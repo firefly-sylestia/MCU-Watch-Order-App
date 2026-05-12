@@ -201,6 +201,7 @@ export default function MCUViewer() {
   const [typeFilter,     setTypeFilter]     = useState(null);
   const [activePhase,    setActivePhase]    = useState(1);
   const [sortOpen,       setSortOpen]       = useState(false);
+  const [phaseOpen,      setPhaseOpen]      = useState(false);
   const [statusDropdown, setStatusDropdown] = useState(null);
   const [dropdownPos,    setDropdownPos]    = useState({ x: 0, y: 0 });
   const [darkMode,       setDarkMode]       = useState(true);
@@ -212,6 +213,7 @@ export default function MCUViewer() {
 
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
+  const phaseRef   = useRef(null);
   const obsRef     = useRef(null);
   const isScrolling= useRef(false);
   const mainRef    = useRef(null);
@@ -308,6 +310,11 @@ export default function MCUViewer() {
   // Close sort on outside click
   useEffect(() => {
     const fn = e => { if (sortRef.current && !sortRef.current.contains(e.target)) setSortOpen(false); };
+    document.addEventListener('mousedown', fn);
+    return () => document.removeEventListener('mousedown', fn);
+  }, []);
+  useEffect(() => {
+    const fn = e => { if (phaseRef.current && !phaseRef.current.contains(e.target)) setPhaseOpen(false); };
     document.addEventListener('mousedown', fn);
     return () => document.removeEventListener('mousedown', fn);
   }, []);
@@ -495,36 +502,19 @@ export default function MCUViewer() {
 
         .hexbg{background-image:radial-gradient(circle,${T.hexDot} 1px,transparent 1px);background-size:28px 28px}
 
-        .lmode-btn{display:flex;flex-direction:column;padding:12px 22px 10px;border:none;background:transparent;cursor:pointer;text-align:left;transition:all 0.2s;border-bottom:2px solid transparent}
+        .lmode-btn{display:flex;flex-direction:column;padding:14px 24px 12px;border:none;background:transparent;cursor:pointer;text-align:left;transition:all 0.2s;border-bottom:2px solid transparent}
         .lmode-btn.active{border-bottom-color:var(--mc)}
         .lmode-btn:hover:not(.active){background:${T.rowHoverBg}}
 
         .theme-btn{width:32px;height:32px;border-radius:50%;border:1px solid ${T.pillBorder};background:${T.pillBg};color:${T.pillText};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0}
         .theme-btn:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText};transform:rotate(22deg)}
 
-        /* ── Sticky phase nav (inside main scroll container) ── */
-        .phase-sticky{
-          position:sticky;top:0;z-index:90;
-          display:flex;align-items:center;gap:8px;
-          overflow-x:auto;padding:10px var(--content-pad);
-          max-width:var(--content-max);margin:0 auto;width:100%;
-          background:${darkMode ? 'rgba(7,7,18,0.9)' : 'rgba(248,246,242,0.92)'};
-          backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-          border-bottom:1px solid ${darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)'};
-          scrollbar-width:thin;scrollbar-color:rgba(192,57,43,0.3) transparent;
+        .filter-shell{
+          position: sticky;
+          top: 0;
+          z-index: 120;
+          box-shadow: ${darkMode ? '0 8px 18px rgba(0,0,0,0.28)' : '0 6px 14px rgba(0,0,0,0.08)'};
         }
-        .phase-sticky::-webkit-scrollbar{height:4px}
-        .phase-sticky::-webkit-scrollbar-track{background:transparent}
-        .phase-sticky::-webkit-scrollbar-thumb{background:rgba(192,57,43,0.3);border-radius:2px}
-        .ph-pill{
-          display:flex;flex-direction:column;align-items:center;gap:1px;
-          padding:6px 12px;border:none;flex-shrink:0;
-          background:transparent;cursor:pointer;
-          transition:background 0.16s,color 0.16s;
-          font-family:'Bebas Neue',sans-serif;
-          position:relative;
-        }
-        .ph-pill:hover{background:${darkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}}
 
         /* ── Mobile-compact header ── */
         @media (max-width: 767px) {
@@ -597,15 +587,15 @@ export default function MCUViewer() {
                 aria-pressed={isActive}
               >
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                  <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 15, letterSpacing: 3, color: isActive ? mode.color : T.textMuted, transition: 'color 0.2s' }}>
+                  <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 16, letterSpacing: 3.2, color: isActive ? mode.color : T.textMuted, transition: 'color 0.2s' }}>
                     {mode.label}
                   </span>
-                  <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 10, letterSpacing: 1.5, color: isActive ? mode.color + 'bb' : T.textFaint, transition: 'color 0.2s' }}>
+                  <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 12, letterSpacing: 1.8, color: isActive ? mode.color + 'bb' : T.textFaint, transition: 'color 0.2s' }}>
                     {modeItems.length}
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1 }}>
-                  <span style={{ fontSize: 10, color: isActive ? T.textMuted : T.textFaint, letterSpacing: 0.4, fontFamily: "'Rajdhani',sans-serif", transition: 'color 0.2s' }}>{mode.desc}</span>
+                  <span style={{ fontSize: 14, color: isActive ? T.textMuted : T.textFaint, letterSpacing: 0.4, fontFamily: "'Rajdhani',sans-serif", transition: 'color 0.2s' }}>{mode.desc}</span>
                   {modePct > 0 && <span style={{ fontSize: 9, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1, color: modePct === 100 ? mode.color : T.textFaint }}>· {modePct}%</span>}
                 </div>
               </button>
@@ -617,7 +607,7 @@ export default function MCUViewer() {
 
 
       {/* ━━ FILTER BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ background: T.filterBg, borderBottom: `1px solid ${T.filterBorder}`, padding: '8px 24px', overflowX: 'auto', flexShrink: 0 }}>
+      <div className="filter-shell" style={{ background: T.filterBg, borderBottom: `1px solid ${T.filterBorder}`, padding: '10px 24px', overflowX: 'auto', flexShrink: 0 }}>
         <div style={{ maxWidth: 1400, margin: '0 auto', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', width: '100%', padding: '0 24px' }}>
           {/* Search */}
           <div style={{ position: 'relative', flex: '1 1 170px', minWidth: 130 }}>
@@ -640,11 +630,21 @@ export default function MCUViewer() {
               </div>
             )}
           </div>
-          <div style={{ position: 'relative' }}>
-            <select value={activePhase} onChange={e => { const pid = Number(e.target.value); setActivePhase(pid); scrollTo(pid); }}
-              style={{ background: T.inputBg, border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '6px 14px', color: T.inputColor, fontSize: 16, letterSpacing: 0.5, fontFamily: "'Bebas Neue',sans-serif" }}>
-              {PHASES.map(ph => <option key={ph.id} value={ph.id}>{ph.name.toUpperCase()}</option>)}
-            </select>
+          <div ref={phaseRef} style={{ position: 'relative' }} onMouseEnter={() => setPhaseOpen(true)} onMouseLeave={() => setPhaseOpen(false)}>
+            <button className="fpill" onClick={() => setPhaseOpen(o => !o)}
+              style={{ color: '#c0392b', borderColor: darkMode ? '#1e1430' : '#f0d8d0', background: darkMode ? '#0d0818' : '#fff5f3', fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
+              {PHASES.find(ph => ph.id === activePhase)?.name || 'Phase 1'}
+              <ChevDown size={12} style={{ opacity: 0.6, transform: phaseOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+            </button>
+            {phaseOpen && (
+              <div className="fade-in" style={{ position: 'fixed', background: T.dropdownBg, border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
+                {PHASES.map((ph) => (
+                  <div key={ph.id} className={`sopt ${activePhase === ph.id ? 'picked' : ''}`} onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); setPhaseOpen(false); }}>
+                    {ph.name}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Type pills */}
