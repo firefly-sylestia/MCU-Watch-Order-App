@@ -391,13 +391,13 @@ export default function MCUViewer() {
     headerBorder: '#13132a', navBg: '#08081a', navBorder: '#13132a',
     filterBg: '#07071a', filterBorder: '#10101f',
     surfaceBg: '#0b0b1c', surfaceBorder: '#12122a',
-    rowHoverBg: 'rgba(255,255,255,0.025)', rowWatchedBg: '#080814',
+    rowHoverBg: 'rgba(255,255,255,0.04)', rowWatchedBg: 'rgba(255,192,203,0.05)',
     rowBorder: '#0e0e1e', expandBg: '#090916', expandBorder: '#14142a',
     pillBg: '#0d0d1e', pillBorder: '#1a1a2e', pillText: '#6a7a90',
     pillHoverBorder: '#252540', pillHoverText: '#c5d0e8',
     inputBg: '#0b0b1d', inputBorder: '#171730', inputColor: '#c5d0e8',
     dropdownBg: '#0d0d1e', dropdownBorder: '#1e1e36', dropdownShadow: '0 24px 64px rgba(0,0,0,0.95)',
-    text: '#c8d4e8', textMuted: '#556070', textFaint: '#2a3344',
+    text: '#cfd9ea', textMuted: '#8fa1b8', textFaint: '#5a6880',
     sortHoverBg: '#0f0f22', statBg: '#0b0b1c', statBorder: '#131328',
     numFaint: '#4a5566', footerText: '#1e2a38',
     scrollTrack: '#07070f', scrollThumb: '#16162a', scrollThumbH: '#222238',
@@ -480,7 +480,7 @@ export default function MCUViewer() {
         .ntab::after{content:'';position:absolute;bottom:0;left:12px;right:12px;height:2px;border-radius:2px 2px 0 0;background:currentColor;transform:scaleX(0);transform-origin:center;transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1)}
         .ntab.on::after{transform:scaleX(1)}
 
-        .fpill{display:flex;align-items:center;gap:6px;padding:8px 18px;border-radius:999px;border:1.5px solid ${T.pillBorder};background:${T.pillBg};cursor:pointer;font-size:clamp(14px,2.2vw,16px);font-weight:600;letter-spacing:0.05em;color:${T.pillText};transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap}
+        .fpill{display:flex;align-items:center;gap:6px;padding:7px 28px;border-radius:999px;border:1.5px solid ${T.pillBorder};background:${T.pillBg};cursor:pointer;font-size:clamp(14px,2.2vw,16px);font-weight:600;letter-spacing:0.05em;color:${T.pillText};transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap}
         .fpill:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText};transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.2)}
 
         .sopt{padding:13px 20px;font-family:'Bebas Neue',sans-serif;font-size:clamp(15px,2.2vw,18px);letter-spacing:2.5px;cursor:pointer;color:${T.pillText};transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1)}
@@ -548,7 +548,7 @@ export default function MCUViewer() {
       `}</style>
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━��━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <header className="hexbg" style={{ background: T.headerBg, borderBottom: `1px solid ${T.headerBorder}`, flexShrink: 0 }}>
+      <header className="hexbg" style={{ background: darkMode ? 'rgba(8,10,24,0.72)' : T.headerBg, borderBottom: `1px solid ${darkMode ? 'rgba(255,255,255,0.12)' : T.headerBorder}`, flexShrink: 0, backdropFilter: darkMode ? 'blur(16px)' : 'none', WebkitBackdropFilter: darkMode ? 'blur(16px)' : 'none' }}>
         <div className="header-inner" style={{ maxWidth: 1400, margin: '0 auto', padding: headerCompact ? '10px 20px 10px' : '18px 20px 14px', transition: 'padding 0.25s ease' }}>
           <div className="header-top-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             {/* Title */}
@@ -560,7 +560,7 @@ export default function MCUViewer() {
               </div>
             </div>
             {/* Status dashboard */}
-            <div className="status-dashboard" style={{ background: T.statBg, border: `1px solid ${T.statBorder}`, borderRadius: 10, padding: headerCompact ? '5px 10px' : '8px 14px', minWidth: headerCompact ? 145 : 180, boxShadow: darkMode ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'none', transition: 'all 0.22s ease' }}>
+            <div className="status-dashboard" style={{ background: darkMode ? 'rgba(18,22,42,0.45)' : T.statBg, border: `1px solid ${darkMode ? 'rgba(255,220,235,0.28)' : T.statBorder}`, borderRadius: 10, padding: headerCompact ? '5px 10px' : '8px 14px', minWidth: headerCompact ? 145 : 180, boxShadow: darkMode ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'none', transition: 'all 0.22s ease' }}>
               <div className="stat-card-label" style={{ fontSize: 'clamp(11px, 1.8vw, 14px)', letterSpacing: 2, color: T.textMuted, fontFamily: "'Bebas Neue',sans-serif" }}>TOTAL WATCHED</div>
               <div className="stat-card-num" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(36px, 5.5vw, 58px)', letterSpacing: 1, color: '#3ec47a', lineHeight: 1, textShadow: darkMode ? '0 0 16px rgba(62,196,122,0.35)' : 'none' }}>
                 {totalWatched}<span style={{ fontSize: 'clamp(18px, 3vw, 28px)', color: T.numFaint }}>/{activeItems.length}</span>
@@ -572,8 +572,8 @@ export default function MCUViewer() {
           </div>
           {!headerCompact && (<>
           {/* Master progress bar */}
-          <div className="progress-bar" style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 999, height: 5, overflow: 'hidden', position: 'relative', marginBottom: 2 }}>
-            <div className="sweep" style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#7a0000 0%,#c0392b 38%,#e85252 72%,#3ec47a 100%)', borderRadius: 999, transition: 'width 0.7s cubic-bezier(.4,0,.2,1)', position: 'relative', overflow: 'hidden' }} />
+          <div className="progress-bar" style={{ background: darkMode ? 'rgba(255,255,255,0.08)' : T.surfaceBg, border: `1px solid ${darkMode ? 'rgba(255,255,255,0.18)' : T.surfaceBorder}`, borderRadius: 999, height: 6, overflow: 'hidden', position: 'relative', marginBottom: 2, backdropFilter: 'blur(4px)' }}>
+            <div className="sweep" style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#f3a6c2 0%,#f49bc8 45%,#f6b8d0 100%)', boxShadow: '0 0 12px rgba(244,155,200,0.6)', borderRadius: 999, transition: 'width 0.7s cubic-bezier(.4,0,.2,1)', position: 'relative', overflow: 'hidden' }} />
           </div>
           <div className="progress-labels" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'clamp(12px, 2vw, 16px)', color: T.textMuted, letterSpacing: 2, fontFamily: "'Bebas Neue',sans-serif" }}>
             <span>{pct}% COMPLETE</span>
@@ -678,7 +678,7 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} style={{ overflowY: 'auto', overflowX: 'hidden', flex: 1, WebkitOverflowScrolling: 'touch', '--content-max': '1400px', '--content-pad': '24px' }}>
+      <main ref={mainRef} style={{ overflowY: 'auto', overflowX: 'hidden', flex: 1, WebkitOverflowScrolling: 'touch', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
 
         {/* ━━ STICKY PHASE NAV ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <nav aria-label="Phase navigation" className="phase-sticky">
@@ -694,7 +694,7 @@ export default function MCUViewer() {
               <button
                 key={ph.id}
                 className="ph-pill"
-                style={{ color: isOn ? '#c0392b' : '#94a3b8', borderBottom: isOn ? `2px solid ${ph.color}` : '2px solid transparent' }}
+                style={{ color: isOn ? '#f7bfd7' : '#c3cfdf', borderBottom: isOn ? '2px solid #f4a8ca' : '2px solid transparent' }}
                 onClick={() => scrollTo(ph.id)}
                 aria-label={`${ph.name} — ${phPct}% watched`}
               >
@@ -727,16 +727,16 @@ export default function MCUViewer() {
           return (
             <section key={pid} className="section-up" data-phase={pid}
               ref={el => { phaseRefs.current[pid] = el; }}
-              style={{ marginBottom: 36, scrollMarginTop: 16, position: 'relative' }}>
+              style={{ marginBottom: 36, scrollMarginTop: 'var(--sticky-offset)', position: 'relative' }}>
 
               {/* Phase completion flash overlay */}
               {isCelebrating && (
-                <div className="phase-flash" style={{ position: 'absolute', inset: 0, background: ph.color, borderRadius: 12, pointerEvents: 'none', zIndex: 5 }} />
+                <div className="phase-flash" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,#f3a6c2,#ffc0d8)', boxShadow: '0 0 10px rgba(244,155,200,0.5)', borderRadius: 12, pointerEvents: 'none', zIndex: 5 }} />
               )}
 
               {/* ── Phase divider injected in list flow ── */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap', padding: '10px 0', borderBottom: `1px solid ${T.surfaceBorder}` }}>
-                <div style={{ width: 3, height: 38, background: ph.color, borderRadius: 2, flexShrink: 0, boxShadow: darkMode ? `0 0 12px ${ph.glow}` : 'none' }} />
+                <div style={{ width: 3, height: 38, background: 'linear-gradient(90deg,#f3a6c2,#ffc0d8)', borderRadius: 2, flexShrink: 0, boxShadow: darkMode ? '0 0 12px rgba(244,155,200,0.55)' : '0 0 6px rgba(244,155,200,0.25)' }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: "'Orbitron',sans-serif", fontSize: 'clamp(24px, 3.6vw, 36px)', letterSpacing: 6, color: ph.color, lineHeight: 1, fontWeight: 700, textShadow: darkMode ? `0 0 18px ${ph.glow}` : 'none' }}>
               {ph.name}
@@ -746,8 +746,8 @@ export default function MCUViewer() {
                   </div>
                 </div>
                 {/* Mini progress */}
-                <div style={{ width: 90, background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 999, height: 3, overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
-                  <div className="sweep" style={{ height: '100%', width: `${phasePct}%`, background: ph.color, borderRadius: 999, transition: 'width 0.5s ease', position: 'relative', overflow: 'hidden', opacity: darkMode ? 0.85 : 0.9 }} />
+                <div style={{ width: 90, background: darkMode ? 'rgba(255,255,255,0.08)' : T.surfaceBg, border: `1px solid ${darkMode ? 'rgba(255,255,255,0.16)' : T.surfaceBorder}`, borderRadius: 999, height: 4, overflow: 'hidden', position: 'relative', flexShrink: 0, backdropFilter: 'blur(3px)' }}>
+                  <div className="sweep" style={{ height: '100%', width: `${phasePct}%`, background: 'linear-gradient(90deg,#f3a6c2,#ffc0d8)', boxShadow: '0 0 10px rgba(244,155,200,0.5)', borderRadius: 999, transition: 'width 0.5s ease', position: 'relative', overflow: 'hidden', opacity: darkMode ? 0.85 : 0.9 }} />
                 </div>
                 <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 11, letterSpacing: 1, color: phasePct === 100 ? ph.color : T.textMuted, flexShrink: 0, minWidth: 38, textAlign: 'right' }}>
                   {done}/{rows.length}
@@ -797,14 +797,14 @@ export default function MCUViewer() {
                       {/* Main row */}
                       <div className="rrow row-in" style={{ background: isWatched ? T.rowWatchedBg : 'transparent' }}>
                         {/* Order / check */}
-                        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 15, color: isWatched ? ph.color : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
-                          {isWatched ? <Check size={14} style={{ color: ph.color }} /> : (idx + 1)}
+                        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 15, color: isWatched ? '#f1bfd3' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
+                          {isWatched ? <Check size={14} style={{ color: '#f4a8ca' }} /> : (idx + 1)}
                         </div>
 
                         {/* Title block — clickable to expand */}
                         <button className="title-btn" onClick={() => setExpandedItem(isExpanded ? null : item.id)}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: 'clamp(17px, 2.7vw, 23px)', fontWeight: isWatched ? 400 : 600, lineHeight: 1.5, color: isWatched ? T.textMuted : T.text, textDecoration: isWatched ? 'line-through' : 'none', textDecorationColor: T.textFaint, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif" }}>
+                            <span style={{ fontSize: 'clamp(17px, 2.7vw, 23px)', fontWeight: isWatched ? 400 : 600, lineHeight: 1.5, color: isWatched ? T.textMuted : T.text, textDecoration: isWatched ? 'line-through' : 'none', textDecorationColor: '#f4a8ca', transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif" }}>
                               {item.title}
                             </span>
                             {/* Episode count badge */}
