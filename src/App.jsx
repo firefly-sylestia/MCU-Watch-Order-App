@@ -217,6 +217,14 @@ export default function MCUViewer() {
   const [posterCache,    setPosterCache]    = useState({});
   const [settingsOpen,   setSettingsOpen]   = useState(false);
   const [profile,        setProfile]        = useState({ name: '', age: '', gender: '', character: 'Iron Man', pfp: '' });
+  const [timelineMode,   setTimelineMode]   = useState('sacred');
+  const [emotionGoal,    setEmotionGoal]    = useState('all');
+  const [artifactFilter, setArtifactFilter] = useState('all');
+  const [canonConfidence,setCanonConfidence]= useState(100);
+  const [budgetHours,    setBudgetHours]    = useState(999);
+  const [myLikes,        setMyLikes]        = useState({});
+  const [myRating,       setMyRating]       = useState({});
+  const [rewatchCount,   setRewatchCount]   = useState({});
 
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
@@ -375,6 +383,12 @@ export default function MCUViewer() {
     'Scarlet Witch': 'https://ui-avatars.com/api/?name=Scarlet+Witch&background=8e2430&color=fff',
     'Spider-Man': 'https://ui-avatars.com/api/?name=Spider-Man&background=b22222&color=fff'
   };
+  const RELEASE_INFO = {
+    'The Fantastic Four: First Steps': { date: '2025-07-25', rating: 'TBD' },
+    'Spider-Man: Brand New Day': { date: '2026-07-31', rating: 'TBD' },
+    'Avengers: Doomsday': { date: '2026-12-18', rating: 'TBD' },
+    'Avengers: Secret Wars': { date: '2027-12-17', rating: 'TBD' },
+  };
 
   const coreIds = useMemo(() => new Set(ESSENTIAL_LIST.map(i => i.id)), []);
 
@@ -405,16 +419,27 @@ export default function MCUViewer() {
       if (statusFilter && i.status !== statusFilter) return false;
       if (typeFilter && i.type !== typeFilter) return false;
       if (activePhase && i.phase !== activePhase) return false;
+      if (timelineMode === 'studio' && i.order % 2 === 0) return true;
+      if (timelineMode === 'whatif' && i.type === 'short') return true;
+      if (emotionGoal !== 'all') {
+        const em = emotionGoal === 'hopeful' ? ['Spider-Man','Guardians','Ms. Marvel'] : emotionGoal === 'mystery' ? ['Loki','WandaVision','Moon'] : ['Endgame','Wakanda','Infinity'];
+        if (!em.some(k => i.title.includes(k))) return false;
+      }
+      if (artifactFilter !== 'all') {
+        const amap = { stones: ['Infinity','Avengers'], rings: ['Ten Rings'], tva: ['Loki','Deadpool'], darkhold: ['WandaVision','Multiverse'] };
+        if (!amap[artifactFilter].some(k => i.title.includes(k) || i.desc.includes(k))) return false;
+      }
       return i.title.toLowerCase().includes(q) || i.prereq.toLowerCase().includes(q);
     }).sort((a, b) =>
       sortBy === 'title' ? a.title.localeCompare(b.title) :
-      sortBy === 'year'  ? a.year - b.year : a.order - b.order
+      sortBy === 'year'  ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : a.order - b.order
     );
+    const capped = f.slice(0, Math.max(1, Math.floor((Number(budgetHours) || 999) / 2)));
     const g = {};
-    f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
+    capped.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
-    return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, q, sortBy, coreIds]);
+    return { filtered: capped, grouped: g, phaseKeys: pk };
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, timelineMode, emotionGoal, artifactFilter, budgetHours, q, sortBy, coreIds]);
 
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
@@ -851,6 +876,11 @@ export default function MCUViewer() {
       {/* ━━ FILTER BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div className="filter-shell" style={{ background: T.filterBg, borderBottom: `1px solid ${T.filterBorder}`, padding: '10px 24px', overflow: 'visible', flexShrink: 0, position: 'relative', zIndex: 180 }}>
         <div style={{ maxWidth: 1400, margin: '0 auto', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', width: '100%', padding: '0 24px', overflow: 'visible' }}>
+          <select value={timelineMode} onChange={e=>setTimelineMode(e.target.value)} style={{ padding: '8px', borderRadius: 20 }}><option value="sacred">Sacred</option><option value="studio">Studio</option><option value="whatif">What-If</option></select>
+          <select value={emotionGoal} onChange={e=>setEmotionGoal(e.target.value)} style={{ padding: '8px', borderRadius: 20 }}><option value="all">Emotion All</option><option value="hopeful">Hopeful</option><option value="mystery">Mystery</option><option value="grief">Grief</option></select>
+          <select value={artifactFilter} onChange={e=>setArtifactFilter(e.target.value)} style={{ padding: '8px', borderRadius: 20 }}><option value="all">Artifact All</option><option value="stones">Infinity Stones</option><option value="rings">Ten Rings</option><option value="tva">TVA Tech</option><option value="darkhold">Darkhold</option></select>
+          <label style={{ fontSize: 12 }}>Canon {canonConfidence}<input type="range" min="40" max="100" value={canonConfidence} onChange={e=>setCanonConfidence(Number(e.target.value))} /></label>
+          <label style={{ fontSize: 12 }}>Budget h<input type="number" value={budgetHours} onChange={e=>setBudgetHours(e.target.value)} style={{ width: 58 }} /></label>
           {/* Search */}
           <div style={{ position: 'relative', flex: '1 1 170px', minWidth: 130 }}>
             <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
@@ -952,6 +982,14 @@ export default function MCUViewer() {
         
 
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '24px var(--content-pad) 80px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch" key={listMode}>
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 10 }}>
+          {filtered.slice(0,10).map(i => (
+            <button key={`c-${i.id}`} onClick={()=>setDetailItem(i)} style={{ minWidth: 140, textAlign: 'left', background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 8 }}>
+              <div style={{ fontSize: 12 }}>{i.title}</div>
+              <div style={{ fontSize: 11, color: T.textMuted }}>❤️ {myLikes[i.id]||0} · ⭐ {myRating[i.id]||0}/10</div>
+            </button>
+          ))}
+        </div>
         {phaseKeys.length === 0 && (
           <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: "'Bebas Neue',sans-serif", fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
             NO RESULTS — ADJUST YOUR FILTERS
@@ -1073,9 +1111,11 @@ export default function MCUViewer() {
 
                         {/* Year column */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 80 }}>
-                          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '14px', letterSpacing: 2, color: T.text, textAlign: 'center', fontWeight: 600 }}>
-                            {item.year}
+                          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '12px', letterSpacing: 1.4, color: T.text, textAlign: 'center', fontWeight: 600 }}>
+                            {RELEASE_INFO[item.title]?.date || `${item.year}-01-01`}
                           </div>
+                          <div style={{ fontSize: 10, color: T.textMuted }}>⭐ {RELEASE_INFO[item.title]?.rating || (myRating[item.id] || '—')}</div>
+                          <button className="fpill" style={{ padding: '2px 8px', fontSize: 10 }} onClick={() => setRewatchCount(p => ({ ...p, [item.id]: (p[item.id] || 0) + 1 }))}>↺ {rewatchCount[item.id] || 0}</button>
 
                         </div>
 
