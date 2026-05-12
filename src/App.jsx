@@ -413,6 +413,7 @@ export default function MCUViewer() {
     'Thor': ['Chris Hemsworth', 'Tom Hiddleston', 'Natalie Portman'],
   };
   const posterFor = (item) => `https://placehold.co/220x330/121a2d/e8edf7?text=${encodeURIComponent(item.title)}`;
+  const OMDB_KEY = '14596ed1';
   const cleanLookupTitle = (title) => title.replace(/\sS\d.*$/i, '').replace(/\sEps?.*$/i, '').trim();
   const nextUnwatched = useMemo(() => filtered.find(i => i.status !== 'watched') || null, [filtered]);
   const recentActivity = useMemo(() => [...activeItems].filter(i => i.watchedDate).sort((a,b) => (b.watchedDate||'').localeCompare(a.watchedDate||'')).slice(0,5), [activeItems]);
@@ -432,17 +433,33 @@ export default function MCUViewer() {
     }
     return list;
   }, [filtered, sessionHours]);
+  const phaseGradient = useMemo(() => {
+    let cursor = 0;
+    const stops = [];
+    PHASES.forEach(ph => {
+      const phaseItems = activeItems.filter(i => i.phase === ph.id);
+      const watched = phaseItems.filter(i => i.status === 'watched').length;
+      const w = activeItems.length ? (watched / activeItems.length) * 100 : 0;
+      if (w <= 0) return;
+      const start = cursor;
+      const end = Math.min(100, cursor + w);
+      stops.push(`${ph.color} ${start.toFixed(2)}% ${end.toFixed(2)}%`);
+      cursor = end;
+    });
+    if (!stops.length) return 'linear-gradient(90deg,#4a9ede,#a06cd5,#e8b84b)';
+    return `linear-gradient(90deg, ${stops.join(', ')})`;
+  }, [activeItems]);
 
   useEffect(() => {
     const fetchDetail = async () => {
       if (!detailItem) return;
       setDetailLoading(true);
       setDetailData(null);
-      const key = import.meta.env.VITE_OMDB_API_KEY;
+      const key = import.meta.env.VITE_OMDB_API_KEY || OMDB_KEY;
       if (!key) { setDetailLoading(false); return; }
       try {
         const t = encodeURIComponent(cleanLookupTitle(detailItem.title));
-        const res = await fetch(`https://www.omdbapi.com/?apikey=14596ed1);
+        const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}`);
         const data = await res.json();
         if (data?.Response === 'True') setDetailData(data);
       } catch {}
@@ -589,9 +606,8 @@ export default function MCUViewer() {
         .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.74);backdrop-filter:blur(4px);z-index:240;display:grid;place-items:center;padding:20px}
         .detail-card{width:min(980px,94vw);max-height:90vh;overflow:auto;background:${T.surfaceBg};border:1px solid ${T.surfaceBorder};border-radius:14px;padding:20px}
         .filter-shell{
-          position: sticky;
-          top: 0;
-          z-index: 120;
+          position: static;
+          z-index: auto;
           box-shadow: ${darkMode ? '0 8px 18px rgba(0,0,0,0.28)' : '0 6px 14px rgba(0,0,0,0.08)'};
         }
 
@@ -644,7 +660,7 @@ export default function MCUViewer() {
           <>
           {/* Master progress bar */}
           <div className="progress-bar" style={{ background: darkMode ? 'rgba(255,255,255,0.08)' : T.surfaceBg, border: `1px solid ${darkMode ? 'rgba(255,255,255,0.18)' : T.surfaceBorder}`, borderRadius: 999, height: 6, overflow: 'hidden', position: 'relative', marginBottom: 2, backdropFilter: 'blur(4px)' }}>
-            <div className="sweep progress-gradient" style={{ height: '100%', width: `${pct}%`, boxShadow: '0 0 12px rgba(244,155,200,0.6)', borderRadius: 999, transition: 'width 0.7s cubic-bezier(.4,0,.2,1)', position: 'relative', overflow: 'hidden' }} />
+            <div className="sweep progress-gradient" style={{ height: '100%', width: `${pct}%`, background: phaseGradient, boxShadow: '0 0 12px rgba(244,155,200,0.6)', borderRadius: 999, transition: 'width 0.7s cubic-bezier(.4,0,.2,1)', position: 'relative', overflow: 'hidden' }} />
           </div>
           <div className="progress-labels" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'clamp(12px, 2vw, 16px)', color: T.textMuted, letterSpacing: 2, fontFamily: "'Bebas Neue',sans-serif" }}>
             <span>{pct}% COMPLETE</span>
@@ -693,6 +709,7 @@ export default function MCUViewer() {
             <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Continue Watching</div>
             <div style={{ fontSize: 18, marginTop: 4 }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</div>
             <div style={{ fontSize: 13, color: T.textMuted, marginTop: 5 }}>{recentActivity.length ? `Recent: ${recentActivity[0].title}` : 'No recent activity'}</div>
+            {nextUnwatched && <button className="fpill" style={{ marginTop: 8 }} onClick={() => { setActivePhase(nextUnwatched.phase); scrollTo(nextUnwatched.phase); }}>Jump to Next</button>}
           </div>
           <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
             <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Session Planner</div>
@@ -1041,7 +1058,7 @@ export default function MCUViewer() {
                   {detailData?.imdbRating && detailData.imdbRating !== 'N/A' ? ` · IMDb ${detailData.imdbRating}` : ''}
                 </div>
                 {detailLoading && <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 8 }}>Loading live metadata…</div>}
-                {!detailLoading && !detailData && !import.meta.env.VITE_OMDB_API_KEY && <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Tip: set VITE_OMDB_API_KEY for real posters/cast/ratings.</div>}
+                {!detailLoading && !detailData && <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Live metadata unavailable for this title right now.</div>}
                 <p style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 12 }}>{detailItem.desc}</p>
                 {detailData?.Plot && detailData.Plot !== 'N/A' && <p style={{ fontSize: 14, lineHeight: 1.6, marginBottom: 12, color: T.textMuted }}>{detailData.Plot}</p>}
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Prerequisite:</strong> {detailItem.prereq}</div>
