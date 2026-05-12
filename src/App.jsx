@@ -138,7 +138,7 @@ export default function MCUViewer() {
   const [items, setItems]             = useState(RAW);
   const [search, setSearch]           = useState('');
   const [sortBy, setSortBy]           = useState('order');
-  const [essentialOnly, setEssOnly]   = useState(false);
+  const [essentialOnly, setEssOnly]   = useState(true);
   const [watchedOnly, setWatchedOnly] = useState(false);
   const [statusFilter, setStatusFilter] = useState(null);
   const [typeFilter, setTypeFilter]   = useState(null);
