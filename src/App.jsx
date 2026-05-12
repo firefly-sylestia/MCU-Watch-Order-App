@@ -248,7 +248,7 @@ export default function MCUViewer() {
         if (i.id !== id) return i;
         const updated = { ...i, status: newStatus };
         if (newStatus === 'watched' && !i.watchedDate) {
-          updated.watchedDate = new Date().toISOString().split('T')[0];
+          updated.watchedDate = new Date().toISOString().slice(0, 16);
         } else if (newStatus !== 'watched') {
           updated.watchedDate = null;
         }
@@ -332,7 +332,7 @@ export default function MCUViewer() {
         if (listMode === 'core' && !coreIds.has(i.id)) return i;
         const updated = { ...i, status: newStatus };
         if (newStatus === 'watched' && !i.watchedDate) {
-          updated.watchedDate = new Date().toISOString().split('T')[0];
+          updated.watchedDate = new Date().toISOString().slice(0, 16);
         } else if (newStatus !== 'watched') {
           updated.watchedDate = null;
         }
@@ -506,17 +506,19 @@ export default function MCUViewer() {
         /* ── Sticky phase nav (inside main scroll container) ── */
         .phase-sticky{
           position:sticky;top:0;z-index:90;
-          display:flex;align-items:center;
-          overflow-x:auto;
+          display:flex;align-items:center;gap:8px;
+          overflow-x:auto;padding:10px 16px;
           background:${darkMode ? 'rgba(7,7,18,0.9)' : 'rgba(248,246,242,0.92)'};
           backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
           border-bottom:1px solid ${darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)'};
-          scrollbar-width:none;
+          scrollbar-width:thin;scrollbar-color:rgba(192,57,43,0.3) transparent;
         }
-        .phase-sticky::-webkit-scrollbar{display:none}
+        .phase-sticky::-webkit-scrollbar{height:4px}
+        .phase-sticky::-webkit-scrollbar-track{background:transparent}
+        .phase-sticky::-webkit-scrollbar-thumb{background:rgba(192,57,43,0.3);border-radius:2px}
         .ph-pill{
           display:flex;flex-direction:column;align-items:center;gap:1px;
-          padding:8px 16px;border:none;flex-shrink:0;
+          padding:6px 12px;border:none;flex-shrink:0;
           background:transparent;cursor:pointer;
           transition:background 0.16s,color 0.16s;
           font-family:'Bebas Neue',sans-serif;
@@ -528,14 +530,14 @@ export default function MCUViewer() {
         @media (max-width: 767px) {
           .header-inner { padding: 10px 14px 8px !important; }
         }
-        .header-title-mcu { font-size: clamp(56px, 10vw, 120px) !important; letter-spacing: clamp(2px, 1vw, 8px) !important; margin: 0 !important; }
-        .header-title-sub { font-size: clamp(32px, 5vw, 72px) !important; letter-spacing: clamp(4px, 1.5vw, 12px) !important; margin-top: 0px !important; }
-        .header-tagline { font-size: clamp(13px, 2.4vw, 18px) !important; margin-top: 1px !important; }
+        .header-title-mcu { font-size: clamp(48px, 8vw, 96px) !important; letter-spacing: clamp(2px, 0.8vw, 6px) !important; margin: 0 !important; }
+        .header-title-sub { font-size: clamp(28px, 4.2vw, 56px) !important; letter-spacing: clamp(4px, 1.2vw, 10px) !important; margin-top: 0px !important; }
+        .header-tagline { font-size: clamp(12px, 2.2vw, 15px) !important; margin-top: 1px !important; }
 
-        .stat-card-num { font-size: clamp(32px, 5vw, 56px) !important; }
-        .stat-card-label { font-size: clamp(12px, 2vw, 16px) !important; }
+        .stat-card-num { font-size: clamp(28px, 4.5vw, 48px) !important; }
+        .stat-card-label { font-size: clamp(11px, 1.8vw, 14px) !important; }
 
-        .progress-labels { font-size: clamp(12px, 2vw, 16px) !important; }
+        .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; }
 
         /* hide default scrollbar on main while keeping functionality */
         main::-webkit-scrollbar{width:4px}
@@ -697,10 +699,10 @@ export default function MCUViewer() {
                 onClick={() => scrollTo(ph.id)}
                 aria-label={`${ph.name} — ${phPct}% watched`}
               >
-                <span style={{ fontSize: 12, letterSpacing: 2.5, fontWeight: isOn ? 700 : 400 }}>
+                <span style={{ fontSize: 'clamp(10px, 1.6vw, 12px)', letterSpacing: 2, fontWeight: isOn ? 700 : 400 }}>
                   {ph.name}
                 </span>
-                <span style={{ fontSize: 8, letterSpacing: 0.5, color: phPct === 100 ? ph.color : T.textFaint, lineHeight: 1 }}>
+                <span style={{ fontSize: 'clamp(8px, 1.2vw, 9px)', letterSpacing: 0.3, color: phPct === 100 ? ph.color : T.textFaint, lineHeight: 1 }}>
                   {phPct === 100 ? '✓ DONE' : `${phPct}%`}
                 </span>
               </button>
@@ -784,7 +786,7 @@ export default function MCUViewer() {
 
               {/* ── Row table ── */}
               <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, overflow: 'hidden', boxShadow: darkMode ? '0 2px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.03)' : '0 1px 6px rgba(0,0,0,0.06)' }}>
-                {rows.map(item => {
+                {rows.map((item, idx) => {
                   const m = TYPE_META[item.type];
                   const statusMeta = STATUS_META[item.status];
                   const showPre = !NO_PREREQ.has(item.prereq);
@@ -797,13 +799,13 @@ export default function MCUViewer() {
                       <div className="rrow row-in" style={{ background: isWatched ? T.rowWatchedBg : 'transparent' }}>
                         {/* Order / check */}
                         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 15, color: isWatched ? ph.color : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
-                          {isWatched ? <Check size={14} style={{ color: ph.color }} /> : item.order}
+                          {isWatched ? <Check size={14} style={{ color: ph.color }} /> : (idx + 1)}
                         </div>
 
                         {/* Title block — clickable to expand */}
                         <button className="title-btn" onClick={() => setExpandedItem(isExpanded ? null : item.id)}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: 'clamp(16px, 2.8vw, 22px)', fontWeight: isWatched ? 400 : 600, lineHeight: 1.5, color: isWatched ? T.textMuted : T.text, textDecoration: isWatched ? 'line-through' : 'none', textDecorationColor: T.textFaint, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif" }}>
+                            <span style={{ fontSize: 'clamp(15px, 2.4vw, 20px)', fontWeight: isWatched ? 400 : 600, lineHeight: 1.5, color: isWatched ? T.textMuted : T.text, textDecoration: isWatched ? 'line-through' : 'none', textDecorationColor: T.textFaint, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif" }}>
                               {item.title}
                             </span>
                             {/* Episode count badge */}
@@ -820,16 +822,18 @@ export default function MCUViewer() {
                             )}
                             <ChevRight size={10} style={{ color: T.textFaint, transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
                           </div>
+                        </button>
+
+                        {/* Year and prereq in middle */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 100 }}>
+                          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(13px, 2vw, 15px)', letterSpacing: 2, color: T.text, textAlign: 'center', fontWeight: 600 }}>
+                            {item.year}
+                          </div>
                           {showPre && (
-                            <div style={{ fontSize: 9.5, color: T.textMuted, marginTop: 1, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.2 }}>
+                            <div style={{ fontSize: 'clamp(10px, 1.6vw, 12px)', color: T.textMuted, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.3, textAlign: 'center', maxWidth: 120 }}>
                               Needs: {item.prereq}
                             </div>
                           )}
-                        </button>
-
-                        {/* Year */}
-                        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 12, letterSpacing: 1, color: T.textMuted, textAlign: 'center' }}>
-                          {item.year}
                         </div>
 
                         {/* Status button */}
@@ -890,7 +894,7 @@ export default function MCUViewer() {
                               <span style={{ fontSize: 10, color: T.textMuted, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1 }}>WATCHED:</span>
                               {editingDateId === item.id ? (
                                 <input
-                                  type="date"
+                                  type="datetime-local"
                                   value={item.watchedDate}
                                   onChange={e => {
                                     setItems(prev => prev.map(i => i.id === item.id ? { ...i, watchedDate: e.target.value } : i));
@@ -906,11 +910,11 @@ export default function MCUViewer() {
                               ) : (
                                 <button
                                   onClick={() => setEditingDateId(item.id)}
-                                  style={{ fontSize: 11, color: '#3ec47a', background: 'transparent', border: `1px solid #3ec47a44`, borderRadius: 4, padding: '4px 8px', cursor: 'pointer', fontFamily: "'Rajdhani',sans-serif", transition: 'all 0.15s' }}
+                                  style={{ fontSize: 'clamp(11px, 1.8vw, 13px)', color: '#3ec47a', background: 'transparent', border: `1px solid #3ec47a44`, borderRadius: 4, padding: '4px 8px', cursor: 'pointer', fontFamily: "'Rajdhani',sans-serif", transition: 'all 0.15s' }}
                                   onMouseEnter={e => { e.currentTarget.style.borderColor = '#3ec47a88'; e.currentTarget.style.background = '#3ec47a08'; }}
                                   onMouseLeave={e => { e.currentTarget.style.borderColor = '#3ec47a44'; e.currentTarget.style.background = 'transparent'; }}
                                 >
-                                  {item.watchedDate}
+                                  {item.watchedDate ? new Date(item.watchedDate + ':00').toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Mark watched'}
                                 </button>
                               )}
                             </div>
