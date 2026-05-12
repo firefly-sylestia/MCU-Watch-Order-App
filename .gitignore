@@ -30,3 +30,6 @@ commandlinetools-linux-11076708_latest.zip
 >>>>>>> b084b1efcabf1a3291e1d5c7884c54e8b45e6f2c
 *.keystore
 *.jks
+*.key
+keystore.base64
+release.keystore
