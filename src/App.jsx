@@ -214,6 +214,7 @@ export default function MCUViewer() {
   const [detailData,     setDetailData]     = useState(null);
   const [detailLoading,  setDetailLoading]  = useState(false);
   const [sessionHours,   setSessionHours]   = useState(2);
+  const [posterCache,    setPosterCache]    = useState({});
 
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
@@ -451,6 +452,41 @@ export default function MCUViewer() {
   }, [activeItems]);
 
   useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('mcu-poster-cache-v1') || '{}');
+      setPosterCache(saved);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('mcu-poster-cache-v1', JSON.stringify(posterCache));
+  }, [posterCache]);
+
+  useEffect(() => {
+    const key = import.meta.env.VITE_OMDB_API_KEY || OMDB_KEY;
+    if (!key) return;
+    const targets = filtered.slice(0, 30).filter(i => posterCache[i.id] === undefined);
+    if (!targets.length) return;
+    let cancelled = false;
+    const run = async () => {
+      const updates = {};
+      for (const item of targets) {
+        try {
+          const t = encodeURIComponent(cleanLookupTitle(item.title));
+          const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}`);
+          const data = await res.json();
+          updates[item.id] = data?.Poster && data.Poster !== 'N/A' ? data.Poster : '';
+        } catch {
+          updates[item.id] = '';
+        }
+      }
+      if (!cancelled) setPosterCache(prev => ({ ...prev, ...updates }));
+    };
+    run();
+    return () => { cancelled = true; };
+  }, [filtered, posterCache]);
+
+  useEffect(() => {
     const fetchDetail = async () => {
       if (!detailItem) return;
       setDetailLoading(true);
@@ -461,7 +497,12 @@ export default function MCUViewer() {
         const t = encodeURIComponent(cleanLookupTitle(detailItem.title));
         const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}`);
         const data = await res.json();
-        if (data?.Response === 'True') setDetailData(data);
+        if (data?.Response === 'True') {
+          setDetailData(data);
+          if (data.Poster && data.Poster !== 'N/A') {
+            setPosterCache(prev => ({ ...prev, [detailItem.id]: data.Poster }));
+          }
+        }
       } catch {}
       setDetailLoading(false);
     };
@@ -908,10 +949,10 @@ export default function MCUViewer() {
                         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 15, color: isWatched ? '#f1bfd3' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
                           {isWatched ? <Check size={14} style={{ color: '#f4a8ca' }} /> : (idx + 1)}
                         </div>
-                        <img className="poster" src={posterFor(item)} alt={`${item.title} poster`} loading="lazy" />
+                        <img className="poster" src={posterCache[item.id] || posterFor(item)} alt={`${item.title} poster`} loading="lazy" />
 
                         {/* Title block — clickable to expand */}
-                        <button className="title-btn" onClick={() => setExpandedItem(isExpanded ? null : item.id)} onDoubleClick={() => setDetailItem(item)}>
+                        <button className="title-btn" onClick={() => setDetailItem(item)}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
                             <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: isWatched ? 400 : 600, lineHeight: 1.5, color: isWatched ? T.textMuted : T.text, textDecoration: isWatched ? 'line-through' : 'none', textDecorationColor: '#f4a8ca', transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif" }}>
                               {item.title}
@@ -928,7 +969,7 @@ export default function MCUViewer() {
                             {!item.essential && (
                               <span style={{ fontSize: 8.5, color: T.textMuted, background: T.expandBg, border: `1px solid ${T.expandBorder}`, borderRadius: 3, padding: '1px 4px', letterSpacing: 1, fontFamily: "'Bebas Neue',sans-serif", flexShrink: 0 }}>OPT</span>
                             )}
-                            <ChevRight size={10} style={{ color: T.textFaint, transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
+                            <ChevRight size={10} style={{ color: T.textFaint, transform: 'none', transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
                           </div>
                           {showPre && (
                             <div style={{ marginTop: 2, fontSize: '14px', color: T.textMuted, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.2 }}>
@@ -964,73 +1005,7 @@ export default function MCUViewer() {
                         </div>
                       </div>
 
-                      {/* Expand panel — description + quick watch buttons */}
-                      {isExpanded && (
-                        <div className="expand-row" style={{ background: T.expandBg, borderBottom: `1px solid ${T.expandBorder}`, borderLeft: `3px solid ${ph.color}44`, padding: '14px 16px 14px 54px' }}>
-                          <p style={{ fontSize: 'clamp(15px, 2.4vw, 18px)', color: T.textMuted, lineHeight: 1.7, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.3, marginBottom: 12 }}>
-                            {item.desc}
-                          </p>
-                          <button onClick={() => setDetailItem(item)} style={{ marginBottom: 12, border: `1px solid ${T.surfaceBorder}`, background: T.pillBg, color: T.text, borderRadius: 8, padding: '6px 12px', fontSize: 14, cursor: 'pointer' }}>Open details page</button>
-                          {/* Quick action buttons inside expand */}
-                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            <button
-                              onClick={() => setStatusDirect(item.id, 'watched')}
-                              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 6, border: `1px solid ${item.status === 'watched' ? '#3ec47a88' : T.expandBorder}`, background: item.status === 'watched' ? '#3ec47a18' : 'transparent', color: item.status === 'watched' ? '#3ec47a' : T.textMuted, cursor: 'pointer', fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(12px, 2vw, 14px)', letterSpacing: 1.5, transition: 'all 0.15s' }}
-                              onMouseEnter={e => { if (item.status !== 'watched') { e.currentTarget.style.background = '#3ec47a12'; e.currentTarget.style.color = '#3ec47a'; } }}
-                              onMouseLeave={e => { if (item.status !== 'watched') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T.textMuted; } }}
-                            >
-                              <Check size={11} />WATCHED
-                            </button>
-                            <button
-                              onClick={() => setStatusDirect(item.id, 'plan-to-watch')}
-                              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 6, border: `1px solid ${item.status === 'plan-to-watch' ? '#4a9ede88' : T.expandBorder}`, background: item.status === 'plan-to-watch' ? '#4a9ede18' : 'transparent', color: item.status === 'plan-to-watch' ? '#4a9ede' : T.textMuted, cursor: 'pointer', fontFamily: "'Bebas Neue',sans-serif", fontSize: 14, letterSpacing: 1.5, transition: 'all 0.15s' }}
-                              onMouseEnter={e => { if (item.status !== 'plan-to-watch') { e.currentTarget.style.background = '#4a9ede12'; e.currentTarget.style.color = '#4a9ede'; } }}
-                              onMouseLeave={e => { if (item.status !== 'plan-to-watch') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T.textMuted; } }}
-                            >
-                              <Clock size={11} />PLAN TO WATCH
-                            </button>
-                            <button
-                              onClick={() => setStatusDirect(item.id, 'unwatched')}
-                              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 6, border: `1px solid ${item.status === 'unwatched' ? '#55667788' : T.expandBorder}`, background: item.status === 'unwatched' ? '#55667718' : 'transparent', color: item.status === 'unwatched' ? '#8899aa' : T.textMuted, cursor: 'pointer', fontFamily: "'Bebas Neue',sans-serif", fontSize: 14, letterSpacing: 1.5, transition: 'all 0.15s' }}
-                              onMouseEnter={e => { if (item.status !== 'unwatched') { e.currentTarget.style.background = '#55667710'; e.currentTarget.style.color = '#8899aa'; } }}
-                              onMouseLeave={e => { if (item.status !== 'unwatched') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T.textMuted; } }}
-                            >
-                              <EyeOff size={11} />UNWATCH
-                            </button>
-                          </div>
-                          {/* Date editor for watched items */}
-                          {item.status === 'watched' && item.watchedDate && (
-                            <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${T.surfaceBorder}`, display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <span style={{ fontSize: 10, color: T.textMuted, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1 }}>WATCHED:</span>
-                              {editingDateId === item.id ? (
-                                <input
-                                  type="datetime-local"
-                                  value={item.watchedDate}
-                                  onChange={e => {
-                                    setItems(prev => prev.map(i => i.id === item.id ? { ...i, watchedDate: e.target.value } : i));
-                                  }}
-                                  onBlur={() => {
-                                    setEditingDateId(null);
-                                    const current = items.find(i => i.id === item.id);
-                                    persist(items);
-                                  }}
-                                  autoFocus
-                                  style={{ padding: '4px 6px', borderRadius: 4, border: `1px solid #c0392b66`, background: T.inputBg, color: T.inputColor, fontSize: 11, fontFamily: "'Rajdhani',sans-serif" }}
-                                />
-                              ) : (
-                                <button
-                                  onClick={() => setEditingDateId(item.id)}
-                                  style={{ fontSize: 'clamp(11px, 1.8vw, 13px)', color: '#3ec47a', background: 'transparent', border: `1px solid #3ec47a44`, borderRadius: 4, padding: '4px 8px', cursor: 'pointer', fontFamily: "'Rajdhani',sans-serif", transition: 'all 0.15s' }}
-                                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#3ec47a88'; e.currentTarget.style.background = '#3ec47a08'; }}
-                                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#3ec47a44'; e.currentTarget.style.background = 'transparent'; }}
-                                >
-                                  {item.watchedDate ? new Date(item.watchedDate + ':00').toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Mark watched'}
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      
                     </div>
                   );
                 })}
@@ -1049,7 +1024,7 @@ export default function MCUViewer() {
         <div className="detail-backdrop" onClick={() => setDetailItem(null)} role="dialog" aria-label="Movie details">
           <div className="detail-card" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'grid', gridTemplateColumns: '180px minmax(0,1fr)', gap: 18 }}>
-              <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : posterFor(detailItem)} alt={`${detailItem.title} poster`} style={{ width: '100%', borderRadius: 10, border: `1px solid ${T.surfaceBorder}` }} />
+              <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : (posterCache[detailItem.id] || posterFor(detailItem))} alt={`${detailItem.title} poster`} style={{ width: '100%', borderRadius: 10, border: `1px solid ${T.surfaceBorder}` }} />
               <div>
                 <h2 style={{ fontSize: 32, marginBottom: 8 }}>{detailItem.title}</h2>
                 <div style={{ fontSize: 16, color: T.textMuted, marginBottom: 10 }}>
@@ -1064,6 +1039,11 @@ export default function MCUViewer() {
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Prerequisite:</strong> {detailItem.prereq}</div>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Status:</strong> {STATUS_META[detailItem.status]?.label}</div>
                 <div style={{ fontSize: 14 }}><strong>Cast:</strong> {detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+                  <button className="fpill" onClick={() => setStatusDirect(detailItem.id, 'watched')}><Check size={11}/>Watched</button>
+                  <button className="fpill" onClick={() => setStatusDirect(detailItem.id, 'plan-to-watch')}><Clock size={11}/>Plan</button>
+                  <button className="fpill" onClick={() => setStatusDirect(detailItem.id, 'unwatched')}><EyeOff size={11}/>Unwatch</button>
+                </div>
               </div>
             </div>
             <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end' }}>
