@@ -144,10 +144,12 @@ export default function MCUViewer() {
   const [typeFilter, setTypeFilter]   = useState(null);
   const [activePhase, setActivePhase] = useState(1);
   const [sortOpen, setSortOpen]       = useState(false);
+  const [statusDropdown, setStatusDropdown] = useState(null);
 
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
   const obsRef     = useRef(null);
+  const pressRef   = useRef({});
 
   // Load saved
   useEffect(() => {
@@ -170,11 +172,16 @@ export default function MCUViewer() {
     setItems(prev => {
       const n = prev.map(i => {
         if (i.id !== id) return i;
-        const statuses = ['unwatched', 'plan-to-watch', 'watching', 'on-hold', 'dropped', 'watched'];
-        const currentIdx = statuses.indexOf(i.status);
-        const nextStatus = statuses[(currentIdx + 1) % statuses.length];
-        return { ...i, status: nextStatus };
+        return { ...i, status: i.status === 'watched' ? 'unwatched' : 'watched' };
       });
+      persist(n);
+      return n;
+    });
+  };
+
+  const setStatusDirect = (id, newStatus) => {
+    setItems(prev => {
+      const n = prev.map(i => i.id === id ? { ...i, status: newStatus } : i);
       persist(n);
       return n;
     });
@@ -224,7 +231,7 @@ export default function MCUViewer() {
   const pct           = Math.round((totalWatched / items.length) * 100);
 
   return (
-    <div style={{ minHeight: '100dvh', background: '#07070f', color: '#cdd4e4', fontFamily: "'Rajdhani', system-ui, sans-serif", display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100dvh', height: '100dvh', background: '#07070f', color: '#cdd4e4', fontFamily: "'Rajdhani', system-ui, sans-serif", display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -428,7 +435,7 @@ export default function MCUViewer() {
         </div>
       </nav>
 
-      {/* ━━ FILTER BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━��━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {/* ━━ FILTER BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━���━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: '#08081a', borderBottom: '1px solid #0f0f1e', padding: '11px 24px', position: 'sticky', top: 44, zIndex: 40, overflowX: 'auto', flexShrink: 0 }}>
         <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
 
@@ -492,7 +499,7 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '36px 24px 90px', flex: 1, width: '100%', overflow: 'auto' }}>
+      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '36px 24px 90px', flex: 1, width: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
         {phaseKeys.length === 0 && (
           <div style={{ textAlign: 'center', padding: '100px 0', fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: '#667888', letterSpacing: 4 }}>
             NO RESULTS — ADJUST YOUR FILTERS
@@ -600,7 +607,26 @@ export default function MCUViewer() {
 
                       {/* Status button with dropdown */}
                       <div style={{ display: 'flex', justifyContent: 'flex-end', position: 'relative' }}>
-                        <button className="wbtn" onClick={() => cycleStatus(item.id)}
+                        <button className="wbtn" 
+                          onMouseDown={() => {
+                            pressRef.current[item.id] = setTimeout(() => {
+                              setStatusDropdown(item.id);
+                            }, 500);
+                          }}
+                          onMouseUp={() => {
+                            clearTimeout(pressRef.current[item.id]);
+                            if (statusDropdown !== item.id) cycleStatus(item.id);
+                          }}
+                          onMouseLeave={() => clearTimeout(pressRef.current[item.id])}
+                          onTouchStart={() => {
+                            pressRef.current[item.id] = setTimeout(() => {
+                              setStatusDropdown(item.id);
+                            }, 500);
+                          }}
+                          onTouchEnd={() => {
+                            clearTimeout(pressRef.current[item.id]);
+                            if (statusDropdown !== item.id) cycleStatus(item.id);
+                          }}
                           style={{
                             background: statusMeta.bg,
                             color: statusMeta.color,
@@ -609,6 +635,65 @@ export default function MCUViewer() {
                           }}>
                           <statusMeta.Icon size={14} />
                         </button>
+
+                        {/* Dropdown menu */}
+                        {statusDropdown === item.id && (
+                          <div className="status-dropdown" style={{
+                            position: 'absolute',
+                            top: 'calc(100% + 6px)',
+                            right: 0,
+                            background: '#0d0d1c',
+                            border: '1px solid #181828',
+                            borderRadius: 10,
+                            overflow: 'hidden',
+                            zIndex: 100,
+                            boxShadow: '0 14px 44px rgba(0,0,0,0.7)',
+                            minWidth: 160,
+                          }}>
+                            {Object.entries(STATUS_META).map(([key, meta]) => (
+                              <button
+                                key={key}
+                                onClick={() => {
+                                  setStatusDirect(item.id, key);
+                                  setStatusDropdown(null);
+                                }}
+                                style={{
+                                  width: '100%',
+                                  padding: '10px 14px',
+                                  border: 'none',
+                                  background: key === item.status ? meta.bg : 'transparent',
+                                  color: meta.color,
+                                  fontSize: 13,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s',
+                                  borderBottom: '1px solid #0c0c18',
+                                  textAlign: 'left',
+                                  fontFamily: 'inherit',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 8,
+                                }}
+                                onMouseEnter={e => e.target.style.background = '#101022'}
+                                onMouseLeave={e => e.target.style.background = key === item.status ? meta.bg : 'transparent'}
+                              >
+                                <meta.Icon size={12} />
+                                {meta.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Close dropdown on outside click */}
+                        {statusDropdown === item.id && (
+                          <div
+                            onClick={() => setStatusDropdown(null)}
+                            style={{
+                              position: 'fixed',
+                              inset: 0,
+                              zIndex: 99,
+                            }}
+                          />
+                        )}
                       </div>
                     </div>
                   );
