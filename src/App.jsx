@@ -208,7 +208,7 @@ export default function MCUViewer() {
   const [expandedPhase,  setExpandedPhase]  = useState(null); // for phase summary toggle
   const [celebPhase,     setCelebPhase]     = useState(null); // phase completion flash
   const [editingDateId,  setEditingDateId]  = useState(null); // date editing mode
-  const [headerCompact,  setHeaderCompact]  = useState(false);
+  const [headerCompact]  = useState(false);
 
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
@@ -274,7 +274,6 @@ export default function MCUViewer() {
     if (!el) return;
     const onScroll = () => {
       isScrolling.current = true;
-      setHeaderCompact(el.scrollTop > 36);
       clearTimeout(isScrolling._t);
       isScrolling._t = setTimeout(() => { isScrolling.current = false; }, 150);
     };
@@ -549,28 +548,28 @@ export default function MCUViewer() {
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━��━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <header className="hexbg" style={{ background: darkMode ? 'rgba(8,10,24,0.72)' : T.headerBg, borderBottom: `1px solid ${darkMode ? 'rgba(255,255,255,0.12)' : T.headerBorder}`, flexShrink: 0, backdropFilter: darkMode ? 'blur(16px)' : 'none', WebkitBackdropFilter: darkMode ? 'blur(16px)' : 'none' }}>
-        <div className="header-inner" style={{ maxWidth: 1400, margin: '0 auto', padding: headerCompact ? '10px 20px 10px' : '18px 20px 14px', transition: 'padding 0.25s ease' }}>
+        <div className="header-inner" style={{ width: '100%', padding: '18px 32px 14px', transition: 'padding 0.25s ease' }}>
           <div className="header-top-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             {/* Title */}
             <div style={{ fontFamily: "'Orbitron',sans-serif", lineHeight: 0.88, marginBottom: 0, fontWeight: 900 }}>
-              <div className="header-title-mcu" style={{ fontSize: headerCompact ? 'clamp(24px, 3vw, 32px)' : 'clamp(46px, 7vw, 86px)', letterSpacing: 'clamp(2px, 1vw, 8px)', color: '#c0392b', textShadow: darkMode ? '0 0 44px rgba(192,57,43,0.5),0 2px 0 #7a0000' : '0 2px 8px rgba(192,57,43,0.2)' }}>MCU</div>
-              <div className="header-title-sub" style={{ fontSize: headerCompact ? 'clamp(18px, 2.2vw, 24px)' : 'clamp(28px, 4.2vw, 56px)', letterSpacing: 'clamp(4px, 1.5vw, 12px)', color: T.text, marginTop: 0 }}>VIEWING ORDER</div>
-              <div className="header-tagline" style={{ fontSize: headerCompact ? '11px' : 'clamp(13px, 2.2vw, 16px)', color: T.textMuted, letterSpacing: headerCompact ? 1.4 : 3, fontFamily: "'Bebas Neue',sans-serif", marginTop: 1, transition: 'all 0.22s ease' }}>
-                {headerCompact ? 'MCU VIEWING ORDER' : `PHASES 1–6 · ${activeItems.length} ENTRIES · ${LIST_MODES.find(m => m.id === listMode)?.sublabel.toUpperCase()}`}
+              <div className="header-title-mcu" style={{ fontSize: 'clamp(64px, 8vw, 72px)', letterSpacing: 'clamp(2px, 1vw, 8px)', color: '#c0392b', textShadow: darkMode ? '0 0 44px rgba(192,57,43,0.5),0 2px 0 #7a0000' : '0 2px 8px rgba(192,57,43,0.2)' }}>MCU</div>
+              <div className="header-title-sub" style={{ fontSize: 'clamp(32px, 4vw, 40px)', letterSpacing: 'clamp(4px, 1.5vw, 12px)', color: T.text, marginTop: 0 }}>VIEWING ORDER</div>
+              <div className="header-tagline" style={{ fontSize: '14px', color: T.textMuted, letterSpacing: headerCompact ? 1.4 : 3, fontFamily: "'Bebas Neue',sans-serif", marginTop: 1, transition: 'all 0.22s ease' }}>
+                {`PHASES 1–6 · ${activeItems.length} ENTRIES · ${LIST_MODES.find(m => m.id === listMode)?.sublabel.toUpperCase()}`}
               </div>
             </div>
             {/* Status dashboard */}
             <div className="status-dashboard" style={{ background: darkMode ? 'rgba(18,22,42,0.45)' : T.statBg, border: `1px solid ${darkMode ? 'rgba(255,220,235,0.28)' : T.statBorder}`, borderRadius: 10, padding: headerCompact ? '5px 10px' : '8px 14px', minWidth: headerCompact ? 145 : 180, boxShadow: darkMode ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'none', transition: 'all 0.22s ease' }}>
-              <div className="stat-card-label" style={{ fontSize: 'clamp(11px, 1.8vw, 14px)', letterSpacing: 2, color: T.textMuted, fontFamily: "'Bebas Neue',sans-serif" }}>TOTAL WATCHED</div>
-              <div className="stat-card-num" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(36px, 5.5vw, 58px)', letterSpacing: 1, color: '#3ec47a', lineHeight: 1, textShadow: darkMode ? '0 0 16px rgba(62,196,122,0.35)' : 'none' }}>
-                {totalWatched}<span style={{ fontSize: 'clamp(18px, 3vw, 28px)', color: T.numFaint }}>/{activeItems.length}</span>
+              <div className="stat-card-label" style={{ fontSize: '12px', letterSpacing: 2, color: T.textMuted, fontFamily: "'Bebas Neue',sans-serif" }}>TOTAL WATCHED</div>
+              <div className="stat-card-num" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(40px, 5vw, 48px)', letterSpacing: 1, color: '#3ec47a', lineHeight: 1, textShadow: darkMode ? '0 0 16px rgba(62,196,122,0.35)' : 'none' }}>
+                {totalWatched}<span style={{ fontSize: 'clamp(24px, 3vw, 28px)', color: T.numFaint }}>/{activeItems.length}</span>
               </div>
               <div style={{ display: 'inline-flex', marginTop: 6, alignItems: 'center', gap: 6, borderRadius: 999, padding: '3px 10px', border: `1px solid ${darkMode ? '#e8b84b66' : '#e8b84baa'}`, background: darkMode ? 'rgba(232,184,75,0.14)' : 'rgba(232,184,75,0.10)', color: '#e8b84b', fontFamily: "'Bebas Neue',sans-serif", fontSize: 11, letterSpacing: 1.4 }}>
                 MUST-WATCH {essWatched}/{essTotal}
               </div>
             </div>
           </div>
-          {!headerCompact && (<>
+          <>
           {/* Master progress bar */}
           <div className="progress-bar" style={{ background: darkMode ? 'rgba(255,255,255,0.08)' : T.surfaceBg, border: `1px solid ${darkMode ? 'rgba(255,255,255,0.18)' : T.surfaceBorder}`, borderRadius: 999, height: 6, overflow: 'hidden', position: 'relative', marginBottom: 2, backdropFilter: 'blur(4px)' }}>
             <div className="sweep" style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#f3a6c2 0%,#f49bc8 45%,#f6b8d0 100%)', boxShadow: '0 0 12px rgba(244,155,200,0.6)', borderRadius: 999, transition: 'width 0.7s cubic-bezier(.4,0,.2,1)', position: 'relative', overflow: 'hidden' }} />
@@ -579,7 +578,7 @@ export default function MCUViewer() {
             <span>{pct}% COMPLETE</span>
             <span>{activeItems.length - totalWatched} REMAINING</span>
           </div>
-          </>)}
+          </>
         </div>
       </header>
 
@@ -641,6 +640,13 @@ export default function MCUViewer() {
               </div>
             )}
           </div>
+          <div style={{ position: 'relative' }}>
+            <select value={activePhase} onChange={e => { const pid = Number(e.target.value); setActivePhase(pid); scrollTo(pid); }}
+              style={{ background: T.inputBg, border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '6px 14px', color: T.inputColor, fontSize: 16, letterSpacing: 0.5, fontFamily: "'Bebas Neue',sans-serif" }}>
+              {PHASES.map(ph => <option key={ph.id} value={ph.id}>{ph.name.toUpperCase()}</option>)}
+            </select>
+          </div>
+
           {/* Type pills */}
           {['film', 'series', 'short'].map(t => {
             const m = TYPE_META[t];
@@ -666,7 +672,7 @@ export default function MCUViewer() {
             <Check size={10} />Watched
           </button>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 10.5, color: T.textMuted, letterSpacing: 2 }}>
+            <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 12, color: T.textMuted, letterSpacing: 2.2, textTransform: 'uppercase' }}>
               {filtered.length} RESULTS
             </span>
             {/* Theme toggle — in the filter bar, far right */}
@@ -680,34 +686,7 @@ export default function MCUViewer() {
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} style={{ overflowY: 'auto', overflowX: 'hidden', flex: 1, WebkitOverflowScrolling: 'touch', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
 
-        {/* ━━ STICKY PHASE NAV ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-        <nav aria-label="Phase navigation" className="phase-sticky">
-          {PHASES.map(ph => {
-            const phItems = items.filter(i =>
-              i.phase === ph.id &&
-              (listMode === 'core' ? coreIds.has(i.id) : true) &&
-              (listMode === 'core' && essentialOnly ? i.essential : true)
-            );
-            const phPct = phItems.length ? Math.round((phItems.filter(i => i.status === 'watched').length / phItems.length) * 100) : 0;
-            const isOn = activePhase === ph.id;
-            return (
-              <button
-                key={ph.id}
-                className="ph-pill"
-                style={{ color: isOn ? '#f7bfd7' : '#c3cfdf', borderBottom: isOn ? '2px solid #f4a8ca' : '2px solid transparent' }}
-                onClick={() => scrollTo(ph.id)}
-                aria-label={`${ph.name} — ${phPct}% watched`}
-              >
-                <span style={{ fontSize: 'clamp(10px, 1.6vw, 12px)', letterSpacing: 2, fontWeight: isOn ? 700 : 400 }}>
-                  {ph.name}
-                </span>
-                <span style={{ fontSize: 'clamp(8px, 1.2vw, 9px)', letterSpacing: 0.3, color: phPct === 100 ? ph.color : T.textFaint, lineHeight: 1 }}>
-                  {phPct === 100 ? '✓ DONE' : `${phPct}%`}
-                </span>
-              </button>
-            );
-          })}
-        </nav>
+        
 
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '24px var(--content-pad) 80px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch" key={listMode}>
         {phaseKeys.length === 0 && (
@@ -738,10 +717,10 @@ export default function MCUViewer() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap', padding: '10px 0', borderBottom: `1px solid ${T.surfaceBorder}` }}>
                 <div style={{ width: 3, height: 38, background: 'linear-gradient(90deg,#f3a6c2,#ffc0d8)', borderRadius: 2, flexShrink: 0, boxShadow: darkMode ? '0 0 12px rgba(244,155,200,0.55)' : '0 0 6px rgba(244,155,200,0.25)' }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: "'Orbitron',sans-serif", fontSize: 'clamp(24px, 3.6vw, 36px)', letterSpacing: 6, color: ph.color, lineHeight: 1, fontWeight: 700, textShadow: darkMode ? `0 0 18px ${ph.glow}` : 'none' }}>
+            <div style={{ fontFamily: "'Orbitron',sans-serif", fontSize: 'clamp(32px, 4vw, 36px)', letterSpacing: 6, color: ph.color, lineHeight: 1, fontWeight: 700, textShadow: darkMode ? `0 0 18px ${ph.glow}` : 'none' }}>
               {ph.name}
             </div>
-            <div style={{ fontSize: 'clamp(11px, 2vw, 14px)', color: T.textMuted, letterSpacing: 3, fontFamily: "'Bebas Neue',sans-serif", marginTop: 1, textTransform: 'uppercase' }}>
+            <div style={{ fontSize: 'clamp(16px, 2.2vw, 18px)', color: T.textMuted, letterSpacing: 3, fontFamily: "'Bebas Neue',sans-serif", marginTop: 1, textTransform: 'uppercase' }}>
                     {ph.tagline}
                   </div>
                 </div>
@@ -755,7 +734,7 @@ export default function MCUViewer() {
                 {/* Phase summary toggle — suggestion 3 */}
                 <button onClick={() => setExpandedPhase(summaryOpen ? null : pid)}
                   aria-label={summaryOpen ? 'Hide phase summary' : 'Show phase summary'}
-                  style={{ background: 'none', border: `1px solid ${summaryOpen ? ph.color + '66' : T.surfaceBorder}`, color: summaryOpen ? ph.color : T.textMuted, borderRadius: 6, padding: '3px 8px', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.5, transition: 'all 0.18s' }}>
+                  style={{ background: 'none', border: `1px solid ${summaryOpen ? ph.color + '66' : T.surfaceBorder}`, color: summaryOpen ? ph.color : T.textMuted, borderRadius: 6, padding: '3px 8px', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 2.2, textTransform: 'uppercase', transition: 'all 0.18s' }}>
                   <Info size={11} />INFO
                 </button>
                 {/* Bulk action */}
@@ -778,7 +757,7 @@ export default function MCUViewer() {
 
               {/* Phase summary card — suggestion 4 */}
               {summaryOpen && (
-                <div className="fade-in" style={{ background: T.phaseSummaryBg, border: `1px solid ${T.phaseSummaryBorder}`, borderLeft: `3px solid ${ph.color}`, borderRadius: '0 8px 8px 0', padding: '10px 14px', marginBottom: 10, fontSize: 12.5, color: T.textMuted, lineHeight: 1.6, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.2 }}>
+                <div className="fade-in" style={{ background: T.phaseSummaryBg, border: `1px solid ${T.phaseSummaryBorder}`, borderLeft: `3px solid ${ph.color}`, borderRadius: '0 8px 8px 0', padding: '10px 14px', marginBottom: 10, fontSize: 14, color: T.textMuted, lineHeight: 1.6, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.2 }}>
                   {ph.summary}
                 </div>
               )}
@@ -804,7 +783,7 @@ export default function MCUViewer() {
                         {/* Title block — clickable to expand */}
                         <button className="title-btn" onClick={() => setExpandedItem(isExpanded ? null : item.id)}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: 'clamp(17px, 2.7vw, 23px)', fontWeight: isWatched ? 400 : 600, lineHeight: 1.5, color: isWatched ? T.textMuted : T.text, textDecoration: isWatched ? 'line-through' : 'none', textDecorationColor: '#f4a8ca', transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif" }}>
+                            <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: isWatched ? 400 : 600, lineHeight: 1.5, color: isWatched ? T.textMuted : T.text, textDecoration: isWatched ? 'line-through' : 'none', textDecorationColor: '#f4a8ca', transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif" }}>
                               {item.title}
                             </span>
                             {/* Episode count badge */}
@@ -813,7 +792,7 @@ export default function MCUViewer() {
                                 {item.episodes} EP
                               </span>
                             )}
-                            <span style={{ fontSize: 10.5, color: m.color, opacity: 0.75, fontWeight: 700, letterSpacing: 0.6, display: 'flex', alignItems: 'center', gap: 2, fontFamily: "'Bebas Neue',sans-serif", flexShrink: 0 }}>
+                            <span style={{ fontSize: 14, color: m.color, opacity: 0.82, fontWeight: 700, letterSpacing: 0.6, display: 'flex', alignItems: 'center', gap: 2, fontFamily: "'Bebas Neue',sans-serif", flexShrink: 0 }}>
                               <m.Icon size={8} />{m.label}
                             </span>
                             {!item.essential && (
@@ -822,7 +801,7 @@ export default function MCUViewer() {
                             <ChevRight size={10} style={{ color: T.textFaint, transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
                           </div>
                           {showPre && (
-                            <div style={{ marginTop: 2, fontSize: 'clamp(11px, 1.7vw, 13px)', color: T.textMuted, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.2 }}>
+                            <div style={{ marginTop: 2, fontSize: '14px', color: T.textMuted, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.2 }}>
                               {item.prereq}
                             </div>
                           )}
@@ -830,7 +809,7 @@ export default function MCUViewer() {
 
                         {/* Year column */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 80 }}>
-                          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(13px, 2vw, 15px)', letterSpacing: 2, color: T.text, textAlign: 'center', fontWeight: 600 }}>
+                          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '14px', letterSpacing: 2, color: T.text, textAlign: 'center', fontWeight: 600 }}>
                             {item.year}
                           </div>
 
@@ -873,7 +852,7 @@ export default function MCUViewer() {
                             </button>
                             <button
                               onClick={() => setStatusDirect(item.id, 'plan-to-watch')}
-                              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 6, border: `1px solid ${item.status === 'plan-to-watch' ? '#4a9ede88' : T.expandBorder}`, background: item.status === 'plan-to-watch' ? '#4a9ede18' : 'transparent', color: item.status === 'plan-to-watch' ? '#4a9ede' : T.textMuted, cursor: 'pointer', fontFamily: "'Bebas Neue',sans-serif", fontSize: 11, letterSpacing: 1.5, transition: 'all 0.15s' }}
+                              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 6, border: `1px solid ${item.status === 'plan-to-watch' ? '#4a9ede88' : T.expandBorder}`, background: item.status === 'plan-to-watch' ? '#4a9ede18' : 'transparent', color: item.status === 'plan-to-watch' ? '#4a9ede' : T.textMuted, cursor: 'pointer', fontFamily: "'Bebas Neue',sans-serif", fontSize: 14, letterSpacing: 1.5, transition: 'all 0.15s' }}
                               onMouseEnter={e => { if (item.status !== 'plan-to-watch') { e.currentTarget.style.background = '#4a9ede12'; e.currentTarget.style.color = '#4a9ede'; } }}
                               onMouseLeave={e => { if (item.status !== 'plan-to-watch') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T.textMuted; } }}
                             >
@@ -881,7 +860,7 @@ export default function MCUViewer() {
                             </button>
                             <button
                               onClick={() => setStatusDirect(item.id, 'unwatched')}
-                              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 6, border: `1px solid ${item.status === 'unwatched' ? '#55667788' : T.expandBorder}`, background: item.status === 'unwatched' ? '#55667718' : 'transparent', color: item.status === 'unwatched' ? '#8899aa' : T.textMuted, cursor: 'pointer', fontFamily: "'Bebas Neue',sans-serif", fontSize: 11, letterSpacing: 1.5, transition: 'all 0.15s' }}
+                              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 6, border: `1px solid ${item.status === 'unwatched' ? '#55667788' : T.expandBorder}`, background: item.status === 'unwatched' ? '#55667718' : 'transparent', color: item.status === 'unwatched' ? '#8899aa' : T.textMuted, cursor: 'pointer', fontFamily: "'Bebas Neue',sans-serif", fontSize: 14, letterSpacing: 1.5, transition: 'all 0.15s' }}
                               onMouseEnter={e => { if (item.status !== 'unwatched') { e.currentTarget.style.background = '#55667710'; e.currentTarget.style.color = '#8899aa'; } }}
                               onMouseLeave={e => { if (item.status !== 'unwatched') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T.textMuted; } }}
                             >
