@@ -908,11 +908,25 @@ export default function MCUViewer() {
               <Star size={10} />Must-Watch
             </button>
           )}
-          <button className="fpill"
-            style={watchedOnly ? { borderColor: '#3ec47a88', background: '#3ec47a14', color: '#3ec47a' } : {}}
-            onClick={() => setWatchedOnly(o => !o)}>
-            <Check size={10} />Watched
-          </button>
+          <div style={{ position: 'relative' }}>
+            <button className="fpill"
+              style={watchedOnly || statusFilter ? { borderColor: '#3ec47a88', background: '#3ec47a14', color: '#3ec47a' } : {}}
+              onClick={() => setStatusDropdown(statusDropdown === 'filter' ? null : 'filter')}
+              onMouseEnter={() => setStatusDropdown('filter')}
+              onMouseLeave={() => setStatusDropdown(null)}>
+              <Check size={10} />Watched
+            </button>
+            {statusDropdown === 'filter' && (
+              <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: T.dropdownBg, border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 180 }}
+                onMouseEnter={() => setStatusDropdown('filter')}
+                onMouseLeave={() => setStatusDropdown(null)}>
+                <div className={`sopt ${!statusFilter && !watchedOnly ? 'picked' : ''}`} onClick={() => { setStatusFilter(null); setWatchedOnly(false); setStatusDropdown(null); }}>All statuses</div>
+                <div className={`sopt ${watchedOnly ? 'picked' : ''}`} onClick={() => { setWatchedOnly(true); setStatusFilter(null); setStatusDropdown(null); }}>Watched only</div>
+                <div className={`sopt ${statusFilter === 'watching' ? 'picked' : ''}`} onClick={() => { setStatusFilter('watching'); setWatchedOnly(false); setStatusDropdown(null); }}>Watching</div>
+                <div className={`sopt ${statusFilter === 'plan-to-watch' ? 'picked' : ''}`} onClick={() => { setStatusFilter('plan-to-watch'); setWatchedOnly(false); setStatusDropdown(null); }}>Plan to Watch</div>
+              </div>
+            )}
+          </div>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 12, color: T.textMuted, letterSpacing: 2.2, textTransform: 'uppercase' }}>
               {filtered.length} RESULTS
