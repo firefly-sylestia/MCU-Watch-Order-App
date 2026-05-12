@@ -210,6 +210,7 @@ export default function MCUViewer() {
   const [celebPhase,     setCelebPhase]     = useState(null); // phase completion flash
   const [editingDateId,  setEditingDateId]  = useState(null); // date editing mode
   const [headerCompact]  = useState(false);
+  const [detailItem,     setDetailItem]     = useState(null);
 
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
@@ -376,6 +377,13 @@ export default function MCUViewer() {
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
   const pct = activeItems.length ? Math.round((totalWatched / activeItems.length) * 100) : 0;
+  const CAST_MAP = {
+    'Iron Man': ['Robert Downey Jr.', 'Gwyneth Paltrow', 'Jeff Bridges'],
+    'The Avengers': ['Robert Downey Jr.', 'Chris Evans', 'Scarlett Johansson'],
+    'Captain America: The First Avenger': ['Chris Evans', 'Hayley Atwell', 'Sebastian Stan'],
+    'Thor': ['Chris Hemsworth', 'Tom Hiddleston', 'Natalie Portman'],
+  };
+  const posterFor = (item) => `https://placehold.co/220x330/121a2d/e8edf7?text=${encodeURIComponent(item.title)}`;
 
   const openStatusDropdown = (e, itemId) => {
     if (isScrolling.current) return;
@@ -493,7 +501,7 @@ export default function MCUViewer() {
         .sopt:hover{background:${T.sortHoverBg};color:${T.text};transform:translateX(4px)}
         .sopt.picked{color:#c0392b;font-weight:700}
 
-        .rrow{position:relative;transition:background 0.13s,transform 0.15s cubic-bezier(0.34,1.56,0.64,1);display:grid;align-items:center;grid-template-columns:40px minmax(0,1fr) 80px 38px;gap:14px;padding:14px 18px;border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:68px}
+        .rrow{position:relative;transition:background 0.13s,transform 0.15s cubic-bezier(0.34,1.56,0.64,1);display:grid;align-items:center;grid-template-columns:40px 52px minmax(0,1fr) 80px 38px;gap:14px;padding:14px 18px;border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:80px}
         .rrow:last-child{border-bottom:none}
         .rrow:hover{background:${T.rowHoverBg} !important;transform:translateX(2px);border-left-color:#c0392b}
 
@@ -509,6 +517,11 @@ export default function MCUViewer() {
         .theme-btn{width:32px;height:32px;border-radius:50%;border:1px solid ${T.pillBorder};background:${T.pillBg};color:${T.pillText};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0}
         .theme-btn:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText};transform:rotate(22deg)}
 
+        .poster{width:52px;height:76px;object-fit:cover;border-radius:6px;border:1px solid ${T.surfaceBorder};box-shadow:0 6px 16px rgba(0,0,0,0.22)}
+        .progress-gradient{background:linear-gradient(90deg,#f3a6c2 0%,#f49bc8 32%,#f6b8d0 64%,#ffd2e4 100%);background-size:200% 100%;animation:gradientFlow 3.4s linear infinite}
+        @keyframes gradientFlow{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+        .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.74);backdrop-filter:blur(4px);z-index:240;display:grid;place-items:center;padding:20px}
+        .detail-card{width:min(980px,94vw);max-height:90vh;overflow:auto;background:${T.surfaceBg};border:1px solid ${T.surfaceBorder};border-radius:14px;padding:20px}
         .filter-shell{
           position: sticky;
           top: 0;
@@ -519,6 +532,9 @@ export default function MCUViewer() {
         /* ── Mobile-compact header ── */
         @media (max-width: 767px) {
           .header-inner { padding: 10px 14px 8px !important; }
+          .fpill{padding:7px 14px !important;font-size:14px !important}
+          .rrow{grid-template-columns:32px 52px minmax(0,1fr) 30px !important;gap:10px;padding:12px}
+          .poster{width:44px;height:64px}
         }
         .header-title-mcu { font-size: clamp(48px, 8vw, 96px) !important; letter-spacing: clamp(2px, 0.8vw, 6px) !important; margin: 0 !important; }
         .header-title-sub { font-size: clamp(28px, 4.2vw, 56px) !important; letter-spacing: clamp(4px, 1.2vw, 10px) !important; margin-top: 0px !important; }
@@ -779,9 +795,10 @@ export default function MCUViewer() {
                         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 15, color: isWatched ? '#f1bfd3' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
                           {isWatched ? <Check size={14} style={{ color: '#f4a8ca' }} /> : (idx + 1)}
                         </div>
+                        <img className="poster" src={posterFor(item)} alt={`${item.title} poster`} loading="lazy" />
 
                         {/* Title block — clickable to expand */}
-                        <button className="title-btn" onClick={() => setExpandedItem(isExpanded ? null : item.id)}>
+                        <button className="title-btn" onClick={() => setExpandedItem(isExpanded ? null : item.id)} onDoubleClick={() => setDetailItem(item)}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
                             <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: isWatched ? 400 : 600, lineHeight: 1.5, color: isWatched ? T.textMuted : T.text, textDecoration: isWatched ? 'line-through' : 'none', textDecorationColor: '#f4a8ca', transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif" }}>
                               {item.title}
@@ -840,6 +857,7 @@ export default function MCUViewer() {
                           <p style={{ fontSize: 'clamp(15px, 2.4vw, 18px)', color: T.textMuted, lineHeight: 1.7, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.3, marginBottom: 12 }}>
                             {item.desc}
                           </p>
+                          <button onClick={() => setDetailItem(item)} style={{ marginBottom: 12, border: `1px solid ${T.surfaceBorder}`, background: T.pillBg, color: T.text, borderRadius: 8, padding: '6px 12px', fontSize: 14, cursor: 'pointer' }}>Open details page</button>
                           {/* Quick action buttons inside expand */}
                           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                             <button
@@ -913,6 +931,27 @@ export default function MCUViewer() {
           </div>
         </div>
       </main>
+
+      {detailItem && (
+        <div className="detail-backdrop" onClick={() => setDetailItem(null)} role="dialog" aria-label="Movie details">
+          <div className="detail-card" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'grid', gridTemplateColumns: '180px minmax(0,1fr)', gap: 18 }}>
+              <img src={posterFor(detailItem)} alt={`${detailItem.title} poster`} style={{ width: '100%', borderRadius: 10, border: `1px solid ${T.surfaceBorder}` }} />
+              <div>
+                <h2 style={{ fontSize: 32, marginBottom: 8 }}>{detailItem.title}</h2>
+                <div style={{ fontSize: 16, color: T.textMuted, marginBottom: 10 }}>{detailItem.year} · {TYPE_META[detailItem.type]?.label} · Phase {detailItem.phase}</div>
+                <p style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 12 }}>{detailItem.desc}</p>
+                <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Prerequisite:</strong> {detailItem.prereq}</div>
+                <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Status:</strong> {STATUS_META[detailItem.status]?.label}</div>
+                <div style={{ fontSize: 14 }}><strong>Cast:</strong> {(CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</div>
+              </div>
+            </div>
+            <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="fpill" onClick={() => setDetailItem(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ━━ STATUS DROPDOWN ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       {statusDropdown !== null && (() => {
