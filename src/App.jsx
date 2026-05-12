@@ -232,7 +232,7 @@ export default function MCUViewer() {
   const pct           = Math.round((totalWatched / items.length) * 100);
 
   return (
-    <div style={{ minHeight: '100dvh', height: '100dvh', background: '#07070f', color: '#cdd4e4', fontFamily: "'Rajdhani', system-ui, sans-serif", display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ minHeight: '100dvh', background: '#07070f', color: '#cdd4e4', fontFamily: "'Rajdhani', system-ui, sans-serif", display: 'flex', flexDirection: 'column' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -380,7 +380,7 @@ export default function MCUViewer() {
       `}</style>
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <header className="hexbg" style={{ background: 'linear-gradient(180deg,#0e0e20 0%,#07070f 100%)', borderBottom: '1px solid #11111f', padding: '40px 24px 30px', flexShrink: 0 }}>
+      <header className="hexbg" style={{ background: 'linear-gradient(180deg,#0e0e20 0%,#07070f 100%)', borderBottom: '1px solid #11111f', padding: '40px 24px 30px' }}>
         <div style={{ maxWidth: 1080, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24, marginBottom: 30 }}>
 
@@ -424,7 +424,7 @@ export default function MCUViewer() {
       </header>
 
       {/* ━━ PHASE NAVBAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <nav style={{ background: '#09091a', borderBottom: '1px solid #11111f', overflowX: 'auto', flexShrink: 0 }}>
+      <nav style={{ background: '#09091a', borderBottom: '1px solid #11111f', overflowX: 'auto' }}>
         <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex' }}>
           {PHASES.map(ph => (
             <button key={ph.id} className={`ntab ${activePhase === ph.id ? 'on' : ''}`}
@@ -437,7 +437,7 @@ export default function MCUViewer() {
       </nav>
 
       {/* ━━ FILTER BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━���━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ background: '#08081a', borderBottom: '1px solid #0f0f1e', padding: '11px 24px', overflowX: 'auto', flexShrink: 0 }}>
+      <div style={{ background: '#08081a', borderBottom: '1px solid #0f0f1e', padding: '11px 24px', overflowX: 'auto' }}>
         <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
 
           {/* Search */}
@@ -503,7 +503,7 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '36px 24px 90px', flex: 1, width: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
+      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '36px 24px 90px', width: '100%' }}>
         {phaseKeys.length === 0 && (
           <div style={{ textAlign: 'center', padding: '100px 0', fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: '#667888', letterSpacing: 4 }}>
             NO RESULTS — ADJUST YOUR FILTERS
