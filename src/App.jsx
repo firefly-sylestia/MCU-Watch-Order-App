@@ -442,7 +442,7 @@ export default function MCUViewer() {
       if (!key) { setDetailLoading(false); return; }
       try {
         const t = encodeURIComponent(cleanLookupTitle(detailItem.title));
-        const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}`);
+        const res = await fetch(`https://www.omdbapi.com/?apikey=14596ed1);
         const data = await res.json();
         if (data?.Response === 'True') setDetailData(data);
       } catch {}
