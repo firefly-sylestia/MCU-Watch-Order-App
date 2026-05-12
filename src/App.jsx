@@ -549,11 +549,10 @@ export default function MCUViewer() {
         <div className="header-inner" style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 24px 22px' }}>
           <div className="header-top-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 22 }}>
             {/* Title */}
-            <div>
-              <div style={{ fontFamily: "'Orbitron',sans-serif", lineHeight: 0.88, marginBottom: 10, fontWeight: 900 }}>
-      <div className="header-title-mcu" style={{ fontSize: 'clamp(32px, 6vw, 56px)', letterSpacing: 'clamp(2px, 0.5vw, 4px)', color: '#c0392b', textShadow: darkMode ? '0 0 44px rgba(192,57,43,0.5),0 2px 0 #7a0000' : '0 2px 8px rgba(192,57,43,0.2)' }}>MCU</div>
-      <div className="header-title-sub" style={{ fontSize: 'clamp(18px, 3.5vw, 32px)', letterSpacing: 'clamp(4px, 1vw, 7px)', color: T.text, marginTop: 3 }}>VIEWING ORDER</div>
-      <div className="header-tagline" style={{ fontSize: 'clamp(10px, 1.8vw, 12px)', color: T.textMuted, letterSpacing: 3, fontFamily: "'Bebas Neue',sans-serif", marginTop: 6 }}>
+            <div style={{ fontFamily: "'Orbitron',sans-serif", lineHeight: 0.88, marginBottom: 10, fontWeight: 900 }}>
+              <div className="header-title-mcu" style={{ fontSize: 'clamp(32px, 6vw, 56px)', letterSpacing: 'clamp(2px, 0.5vw, 4px)', color: '#c0392b', textShadow: darkMode ? '0 0 44px rgba(192,57,43,0.5),0 2px 0 #7a0000' : '0 2px 8px rgba(192,57,43,0.2)' }}>MCU</div>
+              <div className="header-title-sub" style={{ fontSize: 'clamp(18px, 3.5vw, 32px)', letterSpacing: 'clamp(4px, 1vw, 7px)', color: T.text, marginTop: 3 }}>VIEWING ORDER</div>
+              <div className="header-tagline" style={{ fontSize: 'clamp(10px, 1.8vw, 12px)', color: T.textMuted, letterSpacing: 3, fontFamily: "'Bebas Neue',sans-serif", marginTop: 6 }}>
                 PHASES 1–6 &nbsp;·&nbsp; {activeItems.length} ENTRIES &nbsp;·&nbsp; {LIST_MODES.find(m => m.id === listMode)?.sublabel.toUpperCase()}
               </div>
             </div>
@@ -564,10 +563,10 @@ export default function MCUViewer() {
                 { label: 'MUST-WATCH', cur: essWatched,   tot: essTotal,           color: '#e8b84b', glow: 'rgba(232,184,75,0.35)'  },
               ].map(s => (
                 <div key={s.label} className="stat-card" style={{ background: T.statBg, border: `1px solid ${T.statBorder}`, borderRadius: 10, padding: '10px 16px', minWidth: 100, textAlign: 'center', boxShadow: darkMode ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'none' }}>
-          <div className="stat-card-num" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(22px, 3.5vw, 32px)', letterSpacing: 1, color: s.color, lineHeight: 1, textShadow: darkMode ? `0 0 16px ${s.glow}` : 'none' }}>
-            {s.cur}<span style={{ fontSize: 'clamp(14px, 2vw, 18px)', color: T.numFaint }}>/{s.tot}</span>
-          </div>
-          <div className="stat-card-label" style={{ fontSize: 'clamp(9px, 1.5vw, 11px)', letterSpacing: 2, color: T.textMuted, marginTop: 3, fontFamily: "'Bebas Neue',sans-serif" }}>{s.label}</div>
+                  <div className="stat-card-num" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(22px, 3.5vw, 32px)', letterSpacing: 1, color: s.color, lineHeight: 1, textShadow: darkMode ? `0 0 16px ${s.glow}` : 'none' }}>
+                    {s.cur}<span style={{ fontSize: 'clamp(14px, 2vw, 18px)', color: T.numFaint }}>/{s.tot}</span>
+                  </div>
+                  <div className="stat-card-label" style={{ fontSize: 'clamp(9px, 1.5vw, 11px)', letterSpacing: 2, color: T.textMuted, marginTop: 3, fontFamily: "'Bebas Neue',sans-serif" }}>{s.label}</div>
                 </div>
               ))}
             </div>
