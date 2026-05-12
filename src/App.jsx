@@ -126,12 +126,12 @@ const RAW = [
 const SORT_LABELS = { order: 'Chronological', year: 'By Year', title: 'Alphabetical' };
 
 const STATUS_META = {
-  watched:        { label: 'Watched',       color: '#3ec47a', icon: Check, bg: 'rgba(62,196,122,0.1)' },
-  'plan-to-watch': { label: 'Plan to Watch', color: '#4a9ede', icon: Clock, bg: 'rgba(74,158,222,0.1)' },
-  watching:       { label: 'Watching',      color: '#e8b84b', icon: Eye,   bg: 'rgba(232,184,75,0.1)' },
-  'on-hold':      { label: 'On Hold',       color: '#f39c12', icon: Pause, bg: 'rgba(243,156,18,0.1)' },
-  dropped:        { label: 'Dropped',       color: '#e05252', icon: Trash2, bg: 'rgba(224,82,82,0.1)' },
-  unwatched:      { label: 'Unwatched',     color: '#1c1c30', icon: EyeOff, bg: 'transparent' },
+  watched:        { label: 'Watched',       color: '#3ec47a', Icon: Check, bg: 'rgba(62,196,122,0.1)' },
+  'plan-to-watch': { label: 'Plan to Watch', color: '#4a9ede', Icon: Clock, bg: 'rgba(74,158,222,0.1)' },
+  watching:       { label: 'Watching',      color: '#e8b84b', Icon: Eye,   bg: 'rgba(232,184,75,0.1)' },
+  'on-hold':      { label: 'On Hold',       color: '#f39c12', Icon: Pause, bg: 'rgba(243,156,18,0.1)' },
+  dropped:        { label: 'Dropped',       color: '#e05252', Icon: Trash2, bg: 'rgba(224,82,82,0.1)' },
+  unwatched:      { label: 'Unwatched',     color: '#1c1c30', Icon: EyeOff, bg: 'transparent' },
 };
 
 export default function MCUViewer() {
@@ -428,7 +428,7 @@ export default function MCUViewer() {
         </div>
       </nav>
 
-      {/* ━━ FILTER BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {/* ━━ FILTER BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━��━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: '#08081a', borderBottom: '1px solid #0f0f1e', padding: '11px 24px', position: 'sticky', top: 44, zIndex: 40, overflowX: 'auto', flexShrink: 0 }}>
         <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
 
