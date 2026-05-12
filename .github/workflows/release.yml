@@ -30,6 +30,15 @@ jobs:
           echo "tag=$GITHUB_REF_NAME" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
 
+      - name: Apply version to build files
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          # Update Android version
+          sed -i "s/versionName \"[^\"]*\"/versionName \"$VERSION\"/" android/app/build.gradle
+          # Update capacitor version
+          sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/" capacitor.config.json
+          echo "Applied version $VERSION to build files"
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
