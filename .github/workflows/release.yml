@@ -88,19 +88,29 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./android/gradlew
 
+      - name: Create keystore from secrets
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > ./android/release.keystore
+          ls -lh ./android/release.keystore
+
       - name: Build release APK
         working-directory: ./android
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/android/release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           echo "Building release APK..."
           sed -i '/org.gradle.java.home/d' gradle.properties 2>/dev/null || true
-          ./gradlew clean assembleDebug --no-daemon --stacktrace
+          ./gradlew clean assembleRelease --no-daemon --stacktrace
 
       - name: Find APK
         id: find_apk
         run: |
-          APK=$(find ./android -name "app-debug.apk" -type f | head -1)
+          APK=$(find ./android -name "app-release.apk" -type f | head -1)
           if [ -z "$APK" ]; then
-            echo "ERROR: app-debug.apk not found!"
+            echo "ERROR: app-release.apk not found!"
             find ./android -name "*.apk" -type f
             exit 1
           fi
@@ -111,7 +121,7 @@ jobs:
       - name: Prepare release asset
         run: |
           APK_PATH="${{ steps.find_apk.outputs.apk }}"
-          NEW_NAME="MCU-Viewing-Order-${{ steps.version.outputs.version }}-debug.apk"
+          NEW_NAME="MCU-Viewing-Order-${{ steps.version.outputs.version }}-release.apk"
           cp "$APK_PATH" "$NEW_NAME"
           echo "✅ APK ready: $NEW_NAME"
           ls -lh "$NEW_NAME"
@@ -123,7 +133,7 @@ jobs:
           name: "MCU Viewing Order v${{ steps.version.outputs.version }}"
           draft: false
           prerelease: false
-          files: MCU-Viewing-Order-${{ steps.version.outputs.version }}-debug.apk
+          files: MCU-Viewing-Order-${{ steps.version.outputs.version }}-release.apk
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
