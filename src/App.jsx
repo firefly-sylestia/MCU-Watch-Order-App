@@ -480,13 +480,21 @@ export default function MCUViewer() {
           font-family:'Bebas Neue',sans-serif;
           position:relative;
         }
-        .ph-pill::after{
-          content:'';position:absolute;bottom:0;left:16px;right:16px;height:2px;
-          border-radius:2px 2px 0 0;background:currentColor;
-          transform:scaleX(0);transform-origin:center;transition:transform 0.2s ease;
-        }
-        .ph-pill.ph-on::after{transform:scaleX(1)}
         .ph-pill:hover{background:${darkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}}
+
+        /* ── Mobile-compact header ── */
+        @media (max-width: 767px) {
+          .header-inner { padding: 10px 14px 8px !important; }
+          .header-title-mcu { font-size: 30px !important; letter-spacing: 2px !important; }
+          .header-title-sub { font-size: 16px !important; letter-spacing: 4px !important; }
+          .header-tagline { font-size: 9px !important; margin-top: 2px !important; }
+          .header-top-row { margin-bottom: 10px !important; gap: 8px !important; }
+          .stat-card { padding: 6px 10px !important; min-width: 80px !important; }
+          .stat-card-num { font-size: 20px !important; }
+          .stat-card-label { font-size: 8px !important; }
+          .progress-bar { height: 4px !important; margin-bottom: 3px !important; }
+          .progress-labels { font-size: 8px !important; }
+        }
 
         /* hide default scrollbar on main while keeping functionality */
         main::-webkit-scrollbar{width:4px}
@@ -496,16 +504,16 @@ export default function MCUViewer() {
       `}</style>
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <header className="hexbg" style={{ background: T.headerBg, borderBottom: `1px solid ${T.headerBorder}`, padding: '28px 24px 22px', flexShrink: 0 }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 22 }}>
+      <header className="hexbg" style={{ background: T.headerBg, borderBottom: `1px solid ${T.headerBorder}`, flexShrink: 0 }}>
+        <div className="header-inner" style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 24px 22px' }}>
+          <div className="header-top-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 22 }}>
             {/* Title */}
             <div>
               <div style={{ fontFamily: "'Orbitron',sans-serif", lineHeight: 0.88, marginBottom: 10, fontWeight: 900 }}>
-                <div style={{ fontSize: 54, letterSpacing: 4, color: '#c0392b', textShadow: darkMode ? '0 0 44px rgba(192,57,43,0.5),0 2px 0 #7a0000' : '0 2px 8px rgba(192,57,43,0.2)' }}>MCU</div>
-                <div style={{ fontSize: 28, letterSpacing: 7, color: T.text, marginTop: 2 }}>VIEWING ORDER</div>
+                <div className="header-title-mcu" style={{ fontSize: 54, letterSpacing: 4, color: '#c0392b', textShadow: darkMode ? '0 0 44px rgba(192,57,43,0.5),0 2px 0 #7a0000' : '0 2px 8px rgba(192,57,43,0.2)' }}>MCU</div>
+                <div className="header-title-sub" style={{ fontSize: 28, letterSpacing: 7, color: T.text, marginTop: 2 }}>VIEWING ORDER</div>
               </div>
-              <div style={{ fontSize: 10, color: T.textMuted, letterSpacing: 3, fontFamily: "'Bebas Neue',sans-serif", marginTop: 4 }}>
+              <div className="header-tagline" style={{ fontSize: 10, color: T.textMuted, letterSpacing: 3, fontFamily: "'Bebas Neue',sans-serif", marginTop: 4 }}>
                 PHASES 1–6 &nbsp;·&nbsp; {activeItems.length} ENTRIES &nbsp;·&nbsp; {LIST_MODES.find(m => m.id === listMode)?.sublabel.toUpperCase()}
               </div>
             </div>
@@ -515,20 +523,20 @@ export default function MCUViewer() {
                 { label: 'WATCHED',    cur: totalWatched, tot: activeItems.length, color: '#3ec47a', glow: 'rgba(62,196,122,0.35)'  },
                 { label: 'MUST-WATCH', cur: essWatched,   tot: essTotal,           color: '#e8b84b', glow: 'rgba(232,184,75,0.35)'  },
               ].map(s => (
-                <div key={s.label} style={{ background: T.statBg, border: `1px solid ${T.statBorder}`, borderRadius: 10, padding: '10px 16px', minWidth: 100, textAlign: 'center', boxShadow: darkMode ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'none' }}>
-                  <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, letterSpacing: 1, color: s.color, lineHeight: 1, textShadow: darkMode ? `0 0 16px ${s.glow}` : 'none' }}>
+                <div key={s.label} className="stat-card" style={{ background: T.statBg, border: `1px solid ${T.statBorder}`, borderRadius: 10, padding: '10px 16px', minWidth: 100, textAlign: 'center', boxShadow: darkMode ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'none' }}>
+                  <div className="stat-card-num" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, letterSpacing: 1, color: s.color, lineHeight: 1, textShadow: darkMode ? `0 0 16px ${s.glow}` : 'none' }}>
                     {s.cur}<span style={{ fontSize: 16, color: T.numFaint }}>/{s.tot}</span>
                   </div>
-                  <div style={{ fontSize: 9, letterSpacing: 2, color: T.textMuted, marginTop: 2, fontFamily: "'Bebas Neue',sans-serif" }}>{s.label}</div>
+                  <div className="stat-card-label" style={{ fontSize: 9, letterSpacing: 2, color: T.textMuted, marginTop: 2, fontFamily: "'Bebas Neue',sans-serif" }}>{s.label}</div>
                 </div>
               ))}
             </div>
           </div>
           {/* Master progress bar */}
-          <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 999, height: 6, overflow: 'hidden', position: 'relative', marginBottom: 5 }}>
+          <div className="progress-bar" style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 999, height: 6, overflow: 'hidden', position: 'relative', marginBottom: 5 }}>
             <div className="sweep" style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#7a0000 0%,#c0392b 38%,#e85252 72%,#3ec47a 100%)', borderRadius: 999, transition: 'width 0.7s cubic-bezier(.4,0,.2,1)', position: 'relative', overflow: 'hidden' }} />
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, color: T.textMuted, letterSpacing: 2, fontFamily: "'Bebas Neue',sans-serif" }}>
+          <div className="progress-labels" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, color: T.textMuted, letterSpacing: 2, fontFamily: "'Bebas Neue',sans-serif" }}>
             <span>{pct}% COMPLETE</span>
             <span>{activeItems.length - totalWatched} REMAINING</span>
           </div>
@@ -645,11 +653,10 @@ export default function MCUViewer() {
             return (
               <button
                 key={ph.id}
-                className={`ph-pill ${isOn ? 'ph-on' : ''}`}
-                style={{ color: isOn ? ph.color : T.textMuted }}
+                className="ph-pill"
+                style={{ color: T.textMuted }}
                 onClick={() => scrollTo(ph.id)}
                 aria-label={`${ph.name} — ${phPct}% watched`}
-                aria-current={isOn ? 'true' : undefined}
               >
                 <span style={{ fontSize: 12, letterSpacing: 2.5, fontWeight: isOn ? 700 : 400 }}>
                   {ph.name}
