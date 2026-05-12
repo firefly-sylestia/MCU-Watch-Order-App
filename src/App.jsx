@@ -211,6 +211,9 @@ export default function MCUViewer() {
   const [editingDateId,  setEditingDateId]  = useState(null); // date editing mode
   const [headerCompact]  = useState(false);
   const [detailItem,     setDetailItem]     = useState(null);
+  const [detailData,     setDetailData]     = useState(null);
+  const [detailLoading,  setDetailLoading]  = useState(false);
+  const [sessionHours,   setSessionHours]   = useState(2);
 
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
@@ -329,6 +332,32 @@ export default function MCUViewer() {
     const offset = elTop - containerTop + container.scrollTop - 16;
     container.scrollTo({ top: offset, behavior: 'smooth' });
   };
+  const exportProgress = () => {
+    const payload = items.map(({ id, status, watchedDate }) => ({ id, status, watchedDate }));
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mcu-progress.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  const importProgress = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const imported = JSON.parse(String(reader.result));
+        setItems(prev => {
+          const map = new Map(imported.map(x => [x.id, x]));
+          const next = prev.map(i => map.has(i.id) ? { ...i, status: map.get(i.id).status || 'unwatched', watchedDate: map.get(i.id).watchedDate || null } : i);
+          persist(next);
+          return next;
+        });
+      } catch {}
+    };
+    reader.readAsText(file);
+  };
 
   const coreIds = useMemo(() => new Set(ESSENTIAL_LIST.map(i => i.id)), []);
 
@@ -384,6 +413,43 @@ export default function MCUViewer() {
     'Thor': ['Chris Hemsworth', 'Tom Hiddleston', 'Natalie Portman'],
   };
   const posterFor = (item) => `https://placehold.co/220x330/121a2d/e8edf7?text=${encodeURIComponent(item.title)}`;
+  const cleanLookupTitle = (title) => title.replace(/\sS\d.*$/i, '').replace(/\sEps?.*$/i, '').trim();
+  const nextUnwatched = useMemo(() => filtered.find(i => i.status !== 'watched') || null, [filtered]);
+  const recentActivity = useMemo(() => [...activeItems].filter(i => i.watchedDate).sort((a,b) => (b.watchedDate||'').localeCompare(a.watchedDate||'')).slice(0,5), [activeItems]);
+  const totalEntries = activeItems.length;
+  const seriesCount = activeItems.filter(i => i.type === 'series').length;
+  const filmCount = activeItems.filter(i => i.type === 'film').length;
+  const estRuntimeHours = Math.round(((filmCount * 2.3) + (seriesCount * 6.0)) * 10) / 10;
+  const remainingHours = Math.max(0, Math.round((estRuntimeHours * (1 - pct / 100)) * 10) / 10);
+  const plannedItems = useMemo(() => {
+    let budget = sessionHours * 60;
+    const list = [];
+    for (const i of filtered) {
+      if (i.status === 'watched') continue;
+      const mins = i.type === 'film' ? 138 : (i.episodes || 6) * 40;
+      if (mins <= budget) { list.push(i); budget -= mins; }
+      if (list.length >= 3) break;
+    }
+    return list;
+  }, [filtered, sessionHours]);
+
+  useEffect(() => {
+    const fetchDetail = async () => {
+      if (!detailItem) return;
+      setDetailLoading(true);
+      setDetailData(null);
+      const key = import.meta.env.VITE_OMDB_API_KEY;
+      if (!key) { setDetailLoading(false); return; }
+      try {
+        const t = encodeURIComponent(cleanLookupTitle(detailItem.title));
+        const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}`);
+        const data = await res.json();
+        if (data?.Response === 'True') setDetailData(data);
+      } catch {}
+      setDetailLoading(false);
+    };
+    fetchDetail();
+  }, [detailItem]);
 
   const openStatusDropdown = (e, itemId) => {
     if (isScrolling.current) return;
@@ -578,7 +644,7 @@ export default function MCUViewer() {
           <>
           {/* Master progress bar */}
           <div className="progress-bar" style={{ background: darkMode ? 'rgba(255,255,255,0.08)' : T.surfaceBg, border: `1px solid ${darkMode ? 'rgba(255,255,255,0.18)' : T.surfaceBorder}`, borderRadius: 999, height: 6, overflow: 'hidden', position: 'relative', marginBottom: 2, backdropFilter: 'blur(4px)' }}>
-            <div className="sweep" style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#f3a6c2 0%,#f49bc8 45%,#f6b8d0 100%)', boxShadow: '0 0 12px rgba(244,155,200,0.6)', borderRadius: 999, transition: 'width 0.7s cubic-bezier(.4,0,.2,1)', position: 'relative', overflow: 'hidden' }} />
+            <div className="sweep progress-gradient" style={{ height: '100%', width: `${pct}%`, boxShadow: '0 0 12px rgba(244,155,200,0.6)', borderRadius: 999, transition: 'width 0.7s cubic-bezier(.4,0,.2,1)', position: 'relative', overflow: 'hidden' }} />
           </div>
           <div className="progress-labels" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'clamp(12px, 2vw, 16px)', color: T.textMuted, letterSpacing: 2, fontFamily: "'Bebas Neue',sans-serif" }}>
             <span>{pct}% COMPLETE</span>
@@ -620,6 +686,36 @@ export default function MCUViewer() {
         </div>
       </div>
 
+
+      <div style={{ background: T.switcherBg, borderBottom: `1px solid ${T.switcherBorder}`, padding: '10px 24px', flexShrink: 0 }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 10, padding: '0 24px' }}>
+          <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
+            <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Continue Watching</div>
+            <div style={{ fontSize: 18, marginTop: 4 }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</div>
+            <div style={{ fontSize: 13, color: T.textMuted, marginTop: 5 }}>{recentActivity.length ? `Recent: ${recentActivity[0].title}` : 'No recent activity'}</div>
+          </div>
+          <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
+            <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Session Planner</div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6 }}>
+              <input type="range" min="1" max="6" step="0.5" value={sessionHours} onChange={(e) => setSessionHours(Number(e.target.value))} />
+              <span style={{ fontSize: 14 }}>{sessionHours}h</span>
+            </div>
+            <div style={{ fontSize: 13, marginTop: 6, color: T.textMuted }}>{plannedItems.map(x => x.title).join(' • ') || 'No fit found'}</div>
+          </div>
+          <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
+            <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Analytics</div>
+            <div style={{ fontSize: 14, marginTop: 6 }}>{totalWatched}/{totalEntries} watched · ~{remainingHours}h remaining</div>
+            <div style={{ fontSize: 13, color: T.textMuted, marginTop: 4 }}>Films: {filmCount} · Series: {seriesCount}</div>
+          </div>
+          <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <button className="fpill" onClick={exportProgress}>Export</button>
+            <label className="fpill" style={{ cursor: 'pointer' }}>
+              Import
+              <input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} />
+            </label>
+          </div>
+        </div>
+      </div>
 
 
       {/* ━━ FILTER BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
@@ -936,14 +1032,21 @@ export default function MCUViewer() {
         <div className="detail-backdrop" onClick={() => setDetailItem(null)} role="dialog" aria-label="Movie details">
           <div className="detail-card" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'grid', gridTemplateColumns: '180px minmax(0,1fr)', gap: 18 }}>
-              <img src={posterFor(detailItem)} alt={`${detailItem.title} poster`} style={{ width: '100%', borderRadius: 10, border: `1px solid ${T.surfaceBorder}` }} />
+              <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : posterFor(detailItem)} alt={`${detailItem.title} poster`} style={{ width: '100%', borderRadius: 10, border: `1px solid ${T.surfaceBorder}` }} />
               <div>
                 <h2 style={{ fontSize: 32, marginBottom: 8 }}>{detailItem.title}</h2>
-                <div style={{ fontSize: 16, color: T.textMuted, marginBottom: 10 }}>{detailItem.year} · {TYPE_META[detailItem.type]?.label} · Phase {detailItem.phase}</div>
+                <div style={{ fontSize: 16, color: T.textMuted, marginBottom: 10 }}>
+                  {detailData?.Year || detailItem.year} · {TYPE_META[detailItem.type]?.label} · Phase {detailItem.phase}
+                  {detailData?.Runtime ? ` · ${detailData.Runtime}` : ''}
+                  {detailData?.imdbRating && detailData.imdbRating !== 'N/A' ? ` · IMDb ${detailData.imdbRating}` : ''}
+                </div>
+                {detailLoading && <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 8 }}>Loading live metadata…</div>}
+                {!detailLoading && !detailData && !import.meta.env.VITE_OMDB_API_KEY && <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Tip: set VITE_OMDB_API_KEY for real posters/cast/ratings.</div>}
                 <p style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 12 }}>{detailItem.desc}</p>
+                {detailData?.Plot && detailData.Plot !== 'N/A' && <p style={{ fontSize: 14, lineHeight: 1.6, marginBottom: 12, color: T.textMuted }}>{detailData.Plot}</p>}
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Prerequisite:</strong> {detailItem.prereq}</div>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Status:</strong> {STATUS_META[detailItem.status]?.label}</div>
-                <div style={{ fontSize: 14 }}><strong>Cast:</strong> {(CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</div>
+                <div style={{ fontSize: 14 }}><strong>Cast:</strong> {detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</div>
               </div>
             </div>
             <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end' }}>
