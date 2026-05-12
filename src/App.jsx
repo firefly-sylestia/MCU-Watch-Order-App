@@ -213,8 +213,8 @@ export default function MCUViewer() {
   const [detailItem,     setDetailItem]     = useState(null);
   const [detailData,     setDetailData]     = useState(null);
   const [detailLoading,  setDetailLoading]  = useState(false);
-  const [sessionHours,   setSessionHours]   = useState(2);
   const [posterCache,    setPosterCache]    = useState({});
+  const [settingsOpen,   setSettingsOpen]   = useState(false);
 
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
@@ -222,6 +222,7 @@ export default function MCUViewer() {
   const obsRef     = useRef(null);
   const isScrolling= useRef(false);
   const mainRef    = useRef(null);
+  const settingsRef= useRef(null);
 
   // Persist / load
   useEffect(() => {
@@ -320,6 +321,11 @@ export default function MCUViewer() {
   }, []);
   useEffect(() => {
     const fn = e => { if (phaseRef.current && !phaseRef.current.contains(e.target)) setPhaseOpen(false); };
+    document.addEventListener('mousedown', fn);
+    return () => document.removeEventListener('mousedown', fn);
+  }, []);
+  useEffect(() => {
+    const fn = e => { if (settingsRef.current && !settingsRef.current.contains(e.target)) setSettingsOpen(false); };
     document.addEventListener('mousedown', fn);
     return () => document.removeEventListener('mousedown', fn);
   }, []);
@@ -423,17 +429,6 @@ export default function MCUViewer() {
   const filmCount = activeItems.filter(i => i.type === 'film').length;
   const estRuntimeHours = Math.round(((filmCount * 2.3) + (seriesCount * 6.0)) * 10) / 10;
   const remainingHours = Math.max(0, Math.round((estRuntimeHours * (1 - pct / 100)) * 10) / 10);
-  const plannedItems = useMemo(() => {
-    let budget = sessionHours * 60;
-    const list = [];
-    for (const i of filtered) {
-      if (i.status === 'watched') continue;
-      const mins = i.type === 'film' ? 138 : (i.episodes || 6) * 40;
-      if (mins <= budget) { list.push(i); budget -= mins; }
-      if (list.length >= 3) break;
-    }
-    return list;
-  }, [filtered, sessionHours]);
   const phaseGradient = useMemo(() => {
     let cursor = 0;
     const stops = [];
@@ -561,7 +556,7 @@ export default function MCUViewer() {
   };
 
   return (
-    <div style={{ width: '100%', height: '100dvh', background: T.appBg, color: T.text, fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'background 0.32s cubic-bezier(0.34,1.56,0.64,1), color 0.32s cubic-bezier(0.34,1.56,0.64,1)' }} className="theme-switch">
+    <div style={{ width: '100%', minHeight: '100dvh', background: T.appBg, color: T.text, fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 0.32s cubic-bezier(0.34,1.56,0.64,1), color 0.32s cubic-bezier(0.34,1.56,0.64,1)' }} className="theme-switch">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -620,6 +615,7 @@ export default function MCUViewer() {
 
         .fpill{display:flex;align-items:center;gap:6px;padding:7px 28px;border-radius:999px;border:1.5px solid ${T.pillBorder};background:${T.pillBg};cursor:pointer;font-size:clamp(14px,2.2vw,16px);font-weight:600;letter-spacing:0.05em;color:${T.pillText};transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap}
         .fpill:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText};transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.2)}
+        .fpill:focus-visible,.theme-btn:focus-visible,.lmode-btn:focus-visible{outline:2px solid #c0392b;outline-offset:2px}
 
         .sopt{padding:13px 20px;font-family:'Bebas Neue',sans-serif;font-size:clamp(15px,2.2vw,18px);letter-spacing:2.5px;cursor:pointer;color:${T.pillText};transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1)}
         .sopt:hover{background:${T.sortHoverBg};color:${T.text};transform:translateX(4px)}
@@ -627,7 +623,10 @@ export default function MCUViewer() {
 
         .rrow{position:relative;transition:background 0.13s,transform 0.15s cubic-bezier(0.34,1.56,0.64,1);display:grid;align-items:center;grid-template-columns:40px 52px minmax(0,1fr) 80px 38px;gap:14px;padding:14px 18px;border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:80px}
         .rrow:last-child{border-bottom:none}
-        .rrow:hover{background:${T.rowHoverBg} !important;transform:translateX(2px);border-left-color:#c0392b}
+        .rrow:hover{transform:translateX(2px);border-left-color:#c0392b}
+        .rrow.type-film:hover{background:linear-gradient(90deg, rgba(224,82,82,0.20), ${T.rowHoverBg}) !important}
+        .rrow.type-series:hover{background:linear-gradient(90deg, rgba(74,158,222,0.20), ${T.rowHoverBg}) !important}
+        .rrow.type-short:hover{background:linear-gradient(90deg, rgba(160,108,213,0.20), ${T.rowHoverBg}) !important}
 
         .title-btn{background:none;border:none;cursor:pointer;text-align:left;padding:0;color:inherit;font-family:inherit;display:block;width:100%}
         .title-btn:focus-visible{outline:2px solid #c0392b;outline-offset:2px;border-radius:3px}
@@ -667,6 +666,8 @@ export default function MCUViewer() {
         .stat-card-label { font-size: clamp(11px, 1.8vw, 14px) !important; }
 
         .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; }
+        .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));backdrop-filter:blur(6px)}
+        .phase-grad-line{height:2px;background:linear-gradient(90deg,#e05252 0%,#e8b84b 25%,#4a9ede 50%,#a06cd5 75%,#3ec47a 100%);opacity:0.9}
 
         /* hide default scrollbar on main while keeping functionality */
         main::-webkit-scrollbar{width:4px}
@@ -674,6 +675,22 @@ export default function MCUViewer() {
         main::-webkit-scrollbar-thumb{background:${T.scrollThumb};border-radius:4px}
         main::-webkit-scrollbar-thumb:hover{background:${T.scrollThumbH}}
       `}</style>
+      <div ref={settingsRef} style={{ position: 'fixed', top: 12, right: 12, zIndex: 260 }}>
+        <button className="theme-btn" onClick={() => setSettingsOpen(o => !o)} aria-label="Open settings menu" title="Settings" style={{ width: 40, height: 40, background: darkMode ? 'rgba(16,18,35,0.92)' : '#fff' }}>
+          <Sun size={14} style={{ opacity: darkMode ? 0 : 1 }} />
+          <Moon size={14} style={{ position: 'absolute', opacity: darkMode ? 1 : 0 }} />
+        </button>
+        {settingsOpen && (
+          <div className="fade-in" style={{ marginTop: 8, minWidth: 180, borderRadius: 12, border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(11,13,26,0.96)' : '#fff', boxShadow: T.dropdownShadow, padding: 8, display: 'grid', gap: 6 }}>
+            <button className="fpill" onClick={() => setDarkMode(d => !d)}>{darkMode ? 'Light Mode' : 'Dark Mode'}</button>
+            <button className="fpill" onClick={exportProgress}>Export Progress</button>
+            <label className="fpill" style={{ cursor: 'pointer' }}>Import Progress
+              <input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} />
+            </label>
+            <button className="fpill" onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); }}>Reset Filters</button>
+          </div>
+        )}
+      </div>
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━��━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <header className="hexbg" style={{ background: darkMode ? 'rgba(8,10,24,0.72)' : T.headerBg, borderBottom: `1px solid ${darkMode ? 'rgba(255,255,255,0.12)' : T.headerBorder}`, flexShrink: 0, backdropFilter: darkMode ? 'blur(16px)' : 'none', WebkitBackdropFilter: darkMode ? 'blur(16px)' : 'none' }}>
@@ -701,7 +718,7 @@ export default function MCUViewer() {
           <>
           {/* Master progress bar */}
           <div className="progress-bar" style={{ background: darkMode ? 'rgba(255,255,255,0.08)' : T.surfaceBg, border: `1px solid ${darkMode ? 'rgba(255,255,255,0.18)' : T.surfaceBorder}`, borderRadius: 999, height: 6, overflow: 'hidden', position: 'relative', marginBottom: 2, backdropFilter: 'blur(4px)' }}>
-            <div className="sweep progress-gradient" style={{ height: '100%', width: `${pct}%`, background: phaseGradient, boxShadow: '0 0 12px rgba(244,155,200,0.6)', borderRadius: 999, transition: 'width 0.7s cubic-bezier(.4,0,.2,1)', position: 'relative', overflow: 'hidden' }} />
+            <div className="sweep progress-gradient" style={{ height: '100%', width: `${pct}%`, background: phaseGradient, boxShadow: pct >= 75 ? '0 0 16px rgba(62,196,122,0.7)' : pct >= 50 ? '0 0 14px rgba(232,184,75,0.65)' : '0 0 12px rgba(244,155,200,0.6)', borderRadius: 999, transition: 'width 0.7s cubic-bezier(.4,0,.2,1), box-shadow 0.35s ease', position: 'relative', overflow: 'hidden' }} />
           </div>
           <div className="progress-labels" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'clamp(12px, 2vw, 16px)', color: T.textMuted, letterSpacing: 2, fontFamily: "'Bebas Neue',sans-serif" }}>
             <span>{pct}% COMPLETE</span>
@@ -710,6 +727,7 @@ export default function MCUViewer() {
           </>
         </div>
       </header>
+      <div className="phase-grad-line" aria-hidden="true" />
 
       {/* ━━ LIST MODE SWITCHER ━━━━━━━━���━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: T.switcherBg, borderBottom: `1px solid ${T.switcherBorder}`, padding: '0 24px', flexShrink: 0 }}>
@@ -734,8 +752,7 @@ export default function MCUViewer() {
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1 }}>
-                  <span style={{ fontSize: 14, color: isActive ? T.textMuted : T.textFaint, letterSpacing: 0.4, fontFamily: "'Rajdhani',sans-serif", transition: 'color 0.2s' }}>{mode.desc}</span>
-                  {modePct > 0 && <span style={{ fontSize: 9, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1, color: modePct === 100 ? mode.color : T.textFaint }}>· {modePct}%</span>}
+                  {modePct > 0 && <span style={{ fontSize: 10, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2, color: modePct === 100 ? mode.color : T.textFaint }}>Progress · {modePct}%</span>}
                 </div>
               </button>
             );
@@ -745,32 +762,22 @@ export default function MCUViewer() {
 
 
       <div style={{ background: T.switcherBg, borderBottom: `1px solid ${T.switcherBorder}`, padding: '10px 24px', flexShrink: 0 }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 10, padding: '0 24px' }}>
-          <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 10, padding: '0 24px' }}>
+          <div className="glass-grad" style={{ background: darkMode ? 'linear-gradient(135deg, rgba(20,24,42,0.88), rgba(39,20,49,0.78))' : 'linear-gradient(135deg,#ffffff,#f8f4ff)', border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
             <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Continue Watching</div>
             <div style={{ fontSize: 18, marginTop: 4 }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</div>
             <div style={{ fontSize: 13, color: T.textMuted, marginTop: 5 }}>{recentActivity.length ? `Recent: ${recentActivity[0].title}` : 'No recent activity'}</div>
             {nextUnwatched && <button className="fpill" style={{ marginTop: 8 }} onClick={() => { setActivePhase(nextUnwatched.phase); scrollTo(nextUnwatched.phase); }}>Jump to Next</button>}
           </div>
-          <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
-            <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Session Planner</div>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6 }}>
-              <input type="range" min="1" max="6" step="0.5" value={sessionHours} onChange={(e) => setSessionHours(Number(e.target.value))} />
-              <span style={{ fontSize: 14 }}>{sessionHours}h</span>
-            </div>
-            <div style={{ fontSize: 13, marginTop: 6, color: T.textMuted }}>{plannedItems.map(x => x.title).join(' • ') || 'No fit found'}</div>
-          </div>
-          <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
+          <div className="glass-grad" style={{ background: darkMode ? 'linear-gradient(135deg, rgba(17,37,48,0.84), rgba(24,21,43,0.78))' : 'linear-gradient(135deg,#ffffff,#f2fbff)', border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
             <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Analytics</div>
             <div style={{ fontSize: 14, marginTop: 6 }}>{totalWatched}/{totalEntries} watched · ~{remainingHours}h remaining</div>
             <div style={{ fontSize: 13, color: T.textMuted, marginTop: 4 }}>Films: {filmCount} · Series: {seriesCount}</div>
           </div>
-          <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <button className="fpill" onClick={exportProgress}>Export</button>
-            <label className="fpill" style={{ cursor: 'pointer' }}>
-              Import
-              <input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} />
-            </label>
+          <div className="glass-grad" style={{ background: darkMode ? 'linear-gradient(135deg, rgba(18,42,38,0.76), rgba(19,24,42,0.78))' : 'linear-gradient(135deg,#ffffff,#f2fff8)', border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
+            <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Future Projects</div>
+            <div style={{ fontSize: 14, marginTop: 6, color: T.textMuted }}>In list now: Daredevil: Born Again S1, Your Friendly Neighborhood Spider-Man S1.</div>
+            <div style={{ fontSize: 13, color: T.textMuted, marginTop: 4 }}>If missing from your preferred canon, add upcoming films/series as Phase 6 entries in Extended mode.</div>
           </div>
         </div>
       </div>
@@ -783,31 +790,31 @@ export default function MCUViewer() {
           <div style={{ position: 'relative', flex: '1 1 170px', minWidth: 130 }}>
             <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search titles..."
-              style={{ width: '100%', background: T.inputBg, border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '5px 11px 5px 26px', color: T.inputColor, fontSize: 11, letterSpacing: 0.3 }} />
+              style={{ width: '100%', background: T.inputBg, border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '8px 12px 8px 30px', color: T.inputColor, fontSize: 14, letterSpacing: 0.3 }} />
           </div>
           {/* Sort */}
-          <div ref={sortRef} style={{ position: 'relative' }} onMouseEnter={() => setSortOpen(true)} onMouseLeave={() => setSortOpen(false)}>
+          <div ref={sortRef} style={{ position: 'relative' }}>
             <button className="fpill" onClick={() => setSortOpen(o => !o)}
               style={{ color: '#c0392b', borderColor: darkMode ? '#1e1430' : '#f0d8d0', background: darkMode ? '#0d0818' : '#fff5f3', fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
               {SORT_LABELS[sortBy]}
               <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             {sortOpen && (
-              <div className="fade-in" style={{ position: 'fixed', background: T.dropdownBg, border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
+              <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: T.dropdownBg, border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
                 {Object.entries(SORT_LABELS).map(([k, v]) => (
                   <div key={k} className={`sopt ${sortBy === k ? 'picked' : ''}`} onClick={() => { setSortBy(k); setSortOpen(false); }}>{v}</div>
                 ))}
               </div>
             )}
           </div>
-          <div ref={phaseRef} style={{ position: 'relative' }} onMouseEnter={() => setPhaseOpen(true)} onMouseLeave={() => setPhaseOpen(false)}>
+          <div ref={phaseRef} style={{ position: 'relative' }}>
             <button className="fpill" onClick={() => setPhaseOpen(o => !o)}
               style={{ color: '#c0392b', borderColor: darkMode ? '#1e1430' : '#f0d8d0', background: darkMode ? '#0d0818' : '#fff5f3', fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
               {PHASES.find(ph => ph.id === activePhase)?.name || 'Phase 1'}
               <ChevDown size={12} style={{ opacity: 0.6, transform: phaseOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             {phaseOpen && (
-              <div className="fade-in" style={{ position: 'fixed', background: T.dropdownBg, border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
+              <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: T.dropdownBg, border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
                 {PHASES.map((ph) => (
                   <div key={ph.id} className={`sopt ${activePhase === ph.id ? 'picked' : ''}`} onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); setPhaseOpen(false); }}>
                     {ph.name}
@@ -836,25 +843,45 @@ export default function MCUViewer() {
               <Star size={10} />Must-Watch
             </button>
           )}
-          <button className="fpill"
-            style={watchedOnly ? { borderColor: '#3ec47a88', background: '#3ec47a14', color: '#3ec47a' } : {}}
-            onClick={() => setWatchedOnly(o => !o)}>
-            <Check size={10} />Watched
-          </button>
+          <div style={{ position: 'relative' }}>
+            <button className="fpill"
+              style={watchedOnly || statusFilter ? { borderColor: '#3ec47a88', background: '#3ec47a14', color: '#3ec47a' } : {}}
+              onClick={() => setStatusDropdown(statusDropdown === 'filter' ? null : 'filter')}
+              onMouseEnter={() => setStatusDropdown('filter')}
+              onMouseLeave={() => setStatusDropdown(null)}>
+              <Check size={10} />Watched
+            </button>
+            {statusDropdown === 'filter' && (
+              <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: T.dropdownBg, border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 180 }}
+                onMouseEnter={() => setStatusDropdown('filter')}
+                onMouseLeave={() => setStatusDropdown(null)}>
+                <div className={`sopt ${!statusFilter && !watchedOnly ? 'picked' : ''}`} onClick={() => { setStatusFilter(null); setWatchedOnly(false); setStatusDropdown(null); }}>All statuses</div>
+                <div className={`sopt ${watchedOnly ? 'picked' : ''}`} onClick={() => { setWatchedOnly(true); setStatusFilter(null); setStatusDropdown(null); }}>Watched only</div>
+                <div className={`sopt ${statusFilter === 'watching' ? 'picked' : ''}`} onClick={() => { setStatusFilter('watching'); setWatchedOnly(false); setStatusDropdown(null); }}>Watching</div>
+                <div className={`sopt ${statusFilter === 'plan-to-watch' ? 'picked' : ''}`} onClick={() => { setStatusFilter('plan-to-watch'); setWatchedOnly(false); setStatusDropdown(null); }}>Plan to Watch</div>
+              </div>
+            )}
+          </div>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 12, color: T.textMuted, letterSpacing: 2.2, textTransform: 'uppercase' }}>
               {filtered.length} RESULTS
             </span>
-            {/* Theme toggle — in the filter bar, far right */}
-            <button className="theme-btn" onClick={() => setDarkMode(d => !d)} title={darkMode ? 'Light Mode' : 'Dark Mode'} aria-label="Toggle theme">
-              {darkMode ? <Sun size={13} /> : <Moon size={13} />}
-            </button>
           </div>
         </div>
       </div>
 
+
+      <button
+        type="button"
+        onClick={() => { if (nextUnwatched) { setActivePhase(nextUnwatched.phase); scrollTo(nextUnwatched.phase); } }}
+        aria-label="Jump to next unwatched item"
+        style={{ position: 'fixed', right: 16, bottom: 16, zIndex: 120, borderRadius: 999, padding: '10px 14px', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'linear-gradient(135deg, rgba(20,25,46,0.95), rgba(34,18,52,0.95))' : 'linear-gradient(135deg, #ffffff, #f6f0ff)', color: T.text, boxShadow: darkMode ? '0 8px 22px rgba(0,0,0,0.45)' : '0 8px 20px rgba(0,0,0,0.14)', cursor: nextUnwatched ? 'pointer' : 'default', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2, fontSize: 12 }}
+      >
+        {pct}% done · {nextUnwatched ? 'Jump next' : 'All caught up'}
+      </button>
+
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} style={{ overflowY: 'auto', overflowX: 'hidden', flex: 1, WebkitOverflowScrolling: 'touch', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
+      <main ref={mainRef} style={{ overflow: 'visible', flex: '0 0 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
 
         
 
@@ -944,7 +971,7 @@ export default function MCUViewer() {
                   return (
                     <div key={item.id}>
                       {/* Main row */}
-                      <div className="rrow row-in" style={{ background: isWatched ? T.rowWatchedBg : 'transparent' }}>
+                      <div className={`rrow row-in type-${item.type}`} style={{ background: isWatched ? T.rowWatchedBg : 'transparent' }}>
                         {/* Order / check */}
                         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 15, color: isWatched ? '#f1bfd3' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
                           {isWatched ? <Check size={14} style={{ color: '#f4a8ca' }} /> : (idx + 1)}
