@@ -476,18 +476,18 @@ export default function MCUViewer() {
         .wbtn:hover{transform:scale(1.12)}
         .wbtn:active{transform:scale(0.88);animation:buttonPulse 0.4s}
 
-        .ntab{position:relative;font-family:'Bebas Neue',sans-serif;font-size:clamp(13px,2.2vw,18px);letter-spacing:2.5px;padding:12px 18px;border:none;background:transparent;cursor:pointer;transition:color 0.2s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
+        .ntab{position:relative;font-family:'Bebas Neue',sans-serif;font-size:clamp(16px,2.4vw,22px);letter-spacing:3px;padding:14px 20px;border:none;background:transparent;cursor:pointer;transition:color 0.2s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
         .ntab::after{content:'';position:absolute;bottom:0;left:12px;right:12px;height:2px;border-radius:2px 2px 0 0;background:currentColor;transform:scaleX(0);transform-origin:center;transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1)}
         .ntab.on::after{transform:scaleX(1)}
 
-        .fpill{display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:999px;border:1px solid ${T.pillBorder};background:${T.pillBg};cursor:pointer;font-size:clamp(12px,2vw,14px);font-weight:600;letter-spacing:0.05em;color:${T.pillText};transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap}
-        .fpill:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText};transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.15)}
+        .fpill{display:flex;align-items:center;gap:6px;padding:8px 18px;border-radius:999px;border:1.5px solid ${T.pillBorder};background:${T.pillBg};cursor:pointer;font-size:clamp(14px,2.2vw,16px);font-weight:600;letter-spacing:0.05em;color:${T.pillText};transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap}
+        .fpill:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText};transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.2)}
 
-        .sopt{padding:12px 18px;font-family:'Bebas Neue',sans-serif;font-size:clamp(14px,2vw,16px);letter-spacing:2px;cursor:pointer;color:${T.pillText};transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1)}
-        .sopt:hover{background:${T.sortHoverBg};color:${T.text};transform:translateX(3px)}
-        .sopt.picked{color:#c0392b}
+        .sopt{padding:13px 20px;font-family:'Bebas Neue',sans-serif;font-size:clamp(15px,2.2vw,18px);letter-spacing:2.5px;cursor:pointer;color:${T.pillText};transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1)}
+        .sopt:hover{background:${T.sortHoverBg};color:${T.text};transform:translateX(4px)}
+        .sopt.picked{color:#c0392b;font-weight:700}
 
-        .rrow{position:relative;transition:background 0.13s,transform 0.15s cubic-bezier(0.34,1.56,0.64,1);display:grid;align-items:center;grid-template-columns:38px 1fr 52px 32px;gap:12px;padding:13px 16px;border-bottom:1px solid ${T.rowBorder};min-height:62px}
+        .rrow{position:relative;transition:background 0.13s,transform 0.15s cubic-bezier(0.34,1.56,0.64,1);display:grid;align-items:center;grid-template-columns:40px 1fr 60px 38px;gap:14px;padding:14px 18px;border-bottom:1px solid ${T.rowBorder};min-height:68px}
         .rrow:last-child{border-bottom:none}
         .rrow:hover{background:${T.rowHoverBg} !important;transform:translateX(2px)}
 
@@ -528,14 +528,14 @@ export default function MCUViewer() {
         @media (max-width: 767px) {
           .header-inner { padding: 10px 14px 8px !important; }
         }
-        .header-title-mcu { font-size: clamp(48px, 8vw, 80px) !important; letter-spacing: clamp(2px, 0.8vw, 6px) !important; }
-        .header-title-sub { font-size: clamp(26px, 4.5vw, 50px) !important; letter-spacing: clamp(4px, 1.2vw, 9px) !important; }
-        .header-tagline { font-size: clamp(12px, 2.2vw, 15px) !important; margin-top: 2px !important; }
+        .header-title-mcu { font-size: clamp(56px, 10vw, 120px) !important; letter-spacing: clamp(2px, 1vw, 8px) !important; margin: 0 !important; }
+        .header-title-sub { font-size: clamp(32px, 5vw, 72px) !important; letter-spacing: clamp(4px, 1.5vw, 12px) !important; margin-top: 0px !important; }
+        .header-tagline { font-size: clamp(13px, 2.4vw, 18px) !important; margin-top: 1px !important; }
 
-        .stat-card-num { font-size: clamp(28px, 4.2vw, 42px) !important; }
-        .stat-card-label { font-size: clamp(11px, 1.8vw, 13px) !important; }
+        .stat-card-num { font-size: clamp(32px, 5vw, 56px) !important; }
+        .stat-card-label { font-size: clamp(12px, 2vw, 16px) !important; }
 
-        .progress-labels { font-size: clamp(11px, 1.8vw, 13px) !important; }
+        .progress-labels { font-size: clamp(12px, 2vw, 16px) !important; }
 
         /* hide default scrollbar on main while keeping functionality */
         main::-webkit-scrollbar{width:4px}
@@ -547,35 +547,35 @@ export default function MCUViewer() {
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━��━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <header className="hexbg" style={{ background: T.headerBg, borderBottom: `1px solid ${T.headerBorder}`, flexShrink: 0 }}>
         <div className="header-inner" style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 24px 22px' }}>
-          <div className="header-top-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 10 }}>
+          <div className="header-top-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             {/* Title */}
-            <div style={{ fontFamily: "'Orbitron',sans-serif", lineHeight: 0.92, marginBottom: 0, fontWeight: 900 }}>
-              <div className="header-title-mcu" style={{ fontSize: 'clamp(48px, 8vw, 80px)', letterSpacing: 'clamp(2px, 0.8vw, 6px)', color: '#c0392b', textShadow: darkMode ? '0 0 44px rgba(192,57,43,0.5),0 2px 0 #7a0000' : '0 2px 8px rgba(192,57,43,0.2)' }}>MCU</div>
-              <div className="header-title-sub" style={{ fontSize: 'clamp(26px, 4.5vw, 50px)', letterSpacing: 'clamp(4px, 1.2vw, 9px)', color: T.text, marginTop: 0 }}>VIEWING ORDER</div>
-              <div className="header-tagline" style={{ fontSize: 'clamp(12px, 2.2vw, 15px)', color: T.textMuted, letterSpacing: 3, fontFamily: "'Bebas Neue',sans-serif", marginTop: 2 }}>
+            <div style={{ fontFamily: "'Orbitron',sans-serif", lineHeight: 0.88, marginBottom: 0, fontWeight: 900 }}>
+              <div className="header-title-mcu" style={{ fontSize: 'clamp(56px, 10vw, 120px)', letterSpacing: 'clamp(2px, 1vw, 8px)', color: '#c0392b', textShadow: darkMode ? '0 0 44px rgba(192,57,43,0.5),0 2px 0 #7a0000' : '0 2px 8px rgba(192,57,43,0.2)' }}>MCU</div>
+              <div className="header-title-sub" style={{ fontSize: 'clamp(32px, 5vw, 72px)', letterSpacing: 'clamp(4px, 1.5vw, 12px)', color: T.text, marginTop: 0 }}>VIEWING ORDER</div>
+              <div className="header-tagline" style={{ fontSize: 'clamp(13px, 2.4vw, 18px)', color: T.textMuted, letterSpacing: 3, fontFamily: "'Bebas Neue',sans-serif", marginTop: 1 }}>
                 PHASES 1–6 &nbsp;·&nbsp; {activeItems.length} ENTRIES &nbsp;·&nbsp; {LIST_MODES.find(m => m.id === listMode)?.sublabel.toUpperCase()}
               </div>
             </div>
             {/* Stat cards */}
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-start' }}>
               {[
                 { label: 'WATCHED',    cur: totalWatched, tot: activeItems.length, color: '#3ec47a', glow: 'rgba(62,196,122,0.35)'  },
                 { label: 'MUST-WATCH', cur: essWatched,   tot: essTotal,           color: '#e8b84b', glow: 'rgba(232,184,75,0.35)'  },
               ].map(s => (
-                <div key={s.label} className="stat-card" style={{ background: T.statBg, border: `1px solid ${T.statBorder}`, borderRadius: 10, padding: '8px 14px', minWidth: 110, textAlign: 'center', boxShadow: darkMode ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'none' }}>
-                  <div className="stat-card-num" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(28px, 4.2vw, 42px)', letterSpacing: 1, color: s.color, lineHeight: 1, textShadow: darkMode ? `0 0 16px ${s.glow}` : 'none' }}>
-                    {s.cur}<span style={{ fontSize: 'clamp(16px, 2.4vw, 22px)', color: T.numFaint }}>/{s.tot}</span>
+                <div key={s.label} className="stat-card" style={{ background: T.statBg, border: `1px solid ${T.statBorder}`, borderRadius: 8, padding: '6px 12px', minWidth: 100, textAlign: 'center', boxShadow: darkMode ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'none' }}>
+                  <div className="stat-card-num" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(32px, 5vw, 56px)', letterSpacing: 1, color: s.color, lineHeight: 1, textShadow: darkMode ? `0 0 16px ${s.glow}` : 'none' }}>
+                    {s.cur}<span style={{ fontSize: 'clamp(18px, 3vw, 28px)', color: T.numFaint }}>/{s.tot}</span>
                   </div>
-                  <div className="stat-card-label" style={{ fontSize: 'clamp(11px, 1.8vw, 13px)', letterSpacing: 2, color: T.textMuted, marginTop: 2, fontFamily: "'Bebas Neue',sans-serif" }}>{s.label}</div>
+                  <div className="stat-card-label" style={{ fontSize: 'clamp(12px, 2vw, 16px)', letterSpacing: 2, color: T.textMuted, marginTop: 1, fontFamily: "'Bebas Neue',sans-serif" }}>{s.label}</div>
                 </div>
               ))}
             </div>
           </div>
           {/* Master progress bar */}
-          <div className="progress-bar" style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 999, height: 6, overflow: 'hidden', position: 'relative', marginBottom: 3 }}>
+          <div className="progress-bar" style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 999, height: 5, overflow: 'hidden', position: 'relative', marginBottom: 2 }}>
             <div className="sweep" style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#7a0000 0%,#c0392b 38%,#e85252 72%,#3ec47a 100%)', borderRadius: 999, transition: 'width 0.7s cubic-bezier(.4,0,.2,1)', position: 'relative', overflow: 'hidden' }} />
           </div>
-          <div className="progress-labels" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'clamp(11px, 1.8vw, 13px)', color: T.textMuted, letterSpacing: 2, fontFamily: "'Bebas Neue',sans-serif" }}>
+          <div className="progress-labels" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'clamp(12px, 2vw, 16px)', color: T.textMuted, letterSpacing: 2, fontFamily: "'Bebas Neue',sans-serif" }}>
             <span>{pct}% COMPLETE</span>
             <span>{activeItems.length - totalWatched} REMAINING</span>
           </div>
@@ -626,14 +626,14 @@ export default function MCUViewer() {
               style={{ width: '100%', background: T.inputBg, border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '5px 11px 5px 26px', color: T.inputColor, fontSize: 11, letterSpacing: 0.3 }} />
           </div>
           {/* Sort */}
-          <div ref={sortRef} style={{ position: 'relative' }}>
+          <div ref={sortRef} style={{ position: 'relative' }} onMouseEnter={() => setSortOpen(true)} onMouseLeave={() => setSortOpen(false)}>
             <button className="fpill" onClick={() => setSortOpen(o => !o)}
-              style={{ color: '#c0392b', borderColor: darkMode ? '#1e1430' : '#f0d8d0', background: darkMode ? '#0d0818' : '#fff5f3', fontFamily: "'Bebas Neue',sans-serif", fontSize: 12, letterSpacing: 2 }}>
+              style={{ color: '#c0392b', borderColor: darkMode ? '#1e1430' : '#f0d8d0', background: darkMode ? '#0d0818' : '#fff5f3', fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
               {SORT_LABELS[sortBy]}
-              <ChevDown size={10} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+              <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             {sortOpen && (
-              <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 5px)', left: 0, background: T.dropdownBg, border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 100, boxShadow: T.dropdownShadow, minWidth: 160 }}>
+              <div className="fade-in" style={{ position: 'fixed', background: T.dropdownBg, border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
                 {Object.entries(SORT_LABELS).map(([k, v]) => (
                   <div key={k} className={`sopt ${sortBy === k ? 'picked' : ''}`} onClick={() => { setSortBy(k); setSortOpen(false); }}>{v}</div>
                 ))}
@@ -737,10 +737,10 @@ export default function MCUViewer() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
                 <div style={{ width: 3, height: 38, background: ph.color, borderRadius: 2, flexShrink: 0, boxShadow: darkMode ? `0 0 12px ${ph.glow}` : 'none' }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: "'Orbitron',sans-serif", fontSize: 'clamp(20px, 3.2vw, 28px)', letterSpacing: 5, color: ph.color, lineHeight: 1, fontWeight: 700, textShadow: darkMode ? `0 0 18px ${ph.glow}` : 'none' }}>
+            <div style={{ fontFamily: "'Orbitron',sans-serif", fontSize: 'clamp(24px, 3.6vw, 36px)', letterSpacing: 6, color: ph.color, lineHeight: 1, fontWeight: 700, textShadow: darkMode ? `0 0 18px ${ph.glow}` : 'none' }}>
               Phase {ph.num}
             </div>
-            <div style={{ fontSize: 'clamp(10px, 1.8vw, 12px)', color: T.textMuted, letterSpacing: 2.5, fontFamily: "'Bebas Neue',sans-serif", marginTop: 2, textTransform: 'uppercase' }}>
+            <div style={{ fontSize: 'clamp(11px, 2vw, 14px)', color: T.textMuted, letterSpacing: 3, fontFamily: "'Bebas Neue',sans-serif", marginTop: 1, textTransform: 'uppercase' }}>
                     {ph.tagline}
                   </div>
                 </div>
@@ -803,7 +803,7 @@ export default function MCUViewer() {
                         {/* Title block — clickable to expand */}
                         <button className="title-btn" onClick={() => setExpandedItem(isExpanded ? null : item.id)}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: 'clamp(14px, 2.4vw, 18px)', fontWeight: isWatched ? 400 : 600, lineHeight: 1.4, color: isWatched ? T.textMuted : T.text, textDecoration: isWatched ? 'line-through' : 'none', textDecorationColor: T.textFaint, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif" }}>
+                            <span style={{ fontSize: 'clamp(16px, 2.8vw, 22px)', fontWeight: isWatched ? 400 : 600, lineHeight: 1.5, color: isWatched ? T.textMuted : T.text, textDecoration: isWatched ? 'line-through' : 'none', textDecorationColor: T.textFaint, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif" }}>
                               {item.title}
                             </span>
                             {/* Episode count badge */}
@@ -853,15 +853,15 @@ export default function MCUViewer() {
 
                       {/* Expand panel — description + quick watch buttons */}
                       {isExpanded && (
-                        <div className="expand-row" style={{ background: T.expandBg, borderBottom: `1px solid ${T.expandBorder}`, borderLeft: `3px solid ${ph.color}44`, padding: '12px 14px 12px 52px' }}>
-                          <p style={{ fontSize: 12.5, color: T.textMuted, lineHeight: 1.65, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.2, marginBottom: 10 }}>
+                        <div className="expand-row" style={{ background: T.expandBg, borderBottom: `1px solid ${T.expandBorder}`, borderLeft: `3px solid ${ph.color}44`, padding: '14px 16px 14px 54px' }}>
+                          <p style={{ fontSize: 'clamp(13px, 2.2vw, 16px)', color: T.textMuted, lineHeight: 1.7, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.3, marginBottom: 12 }}>
                             {item.desc}
                           </p>
                           {/* Quick action buttons inside expand */}
-                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                             <button
                               onClick={() => setStatusDirect(item.id, 'watched')}
-                              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 6, border: `1px solid ${item.status === 'watched' ? '#3ec47a88' : T.expandBorder}`, background: item.status === 'watched' ? '#3ec47a18' : 'transparent', color: item.status === 'watched' ? '#3ec47a' : T.textMuted, cursor: 'pointer', fontFamily: "'Bebas Neue',sans-serif", fontSize: 11, letterSpacing: 1.5, transition: 'all 0.15s' }}
+                              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 6, border: `1px solid ${item.status === 'watched' ? '#3ec47a88' : T.expandBorder}`, background: item.status === 'watched' ? '#3ec47a18' : 'transparent', color: item.status === 'watched' ? '#3ec47a' : T.textMuted, cursor: 'pointer', fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(12px, 2vw, 14px)', letterSpacing: 1.5, transition: 'all 0.15s' }}
                               onMouseEnter={e => { if (item.status !== 'watched') { e.currentTarget.style.background = '#3ec47a12'; e.currentTarget.style.color = '#3ec47a'; } }}
                               onMouseLeave={e => { if (item.status !== 'watched') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T.textMuted; } }}
                             >
