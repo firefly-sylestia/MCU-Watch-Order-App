@@ -187,8 +187,8 @@ const ADDITIONAL_LIST = [
 const RAW = [...ESSENTIAL_LIST, ...ADDITIONAL_LIST].map(d => ({ ...d, status: 'unwatched', watchedDate: null }));
 
 const LIST_MODES = [
-  { id: 'core',     label: 'MCU',      sublabel: 'Curated List',       color: '#c0392b', desc: '60 curated films & series'           },
-  { id: 'extended', label: 'Extended', sublabel: 'Full Chronological', color: '#4a9ede', desc: 'All entries incl. Netflix, SHIELD & more' },
+  { id: 'core',     label: 'MCU',      sublabel: 'Curated List',       color: '#c0392b', desc: 'MCU'           },
+  { id: 'extended', label: 'MCU Extended', sublabel: 'Full Chronological', color: '#4a9ede', desc: 'MCU Extended' },
 ];
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -210,6 +210,7 @@ export default function MCUViewer() {
   const [expandedPhase,  setExpandedPhase]  = useState(null); // for phase summary toggle
   const [celebPhase,     setCelebPhase]     = useState(null); // phase completion flash
   const [editingDateId,  setEditingDateId]  = useState(null); // date editing mode
+  const [showFilters, setShowFilters] = useState(false);
 
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
@@ -580,8 +581,8 @@ export default function MCUViewer() {
             </div>
           </div>
           {/* Master progress bar */}
-          <div className="progress-bar" style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 999, height: 4, overflow: 'hidden', position: 'relative', marginBottom: 2 }}>
-            <div className="progress-train sweep" style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#7a0000 0%,#c0392b 38%,#e85252 72%,#3ec47a 100%)', borderRadius: 999, position: 'relative', boxShadow: `0 0 12px rgba(192,57,43,0.4)` }} />
+          <div className="progress-bar" style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 999, height: 4, overflow: 'hidden', position: 'relative', marginBottom: 2, width:'100%' }}>
+            <div className="progress-train sweep" style={{ height: '100%', maxWidth:'100%', width: `${Math.min(pct,100)}%`, background: 'linear-gradient(90deg,#7a0000 0%,#c0392b 38%,#e85252 72%,#3ec47a 100%)', borderRadius: 999, position: 'relative', boxShadow: `0 0 12px rgba(192,57,43,0.4)` }} />
           </div>
           <div className="progress-labels" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'clamp(12px, 2vw, 16px)', color: T.textMuted, letterSpacing: 2, fontFamily: "'Bebas Neue',sans-serif" }}>
             <span>{pct}% COMPLETE</span>
@@ -591,7 +592,7 @@ export default function MCUViewer() {
       </header>
 
       {/* ━━ LIST MODE SWITCHER ━━━━━━━━���━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ background: T.switcherBg, borderBottom: `1px solid ${T.switcherBorder}`, padding: '12px 24px', flexShrink: 0 }}>
+      <div style={{ background: T.switcherBg, borderBottom: `1px solid ${T.switcherBorder}`, padding: '18px 24px', flexShrink: 0 }}>
         <div style={{ maxWidth: '100%', margin: '0 auto', display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 8 }}>
           <div className="lmode-pill">
             {LIST_MODES.map(mode => {
@@ -603,19 +604,41 @@ export default function MCUViewer() {
                 <button key={mode.id} className={`lmode-btn ${isActive ? 'active' : ''}`}
                   onClick={() => { setListMode(mode.id); setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setSortBy('order'); setActivePhase(1); setExpandedItem(null); setExpandedPhase(null); }}
                   aria-pressed={isActive}
-                  style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(12px, 2vw, 14px)', letterSpacing: 2 }}
+                  style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(16px, 2.5vw, 18px)', letterSpacing: 2 }}
                 >
-                  {mode.name} <span style={{ fontSize: 'clamp(11px, 1.8vw, 13px)', opacity: 0.7 }}>({modeItems.length})</span>
+                  {mode.label}
                 </button>
               );
             })}
           </div>
       </div>
+      </div>
 
 
+
+{/* Compact Filter Toggle */}
+      <div style={{padding:'10px 24px',background:T.filterBg,borderBottom:`1px solid ${T.filterBorder}`,display:'flex',justifyContent:'center',flexShrink:0}}>
+        <button onClick={() => setShowFilters(v => !v)} style={{
+          border:`1px solid ${T.inputBorder}`,
+          background: darkMode ? 'rgba(18,18,35,0.72)' : 'rgba(255,255,255,0.7)',
+          backdropFilter:'blur(18px)',
+          WebkitBackdropFilter:'blur(18px)',
+          color:T.text,
+          borderRadius:999,
+          padding:'10px 20px',
+          fontFamily:"'Bebas Neue',sans-serif",
+          fontSize:'18px',
+          letterSpacing:2,
+          display:'flex',
+          alignItems:'center',
+          gap:8
+        }}>
+          Filters <ChevDown size={14} style={{transform:showFilters ? 'rotate(180deg)' : 'none',transition:'0.2s'}} />
+        </button>
+      </div>
 
       {/* ━━ FILTER BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ background: T.filterBg, borderBottom: `1px solid ${T.filterBorder}`, padding: '8px 24px', overflowX: 'auto', flexShrink: 0 }}>
+      {showFilters && <div className='fade-in' style={{ background: T.filterBg, borderBottom: `1px solid ${T.filterBorder}`, padding: '8px 24px', overflowX: 'auto', flexShrink: 0 }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
           {/* Search */}
           <div style={{ position: 'relative', flex: '1 1 170px', minWidth: 130 }}>
@@ -810,7 +833,7 @@ export default function MCUViewer() {
                                 {item.episodes} EP
                               </span>
                             )}
-                            <span style={{ fontSize: 9, color: m.color, opacity: 0.75, fontWeight: 700, letterSpacing: 0.6, display: 'flex', alignItems: 'center', gap: 2, fontFamily: "'Bebas Neue',sans-serif", flexShrink: 0 }}>
+                            <span style={{ fontSize: 'clamp(15px, 2.4vw, 20px)', color: m.color, opacity: 0.75, fontWeight: 700, letterSpacing: 0.6, display: 'flex', alignItems: 'center', gap: 2, fontFamily: "'Bebas Neue',sans-serif", flexShrink: 0 }}>
                               <m.Icon size={8} />{m.label}
                             </span>
                             {!item.essential && (
@@ -822,14 +845,14 @@ export default function MCUViewer() {
 
                         {/* Year and prereq in middle */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 100 }}>
+                          {showPre && (
+                            <div style={{ fontSize: 'clamp(11px, 1.8vw, 13px)', color: T.textMuted, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.3, textAlign: 'center', maxWidth: 140, lineHeight:1.2 }}>
+                              {item.prereq}
+                            </div>
+                          )}
                           <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(13px, 2vw, 15px)', letterSpacing: 2, color: T.text, textAlign: 'center', fontWeight: 600 }}>
                             {item.year}
                           </div>
-                          {showPre && (
-                            <div style={{ fontSize: 'clamp(10px, 1.6vw, 12px)', color: T.textMuted, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.3, textAlign: 'center', maxWidth: 120 }}>
-                              Needs: {item.prereq}
-                            </div>
-                          )}
                         </div>
 
                         {/* Status button */}
@@ -861,7 +884,7 @@ export default function MCUViewer() {
                           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                             <button
                               onClick={() => setStatusDirect(item.id, 'watched')}
-                              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 6, border: `1px solid ${item.status === 'watched' ? '#3ec47a88' : T.expandBorder}`, background: item.status === 'watched' ? '#3ec47a18' : 'transparent', color: item.status === 'watched' ? '#3ec47a' : T.textMuted, cursor: 'pointer', fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(12px, 2vw, 14px)', letterSpacing: 1.5, transition: 'all 0.15s' }}
+                              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 6, border: `1px solid ${item.status === 'watched' ? '#3ec47a88' : T.expandBorder}`, background: item.status === 'watched' ? '#3ec47a18' : 'transparent', color: item.status === 'watched' ? '#3ec47a' : T.textMuted, cursor: 'pointer', fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(16px, 2.5vw, 18px)', letterSpacing: 1.5, transition: 'all 0.15s' }}
                               onMouseEnter={e => { if (item.status !== 'watched') { e.currentTarget.style.background = '#3ec47a12'; e.currentTarget.style.color = '#3ec47a'; } }}
                               onMouseLeave={e => { if (item.status !== 'watched') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T.textMuted; } }}
                             >
