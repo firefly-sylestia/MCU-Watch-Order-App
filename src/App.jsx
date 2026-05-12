@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Eye, EyeOff, Star, Film, Tv, Zap, ChevronDown } from 'lucide-react';
+import { Search, Eye, EyeOff, Star, Film, Tv, Zap, ChevronDown, Check, Clock, Pause, Trash2 } from 'lucide-react';
 
 const PHASES = [
   { id: 1, name: 'Phase 1', color: '#e8b84b', glow: 'rgba(232,184,75,0.28)',  bg: 'rgba(232,184,75,0.06)' },
@@ -121,9 +121,18 @@ const RAW = [
   { id:96, order:96, title:"Captain America: Brave New World",             year:2025, prereq:"The Falcon and the Winter Soldier", essential:true, phase:6, type:'film' },
   { id:97, order:97, title:"Thunderbolts*",                                year:2025, prereq:"CACBW, Black Widow, Civil War",  essential:true,  phase:6, type:'film'   },
   { id:98, order:98, title:"The Fantastic Four: First Steps",              year:2025, prereq:"None (intro to FF)",            essential:true,  phase:6, type:'film'   },
-].map(d => ({ ...d, watched: false }));
+].map(d => ({ ...d, status: 'unwatched' }));
 
 const SORT_LABELS = { order: 'Chronological', year: 'By Year', title: 'Alphabetical' };
+
+const STATUS_META = {
+  watched:        { label: 'Watched',       color: '#3ec47a', icon: Check, bg: 'rgba(62,196,122,0.1)' },
+  'plan-to-watch': { label: 'Plan to Watch', color: '#4a9ede', icon: Clock, bg: 'rgba(74,158,222,0.1)' },
+  watching:       { label: 'Watching',      color: '#e8b84b', icon: Eye,   bg: 'rgba(232,184,75,0.1)' },
+  'on-hold':      { label: 'On Hold',       color: '#f39c12', icon: Pause, bg: 'rgba(243,156,18,0.1)' },
+  dropped:        { label: 'Dropped',       color: '#e05252', icon: Trash2, bg: 'rgba(224,82,82,0.1)' },
+  unwatched:      { label: 'Unwatched',     color: '#1c1c30', icon: EyeOff, bg: 'transparent' },
+};
 
 export default function MCUViewer() {
   const [items, setItems]             = useState(RAW);
@@ -131,6 +140,7 @@ export default function MCUViewer() {
   const [sortBy, setSortBy]           = useState('order');
   const [essentialOnly, setEssOnly]   = useState(false);
   const [watchedOnly, setWatchedOnly] = useState(false);
+  const [statusFilter, setStatusFilter] = useState(null);
   const [typeFilter, setTypeFilter]   = useState(null);
   const [activePhase, setActivePhase] = useState(1);
   const [sortOpen, setSortOpen]       = useState(false);
@@ -141,18 +151,34 @@ export default function MCUViewer() {
 
   // Load saved
   useEffect(() => {
-    const s = localStorage.getItem('mcu-v3');
+    const s = localStorage.getItem('mcu-v4');
     if (s) {
-      const ids = new Set(JSON.parse(s));
-      setItems(prev => prev.map(i => ({ ...i, watched: ids.has(i.id) })));
+      const saved = JSON.parse(s);
+      setItems(prev => prev.map(i => ({ ...i, status: saved[i.id] || 'unwatched' })));
     }
   }, []);
 
-  const persist = (next) =>
-    localStorage.setItem('mcu-v3', JSON.stringify(next.filter(i => i.watched).map(i => i.id)));
+  const persist = (next) => {
+    const statuses = {};
+    next.forEach(i => {
+      if (i.status !== 'unwatched') statuses[i.id] = i.status;
+    });
+    localStorage.setItem('mcu-v4', JSON.stringify(statuses));
+  };
 
-  const toggle = (id) =>
-    setItems(prev => { const n = prev.map(i => i.id === id ? { ...i, watched: !i.watched } : i); persist(n); return n; });
+  const cycleStatus = (id) => {
+    setItems(prev => {
+      const n = prev.map(i => {
+        if (i.id !== id) return i;
+        const statuses = ['unwatched', 'plan-to-watch', 'watching', 'on-hold', 'dropped', 'watched'];
+        const currentIdx = statuses.indexOf(i.status);
+        const nextStatus = statuses[(currentIdx + 1) % statuses.length];
+        return { ...i, status: nextStatus };
+      });
+      persist(n);
+      return n;
+    });
+  };
 
   // IntersectionObserver for active nav tab
   useEffect(() => {
@@ -178,7 +204,8 @@ export default function MCUViewer() {
   const filtered = items
     .filter(i => {
       if (essentialOnly && !i.essential) return false;
-      if (watchedOnly   && !i.watched)   return false;
+      if (watchedOnly   && i.status !== 'watched')   return false;
+      if (statusFilter    && i.status !== statusFilter) return false;
       if (typeFilter    && i.type !== typeFilter) return false;
       return i.title.toLowerCase().includes(q) || i.prereq.toLowerCase().includes(q);
     })
@@ -191,20 +218,21 @@ export default function MCUViewer() {
   filtered.forEach(i => (grouped[i.phase] = grouped[i.phase] || []).push(i));
   const phaseKeys = Object.keys(grouped).map(Number).sort((a, b) => a - b);
 
-  const totalWatched  = items.filter(i => i.watched).length;
+  const totalWatched  = items.filter(i => i.status === 'watched').length;
   const essTotal      = items.filter(i => i.essential).length;
-  const essWatched    = items.filter(i => i.essential && i.watched).length;
+  const essWatched    = items.filter(i => i.essential && i.status === 'watched').length;
   const pct           = Math.round((totalWatched / items.length) * 100);
 
   return (
-    <div style={{ minHeight: '100vh', background: '#07070f', color: '#cdd4e4', fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div style={{ minHeight: '100dvh', background: '#07070f', color: '#cdd4e4', fontFamily: "'Rajdhani', system-ui, sans-serif", display: 'flex', flexDirection: 'column' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
-        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #07070f; }
         ::-webkit-scrollbar-thumb { background: #18182a; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #242435; }
         input, button, select { font-family: inherit; }
         input:focus { outline: none; }
         button:focus { outline: none; }
@@ -242,6 +270,34 @@ export default function MCUViewer() {
         }
         .section-up { animation: sectionUp 0.4s ease both; }
 
+        /* status dropdown */
+        .status-dropdown {
+          position: absolute;
+          top: calc(100% + 6px);
+          right: 0;
+          background: #0d0d1c;
+          border: 1px solid #181828;
+          border-radius: 10px;
+          overflow: hidden;
+          z-index: 100;
+          box-shadow: 0 14px 44px rgba(0,0,0,0.7);
+          min-width: 140px;
+        }
+        .status-opt {
+          padding: 10px 14px;
+          cursor: pointer;
+          font-size: 13px;
+          color: #8892aa;
+          transition: all 0.15s;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          border-bottom: 1px solid #0c0c18;
+        }
+        .status-opt:last-child { border-bottom: none; }
+        .status-opt:hover { background: #101022; color: #c5cde0; }
+        .status-opt.active { color: #3ec47a; font-weight: 600; }
+
         /* watch button */
         .wbtn {
           width: 34px; height: 34px; border-radius: 50%;
@@ -249,6 +305,7 @@ export default function MCUViewer() {
           display: flex; align-items: center; justify-content: center;
           transition: transform 0.18s, box-shadow 0.2s, background 0.2s, border-color 0.2s;
           flex-shrink: 0;
+          position: relative;
         }
         .wbtn:hover  { transform: scale(1.14); }
         .wbtn:active { transform: scale(0.9); }
@@ -281,20 +338,20 @@ export default function MCUViewer() {
           padding: 6px 14px; border-radius: 999px;
           border: 1px solid #181828; background: #0d0d1c;
           cursor: pointer; font-size: 12px; font-weight: 600;
-          letter-spacing: 0.05em; color: #334;
+          letter-spacing: 0.05em; color: #8892aa;
           transition: all 0.18s;
         }
-        .fpill:hover { border-color: #242438; color: #667; }
+        .fpill:hover { border-color: #242438; color: #c5cde0; }
 
         /* sort dropdown item */
         .sopt {
           padding: 10px 18px;
           font-family: 'Bebas Neue', sans-serif;
           font-size: 14px; letter-spacing: 2px;
-          cursor: pointer; color: #445;
+          cursor: pointer; color: #8892aa;
           transition: background 0.15s, color 0.15s;
         }
-        .sopt:hover  { background: #101022; color: #aab; }
+        .sopt:hover  { background: #101022; color: #c5cde0; }
         .sopt.picked { color: #e8b84b; }
 
         /* row hover scan */
@@ -315,18 +372,18 @@ export default function MCUViewer() {
       `}</style>
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <header className="hexbg" style={{ background: 'linear-gradient(180deg,#0e0e20 0%,#07070f 100%)', borderBottom: '1px solid #11111f', padding: '40px 24px 30px' }}>
+      <header className="hexbg" style={{ background: 'linear-gradient(180deg,#0e0e20 0%,#07070f 100%)', borderBottom: '1px solid #11111f', padding: '40px 24px 30px', flexShrink: 0 }}>
         <div style={{ maxWidth: 1080, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24, marginBottom: 30 }}>
 
             {/* Title */}
             <div>
-              <div style={{ fontFamily: "'Bebas Neue', sans-serif", lineHeight: 0.9, marginBottom: 10 }}>
+              <div style={{ fontFamily: "'Orbitron', 'Bebas Neue', sans-serif", lineHeight: 0.9, marginBottom: 10, fontWeight: 700 }}>
                 <div style={{ fontSize: 64, letterSpacing: 5, color: '#c0392b', textShadow: '0 0 50px rgba(192,57,43,0.45)' }}>MCU</div>
-                <div style={{ fontSize: 38, letterSpacing: 8, color: '#dde3ee' }}>VIEWING ORDER</div>
-                <div style={{ fontSize: 14, letterSpacing: 6, color: '#1c1c30', marginTop: 4 }}>COMPLETE CHRONOLOGICAL GUIDE</div>
+                <div style={{ fontSize: 38, letterSpacing: 8, color: '#f0f5f9' }}>VIEWING ORDER</div>
+                <div style={{ fontSize: 14, letterSpacing: 6, color: '#667888', marginTop: 4 }}>COMPLETE CHRONOLOGICAL GUIDE</div>
               </div>
-              <div style={{ fontSize: 11, color: '#1c1c30', letterSpacing: 3, fontFamily: "'Bebas Neue', sans-serif" }}>
+              <div style={{ fontSize: 11, color: '#667888', letterSpacing: 3, fontFamily: "'Bebas Neue', sans-serif" }}>
                 PHASES 1–6  ·  {items.length} ENTRIES  ·  2025
               </div>
             </div>
@@ -334,14 +391,14 @@ export default function MCUViewer() {
             {/* Stat cards */}
             <div style={{ display: 'flex', gap: 10 }}>
               {[
-                { label: 'WATCHED',   cur: totalWatched, tot: items.length, color: '#4a9ede', glow: 'rgba(74,158,222,0.3)' },
+                { label: 'WATCHED',   cur: totalWatched, tot: items.length, color: '#3ec47a', glow: 'rgba(62,196,122,0.3)' },
                 { label: 'ESSENTIAL', cur: essWatched,   tot: essTotal,     color: '#e8b84b', glow: 'rgba(232,184,75,0.3)' },
               ].map(s => (
                 <div key={s.label} style={{ background: '#0d0d1c', border: '1px solid #11111f', borderRadius: 12, padding: '14px 20px', minWidth: 112, textAlign: 'center' }}>
                   <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: s.color, lineHeight: 1, textShadow: `0 0 20px ${s.glow}` }}>
-                    {s.cur}<span style={{ fontSize: 20, color: '#18182a' }}>/{s.tot}</span>
+                    {s.cur}<span style={{ fontSize: 20, color: '#667888' }}>/{s.tot}</span>
                   </div>
-                  <div style={{ fontSize: 10, letterSpacing: 2, color: '#1c1c30', marginTop: 4, fontFamily: "'Bebas Neue', sans-serif" }}>{s.label}</div>
+                  <div style={{ fontSize: 10, letterSpacing: 2, color: '#667888', marginTop: 4, fontFamily: "'Bebas Neue', sans-serif" }}>{s.label}</div>
                 </div>
               ))}
             </div>
@@ -349,9 +406,9 @@ export default function MCUViewer() {
 
           {/* Progress bar */}
           <div style={{ background: '#0d0d1c', borderRadius: 999, height: 8, overflow: 'hidden', position: 'relative', marginBottom: 8 }}>
-            <div className="sweep" style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg, #8e0000 0%, #c0392b 30%, #e05252 65%, #e8b84b 100%)', borderRadius: 999, transition: 'width 0.7s cubic-bezier(.4,0,.2,1)', position: 'relative', overflow: 'hidden' }} />
+            <div className="sweep" style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg, #8e0000 0%, #c0392b 30%, #e05252 65%, #3ec47a 100%)', borderRadius: 999, transition: 'width 0.7s cubic-bezier(.4,0,.2,1)', position: 'relative', overflow: 'hidden' }} />
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#1c1c30', letterSpacing: 2, fontFamily: "'Bebas Neue', sans-serif" }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#667888', letterSpacing: 2, fontFamily: "'Bebas Neue', sans-serif" }}>
             <span>{pct}% COMPLETE</span>
             <span>{items.length - totalWatched} REMAINING</span>
           </div>
@@ -359,11 +416,11 @@ export default function MCUViewer() {
       </header>
 
       {/* ━━ PHASE NAVBAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <nav style={{ background: '#09091a', borderBottom: '1px solid #11111f', position: 'sticky', top: 0, zIndex: 50, overflowX: 'auto' }}>
+      <nav style={{ background: '#09091a', borderBottom: '1px solid #11111f', position: 'sticky', top: 0, zIndex: 50, overflowX: 'auto', flexShrink: 0 }}>
         <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex' }}>
           {PHASES.map(ph => (
             <button key={ph.id} className={`ntab ${activePhase === ph.id ? 'on' : ''}`}
-              style={{ color: activePhase === ph.id ? ph.color : '#222238' }}
+              style={{ color: activePhase === ph.id ? ph.color : '#667888' }}
               onClick={() => scrollTo(ph.id)}>
               {ph.name}
             </button>
@@ -372,14 +429,14 @@ export default function MCUViewer() {
       </nav>
 
       {/* ━━ FILTER BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ background: '#08081a', borderBottom: '1px solid #0f0f1e', padding: '11px 24px', position: 'sticky', top: 44, zIndex: 40 }}>
+      <div style={{ background: '#08081a', borderBottom: '1px solid #0f0f1e', padding: '11px 24px', position: 'sticky', top: 44, zIndex: 40, overflowX: 'auto', flexShrink: 0 }}>
         <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
 
           {/* Search */}
           <div style={{ position: 'relative', flex: '1 1 190px', minWidth: 150 }}>
-            <Search size={13} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#222238' }} />
+            <Search size={13} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#667888' }} />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..."
-              style={{ width: '100%', background: '#0d0d1c', border: '1px solid #181828', borderRadius: 999, padding: '7px 12px 7px 30px', color: '#8892aa', fontSize: 12, letterSpacing: 0.3 }} />
+              style={{ width: '100%', background: '#0d0d1c', border: '1px solid #181828', borderRadius: 999, padding: '7px 12px 7px 30px', color: '#c5cde0', fontSize: 12, letterSpacing: 0.3, fontFamily: 'inherit' }} />
           </div>
 
           {/* Sort */}
@@ -420,24 +477,24 @@ export default function MCUViewer() {
             Essential
           </button>
 
-          {/* Watched */}
+          {/* Status filter */}
           <button className="fpill"
             style={watchedOnly ? { borderColor: '#3ec47a', background: '#3ec47a18', color: '#3ec47a' } : {}}
             onClick={() => setWatchedOnly(o => !o)}>
-            <Eye size={11} />
+            <Check size={11} />
             Watched
           </button>
 
-          <div style={{ marginLeft: 'auto', fontFamily: "'Bebas Neue', sans-serif", fontSize: 12, color: '#181828', letterSpacing: 2 }}>
+          <div style={{ marginLeft: 'auto', fontFamily: "'Bebas Neue', sans-serif", fontSize: 12, color: '#667888', letterSpacing: 2 }}>
             {filtered.length} RESULTS
           </div>
         </div>
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '36px 24px 90px' }}>
+      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '36px 24px 90px', flex: 1, width: '100%', overflow: 'auto' }}>
         {phaseKeys.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '100px 0', fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: '#181828', letterSpacing: 4 }}>
+          <div style={{ textAlign: 'center', padding: '100px 0', fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: '#667888', letterSpacing: 4 }}>
             NO RESULTS — ADJUST YOUR FILTERS
           </div>
         )}
@@ -445,7 +502,7 @@ export default function MCUViewer() {
         {phaseKeys.map(pid => {
           const ph   = PHASES.find(p => p.id === pid);
           const rows = grouped[pid];
-          const done = rows.filter(r => r.watched).length;
+          const done = rows.filter(r => r.status === 'watched').length;
           const phasePct = rows.length ? Math.round((done / rows.length) * 100) : 0;
 
           return (
@@ -460,10 +517,10 @@ export default function MCUViewer() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
                 <div style={{ width: 4, height: 42, background: ph.color, borderRadius: 2, flexShrink: 0, boxShadow: `0 0 16px ${ph.glow}` }} />
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 24, letterSpacing: 6, color: ph.color, lineHeight: 1, textShadow: `0 0 22px ${ph.glow}` }}>
+                  <div style={{ fontFamily: "'Orbitron', 'Bebas Neue', sans-serif", fontSize: 24, letterSpacing: 6, color: ph.color, lineHeight: 1, textShadow: `0 0 22px ${ph.glow}`, fontWeight: 700 }}>
                     {ph.name}
                   </div>
-                  <div style={{ fontSize: 10, color: '#1c1c30', letterSpacing: 2, fontFamily: "'Bebas Neue', sans-serif", marginTop: 2 }}>
+                  <div style={{ fontSize: 10, color: '#667888', letterSpacing: 2, fontFamily: "'Bebas Neue', sans-serif", marginTop: 2 }}>
                     {done}/{rows.length} WATCHED · {phasePct}%
                   </div>
                 </div>
@@ -478,6 +535,7 @@ export default function MCUViewer() {
                 {rows.map((item, i) => {
                   const m = TYPE_META[item.type];
                   const showPre = !NO_PREREQ.has(item.prereq);
+                  const statusMeta = STATUS_META[item.status] || STATUS_META.unwatched;
                   return (
                     <div
                       key={item.id}
@@ -488,7 +546,7 @@ export default function MCUViewer() {
                         alignItems: 'center',
                         padding: '0 16px',
                         borderBottom: i < rows.length - 1 ? '1px solid #0c0c18' : 'none',
-                        background: item.watched
+                        background: item.status === 'watched'
                           ? `${ph.bg}`
                           : i % 2 === 0 ? '#0b0b18' : '#080814',
                         minHeight: 54,
@@ -497,13 +555,13 @@ export default function MCUViewer() {
                       }}
                     >
                       {/* Watched glow overlay */}
-                      {item.watched && (
+                      {item.status === 'watched' && (
                         <div style={{ position: 'absolute', inset: 0, background: ph.color, borderRadius: 0, opacity: 0, animation: 'glowPulse 3s ease-in-out infinite', pointerEvents: 'none' }} />
                       )}
 
                       {/* Order number */}
-                      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 1, color: item.watched ? ph.color : '#1c1c2e', transition: 'color 0.3s', position: 'relative' }}>
-                        {item.watched ? '✓' : item.order}
+                      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 1, color: item.status === 'watched' ? ph.color : '#667888', transition: 'color 0.3s', position: 'relative' }}>
+                        {item.status === 'watched' ? '✓' : item.order}
                       </div>
 
                       {/* Title block */}
@@ -511,10 +569,11 @@ export default function MCUViewer() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
                           <span style={{
                             fontSize: 13.5, fontWeight: 500, lineHeight: 1.4,
-                            color: item.watched ? '#202035' : '#c5cde0',
-                            textDecoration: item.watched ? 'line-through' : 'none',
-                            textDecorationColor: '#1c2028',
+                            color: item.status === 'watched' ? '#667888' : '#f0f5f9',
+                            textDecoration: item.status === 'watched' ? 'line-through' : 'none',
+                            textDecorationColor: '#667888',
                             transition: 'color 0.3s',
+                            fontFamily: "'Rajdhani', sans-serif",
                           }}>
                             {item.title}
                           </span>
@@ -522,33 +581,33 @@ export default function MCUViewer() {
                             <m.Icon size={9} />{m.label.toUpperCase()}
                           </span>
                           {!item.essential && (
-                            <span style={{ fontSize: 9, color: '#18182a', background: '#0c0c1c', border: '1px solid #14141e', borderRadius: 3, padding: '1px 5px', letterSpacing: 1, fontFamily: "'Bebas Neue', sans-serif" }}>
+                            <span style={{ fontSize: 9, color: '#667888', background: '#0c0c1c', border: '1px solid #14141e', borderRadius: 3, padding: '1px 5px', letterSpacing: 1, fontFamily: "'Bebas Neue', sans-serif" }}>
                               OPT
                             </span>
                           )}
                         </div>
                         {showPre && (
-                          <div style={{ fontSize: 10, color: '#1a1a2c', marginTop: 3 }}>
+                          <div style={{ fontSize: 10, color: '#667888', marginTop: 3 }}>
                             Needs: {item.prereq}
                           </div>
                         )}
                       </div>
 
                       {/* Year */}
-                      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 1, color: '#1c1c2e', textAlign: 'center', position: 'relative' }}>
+                      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 1, color: '#667888', textAlign: 'center', position: 'relative' }}>
                         {item.year}
                       </div>
 
-                      {/* Watch button */}
+                      {/* Status button with dropdown */}
                       <div style={{ display: 'flex', justifyContent: 'flex-end', position: 'relative' }}>
-                        <button className="wbtn" onClick={() => toggle(item.id)}
+                        <button className="wbtn" onClick={() => cycleStatus(item.id)}
                           style={{
-                            background: item.watched ? `${ph.color}22` : 'rgba(255,255,255,0.025)',
-                            color: item.watched ? ph.color : '#1c1c2e',
-                            border: `1px solid ${item.watched ? ph.color + '66' : '#131325'}`,
-                            boxShadow: item.watched ? `0 0 12px ${ph.glow}` : 'none',
+                            background: statusMeta.bg,
+                            color: statusMeta.color,
+                            border: `1px solid ${statusMeta.color}66`,
+                            boxShadow: item.status !== 'unwatched' ? `0 0 12px ${statusMeta.color}40` : 'none',
                           }}>
-                          {item.watched ? <Eye size={14} /> : <EyeOff size={14} />}
+                          <statusMeta.Icon size={14} />
                         </button>
                       </div>
                     </div>
@@ -559,7 +618,7 @@ export default function MCUViewer() {
           );
         })}
 
-        <div style={{ textAlign: 'center', marginTop: 60, fontFamily: "'Bebas Neue', sans-serif", fontSize: 10, color: '#0e0e1c', letterSpacing: 4 }}>
+        <div style={{ textAlign: 'center', marginTop: 60, fontFamily: "'Bebas Neue', sans-serif", fontSize: 10, color: '#667888', letterSpacing: 4 }}>
           MCU VIEWING ORDER  ·  PHASES 1–6  ·  PROGRESS SAVED TO LOCALSTORAGE
         </div>
       </main>

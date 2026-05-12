@@ -93,14 +93,14 @@ jobs:
         run: |
           echo "Building release APK..."
           sed -i '/org.gradle.java.home/d' gradle.properties 2>/dev/null || true
-          ./gradlew assembleRelease --no-daemon --stacktrace
+          ./gradlew clean assembleDebug --no-daemon --stacktrace
 
       - name: Find APK
         id: find_apk
         run: |
-          APK=$(find ./android -name "app-release.apk" -type f | head -1)
+          APK=$(find ./android -name "app-debug.apk" -type f | head -1)
           if [ -z "$APK" ]; then
-            echo "ERROR: app-release.apk not found!"
+            echo "ERROR: app-debug.apk not found!"
             find ./android -name "*.apk" -type f
             exit 1
           fi
@@ -111,7 +111,7 @@ jobs:
       - name: Prepare release asset
         run: |
           APK_PATH="${{ steps.find_apk.outputs.apk }}"
-          NEW_NAME="MCU-Viewing-Order-${{ steps.version.outputs.version }}-release.apk"
+          NEW_NAME="MCU-Viewing-Order-${{ steps.version.outputs.version }}-debug.apk"
           cp "$APK_PATH" "$NEW_NAME"
           echo "✅ APK ready: $NEW_NAME"
           ls -lh "$NEW_NAME"
@@ -123,7 +123,7 @@ jobs:
           name: "MCU Viewing Order v${{ steps.version.outputs.version }}"
           draft: false
           prerelease: false
-          files: MCU-Viewing-Order-${{ steps.version.outputs.version }}-release.apk
+          files: MCU-Viewing-Order-${{ steps.version.outputs.version }}-debug.apk
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
