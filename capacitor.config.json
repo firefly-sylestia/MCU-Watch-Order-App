@@ -1,0 +1,21 @@
+{
+  "appId": "com.mcuviewingorder.app",
+  "appName": "MCU Viewing Order",
+  "webDir": "dist",
+  "version": "1.1.6",
+  "server": {
+    "androidScheme": "https",
+    "allowNavigation": [
+      "image.pollinations.ai",
+      "*.pollinations.ai"
+    ]
+  },
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
+}
