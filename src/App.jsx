@@ -150,6 +150,7 @@ export default function MCUViewer() {
   const sortRef    = useRef(null);
   const obsRef     = useRef(null);
   const pressRef   = useRef({});
+  const longPressRef = useRef({});
 
   // Load saved
   useEffect(() => {
@@ -423,7 +424,7 @@ export default function MCUViewer() {
       </header>
 
       {/* ━━ PHASE NAVBAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <nav style={{ background: '#09091a', borderBottom: '1px solid #11111f', position: 'sticky', top: 0, zIndex: 50, overflowX: 'auto', flexShrink: 0 }}>
+      <nav style={{ background: '#09091a', borderBottom: '1px solid #11111f', overflowX: 'auto', flexShrink: 0 }}>
         <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex' }}>
           {PHASES.map(ph => (
             <button key={ph.id} className={`ntab ${activePhase === ph.id ? 'on' : ''}`}
@@ -436,7 +437,7 @@ export default function MCUViewer() {
       </nav>
 
       {/* ━━ FILTER BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━���━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ background: '#08081a', borderBottom: '1px solid #0f0f1e', padding: '11px 24px', position: 'sticky', top: 44, zIndex: 40, overflowX: 'auto', flexShrink: 0 }}>
+      <div style={{ background: '#08081a', borderBottom: '1px solid #0f0f1e', padding: '11px 24px', overflowX: 'auto', flexShrink: 0 }}>
         <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
 
           {/* Search */}
@@ -468,6 +469,7 @@ export default function MCUViewer() {
             const on = typeFilter === t;
             return (
               <button key={t} className="fpill"
+                title={m.label}
                 style={on ? { borderColor: m.color, background: m.color + '18', color: m.color } : {}}
                 onClick={() => setTypeFilter(on ? null : t)}>
                 <m.Icon size={11} />
@@ -478,6 +480,7 @@ export default function MCUViewer() {
 
           {/* Essential */}
           <button className="fpill"
+            title="Show only essential MCU content"
             style={essentialOnly ? { borderColor: '#e8b84b', background: '#e8b84b18', color: '#e8b84b' } : {}}
             onClick={() => setEssOnly(o => !o)}>
             <Star size={11} />
@@ -486,6 +489,7 @@ export default function MCUViewer() {
 
           {/* Status filter */}
           <button className="fpill"
+            title="Show only watched items"
             style={watchedOnly ? { borderColor: '#3ec47a', background: '#3ec47a18', color: '#3ec47a' } : {}}
             onClick={() => setWatchedOnly(o => !o)}>
             <Check size={11} />
@@ -608,24 +612,29 @@ export default function MCUViewer() {
                       {/* Status button with dropdown */}
                       <div style={{ display: 'flex', justifyContent: 'flex-end', position: 'relative' }}>
                         <button className="wbtn" 
+                          title={statusMeta.label}
                           onMouseDown={() => {
+                            longPressRef.current[item.id] = false;
                             pressRef.current[item.id] = setTimeout(() => {
+                              longPressRef.current[item.id] = true;
                               setStatusDropdown(item.id);
                             }, 500);
                           }}
                           onMouseUp={() => {
                             clearTimeout(pressRef.current[item.id]);
-                            if (statusDropdown !== item.id) cycleStatus(item.id);
+                            if (!longPressRef.current[item.id]) cycleStatus(item.id);
                           }}
                           onMouseLeave={() => clearTimeout(pressRef.current[item.id])}
                           onTouchStart={() => {
+                            longPressRef.current[item.id] = false;
                             pressRef.current[item.id] = setTimeout(() => {
+                              longPressRef.current[item.id] = true;
                               setStatusDropdown(item.id);
                             }, 500);
                           }}
                           onTouchEnd={() => {
                             clearTimeout(pressRef.current[item.id]);
-                            if (statusDropdown !== item.id) cycleStatus(item.id);
+                            if (!longPressRef.current[item.id]) cycleStatus(item.id);
                           }}
                           style={{
                             background: statusMeta.bg,
