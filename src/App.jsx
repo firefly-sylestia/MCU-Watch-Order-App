@@ -213,7 +213,6 @@ export default function MCUViewer() {
   const [detailItem,     setDetailItem]     = useState(null);
   const [detailData,     setDetailData]     = useState(null);
   const [detailLoading,  setDetailLoading]  = useState(false);
-  const [sessionHours,   setSessionHours]   = useState(2);
   const [posterCache,    setPosterCache]    = useState({});
 
   const phaseRefs  = useRef({});
@@ -423,17 +422,6 @@ export default function MCUViewer() {
   const filmCount = activeItems.filter(i => i.type === 'film').length;
   const estRuntimeHours = Math.round(((filmCount * 2.3) + (seriesCount * 6.0)) * 10) / 10;
   const remainingHours = Math.max(0, Math.round((estRuntimeHours * (1 - pct / 100)) * 10) / 10);
-  const plannedItems = useMemo(() => {
-    let budget = sessionHours * 60;
-    const list = [];
-    for (const i of filtered) {
-      if (i.status === 'watched') continue;
-      const mins = i.type === 'film' ? 138 : (i.episodes || 6) * 40;
-      if (mins <= budget) { list.push(i); budget -= mins; }
-      if (list.length >= 3) break;
-    }
-    return list;
-  }, [filtered, sessionHours]);
   const phaseGradient = useMemo(() => {
     let cursor = 0;
     const stops = [];
@@ -745,20 +733,12 @@ export default function MCUViewer() {
 
 
       <div style={{ background: T.switcherBg, borderBottom: `1px solid ${T.switcherBorder}`, padding: '10px 24px', flexShrink: 0 }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 10, padding: '0 24px' }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 10, padding: '0 24px' }}>
           <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
             <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Continue Watching</div>
             <div style={{ fontSize: 18, marginTop: 4 }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</div>
             <div style={{ fontSize: 13, color: T.textMuted, marginTop: 5 }}>{recentActivity.length ? `Recent: ${recentActivity[0].title}` : 'No recent activity'}</div>
             {nextUnwatched && <button className="fpill" style={{ marginTop: 8 }} onClick={() => { setActivePhase(nextUnwatched.phase); scrollTo(nextUnwatched.phase); }}>Jump to Next</button>}
-          </div>
-          <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
-            <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Session Planner</div>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6 }}>
-              <input type="range" min="1" max="6" step="0.5" value={sessionHours} onChange={(e) => setSessionHours(Number(e.target.value))} />
-              <span style={{ fontSize: 14 }}>{sessionHours}h</span>
-            </div>
-            <div style={{ fontSize: 13, marginTop: 6, color: T.textMuted }}>{plannedItems.map(x => x.title).join(' • ') || 'No fit found'}</div>
           </div>
           <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
             <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Analytics</div>
@@ -783,7 +763,7 @@ export default function MCUViewer() {
           <div style={{ position: 'relative', flex: '1 1 170px', minWidth: 130 }}>
             <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search titles..."
-              style={{ width: '100%', background: T.inputBg, border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '5px 11px 5px 26px', color: T.inputColor, fontSize: 11, letterSpacing: 0.3 }} />
+              style={{ width: '100%', background: T.inputBg, border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '8px 12px 8px 30px', color: T.inputColor, fontSize: 14, letterSpacing: 0.3 }} />
           </div>
           {/* Sort */}
           <div ref={sortRef} style={{ position: 'relative' }} onMouseEnter={() => setSortOpen(true)} onMouseLeave={() => setSortOpen(false)}>
@@ -854,7 +834,7 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} style={{ overflowY: 'auto', overflowX: 'hidden', flex: 1, WebkitOverflowScrolling: 'touch', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
+      <main ref={mainRef} style={{ overflow: 'visible', flex: 1, '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
 
         
 
