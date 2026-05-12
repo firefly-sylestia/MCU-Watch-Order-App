@@ -217,12 +217,6 @@ export default function MCUViewer() {
   const [posterCache,    setPosterCache]    = useState({});
   const [settingsOpen,   setSettingsOpen]   = useState(false);
   const [profile,        setProfile]        = useState({ name: '', age: '', gender: '', character: 'Iron Man', pfp: '' });
-  const [timelineMode,   setTimelineMode]   = useState('sacred');
-  const [emotionGoal,    setEmotionGoal]    = useState('hopeful');
-  const [canonConfidence,setCanonConfidence]= useState(70);
-  const [budgetHours,    setBudgetHours]    = useState(12);
-  const [payoffGoal,     setPayoffGoal]     = useState('Secret Wars setup');
-  const [artifactFilter, setArtifactFilter] = useState('All');
 
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
@@ -374,7 +368,12 @@ export default function MCUViewer() {
     reader.readAsText(file);
   };
   const CHARACTER_PFPS = {
-    'Iron Man': '🤖', 'Captain America': '🛡️', Thor: '⚡', Loki: '🌀', 'Scarlet Witch': '🔮', SpiderMan: '🕷️'
+    'Iron Man': 'https://ui-avatars.com/api/?name=Iron+Man&background=7a0000&color=fff',
+    'Captain America': 'https://ui-avatars.com/api/?name=Captain+America&background=0f3d91&color=fff',
+    Thor: 'https://ui-avatars.com/api/?name=Thor&background=2c3e50&color=fff',
+    Loki: 'https://ui-avatars.com/api/?name=Loki&background=145a32&color=fff',
+    'Scarlet Witch': 'https://ui-avatars.com/api/?name=Scarlet+Witch&background=8e2430&color=fff',
+    'Spider-Man': 'https://ui-avatars.com/api/?name=Spider-Man&background=b22222&color=fff'
   };
 
   const coreIds = useMemo(() => new Set(ESSENTIAL_LIST.map(i => i.id)), []);
@@ -405,6 +404,7 @@ export default function MCUViewer() {
       if (watchedOnly && i.status !== 'watched') return false;
       if (statusFilter && i.status !== statusFilter) return false;
       if (typeFilter && i.type !== typeFilter) return false;
+      if (activePhase && i.phase !== activePhase) return false;
       return i.title.toLowerCase().includes(q) || i.prereq.toLowerCase().includes(q);
     }).sort((a, b) =>
       sortBy === 'title' ? a.title.localeCompare(b.title) :
@@ -414,7 +414,7 @@ export default function MCUViewer() {
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, typeFilter, q, sortBy, coreIds]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, q, sortBy, coreIds]);
 
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
@@ -704,7 +704,7 @@ export default function MCUViewer() {
         @media (max-width: 767px) {
           .header-inner { padding: 10px 14px 8px !important; }
           .fpill{padding:7px 14px !important;font-size:14px !important}
-          .rrow{grid-template-columns:32px 52px minmax(0,1fr) 30px !important;gap:10px;padding:12px}
+          .rrow{grid-template-columns:28px 44px minmax(0,1fr) 52px 24px !important;gap:8px;padding:12px}
           .poster{width:44px;height:64px}
         }
         .header-title-mcu { font-size: clamp(48px, 8vw, 96px) !important; letter-spacing: clamp(2px, 0.8vw, 6px) !important; margin: 0 !important; }
@@ -724,9 +724,9 @@ export default function MCUViewer() {
         main::-webkit-scrollbar-thumb{background:${T.scrollThumb};border-radius:4px}
         main::-webkit-scrollbar-thumb:hover{background:${T.scrollThumbH}}
       `}</style>
-      <div ref={settingsRef} style={{ position: 'fixed', top: 12, right: 12, zIndex: 260, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div title={profile.name || 'Profile'} style={{ width: 40, height: 40, borderRadius: '50%', border: `1px solid ${T.surfaceBorder}`, display: 'grid', placeItems: 'center', background: darkMode ? 'rgba(16,18,35,0.92)' : '#fff', overflow: 'hidden', fontSize: 20 }}>
-          {profile.pfp ? <img src={profile.pfp} alt="profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (CHARACTER_PFPS[profile.character] || '👤')}
+      <div ref={settingsRef} style={{ position: 'fixed', top: 16, right: 14, zIndex: 260, display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div title={profile.name || 'Profile'} style={{ width: 44, height: 44, borderRadius: '50%', border: `1px solid ${T.surfaceBorder}`, display: 'grid', placeItems: 'center', background: darkMode ? 'rgba(16,18,35,0.92)' : '#fff', overflow: 'hidden', flexShrink: 0 }}>
+          <img src={profile.pfp || CHARACTER_PFPS[profile.character] || CHARACTER_PFPS['Iron Man']} alt="profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
         <button className="theme-btn" onClick={() => setSettingsOpen(o => !o)} aria-label="Open settings menu" title="Settings" style={{ width: 40, height: 40, background: darkMode ? 'rgba(16,18,35,0.92)' : '#fff' }}>
           <Settings size={15} />
@@ -753,9 +753,6 @@ export default function MCUViewer() {
               <input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} />
             </label>
             <button className="fpill" onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); }}>Reset Filters</button>
-            <div style={{ marginTop: 6, fontSize: 12, color: T.textMuted, lineHeight: 1.5 }}>
-              Advanced features 1–10 are enabled as part of the default experience where applicable; only user-preference controls are shown here.
-            </div>
           </div>
         )}
       </div>
@@ -950,40 +947,7 @@ export default function MCUViewer() {
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} style={{ overflow: 'visible', flex: '0 0 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
-        <section style={{ maxWidth: 'var(--content-max)', margin: '10px auto 0', padding: '0 var(--content-pad)' }}>
-          <div className="glass-grad" style={{ border: `1px solid ${T.surfaceBorder}`, borderRadius: 12, padding: 12 }}>
-            <div style={{ fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 2, color: T.textMuted, marginBottom: 10 }}>Narrative Intelligence Lab</div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {['sacred','studio','pov','whatif'].map(m => <button key={m} className="fpill" style={timelineMode===m?{color:'#c0392b'}:{}} onClick={()=>setTimelineMode(m)}>{m}</button>)}
-            </div>
-            <div style={{ marginTop: 10, fontSize: 13, color: T.textMuted }}>Causality Map: {filtered.slice(0,4).map(i=>i.title).join(' → ')} (mode: {timelineMode}).</div>
-            <div style={{ marginTop: 8, fontSize: 13, color: spoilerSafe ? '#e8b84b' : '#3ec47a' }}>Spoiler-Safe Adaptive UI: {spoilerSafe ? 'ON (hiding deep metadata)' : 'OFF (full metadata unlocked)'}</div>
-            <div style={{ marginTop: 8 }}>
-              <span style={{ fontSize: 12, color: T.textMuted }}>Emotional Arc:</span>{' '}
-              {['hopeful','mystery','grief','comedy'].map(e => <button key={e} className="fpill" style={{ padding: '4px 10px', marginLeft: 6, ...(emotionGoal===e?{color:'#c0392b'}:{}) }} onClick={()=>setEmotionGoal(e)}>{e}</button>)}
-            </div>
-            <div style={{ marginTop: 8, fontSize: 13 }}>Sequenced route: {emotionalRoute.slice(0,3).map(i=>i.title).join(' • ') || 'No route yet'}.</div>
-            <div style={{ marginTop: 8, fontSize: 13 }}>Character continuity heatmap: {characterHeat.map(x => `${x.c} ${x.score}%`).join(' | ')}.</div>
-            <div style={{ marginTop: 8, fontSize: 13 }}>Memory Sync score: {memoryScore}% · next checkpoint prompts appear after marking watched.</div>
-            <div style={{ marginTop: 8, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ fontSize: 12, color: T.textMuted }}>Artifact mode</span>
-              <select value={artifactFilter} onChange={e=>setArtifactFilter(e.target.value)} style={{ padding: '6px 8px', borderRadius: 8, background: T.inputBg, color: T.inputColor, border: `1px solid ${T.inputBorder}` }}>
-                <option>All</option>{Object.keys(artifacts).map(a => <option key={a}>{a}</option>)}
-              </select>
-              <span style={{ fontSize: 13 }}>{artifactFilter==='All'?'Select an artifact.':artifactRoute.map(i=>i.title).join(' → ')}</span>
-            </div>
-            <div style={{ marginTop: 8 }}>
-              <span style={{ fontSize: 12, color: T.textMuted }}>Canon confidence: {canonConfidence}%</span>
-              <input type="range" min="0" max="100" value={canonConfidence} onChange={e=>setCanonConfidence(Number(e.target.value))} style={{ width: '100%' }} />
-            </div>
-            <div style={{ marginTop: 8, display: 'grid', gridTemplateColumns: '120px 1fr', gap: 8 }}>
-              <input type="number" value={budgetHours} onChange={e=>setBudgetHours(e.target.value)} style={{ padding: '6px 8px', borderRadius: 8, background: T.inputBg, color: T.inputColor, border: `1px solid ${T.inputBorder}` }} />
-              <input value={payoffGoal} onChange={e=>setPayoffGoal(e.target.value)} style={{ padding: '6px 8px', borderRadius: 8, background: T.inputBg, color: T.inputColor, border: `1px solid ${T.inputBorder}` }} />
-            </div>
-            <div style={{ marginTop: 8, fontSize: 13 }}>Budget Optimizer ({payoffGoal}): {budgetRoute.slice(0,4).map(i=>`${i.title}(${i.est}h)`).join(' • ') || 'No fit'}.</div>
-            <div style={{ marginTop: 8, fontSize: 13, color: T.textMuted }}>Narrative Gap Simulator: skipping an entry shows severity + micro-recap patch in detail modal (based on prerequisites and phase distance).</div>
-          </div>
-        </section>
+        
 
         
 
