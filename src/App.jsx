@@ -930,6 +930,7 @@ export default function MCUViewer() {
           </div>
         </div>
         </div>
+        </div>
       </main>
 
       {/* ━━ STATUS DROPDOWN ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
