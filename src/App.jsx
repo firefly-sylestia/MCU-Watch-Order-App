@@ -485,9 +485,9 @@ export default function MCUViewer() {
         .sopt:hover{background:${T.sortHoverBg};color:${T.text};transform:translateX(4px)}
         .sopt.picked{color:#c0392b;font-weight:700}
 
-        .rrow{position:relative;transition:background 0.13s,transform 0.15s cubic-bezier(0.34,1.56,0.64,1);display:grid;align-items:center;grid-template-columns:40px 1fr 60px 38px;gap:14px;padding:14px 18px;border-bottom:1px solid ${T.rowBorder};min-height:68px}
+        .rrow{position:relative;transition:background 0.13s,transform 0.15s cubic-bezier(0.34,1.56,0.64,1);display:grid;align-items:center;grid-template-columns:40px minmax(0,1fr) 80px 38px;gap:14px;padding:14px 18px;border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:68px}
         .rrow:last-child{border-bottom:none}
-        .rrow:hover{background:${T.rowHoverBg} !important;transform:translateX(2px)}
+        .rrow:hover{background:${T.rowHoverBg} !important;transform:translateX(2px);border-left-color:#c0392b}
 
         .title-btn{background:none;border:none;cursor:pointer;text-align:left;padding:0;color:inherit;font-family:inherit;display:block;width:100%}
         .title-btn:focus-visible{outline:2px solid #c0392b;outline-offset:2px;border-radius:3px}
@@ -505,7 +505,8 @@ export default function MCUViewer() {
         .phase-sticky{
           position:sticky;top:0;z-index:90;
           display:flex;align-items:center;gap:8px;
-          overflow-x:auto;padding:10px 16px;
+          overflow-x:auto;padding:10px var(--content-pad);
+          max-width:var(--content-max);margin:0 auto;width:100%;
           background:${darkMode ? 'rgba(7,7,18,0.9)' : 'rgba(248,246,242,0.92)'};
           backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
           border-bottom:1px solid ${darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)'};
@@ -556,19 +557,15 @@ export default function MCUViewer() {
                 PHASES 1–6 &nbsp;·&nbsp; {activeItems.length} ENTRIES &nbsp;·&nbsp; {LIST_MODES.find(m => m.id === listMode)?.sublabel.toUpperCase()}
               </div>
             </div>
-            {/* Stat cards */}
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-              {[
-                { label: 'WATCHED',    cur: totalWatched, tot: activeItems.length, color: '#3ec47a', glow: 'rgba(62,196,122,0.35)'  },
-                { label: 'MUST-WATCH', cur: essWatched,   tot: essTotal,           color: '#e8b84b', glow: 'rgba(232,184,75,0.35)'  },
-              ].map(s => (
-                <div key={s.label} className="stat-card" style={{ background: T.statBg, border: `1px solid ${T.statBorder}`, borderRadius: 8, padding: '6px 12px', minWidth: 100, textAlign: 'center', boxShadow: darkMode ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'none' }}>
-                  <div className="stat-card-num" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(32px, 5vw, 56px)', letterSpacing: 1, color: s.color, lineHeight: 1, textShadow: darkMode ? `0 0 16px ${s.glow}` : 'none' }}>
-                    {s.cur}<span style={{ fontSize: 'clamp(18px, 3vw, 28px)', color: T.numFaint }}>/{s.tot}</span>
-                  </div>
-                  <div className="stat-card-label" style={{ fontSize: 'clamp(12px, 2vw, 16px)', letterSpacing: 2, color: T.textMuted, marginTop: 1, fontFamily: "'Bebas Neue',sans-serif" }}>{s.label}</div>
-                </div>
-              ))}
+            {/* Status dashboard */}
+            <div className="status-dashboard" style={{ background: T.statBg, border: `1px solid ${T.statBorder}`, borderRadius: 10, padding: '8px 14px', minWidth: 180, boxShadow: darkMode ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'none' }}>
+              <div className="stat-card-label" style={{ fontSize: 'clamp(11px, 1.8vw, 14px)', letterSpacing: 2, color: T.textMuted, fontFamily: "'Bebas Neue',sans-serif" }}>TOTAL WATCHED</div>
+              <div className="stat-card-num" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(36px, 5.5vw, 58px)', letterSpacing: 1, color: '#3ec47a', lineHeight: 1, textShadow: darkMode ? '0 0 16px rgba(62,196,122,0.35)' : 'none' }}>
+                {totalWatched}<span style={{ fontSize: 'clamp(18px, 3vw, 28px)', color: T.numFaint }}>/{activeItems.length}</span>
+              </div>
+              <div style={{ display: 'inline-flex', marginTop: 6, alignItems: 'center', gap: 6, borderRadius: 999, padding: '3px 10px', border: `1px solid ${darkMode ? '#e8b84b66' : '#e8b84baa'}`, background: darkMode ? 'rgba(232,184,75,0.14)' : 'rgba(232,184,75,0.10)', color: '#e8b84b', fontFamily: "'Bebas Neue',sans-serif", fontSize: 11, letterSpacing: 1.4 }}>
+                MUST-WATCH {essWatched}/{essTotal}
+              </div>
             </div>
           </div>
           {/* Master progress bar */}
@@ -584,7 +581,7 @@ export default function MCUViewer() {
 
       {/* ━━ LIST MODE SWITCHER ━━━━━━━━���━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: T.switcherBg, borderBottom: `1px solid ${T.switcherBorder}`, padding: '0 24px', flexShrink: 0 }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', padding: '0 24px', width: '100%' }}>
           {LIST_MODES.map(mode => {
             const isActive = listMode === mode.id;
             const modeItems = mode.id === 'core' ? items.filter(i => coreIds.has(i.id)) : items;
@@ -618,7 +615,7 @@ export default function MCUViewer() {
 
       {/* ━━ FILTER BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: T.filterBg, borderBottom: `1px solid ${T.filterBorder}`, padding: '8px 24px', overflowX: 'auto', flexShrink: 0 }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', width: '100%', padding: '0 24px' }}>
           {/* Search */}
           <div style={{ position: 'relative', flex: '1 1 170px', minWidth: 130 }}>
             <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
@@ -677,7 +674,7 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} style={{ overflowY: 'auto', overflowX: 'hidden', flex: 1, WebkitOverflowScrolling: 'touch' }}>
+      <main ref={mainRef} style={{ overflowY: 'auto', overflowX: 'hidden', flex: 1, WebkitOverflowScrolling: 'touch', '--content-max': '1200px', '--content-pad': '24px' }}>
 
         {/* ━━ STICKY PHASE NAV ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <nav aria-label="Phase navigation" className="phase-sticky">
@@ -693,7 +690,7 @@ export default function MCUViewer() {
               <button
                 key={ph.id}
                 className="ph-pill"
-                style={{ color: T.textMuted }}
+                style={{ color: isOn ? '#c0392b' : '#94a3b8', borderBottom: isOn ? `2px solid ${ph.color}` : '2px solid transparent' }}
                 onClick={() => scrollTo(ph.id)}
                 aria-label={`${ph.name} — ${phPct}% watched`}
               >
@@ -708,7 +705,7 @@ export default function MCUViewer() {
           })}
         </nav>
 
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 24px 80px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch" key={listMode}>
+        <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '24px var(--content-pad) 80px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch" key={listMode}>
         {phaseKeys.length === 0 && (
           <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: "'Bebas Neue',sans-serif", fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
             NO RESULTS — ADJUST YOUR FILTERS
@@ -733,12 +730,12 @@ export default function MCUViewer() {
                 <div className="phase-flash" style={{ position: 'absolute', inset: 0, background: ph.color, borderRadius: 12, pointerEvents: 'none', zIndex: 5 }} />
               )}
 
-              {/* ── Phase heading ── */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+              {/* ── Phase divider injected in list flow ── */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap', padding: '10px 0', borderBottom: `1px solid ${T.surfaceBorder}` }}>
                 <div style={{ width: 3, height: 38, background: ph.color, borderRadius: 2, flexShrink: 0, boxShadow: darkMode ? `0 0 12px ${ph.glow}` : 'none' }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: "'Orbitron',sans-serif", fontSize: 'clamp(24px, 3.6vw, 36px)', letterSpacing: 6, color: ph.color, lineHeight: 1, fontWeight: 700, textShadow: darkMode ? `0 0 18px ${ph.glow}` : 'none' }}>
-              Phase {ph.num}
+              {ph.name}
             </div>
             <div style={{ fontSize: 'clamp(11px, 2vw, 14px)', color: T.textMuted, letterSpacing: 3, fontFamily: "'Bebas Neue',sans-serif", marginTop: 1, textTransform: 'uppercase' }}>
                     {ph.tagline}
@@ -823,7 +820,7 @@ export default function MCUViewer() {
                         </button>
 
                         {/* Year and prereq in middle */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 100 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 80 }}>
                           <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(13px, 2vw, 15px)', letterSpacing: 2, color: T.text, textAlign: 'center', fontWeight: 600 }}>
                             {item.year}
                           </div>
