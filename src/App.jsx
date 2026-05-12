@@ -423,7 +423,7 @@ export default function MCUViewer() {
   };
 
   return (
-    <div style={{ width: '100%', height: '100dvh', background: T.appBg, color: T.text, fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'background 0.3s, color 0.3s' }}>
+    <div style={{ width: '100%', height: '100dvh', background: T.appBg, color: T.text, fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'background 0.32s cubic-bezier(0.34,1.56,0.64,1), color 0.32s cubic-bezier(0.34,1.56,0.64,1)' }} className="theme-switch">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -451,8 +451,17 @@ export default function MCUViewer() {
         @keyframes fadeIn{from{opacity:0;transform:scale(0.97) translateY(-4px)}to{opacity:1;transform:scale(1) translateY(0)}}
         .fade-in{animation:fadeIn 0.16s ease both}
 
-        @keyframes expandDown{from{opacity:0;max-height:0}to{opacity:1;max-height:300px}}
-        .expand-row{animation:expandDown 0.22s ease both;overflow:hidden}
+        @keyframes expandDown{from{opacity:0;max-height:0;padding-top:0;padding-bottom:0}to{opacity:1;max-height:600px;padding-top:10px;padding-bottom:10px}}
+        .expand-row{animation:expandDown 0.28s cubic-bezier(0.34,1.56,0.64,1) both;overflow:hidden}
+
+        @keyframes themeFadeSwitch{from{opacity:0}to{opacity:1}}
+        .theme-switch{animation:themeFadeSwitch 0.32s ease both}
+
+        @keyframes listModeSlide{from{opacity:0.8;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+        .list-mode-switch{animation:listModeSlide 0.24s cubic-bezier(0.34,1.56,0.64,1) both}
+
+        @keyframes contentStabilize{from{opacity:0}to{opacity:1}}
+        .content-stable{animation:contentStabilize 0.18s ease both}
 
         /* Phase 2: Micro-interactions */
         @keyframes buttonPulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,0.4)}70%{box-shadow:0 0 0 6px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
@@ -467,18 +476,18 @@ export default function MCUViewer() {
         .wbtn:hover{transform:scale(1.12)}
         .wbtn:active{transform:scale(0.88);animation:buttonPulse 0.4s}
 
-        .ntab{position:relative;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2.5px;padding:10px 16px;border:none;background:transparent;cursor:pointer;transition:color 0.2s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
+        .ntab{position:relative;font-family:'Bebas Neue',sans-serif;font-size:clamp(12px,2vw,16px);letter-spacing:2.5px;padding:10px 16px;border:none;background:transparent;cursor:pointer;transition:color 0.2s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
         .ntab::after{content:'';position:absolute;bottom:0;left:12px;right:12px;height:2px;border-radius:2px 2px 0 0;background:currentColor;transform:scaleX(0);transform-origin:center;transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1)}
         .ntab.on::after{transform:scaleX(1)}
 
-        .fpill{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:999px;border:1px solid ${T.pillBorder};background:${T.pillBg};cursor:pointer;font-size:11px;font-weight:600;letter-spacing:0.04em;color:${T.pillText};transition:all 0.16s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap}
-        .fpill:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText};transform:translateY(-1px)}
+        .fpill{display:flex;align-items:center;gap:5px;padding:6px 14px;border-radius:999px;border:1px solid ${T.pillBorder};background:${T.pillBg};cursor:pointer;font-size:clamp(11px,1.5vw,13px);font-weight:600;letter-spacing:0.04em;color:${T.pillText};transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap}
+        .fpill:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText};transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.1)}
 
-        .sopt{padding:9px 15px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;color:${T.pillText};transition:background 0.13s,color 0.13s}
-        .sopt:hover{background:${T.sortHoverBg};color:${T.text};transform:translateX(2px)}
+        .sopt{padding:11px 16px;font-family:'Bebas Neue',sans-serif;font-size:clamp(13px,1.8vw,15px);letter-spacing:2px;cursor:pointer;color:${T.pillText};transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1)}
+        .sopt:hover{background:${T.sortHoverBg};color:${T.text};transform:translateX(3px)}
         .sopt.picked{color:#c0392b}
 
-        .rrow{position:relative;transition:background 0.13s,transform 0.15s cubic-bezier(0.34,1.56,0.64,1);display:grid;align-items:center;grid-template-columns:38px 1fr 52px 32px;gap:10px;padding:11px 14px;border-bottom:1px solid ${T.rowBorder};min-height:56px}
+        .rrow{position:relative;transition:background 0.13s,transform 0.15s cubic-bezier(0.34,1.56,0.64,1);display:grid;align-items:center;grid-template-columns:38px 1fr 52px 32px;gap:12px;padding:13px 16px;border-bottom:1px solid ${T.rowBorder};min-height:62px}
         .rrow:last-child{border-bottom:none}
         .rrow:hover{background:${T.rowHoverBg} !important;transform:translateX(2px)}
 
@@ -518,15 +527,14 @@ export default function MCUViewer() {
         /* ── Mobile-compact header ── */
         @media (max-width: 767px) {
           .header-inner { padding: 10px 14px 8px !important; }
-          .header-title-mcu { font-size: 30px !important; letter-spacing: 2px !important; }
-          .header-title-sub { font-size: 16px !important; letter-spacing: 4px !important; }
-          .header-tagline { font-size: 9px !important; margin-top: 2px !important; }
-          .header-top-row { margin-bottom: 10px !important; gap: 8px !important; }
-          .stat-card { padding: 6px 10px !important; min-width: 80px !important; }
-          .stat-card-num { font-size: 20px !important; }
-          .stat-card-label { font-size: 8px !important; }
-          .progress-bar { height: 4px !important; margin-bottom: 3px !important; }
-          .progress-labels { font-size: 8px !important; }
+        .header-title-mcu { font-size: clamp(32px, 6vw, 56px) !important; letter-spacing: 3px !important; }
+        .header-title-sub { font-size: clamp(18px, 3.5vw, 32px) !important; letter-spacing: 5px !important; }
+        .header-tagline { font-size: clamp(10px, 1.8vw, 12px) !important; margin-top: 3px !important; }
+
+        .stat-card-num { font-size: clamp(22px, 3.5vw, 32px) !important; }
+        .stat-card-label { font-size: clamp(9px, 1.5vw, 11px) !important; }
+
+        .progress-labels { font-size: clamp(9px, 1.5vw, 11px) !important; }
         }
 
         /* hide default scrollbar on main while keeping functionality */
@@ -543,10 +551,9 @@ export default function MCUViewer() {
             {/* Title */}
             <div>
               <div style={{ fontFamily: "'Orbitron',sans-serif", lineHeight: 0.88, marginBottom: 10, fontWeight: 900 }}>
-                <div className="header-title-mcu" style={{ fontSize: 54, letterSpacing: 4, color: '#c0392b', textShadow: darkMode ? '0 0 44px rgba(192,57,43,0.5),0 2px 0 #7a0000' : '0 2px 8px rgba(192,57,43,0.2)' }}>MCU</div>
-                <div className="header-title-sub" style={{ fontSize: 28, letterSpacing: 7, color: T.text, marginTop: 2 }}>VIEWING ORDER</div>
-              </div>
-              <div className="header-tagline" style={{ fontSize: 10, color: T.textMuted, letterSpacing: 3, fontFamily: "'Bebas Neue',sans-serif", marginTop: 4 }}>
+      <div className="header-title-mcu" style={{ fontSize: 'clamp(32px, 6vw, 56px)', letterSpacing: 'clamp(2px, 0.5vw, 4px)', color: '#c0392b', textShadow: darkMode ? '0 0 44px rgba(192,57,43,0.5),0 2px 0 #7a0000' : '0 2px 8px rgba(192,57,43,0.2)' }}>MCU</div>
+      <div className="header-title-sub" style={{ fontSize: 'clamp(18px, 3.5vw, 32px)', letterSpacing: 'clamp(4px, 1vw, 7px)', color: T.text, marginTop: 3 }}>VIEWING ORDER</div>
+      <div className="header-tagline" style={{ fontSize: 'clamp(10px, 1.8vw, 12px)', color: T.textMuted, letterSpacing: 3, fontFamily: "'Bebas Neue',sans-serif", marginTop: 6 }}>
                 PHASES 1–6 &nbsp;·&nbsp; {activeItems.length} ENTRIES &nbsp;·&nbsp; {LIST_MODES.find(m => m.id === listMode)?.sublabel.toUpperCase()}
               </div>
             </div>
@@ -557,10 +564,10 @@ export default function MCUViewer() {
                 { label: 'MUST-WATCH', cur: essWatched,   tot: essTotal,           color: '#e8b84b', glow: 'rgba(232,184,75,0.35)'  },
               ].map(s => (
                 <div key={s.label} className="stat-card" style={{ background: T.statBg, border: `1px solid ${T.statBorder}`, borderRadius: 10, padding: '10px 16px', minWidth: 100, textAlign: 'center', boxShadow: darkMode ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'none' }}>
-                  <div className="stat-card-num" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, letterSpacing: 1, color: s.color, lineHeight: 1, textShadow: darkMode ? `0 0 16px ${s.glow}` : 'none' }}>
-                    {s.cur}<span style={{ fontSize: 16, color: T.numFaint }}>/{s.tot}</span>
-                  </div>
-                  <div className="stat-card-label" style={{ fontSize: 9, letterSpacing: 2, color: T.textMuted, marginTop: 2, fontFamily: "'Bebas Neue',sans-serif" }}>{s.label}</div>
+          <div className="stat-card-num" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(22px, 3.5vw, 32px)', letterSpacing: 1, color: s.color, lineHeight: 1, textShadow: darkMode ? `0 0 16px ${s.glow}` : 'none' }}>
+            {s.cur}<span style={{ fontSize: 'clamp(14px, 2vw, 18px)', color: T.numFaint }}>/{s.tot}</span>
+          </div>
+          <div className="stat-card-label" style={{ fontSize: 'clamp(9px, 1.5vw, 11px)', letterSpacing: 2, color: T.textMuted, marginTop: 3, fontFamily: "'Bebas Neue',sans-serif" }}>{s.label}</div>
                 </div>
               ))}
             </div>
@@ -702,7 +709,7 @@ export default function MCUViewer() {
           })}
         </nav>
 
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 24px 80px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 24px 80px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch" key={listMode}>
         {phaseKeys.length === 0 && (
           <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: "'Bebas Neue',sans-serif", fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
             NO RESULTS — ADJUST YOUR FILTERS
@@ -731,11 +738,10 @@ export default function MCUViewer() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
                 <div style={{ width: 3, height: 38, background: ph.color, borderRadius: 2, flexShrink: 0, boxShadow: darkMode ? `0 0 12px ${ph.glow}` : 'none' }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: "'Orbitron',sans-serif", fontSize: 18, letterSpacing: 5, color: ph.color, lineHeight: 1, fontWeight: 700, textShadow: darkMode ? `0 0 18px ${ph.glow}` : 'none' }}>
-                    {ph.name}
-                  </div>
-                  {/* Phase tagline — suggestion 1 */}
-                  <div style={{ fontSize: 9.5, color: T.textMuted, letterSpacing: 2.5, fontFamily: "'Bebas Neue',sans-serif", marginTop: 2, textTransform: 'uppercase' }}>
+            <div style={{ fontFamily: "'Orbitron',sans-serif", fontSize: 'clamp(18px, 3vw, 24px)', letterSpacing: 5, color: ph.color, lineHeight: 1, fontWeight: 700, textShadow: darkMode ? `0 0 18px ${ph.glow}` : 'none' }}>
+              Phase {ph.num}
+            </div>
+            <div style={{ fontSize: 'clamp(9px, 1.6vw, 11px)', color: T.textMuted, letterSpacing: 2.5, fontFamily: "'Bebas Neue',sans-serif", marginTop: 3, textTransform: 'uppercase' }}>
                     {ph.tagline}
                   </div>
                 </div>
@@ -798,7 +804,7 @@ export default function MCUViewer() {
                         {/* Title block — clickable to expand */}
                         <button className="title-btn" onClick={() => setExpandedItem(isExpanded ? null : item.id)}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: 13, fontWeight: isWatched ? 400 : 600, lineHeight: 1.35, color: isWatched ? T.textMuted : T.text, textDecoration: isWatched ? 'line-through' : 'none', textDecorationColor: T.textFaint, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif" }}>
+                            <span style={{ fontSize: 'clamp(13px, 2.2vw, 16px)', fontWeight: isWatched ? 400 : 600, lineHeight: 1.4, color: isWatched ? T.textMuted : T.text, textDecoration: isWatched ? 'line-through' : 'none', textDecorationColor: T.textFaint, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif" }}>
                               {item.title}
                             </span>
                             {/* Episode count badge */}
