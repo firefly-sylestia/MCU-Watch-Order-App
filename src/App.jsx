@@ -496,7 +496,13 @@ export default function MCUViewer() {
 
         .hexbg{background-image:radial-gradient(circle,${T.hexDot} 1px,transparent 1px);background-size:28px 28px}
 
-        .lmode-btn{display:flex;flex-direction:column;padding:12px 22px 10px;border:none;background:transparent;cursor:pointer;text-align:left;transition:all 0.2s;border-bottom:2px solid transparent}
+        @keyframes trainRoll{0%{width:0;box-shadow:0 0 0 rgba(192,57,43,0)}50%{width:${pct}%;box-shadow:0 0 20px rgba(192,57,43,0.6)}100%{width:${pct}%;box-shadow:0 0 0 rgba(192,57,43,0)}}
+        .progress-train{animation:trainRoll 2.5s cubic-bezier(0.25,0.46,0.45,0.94) both}
+
+        /* MCU/Extended tabs - pill shaped */
+        .lmode-pill{display:inline-flex;align-items:center;gap:12px;background:${T.pillBg};border:1.5px solid ${T.pillBorder};border-radius:999px;padding:6px 8px;gap:2px}
+        .lmode-btn{padding:6px 14px;border:none;background:transparent;cursor:pointer;border-radius:999px;transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);font-family:'Bebas Neue',sans-serif;font-size:clamp(12px,2vw,14px);letter-spacing:2px;color:${T.textMuted};position:relative}
+        .lmode-btn.active{color:${T.text};background:${darkMode ? 'rgba(192,57,43,0.15)' : 'rgba(192,57,43,0.1)'};font-weight:600}
         .lmode-btn.active{border-bottom-color:var(--mc)}
         .lmode-btn:hover:not(.active){background:${T.rowHoverBg}}
 
@@ -530,14 +536,14 @@ export default function MCUViewer() {
         @media (max-width: 767px) {
           .header-inner { padding: 10px 14px 8px !important; }
         }
-        .header-title-mcu { font-size: clamp(48px, 8vw, 96px) !important; letter-spacing: clamp(2px, 0.8vw, 6px) !important; margin: 0 !important; }
-        .header-title-sub { font-size: clamp(28px, 4.2vw, 56px) !important; letter-spacing: clamp(4px, 1.2vw, 10px) !important; margin-top: 0px !important; }
-        .header-tagline { font-size: clamp(12px, 2.2vw, 15px) !important; margin-top: 1px !important; }
+        .header-title-mcu { font-size: clamp(36px, 6vw, 64px) !important; letter-spacing: clamp(2px, 0.6vw, 4px) !important; margin: 0 !important; line-height: 1 !important; }
+        .header-title-sub { font-size: clamp(14px, 2.2vw, 22px) !important; letter-spacing: clamp(3px, 0.8vw, 5px) !important; margin-top: -2px !important; font-weight: 400 !important; }
+        .header-tagline { font-size: clamp(10px, 1.8vw, 13px) !important; margin-top: 4px !important; }
 
-        .stat-card-num { font-size: clamp(28px, 4.5vw, 48px) !important; }
-        .stat-card-label { font-size: clamp(11px, 1.8vw, 14px) !important; }
+        .stat-card-num { font-size: clamp(22px, 3.5vw, 36px) !important; }
+        .stat-card-label { font-size: clamp(10px, 1.6vw, 12px) !important; }
 
-        .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; }
+        .progress-labels { font-size: clamp(10px, 1.6vw, 12px) !important; }
 
         /* hide default scrollbar on main while keeping functionality */
         main::-webkit-scrollbar{width:4px}
@@ -548,34 +554,34 @@ export default function MCUViewer() {
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━��━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <header className="hexbg" style={{ background: T.headerBg, borderBottom: `1px solid ${T.headerBorder}`, flexShrink: 0 }}>
-        <div className="header-inner" style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 24px 22px' }}>
-          <div className="header-top-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
-            {/* Title */}
-            <div style={{ fontFamily: "'Orbitron',sans-serif", lineHeight: 0.88, marginBottom: 0, fontWeight: 900 }}>
-              <div className="header-title-mcu" style={{ fontSize: 'clamp(56px, 10vw, 120px)', letterSpacing: 'clamp(2px, 1vw, 8px)', color: '#c0392b', textShadow: darkMode ? '0 0 44px rgba(192,57,43,0.5),0 2px 0 #7a0000' : '0 2px 8px rgba(192,57,43,0.2)' }}>MCU</div>
-              <div className="header-title-sub" style={{ fontSize: 'clamp(32px, 5vw, 72px)', letterSpacing: 'clamp(4px, 1.5vw, 12px)', color: T.text, marginTop: 0 }}>VIEWING ORDER</div>
-              <div className="header-tagline" style={{ fontSize: 'clamp(13px, 2.4vw, 18px)', color: T.textMuted, letterSpacing: 3, fontFamily: "'Bebas Neue',sans-serif", marginTop: 1 }}>
-                PHASES 1–6 &nbsp;·&nbsp; {activeItems.length} ENTRIES &nbsp;·&nbsp; {LIST_MODES.find(m => m.id === listMode)?.sublabel.toUpperCase()}
+        <div className="header-inner" style={{ maxWidth: '100%', margin: '0 auto', padding: '16px 24px 14px', overflow: 'hidden' }}>
+          <div className="header-top-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 0 }}>
+            {/* Title Section */}
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontFamily: "'Orbitron',sans-serif" }}>
+              <div className="header-title-mcu" style={{ fontSize: 'clamp(36px, 6vw, 64px)', letterSpacing: 'clamp(2px, 0.6vw, 4px)', color: '#c0392b', textShadow: darkMode ? '0 0 44px rgba(192,57,43,0.5),0 2px 0 #7a0000' : '0 2px 8px rgba(192,57,43,0.2)', lineHeight: 1, margin: 0 }}>MCU</div>
+              <div className="header-title-sub" style={{ fontSize: 'clamp(14px, 2.2vw, 22px)', letterSpacing: 'clamp(3px, 0.8vw, 5px)', color: T.text, lineHeight: 1, margin: 0, fontWeight: 400 }}>VIEWING ORDER</div>
+              <div className="header-tagline" style={{ fontSize: 'clamp(10px, 1.8vw, 13px)', color: T.textMuted, letterSpacing: 2, fontFamily: "'Bebas Neue',sans-serif", margin: 0 }}>
+                {activeItems.length} / {LIST_MODES.find(m => m.id === listMode)?.name}
               </div>
             </div>
             {/* Stat cards */}
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
               {[
                 { label: 'WATCHED',    cur: totalWatched, tot: activeItems.length, color: '#3ec47a', glow: 'rgba(62,196,122,0.35)'  },
                 { label: 'MUST-WATCH', cur: essWatched,   tot: essTotal,           color: '#e8b84b', glow: 'rgba(232,184,75,0.35)'  },
               ].map(s => (
-                <div key={s.label} className="stat-card" style={{ background: T.statBg, border: `1px solid ${T.statBorder}`, borderRadius: 8, padding: '6px 12px', minWidth: 100, textAlign: 'center', boxShadow: darkMode ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'none' }}>
-                  <div className="stat-card-num" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(32px, 5vw, 56px)', letterSpacing: 1, color: s.color, lineHeight: 1, textShadow: darkMode ? `0 0 16px ${s.glow}` : 'none' }}>
-                    {s.cur}<span style={{ fontSize: 'clamp(18px, 3vw, 28px)', color: T.numFaint }}>/{s.tot}</span>
+                <div key={s.label} className="stat-card" style={{ background: T.statBg, border: `1px solid ${T.statBorder}`, borderRadius: 6, padding: '4px 10px', minWidth: 90, textAlign: 'center', boxShadow: darkMode ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'none' }}>
+                  <div className="stat-card-num" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(22px, 3.5vw, 36px)', letterSpacing: 1, color: s.color, lineHeight: 1, textShadow: darkMode ? `0 0 16px ${s.glow}` : 'none' }}>
+                    {s.cur}<span style={{ fontSize: 'clamp(12px, 2vw, 16px)', color: T.numFaint }}>{s.tot}</span>
                   </div>
-                  <div className="stat-card-label" style={{ fontSize: 'clamp(12px, 2vw, 16px)', letterSpacing: 2, color: T.textMuted, marginTop: 1, fontFamily: "'Bebas Neue',sans-serif" }}>{s.label}</div>
+                  <div className="stat-card-label" style={{ fontSize: 'clamp(10px, 1.6vw, 12px)', letterSpacing: 1, color: T.textMuted, marginTop: 0, fontFamily: "'Bebas Neue',sans-serif" }}>{s.label}</div>
                 </div>
               ))}
             </div>
           </div>
           {/* Master progress bar */}
-          <div className="progress-bar" style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 999, height: 5, overflow: 'hidden', position: 'relative', marginBottom: 2 }}>
-            <div className="sweep" style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#7a0000 0%,#c0392b 38%,#e85252 72%,#3ec47a 100%)', borderRadius: 999, transition: 'width 0.7s cubic-bezier(.4,0,.2,1)', position: 'relative', overflow: 'hidden' }} />
+          <div className="progress-bar" style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 999, height: 4, overflow: 'hidden', position: 'relative', marginBottom: 2 }}>
+            <div className="progress-train sweep" style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#7a0000 0%,#c0392b 38%,#e85252 72%,#3ec47a 100%)', borderRadius: 999, position: 'relative', boxShadow: `0 0 12px rgba(192,57,43,0.4)` }} />
           </div>
           <div className="progress-labels" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'clamp(12px, 2vw, 16px)', color: T.textMuted, letterSpacing: 2, fontFamily: "'Bebas Neue',sans-serif" }}>
             <span>{pct}% COMPLETE</span>
@@ -585,35 +591,25 @@ export default function MCUViewer() {
       </header>
 
       {/* ━━ LIST MODE SWITCHER ━━━━━━━━���━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ background: T.switcherBg, borderBottom: `1px solid ${T.switcherBorder}`, padding: '0 24px', flexShrink: 0 }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex' }}>
-          {LIST_MODES.map(mode => {
-            const isActive = listMode === mode.id;
-            const modeItems = mode.id === 'core' ? items.filter(i => coreIds.has(i.id)) : items;
-            const modeWatched = modeItems.filter(i => i.status === 'watched').length;
-            const modePct = modeItems.length ? Math.round((modeWatched / modeItems.length) * 100) : 0;
-            return (
-              <button key={mode.id} className={`lmode-btn ${isActive ? 'active' : ''}`}
-                style={{ '--mc': mode.color }}
-                onClick={() => { setListMode(mode.id); setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setSortBy('order'); setActivePhase(1); setExpandedItem(null); setExpandedPhase(null); }}
-                aria-pressed={isActive}
-              >
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                  <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 15, letterSpacing: 3, color: isActive ? mode.color : T.textMuted, transition: 'color 0.2s' }}>
-                    {mode.label}
-                  </span>
-                  <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 10, letterSpacing: 1.5, color: isActive ? mode.color + 'bb' : T.textFaint, transition: 'color 0.2s' }}>
-                    {modeItems.length}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1 }}>
-                  <span style={{ fontSize: 10, color: isActive ? T.textMuted : T.textFaint, letterSpacing: 0.4, fontFamily: "'Rajdhani',sans-serif", transition: 'color 0.2s' }}>{mode.desc}</span>
-                  {modePct > 0 && <span style={{ fontSize: 9, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1, color: modePct === 100 ? mode.color : T.textFaint }}>· {modePct}%</span>}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+      <div style={{ background: T.switcherBg, borderBottom: `1px solid ${T.switcherBorder}`, padding: '12px 24px', flexShrink: 0 }}>
+        <div style={{ maxWidth: '100%', margin: '0 auto', display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <div className="lmode-pill">
+            {LIST_MODES.map(mode => {
+              const isActive = listMode === mode.id;
+              const modeItems = mode.id === 'core' ? items.filter(i => coreIds.has(i.id)) : items;
+              const modeWatched = modeItems.filter(i => i.status === 'watched').length;
+              const modePct = modeItems.length ? Math.round((modeWatched / modeItems.length) * 100) : 0;
+              return (
+                <button key={mode.id} className={`lmode-btn ${isActive ? 'active' : ''}`}
+                  onClick={() => { setListMode(mode.id); setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setSortBy('order'); setActivePhase(1); setExpandedItem(null); setExpandedPhase(null); }}
+                  aria-pressed={isActive}
+                  style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(12px, 2vw, 14px)', letterSpacing: 2 }}
+                >
+                  {mode.name} <span style={{ fontSize: 'clamp(11px, 1.8vw, 13px)', opacity: 0.7 }}>({modeItems.length})</span>
+                </button>
+              );
+            })}
+          </div>
       </div>
 
 
@@ -679,10 +675,10 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} style={{ overflowY: 'auto', overflowX: 'hidden', flex: 1, WebkitOverflowScrolling: 'touch' }}>
-
+      <main ref={mainRef} style={{ overflowY: 'auto', overflowX: 'hidden', flex: 1, WebkitOverflowScrolling: 'touch', width: '100%' }}>
+        <div style={{ maxWidth: '100vw', overflow: 'hidden', width: '100%' }}>
         {/* ━━ STICKY PHASE NAV ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-        <nav aria-label="Phase navigation" className="phase-sticky">
+        <nav aria-label="Phase navigation" className="phase-sticky" style={{ maxWidth: '100vw', width: '100%' }}>
           {PHASES.map(ph => {
             const phItems = items.filter(i =>
               i.phase === ph.id &&
@@ -932,6 +928,7 @@ export default function MCUViewer() {
           <div style={{ textAlign: 'center', marginTop: 44, fontFamily: "'Bebas Neue',sans-serif", fontSize: 9, color: T.footerText, letterSpacing: 3.5 }}>
             MCU VIEWING ORDER &nbsp;·&nbsp; PHASES 1–6 &nbsp;·&nbsp; PROGRESS SAVED LOCALLY
           </div>
+        </div>
         </div>
       </main>
 
