@@ -15,7 +15,7 @@ const iconSizes = [
   { name: 'xxxhdpi', size: 192, dir: 'mipmap-xxxhdpi' },
 ];
 
-const sourceIcon = path.join(__dirname, 'mcu-simple-icon.jpg');
+const sourceIcon = path.join(__dirname, 'mcu-icon-final.jpg');
 const resDir = path.join(__dirname, 'android/app/src/main/res');
 
 // Also update drawable directory with high-res version
