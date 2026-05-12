@@ -1,100 +1,34 @@
-name: Android Release APK
+name: Android Release APK Build
 
 on:
   push:
     tags:
       - 'v*'
   workflow_dispatch:
-    inputs:
-      skip_tests:
-        description: 'Skip build validation tests'
-        required: false
-        default: false
-        type: boolean
 
 permissions:
   contents: write
-  issues: write
 
 env:
   JAVA_VERSION: '17'
   NODE_VERSION: '22'
 
 jobs:
-  validate:
-    name: Validate Build Environment
+  build-release:
+    name: Build Release APK
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.meta.outputs.version }}
-      tag: ${{ steps.meta.outputs.tag }}
-      asset: ${{ steps.meta.outputs.asset }}
     
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Resolve release version metadata
-        id: meta
-        shell: bash
+      - name: Extract version from tag
+        id: version
         run: |
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
-
-          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            APP_TAG="${GITHUB_REF_NAME}"
-            APP_VERSION="${APP_TAG#v}"
-            if [[ "${APP_VERSION}" != "${PACKAGE_VERSION}" ]]; then
-              echo "::warning::Tag/version mismatch: tag=${APP_TAG}, package.json=${PACKAGE_VERSION}. Using tag version for release metadata."
-            fi
-          else
-            APP_VERSION="${PACKAGE_VERSION}"
-            APP_TAG="v${APP_VERSION}"
-          fi
-
-          echo "version=${APP_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "tag=${APP_TAG}" >> "$GITHUB_OUTPUT"
-          echo "asset=MCU-Viewing-Order-${APP_VERSION}-release.apk" >> "$GITHUB_OUTPUT"
-          
-          echo "📦 Version: ${APP_VERSION}"
-          echo "🏷️ Tag: ${APP_TAG}"
-
-      - name: Validate required files exist
-        run: |
-          echo "🔍 Validating project structure..."
-          
-          required_files=(
-            "package.json"
-            "vite.config.js"
-            "android/build.gradle"
-            "android/app/build.gradle"
-            "android/gradlew"
-            "android/luminary.keystore"
-          )
-          
-          missing_files=()
-          for file in "${required_files[@]}"; do
-            if [[ ! -f "$file" ]]; then
-              missing_files+=("$file")
-              echo "❌ Missing: $file"
-            else
-              echo "✅ Found: $file"
-            fi
-          done
-          
-          if [[ ${#missing_files[@]} -gt 0 ]]; then
-            echo "::error::Missing required files: ${missing_files[*]}"
-            exit 1
-          fi
-          
-          echo "✅ All required files present"
-
-  build:
-    name: Build Android APK
-    runs-on: ubuntu-latest
-    needs: validate
-    
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$GITHUB_REF_NAME" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -111,196 +45,85 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Cache Gradle dependencies
+      - name: Cache Gradle
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-            android/.gradle
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: gradle-${{ runner.os }}-
 
-      - name: Install dependencies
-        run: |
-          echo "📦 Installing npm dependencies..."
-          npm ci
-          echo "✅ Dependencies installed"
+      - name: Install npm dependencies
+        run: npm ci
 
-      - name: Build web assets
+      - name: Build web
+        run: npm run build
+
+      - name: Verify web build
         run: |
-          echo "🔨 Building web assets..."
-          npm run build
-          
-          # Validate build output
-          if [[ ! -d "dist" ]]; then
-            echo "::error::Build failed - dist directory not found"
+          if [ ! -d "dist" ]; then
+            echo "ERROR: dist directory not created"
             exit 1
           fi
-          
-          echo "✅ Web build complete"
-          ls -la dist/
+          echo "✅ Web build successful"
 
       - name: Sync Capacitor
         run: |
-          echo "📱 Syncing Capacitor..."
+          echo "Syncing Capacitor with Android..."
           npx cap sync android
-          echo "✅ Capacitor sync complete"
 
-      - name: Force Java 17 / Kotlin 17 targets
+      - name: Patch Gradle for Java 17
         run: |
-          echo "⚙️ Patching Gradle files for Java 17 compatibility..."
-          
           find ./node_modules/@capacitor ./node_modules/@capacitor-community ./android \
             -name "*.gradle" -type f 2>/dev/null | while read -r file; do
             sed -i \
               -e 's/JavaVersion.VERSION_21/JavaVersion.VERSION_17/g' \
               -e 's/jvmTarget = "21"/jvmTarget = "17"/g' \
               -e "s/jvmTarget = '21'/jvmTarget = '17'/g" \
-              -e 's/jvmToolchain(21)/jvmToolchain(17)/g' "$file"
+              -e 's/jvmToolchain(21)/jvmToolchain(17)/g' \
+              "$file" 2>/dev/null || true
           done
-          
-          echo "✅ Gradle files patched"
 
       - name: Make gradlew executable
         run: chmod +x ./android/gradlew
 
-      - name: Clean previous builds
+      - name: Build release APK
         working-directory: ./android
         run: |
-          echo "🧹 Cleaning previous builds..."
-          ./gradlew clean --no-daemon || true
-          echo "✅ Clean complete"
-
-      - name: Build signed release APK
-        id: build_apk
-        working-directory: ./android
-        run: |
-          echo "🔑 Building signed release APK..."
-          
-          # Remove any conflicting Java home settings
+          echo "Building release APK..."
           sed -i '/org.gradle.java.home/d' gradle.properties 2>/dev/null || true
-          
-          # Build with signing configuration
-          ./gradlew --no-daemon --stacktrace assembleRelease \
-            -Pandroid.injected.signing.store.file=${{ github.workspace }}/android/luminary.keystore \
-            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD || 'luminary123' }} \
-            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS || 'luminary_key' }} \
-            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD || 'luminary123' }}
-          
-          echo "✅ APK build complete"
+          ./gradlew assembleRelease --no-daemon --stacktrace
 
-      - name: Verify APK was created
-        id: verify_apk
+      - name: Find APK
+        id: find_apk
         run: |
-          APK_PATH=$(find ./android -name "app-release.apk" | head -1)
-          
-          if [ -z "$APK_PATH" ]; then
-            echo "::error::app-release.apk not found after build"
+          APK=$(find ./android -name "app-release.apk" -type f | head -1)
+          if [ -z "$APK" ]; then
+            echo "ERROR: app-release.apk not found!"
+            find ./android -name "*.apk" -type f
             exit 1
           fi
-          
-          echo "apk_path=$APK_PATH" >> "$GITHUB_OUTPUT"
-          
-          # Get APK size
-          APK_SIZE=$(ls -lh "$APK_PATH" | awk '{print $5}')
-          echo "📦 APK created: $APK_PATH ($APK_SIZE)"
+          echo "apk=$APK" >> $GITHUB_OUTPUT
+          echo "✅ Found APK: $APK"
+          ls -lh "$APK"
 
       - name: Prepare release asset
         run: |
-          APK_PATH="${{ steps.verify_apk.outputs.apk_path }}"
-          ASSET_NAME="${{ needs.validate.outputs.asset }}"
-          
-          cp "$APK_PATH" "./$ASSET_NAME"
-          
-          echo "📦 Release asset prepared: $ASSET_NAME"
-          ls -lh "./$ASSET_NAME"
+          APK_PATH="${{ steps.find_apk.outputs.apk }}"
+          NEW_NAME="MCU-Viewing-Order-${{ steps.version.outputs.version }}-release.apk"
+          cp "$APK_PATH" "$NEW_NAME"
+          echo "✅ APK ready: $NEW_NAME"
+          ls -lh "$NEW_NAME"
 
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-apk
-          path: ./${{ needs.validate.outputs.asset }}
-          retention-days: 30
-          if-no-files-found: error
-
-      - name: Publish GitHub Release with APK
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ needs.validate.outputs.tag }}
-          name: MCU Viewing Order v${{ needs.validate.outputs.version }}
-          body: |
-            ## MCU Viewing Order v${{ needs.validate.outputs.version }}
-            
-            ### Installation
-            1. Download the APK file below
-            2. Enable "Install from unknown sources" on your Android device
-            3. Open the APK to install
-            
-            ### What's New
-            See the auto-generated release notes below.
-          files: ./${{ needs.validate.outputs.asset }}
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "MCU Viewing Order v${{ steps.version.outputs.version }}"
+          draft: false
+          prerelease: false
+          files: MCU-Viewing-Order-${{ steps.version.outputs.version }}-release.apk
           generate_release_notes: true
-          fail_on_unmatched_files: true
-          overwrite_files: true
-
-  notify-failure:
-    name: Notify on Build Failure
-    runs-on: ubuntu-latest
-    needs: [validate, build]
-    if: failure()
-    
-    steps:
-      - name: Create failure issue
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const version = '${{ needs.validate.outputs.tag }}' || context.ref.replace('refs/tags/', '');
-            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            
-            // Check if an issue already exists for this version
-            const issues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: 'build-failure'
-            });
-            
-            const existingIssue = issues.data.find(issue => 
-              issue.title.includes(version)
-            );
-            
-            if (existingIssue) {
-              // Add comment to existing issue
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: existingIssue.number,
-                body: `Build failed again. See the [workflow run](${runUrl}) for details.`
-              });
-            } else {
-              // Create new issue
-              await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: `🚨 Build failed for ${version}`,
-                body: `## Build Failure Report
-                
-**Version:** ${version}
-**Workflow Run:** [View Details](${runUrl})
-**Triggered by:** ${context.actor}
-
-### Next Steps
-1. Check the workflow logs for error details
-2. Fix the issue and push a new commit
-3. Re-tag and re-release if necessary
-
-### Common Issues
-- Missing or corrupted keystore file
-- Node.js dependency issues
-- Gradle/Android SDK version mismatches
-- Java version incompatibility`,
-                labels: ['bug', 'build-failure', 'automated']
-              });
-            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
