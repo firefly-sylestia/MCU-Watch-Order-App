@@ -549,7 +549,7 @@ export default function MCUViewer() {
   };
 
   return (
-    <div style={{ width: '100%', height: '100dvh', background: T.appBg, color: T.text, fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'background 0.32s cubic-bezier(0.34,1.56,0.64,1), color 0.32s cubic-bezier(0.34,1.56,0.64,1)' }} className="theme-switch">
+    <div style={{ width: '100%', minHeight: '100dvh', background: T.appBg, color: T.text, fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', transition: 'background 0.32s cubic-bezier(0.34,1.56,0.64,1), color 0.32s cubic-bezier(0.34,1.56,0.64,1)' }} className="theme-switch">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -608,6 +608,7 @@ export default function MCUViewer() {
 
         .fpill{display:flex;align-items:center;gap:6px;padding:7px 28px;border-radius:999px;border:1.5px solid ${T.pillBorder};background:${T.pillBg};cursor:pointer;font-size:clamp(14px,2.2vw,16px);font-weight:600;letter-spacing:0.05em;color:${T.pillText};transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap}
         .fpill:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText};transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.2)}
+        .fpill:focus-visible,.theme-btn:focus-visible,.lmode-btn:focus-visible{outline:2px solid #c0392b;outline-offset:2px}
 
         .sopt{padding:13px 20px;font-family:'Bebas Neue',sans-serif;font-size:clamp(15px,2.2vw,18px);letter-spacing:2.5px;cursor:pointer;color:${T.pillText};transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1)}
         .sopt:hover{background:${T.sortHoverBg};color:${T.text};transform:translateX(4px)}
@@ -655,6 +656,8 @@ export default function MCUViewer() {
         .stat-card-label { font-size: clamp(11px, 1.8vw, 14px) !important; }
 
         .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; }
+        .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));backdrop-filter:blur(6px)}
+        .phase-grad-line{height:2px;background:linear-gradient(90deg,#e05252 0%,#e8b84b 25%,#4a9ede 50%,#a06cd5 75%,#3ec47a 100%);opacity:0.9}
 
         /* hide default scrollbar on main while keeping functionality */
         main::-webkit-scrollbar{width:4px}
@@ -698,6 +701,7 @@ export default function MCUViewer() {
           </>
         </div>
       </header>
+      <div className="phase-grad-line" aria-hidden="true" />
 
       {/* ━━ LIST MODE SWITCHER ━━━━━━━━���━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: T.switcherBg, borderBottom: `1px solid ${T.switcherBorder}`, padding: '0 24px', flexShrink: 0 }}>
@@ -722,8 +726,7 @@ export default function MCUViewer() {
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1 }}>
-                  <span style={{ fontSize: 14, color: isActive ? T.textMuted : T.textFaint, letterSpacing: 0.4, fontFamily: "'Rajdhani',sans-serif", transition: 'color 0.2s' }}>{mode.desc}</span>
-                  {modePct > 0 && <span style={{ fontSize: 9, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1, color: modePct === 100 ? mode.color : T.textFaint }}>· {modePct}%</span>}
+                  {modePct > 0 && <span style={{ fontSize: 10, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2, color: modePct === 100 ? mode.color : T.textFaint }}>Progress · {modePct}%</span>}
                 </div>
               </button>
             );
@@ -734,18 +737,18 @@ export default function MCUViewer() {
 
       <div style={{ background: T.switcherBg, borderBottom: `1px solid ${T.switcherBorder}`, padding: '10px 24px', flexShrink: 0 }}>
         <div style={{ maxWidth: 1400, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 10, padding: '0 24px' }}>
-          <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
+          <div className="glass-grad" style={{ background: darkMode ? 'linear-gradient(135deg, rgba(20,24,42,0.88), rgba(39,20,49,0.78))' : 'linear-gradient(135deg,#ffffff,#f8f4ff)', border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
             <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Continue Watching</div>
             <div style={{ fontSize: 18, marginTop: 4 }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</div>
             <div style={{ fontSize: 13, color: T.textMuted, marginTop: 5 }}>{recentActivity.length ? `Recent: ${recentActivity[0].title}` : 'No recent activity'}</div>
             {nextUnwatched && <button className="fpill" style={{ marginTop: 8 }} onClick={() => { setActivePhase(nextUnwatched.phase); scrollTo(nextUnwatched.phase); }}>Jump to Next</button>}
           </div>
-          <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
+          <div className="glass-grad" style={{ background: darkMode ? 'linear-gradient(135deg, rgba(17,37,48,0.84), rgba(24,21,43,0.78))' : 'linear-gradient(135deg,#ffffff,#f2fbff)', border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
             <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Analytics</div>
             <div style={{ fontSize: 14, marginTop: 6 }}>{totalWatched}/{totalEntries} watched · ~{remainingHours}h remaining</div>
             <div style={{ fontSize: 13, color: T.textMuted, marginTop: 4 }}>Films: {filmCount} · Series: {seriesCount}</div>
           </div>
-          <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className="glass-grad" style={{ background: darkMode ? 'linear-gradient(135deg, rgba(32,26,52,0.82), rgba(19,24,42,0.78))' : 'linear-gradient(135deg,#ffffff,#fff7f3)', border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <button className="fpill" onClick={exportProgress}>Export</button>
             <label className="fpill" style={{ cursor: 'pointer' }}>
               Import
@@ -833,8 +836,18 @@ export default function MCUViewer() {
         </div>
       </div>
 
+
+      <button
+        type="button"
+        onClick={() => { if (nextUnwatched) { setActivePhase(nextUnwatched.phase); scrollTo(nextUnwatched.phase); } }}
+        aria-label="Jump to next unwatched item"
+        style={{ position: 'fixed', right: 16, bottom: 16, zIndex: 120, borderRadius: 999, padding: '10px 14px', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'linear-gradient(135deg, rgba(20,25,46,0.95), rgba(34,18,52,0.95))' : 'linear-gradient(135deg, #ffffff, #f6f0ff)', color: T.text, boxShadow: darkMode ? '0 8px 22px rgba(0,0,0,0.45)' : '0 8px 20px rgba(0,0,0,0.14)', cursor: nextUnwatched ? 'pointer' : 'default', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2, fontSize: 12 }}
+      >
+        {pct}% done · {nextUnwatched ? 'Jump next' : 'All caught up'}
+      </button>
+
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} style={{ overflow: 'visible', flex: 1, '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
+      <main ref={mainRef} style={{ overflow: 'visible', flex: '0 0 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
 
         
 
