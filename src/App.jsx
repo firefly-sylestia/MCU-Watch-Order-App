@@ -184,7 +184,7 @@ const ADDITIONAL_LIST = [
   { id: 154, order: 154, phase: 5, type: 'series', year: 2024, essential: false, episodes: 10, title: "Your Friendly Neighborhood Spider-Man S1", prereq: "None (separate continuity)", desc: "An animated series set in an alternate MCU continuity featuring a younger Peter Parker learning the ropes as Spider-Man before the events of the live-action films. 10 episodes." },
 ];
 
-const RAW = [...ESSENTIAL_LIST, ...ADDITIONAL_LIST].map(d => ({ ...d, status: 'unwatched' }));
+const RAW = [...ESSENTIAL_LIST, ...ADDITIONAL_LIST].map(d => ({ ...d, status: 'unwatched', watchedDate: null }));
 
 const LIST_MODES = [
   { id: 'core',     label: 'MCU',      sublabel: 'Curated List',       color: '#c0392b', desc: '60 curated films & series'           },
@@ -209,6 +209,7 @@ export default function MCUViewer() {
   const [expandedItem,   setExpandedItem]   = useState(null);
   const [expandedPhase,  setExpandedPhase]  = useState(null); // for phase summary toggle
   const [celebPhase,     setCelebPhase]     = useState(null); // phase completion flash
+  const [editingDateId,  setEditingDateId]  = useState(null); // date editing mode
 
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
@@ -222,20 +223,37 @@ export default function MCUViewer() {
     if (s) {
       try {
         const saved = JSON.parse(s);
-        setItems(prev => prev.map(i => ({ ...i, status: saved[i.id] || 'unwatched' })));
+        setItems(prev => prev.map(i => ({ 
+          ...i, 
+          status: saved[i.id]?.status || 'unwatched',
+          watchedDate: saved[i.id]?.watchedDate || null
+        })));
       } catch {}
     }
   }, []);
 
   const persist = (next) => {
-    const statuses = {};
-    next.forEach(i => { if (i.status !== 'unwatched') statuses[i.id] = i.status; });
-    localStorage.setItem('mcu-v7', JSON.stringify(statuses));
+    const data = {};
+    next.forEach(i => { 
+      if (i.status !== 'unwatched' || i.watchedDate) {
+        data[i.id] = { status: i.status, watchedDate: i.watchedDate };
+      }
+    });
+    localStorage.setItem('mcu-v7', JSON.stringify(data));
   };
 
   const setStatusDirect = (id, newStatus) => {
     setItems(prev => {
-      const n = prev.map(i => i.id === id ? { ...i, status: newStatus } : i);
+      const n = prev.map(i => {
+        if (i.id !== id) return i;
+        const updated = { ...i, status: newStatus };
+        if (newStatus === 'watched' && !i.watchedDate) {
+          updated.watchedDate = new Date().toISOString().split('T')[0];
+        } else if (newStatus !== 'watched') {
+          updated.watchedDate = null;
+        }
+        return updated;
+      });
       // Check if this completes a phase — trigger celebration
       const item = n.find(i => i.id === id);
       if (newStatus === 'watched' && item) {
@@ -312,7 +330,13 @@ export default function MCUViewer() {
       const n = prev.map(i => {
         if (i.phase !== phaseId) return i;
         if (listMode === 'core' && !coreIds.has(i.id)) return i;
-        return { ...i, status: newStatus };
+        const updated = { ...i, status: newStatus };
+        if (newStatus === 'watched' && !i.watchedDate) {
+          updated.watchedDate = new Date().toISOString().split('T')[0];
+        } else if (newStatus !== 'watched') {
+          updated.watchedDate = null;
+        }
+        return updated;
       });
       persist(n);
       return n;
@@ -430,24 +454,33 @@ export default function MCUViewer() {
         @keyframes expandDown{from{opacity:0;max-height:0}to{opacity:1;max-height:300px}}
         .expand-row{animation:expandDown 0.22s ease both;overflow:hidden}
 
-        .wbtn{width:30px;height:30px;border-radius:50%;border:1.5px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.16s,box-shadow 0.18s,background 0.18s;flex-shrink:0}
-        .wbtn:hover{transform:scale(1.12)}
-        .wbtn:active{transform:scale(0.88)}
+        /* Phase 2: Micro-interactions */
+        @keyframes buttonPulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,0.4)}70%{box-shadow:0 0 0 6px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
+        @keyframes statusFlip{0%{transform:rotateX(0)}50%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
+        @keyframes slideInRight{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
+        @keyframes watchedGlow{0%{text-shadow:0 0 0 rgba(62,196,122,0)}50%{text-shadow:0 0 8px rgba(62,196,122,0.8)}100%{text-shadow:0 0 0 rgba(62,196,122,0)}}
+        
+        .watched-badge{animation:watchedGlow 0.6s ease both}
+        .button-click{animation:buttonPulse 0.6s ease both}
 
-        .ntab{position:relative;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2.5px;padding:10px 16px;border:none;background:transparent;cursor:pointer;transition:color 0.2s;white-space:nowrap;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
-        .ntab::after{content:'';position:absolute;bottom:0;left:12px;right:12px;height:2px;border-radius:2px 2px 0 0;background:currentColor;transform:scaleX(0);transform-origin:center;transition:transform 0.22s ease}
+        .wbtn{width:30px;height:30px;border-radius:50%;border:1.5px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.16s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.18s,background 0.18s;flex-shrink:0}
+        .wbtn:hover{transform:scale(1.12)}
+        .wbtn:active{transform:scale(0.88);animation:buttonPulse 0.4s}
+
+        .ntab{position:relative;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2.5px;padding:10px 16px;border:none;background:transparent;cursor:pointer;transition:color 0.2s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
+        .ntab::after{content:'';position:absolute;bottom:0;left:12px;right:12px;height:2px;border-radius:2px 2px 0 0;background:currentColor;transform:scaleX(0);transform-origin:center;transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1)}
         .ntab.on::after{transform:scaleX(1)}
 
-        .fpill{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:999px;border:1px solid ${T.pillBorder};background:${T.pillBg};cursor:pointer;font-size:11px;font-weight:600;letter-spacing:0.04em;color:${T.pillText};transition:all 0.16s;white-space:nowrap}
-        .fpill:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText}}
+        .fpill{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:999px;border:1px solid ${T.pillBorder};background:${T.pillBg};cursor:pointer;font-size:11px;font-weight:600;letter-spacing:0.04em;color:${T.pillText};transition:all 0.16s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap}
+        .fpill:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText};transform:translateY(-1px)}
 
         .sopt{padding:9px 15px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;color:${T.pillText};transition:background 0.13s,color 0.13s}
-        .sopt:hover{background:${T.sortHoverBg};color:${T.text}}
+        .sopt:hover{background:${T.sortHoverBg};color:${T.text};transform:translateX(2px)}
         .sopt.picked{color:#c0392b}
 
-        .rrow{position:relative;transition:background 0.13s;display:grid;align-items:center;grid-template-columns:38px 1fr 52px 32px;gap:10px;padding:11px 14px;border-bottom:1px solid ${T.rowBorder}}
+        .rrow{position:relative;transition:background 0.13s,transform 0.15s cubic-bezier(0.34,1.56,0.64,1);display:grid;align-items:center;grid-template-columns:38px 1fr 52px 32px;gap:10px;padding:11px 14px;border-bottom:1px solid ${T.rowBorder};min-height:56px}
         .rrow:last-child{border-bottom:none}
-        .rrow:hover{background:${T.rowHoverBg} !important}
+        .rrow:hover{background:${T.rowHoverBg} !important;transform:translateX(2px)}
 
         .title-btn{background:none;border:none;cursor:pointer;text-align:left;padding:0;color:inherit;font-family:inherit;display:block;width:100%}
         .title-btn:focus-visible{outline:2px solid #c0392b;outline-offset:2px;border-radius:3px}
@@ -503,7 +536,7 @@ export default function MCUViewer() {
         main::-webkit-scrollbar-thumb:hover{background:${T.scrollThumbH}}
       `}</style>
 
-      {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {/* ━━ HEADER ━━━━━━━━━━━━━━━━��━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <header className="hexbg" style={{ background: T.headerBg, borderBottom: `1px solid ${T.headerBorder}`, flexShrink: 0 }}>
         <div className="header-inner" style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 24px 22px' }}>
           <div className="header-top-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 22 }}>
@@ -669,7 +702,7 @@ export default function MCUViewer() {
           })}
         </nav>
 
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 24px 80px', width: '100%' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 24px 80px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }}>
         {phaseKeys.length === 0 && (
           <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: "'Bebas Neue',sans-serif", fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
             NO RESULTS — ADJUST YOUR FILTERS
@@ -846,6 +879,37 @@ export default function MCUViewer() {
                               <EyeOff size={11} />UNWATCH
                             </button>
                           </div>
+                          {/* Date editor for watched items */}
+                          {item.status === 'watched' && item.watchedDate && (
+                            <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${T.surfaceBorder}`, display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontSize: 10, color: T.textMuted, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1 }}>WATCHED:</span>
+                              {editingDateId === item.id ? (
+                                <input
+                                  type="date"
+                                  value={item.watchedDate}
+                                  onChange={e => {
+                                    setItems(prev => prev.map(i => i.id === item.id ? { ...i, watchedDate: e.target.value } : i));
+                                  }}
+                                  onBlur={() => {
+                                    setEditingDateId(null);
+                                    const current = items.find(i => i.id === item.id);
+                                    persist(items);
+                                  }}
+                                  autoFocus
+                                  style={{ padding: '4px 6px', borderRadius: 4, border: `1px solid #c0392b66`, background: T.inputBg, color: T.inputColor, fontSize: 11, fontFamily: "'Rajdhani',sans-serif" }}
+                                />
+                              ) : (
+                                <button
+                                  onClick={() => setEditingDateId(item.id)}
+                                  style={{ fontSize: 11, color: '#3ec47a', background: 'transparent', border: `1px solid #3ec47a44`, borderRadius: 4, padding: '4px 8px', cursor: 'pointer', fontFamily: "'Rajdhani',sans-serif", transition: 'all 0.15s' }}
+                                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#3ec47a88'; e.currentTarget.style.background = '#3ec47a08'; }}
+                                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#3ec47a44'; e.currentTarget.style.background = 'transparent'; }}
+                                >
+                                  {item.watchedDate}
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

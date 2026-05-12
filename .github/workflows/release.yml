@@ -30,6 +30,15 @@ jobs:
           echo "tag=$GITHUB_REF_NAME" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
 
+      - name: Apply version to build files
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          # Update Android version
+          sed -i "s/versionName \"[^\"]*\"/versionName \"$VERSION\"/" android/app/build.gradle
+          # Update capacitor version
+          sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/" capacitor.config.json
+          echo "Applied version $VERSION to build files"
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -90,8 +99,14 @@ jobs:
 
       - name: Create keystore from secrets
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > ./android/release.keystore
-          ls -lh ./android/release.keystore
+          if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "⚠️  KEYSTORE_BASE64 secret not configured. Skipping signing."
+            echo "SKIP_SIGNING=true" >> $GITHUB_ENV
+          else
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > ./android/release.keystore
+            echo "SKIP_SIGNING=false" >> $GITHUB_ENV
+            ls -lh ./android/release.keystore
+          fi
 
       - name: Build release APK
         working-directory: ./android
@@ -101,27 +116,45 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          echo "Building release APK..."
-          sed -i '/org.gradle.java.home/d' gradle.properties 2>/dev/null || true
-          ./gradlew clean assembleRelease --no-daemon --stacktrace
+          if [ "$SKIP_SIGNING" = "true" ]; then
+            echo "Building unsigned release APK (signing secrets not configured)..."
+            sed -i '/org.gradle.java.home/d' gradle.properties 2>/dev/null || true
+            ./gradlew clean assembleDebug --no-daemon --stacktrace
+          else
+            echo "Building signed release APK..."
+            sed -i '/org.gradle.java.home/d' gradle.properties 2>/dev/null || true
+            ./gradlew clean assembleRelease --no-daemon --stacktrace
+          fi
 
       - name: Find APK
         id: find_apk
         run: |
-          APK=$(find ./android -name "app-release.apk" -type f | head -1)
+          if [ "$SKIP_SIGNING" = "true" ]; then
+            APK=$(find ./android -name "app-debug.apk" -type f | head -1)
+            APK_TYPE="unsigned"
+          else
+            APK=$(find ./android -name "app-release.apk" -type f | head -1)
+            APK_TYPE="release"
+          fi
           if [ -z "$APK" ]; then
-            echo "ERROR: app-release.apk not found!"
+            echo "ERROR: APK not found!"
             find ./android -name "*.apk" -type f
             exit 1
           fi
           echo "apk=$APK" >> $GITHUB_OUTPUT
+          echo "apk_type=$APK_TYPE" >> $GITHUB_OUTPUT
           echo "✅ Found APK: $APK"
           ls -lh "$APK"
 
       - name: Prepare release asset
         run: |
           APK_PATH="${{ steps.find_apk.outputs.apk }}"
-          NEW_NAME="MCU-Viewing-Order-${{ steps.version.outputs.version }}-release.apk"
+          APK_TYPE="${{ steps.find_apk.outputs.apk_type }}"
+          if [ "$APK_TYPE" = "release" ]; then
+            NEW_NAME="MCU-Viewing-Order-${{ steps.version.outputs.version }}-signed.apk"
+          else
+            NEW_NAME="MCU-Viewing-Order-${{ steps.version.outputs.version }}-unsigned.apk"
+          fi
           cp "$APK_PATH" "$NEW_NAME"
           echo "✅ APK ready: $NEW_NAME"
           ls -lh "$NEW_NAME"
@@ -133,7 +166,7 @@ jobs:
           name: "MCU Viewing Order v${{ steps.version.outputs.version }}"
           draft: false
           prerelease: false
-          files: MCU-Viewing-Order-${{ steps.version.outputs.version }}-release.apk
+          files: MCU-Viewing-Order-${{ steps.version.outputs.version }}-${{ steps.find_apk.outputs.apk_type }}.apk
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
