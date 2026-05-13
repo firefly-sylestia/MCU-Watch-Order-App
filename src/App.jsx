@@ -722,7 +722,7 @@ export default function MCUViewer() {
         ::-webkit-scrollbar-thumb:hover{background:${T.scrollThumbH}}
         input,button,select{font-family:inherit;border-radius:12px}
         input:focus{outline:none}
-        button:focus-visible{outline:2px solid #c0392b;outline-offset:2px}
+        button:focus-visible{outline:2px solid var(--theme-accent);outline-offset:2px}
 
         @keyframes sweep{0%{transform:translateX(-120%)}100%{transform:translateX(220%)}}
         .sweep::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent);animation:sweep 2.8s ease-in-out infinite}
@@ -771,7 +771,7 @@ export default function MCUViewer() {
         .fpill{display:flex;align-items:center;gap:6px;padding:7px 26px;border-radius:12px;border:1px solid var(--theme-border);background:var(--theme-surface);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);cursor:pointer;font-size:clamp(14px,2.2vw,16px);font-weight:600;letter-spacing:0.03em;color:var(--theme-text);transition:background-color 0.18s ease,color 0.18s ease,opacity 0.18s ease,border-color 0.18s ease;white-space:nowrap;box-shadow:none;overflow:visible}
         .fpill:hover{border-color:var(--theme-accent);color:var(--theme-accent);background:var(--theme-surface-hover);opacity:0.96}
         .fpill:active{opacity:0.82}
-        .fpill:focus-visible,.theme-btn:focus-visible,.lmode-btn:focus-visible{outline:2px solid #c0392b;outline-offset:2px}
+        .fpill:focus-visible,.theme-btn:focus-visible,.lmode-btn:focus-visible{outline:2px solid var(--theme-accent);outline-offset:2px}
 
         .sopt{padding:13px 20px;font-family:'Bebas Neue',sans-serif;font-size:clamp(15px,2.2vw,18px);letter-spacing:2.5px;cursor:pointer;color:${T.pillText};transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1)}
         .sopt:hover{background:${T.sortHoverBg};color:${T.text};transform:translateX(4px)}
@@ -787,7 +787,7 @@ export default function MCUViewer() {
         .rrow.type-short:hover{background:linear-gradient(90deg, rgba(160,108,213,0.18), ${T.rowHoverBg}) !important}
 
         .title-btn{background:none;border:none;cursor:pointer;text-align:left;padding:0;color:inherit;font-family:inherit;display:block;width:100%}
-        .title-btn:focus-visible{outline:2px solid #c0392b;outline-offset:2px;border-radius:3px}
+        .title-btn:focus-visible{outline:2px solid var(--theme-accent);outline-offset:2px;border-radius:3px}
 
         .hexbg{background-image:radial-gradient(circle,${T.hexDot} 1px,transparent 1px);background-size:28px 28px}
 
@@ -817,7 +817,7 @@ export default function MCUViewer() {
           .rrow{grid-template-columns:24px 44px minmax(0,1fr) minmax(82px,auto) !important;gap:6px;padding:12px 10px 12px 8px}
           .poster{width:44px;height:64px}
         }
-        .header-title-mcu { font-size: clamp(48px, 8vw, 96px) !important; letter-spacing: clamp(2px, 0.8vw, 6px) !important; margin: 0 !important; background:linear-gradient(90deg,var(--theme-accent),var(--theme-accent-alt));-webkit-background-clip:text;background-clip:text;color:transparent; }
+        .header-title-mcu { font-size: clamp(48px, 8vw, 96px) !important; letter-spacing: clamp(2px, 0.8vw, 6px) !important; margin: 0 !important; background:none !important; -webkit-background-clip:initial !important; background-clip:initial !important; }
         .header-title-sub { font-size: clamp(28px, 4.2vw, 56px) !important; letter-spacing: clamp(4px, 1.2vw, 10px) !important; margin-top: 0px !important; }
         .header-tagline { font-size: clamp(12px, 2.2vw, 15px) !important; margin-top: 1px !important; }
 
@@ -906,7 +906,7 @@ export default function MCUViewer() {
           <div className="header-top-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             {/* Title */}
             <div style={{ fontFamily: "'Orbitron',sans-serif", lineHeight: 0.88, marginBottom: 0, fontWeight: 900 }}>
-              <div className="header-title-mcu" style={{ fontSize: 'clamp(56px, 7vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', textShadow: darkMode ? '0 0 30px rgba(192,57,43,0.38),0 1px 0 #7a0000' : '0 2px 8px rgba(192,57,43,0.2)' }}>MCU</div>
+              <div className="header-title-mcu" style={{ fontSize: 'clamp(56px, 7vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: T.text, textShadow: darkMode ? '0 0 28px var(--theme-accent-glow), 0 0 6px var(--theme-accent-glow)' : '0 2px 8px color-mix(in srgb, var(--theme-accent) 28%, transparent)' }}>MCU</div>
               <div className="header-title-sub" style={{ fontSize: 'clamp(28px, 3.6vw, 35px)', letterSpacing: 'clamp(3px, 1.1vw, 9px)', color: T.text, marginTop: 0 }}>VIEWING ORDER</div>
               <div className="header-tagline" style={{ fontSize: '14px', color: T.textMuted, letterSpacing: headerCompact ? 1.4 : 3, fontFamily: "'Bebas Neue',sans-serif", marginTop: 1, transition: 'all 0.22s ease' }}>
                 {`PHASES 1–6 · ${activeItems.length} ENTRIES · ${LIST_MODES.find(m => m.id === listMode)?.sublabel.toUpperCase()}`}
