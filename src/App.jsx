@@ -200,7 +200,7 @@ export default function MCUViewer() {
   const [watchedOnly,    setWatchedOnly]    = useState(false);
   const [statusFilter,   setStatusFilter]   = useState(null);
   const [typeFilter,     setTypeFilter]     = useState(null);
-  const [activePhase,    setActivePhase]    = useState(1);
+  const [activePhase,    setActivePhase]    = useState(0);
   const [sortOpen,       setSortOpen]       = useState(false);
   const [phaseOpen,      setPhaseOpen]      = useState(false);
   const [statusDropdown, setStatusDropdown] = useState(null);
@@ -218,10 +218,7 @@ export default function MCUViewer() {
   const [settingsOpen,   setSettingsOpen]   = useState(false);
   const [profile,        setProfile]        = useState({ name: '', age: '', gender: '', character: 'Iron Man', pfp: '' });
   const [timelineMode,   setTimelineMode]   = useState('sacred');
-  const [emotionGoal,    setEmotionGoal]    = useState('all');
-  const [artifactFilter, setArtifactFilter] = useState('all');
-  const [canonConfidence,setCanonConfidence]= useState(100);
-  const [budgetHours,    setBudgetHours]    = useState(999);
+  const [genreFilter] = useState('all'); // hidden filter hook for future genre controls
   const [myLikes,        setMyLikes]        = useState({});
   const [myRating,       setMyRating]       = useState({});
   const [rewatchCount,   setRewatchCount]   = useState({});
@@ -421,25 +418,17 @@ export default function MCUViewer() {
       if (activePhase && i.phase !== activePhase) return false;
       if (timelineMode === 'studio' && i.order % 2 === 0) return true;
       if (timelineMode === 'whatif' && i.type === 'short') return true;
-      if (emotionGoal !== 'all') {
-        const em = emotionGoal === 'hopeful' ? ['Spider-Man','Guardians','Ms. Marvel'] : emotionGoal === 'mystery' ? ['Loki','WandaVision','Moon'] : ['Endgame','Wakanda','Infinity'];
-        if (!em.some(k => i.title.includes(k))) return false;
-      }
-      if (artifactFilter !== 'all') {
-        const amap = { stones: ['Infinity','Avengers'], rings: ['Ten Rings'], tva: ['Loki','Deadpool'], darkhold: ['WandaVision','Multiverse'] };
-        if (!amap[artifactFilter].some(k => i.title.includes(k) || i.desc.includes(k))) return false;
-      }
+      if (genreFilter !== 'all' && i.type !== genreFilter) return false;
       return i.title.toLowerCase().includes(q) || i.prereq.toLowerCase().includes(q);
     }).sort((a, b) =>
       sortBy === 'title' ? a.title.localeCompare(b.title) :
       sortBy === 'year'  ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : a.order - b.order
     );
-    const capped = f.slice(0, Math.max(1, Math.floor((Number(budgetHours) || 999) / 2)));
     const g = {};
-    capped.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
+    f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
-    return { filtered: capped, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, timelineMode, emotionGoal, artifactFilter, budgetHours, q, sortBy, coreIds]);
+    return { filtered: f, grouped: g, phaseKeys: pk };
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, timelineMode, genreFilter, q, sortBy, coreIds]);
 
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
@@ -449,6 +438,13 @@ export default function MCUViewer() {
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
   const pct = activeItems.length ? Math.round((totalWatched / activeItems.length) * 100) : 0;
+  const stickyPhaseProgress = useMemo(() => {
+    if (activePhase === 0) return { label: 'All Phases', done: totalWatched, total: activeItems.length, pct };
+    const phaseItems = activeItems.filter(i => i.phase === activePhase);
+    const done = phaseItems.filter(i => i.status === 'watched').length;
+    const total = phaseItems.length;
+    return { label: `Phase ${activePhase}`, done, total, pct: total ? Math.round((done / total) * 100) : 0 };
+  }, [activePhase, activeItems, totalWatched, pct]);
   const CAST_MAP = {
     'Iron Man': ['Robert Downey Jr.', 'Gwyneth Paltrow', 'Jeff Bridges'],
     'The Avengers': ['Robert Downey Jr.', 'Chris Evans', 'Scarlett Johansson'],
@@ -456,18 +452,7 @@ export default function MCUViewer() {
     'Thor': ['Chris Hemsworth', 'Tom Hiddleston', 'Natalie Portman'],
   };
   const posterFor = (item) => `https://placehold.co/220x330/121a2d/e8edf7?text=${encodeURIComponent(item.title)}`;
-  const artifacts = {
-    'Infinity Stones': ['The Avengers', 'Thor: The Dark World', 'Infinity War', 'Endgame'],
-    'Ten Rings': ['Shang-Chi & the Legend of the Ten Rings'],
-    Darkhold: ['WandaVision S1', 'Doctor Strange: Multiverse of Madness'],
-    'TVA Tech': ['Loki S1', 'Loki S2', 'Deadpool & Wolverine'],
-  };
   const spoilerSafe = useMemo(() => totalWatched < Math.max(6, Math.round(activeItems.length * 0.35)), [totalWatched, activeItems.length]);
-  const emotionalRoute = useMemo(() => {
-    const toneMap = { hopeful: ['Spider-Man', 'Guardians', 'Ms. Marvel'], mystery: ['Loki', 'WandaVision', 'Moon Knight'], grief: ['Wakanda Forever', 'Endgame', 'WandaVision'], comedy: ['She-Hulk', 'I Am Groot', 'Thor: Ragnarok'] };
-    const keys = toneMap[emotionGoal] || toneMap.hopeful;
-    return filtered.filter(i => keys.some(k => i.title.includes(k))).slice(0, 8);
-  }, [filtered, emotionGoal]);
   const characterHeat = useMemo(() => {
     const chars = ['Iron Man', 'Captain America', 'Thor', 'Loki', 'Spider-Man', 'Wanda'];
     return chars.map(c => {
@@ -477,23 +462,6 @@ export default function MCUViewer() {
     });
   }, [activeItems]);
   const memoryScore = useMemo(() => Math.max(0, Math.min(100, Math.round((totalWatched / Math.max(1, activeItems.length)) * 100) - (spoilerSafe ? 10 : 0))), [totalWatched, activeItems.length, spoilerSafe]);
-  const artifactRoute = useMemo(() => {
-    if (artifactFilter === 'All') return [];
-    return activeItems.filter(i => (artifacts[artifactFilter] || []).includes(i.title));
-  }, [artifactFilter, activeItems]);
-  const budgetRoute = useMemo(() => {
-    const hours = Number(budgetHours) || 0;
-    let left = hours;
-    const picks = [];
-    for (const item of filtered) {
-      const est = item.type === 'film' ? 2.5 : Math.min(6, Math.max(1, (item.episodes || 6) * 0.45));
-      if (left - est < -0.25) continue;
-      picks.push({ ...item, est: Number(est.toFixed(1)) });
-      left -= est;
-      if (left <= 0.2 || picks.length >= 10) break;
-    }
-    return picks;
-  }, [filtered, budgetHours]);
   const OMDB_KEY = '14596ed1';
   const cleanLookupTitle = (title) => title.replace(/\sS\d.*$/i, '').replace(/\sEps?.*$/i, '').trim();
   const nextUnwatched = useMemo(() => filtered.find(i => i.status !== 'watched') || null, [filtered]);
@@ -695,12 +663,15 @@ export default function MCUViewer() {
         .sopt:hover{background:${T.sortHoverBg};color:${T.text};transform:translateX(4px)}
         .sopt.picked{color:#c0392b;font-weight:700}
 
-        .rrow{position:relative;transition:background 0.13s,transform 0.15s cubic-bezier(0.34,1.56,0.64,1);display:grid;align-items:center;grid-template-columns:40px 52px minmax(0,1fr) 80px 38px;gap:14px;padding:14px 18px;border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:80px}
+        .rrow{position:relative;transition:background 0.2s ease,transform 0.22s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.22s ease,border-color 0.22s ease;display:grid;align-items:center;grid-template-columns:40px 52px minmax(0,1fr) 80px 38px;gap:14px;padding:16px 20px;border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:86px;border-radius:10px;overflow:hidden}
         .rrow:last-child{border-bottom:none}
-        .rrow:hover{transform:translateX(2px);border-left-color:#c0392b}
-        .rrow.type-film:hover{background:linear-gradient(90deg, rgba(224,82,82,0.20), ${T.rowHoverBg}) !important}
-        .rrow.type-series:hover{background:linear-gradient(90deg, rgba(74,158,222,0.20), ${T.rowHoverBg}) !important}
-        .rrow.type-short:hover{background:linear-gradient(90deg, rgba(160,108,213,0.20), ${T.rowHoverBg}) !important}
+        .rrow::before{content:'';position:absolute;inset:0;background:linear-gradient(125deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 28%, rgba(255,255,255,0) 62%);opacity:0;transition:opacity 0.24s ease;pointer-events:none;z-index:0}
+        .rrow > *{position:relative;z-index:1}
+        .rrow:hover{transform:translateY(-6px);border-left-color:var(--phase-color,#c0392b);box-shadow:0 12px 28px -14px var(--phase-glow,rgba(192,57,43,0.5))}
+        .rrow:hover::before{opacity:1}
+        .rrow.type-film:hover{background:linear-gradient(90deg, rgba(224,82,82,0.18), ${T.rowHoverBg}) !important}
+        .rrow.type-series:hover{background:linear-gradient(90deg, rgba(74,158,222,0.18), ${T.rowHoverBg}) !important}
+        .rrow.type-short:hover{background:linear-gradient(90deg, rgba(160,108,213,0.18), ${T.rowHoverBg}) !important}
 
         .title-btn{background:none;border:none;cursor:pointer;text-align:left;padding:0;color:inherit;font-family:inherit;display:block;width:100%}
         .title-btn:focus-visible{outline:2px solid #c0392b;outline-offset:2px;border-radius:3px}
@@ -877,10 +848,6 @@ export default function MCUViewer() {
       <div className="filter-shell" style={{ background: T.filterBg, borderBottom: `1px solid ${T.filterBorder}`, padding: '10px 24px', overflow: 'visible', flexShrink: 0, position: 'relative', zIndex: 180 }}>
         <div style={{ maxWidth: 1400, margin: '0 auto', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', width: '100%', padding: '0 24px', overflow: 'visible' }}>
           <select value={timelineMode} onChange={e=>setTimelineMode(e.target.value)} style={{ padding: '8px', borderRadius: 20 }}><option value="sacred">Sacred</option><option value="studio">Studio</option><option value="whatif">What-If</option></select>
-          <select value={emotionGoal} onChange={e=>setEmotionGoal(e.target.value)} style={{ padding: '8px', borderRadius: 20 }}><option value="all">Emotion All</option><option value="hopeful">Hopeful</option><option value="mystery">Mystery</option><option value="grief">Grief</option></select>
-          <select value={artifactFilter} onChange={e=>setArtifactFilter(e.target.value)} style={{ padding: '8px', borderRadius: 20 }}><option value="all">Artifact All</option><option value="stones">Infinity Stones</option><option value="rings">Ten Rings</option><option value="tva">TVA Tech</option><option value="darkhold">Darkhold</option></select>
-          <label style={{ fontSize: 12 }}>Canon {canonConfidence}<input type="range" min="40" max="100" value={canonConfidence} onChange={e=>setCanonConfidence(Number(e.target.value))} /></label>
-          <label style={{ fontSize: 12 }}>Budget h<input type="number" value={budgetHours} onChange={e=>setBudgetHours(e.target.value)} style={{ width: 58 }} /></label>
           {/* Search */}
           <div style={{ position: 'relative', flex: '1 1 170px', minWidth: 130 }}>
             <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
@@ -905,11 +872,14 @@ export default function MCUViewer() {
           <div ref={phaseRef} style={{ position: 'relative' }}>
             <button className="fpill" onClick={() => setPhaseOpen(o => !o)}
               style={{ color: '#c0392b', borderColor: darkMode ? '#1e1430' : '#f0d8d0', background: darkMode ? '#0d0818' : '#fff5f3', fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
-              {PHASES.find(ph => ph.id === activePhase)?.name || 'Phase 1'}
+              {activePhase === 0 ? 'Phase All' : (PHASES.find(ph => ph.id === activePhase)?.name || 'Phase All')}
               <ChevDown size={12} style={{ opacity: 0.6, transform: phaseOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             {phaseOpen && (
               <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: T.dropdownBg, border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
+                <div className={`sopt ${activePhase === 0 ? 'picked' : ''}`} onClick={() => { setActivePhase(0); setPhaseOpen(false); }}>
+                  Phase All
+                </div>
                 {PHASES.map((ph) => (
                   <div key={ph.id} className={`sopt ${activePhase === ph.id ? 'picked' : ''}`} onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); setPhaseOpen(false); }}>
                     {ph.name}
@@ -962,6 +932,15 @@ export default function MCUViewer() {
               {filtered.length} RESULTS
             </span>
           </div>
+        </div>
+      </div>
+      <div style={{ position: 'sticky', top: 0, zIndex: 170, padding: '6px 24px', background: darkMode ? 'rgba(8,10,20,0.78)' : 'rgba(255,255,255,0.86)', backdropFilter: 'blur(6px)', borderBottom: `1px solid ${T.filterBorder}` }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 10, padding: '0 24px' }}>
+          <span style={{ fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.8, fontSize: 12, color: T.textMuted, minWidth: 90 }}>{stickyPhaseProgress.label}</span>
+          <div style={{ flex: 1, height: 4, borderRadius: 999, overflow: 'hidden', background: darkMode ? 'rgba(255,255,255,0.12)' : '#eae6de' }}>
+            <div style={{ width: `${stickyPhaseProgress.pct}%`, height: '100%', background: phaseGradient, transition: 'width 0.3s ease' }} />
+          </div>
+          <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 11, letterSpacing: 1.2, color: T.textMuted }}>{stickyPhaseProgress.done}/{stickyPhaseProgress.total}</span>
         </div>
       </div>
 
@@ -1075,7 +1054,7 @@ export default function MCUViewer() {
                   return (
                     <div key={item.id}>
                       {/* Main row */}
-                      <div className={`rrow row-in type-${item.type}`} style={{ background: isWatched ? T.rowWatchedBg : 'transparent' }}>
+                      <div className={`rrow row-in type-${item.type}`} style={{ background: isWatched ? T.rowWatchedBg : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow }}>
                         {/* Order / check */}
                         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 15, color: isWatched ? '#f1bfd3' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
                           {isWatched ? <Check size={14} style={{ color: '#f4a8ca' }} /> : (idx + 1)}
@@ -1167,8 +1146,7 @@ export default function MCUViewer() {
                 </div>
                 {detailLoading && <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 8 }}>Loading live metadata…</div>}
                 {!detailLoading && !detailData && <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Live metadata unavailable for this title right now.</div>}
-                <p style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 12 }}>{detailItem.desc}</p>
-                {detailData?.Plot && detailData.Plot !== 'N/A' && <p style={{ fontSize: 14, lineHeight: 1.6, marginBottom: 12, color: T.textMuted }}>{detailData.Plot}</p>}
+                <p style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 12 }}>{detailData?.Plot && detailData.Plot !== 'N/A' ? detailData.Plot : detailItem.desc}</p>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Prerequisite:</strong> {detailItem.prereq}</div>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Status:</strong> {STATUS_META[detailItem.status]?.label}</div>
                 <div style={{ fontSize: 14 }}><strong>Cast:</strong> {detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</div>
