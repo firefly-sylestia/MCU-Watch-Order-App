@@ -772,16 +772,17 @@ export default function MCUViewer() {
           .rrow{grid-template-columns:24px 44px minmax(0,1fr) minmax(82px,auto) !important;gap:6px;padding:12px 10px 12px 8px}
           .poster{width:44px;height:64px}
         }
-        .header-title-mcu { font-size: clamp(48px, 8vw, 96px) !important; letter-spacing: clamp(2px, 0.8vw, 6px) !important; margin: 0 !important; }
+        .header-title-mcu { font-size: clamp(48px, 8vw, 96px) !important; letter-spacing: clamp(2px, 0.8vw, 6px) !important; margin: 0 !important; background:linear-gradient(90deg,var(--theme-accent),var(--theme-accent-alt));-webkit-background-clip:text;background-clip:text;color:transparent; }
         .header-title-sub { font-size: clamp(28px, 4.2vw, 56px) !important; letter-spacing: clamp(4px, 1.2vw, 10px) !important; margin-top: 0px !important; }
         .header-tagline { font-size: clamp(12px, 2.2vw, 15px) !important; margin-top: 1px !important; }
 
         .stat-card-num { font-size: clamp(28px, 4.5vw, 48px) !important; }
         .stat-card-label { font-size: clamp(11px, 1.8vw, 14px) !important; }
 
-        .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; }
+        .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; color:var(--theme-text-muted) !important }
         .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));backdrop-filter:blur(6px)}
-        .phase-grad-line{display:none}
+        .marvel-accent-line{height:3px;background:linear-gradient(90deg,#c0392b 0%,#e8b84b 35%,#4a9ede 70%,#a06cd5 100%);opacity:0.85}
+        .meta-muted{color:var(--theme-text-muted) !important}
 
         /* hide default scrollbar on main while keeping functionality */
         main::-webkit-scrollbar{width:4px}
@@ -838,13 +839,13 @@ export default function MCUViewer() {
         )}
       </div>
 
-      {/* ━━ HEADER ━━━━━━━━━━━━━━━━��━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <header className="hexbg" style={{ background: darkMode ? 'rgba(8,10,24,0.72)' : T.headerBg, borderBottom: `1px solid ${darkMode ? 'rgba(255,255,255,0.12)' : T.headerBorder}`, flexShrink: 0, backdropFilter: darkMode ? 'blur(16px)' : 'none', WebkitBackdropFilter: darkMode ? 'blur(16px)' : 'none' }}>
         <div className="header-inner" style={{ width: '100%', padding: 'calc(env(safe-area-inset-top, 0px) + 28px) 32px 14px', transition: 'padding 0.25s ease' }}>
           <div className="header-top-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             {/* Title */}
             <div style={{ fontFamily: "'Orbitron',sans-serif", lineHeight: 0.88, marginBottom: 0, fontWeight: 900 }}>
-              <div className="header-title-mcu" style={{ fontSize: 'clamp(56px, 7vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: '#c0392b', textShadow: darkMode ? '0 0 30px rgba(192,57,43,0.38),0 1px 0 #7a0000' : '0 2px 8px rgba(192,57,43,0.2)' }}>MCU</div>
+              <div className="header-title-mcu" style={{ fontSize: 'clamp(56px, 7vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', textShadow: darkMode ? '0 0 30px rgba(192,57,43,0.38),0 1px 0 #7a0000' : '0 2px 8px rgba(192,57,43,0.2)' }}>MCU</div>
               <div className="header-title-sub" style={{ fontSize: 'clamp(28px, 3.6vw, 35px)', letterSpacing: 'clamp(3px, 1.1vw, 9px)', color: T.text, marginTop: 0 }}>VIEWING ORDER</div>
               <div className="header-tagline" style={{ fontSize: '14px', color: T.textMuted, letterSpacing: headerCompact ? 1.4 : 3, fontFamily: "'Bebas Neue',sans-serif", marginTop: 1, transition: 'all 0.22s ease' }}>
                 {`PHASES 1–6 · ${activeItems.length} ENTRIES · ${LIST_MODES.find(m => m.id === listMode)?.sublabel.toUpperCase()}`}
@@ -874,6 +875,7 @@ export default function MCUViewer() {
         </div>
       </header>
 
+      <div className="marvel-accent-line" aria-hidden="true" />
       {/* ━━ LIST MODE SWITCHER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: T.switcherBg, borderBottom: `1px solid ${T.switcherBorder}`, padding: '0 24px', flexShrink: 0 }}>
         <div style={{ maxWidth: 1400, margin: '0 auto', display: 'flex', padding: '0 24px', width: '100%' }}>
@@ -1135,7 +1137,7 @@ export default function MCUViewer() {
                         {/* Title block — clickable to expand */}
                         <button className="title-btn" onClick={() => setDetailItem(item)} style={{ overflow: 'hidden' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: isWatched ? 700 : 700, lineHeight: 1.5, color: isWatched ? '#9df1c2' : 'rgba(255,255,255,0.9)', opacity: 1, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: '100%' }}>
+                            <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: 700, lineHeight: 1.5, color: isWatched ? '#9df1c2' : 'var(--theme-text)', opacity: 1, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: '100%' }}>
                               {item.title}
                             </span>
                             {/* Episode count badge */}
@@ -1152,7 +1154,7 @@ export default function MCUViewer() {
                             )}
                             <ChevRight size={10} style={{ color: T.textFaint, transform: 'none', transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
                           </div>
-                          <div style={{ marginTop: 2, fontSize: 10, color: 'rgba(255,255,255,0.5)', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2 }}>GENRES: {inferGenres(item).join(' • ').toUpperCase()}</div>
+                          <div className="meta-muted" style={{ marginTop: 2, fontSize: 10, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2 }}>GENRES: {inferGenres(item).join(' • ').toUpperCase()}</div>
                         </button>
 
                         {/* Year column */}
