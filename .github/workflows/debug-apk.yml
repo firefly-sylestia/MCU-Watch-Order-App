@@ -1,0 +1,75 @@
+name: Android Debug APK Artifact
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - work
+
+env:
+  JAVA_VERSION: '17'
+  NODE_VERSION: '22'
+
+jobs:
+  build-debug:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Set up Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build web
+        run: npm run build
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Make gradlew executable
+        run: chmod +x ./android/gradlew
+
+      - name: Build debug APK
+        working-directory: ./android
+        run: |
+          sed -i '/org.gradle.java.home/d' gradle.properties 2>/dev/null || true
+          ./gradlew clean assembleDebug --no-daemon --stacktrace
+
+      - name: Locate debug APK
+        id: find_apk
+        run: |
+          APK=$(find ./android -name "app-debug.apk" -type f | head -1)
+          if [ -z "$APK" ]; then
+            echo "ERROR: Debug APK not found"
+            find ./android -name "*.apk" -type f
+            exit 1
+          fi
+          cp "$APK" "MCU-Viewing-Order-debug-${{ github.run_number }}.apk"
+          echo "apk_file=MCU-Viewing-Order-debug-${{ github.run_number }}.apk" >> $GITHUB_OUTPUT
+          ls -lh "MCU-Viewing-Order-debug-${{ github.run_number }}.apk"
+
+      - name: Upload debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcu-viewing-order-debug-apk
+          path: ${{ steps.find_apk.outputs.apk_file }}
+          if-no-files-found: error
+          retention-days: 14
