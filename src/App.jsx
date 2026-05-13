@@ -204,6 +204,7 @@ export default function MCUViewer() {
   const [sortOpen,       setSortOpen]       = useState(false);
   const [phaseOpen,      setPhaseOpen]      = useState(false);
   const [statusDropdown, setStatusDropdown] = useState(null);
+  const [filterStatusOpen, setFilterStatusOpen] = useState(false);
   const [dropdownPos,    setDropdownPos]    = useState({ x: 0, y: 0 });
   const [darkMode,       setDarkMode]       = useState(true);
   const [expandedItem,   setExpandedItem]   = useState(null);
@@ -464,6 +465,13 @@ export default function MCUViewer() {
   const memoryScore = useMemo(() => Math.max(0, Math.min(100, Math.round((totalWatched / Math.max(1, activeItems.length)) * 100) - (spoilerSafe ? 10 : 0))), [totalWatched, activeItems.length, spoilerSafe]);
   const OMDB_KEY = '14596ed1';
   const cleanLookupTitle = (title) => title.replace(/\sS\d.*$/i, '').replace(/\sEps?.*$/i, '').trim();
+  const formatReleaseDate = (dateStr, fallbackYear) => {
+    if (!dateStr) return String(fallbackYear);
+    const d = new Date(dateStr);
+    if (!Number.isNaN(d.getTime())) return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    const yearMatch = String(dateStr).match(/\b(19|20)\d{2}\b/);
+    return yearMatch ? yearMatch[0] : String(fallbackYear);
+  };
   const nextUnwatched = useMemo(() => filtered.find(i => i.status !== 'watched') || null, [filtered]);
   const recentActivity = useMemo(() => [...activeItems].filter(i => i.watchedDate).sort((a,b) => (b.watchedDate||'').localeCompare(a.watchedDate||'')).slice(0,5), [activeItems]);
   const totalEntries = activeItems.length;
@@ -848,7 +856,6 @@ export default function MCUViewer() {
       {/* ━━ FILTER BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div className="filter-shell" style={{ background: T.filterBg, borderBottom: `1px solid ${T.filterBorder}`, padding: '10px 24px', overflow: 'visible', flexShrink: 0, position: 'relative', zIndex: 180 }}>
         <div style={{ maxWidth: 1400, margin: '0 auto', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', width: '100%', padding: '0 24px', overflow: 'visible' }}>
-          <select value={timelineMode} onChange={e=>setTimelineMode(e.target.value)} style={{ padding: '8px', borderRadius: 20 }}><option value="sacred">Sacred</option><option value="studio">Studio</option><option value="whatif">What-If</option></select>
           {/* Search */}
           <div style={{ position: 'relative', flex: '1 1 170px', minWidth: 130 }}>
             <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
@@ -912,19 +919,19 @@ export default function MCUViewer() {
           <div style={{ position: 'relative' }}>
             <button className="fpill"
               style={watchedOnly || statusFilter ? { borderColor: '#3ec47a88', background: '#3ec47a14', color: '#3ec47a' } : {}}
-              onClick={() => setStatusDropdown(statusDropdown === 'filter' ? null : 'filter')}
-              onMouseEnter={() => setStatusDropdown('filter')}
-              onMouseLeave={() => setStatusDropdown(null)}>
+              onClick={() => setFilterStatusOpen(v => !v)}
+              onMouseEnter={() => setFilterStatusOpen(true)}
+              onMouseLeave={() => setFilterStatusOpen(false)}>
               <Check size={10} />Watched
             </button>
-            {statusDropdown === 'filter' && (
+            {filterStatusOpen && (
               <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: T.dropdownBg, border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 180 }}
-                onMouseEnter={() => setStatusDropdown('filter')}
-                onMouseLeave={() => setStatusDropdown(null)}>
-                <div className={`sopt ${!statusFilter && !watchedOnly ? 'picked' : ''}`} onClick={() => { setStatusFilter(null); setWatchedOnly(false); setStatusDropdown(null); }}>All statuses</div>
-                <div className={`sopt ${watchedOnly ? 'picked' : ''}`} onClick={() => { setWatchedOnly(true); setStatusFilter(null); setStatusDropdown(null); }}>Watched only</div>
-                <div className={`sopt ${statusFilter === 'watching' ? 'picked' : ''}`} onClick={() => { setStatusFilter('watching'); setWatchedOnly(false); setStatusDropdown(null); }}>Watching</div>
-                <div className={`sopt ${statusFilter === 'plan-to-watch' ? 'picked' : ''}`} onClick={() => { setStatusFilter('plan-to-watch'); setWatchedOnly(false); setStatusDropdown(null); }}>Plan to Watch</div>
+                onMouseEnter={() => setFilterStatusOpen(true)}
+                onMouseLeave={() => setFilterStatusOpen(false)}>
+                <div className={`sopt ${!statusFilter && !watchedOnly ? 'picked' : ''}`} onClick={() => { setStatusFilter(null); setWatchedOnly(false); setFilterStatusOpen(false); }}>All statuses</div>
+                <div className={`sopt ${watchedOnly ? 'picked' : ''}`} onClick={() => { setWatchedOnly(true); setStatusFilter(null); setFilterStatusOpen(false); }}>Watched only</div>
+                <div className={`sopt ${statusFilter === 'watching' ? 'picked' : ''}`} onClick={() => { setStatusFilter('watching'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Watching</div>
+                <div className={`sopt ${statusFilter === 'plan-to-watch' ? 'picked' : ''}`} onClick={() => { setStatusFilter('plan-to-watch'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Plan to Watch</div>
               </div>
             )}
           </div>
@@ -962,14 +969,6 @@ export default function MCUViewer() {
         
 
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '24px var(--content-pad) 80px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch" key={listMode}>
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 10 }}>
-          {filtered.slice(0,10).map(i => (
-            <button key={`c-${i.id}`} onClick={()=>setDetailItem(i)} style={{ minWidth: 140, textAlign: 'left', background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 8 }}>
-              <div style={{ fontSize: 12 }}>{i.title}</div>
-              <div style={{ fontSize: 11, color: T.textMuted }}>❤️ {myLikes[i.id]||0} · ⭐ {myRating[i.id]||0}/10</div>
-            </button>
-          ))}
-        </div>
         {phaseKeys.length === 0 && (
           <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: "'Bebas Neue',sans-serif", fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
             NO RESULTS — ADJUST YOUR FILTERS
@@ -1001,8 +1000,8 @@ export default function MCUViewer() {
             <div style={{ fontFamily: "'Orbitron',sans-serif", fontSize: 'clamp(32px, 4vw, 36px)', letterSpacing: 6, color: ph.color, lineHeight: 1, fontWeight: 700, textShadow: darkMode ? `0 0 18px ${ph.glow}` : 'none' }}>
               {ph.name}
             </div>
-            <div style={{ fontSize: 'clamp(16px, 2.2vw, 18px)', color: T.textMuted, letterSpacing: 3, fontFamily: "'Bebas Neue',sans-serif", marginTop: 1, textTransform: 'uppercase' }}>
-                    {ph.tagline}
+            <div style={{ fontSize: 'clamp(15px, 1.9vw, 17px)', color: T.textMuted, letterSpacing: 2.4, fontFamily: "'Bebas Neue',sans-serif", marginTop: 1, textTransform: 'uppercase', maxWidth: 360, lineHeight: 1.15 }}>
+                    {ph.tagline === 'Assembling the Avengers' ? <>ASSEMBLING<br />THE AVENGERS</> : ph.tagline}
                   </div>
                 </div>
                 {/* Mini progress */}
@@ -1087,14 +1086,27 @@ export default function MCUViewer() {
                               {item.prereq}
                             </div>
                           )}
+                          <div style={{ marginTop: 1, fontSize: '11px', color: T.textFaint, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.3, textTransform: 'uppercase' }}>
+                            Genre: {m.label}
+                          </div>
                         </button>
 
                         {/* Year column */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 80 }}>
                           <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '12px', letterSpacing: 1.4, color: T.text, textAlign: 'center', fontWeight: 600 }}>
-                            {RELEASE_INFO[item.title]?.date || `${item.year}-01-01`}
+                            {formatReleaseDate(RELEASE_INFO[item.title]?.date, item.year)}
                           </div>
-                          <div style={{ fontSize: 10, color: T.textMuted }}>⭐ {RELEASE_INFO[item.title]?.rating || (myRating[item.id] || '—')}</div>
+                          <div style={{ fontSize: 10, color: T.textMuted }}>IMDb {RELEASE_INFO[item.title]?.rating || '—'}</div>
+                          {(watchedOnly || isWatched) && (
+                            <>
+                              <button className="fpill" style={{ padding: '2px 8px', fontSize: 10 }} onClick={() => setMyLikes(p => ({ ...p, [item.id]: (p[item.id] || 0) + 1 }))}>❤️ {myLikes[item.id] || 0}</button>
+                              <select value={myRating[item.id] || ''} onChange={(e) => setMyRating(p => ({ ...p, [item.id]: Number(e.target.value) }))}
+                                style={{ fontSize: 10, borderRadius: 8, padding: '2px 4px', background: T.inputBg, color: T.inputColor, border: `1px solid ${T.inputBorder}` }}>
+                                <option value="">My ⭐</option>
+                                {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}/10</option>)}
+                              </select>
+                            </>
+                          )}
                           <button className="fpill" style={{ padding: '2px 8px', fontSize: 10 }} onClick={() => setRewatchCount(p => ({ ...p, [item.id]: (p[item.id] || 0) + 1 }))}>↺ {rewatchCount[item.id] || 0}</button>
 
                         </div>
