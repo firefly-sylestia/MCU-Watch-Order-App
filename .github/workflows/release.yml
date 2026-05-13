@@ -159,6 +159,15 @@ jobs:
           echo "✅ APK ready: $NEW_NAME"
           ls -lh "$NEW_NAME"
 
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcu-viewing-order-${{ steps.find_apk.outputs.apk_type }}-apk
+          path: MCU-Viewing-Order-${{ steps.version.outputs.version }}-${{ steps.find_apk.outputs.apk_type }}.apk
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
