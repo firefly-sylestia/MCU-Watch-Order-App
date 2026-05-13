@@ -615,7 +615,7 @@ export default function MCUViewer() {
         ::-webkit-scrollbar-track{background:${T.scrollTrack}}
         ::-webkit-scrollbar-thumb{background:${T.scrollThumb};border-radius:4px}
         ::-webkit-scrollbar-thumb:hover{background:${T.scrollThumbH}}
-        input,button,select{font-family:inherit}
+        input,button,select{font-family:inherit;border-radius:12px}
         input:focus{outline:none}
         button:focus-visible{outline:2px solid #c0392b;outline-offset:2px}
 
@@ -663,7 +663,7 @@ export default function MCUViewer() {
         .ntab::after{content:'';position:absolute;bottom:0;left:12px;right:12px;height:2px;border-radius:2px 2px 0 0;background:currentColor;transform:scaleX(0);transform-origin:center;transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1)}
         .ntab.on::after{transform:scaleX(1)}
 
-        .fpill{display:flex;align-items:center;gap:6px;padding:7px 28px;border-radius:999px;border:1px solid transparent;background:${darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(20,24,34,0.06)'};cursor:pointer;font-size:clamp(14px,2.2vw,16px);font-weight:600;letter-spacing:0.05em;color:${T.pillText};transition:background-color 0.18s ease,color 0.18s ease,opacity 0.18s ease,border-color 0.18s ease;white-space:nowrap;box-shadow:none}
+        .fpill{display:flex;align-items:center;gap:6px;padding:7px 28px;border-radius:12px;border:1px solid transparent;background:${darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(20,24,34,0.06)'};backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);cursor:pointer;font-size:clamp(14px,2.2vw,16px);font-weight:600;letter-spacing:0.05em;color:${T.pillText};transition:background-color 0.18s ease,color 0.18s ease,opacity 0.18s ease,border-color 0.18s ease;white-space:nowrap;box-shadow:none}
         .fpill:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText};background:${darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(20,24,34,0.10)'};opacity:0.96}
         .fpill:active{opacity:0.82}
         .fpill:focus-visible,.theme-btn:focus-visible,.lmode-btn:focus-visible{outline:2px solid #c0392b;outline-offset:2px}
@@ -767,7 +767,7 @@ export default function MCUViewer() {
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━��━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <header className="hexbg" style={{ background: darkMode ? 'rgba(8,10,24,0.72)' : T.headerBg, borderBottom: `1px solid ${darkMode ? 'rgba(255,255,255,0.12)' : T.headerBorder}`, flexShrink: 0, backdropFilter: darkMode ? 'blur(16px)' : 'none', WebkitBackdropFilter: darkMode ? 'blur(16px)' : 'none' }}>
-        <div className="header-inner" style={{ width: '100%', padding: '18px 32px 14px', transition: 'padding 0.25s ease' }}>
+        <div className="header-inner" style={{ width: '100%', padding: 'calc(env(safe-area-inset-top, 0px) + 28px) 32px 14px', transition: 'padding 0.25s ease' }}>
           <div className="header-top-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             {/* Title */}
             <div style={{ fontFamily: "'Orbitron',sans-serif", lineHeight: 0.88, marginBottom: 0, fontWeight: 900 }}>
@@ -835,7 +835,7 @@ export default function MCUViewer() {
 
 
       <div style={{ background: T.switcherBg, borderBottom: `1px solid ${T.switcherBorder}`, padding: '10px 24px', flexShrink: 0 }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 10, padding: '0 24px' }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto 20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 20, padding: '0 24px' }}>
           <div className="glass-grad" style={{ background: darkMode ? 'linear-gradient(135deg, rgba(20,24,42,0.88), rgba(39,20,49,0.78))' : 'linear-gradient(135deg,#ffffff,#f8f4ff)', border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
             <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Continue Watching</div>
             <div style={{ fontSize: 18, marginTop: 4 }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</div>
@@ -1052,7 +1052,7 @@ export default function MCUViewer() {
                   return (
                     <div key={item.id}>
                       {/* Main row */}
-                      <div className={`rrow row-in type-${item.type} ${isWatched ? 'glass-panel' : ''}`} style={{ background: isWatched ? T.rowWatchedBg : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow }}>
+                      <div className={`rrow row-in type-${item.type} ${isWatched ? 'glass-panel' : ''}`} style={{ background: isWatched ? T.rowWatchedBg : 'transparent', opacity: isWatched ? 0.7 : 1, '--phase-color': ph.color, '--phase-glow': ph.glow }}>
                         {/* Order / check */}
                         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 15, color: isWatched ? '#f1bfd3' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
                           {isWatched ? <Check size={14} style={{ color: '#f4a8ca' }} /> : (idx + 1)}
@@ -1079,6 +1079,7 @@ export default function MCUViewer() {
                             )}
                             <ChevRight size={10} style={{ color: T.textFaint, transform: 'none', transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
                           </div>
+                          <div style={{ marginTop: 2, fontSize: 10, color: 'rgba(255,255,255,0.5)', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2 }}>GENRE: {m.label.toUpperCase()}</div>
                         </button>
 
                         {/* Year column */}
@@ -1102,6 +1103,7 @@ export default function MCUViewer() {
                             <statusMeta.Icon size={11} />
                           </button>
                         </div>
+                        {isWatched && <Check size={12} style={{ position: 'absolute', top: 8, right: 8, color: '#9be8bc', filter: 'drop-shadow(0 0 6px rgba(155,232,188,0.75))' }} />}
                       </div>
 
                       
