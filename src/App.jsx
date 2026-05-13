@@ -22,6 +22,7 @@ const ChevDown  = p => <Icon {...p}><path d="m6 9 6 6 6-6"/></Icon>;
 const ChevRight = p => <Icon {...p}><path d="m9 6 6 6-6 6"/></Icon>;
 const Check     = p => <Icon {...p}><path d="M20 6 9 17l-5-5"/></Icon>;
 const Clock     = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></Icon>;
+const Heart     = p => <Icon {...p}><path d="M12 21s-7-4.35-9.5-8.5C.2 8.8 2.1 5 5.8 5c2.1 0 3.3 1.1 4.2 2.4C10.9 6.1 12.1 5 14.2 5 17.9 5 19.8 8.8 21.5 12.5 19 16.65 12 21 12 21z"/></Icon>;
 const Pause     = p => <Icon {...p}><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></Icon>;
 const Trash2    = p => <Icon {...p}><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></Icon>;
 const Sun       = p => <Icon {...p}><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></Icon>;
@@ -727,7 +728,7 @@ export default function MCUViewer() {
         @media (max-width: 767px) {
           .header-inner { padding: 10px 14px 8px !important; }
           .fpill{padding:7px 14px !important;font-size:14px !important}
-          .rrow{grid-template-columns:28px 44px minmax(0,1fr) 52px 24px !important;gap:8px;padding:12px}
+          .rrow{grid-template-columns:28px 44px minmax(0,1fr) 84px !important;gap:8px;padding:12px 16px 12px 12px}
           .poster{width:44px;height:64px}
         }
         .header-title-mcu { font-size: clamp(48px, 8vw, 96px) !important; letter-spacing: clamp(2px, 0.8vw, 6px) !important; margin: 0 !important; }
@@ -1159,8 +1160,9 @@ export default function MCUViewer() {
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Status:</strong> {STATUS_META[detailItem.status]?.label}</div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10, alignItems: 'center' }}>
                   <span style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.1, fontFamily: "'Bebas Neue',sans-serif" }}>QUICK ACTIONS</span>
-                  <button className="fpill" style={{ padding: '3px 8px', fontSize: 10 }} onClick={() => setMyLikes(p => ({ ...p, [detailItem.id]: (p[detailItem.id] || 0) + 1 }))}>❤️ {myLikes[detailItem.id] || 0}</button>
+                  <button className="fpill" style={{ padding: '3px 8px', fontSize: 10 }} onClick={() => setMyLikes(p => ({ ...p, [detailItem.id]: p[detailItem.id] ? 0 : 1 }))}><Heart size={10}/> {myLikes[detailItem.id] ? 'Liked' : 'Like'}</button>
                   <button className="fpill" style={{ padding: '3px 8px', fontSize: 10 }} onClick={() => setRewatchCount(p => ({ ...p, [detailItem.id]: (p[detailItem.id] || 0) + 1 }))}>↺ {rewatchCount[detailItem.id] || 0}</button>
+                  <button className="fpill" style={{ padding: '3px 8px', fontSize: 10 }} onClick={() => setRewatchCount(p => ({ ...p, [detailItem.id]: 0 }))}>Reset ↺</button>
                   <select value={myRating[detailItem.id] || ''} onChange={(e) => setMyRating(p => ({ ...p, [detailItem.id]: Number(e.target.value) }))}
                     style={{ fontSize: 11, borderRadius: 8, padding: '3px 6px', background: T.inputBg, color: T.inputColor, border: `1px solid ${T.inputBorder}` }}>
                     <option value="">My rating</option>
