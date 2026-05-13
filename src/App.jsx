@@ -664,9 +664,54 @@ export default function MCUViewer() {
     phaseSummaryBg: '#f5f2ec', phaseSummaryBorder: '#e4ddd4',
   };
 
+
+  const themeVarsByMode = {
+    classic: {
+      '--theme-accent': '#c0392b',
+      '--theme-accent-alt': '#e8b84b',
+      '--theme-accent-glow': darkMode ? 'rgba(192,57,43,0.40)' : 'rgba(192,57,43,0.22)',
+    },
+    cosmic: {
+      '--theme-accent': '#4a9ede',
+      '--theme-accent-alt': '#a06cd5',
+      '--theme-accent-glow': darkMode ? 'rgba(74,158,222,0.42)' : 'rgba(74,158,222,0.25)',
+    },
+    vibranium: {
+      '--theme-accent': '#3ec47a',
+      '--theme-accent-alt': '#58d6d8',
+      '--theme-accent-glow': darkMode ? 'rgba(62,196,122,0.42)' : 'rgba(62,196,122,0.22)',
+    },
+    quantum: {
+      '--theme-accent': '#f3a6c2',
+      '--theme-accent-alt': '#ffd2e4',
+      '--theme-accent-glow': darkMode ? 'rgba(243,166,194,0.45)' : 'rgba(243,166,194,0.26)',
+    },
+    mystic: {
+      '--theme-accent': '#a06cd5',
+      '--theme-accent-alt': '#4a9ede',
+      '--theme-accent-glow': darkMode ? 'rgba(160,108,213,0.42)' : 'rgba(160,108,213,0.24)',
+    },
+    'web-slinger': {
+      '--theme-accent': '#d34d4d',
+      '--theme-accent-alt': '#4a9ede',
+      '--theme-accent-glow': darkMode ? 'rgba(211,77,77,0.40)' : 'rgba(211,77,77,0.22)',
+    },
+  };
+
+  const activeThemeVars = themeVarsByMode[themeMode] || themeVarsByMode.classic;
+  const cssThemeVars = {
+    '--theme-bg': darkMode ? '#06060f' : '#f2f0eb',
+    '--theme-surface': darkMode ? 'rgba(13,13,30,0.82)' : 'rgba(255,255,255,0.92)',
+    '--theme-surface-hover': darkMode ? 'rgba(27,27,54,0.90)' : 'rgba(242,236,225,0.92)',
+    '--theme-border': darkMode ? '#1b1b33' : '#ddd8cf',
+    '--theme-text': darkMode ? '#d8e3f5' : '#1a2030',
+    '--theme-text-muted': darkMode ? '#8fa1b8' : '#667182',
+    ...activeThemeVars,
+  };
+
   const appThemeBg = 'var(--theme-bg)';
   return (
-      <div data-theme={themeMode} style={{ width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 0.32s cubic-bezier(0.34,1.56,0.64,1), color 0.32s cubic-bezier(0.34,1.56,0.64,1)' }} className="theme-switch">
+      <div data-theme={themeMode} style={{ ...cssThemeVars, width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 0.32s cubic-bezier(0.34,1.56,0.64,1), color 0.32s cubic-bezier(0.34,1.56,0.64,1)' }} className="theme-switch">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -757,7 +802,7 @@ export default function MCUViewer() {
         .progress-gradient{background:linear-gradient(90deg,#f3a6c2 0%,#f49bc8 32%,#f6b8d0 64%,#ffd2e4 100%);background-size:200% 100%;animation:gradientFlow 3.4s linear infinite}
         @keyframes gradientFlow{0%{background-position:0% 50%}100%{background-position:200% 50%}}
         .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.62);backdrop-filter:blur(12px);z-index:240;display:grid;place-items:center;padding:20px}
-        .detail-card{width:min(980px,94vw);max-height:90vh;overflow:auto;background:rgba(30,30,46,0.4);backdrop-filter:blur(12px);border:1px solid ${T.surfaceBorder};border-radius:14px;padding:24px}
+        .detail-card{width:min(980px,94vw);max-height:90vh;overflow:auto;background:${darkMode ? 'rgba(12,16,34,0.88)' : 'rgba(255,255,255,0.95)'};backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid ${T.surfaceBorder};border-radius:14px;padding:24px;box-shadow:${darkMode ? '0 22px 60px rgba(0,0,0,0.56)' : '0 18px 44px rgba(0,0,0,0.14)'}}
         .glass-panel{background-color:rgba(30,30,46,0.6);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.05);border-radius:16px}
         .filter-shell{
           position: static;
