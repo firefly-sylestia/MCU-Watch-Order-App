@@ -218,6 +218,7 @@ export default function MCUViewer() {
   const [headerCompact]  = useState(false);
   const [detailItem,     setDetailItem]     = useState(null);
   const [detailData,     setDetailData]     = useState(null);
+  const [metaCache,      setMetaCache]      = useState({});
   const [detailLoading,  setDetailLoading]  = useState(false);
   const [posterCache,    setPosterCache]    = useState({});
   const [settingsOpen,   setSettingsOpen]   = useState(false);
@@ -520,6 +521,8 @@ export default function MCUViewer() {
     try {
       const saved = JSON.parse(localStorage.getItem('mcu-poster-cache-v1') || '{}');
       setPosterCache(saved);
+      const metaSaved = JSON.parse(localStorage.getItem('mcu-meta-cache-v1') || '{}');
+      setMetaCache(metaSaved);
     } catch {}
   }, []);
 
@@ -528,28 +531,41 @@ export default function MCUViewer() {
   }, [posterCache]);
 
   useEffect(() => {
+    localStorage.setItem('mcu-meta-cache-v1', JSON.stringify(metaCache));
+  }, [metaCache]);
+
+  useEffect(() => {
     const key = import.meta.env.VITE_OMDB_API_KEY || OMDB_KEY;
     if (!key) return;
-    const targets = filtered.slice(0, 30).filter(i => posterCache[i.id] === undefined);
+    const targets = filtered.slice(0, 30).filter(i => posterCache[i.id] === undefined || metaCache[i.id] === undefined);
     if (!targets.length) return;
     let cancelled = false;
     const run = async () => {
-      const updates = {};
+      const posterUpdates = {};
+      const metaUpdates = {};
       for (const item of targets) {
         try {
           const t = encodeURIComponent(cleanLookupTitle(item.title));
           const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}`);
           const data = await res.json();
-          updates[item.id] = data?.Poster && data.Poster !== 'N/A' ? data.Poster : '';
+          posterUpdates[item.id] = data?.Poster && data.Poster !== 'N/A' ? data.Poster : '';
+          metaUpdates[item.id] = {
+            rating: data?.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : '',
+            released: data?.Released && data.Released !== 'N/A' ? data.Released : ''
+          };
         } catch {
-          updates[item.id] = '';
+          posterUpdates[item.id] = '';
+          metaUpdates[item.id] = { rating: '', released: '' };
         }
       }
-      if (!cancelled) setPosterCache(prev => ({ ...prev, ...updates }));
+      if (!cancelled) {
+        setPosterCache(prev => ({ ...prev, ...posterUpdates }));
+        setMetaCache(prev => ({ ...prev, ...metaUpdates }));
+      }
     };
     run();
     return () => { cancelled = true; };
-  }, [filtered, posterCache]);
+  }, [filtered, posterCache, metaCache]);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -692,7 +708,7 @@ export default function MCUViewer() {
         .sopt:hover{background:${T.sortHoverBg};color:${T.text};transform:translateX(4px)}
         .sopt.picked{color:#c0392b;font-weight:700}
 
-        .rrow{position:relative;transition:background 0.2s ease,transform 0.22s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.22s ease,border-color 0.22s ease;display:grid;align-items:center;grid-template-columns:40px 52px minmax(0,1fr) 108px;gap:14px;padding:16px 20px;border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:86px;border-radius:10px;overflow:hidden}
+        .rrow{position:relative;transition:background 0.2s ease,transform 0.22s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.22s ease,border-color 0.22s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:12px;padding:16px 16px 16px 12px;border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:86px;border-radius:10px;overflow:hidden}
         .rrow:last-child{border-bottom:none}
         .rrow > *{position:relative;z-index:1}
         .rrow:hover{transform:translateY(-6px);border-left-color:var(--phase-color,#c0392b);box-shadow:0 12px 28px -14px var(--phase-glow,rgba(192,57,43,0.5))}
@@ -728,7 +744,7 @@ export default function MCUViewer() {
         @media (max-width: 767px) {
           .header-inner { padding: 10px 14px 8px !important; }
           .fpill{padding:7px 14px !important;font-size:14px !important}
-          .rrow{grid-template-columns:28px 44px minmax(0,1fr) 84px !important;gap:8px;padding:12px 16px 12px 12px}
+          .rrow{grid-template-columns:24px 44px minmax(0,1fr) minmax(82px,auto) !important;gap:6px;padding:12px 10px 12px 8px}
           .poster{width:44px;height:64px}
         }
         .header-title-mcu { font-size: clamp(48px, 8vw, 96px) !important; letter-spacing: clamp(2px, 0.8vw, 6px) !important; margin: 0 !important; }
@@ -1103,10 +1119,10 @@ export default function MCUViewer() {
 
                         {/* Year column */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: 104, flexShrink: 0 }}>
-                          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '12px', letterSpacing: 1.4, color: T.text, textAlign: 'center', fontWeight: 600 }}>
-                            {formatReleaseDate(RELEASE_INFO[item.title]?.date, item.year)}
+                          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '12px', letterSpacing: 1.1, color: T.text, textAlign: 'right', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                            {formatReleaseDate(RELEASE_INFO[item.title]?.date || metaCache[item.id]?.released, item.year)}
                           </div>
-                          <div style={{ fontSize: 11, color: '#e8b84b', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 0.8 }}>★ {RELEASE_INFO[item.title]?.rating || '—'}</div>
+                          <div style={{ fontSize: 11, color: '#e8b84b', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 0.6, whiteSpace: 'nowrap' }}>★ {RELEASE_INFO[item.title]?.rating || metaCache[item.id]?.rating || '—'}</div>
                           <button className="wbtn"
                             aria-label={`${statusMeta.label} — click to change`}
                             aria-haspopup="true"
