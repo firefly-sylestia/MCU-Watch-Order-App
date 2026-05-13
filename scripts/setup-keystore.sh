@@ -13,12 +13,12 @@ echo ""
 # Step 1: Get user inputs
 echo "Step 1: Enter Keystore Details"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-read -p "Enter keystore filename [release.keystore]: " KEYSTORE_FILE
+read -p "MCUWatchOrder.keystore: " KEYSTORE_FILE
 KEYSTORE_FILE=${KEYSTORE_FILE:-release.keystore}
 
-read -sp "Enter keystore password: " STORE_PASSWORD
+read -sp "12MCU@Me: " STORE_PASSWORD
 echo ""
-read -sp "Confirm keystore password: " STORE_PASSWORD_CONFIRM
+read -sp "12MCU@Me: " STORE_PASSWORD_CONFIRM
 echo ""
 
 if [ "$STORE_PASSWORD" != "$STORE_PASSWORD_CONFIRM" ]; then
@@ -26,12 +26,12 @@ if [ "$STORE_PASSWORD" != "$STORE_PASSWORD_CONFIRM" ]; then
   exit 1
 fi
 
-read -p "Enter key alias [mcu-app]: " KEY_ALIAS
+read -p "mcu-app: " KEY_ALIAS
 KEY_ALIAS=${KEY_ALIAS:-mcu-app}
 
-read -sp "Enter key password: " KEY_PASSWORD
+read -sp "12MCU@Me: " KEY_PASSWORD
 echo ""
-read -sp "Confirm key password: " KEY_PASSWORD_CONFIRM
+read -sp "12MCU@Me: " KEY_PASSWORD_CONFIRM
 echo ""
 
 if [ "$KEY_PASSWORD" != "$KEY_PASSWORD_CONFIRM" ]; then
