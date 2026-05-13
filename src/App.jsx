@@ -32,6 +32,7 @@ const Moon      = p => <Icon {...p}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0
 const Settings  = p => <Icon {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.02.02a2 2 0 1 1-2.83 2.83l-.02-.02A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.03a1.7 1.7 0 0 0-.4-1.1 1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.87.34l-.02.02a2 2 0 1 1-2.83-2.83l.02-.02A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H2.9a2 2 0 1 1 0-4h.03a1.7 1.7 0 0 0 1.1-.4 1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.87l-.02-.02a2 2 0 1 1 2.83-2.83l.02.02A1.7 1.7 0 0 0 9 4.6c.4 0 .78-.2 1-.6.25-.31.39-.7.4-1.1V2.9a2 2 0 1 1 4 0v.03c0 .4.15.79.4 1.1.22.4.6.6 1 .6.67.07 1.34-.16 1.87-.62l.02-.02a2 2 0 1 1 2.83 2.83l-.02.02a1.7 1.7 0 0 0-.34 1.87c0 .4.2.78.6 1 .31.25.7.39 1.1.4h.03a2 2 0 1 1 0 4h-.03a1.7 1.7 0 0 0-1.1.4 1.7 1.7 0 0 0-.6 1z"/></Icon>;
 const Info      = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></Icon>;
 const Bookmark  = p => <Icon {...p}><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"/></Icon>;
+const SlidersH  = p => <Icon {...p}><line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><circle cx="12" cy="4" r="2"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><circle cx="10" cy="12" r="2"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><circle cx="14" cy="20" r="2"/></Icon>;
 
 // ─── Static data ────────────────────────────────────────────────────────────
 const PHASES = [
@@ -132,7 +133,7 @@ const ESSENTIAL_LIST = [
   { id: 60, order: 60, phase: 6, type: 'series', year: 2025, essential: false, episodes: null, title: "Marvel Zombies S1",               prereq: "None (alternate reality, optional)",      desc: "Set in an alternate MCU reality overrun by a zombie plague, a group of young heroes — including Kamala Khan — must fight to survive in a horror-tinged animated series for mature audiences." },
 ];
 
-// ─── ADDITIONAL LIST (54 items — no duplicates with ESSENTIAL_LIST) ──────────
+// ─── ADDITIONAL LIST ─────────────────────────────────────────────────────────
 const ADDITIONAL_LIST = [
   { id: 101, order: 101, phase: 1, type: 'short',  year: 2013, essential: false, episodes: 1,  title: "Agent Carter (One-Shot)",            prereq: "CATFA",                          desc: "A short film following Peggy Carter one year after WWII, proving her worth to SSR colleagues who underestimate her — a precursor to the full Agent Carter series." },
   { id: 102, order: 102, phase: 1, type: 'series', year: 2015, essential: false, episodes: 18, title: "Agent Carter S1 & S2",               prereq: "CATFA",                          desc: "Peggy Carter works as an SSR agent after the war, fighting Howard Stark's enemies and later an adversary in Hollywood. 10 episodes across 2 seasons of spy-era adventure." },
@@ -197,6 +198,9 @@ const LIST_MODES = [
   { id: 'extended', label: 'Extended', sublabel: 'Full Chronological', color: '#4a9ede', desc: 'All entries incl. Netflix, SHIELD & more' },
 ];
 
+// ─── OMDB ratings key (for ratings only — posters use TMDB) ─────────────────
+const OMDB_RATINGS_KEY = '2c971c17';
+
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function MCUViewer() {
   const [items,          setItems]          = useState(RAW);
@@ -212,12 +216,13 @@ export default function MCUViewer() {
   const [phaseOpen,      setPhaseOpen]      = useState(false);
   const [statusDropdown, setStatusDropdown] = useState(null);
   const [filterStatusOpen, setFilterStatusOpen] = useState(false);
+  const [filtersOpen,    setFiltersOpen]    = useState(false); // collapsed by default
   const [dropdownPos,    setDropdownPos]    = useState({ x: 0, y: 0 });
   const [darkMode,       setDarkMode]       = useState(true);
   const [expandedItem,   setExpandedItem]   = useState(null);
-  const [expandedPhase,  setExpandedPhase]  = useState(null); // for phase summary toggle
-  const [celebPhase,     setCelebPhase]     = useState(null); // phase completion flash
-  const [editingDateId,  setEditingDateId]  = useState(null); // date editing mode
+  const [expandedPhase,  setExpandedPhase]  = useState(null);
+  const [celebPhase,     setCelebPhase]     = useState(null);
+  const [editingDateId,  setEditingDateId]  = useState(null);
   const [headerCompact]  = useState(false);
   const [detailItem,     setDetailItem]     = useState(null);
   const [detailData,     setDetailData]     = useState(null);
@@ -233,7 +238,7 @@ export default function MCUViewer() {
   const [viewMode, setViewMode] = useState('list');
   const [densityMode, setDensityMode] = useState('comfortable');
   const [timelineMode,   setTimelineMode]   = useState('sacred');
-  const [genreFilter] = useState('all'); // hidden filter hook for future genre controls
+  const [genreFilter] = useState('all');
   const [myLikes,        setMyLikes]        = useState({});
   const [myRating,       setMyRating]       = useState({});
   const [rewatchCount,   setRewatchCount]   = useState({});
@@ -247,14 +252,13 @@ export default function MCUViewer() {
   const mainRef    = useRef(null);
   const settingsRef= useRef(null);
 
-  // Persist / load
   useEffect(() => {
     const s = localStorage.getItem('mcu-v7');
     if (s) {
       try {
         const saved = JSON.parse(s);
-        setItems(prev => prev.map(i => ({ 
-          ...i, 
+        setItems(prev => prev.map(i => ({
+          ...i,
           status: saved[i.id]?.status || 'unwatched',
           watchedDate: saved[i.id]?.watchedDate || null
         })));
@@ -264,7 +268,7 @@ export default function MCUViewer() {
 
   const persist = (next) => {
     const data = {};
-    next.forEach(i => { 
+    next.forEach(i => {
       if (i.status !== 'unwatched' || i.watchedDate) {
         data[i.id] = { status: i.status, watchedDate: i.watchedDate };
       }
@@ -284,7 +288,6 @@ export default function MCUViewer() {
         }
         return updated;
       });
-      // Check if this completes a phase — trigger celebration
       const item = n.find(i => i.id === id);
       if (newStatus === 'watched' && item) {
         const phaseItems = n.filter(i => i.phase === item.phase && (listMode === 'core' ? coreIds.has(i.id) : true));
@@ -299,7 +302,6 @@ export default function MCUViewer() {
     });
   };
 
-  // Scroll detection — listen on the main scroll container
   useEffect(() => {
     const el = mainRef.current;
     if (!el) return;
@@ -312,13 +314,11 @@ export default function MCUViewer() {
     return () => el.removeEventListener('scroll', onScroll);
   }, []);
 
-  // IntersectionObserver — root is the <main> scroll container, no window scroll needed
   useEffect(() => {
     const root = mainRef.current;
     if (!root) return;
     obsRef.current?.disconnect();
     obsRef.current = new IntersectionObserver(entries => {
-      // Pick the section whose top is closest to the top of the viewport
       let best = null, bestTop = Infinity;
       entries.forEach(e => {
         const top = e.boundingClientRect.top;
@@ -329,14 +329,12 @@ export default function MCUViewer() {
       });
       if (best !== null) setActivePhase(best);
     }, { root, rootMargin: '0px 0px -70% 0px', threshold: 0 });
-    // Defer so section refs are populated after render
     const timer = setTimeout(() => {
       Object.values(phaseRefs.current).forEach(el => el && obsRef.current?.observe(el));
     }, 50);
     return () => { clearTimeout(timer); obsRef.current?.disconnect(); };
   }, [listMode, essentialOnly]);
 
-  // Close sort on outside click
   useEffect(() => {
     const fn = e => { if (sortRef.current && !sortRef.current.contains(e.target)) setSortOpen(false); };
     document.addEventListener('mousedown', fn);
@@ -362,6 +360,7 @@ export default function MCUViewer() {
     const offset = elTop - containerTop + container.scrollTop - 16;
     container.scrollTo({ top: offset, behavior: 'smooth' });
   };
+
   const exportProgress = async () => {
     const payload = items.map(({ id, status, watchedDate }) => ({ id, status, watchedDate }));
     const content = JSON.stringify(payload, null, 2);
@@ -379,6 +378,7 @@ export default function MCUViewer() {
     a.click();
     URL.revokeObjectURL(url);
   };
+
   const importProgress = (file) => {
     if (!file) return;
     const reader = new FileReader();
@@ -395,6 +395,7 @@ export default function MCUViewer() {
     };
     reader.readAsText(file);
   };
+
   const STATUS_SORT_ORDER = { watching: 0, 'plan-to-watch': 1, unwatched: 2, watched: 3, 'on-hold': 4, dropped: 5 };
   const RELEASE_INFO = {
     'The Fantastic Four: First Steps': { date: '2025-07-25', rating: 'TBD' },
@@ -458,6 +459,7 @@ export default function MCUViewer() {
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
   const pct = activeItems.length ? Math.round((totalWatched / activeItems.length) * 100) : 0;
+
   const stickyPhaseProgress = useMemo(() => {
     if (activePhase === 0) return { label: 'All Phases', done: totalWatched, total: activeItems.length, pct };
     const phaseItems = activeItems.filter(i => i.phase === activePhase);
@@ -465,26 +467,18 @@ export default function MCUViewer() {
     const total = phaseItems.length;
     return { label: `Phase ${activePhase}`, done, total, pct: total ? Math.round((done / total) * 100) : 0 };
   }, [activePhase, activeItems, totalWatched, pct]);
+
   const CAST_MAP = {
     'Iron Man': ['Robert Downey Jr.', 'Gwyneth Paltrow', 'Jeff Bridges'],
     'The Avengers': ['Robert Downey Jr.', 'Chris Evans', 'Scarlett Johansson'],
     'Captain America: The First Avenger': ['Chris Evans', 'Hayley Atwell', 'Sebastian Stan'],
     'Thor': ['Chris Hemsworth', 'Tom Hiddleston', 'Natalie Portman'],
   };
-  const posterFor = (item) => `https://placehold.co/220x330/121a2d/e8edf7?text=${encodeURIComponent(item.title)}`;
+
   const posterSrc = (item) => posterCache[item.id] || detailData?.Poster || `https://placehold.co/220x330/1a1f33/f7c4de?text=${encodeURIComponent(item.title+'\n'+item.year)}`;
   const spoilerSafe = useMemo(() => spoilerSafeMode, [spoilerSafeMode]);
-  const characterHeat = useMemo(() => {
-    const chars = ['Iron Man', 'Captain America', 'Thor', 'Loki', 'Spider-Man', 'Wanda'];
-    return chars.map(c => {
-      const related = activeItems.filter(i => i.title.includes(c.replace('-Man', '-Man')) || i.desc.includes(c)).length || 1;
-      const watched = activeItems.filter(i => (i.title.includes(c) || i.desc.includes(c)) && i.status === 'watched').length;
-      return { c, score: Math.round((watched / related) * 100) };
-    });
-  }, [activeItems]);
+
   const memoryScore = useMemo(() => Math.max(0, Math.min(100, Math.round((totalWatched / Math.max(1, activeItems.length)) * 100) - (spoilerSafe ? 10 : 0))), [totalWatched, activeItems.length, spoilerSafe]);
-  const OMDB_KEY = import.meta.env.VITE_OMDB_API_KEY || '';
-  const OMDB_RATINGS_KEY = import.meta.env.VITE_OMDB_RATINGS_API_KEY || OMDB_KEY;
   const TMDB_DIRECT_KEY = import.meta.env.VITE_TMDB_API_KEY || '65eda48cf5803f22304fd21f4f06a35e';
 
   const fetchTmdbPoster = async (item) => {
@@ -522,7 +516,9 @@ export default function MCUViewer() {
       return null;
     }
   };
+
   const cleanLookupTitle = (title) => title.replace(/\sS\d.*$/i, '').replace(/\sEps?.*$/i, '').trim();
+
   const formatReleaseDate = (dateStr, fallbackYear) => {
     if (!dateStr) return String(fallbackYear);
     const d = new Date(dateStr);
@@ -530,15 +526,17 @@ export default function MCUViewer() {
     const yearMatch = String(dateStr).match(/\b(19|20)\d{2}\b/);
     return yearMatch ? yearMatch[0] : String(fallbackYear);
   };
+
   const inferGenre = (item) => {
     const t = item.title.toLowerCase();
-    if (t.includes('guardians') || t.includes('captain marvel') || t.includes('marvels') || t.includes('secret invasion')) return 'Sci‑Fi';
+    if (t.includes('guardians') || t.includes('captain marvel') || t.includes('marvels') || t.includes('secret invasion')) return 'Sci-Fi';
     if (t.includes('doctor strange') || t.includes('wanda') || t.includes('agatha')) return 'Fantasy';
     if (t.includes('what if') || t.includes('i am groot') || t.includes('friendly neighborhood')) return 'Animation';
     if (t.includes('moon knight') || t.includes('punisher') || t.includes('daredevil')) return 'Crime';
     if (item.type === 'series') return 'Drama';
     return 'Action';
   };
+
   const inferGenres = (item) => {
     const g = new Set([inferGenre(item)]);
     const t = item.title.toLowerCase();
@@ -548,6 +546,7 @@ export default function MCUViewer() {
     if (item.type === 'series') g.add('Serial');
     return [...g].slice(0, 3);
   };
+
   const nextUnwatched = useMemo(() => filtered.find(i => i.status !== 'watched') || null, [filtered]);
   const recentActivity = useMemo(() => [...activeItems].filter(i => i.watchedDate).sort((a,b) => (b.watchedDate||'').localeCompare(a.watchedDate||'')).slice(0,5), [activeItems]);
   const totalEntries = activeItems.length;
@@ -573,20 +572,25 @@ export default function MCUViewer() {
     };
   }, [filtered, metaCache]);
 
+  // ─── Smoother phase gradient (multi-stop per phase for richer look) ──────
   const phaseGradient = useMemo(() => {
     let cursor = 0;
     const stops = [];
-    PHASES.forEach(ph => {
+    PHASES.forEach((ph, phIdx) => {
       const phaseItems = activeItems.filter(i => i.phase === ph.id);
       const watched = phaseItems.filter(i => i.status === 'watched').length;
       const w = activeItems.length ? (watched / activeItems.length) * 100 : 0;
       if (w <= 0) return;
       const start = cursor;
       const end = Math.min(100, cursor + w);
-      stops.push(`${ph.color} ${start.toFixed(2)}% ${end.toFixed(2)}%`);
+      const mid = start + (end - start) * 0.5;
+      // Richer multi-stop: fade in, bright midpoint, fade out toward next phase
+      stops.push(`${ph.color}bb ${start.toFixed(2)}%`);
+      stops.push(`${ph.color}ff ${mid.toFixed(2)}%`);
+      stops.push(`${ph.color}cc ${end.toFixed(2)}%`);
       cursor = end;
     });
-    if (!stops.length) return 'linear-gradient(90deg,#4a9ede,#a06cd5,#e8b84b)';
+    if (!stops.length) return 'linear-gradient(90deg, var(--theme-accent), var(--theme-accent-alt))';
     return `linear-gradient(90deg, ${stops.join(', ')})`;
   }, [activeItems]);
 
@@ -599,13 +603,9 @@ export default function MCUViewer() {
     } catch {}
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('mcu-poster-cache-v1', JSON.stringify(posterCache));
-  }, [posterCache]);
+  useEffect(() => { localStorage.setItem('mcu-poster-cache-v1', JSON.stringify(posterCache)); }, [posterCache]);
+  useEffect(() => { localStorage.setItem('mcu-meta-cache-v1', JSON.stringify(metaCache)); }, [metaCache]);
 
-  useEffect(() => {
-    localStorage.setItem('mcu-meta-cache-v1', JSON.stringify(metaCache));
-  }, [metaCache]);
   useEffect(() => {
     try {
       const p = JSON.parse(localStorage.getItem('mcu-profile-v1') || '{}');
@@ -616,6 +616,7 @@ export default function MCUViewer() {
       if (t) setThemeMode(t);
     } catch {}
   }, []);
+
   useEffect(() => { localStorage.setItem('mcu-profile-v1', JSON.stringify(profile)); }, [profile]);
   useEffect(() => { localStorage.setItem('mcu-uploaded-avatars-v1', JSON.stringify(uploadedAvatars)); }, [uploadedAvatars]);
   useEffect(() => { localStorage.setItem('mcu-theme-mode-v1', themeMode); }, [themeMode]);
@@ -634,30 +635,35 @@ export default function MCUViewer() {
     localStorage.setItem('mcu-user-actions-v1', JSON.stringify({ likes: myLikes, ratings: myRating, rewatch: rewatchCount, bookmarks }));
   }, [myLikes, myRating, rewatchCount, bookmarks]);
 
+  // ─── Manual refresh: OMDB for ratings only, TMDB for posters ────────────
   const refreshPostersAndMetadata = async () => {
-    const key = OMDB_RATINGS_KEY;
     const targets = filtered.slice(0, 60);
     const posterUpdates = {};
     const metaUpdates = {};
     for (const item of targets) {
       try {
+        // Always fetch poster from TMDB
+        const tmdbPoster = await fetchTmdbPoster(item);
+        posterUpdates[item.id] = tmdbPoster || posterCache[item.id] || '';
+        // Fetch rating only from OMDB with the ratings key
         const t = encodeURIComponent(cleanLookupTitle(item.title));
-        if (key) {
-          const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}&y=${encodeURIComponent(String(detailItem.year || ''))}`);
-          const data = await res.json();
-          posterUpdates[item.id] = data?.Poster && data.Poster !== 'N/A' ? data.Poster : await fetchTmdbPoster(item);
-          metaUpdates[item.id] = { rating: data?.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : '', released: data?.Released && data.Released !== 'N/A' ? data.Released : '' };
-        } else {
-          posterUpdates[item.id] = await fetchTmdbPoster(item);
-        }
-      } catch {}
+        const y = encodeURIComponent(String(item.year || ''));
+        const res = await fetch(`https://www.omdbapi.com/?apikey=${OMDB_RATINGS_KEY}&t=${t}&y=${y}`);
+        const data = await res.json();
+        metaUpdates[item.id] = {
+          rating: data?.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : '',
+          released: data?.Released && data.Released !== 'N/A' ? data.Released : '',
+        };
+      } catch {
+        metaUpdates[item.id] = metaUpdates[item.id] || { rating: '', released: '' };
+      }
     }
     setPosterCache(prev => ({ ...prev, ...posterUpdates }));
     setMetaCache(prev => ({ ...prev, ...metaUpdates }));
   };
 
+  // ─── Background auto-fetch: TMDB for poster, OMDB for rating only ───────
   useEffect(() => {
-    const key = OMDB_RATINGS_KEY;
     const targets = filtered.slice(0, 30).filter(i => posterCache[i.id] === undefined || metaCache[i.id] === undefined);
     if (!targets.length) return;
     let cancelled = false;
@@ -666,21 +672,20 @@ export default function MCUViewer() {
       const metaUpdates = {};
       for (const item of targets) {
         try {
+          // Poster: TMDB always
+          const tmdbPoster = await fetchTmdbPoster(item);
+          posterUpdates[item.id] = tmdbPoster || '';
+          // Rating: OMDB ratings key, using correct item.year (was buggy before)
           const t = encodeURIComponent(cleanLookupTitle(item.title));
-          if (key) {
-            const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}&y=${encodeURIComponent(String(detailItem.year || ''))}`);
-            const data = await res.json();
-            posterUpdates[item.id] = data?.Poster && data.Poster !== 'N/A' ? data.Poster : await fetchTmdbPoster(item);
-            metaUpdates[item.id] = {
-              rating: data?.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : '',
-              released: data?.Released && data.Released !== 'N/A' ? data.Released : ''
-            };
-          } else {
-            posterUpdates[item.id] = await fetchTmdbPoster(item);
-            metaUpdates[item.id] = { rating: '', released: '' };
-          }
+          const y = encodeURIComponent(String(item.year || ''));
+          const res = await fetch(`https://www.omdbapi.com/?apikey=${OMDB_RATINGS_KEY}&t=${t}&y=${y}`);
+          const data = await res.json();
+          metaUpdates[item.id] = {
+            rating: data?.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : '',
+            released: data?.Released && data.Released !== 'N/A' ? data.Released : '',
+          };
         } catch {
-          posterUpdates[item.id] = await fetchTmdbPoster(item);
+          posterUpdates[item.id] = posterUpdates[item.id] || '';
           metaUpdates[item.id] = { rating: '', released: '' };
         }
       }
@@ -693,40 +698,30 @@ export default function MCUViewer() {
     return () => { cancelled = true; };
   }, [filtered, posterCache, metaCache]);
 
+  // ─── Detail panel fetch: TMDB for everything, OMDB only for rating ──────
   useEffect(() => {
     const fetchDetail = async () => {
       if (!detailItem) return;
       setDetailLoading(true);
       setDetailData(null);
-      const key = OMDB_KEY;
       try {
-        if (key) {
-          const t = encodeURIComponent(cleanLookupTitle(detailItem.title));
-          const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}&y=${encodeURIComponent(String(detailItem.year || ''))}`);
-          const data = await res.json();
-          if (data?.Response === 'True') {
-          setDetailData(data);
-          if (data.Poster && data.Poster !== 'N/A') {
-            setPosterCache(prev => ({ ...prev, [detailItem.id]: data.Poster }));
-          } else {
-            const tmdbPoster = await fetchTmdbPoster(detailItem);
-            if (tmdbPoster) setPosterCache(prev => ({ ...prev, [detailItem.id]: tmdbPoster }));
+        // Always use TMDB for full details + poster
+        const tmdbPoster = await fetchTmdbPoster(detailItem);
+        if (tmdbPoster) setPosterCache(prev => ({ ...prev, [detailItem.id]: tmdbPoster }));
+        const tmdbDetails = await fetchTmdbDetail(detailItem);
+        if (tmdbDetails) setDetailData(tmdbDetails);
 
-            const tmdbDetails = await fetchTmdbDetail(detailItem);
-            if (tmdbDetails) setDetailData(tmdbDetails);
+        // Separately fetch just the OMDB rating
+        const t = encodeURIComponent(cleanLookupTitle(detailItem.title));
+        const y = encodeURIComponent(String(detailItem.year || ''));
+        try {
+          const ratingRes = await fetch(`https://www.omdbapi.com/?apikey=${OMDB_RATINGS_KEY}&t=${t}&y=${y}`);
+          const ratingData = await ratingRes.json();
+          if (ratingData?.imdbRating && ratingData.imdbRating !== 'N/A') {
+            setDetailData(prev => prev ? { ...prev, imdbRating: ratingData.imdbRating } : { imdbRating: ratingData.imdbRating });
+            setMetaCache(prev => ({ ...prev, [detailItem.id]: { ...prev[detailItem.id], rating: ratingData.imdbRating } }));
           }
-          } else {
-            const tmdbPoster = await fetchTmdbPoster(detailItem);
-            if (tmdbPoster) setPosterCache(prev => ({ ...prev, [detailItem.id]: tmdbPoster }));
-            const tmdbDetails = await fetchTmdbDetail(detailItem);
-            if (tmdbDetails) setDetailData(tmdbDetails);
-          }
-        } else {
-          const tmdbPoster = await fetchTmdbPoster(detailItem);
-          if (tmdbPoster) setPosterCache(prev => ({ ...prev, [detailItem.id]: tmdbPoster }));
-          const tmdbDetails = await fetchTmdbDetail(detailItem);
-          if (tmdbDetails) setDetailData(tmdbDetails);
-        }
+        } catch {}
       } catch {}
       setDetailLoading(false);
     };
@@ -788,72 +783,98 @@ export default function MCUViewer() {
     phaseSummaryBg: '#f5f2ec', phaseSummaryBorder: '#e4ddd4',
   };
 
-
   const THEME_CHOICES = [
-    { id: 'classic', label: 'Iron Man' },
-    { id: 'cosmic', label: 'Captain Marvel' },
-    { id: 'vibranium', label: 'Black Panther' },
-    { id: 'quantum', label: 'Ant-Man' },
-    { id: 'mystic', label: 'Doctor Strange' },
-    { id: 'web-slinger', label: 'Spider-Man' },
-    { id: 'god-of-thunder', label: 'Thor' },
-    { id: 'scarlet-witch', label: 'Scarlet Witch' },
-    { id: 'winter-soldier', label: 'Winter Soldier' },
+    { id: 'classic',        label: 'Iron Man',       swatch: '#d4372f' },
+    { id: 'cosmic',         label: 'Capt. Marvel',   swatch: '#4d7bff' },
+    { id: 'vibranium',      label: 'Black Panther',  swatch: '#7e5dff' },
+    { id: 'quantum',        label: 'Ant-Man',        swatch: '#ff5da8' },
+    { id: 'mystic',         label: 'Dr. Strange',    swatch: '#9f66ff' },
+    { id: 'web-slinger',    label: 'Spider-Man',     swatch: '#df3f4c' },
+    { id: 'god-of-thunder', label: 'Thor',           swatch: '#3ca6ff' },
+    { id: 'scarlet-witch',  label: 'Scarlet Witch',  swatch: '#c61b59' },
+    { id: 'winter-soldier', label: 'Winter Soldier', swatch: '#8fa0b8' },
   ];
 
+  // ─── Per-theme accent + distinctive surface tints ─────────────────────────
   const themeVarsByMode = {
     classic: {
       '--theme-accent': '#d4372f',
       '--theme-accent-alt': '#f5c04a',
       '--theme-accent-glow': darkMode ? 'rgba(212,55,47,0.42)' : 'rgba(212,55,47,0.26)',
+      '--theme-surface': darkMode ? 'rgba(28,10,9,0.90)' : 'rgba(255,246,244,0.96)',
+      '--theme-surface-hover': darkMode ? 'rgba(44,14,12,0.94)' : 'rgba(255,236,232,0.97)',
+      '--comp-card-bg': darkMode ? 'rgba(26,9,8,0.88)' : 'rgba(255,248,246,0.95)',
     },
     cosmic: {
       '--theme-accent': '#4d7bff',
       '--theme-accent-alt': '#ffb94a',
       '--theme-accent-glow': darkMode ? 'rgba(77,123,255,0.45)' : 'rgba(77,123,255,0.24)',
+      '--theme-surface': darkMode ? 'rgba(7,12,32,0.90)' : 'rgba(243,247,255,0.96)',
+      '--theme-surface-hover': darkMode ? 'rgba(10,16,44,0.94)' : 'rgba(232,240,255,0.97)',
+      '--comp-card-bg': darkMode ? 'rgba(6,11,30,0.88)' : 'rgba(245,249,255,0.95)',
     },
     vibranium: {
       '--theme-accent': '#7e5dff',
       '--theme-accent-alt': '#31c0f4',
       '--theme-accent-glow': darkMode ? 'rgba(126,93,255,0.42)' : 'rgba(126,93,255,0.25)',
+      '--theme-surface': darkMode ? 'rgba(13,7,28,0.90)' : 'rgba(248,244,255,0.96)',
+      '--theme-surface-hover': darkMode ? 'rgba(20,10,42,0.94)' : 'rgba(238,230,255,0.97)',
+      '--comp-card-bg': darkMode ? 'rgba(12,6,26,0.88)' : 'rgba(250,246,255,0.95)',
     },
     quantum: {
       '--theme-accent': '#ff5da8',
       '--theme-accent-alt': '#67f2ff',
       '--theme-accent-glow': darkMode ? 'rgba(255,93,168,0.44)' : 'rgba(255,93,168,0.25)',
+      '--theme-surface': darkMode ? 'rgba(26,7,18,0.90)' : 'rgba(255,243,251,0.96)',
+      '--theme-surface-hover': darkMode ? 'rgba(38,9,26,0.94)' : 'rgba(255,230,246,0.97)',
+      '--comp-card-bg': darkMode ? 'rgba(24,6,17,0.88)' : 'rgba(255,246,253,0.95)',
     },
     mystic: {
       '--theme-accent': '#9f66ff',
       '--theme-accent-alt': '#ff7b39',
       '--theme-accent-glow': darkMode ? 'rgba(159,102,255,0.42)' : 'rgba(159,102,255,0.24)',
+      '--theme-surface': darkMode ? 'rgba(15,7,28,0.90)' : 'rgba(250,244,255,0.96)',
+      '--theme-surface-hover': darkMode ? 'rgba(22,10,40,0.94)' : 'rgba(240,230,255,0.97)',
+      '--comp-card-bg': darkMode ? 'rgba(14,6,26,0.88)' : 'rgba(252,247,255,0.95)',
     },
     'web-slinger': {
       '--theme-accent': '#df3f4c',
       '--theme-accent-alt': '#2b7bdf',
       '--theme-accent-glow': darkMode ? 'rgba(223,63,76,0.42)' : 'rgba(223,63,76,0.24)',
+      '--theme-surface': darkMode ? 'rgba(24,7,9,0.90)' : 'rgba(255,244,245,0.96)',
+      '--theme-surface-hover': darkMode ? 'rgba(36,9,12,0.94)' : 'rgba(255,232,234,0.97)',
+      '--comp-card-bg': darkMode ? 'rgba(22,6,8,0.88)' : 'rgba(255,247,248,0.95)',
     },
     'god-of-thunder': {
       '--theme-accent': '#3ca6ff',
       '--theme-accent-alt': '#f0f6ff',
       '--theme-accent-glow': darkMode ? 'rgba(60,166,255,0.46)' : 'rgba(60,166,255,0.26)',
+      '--theme-surface': darkMode ? 'rgba(5,12,26,0.90)' : 'rgba(243,250,255,0.96)',
+      '--theme-surface-hover': darkMode ? 'rgba(7,17,36,0.94)' : 'rgba(226,244,255,0.97)',
+      '--comp-card-bg': darkMode ? 'rgba(4,10,24,0.88)' : 'rgba(245,252,255,0.95)',
     },
     'scarlet-witch': {
       '--theme-accent': '#c61b59',
       '--theme-accent-alt': '#ff7cb5',
       '--theme-accent-glow': darkMode ? 'rgba(198,27,89,0.45)' : 'rgba(198,27,89,0.25)',
+      '--theme-surface': darkMode ? 'rgba(24,5,12,0.90)' : 'rgba(255,242,247,0.96)',
+      '--theme-surface-hover': darkMode ? 'rgba(36,6,18,0.94)' : 'rgba(255,228,238,0.97)',
+      '--comp-card-bg': darkMode ? 'rgba(22,4,11,0.88)' : 'rgba(255,245,250,0.95)',
     },
     'winter-soldier': {
       '--theme-accent': '#8fa0b8',
       '--theme-accent-alt': '#4b596f',
       '--theme-accent-glow': darkMode ? 'rgba(143,160,184,0.40)' : 'rgba(143,160,184,0.24)',
+      '--theme-surface': darkMode ? 'rgba(7,10,16,0.90)' : 'rgba(244,247,252,0.96)',
+      '--theme-surface-hover': darkMode ? 'rgba(10,14,22,0.94)' : 'rgba(230,237,248,0.97)',
+      '--comp-card-bg': darkMode ? 'rgba(6,9,15,0.88)' : 'rgba(246,249,254,0.95)',
     },
   };
 
   const activeThemeVars = themeVarsByMode[themeMode] || themeVarsByMode.classic;
+
   const cssThemeVars = {
     '--theme-bg': darkMode ? '#06060f' : '#f2f0eb',
-    '--theme-surface': darkMode ? 'rgba(13,13,30,0.82)' : 'rgba(255,255,255,0.92)',
-    '--theme-surface-hover': darkMode ? 'rgba(27,27,54,0.90)' : 'rgba(242,236,225,0.92)',
     '--theme-border': darkMode ? '#1b1b33' : '#ddd8cf',
     '--theme-text': darkMode ? '#d8e3f5' : '#1a2030',
     '--theme-text-muted': darkMode ? '#8fa1b8' : '#667182',
@@ -864,23 +885,25 @@ export default function MCUViewer() {
     '--theme-danger': '#d16a6a',
     '--theme-danger-soft': darkMode ? 'rgba(209,106,106,0.16)' : 'rgba(209,106,106,0.12)',
     '--theme-app-bg': darkMode
-      ? 'radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 36%), radial-gradient(circle at 88% 14%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(155deg,#06060f 0%,#0b1021 40%,#0a0f20 100%)'
-      : 'radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--theme-accent) 18%, #ffffff), transparent 36%), radial-gradient(circle at 88% 14%, color-mix(in srgb, var(--theme-accent-alt) 14%, #ffffff), transparent 40%), linear-gradient(155deg,#fbfaf7 0%,#f5f2eb 45%,#f0ece5 100%)',
-    '--comp-card-bg': darkMode ? 'rgba(13,13,30,0.82)' : 'rgba(255,255,255,0.92)',
+      ? `radial-gradient(ellipse at 15% 10%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 22%, transparent), transparent 40%), radial-gradient(ellipse at 85% 18%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 18%, transparent), transparent 44%), linear-gradient(155deg, #05050e 0%, #090d1e 42%, #07101c 100%)`
+      : `radial-gradient(ellipse at 15% 10%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 16%, #ffffff), transparent 38%), radial-gradient(ellipse at 85% 18%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 12%, #ffffff), transparent 42%), linear-gradient(155deg, #fbfaf7 0%, #f5f2eb 45%, #f0ece5 100%)`,
     '--comp-overlay-bg': darkMode ? 'rgba(12,16,34,0.88)' : 'rgba(255,255,255,0.95)',
-    '--comp-dropdown-bg': darkMode ? 'rgba(13,18,34,0.68)' : 'rgba(255,255,255,0.72)',
+    '--comp-dropdown-bg': darkMode ? 'rgba(13,18,34,0.72)' : 'rgba(255,255,255,0.75)',
     '--theme-header-bg': darkMode
-      ? 'linear-gradient(180deg, color-mix(in srgb, var(--theme-accent) 14%, #0c1022), #06060f)'
-      : 'linear-gradient(180deg, color-mix(in srgb, var(--theme-accent) 8%, #ffffff), #f6f2ea)',
+      ? `linear-gradient(180deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 18%, #0c1022), #06060f)`
+      : `linear-gradient(180deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 10%, #ffffff), #f6f2ea)`,
     '--theme-watched-bg': darkMode
-      ? 'linear-gradient(100deg, color-mix(in srgb, var(--theme-accent) 22%, rgba(12,18,34,0.95)), color-mix(in srgb, var(--theme-accent-alt) 12%, rgba(10,20,32,0.88)))'
-      : 'linear-gradient(100deg, color-mix(in srgb, var(--theme-accent) 14%, #ffffff), color-mix(in srgb, var(--theme-accent-alt) 8%, #f7f5ef))',
+      ? `linear-gradient(100deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 22%, rgba(12,18,34,0.95)), color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 12%, rgba(10,20,32,0.88)))`
+      : `linear-gradient(100deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 14%, #ffffff), color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 8%, #f7f5ef))`,
     ...activeThemeVars,
   };
 
+  // Count active filters for the collapsed bar badge
+  const activeFilterCount = [typeFilter, statusFilter, watchedOnly, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
+
   const appThemeBg = 'var(--theme-app-bg)';
   return (
-      <div data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 0.32s cubic-bezier(0.34,1.56,0.64,1), color 0.32s cubic-bezier(0.34,1.56,0.64,1)' }} className="theme-switch">
+    <div data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 0.4s cubic-bezier(0.34,1.56,0.64,1), color 0.32s cubic-bezier(0.34,1.56,0.64,1)' }} className="theme-switch">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -894,7 +917,7 @@ export default function MCUViewer() {
         button:focus-visible{outline:2px solid var(--theme-accent);outline-offset:2px}
 
         @keyframes sweep{0%{transform:translateX(-120%)}100%{transform:translateX(220%)}}
-        .sweep::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent);animation:sweep 2.8s ease-in-out infinite}
+        .sweep::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent);animation:sweep 3.2s ease-in-out infinite}
 
         @keyframes phaseFlash{0%{opacity:0}20%{opacity:0.22}80%{opacity:0.18}100%{opacity:0}}
         .phase-flash{animation:phaseFlash 2.4s ease both}
@@ -911,22 +934,16 @@ export default function MCUViewer() {
         @keyframes expandDown{from{opacity:0;max-height:0;padding-top:0;padding-bottom:0}to{opacity:1;max-height:600px;padding-top:10px;padding-bottom:10px}}
         .expand-row{animation:expandDown 0.28s cubic-bezier(0.34,1.56,0.64,1) both;overflow:hidden}
 
-        @keyframes themeFadeSwitch{from{opacity:0}to{opacity:1}}
-        .theme-switch{animation:themeFadeSwitch 0.32s ease both}
+        @keyframes filtersSlide{from{opacity:0;max-height:0}to{opacity:1;max-height:220px}}
+        .filters-open{animation:filtersSlide 0.26s cubic-bezier(0.34,1.56,0.64,1) both;overflow:hidden}
+
+        @keyframes themeFadeSwitch{from{opacity:0.7}to{opacity:1}}
+        .theme-switch{animation:themeFadeSwitch 0.35s ease both}
 
         @keyframes listModeSlide{from{opacity:0.8;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
         .list-mode-switch{animation:listModeSlide 0.24s cubic-bezier(0.34,1.56,0.64,1) both}
 
-        @keyframes contentStabilize{from{opacity:0}to{opacity:1}}
-        .content-stable{animation:contentStabilize 0.18s ease both}
-
-        /* Phase 2: Micro-interactions */
         @keyframes buttonPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--theme-accent) 45%, transparent)}70%{box-shadow:0 0 0 6px transparent}100%{box-shadow:0 0 0 0 transparent}}
-        @keyframes statusFlip{0%{transform:rotateX(0)}50%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
-        @keyframes slideInRight{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
-        @keyframes watchedGlow{0%{text-shadow:0 0 0 rgba(62,196,122,0)}50%{text-shadow:0 0 8px rgba(62,196,122,0.8)}100%{text-shadow:0 0 0 rgba(62,196,122,0)}}
-        
-        .watched-badge{animation:watchedGlow 0.6s ease both}
         .button-click{animation:buttonPulse 0.6s ease both}
 
         .wbtn{width:30px;height:30px;border-radius:50%;border:1.5px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.16s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.18s,background 0.18s;flex-shrink:0}
@@ -947,7 +964,7 @@ export default function MCUViewer() {
         .sopt.picked,.dropdown-item.active{background:var(--theme-surface-hover);border-radius:12px;color:var(--theme-accent);font-weight:700}
         .curvy-indicator{height:4px;border-radius:99px;background:var(--theme-accent);box-shadow:0 0 8px var(--theme-accent-glow);border:none}
         .curvy-panel{position:relative;overflow:hidden;border-radius:14px}
-         .curvy-panel::before{content:'';position:absolute;inset:0 auto 0 0;width:4px;background:linear-gradient(180deg,var(--phase-color,#f3a6c2),color-mix(in srgb,var(--phase-color,#f3a6c2) 70%,#ffd2e4));border-radius:14px 0 0 14px;box-shadow:0 0 14px color-mix(in srgb,var(--phase-color,#f3a6c2) 48%, transparent);z-index:0}
+        .curvy-panel::before{content:'';position:absolute;inset:0 auto 0 0;width:4px;background:linear-gradient(180deg,var(--phase-color,#f3a6c2),color-mix(in srgb,var(--phase-color,#f3a6c2) 70%,#ffd2e4));border-radius:14px 0 0 14px;box-shadow:0 0 14px color-mix(in srgb,var(--phase-color,#f3a6c2) 48%, transparent);z-index:0}
 
         .rrow{position:relative;transition:background 0.2s ease,transform 0.22s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.22s ease,border-color 0.22s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:var(--row-min-h,86px);border-radius:10px;overflow:hidden}
         .rrow:last-child{border-bottom:none}
@@ -971,8 +988,8 @@ export default function MCUViewer() {
         .theme-btn:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText};transform:rotate(22deg)}
 
         .poster{width:52px;height:76px;object-fit:cover;border-radius:6px;border:1px solid ${T.surfaceBorder};box-shadow:0 6px 16px rgba(0,0,0,0.22)}
-        .progress-gradient{background:linear-gradient(90deg,var(--theme-accent) 0%,color-mix(in srgb, var(--theme-accent) 72%, var(--theme-accent-alt)) 40%,var(--theme-accent-alt) 100%);background-size:200% 100%;animation:gradientFlow 3.4s linear infinite}
-        @keyframes gradientFlow{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+        .progress-gradient{background:${phaseGradient};background-size:200% 100%;animation:gradientPulse 4s ease-in-out infinite alternate}
+        @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
         .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.62);backdrop-filter:blur(12px);z-index:240;display:grid;place-items:center;padding:20px}
         .detail-card{width:min(980px,94vw);max-height:90vh;overflow:auto;background:linear-gradient(145deg, rgba(17,22,44,0.62), rgba(12,16,34,0.5));backdrop-filter:blur(16px) saturate(130%);-webkit-backdrop-filter:blur(16px) saturate(130%);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:24px;box-shadow:${darkMode ? '0 22px 60px rgba(0,0,0,0.56)' : '0 18px 44px rgba(0,0,0,0.14)'}}
 
@@ -982,13 +999,10 @@ export default function MCUViewer() {
         .detail-fallback-poster::before{content:'';position:absolute;inset:0;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
         .detail-fallback-poster span{position:relative;z-index:1;text-align:center;font-size:clamp(24px,5vw,40px);line-height:1.2;font-weight:700;color:rgba(242,247,255,0.95);text-shadow:0 2px 14px rgba(0,0,0,0.35)}
         .glass-panel{background-color:rgba(30,30,46,0.6);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.05);border-radius:16px}
-        .filter-shell{
-          position: static;
-          z-index: auto;
-          box-shadow: none;
-        }
+        .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));backdrop-filter:blur(6px)}
+        .meta-muted{color:var(--theme-text-muted) !important}
 
-        /* ── Mobile-compact header ── */
+        /* Mobile */
         @media (max-width: 767px) {
           .header-inner { padding: 10px 14px 8px !important; }
           .fpill{padding:7px 14px !important;font-size:14px !important}
@@ -998,28 +1012,24 @@ export default function MCUViewer() {
           .detail-layout img,.detail-fallback-poster{max-width:280px;margin:0 auto;max-height:360px}
           .detail-layout > div:last-child{width:100%}
         }
-        .header-title-mcu { font-size: clamp(48px, 8vw, 96px) !important; letter-spacing: clamp(2px, 0.8vw, 6px) !important; margin: 0 !important; background:none !important; -webkit-background-clip:initial !important; background-clip:initial !important; }
+        .header-title-mcu { font-size: clamp(48px, 8vw, 96px) !important; letter-spacing: clamp(2px, 0.8vw, 6px) !important; margin: 0 !important; }
         .header-title-sub { font-size: clamp(28px, 4.2vw, 56px) !important; letter-spacing: clamp(4px, 1.2vw, 10px) !important; margin-top: 0px !important; }
         .header-tagline { font-size: clamp(12px, 2.2vw, 15px) !important; margin-top: 1px !important; }
-
         .stat-card-num { font-size: clamp(28px, 4.5vw, 48px) !important; }
         .stat-card-label { font-size: clamp(11px, 1.8vw, 14px) !important; }
-
         .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; color:var(--theme-text-muted) !important }
-        .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));backdrop-filter:blur(6px)}
-        .marvel-accent-line{height:3px;background:linear-gradient(90deg,var(--theme-accent) 0%,var(--theme-warning) 35%,#4a9ede 70%,var(--theme-accent-alt) 100%);opacity:0.85}
-        .meta-muted{color:var(--theme-text-muted) !important}
 
-        /* hide default scrollbar on main while keeping functionality */
         main::-webkit-scrollbar{width:4px}
         main::-webkit-scrollbar-track{background:transparent}
         main::-webkit-scrollbar-thumb{background:${T.scrollThumb};border-radius:4px}
         main::-webkit-scrollbar-thumb:hover{background:${T.scrollThumbH}}
       `}</style>
+
+      {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div ref={settingsRef} style={{ position: 'fixed', top: 16, right: 14, zIndex: 260 }}>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div className="profile-avatar-container" title={profile.name || 'Profile'} style={{ width: 56, height: 56, borderRadius: '50%', border: `2px solid var(--theme-accent)`, padding: 3, background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
-            <img className="profile-avatar-img" src={profile.pfp || 'https://placehold.co/80x80/222/fff?text=G'} alt="profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+          <div title={profile.name || 'Profile'} style={{ width: 56, height: 56, borderRadius: '50%', border: `2px solid var(--theme-accent)`, padding: 3, background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+            <img src={profile.pfp || 'https://placehold.co/80x80/222/fff?text=G'} alt="profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
           </div>
           <button className="theme-btn" onClick={() => setSettingsOpen(o => !o)} aria-label="Open settings menu" title="Settings" style={{ width: 40, height: 40, background: darkMode ? 'rgba(16,18,35,0.92)' : '#fff' }}>
             <Settings size={15} />
@@ -1031,7 +1041,7 @@ export default function MCUViewer() {
             <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 6 }}>
               {uploadedAvatars.map((src, idx) => (
-                <button key={idx} onClick={() => setProfile(p => ({ ...p, pfp: src }))} title={`Avatar ${idx + 1}`} style={{ border: profile.pfp === src ? '2px solid #c0392b' : `1px solid ${T.inputBorder}`, borderRadius: '999px', padding: 2, background: 'transparent', cursor: 'pointer' }}>
+                <button key={idx} onClick={() => setProfile(p => ({ ...p, pfp: src }))} title={`Avatar ${idx + 1}`} style={{ border: profile.pfp === src ? '2px solid var(--theme-accent)' : `1px solid ${T.inputBorder}`, borderRadius: '999px', padding: 2, background: 'transparent', cursor: 'pointer' }}>
                   <img src={src} alt={`Avatar ${idx + 1}`} style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: '50%', objectFit: 'cover' }} />
                 </button>
               ))}
@@ -1054,24 +1064,18 @@ export default function MCUViewer() {
               <input type='checkbox' checked={spoilerSafeMode} onChange={() => setSpoilerSafeMode(v => !v)} style={{ width: 36, height: 20 }} />
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 6 }}>
-              <button className='fpill' onClick={() => setDensityMode('comfortable')} style={{ borderColor: densityMode === 'comfortable' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>Comfortable</button>
-              <button className='fpill' onClick={() => setDensityMode('compact')} style={{ borderColor: densityMode === 'compact' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>Compact</button>
+              <button className='fpill' onClick={() => setDensityMode('comfortable')} style={{ borderColor: densityMode === 'comfortable' ? 'var(--theme-accent)' : 'var(--theme-border)', justifyContent: 'center' }}>Comfortable</button>
+              <button className='fpill' onClick={() => setDensityMode('compact')} style={{ borderColor: densityMode === 'compact' ? 'var(--theme-accent)' : 'var(--theme-border)', justifyContent: 'center' }}>Compact</button>
             </div>
+            {/* Theme picker with color swatches */}
+            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase', marginTop: 2 }}>Theme</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
-              {THEME_CHOICES.map(({ id: t, label }) => (
-                <button
-                  key={t}
-                  className="fpill"
-                  style={{
-                    padding: '6px 8px',
-                    justifyContent: 'center',
-                    borderColor: themeMode === t ? 'var(--theme-accent)' : 'var(--theme-border)',
-                    boxShadow: themeMode === t ? '0 0 0 1px var(--theme-accent), 0 0 10px var(--theme-accent-glow)' : 'none',
-                    background: themeMode === t ? 'var(--theme-surface-hover)' : 'var(--theme-surface)',
-                    color: themeMode === t ? 'var(--theme-accent)' : 'var(--theme-text)'
-                  }}
+              {THEME_CHOICES.map(({ id: t, label, swatch }) => (
+                <button key={t} className="fpill"
+                  style={{ padding: '7px 8px', justifyContent: 'center', gap: 5, fontSize: 11, borderColor: themeMode === t ? swatch : 'var(--theme-border)', boxShadow: themeMode === t ? `0 0 0 1px ${swatch}, 0 0 12px ${swatch}55` : 'none', background: themeMode === t ? `${swatch}18` : 'var(--theme-surface)', color: themeMode === t ? swatch : 'var(--theme-text)', transition: 'all 0.18s' }}
                   onClick={() => setThemeMode(t)}
                 >
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: swatch, flexShrink: 0, display: 'inline-block', boxShadow: themeMode === t ? `0 0 6px ${swatch}` : 'none' }} />
                   {label}
                 </button>
               ))}
@@ -1084,17 +1088,16 @@ export default function MCUViewer() {
             </label>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: 'var(--theme-danger)', textTransform: 'uppercase' }}>Danger Zone</div>
-            <button className="fpill" onClick={refreshPostersAndMetadata}><Download size={14}/>Fetch Posters & Metadata</button>
+            <button className="fpill" onClick={refreshPostersAndMetadata}><Download size={14}/>Fetch Posters & Ratings</button>
             <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); }}><Trash2 size={14}/>Reset Filters</button>
           </div>
         )}
       </div>
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <header className="hexbg" style={{ background: 'var(--theme-surface)', borderBottom: '1px solid var(--theme-border)', flexShrink: 0, backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
+      <header className="hexbg" style={{ background: 'var(--theme-header-bg)', borderBottom: `1px solid ${T.headerBorder}`, flexShrink: 0, backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
         <div className="header-inner" style={{ width: '100%', padding: 'calc(env(safe-area-inset-top, 0px) + 28px) 32px 14px', transition: 'padding 0.25s ease' }}>
-          <div className="header-top-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
-            {/* Title */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             <div style={{ fontFamily: "'Orbitron',sans-serif", lineHeight: 0.88, marginBottom: 0, fontWeight: 900 }}>
               <div className="header-title-mcu" style={{ fontSize: 'clamp(56px, 7vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: T.text, textShadow: darkMode ? '0 0 28px var(--theme-accent-glow), 0 0 6px var(--theme-accent-glow)' : '0 2px 8px color-mix(in srgb, var(--theme-accent) 28%, transparent)' }}>MCU</div>
               <div className="header-title-sub" style={{ fontSize: 'clamp(28px, 3.6vw, 35px)', letterSpacing: 'clamp(3px, 1.1vw, 9px)', color: T.text, marginTop: 0 }}>VIEWING ORDER</div>
@@ -1102,8 +1105,7 @@ export default function MCUViewer() {
                 {`PHASES 1–6 · ${activeItems.length} ENTRIES · ${LIST_MODES.find(m => m.id === listMode)?.sublabel.toUpperCase()}`}
               </div>
             </div>
-            {/* Status dashboard */}
-            <div className="status-dashboard" style={{ background: darkMode ? 'rgba(18,22,42,0.45)' : T.statBg, border: `1px solid ${darkMode ? 'rgba(255,220,235,0.28)' : T.statBorder}`, borderRadius: 10, padding: headerCompact ? '5px 10px' : '8px 14px', minWidth: headerCompact ? 145 : 180, boxShadow: darkMode ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'none', transition: 'all 0.22s ease' }}>
+            <div style={{ background: darkMode ? 'rgba(18,22,42,0.45)' : T.statBg, border: `1px solid ${darkMode ? 'rgba(255,220,235,0.28)' : T.statBorder}`, borderRadius: 10, padding: headerCompact ? '5px 10px' : '8px 14px', minWidth: headerCompact ? 145 : 180, boxShadow: darkMode ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'none', transition: 'all 0.22s ease' }}>
               <div className="stat-card-label" style={{ fontSize: '12px', letterSpacing: 2, color: T.textMuted, fontFamily: "'Bebas Neue',sans-serif" }}>TOTAL WATCHED</div>
               <div className="stat-card-num" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(40px, 5vw, 48px)', letterSpacing: 1, color: 'var(--theme-accent)', lineHeight: 1, textShadow: darkMode ? '0 0 14px var(--theme-accent-glow)' : 'none' }}>
                 {totalWatched}<span style={{ fontSize: 'clamp(24px, 3vw, 28px)', color: T.numFaint }}>/{activeItems.length}</span>
@@ -1113,22 +1115,19 @@ export default function MCUViewer() {
               </div>
             </div>
           </div>
-          <>
           {/* Master progress bar */}
-          <div className="progress-bar" style={{ background: darkMode ? 'rgba(255,255,255,0.08)' : T.surfaceBg, border: `1px solid ${darkMode ? 'rgba(255,255,255,0.18)' : T.surfaceBorder}`, borderRadius: 999, height: 6, overflow: 'hidden', position: 'relative', marginBottom: 2, backdropFilter: 'blur(4px)' }}>
-            <div className="sweep progress-gradient" style={{ height: '100%', width: `${pct}%`, background: phaseGradient, boxShadow: pct >= 75 ? '0 0 16px rgba(62,196,122,0.7)' : pct >= 50 ? '0 0 14px rgba(232,184,75,0.65)' : '0 0 12px rgba(244,155,200,0.6)', borderRadius: 999, transition: 'width 0.7s cubic-bezier(.4,0,.2,1), box-shadow 0.35s ease', position: 'relative', overflow: 'hidden' }} />
+          <div style={{ background: darkMode ? 'rgba(255,255,255,0.08)' : T.surfaceBg, border: `1px solid ${darkMode ? 'rgba(255,255,255,0.18)' : T.surfaceBorder}`, borderRadius: 999, height: 7, overflow: 'hidden', position: 'relative', marginBottom: 2, backdropFilter: 'blur(4px)' }}>
+            <div className="sweep progress-gradient" style={{ height: '100%', width: `${pct}%`, background: phaseGradient, boxShadow: pct >= 75 ? '0 0 18px rgba(62,196,122,0.75), 0 0 6px rgba(62,196,122,0.4)' : pct >= 50 ? '0 0 16px rgba(232,184,75,0.7), 0 0 5px rgba(232,184,75,0.35)' : '0 0 14px rgba(74,158,222,0.65), 0 0 4px rgba(74,158,222,0.3)', borderRadius: 999, transition: 'width 0.7s cubic-bezier(.4,0,.2,1), box-shadow 0.35s ease', position: 'relative', overflow: 'hidden' }} />
           </div>
           <div className="progress-labels" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'clamp(12px, 2vw, 16px)', color: T.textMuted, letterSpacing: 2, fontFamily: "'Bebas Neue',sans-serif" }}>
             <span>{pct}% COMPLETE</span>
             <span>{activeItems.length - totalWatched} REMAINING</span>
           </div>
-          </>
         </div>
       </header>
 
-      <div className="marvel-accent-line" aria-hidden="true" />
-      {/* ━━ LIST MODE SWITCHER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ background: 'var(--theme-surface)', borderBottom: '1px solid var(--theme-border)', padding: '0 24px', flexShrink: 0 }}>
+      {/* ━━ LIST MODE SWITCHER (MCU / Extended) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <div style={{ background: 'var(--theme-surface)', borderBottom: `1px solid ${T.navBorder}`, padding: '0 24px', flexShrink: 0 }}>
         <div style={{ maxWidth: 1400, margin: '0 auto', display: 'flex', padding: '0 24px', width: '100%' }}>
           {LIST_MODES.map(mode => {
             const isActive = listMode === mode.id;
@@ -1138,7 +1137,7 @@ export default function MCUViewer() {
             return (
               <button key={mode.id} className={`lmode-btn ${isActive ? 'active' : ''}`}
                 style={{ '--mc': mode.color }}
-                onClick={() => { setListMode(mode.id); setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setSortBy('order'); setActivePhase(1); setExpandedItem(null); setExpandedPhase(null); }}
+                onClick={() => { setListMode(mode.id); setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setSortBy('order'); setActivePhase(0); setExpandedItem(null); setExpandedPhase(null); }}
                 aria-pressed={isActive}
               >
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
@@ -1158,9 +1157,9 @@ export default function MCUViewer() {
         </div>
       </div>
 
-
+      {/* ━━ ANALYTICS STRIP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: T.switcherBg, borderBottom: `1px solid ${T.switcherBorder}`, padding: '10px 24px', flexShrink: 0 }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto 20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 20, padding: '0 24px' }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 20, padding: '0 24px' }}>
           <div className="glass-grad" style={{ background: darkMode ? 'linear-gradient(135deg, rgba(20,24,42,0.88), rgba(39,20,49,0.78))' : 'linear-gradient(135deg,#ffffff,#f8f4ff)', border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
             <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Continue Watching</div>
             <div style={{ fontSize: 18, marginTop: 4 }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</div>
@@ -1173,107 +1172,129 @@ export default function MCUViewer() {
             <div style={{ fontSize: 14, marginTop: 6 }}>{totalWatched}/{totalEntries} watched · ~{remainingHours}h remaining</div>
             <div style={{ fontSize: 13, color: T.textMuted, marginTop: 4 }}>Films: {filmCount} · Series: {seriesCount}</div>
           </div>
-      </div>
-      <div style={{ background: 'var(--theme-surface)', borderBottom: '1px solid var(--theme-border)', padding: '8px 24px' }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 10, padding: '0 24px' }}>
-          <div className='fpill' style={{ justifyContent: 'space-between' }}><span>Now Watching</span><strong>{filtered.find(i => i.status==='watching')?.title || '—'}</strong></div>
-          <div className='fpill' style={{ justifyContent: 'space-between' }}><span>Next Up</span><strong>{nextUnwatched?.title || 'All done'}</strong></div>
-          <div className='fpill' style={{ justifyContent: 'space-between' }}><span>Upcoming</span><strong>{calendarItems.upcoming[0]?.item?.title || 'No upcoming'}</strong></div>
         </div>
       </div>
 
-      {/* ━━ FILTER BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div className="filter-shell" style={{ background: T.filterBg, borderBottom: `1px solid ${T.filterBorder}`, padding: '10px 24px', overflow: 'visible', flexShrink: 0, position: 'relative', zIndex: 180 }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', width: '100%', padding: '0 24px', overflow: 'visible' }}>
-          {/* Search */}
-          <div style={{ position: 'relative', flex: '1 1 170px', minWidth: 130 }}>
-            <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search titles..."
-              style={{ width: '100%', background: T.inputBg, border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '8px 12px 8px 30px', color: T.inputColor, fontSize: 14, letterSpacing: 0.3 }} />
-          </div>
-          {/* Sort */}
-          <div ref={sortRef} style={{ position: 'relative' }}>
-            <button className="fpill" onClick={() => setSortOpen(o => !o)}
-              style={{ color: 'var(--theme-accent)', borderColor: 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'color-mix(in srgb, var(--theme-accent) 9%, var(--theme-surface))', fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
-              {SORT_LABELS[sortBy]}
-              <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+      {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <div style={{ background: T.filterBg, borderBottom: `1px solid ${T.filterBorder}`, flexShrink: 0, position: 'relative', zIndex: 180 }}>
+        {/* Toggle row — always visible */}
+        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0' }}>
+            <button
+              onClick={() => setFiltersOpen(v => !v)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: `1px solid ${filtersOpen ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: filtersOpen ? 'color-mix(in srgb, var(--theme-accent) 10%, var(--theme-surface))' : T.filterBg, color: filtersOpen ? 'var(--theme-accent)' : T.textMuted, cursor: 'pointer', fontFamily: "'Bebas Neue',sans-serif", fontSize: 13, letterSpacing: 2, transition: 'all 0.18s' }}
+            >
+              <SlidersH size={13} />
+              FILTERS
+              {activeFilterCount > 0 && (
+                <span style={{ background: 'var(--theme-accent)', color: '#fff', borderRadius: 999, fontSize: 10, fontFamily: "'Rajdhani',sans-serif", fontWeight: 700, padding: '1px 6px', lineHeight: 1.4 }}>{activeFilterCount}</span>
+              )}
+              <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
-            {sortOpen && (
-              <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
-                {Object.entries(SORT_LABELS).map(([k, v]) => (
-                  <div key={k} className={`sopt ${sortBy === k ? 'picked' : ''}`} onClick={() => { setSortBy(k); setSortOpen(false); }}>{v}</div>
-                ))}
-              </div>
-            )}
-          </div>
-          <div ref={phaseRef} style={{ position: 'relative' }}>
-            <button className="fpill" onClick={() => setPhaseOpen(o => !o)}
-              style={{ color: 'var(--theme-accent)', borderColor: 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'color-mix(in srgb, var(--theme-accent) 9%, var(--theme-surface))', fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
-              {activePhase === 0 ? 'Phase All' : (PHASES.find(ph => ph.id === activePhase)?.name || 'Phase All')}
-              <ChevDown size={12} style={{ opacity: 0.6, transform: phaseOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-            </button>
-            {phaseOpen && (
-              <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
-                <div className={`sopt ${activePhase === 0 ? 'picked' : ''}`} onClick={() => { setActivePhase(0); setPhaseOpen(false); }}>
-                  Phase All
-                </div>
-                {PHASES.map((ph) => (
-                  <div key={ph.id} className={`sopt ${activePhase === ph.id ? 'picked' : ''}`} onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); setPhaseOpen(false); }}>
-                    {ph.name}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Type pills */}
-          {['film', 'series', 'short'].map(t => {
-            const m = TYPE_META[t];
-            const on = typeFilter === t;
-            return (
-              <button key={t} className="fpill"
-                style={on ? { borderColor: m.color + '88', background: m.color + '14', color: m.color } : {}}
-                onClick={() => setTypeFilter(on ? null : t)}>
-                <m.Icon size={10} />{m.label}
+            {/* Search always visible */}
+            <div style={{ position: 'relative', flex: '1 1 170px', minWidth: 130, maxWidth: 320 }}>
+              <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search titles..."
+                style={{ width: '100%', background: T.inputBg, border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '7px 12px 7px 30px', color: T.inputColor, fontSize: 14, letterSpacing: 0.3 }} />
+            </div>
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button className='fpill' onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')} style={{ background: viewMode === 'calendar' ? 'color-mix(in srgb, var(--theme-accent) 11%, var(--theme-surface))' : 'var(--theme-surface)', padding: '7px 14px' }}>
+                {viewMode === 'calendar' ? 'List' : 'Calendar'}
               </button>
-            );
-          })}
-          {listMode === 'core' && (
-            <button className="fpill"
-              style={essentialOnly ? { borderColor: 'color-mix(in srgb, var(--theme-warning) 50%, transparent)', background: 'var(--theme-warning-soft)', color: 'var(--theme-warning)' } : {}}
-              onClick={() => setEssOnly(o => !o)}>
-              <Star size={10} />Must-Watch
-            </button>
-          )}
-          <div style={{ position: 'relative' }}>
-            <button className="fpill"
-              style={watchedOnly || statusFilter ? { borderColor: 'color-mix(in srgb, var(--theme-success) 50%, transparent)', background: 'var(--theme-success-soft)', color: 'var(--theme-success)' } : {}}
-              onClick={() => setFilterStatusOpen(v => !v)}
-              onMouseEnter={() => setFilterStatusOpen(true)}
-              onMouseLeave={() => setFilterStatusOpen(false)}>
-              <Check size={10} />Watched
-            </button>
-            {filterStatusOpen && (
-              <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 180 }}
-                onMouseEnter={() => setFilterStatusOpen(true)}
-                onMouseLeave={() => setFilterStatusOpen(false)}>
-                <div className={`sopt ${!statusFilter && !watchedOnly ? 'picked' : ''}`} onClick={() => { setStatusFilter(null); setWatchedOnly(false); setFilterStatusOpen(false); }}>All statuses</div>
-                <div className={`sopt ${watchedOnly ? 'picked' : ''}`} onClick={() => { setWatchedOnly(true); setStatusFilter(null); setFilterStatusOpen(false); }}>Watched only</div>
-                <div className={`sopt ${statusFilter === 'watching' ? 'picked' : ''}`} onClick={() => { setStatusFilter('watching'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Watching</div>
-                <div className={`sopt ${statusFilter === 'plan-to-watch' ? 'picked' : ''}`} onClick={() => { setStatusFilter('plan-to-watch'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Plan to Watch</div>
-              </div>
-            )}
-          </div>
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button className='fpill' onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')} style={{ background: viewMode === 'calendar' ? 'color-mix(in srgb, var(--theme-accent) 11%, var(--theme-surface))' : 'var(--theme-surface)' }}>
-              {viewMode === 'calendar' ? 'List View' : 'Release Calendar'}
-            </button>
-            <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 12, color: T.textMuted, letterSpacing: 2.2, textTransform: 'uppercase' }}>
-              {filtered.length} RESULTS
-            </span>
+              <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 12, color: T.textMuted, letterSpacing: 2.2 }}>
+                {filtered.length}
+              </span>
+            </div>
           </div>
         </div>
+
+        {/* Collapsible filter controls */}
+        {filtersOpen && (
+          <div className="filters-open" style={{ padding: '0 48px 12px', maxWidth: 1400, margin: '0 auto' }}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', overflow: 'visible' }}>
+              {/* Sort */}
+              <div ref={sortRef} style={{ position: 'relative' }}>
+                <button className="fpill" onClick={() => setSortOpen(o => !o)}
+                  style={{ color: 'var(--theme-accent)', borderColor: 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'color-mix(in srgb, var(--theme-accent) 9%, var(--theme-surface))', fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
+                  {SORT_LABELS[sortBy]}
+                  <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                </button>
+                {sortOpen && (
+                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
+                    {Object.entries(SORT_LABELS).map(([k, v]) => (
+                      <div key={k} className={`sopt ${sortBy === k ? 'picked' : ''}`} onClick={() => { setSortBy(k); setSortOpen(false); }}>{v}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Phase */}
+              <div ref={phaseRef} style={{ position: 'relative' }}>
+                <button className="fpill" onClick={() => setPhaseOpen(o => !o)}
+                  style={{ color: 'var(--theme-accent)', borderColor: 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'color-mix(in srgb, var(--theme-accent) 9%, var(--theme-surface))', fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
+                  {activePhase === 0 ? 'Phase All' : (PHASES.find(ph => ph.id === activePhase)?.name || 'Phase All')}
+                  <ChevDown size={12} style={{ opacity: 0.6, transform: phaseOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                </button>
+                {phaseOpen && (
+                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
+                    <div className={`sopt ${activePhase === 0 ? 'picked' : ''}`} onClick={() => { setActivePhase(0); setPhaseOpen(false); }}>Phase All</div>
+                    {PHASES.map((ph) => (
+                      <div key={ph.id} className={`sopt ${activePhase === ph.id ? 'picked' : ''}`} onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); setPhaseOpen(false); }}>{ph.name}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Type pills */}
+              {['film', 'series', 'short'].map(t => {
+                const m = TYPE_META[t];
+                const on = typeFilter === t;
+                return (
+                  <button key={t} className="fpill"
+                    style={on ? { borderColor: m.color + '88', background: m.color + '14', color: m.color } : {}}
+                    onClick={() => setTypeFilter(on ? null : t)}>
+                    <m.Icon size={10} />{m.label}
+                  </button>
+                );
+              })}
+              {listMode === 'core' && (
+                <button className="fpill"
+                  style={essentialOnly ? { borderColor: 'color-mix(in srgb, var(--theme-warning) 50%, transparent)', background: 'var(--theme-warning-soft)', color: 'var(--theme-warning)' } : {}}
+                  onClick={() => setEssOnly(o => !o)}>
+                  <Star size={10} />Must-Watch
+                </button>
+              )}
+              {/* Status filter */}
+              <div style={{ position: 'relative' }}>
+                <button className="fpill"
+                  style={watchedOnly || statusFilter ? { borderColor: 'color-mix(in srgb, var(--theme-success) 50%, transparent)', background: 'var(--theme-success-soft)', color: 'var(--theme-success)' } : {}}
+                  onClick={() => setFilterStatusOpen(v => !v)}
+                  onMouseEnter={() => setFilterStatusOpen(true)}
+                  onMouseLeave={() => setFilterStatusOpen(false)}>
+                  <Check size={10} />Status
+                </button>
+                {filterStatusOpen && (
+                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 180 }}
+                    onMouseEnter={() => setFilterStatusOpen(true)}
+                    onMouseLeave={() => setFilterStatusOpen(false)}>
+                    <div className={`sopt ${!statusFilter && !watchedOnly ? 'picked' : ''}`} onClick={() => { setStatusFilter(null); setWatchedOnly(false); setFilterStatusOpen(false); }}>All statuses</div>
+                    <div className={`sopt ${watchedOnly ? 'picked' : ''}`} onClick={() => { setWatchedOnly(true); setStatusFilter(null); setFilterStatusOpen(false); }}>Watched only</div>
+                    <div className={`sopt ${statusFilter === 'watching' ? 'picked' : ''}`} onClick={() => { setStatusFilter('watching'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Watching</div>
+                    <div className={`sopt ${statusFilter === 'plan-to-watch' ? 'picked' : ''}`} onClick={() => { setStatusFilter('plan-to-watch'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Plan to Watch</div>
+                  </div>
+                )}
+              </div>
+              {/* Reset */}
+              {activeFilterCount > 0 && (
+                <button className="fpill" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', padding: '7px 12px' }}
+                  onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setSortBy('order'); }}>
+                  <Trash2 size={10} /> Clear
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* ━━ STICKY PHASE PROGRESS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ position: 'sticky', top: 0, zIndex: 170, padding: '6px 24px', background: darkMode ? 'rgba(8,10,20,0.72)' : 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderBottom: `1px solid ${T.filterBorder}` }}>
         <div style={{ maxWidth: 1400, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 10, padding: '0 24px' }}>
           <span style={{ fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.8, fontSize: 12, color: T.textMuted, minWidth: 90 }}>{stickyPhaseProgress.label}</span>
@@ -1285,10 +1306,9 @@ export default function MCUViewer() {
         <div style={{ maxWidth: 1400, margin: '4px auto 0', padding: '0 24px', display: 'flex', gap: 4 }}>
           {PHASES.map(ph => <div key={ph.id} style={{ height: 2, flex: 1, borderRadius: 99, background: ph.color, opacity: activePhase === 0 || activePhase === ph.id ? 0.9 : 0.28 }} />)}
         </div>
-        </div>
       </div>
 
-
+      {/* ━━ JUMP NEXT BUTTON ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <button
         type="button"
         onClick={() => { if (nextUnwatched) setDetailItem(nextUnwatched); }}
@@ -1300,185 +1320,169 @@ export default function MCUViewer() {
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} style={{ overflow: 'visible', flex: '0 0 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
-        
-
-        
-
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '24px 16px 80px 16px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch" key={listMode}>
-        {phaseKeys.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: "'Bebas Neue',sans-serif", fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
-            NO RESULTS — ADJUST YOUR FILTERS
-          </div>
-        )}
-
-        {viewMode === 'calendar' ? (
-          <section className='curvy-panel' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'var(--theme-surface)', borderRadius: 14, padding: 16 }}>
-            <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: "'Bebas Neue',sans-serif" }}>Release Calendar</h3>
-            <div style={{ marginBottom: 12, color: T.textMuted }}>Upcoming</div>
-            {calendarItems.upcoming.length === 0 ? <div style={{ marginBottom: 12, color: T.textMuted }}>No upcoming entries in current filter.</div> : calendarItems.upcoming.map(({ item, rawDate }) => (
-              <div key={'up-'+item.id} className='rrow' style={{ gridTemplateColumns: '70px 52px minmax(0,1fr)', background: 'transparent' }}>
-                <div style={{ fontSize: 11, color: 'var(--theme-warning)' }}>{formatReleaseDate(rawDate, item.year)}</div>
-                <img className='poster' src={posterSrc(item)} alt={item.title} />
-                <button className='title-btn' onClick={() => setDetailItem(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
-              </div>
-            ))}
-            <div style={{ margin: '16px 0 12px', color: T.textMuted }}>Already Released</div>
-            {calendarItems.released.map(({ item, rawDate }) => (
-              <div key={'old-'+item.id} className='rrow' style={{ gridTemplateColumns: '70px 52px minmax(0,1fr)', background: 'transparent' }}>
-                <div style={{ fontSize: 11, color: T.textMuted }}>{formatReleaseDate(rawDate, item.year)}</div>
-                <img className='poster' src={posterSrc(item)} alt={item.title} />
-                <button className='title-btn' onClick={() => setDetailItem(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
-              </div>
-            ))}
-          </section>
-        ) : phaseKeys.map(pid => {
-          const ph = PHASES.find(p => p.id === pid);
-          const rows = grouped[pid];
-          const done = rows.filter(r => r.status === 'watched').length;
-          const phasePct = rows.length ? Math.round((done / rows.length) * 100) : 0;
-          const isCelebrating = celebPhase === pid;
-          const summaryOpen = expandedPhase === pid;
-
-          return (
-            <section key={pid} className="section-up" data-phase={pid}
-              ref={el => { phaseRefs.current[pid] = el; }}
-              style={{ marginBottom: 36, scrollMarginTop: 'var(--sticky-offset)', position: 'relative' }}>
-
-              {/* Phase completion flash overlay */}
-              {isCelebrating && (
-                <div className="phase-flash" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,#f3a6c2,#ffc0d8)', boxShadow: '0 0 10px rgba(244,155,200,0.5)', borderRadius: 12, pointerEvents: 'none', zIndex: 5 }} />
-              )}
-
-              {/* ── Phase divider injected in list flow ── */}
-              <div className="curvy-panel" style={{ '--phase-color': ph.color, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap', padding: '14px 12px 14px 18px', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? `linear-gradient(120deg, color-mix(in srgb, var(--theme-accent) 16%, color-mix(in srgb, ${ph.color} 26%, transparent)), rgba(22,20,38,0.55))` : `linear-gradient(120deg, color-mix(in srgb, var(--theme-accent) 8%, color-mix(in srgb, ${ph.color} 14%, #fff)), rgba(255,255,255,0.88))` }}>
-                <div style={{ width: 7, height: 54, background: `linear-gradient(180deg, ${ph.color}, color-mix(in srgb, ${ph.color} 58%, #ffd2e4))`, borderRadius: 999, flexShrink: 0, boxShadow: darkMode ? `0 0 14px ${ph.glow}` : '0 0 7px rgba(244,155,200,0.25)' }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: "'Orbitron',sans-serif", fontSize: 'clamp(32px, 4vw, 36px)', letterSpacing: 6, color: ph.color, lineHeight: 1, fontWeight: 700, textShadow: darkMode ? `0 0 18px ${ph.glow}` : 'none' }}>
-              {ph.name}
+          {phaseKeys.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: "'Bebas Neue',sans-serif", fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
+              NO RESULTS — ADJUST YOUR FILTERS
             </div>
-            <div style={{ fontSize: 'clamp(15px, 1.9vw, 17px)', color: T.textMuted, letterSpacing: 2.4, fontFamily: "'Bebas Neue',sans-serif", marginTop: 1, textTransform: 'uppercase', maxWidth: 360, lineHeight: 1.15 }}>
-                    {ph.tagline === 'Assembling the Avengers' ? <>ASSEMBLING<br />THE AVENGERS</> : ph.tagline}
-                  </div>
+          )}
+
+          {viewMode === 'calendar' ? (
+            <section className='curvy-panel' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'var(--theme-surface)', borderRadius: 14, padding: 16 }}>
+              <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: "'Bebas Neue',sans-serif" }}>Release Calendar</h3>
+              <div style={{ marginBottom: 12, color: T.textMuted }}>Upcoming</div>
+              {calendarItems.upcoming.length === 0 ? <div style={{ marginBottom: 12, color: T.textMuted }}>No upcoming entries in current filter.</div> : calendarItems.upcoming.map(({ item, rawDate }) => (
+                <div key={'up-'+item.id} className='rrow' style={{ gridTemplateColumns: '70px 52px minmax(0,1fr)', background: 'transparent' }}>
+                  <div style={{ fontSize: 11, color: 'var(--theme-warning)' }}>{formatReleaseDate(rawDate, item.year)}</div>
+                  <img className='poster' src={posterSrc(item)} alt={item.title} />
+                  <button className='title-btn' onClick={() => setDetailItem(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
                 </div>
-                {/* Mini progress */}
-                <div style={{ width: 90, background: darkMode ? 'rgba(255,255,255,0.08)' : T.surfaceBg, border: `1px solid ${darkMode ? 'rgba(255,255,255,0.16)' : T.surfaceBorder}`, borderRadius: 999, height: 4, overflow: 'hidden', position: 'relative', flexShrink: 0, backdropFilter: 'blur(3px)' }}>
-                  <div style={{ height: '100%', width: `${phasePct}%`, background: 'linear-gradient(90deg,var(--theme-accent),var(--theme-accent-alt))', boxShadow: '0 0 10px rgba(244,155,200,0.5)', borderRadius: 999, transition: 'width 0.5s ease', position: 'relative', overflow: 'hidden', opacity: darkMode ? 0.85 : 0.9 }} />
+              ))}
+              <div style={{ margin: '16px 0 12px', color: T.textMuted }}>Already Released</div>
+              {calendarItems.released.map(({ item, rawDate }) => (
+                <div key={'old-'+item.id} className='rrow' style={{ gridTemplateColumns: '70px 52px minmax(0,1fr)', background: 'transparent' }}>
+                  <div style={{ fontSize: 11, color: T.textMuted }}>{formatReleaseDate(rawDate, item.year)}</div>
+                  <img className='poster' src={posterSrc(item)} alt={item.title} />
+                  <button className='title-btn' onClick={() => setDetailItem(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
                 </div>
-                <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 11, letterSpacing: 1, color: phasePct === 100 ? ph.color : T.textMuted, flexShrink: 0, minWidth: 38, textAlign: 'right' }}>
-                  {done}/{rows.length}
-                </span>
-                {/* Phase summary toggle — suggestion 3 */}
-                <button onClick={() => setExpandedPhase(summaryOpen ? null : pid)}
-                  aria-label={summaryOpen ? 'Hide phase summary' : 'Show phase summary'}
-                  style={{ background: 'none', border: `1px solid ${summaryOpen ? ph.color + '66' : T.surfaceBorder}`, color: summaryOpen ? ph.color : T.textMuted, borderRadius: 6, padding: '3px 8px', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 2.2, textTransform: 'uppercase', transition: 'all 0.18s' }}>
-                  <Info size={11} />INFO
-                </button>
-                {/* Bulk action */}
-                {done < rows.length ? (
-                  <button onClick={() => markPhaseWatched(pid, 'watched')}
-                    style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 10, letterSpacing: 1.5, color: ph.color, background: 'transparent', border: `1px solid ${ph.color}44`, borderRadius: 6, padding: '4px 9px', cursor: 'pointer', flexShrink: 0, transition: 'all 0.16s' }}
-                    onMouseEnter={e => { e.currentTarget.style.background = ph.color + '16'; e.currentTarget.style.borderColor = ph.color + '88'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = ph.color + '44'; }}>
-                    MARK ALL
-                  </button>
-                ) : (
-                  <button onClick={() => markPhaseWatched(pid, 'unwatched')}
-                    style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 10, letterSpacing: 1.5, color: T.textMuted, background: 'transparent', border: `1px solid ${T.surfaceBorder}`, borderRadius: 6, padding: '4px 9px', cursor: 'pointer', flexShrink: 0, transition: 'all 0.16s' }}
-                    onMouseEnter={e => { e.currentTarget.style.background = T.rowHoverBg; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>
-                    CLEAR
-                  </button>
-                )}
-              </div>
-
-              {/* Phase summary card — suggestion 4 */}
-              {summaryOpen && (
-                <div className="fade-in curvy-panel" style={{ '--phase-color': ph.color, background: T.phaseSummaryBg, border: `1px solid ${T.phaseSummaryBorder}`, borderRadius: 12, padding: '12px 14px 12px 18px', marginBottom: 10, fontSize: 14, color: T.textMuted, lineHeight: 1.6, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.2 }}>
-                  {ph.summary}
-                </div>
-              )}
-
-              {/* ── Row table ── */}
-              <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 14, overflow: 'hidden', boxShadow: darkMode ? '0 2px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.03)' : '0 1px 6px rgba(0,0,0,0.06)' }}>
-                {rows.map((item, idx) => {
-                  const m = TYPE_META[item.type];
-                  const statusMeta = STATUS_META[item.status];
-                  const showPre = !NO_PREREQ.has(item.prereq);
-                  const isWatched = item.status === 'watched';
-                  const isExpanded = expandedItem === item.id;
-
-                  return (
-                    <div key={item.id}>
-                      {/* Main row */}
-                      <div className={`rrow row-in type-${item.type} ${isWatched ? 'glass-panel' : ''} ${expandedItem === item.id ? 'curvy-selected' : ''}`} style={{ background: isWatched ? 'var(--theme-watched-bg)' : 'transparent', opacity: 1, borderLeftColor: expandedItem === item.id ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow }}>
-                        {/* Order / check */}
-                        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 15, color: isWatched ? '#f1bfd3' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
-                          {isWatched ? <Check size={14} style={{ color: '#f4a8ca' }} /> : (idx + 1)}
-                        </div>
-                        <img className="poster" src={posterSrc(item)} alt={`${item.title} poster`} loading="lazy" />
-
-                        {/* Title block — clickable to expand */}
-                        <button className="title-btn" onClick={() => setDetailItem(item)} style={{ overflow: 'hidden' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: 700, lineHeight: 1.5, color: isWatched ? '#9df1c2' : 'var(--theme-text)', opacity: 1, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: '100%' }}>
-                              {item.title}
-                            </span>
-                            {/* Episode count badge */}
-                            {item.episodes && (
-                              <span style={{ fontSize: 9, color: T.textMuted, background: T.expandBg, border: `1px solid ${T.expandBorder}`, borderRadius: 3, padding: '1px 5px', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1, flexShrink: 0 }}>
-                                {item.episodes} EP
-                              </span>
-                            )}
-                            <span style={{ fontSize: 14, color: m.color, opacity: 0.82, fontWeight: 700, letterSpacing: 0.6, display: 'flex', alignItems: 'center', gap: 2, fontFamily: "'Bebas Neue',sans-serif", flexShrink: 0 }}>
-                              <m.Icon size={8} />{m.label}
-                            </span>
-                            {!item.essential && (
-                              <span style={{ fontSize: 8.5, color: T.textMuted, background: T.expandBg, border: `1px solid ${T.expandBorder}`, borderRadius: 3, padding: '1px 4px', letterSpacing: 1, fontFamily: "'Bebas Neue',sans-serif", flexShrink: 0 }}>OPT</span>
-                            )}
-                            <ChevRight size={10} style={{ color: T.textFaint, transform: 'none', transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
-                          </div>
-                          <div className="meta-muted" style={{ marginTop: 2, fontSize: 10, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2 }}>GENRES: {inferGenres(item).join(' • ').toUpperCase()}</div>
-                        </button>
-
-                        {/* Year column */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: 104, flexShrink: 0 }}>
-                          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '12px', letterSpacing: 1.1, color: T.text, textAlign: 'right', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                            {formatReleaseDate(RELEASE_INFO[item.title]?.date || metaCache[item.id]?.released, item.year)}
-                          </div>
-                          <div style={{ fontSize: 11, color: '#e8b84b', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 0.6, whiteSpace: 'nowrap' }}>★ {metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating || '—'}</div>
-                          <button className="wbtn"
-                            aria-label={bookmarks[item.id] ? 'Remove bookmark' : 'Add bookmark'}
-                            onClick={() => setBookmarks(p => ({ ...p, [item.id]: p[item.id] ? 0 : 1 }))}
-                            style={{ width: 24, height: 24, background: bookmarks[item.id] ? 'rgba(125,211,252,0.2)' : 'transparent', color: bookmarks[item.id] ? '#7dd3fc' : T.textMuted, borderColor: bookmarks[item.id] ? '#7dd3fc66' : `${T.surfaceBorder}` }}
-                          >
-                            <Bookmark size={11} />
-                          </button>
-                          <button className="wbtn"
-                            aria-label={`${statusMeta.label} — click to change`}
-                            aria-haspopup="true"
-                            aria-expanded={statusDropdown === item.id}
-                            onClick={e => openStatusDropdown(e, item.id)}
-                            onContextMenu={e => e.preventDefault()}
-                            onKeyDown={e => {
-                              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openStatusDropdown(e, item.id); }
-                              if (e.key === 'Escape') setStatusDropdown(null);
-                            }}
-                            style={{ width: 24, height: 24, background: statusMeta.bg, color: statusMeta.color, borderColor: statusMeta.color + '55', boxShadow: item.status !== 'unwatched' && darkMode ? `0 0 9px ${statusMeta.color}35` : 'none' }}
-                          >
-                            <statusMeta.Icon size={11} />
-                          </button>
-                        </div>
-                        {isWatched && <Check size={12} style={{ position: 'absolute', top: 8, right: 8, color: '#9be8bc', filter: 'drop-shadow(0 0 6px rgba(155,232,188,0.75))' }} />}
-                      </div>
-
-                      
-                    </div>
-                  );
-                })}
-              </div>
+              ))}
             </section>
-          );
-        })}
+          ) : phaseKeys.map(pid => {
+            const ph = PHASES.find(p => p.id === pid);
+            const rows = grouped[pid];
+            const done = rows.filter(r => r.status === 'watched').length;
+            const phasePct = rows.length ? Math.round((done / rows.length) * 100) : 0;
+            const isCelebrating = celebPhase === pid;
+            const summaryOpen = expandedPhase === pid;
+
+            return (
+              <section key={pid} className="section-up" data-phase={pid}
+                ref={el => { phaseRefs.current[pid] = el; }}
+                style={{ marginBottom: 36, scrollMarginTop: 'var(--sticky-offset)', position: 'relative' }}>
+
+                {isCelebrating && (
+                  <div className="phase-flash" style={{ position: 'absolute', inset: 0, background: `linear-gradient(90deg, ${ph.color}40, ${ph.color}22)`, boxShadow: `0 0 10px ${ph.glow}`, borderRadius: 12, pointerEvents: 'none', zIndex: 5 }} />
+                )}
+
+                {/* Phase divider */}
+                <div className="curvy-panel" style={{ '--phase-color': ph.color, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap', padding: '14px 12px 14px 18px', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? `linear-gradient(120deg, color-mix(in srgb, var(--theme-accent) 16%, color-mix(in srgb, ${ph.color} 26%, transparent)), rgba(22,20,38,0.55))` : `linear-gradient(120deg, color-mix(in srgb, var(--theme-accent) 8%, color-mix(in srgb, ${ph.color} 14%, #fff)), rgba(255,255,255,0.88))` }}>
+                  <div style={{ width: 7, height: 54, background: `linear-gradient(180deg, ${ph.color}, color-mix(in srgb, ${ph.color} 58%, #ffd2e4))`, borderRadius: 999, flexShrink: 0, boxShadow: darkMode ? `0 0 14px ${ph.glow}` : '0 0 7px rgba(244,155,200,0.25)' }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: "'Orbitron',sans-serif", fontSize: 'clamp(32px, 4vw, 36px)', letterSpacing: 6, color: ph.color, lineHeight: 1, fontWeight: 700, textShadow: darkMode ? `0 0 18px ${ph.glow}` : 'none' }}>
+                      {ph.name}
+                    </div>
+                    <div style={{ fontSize: 'clamp(15px, 1.9vw, 17px)', color: T.textMuted, letterSpacing: 2.4, fontFamily: "'Bebas Neue',sans-serif", marginTop: 1, textTransform: 'uppercase', maxWidth: 360, lineHeight: 1.15 }}>
+                      {ph.tagline === 'Assembling the Avengers' ? <>ASSEMBLING<br />THE AVENGERS</> : ph.tagline}
+                    </div>
+                  </div>
+                  <div style={{ width: 90, background: darkMode ? 'rgba(255,255,255,0.08)' : T.surfaceBg, border: `1px solid ${darkMode ? 'rgba(255,255,255,0.16)' : T.surfaceBorder}`, borderRadius: 999, height: 4, overflow: 'hidden', position: 'relative', flexShrink: 0, backdropFilter: 'blur(3px)' }}>
+                    <div style={{ height: '100%', width: `${phasePct}%`, background: 'linear-gradient(90deg,var(--theme-accent),var(--theme-accent-alt))', boxShadow: `0 0 10px var(--theme-accent-glow)`, borderRadius: 999, transition: 'width 0.5s ease', position: 'relative', overflow: 'hidden', opacity: darkMode ? 0.85 : 0.9 }} />
+                  </div>
+                  <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 11, letterSpacing: 1, color: phasePct === 100 ? ph.color : T.textMuted, flexShrink: 0, minWidth: 38, textAlign: 'right' }}>
+                    {done}/{rows.length}
+                  </span>
+                  <button onClick={() => setExpandedPhase(summaryOpen ? null : pid)}
+                    aria-label={summaryOpen ? 'Hide phase summary' : 'Show phase summary'}
+                    style={{ background: 'none', border: `1px solid ${summaryOpen ? ph.color + '66' : T.surfaceBorder}`, color: summaryOpen ? ph.color : T.textMuted, borderRadius: 6, padding: '3px 8px', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 2.2, textTransform: 'uppercase', transition: 'all 0.18s' }}>
+                    <Info size={11} />INFO
+                  </button>
+                  {done < rows.length ? (
+                    <button onClick={() => markPhaseWatched(pid, 'watched')}
+                      style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 10, letterSpacing: 1.5, color: ph.color, background: 'transparent', border: `1px solid ${ph.color}44`, borderRadius: 6, padding: '4px 9px', cursor: 'pointer', flexShrink: 0, transition: 'all 0.16s' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = ph.color + '16'; e.currentTarget.style.borderColor = ph.color + '88'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = ph.color + '44'; }}>
+                      MARK ALL
+                    </button>
+                  ) : (
+                    <button onClick={() => markPhaseWatched(pid, 'unwatched')}
+                      style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 10, letterSpacing: 1.5, color: T.textMuted, background: 'transparent', border: `1px solid ${T.surfaceBorder}`, borderRadius: 6, padding: '4px 9px', cursor: 'pointer', flexShrink: 0, transition: 'all 0.16s' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = T.rowHoverBg; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>
+                      CLEAR
+                    </button>
+                  )}
+                </div>
+
+                {summaryOpen && (
+                  <div className="fade-in curvy-panel" style={{ '--phase-color': ph.color, background: T.phaseSummaryBg, border: `1px solid ${T.phaseSummaryBorder}`, borderRadius: 12, padding: '12px 14px 12px 18px', marginBottom: 10, fontSize: 14, color: T.textMuted, lineHeight: 1.6, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.2 }}>
+                    {ph.summary}
+                  </div>
+                )}
+
+                {/* Row table */}
+                <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 14, overflow: 'hidden', boxShadow: darkMode ? '0 2px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.03)' : '0 1px 6px rgba(0,0,0,0.06)' }}>
+                  {rows.map((item, idx) => {
+                    const m = TYPE_META[item.type];
+                    const statusMeta = STATUS_META[item.status];
+                    const showPre = !NO_PREREQ.has(item.prereq);
+                    const isWatched = item.status === 'watched';
+                    const isExpanded = expandedItem === item.id;
+
+                    return (
+                      <div key={item.id}>
+                        <div className={`rrow row-in type-${item.type} ${isWatched ? 'glass-panel' : ''} ${expandedItem === item.id ? 'curvy-selected' : ''}`} style={{ background: isWatched ? 'var(--theme-watched-bg)' : 'transparent', opacity: 1, borderLeftColor: expandedItem === item.id ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow }}>
+                          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 15, color: isWatched ? '#f1bfd3' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
+                            {isWatched ? <Check size={14} style={{ color: '#f4a8ca' }} /> : (idx + 1)}
+                          </div>
+                          <img className="poster" src={posterSrc(item)} alt={`${item.title} poster`} loading="lazy" />
+
+                          <button className="title-btn" onClick={() => setDetailItem(item)} style={{ overflow: 'hidden' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: 700, lineHeight: 1.5, color: isWatched ? '#9df1c2' : 'var(--theme-text)', opacity: 1, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: '100%' }}>
+                                {item.title}
+                              </span>
+                              {item.episodes && (
+                                <span style={{ fontSize: 9, color: T.textMuted, background: T.expandBg, border: `1px solid ${T.expandBorder}`, borderRadius: 3, padding: '1px 5px', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1, flexShrink: 0 }}>
+                                  {item.episodes} EP
+                                </span>
+                              )}
+                              <span style={{ fontSize: 14, color: m.color, opacity: 0.82, fontWeight: 700, letterSpacing: 0.6, display: 'flex', alignItems: 'center', gap: 2, fontFamily: "'Bebas Neue',sans-serif", flexShrink: 0 }}>
+                                <m.Icon size={8} />{m.label}
+                              </span>
+                              {!item.essential && (
+                                <span style={{ fontSize: 8.5, color: T.textMuted, background: T.expandBg, border: `1px solid ${T.expandBorder}`, borderRadius: 3, padding: '1px 4px', letterSpacing: 1, fontFamily: "'Bebas Neue',sans-serif", flexShrink: 0 }}>OPT</span>
+                              )}
+                              <ChevRight size={10} style={{ color: T.textFaint, transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
+                            </div>
+                            <div className="meta-muted" style={{ marginTop: 2, fontSize: 10, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2 }}>GENRES: {inferGenres(item).join(' • ').toUpperCase()}</div>
+                          </button>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: 104, flexShrink: 0 }}>
+                            <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '12px', letterSpacing: 1.1, color: T.text, textAlign: 'right', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                              {formatReleaseDate(RELEASE_INFO[item.title]?.date || metaCache[item.id]?.released, item.year)}
+                            </div>
+                            <div style={{ fontSize: 11, color: '#e8b84b', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 0.6, whiteSpace: 'nowrap' }}>★ {metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating || '—'}</div>
+                            <button className="wbtn"
+                              aria-label={bookmarks[item.id] ? 'Remove bookmark' : 'Add bookmark'}
+                              onClick={() => setBookmarks(p => ({ ...p, [item.id]: p[item.id] ? 0 : 1 }))}
+                              style={{ width: 24, height: 24, background: bookmarks[item.id] ? 'rgba(125,211,252,0.2)' : 'transparent', color: bookmarks[item.id] ? '#7dd3fc' : T.textMuted, borderColor: bookmarks[item.id] ? '#7dd3fc66' : `${T.surfaceBorder}` }}
+                            >
+                              <Bookmark size={11} />
+                            </button>
+                            <button className="wbtn"
+                              aria-label={`${statusMeta.label} — click to change`}
+                              aria-haspopup="true"
+                              aria-expanded={statusDropdown === item.id}
+                              onClick={e => openStatusDropdown(e, item.id)}
+                              onContextMenu={e => e.preventDefault()}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openStatusDropdown(e, item.id); }
+                                if (e.key === 'Escape') setStatusDropdown(null);
+                              }}
+                              style={{ width: 24, height: 24, background: statusMeta.bg, color: statusMeta.color, borderColor: statusMeta.color + '55', boxShadow: item.status !== 'unwatched' && darkMode ? `0 0 9px ${statusMeta.color}35` : 'none' }}
+                            >
+                              <statusMeta.Icon size={11} />
+                            </button>
+                          </div>
+                          {isWatched && <Check size={12} style={{ position: 'absolute', top: 8, right: 8, color: '#9be8bc', filter: 'drop-shadow(0 0 6px rgba(155,232,188,0.75))' }} />}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
 
           <div style={{ textAlign: 'center', marginTop: 44, fontFamily: "'Bebas Neue',sans-serif", fontSize: 9, color: T.footerText, letterSpacing: 3.5 }}>
             MCU VIEWING ORDER &nbsp;·&nbsp; PHASES 1–6 &nbsp;·&nbsp; PROGRESS SAVED LOCALLY
@@ -1486,11 +1490,11 @@ export default function MCUViewer() {
         </div>
       </main>
 
+      {/* ━━ DETAIL MODAL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       {detailItem && (
         <div className="detail-backdrop" onClick={() => setDetailItem(null)} role="dialog" aria-label="Movie details">
           <div className="detail-card glass-panel" onClick={(e) => e.stopPropagation()}>
             <div className="detail-layout" style={{ display: 'grid', gridTemplateColumns: 'minmax(220px,34%) minmax(0,1fr)', gap: 18, alignItems: 'start', width: '100%' }}>
-
               {detailPosterFailed ? (
                 <div className="detail-fallback-poster" style={{ width: '100%', minHeight: 340, borderRadius: 10, border: `1px solid ${T.surfaceBorder}` }}>
                   <span>{detailItem.title}</span>
@@ -1506,22 +1510,20 @@ export default function MCUViewer() {
                   <span className="fpill detail-pill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>Phase {detailItem.phase}</span>
                   {(detailData?.imdbRating && detailData.imdbRating !== 'N/A') && <span className="fpill detail-pill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>★ {detailData.imdbRating}</span>}
                 </div>
-                {detailLoading && <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 8 }}>Loading live metadata…</div>}
-                {!detailLoading && !detailData && <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Live metadata unavailable from OMDb — showing TMDB fallback where available.</div>}
+                {detailLoading && <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 8 }}>Loading metadata…</div>}
+                {!detailLoading && !detailData && <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Showing local data.</div>}
                 <p style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 12, filter: spoilerSafe ? 'blur(5px)' : 'none', transition: 'filter 0.18s ease' }}>{detailData?.Plot && detailData.Plot !== 'N/A' ? detailData.Plot : detailItem.desc}</p>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Prerequisite:</strong> {detailItem.prereq}</div>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Status:</strong> {STATUS_META[detailItem.status]?.label}</div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                   <span style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.1, fontFamily: "'Bebas Neue',sans-serif" }}>SPOILER SAFE</span>
-                  <button
-                    className="fpill glass-panel"
-                    onClick={() => setSpoilerSafeMode(v => !v)}
-                    style={{ padding: '6px 10px', fontSize: 11, background: spoilerSafe ? 'rgba(232,184,75,0.18)' : 'rgba(255,255,255,0.06)', borderColor: spoilerSafe ? 'rgba(232,184,75,0.45)' : 'rgba(255,255,255,0.16)' }}
-                  >
+                  <button className="fpill glass-panel" onClick={() => setSpoilerSafeMode(v => !v)}
+                    style={{ padding: '6px 10px', fontSize: 11, background: spoilerSafe ? 'rgba(232,184,75,0.18)' : 'rgba(255,255,255,0.06)', borderColor: spoilerSafe ? 'rgba(232,184,75,0.45)' : 'rgba(255,255,255,0.16)' }}>
                     {spoilerSafe ? 'On · Tap to reveal' : 'Off · Tap to hide'}
                   </button>
                 </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10, alignItems: 'center' }}>
                   <span style={{ gridColumn: '1 / -1', fontSize: 11, color: T.textMuted, letterSpacing: 1.1, fontFamily: "'Bebas Neue',sans-serif" }}>QUICK ACTIONS</span>
                   <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setMyLikes(p => ({ ...p, [detailItem.id]: p[detailItem.id] ? 0 : 1 }))}><Heart size={12}/> {myLikes[detailItem.id] ? 'Liked' : 'Like'}</button>
@@ -1594,4 +1596,3 @@ export default function MCUViewer() {
     </div>
   );
 }
-
