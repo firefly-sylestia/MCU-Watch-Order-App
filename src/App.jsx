@@ -483,8 +483,8 @@ export default function MCUViewer() {
     });
   }, [activeItems]);
   const memoryScore = useMemo(() => Math.max(0, Math.min(100, Math.round((totalWatched / Math.max(1, activeItems.length)) * 100) - (spoilerSafe ? 10 : 0))), [totalWatched, activeItems.length, spoilerSafe]);
-  const OMDB_KEY = import.meta.env.VITE_OMDB_API_KEY;
-  const TMDB_DIRECT_KEY = import.meta.env.VITE_TMDB_API_KEY;
+  const OMDB_KEY = import.meta.env.VITE_OMDB_API_KEY || '';
+  const TMDB_DIRECT_KEY = import.meta.env.VITE_TMDB_API_KEY || '65eda48cf5803f22304fd21f4f06a35e';
 
   const fetchTmdbPoster = async (item) => {
     const q = encodeURIComponent(cleanLookupTitle(item.title));
@@ -506,6 +506,19 @@ export default function MCUViewer() {
       return best?.poster_path ? `https://image.tmdb.org/t/p/w500${best.poster_path}` : '';
     } catch {
       return '';
+    }
+  };
+
+  const fetchTmdbDetail = async (item) => {
+    const q = encodeURIComponent(cleanLookupTitle(item.title));
+    const y = encodeURIComponent(String(item.year || ''));
+    try {
+      const r = await fetch(`/api/tmdb/poster?title=${q}&year=${y}&details=1`);
+      if (!r.ok) return null;
+      const payload = await r.json();
+      return payload?.details || null;
+    } catch {
+      return null;
     }
   };
   const cleanLookupTitle = (title) => title.replace(/\sS\d.*$/i, '').replace(/\sEps?.*$/i, '').trim();
@@ -620,6 +633,28 @@ export default function MCUViewer() {
     localStorage.setItem('mcu-user-actions-v1', JSON.stringify({ likes: myLikes, ratings: myRating, rewatch: rewatchCount, bookmarks }));
   }, [myLikes, myRating, rewatchCount, bookmarks]);
 
+  const refreshPostersAndMetadata = async () => {
+    const key = OMDB_KEY;
+    const targets = filtered.slice(0, 60);
+    const posterUpdates = {};
+    const metaUpdates = {};
+    for (const item of targets) {
+      try {
+        const t = encodeURIComponent(cleanLookupTitle(item.title));
+        if (key) {
+          const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}`);
+          const data = await res.json();
+          posterUpdates[item.id] = data?.Poster && data.Poster !== 'N/A' ? data.Poster : await fetchTmdbPoster(item);
+          metaUpdates[item.id] = { rating: data?.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : '', released: data?.Released && data.Released !== 'N/A' ? data.Released : '' };
+        } else {
+          posterUpdates[item.id] = await fetchTmdbPoster(item);
+        }
+      } catch {}
+    }
+    setPosterCache(prev => ({ ...prev, ...posterUpdates }));
+    setMetaCache(prev => ({ ...prev, ...metaUpdates }));
+  };
+
   useEffect(() => {
     const key = OMDB_KEY;
     const targets = filtered.slice(0, 30).filter(i => posterCache[i.id] === undefined || metaCache[i.id] === undefined);
@@ -675,14 +710,21 @@ export default function MCUViewer() {
           } else {
             const tmdbPoster = await fetchTmdbPoster(detailItem);
             if (tmdbPoster) setPosterCache(prev => ({ ...prev, [detailItem.id]: tmdbPoster }));
+
+            const tmdbDetails = await fetchTmdbDetail(detailItem);
+            if (tmdbDetails) setDetailData(tmdbDetails);
           }
           } else {
             const tmdbPoster = await fetchTmdbPoster(detailItem);
             if (tmdbPoster) setPosterCache(prev => ({ ...prev, [detailItem.id]: tmdbPoster }));
+            const tmdbDetails = await fetchTmdbDetail(detailItem);
+            if (tmdbDetails) setDetailData(tmdbDetails);
           }
         } else {
           const tmdbPoster = await fetchTmdbPoster(detailItem);
           if (tmdbPoster) setPosterCache(prev => ({ ...prev, [detailItem.id]: tmdbPoster }));
+          const tmdbDetails = await fetchTmdbDetail(detailItem);
+          if (tmdbDetails) setDetailData(tmdbDetails);
         }
       } catch {}
       setDetailLoading(false);
@@ -1041,6 +1083,7 @@ export default function MCUViewer() {
             </label>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: 'var(--theme-danger)', textTransform: 'uppercase' }}>Danger Zone</div>
+            <button className="fpill" onClick={refreshPostersAndMetadata}><Download size={14}/>Fetch Posters & Metadata</button>
             <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); }}><Trash2 size={14}/>Reset Filters</button>
           </div>
         )}
@@ -1403,6 +1446,13 @@ export default function MCUViewer() {
                           </div>
                           <div style={{ fontSize: 11, color: '#e8b84b', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 0.6, whiteSpace: 'nowrap' }}>★ {RELEASE_INFO[item.title]?.rating || metaCache[item.id]?.rating || '—'}</div>
                           <button className="wbtn"
+                            aria-label={bookmarks[item.id] ? 'Remove bookmark' : 'Add bookmark'}
+                            onClick={() => setBookmarks(p => ({ ...p, [item.id]: p[item.id] ? 0 : 1 }))}
+                            style={{ width: 24, height: 24, background: bookmarks[item.id] ? 'rgba(125,211,252,0.2)' : 'transparent', color: bookmarks[item.id] ? '#7dd3fc' : T.textMuted, borderColor: bookmarks[item.id] ? '#7dd3fc66' : `${T.surfaceBorder}` }}
+                          >
+                            <Bookmark size={11} />
+                          </button>
+                          <button className="wbtn"
                             aria-label={`${statusMeta.label} — click to change`}
                             aria-haspopup="true"
                             aria-expanded={statusDropdown === item.id}
@@ -1456,7 +1506,7 @@ export default function MCUViewer() {
                   {(detailData?.imdbRating && detailData.imdbRating !== 'N/A') && <span className="fpill detail-pill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>★ {detailData.imdbRating}</span>}
                 </div>
                 {detailLoading && <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 8 }}>Loading live metadata…</div>}
-                {!detailLoading && !detailData && <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Live metadata unavailable for this title right now.</div>}
+                {!detailLoading && !detailData && <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Live metadata unavailable from OMDb — showing TMDB fallback where available.</div>}
                 <p style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 12, filter: spoilerSafe ? 'blur(5px)' : 'none', transition: 'filter 0.18s ease' }}>{detailData?.Plot && detailData.Plot !== 'N/A' ? detailData.Plot : detailItem.desc}</p>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Prerequisite:</strong> {detailItem.prereq}</div>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Status:</strong> {STATUS_META[detailItem.status]?.label}</div>
