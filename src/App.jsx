@@ -227,6 +227,9 @@ export default function MCUViewer() {
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [themeMode,      setThemeMode]      = useState('classic');
+  const [spoilerSafeMode, setSpoilerSafeMode] = useState(false);
+  const [viewMode, setViewMode] = useState('list');
+  const [densityMode, setDensityMode] = useState('comfortable');
   const [timelineMode,   setTimelineMode]   = useState('sacred');
   const [genreFilter] = useState('all'); // hidden filter hook for future genre controls
   const [myLikes,        setMyLikes]        = useState({});
@@ -466,7 +469,8 @@ export default function MCUViewer() {
     'Thor': ['Chris Hemsworth', 'Tom Hiddleston', 'Natalie Portman'],
   };
   const posterFor = (item) => `https://placehold.co/220x330/121a2d/e8edf7?text=${encodeURIComponent(item.title)}`;
-  const spoilerSafe = useMemo(() => totalWatched < Math.max(6, Math.round(activeItems.length * 0.35)), [totalWatched, activeItems.length]);
+  const posterSrc = (item) => posterCache[item.id] || detailData?.Poster || `https://placehold.co/220x330/1a1f33/f7c4de?text=${encodeURIComponent(item.title+'\n'+item.year)}`;
+  const spoilerSafe = useMemo(() => spoilerSafeMode || (totalWatched < Math.max(6, Math.round(activeItems.length * 0.35))), [spoilerSafeMode, totalWatched, activeItems.length]);
   const characterHeat = useMemo(() => {
     const chars = ['Iron Man', 'Captain America', 'Thor', 'Loki', 'Spider-Man', 'Wanda'];
     return chars.map(c => {
@@ -510,6 +514,24 @@ export default function MCUViewer() {
   const filmCount = activeItems.filter(i => i.type === 'film').length;
   const estRuntimeHours = Math.round(((filmCount * 2.3) + (seriesCount * 6.0)) * 10) / 10;
   const remainingHours = Math.max(0, Math.round((estRuntimeHours * (1 - pct / 100)) * 10) / 10);
+
+  const calendarItems = useMemo(() => {
+    const now = new Date();
+    const withDates = filtered.map(item => {
+      const rawDate = RELEASE_INFO[item.title]?.date || metaCache[item.id]?.released || `${item.year}-01-01`;
+      const parsed = new Date(rawDate);
+      return { item, rawDate, parsed, isUpcoming: !Number.isNaN(parsed.getTime()) ? parsed > now : false };
+    }).sort((a, b) => {
+      const at = Number.isNaN(a.parsed.getTime()) ? Infinity : a.parsed.getTime();
+      const bt = Number.isNaN(b.parsed.getTime()) ? Infinity : b.parsed.getTime();
+      return at - bt;
+    });
+    return {
+      upcoming: withDates.filter(x => x.isUpcoming),
+      released: withDates.filter(x => !x.isUpcoming),
+    };
+  }, [filtered, metaCache]);
+
   const phaseGradient = useMemo(() => {
     let cursor = 0;
     const stops = [];
@@ -742,6 +764,9 @@ export default function MCUViewer() {
     '--theme-app-bg': darkMode
       ? 'radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 36%), radial-gradient(circle at 88% 14%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(155deg,#06060f 0%,#0b1021 40%,#0a0f20 100%)'
       : 'radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--theme-accent) 18%, #ffffff), transparent 36%), radial-gradient(circle at 88% 14%, color-mix(in srgb, var(--theme-accent-alt) 14%, #ffffff), transparent 40%), linear-gradient(155deg,#fbfaf7 0%,#f5f2eb 45%,#f0ece5 100%)',
+    '--comp-card-bg': darkMode ? 'rgba(13,13,30,0.82)' : 'rgba(255,255,255,0.92)',
+    '--comp-overlay-bg': darkMode ? 'rgba(12,16,34,0.88)' : 'rgba(255,255,255,0.95)',
+    '--comp-dropdown-bg': darkMode ? 'rgba(13,18,34,0.68)' : 'rgba(255,255,255,0.72)',
     '--theme-header-bg': darkMode
       ? 'linear-gradient(180deg, color-mix(in srgb, var(--theme-accent) 14%, #0c1022), #06060f)'
       : 'linear-gradient(180deg, color-mix(in srgb, var(--theme-accent) 8%, #ffffff), #f6f2ea)',
@@ -753,7 +778,7 @@ export default function MCUViewer() {
 
   const appThemeBg = 'var(--theme-app-bg)';
   return (
-      <div data-theme={themeMode} style={{ ...cssThemeVars, width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 0.32s cubic-bezier(0.34,1.56,0.64,1), color 0.32s cubic-bezier(0.34,1.56,0.64,1)' }} className="theme-switch">
+      <div data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 0.32s cubic-bezier(0.34,1.56,0.64,1), color 0.32s cubic-bezier(0.34,1.56,0.64,1)' }} className="theme-switch">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -822,7 +847,7 @@ export default function MCUViewer() {
         .curvy-panel{position:relative;overflow:hidden;border-radius:14px}
          .curvy-panel::before{content:'';position:absolute;inset:0 auto 0 0;width:4px;background:linear-gradient(180deg,var(--phase-color,#f3a6c2),color-mix(in srgb,var(--phase-color,#f3a6c2) 70%,#ffd2e4));border-radius:14px 0 0 14px;box-shadow:0 0 14px color-mix(in srgb,var(--phase-color,#f3a6c2) 48%, transparent);z-index:0}
 
-        .rrow{position:relative;transition:background 0.2s ease,transform 0.22s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.22s ease,border-color 0.22s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:12px;padding:16px 16px 16px 12px;border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:86px;border-radius:10px;overflow:hidden}
+        .rrow{position:relative;transition:background 0.2s ease,transform 0.22s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.22s ease,border-color 0.22s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:var(--row-min-h,86px);border-radius:10px;overflow:hidden}
         .rrow:last-child{border-bottom:none}
         .rrow > *{position:relative;z-index:1}
         .rrow:hover{transform:translateY(-4px);border-left-color:color-mix(in srgb,var(--theme-accent) 65%, var(--phase-color,#c0392b));box-shadow:0 10px 24px -14px var(--phase-glow,rgba(192,57,43,0.5))}
@@ -847,7 +872,7 @@ export default function MCUViewer() {
         .progress-gradient{background:linear-gradient(90deg,var(--theme-accent) 0%,color-mix(in srgb, var(--theme-accent) 72%, var(--theme-accent-alt)) 40%,var(--theme-accent-alt) 100%);background-size:200% 100%;animation:gradientFlow 3.4s linear infinite}
         @keyframes gradientFlow{0%{background-position:0% 50%}100%{background-position:200% 50%}}
         .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.62);backdrop-filter:blur(12px);z-index:240;display:grid;place-items:center;padding:20px}
-        .detail-card{width:min(980px,94vw);max-height:90vh;overflow:auto;background:${darkMode ? 'rgba(12,16,34,0.88)' : 'rgba(255,255,255,0.95)'};backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid ${T.surfaceBorder};border-radius:14px;padding:24px;box-shadow:${darkMode ? '0 22px 60px rgba(0,0,0,0.56)' : '0 18px 44px rgba(0,0,0,0.14)'}}
+        .detail-card{width:min(980px,94vw);max-height:90vh;overflow:auto;background:var(--comp-overlay-bg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid ${T.surfaceBorder};border-radius:14px;padding:24px;box-shadow:${darkMode ? '0 22px 60px rgba(0,0,0,0.56)' : '0 18px 44px rgba(0,0,0,0.14)'}}
         .glass-panel{background-color:rgba(30,30,46,0.6);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.05);border-radius:16px}
         .filter-shell{
           position: static;
@@ -913,6 +938,14 @@ export default function MCUViewer() {
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Moon size={14} /> Dark Theme</span>
               <input type="checkbox" checked={darkMode} onChange={() => setDarkMode(d => !d)} style={{ width: 36, height: 20 }} />
             </label>
+            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><EyeOff size={14} /> Spoiler Safe</span>
+              <input type='checkbox' checked={spoilerSafeMode} onChange={() => setSpoilerSafeMode(v => !v)} style={{ width: 36, height: 20 }} />
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 6 }}>
+              <button className='fpill' onClick={() => setDensityMode('comfortable')} style={{ borderColor: densityMode === 'comfortable' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>Comfortable</button>
+              <button className='fpill' onClick={() => setDensityMode('compact')} style={{ borderColor: densityMode === 'compact' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>Compact</button>
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
               {THEME_CHOICES.map(({ id: t, label }) => (
                 <button
@@ -1028,9 +1061,14 @@ export default function MCUViewer() {
             <div style={{ fontSize: 14, marginTop: 6 }}>{totalWatched}/{totalEntries} watched · ~{remainingHours}h remaining</div>
             <div style={{ fontSize: 13, color: T.textMuted, marginTop: 4 }}>Films: {filmCount} · Series: {seriesCount}</div>
           </div>
+      </div>
+      <div style={{ background: 'var(--theme-surface)', borderBottom: '1px solid var(--theme-border)', padding: '8px 24px' }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 10, padding: '0 24px' }}>
+          <div className='fpill' style={{ justifyContent: 'space-between' }}><span>Now Watching</span><strong>{filtered.find(i => i.status==='watching')?.title || '—'}</strong></div>
+          <div className='fpill' style={{ justifyContent: 'space-between' }}><span>Next Up</span><strong>{nextUnwatched?.title || 'All done'}</strong></div>
+          <div className='fpill' style={{ justifyContent: 'space-between' }}><span>Upcoming</span><strong>{calendarItems.upcoming[0]?.item?.title || 'No upcoming'}</strong></div>
         </div>
       </div>
-
 
       {/* ━━ FILTER BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div className="filter-shell" style={{ background: T.filterBg, borderBottom: `1px solid ${T.filterBorder}`, padding: '10px 24px', overflow: 'visible', flexShrink: 0, position: 'relative', zIndex: 180 }}>
@@ -1049,7 +1087,7 @@ export default function MCUViewer() {
               <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             {sortOpen && (
-              <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: T.dropdownBg, border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
+              <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
                 {Object.entries(SORT_LABELS).map(([k, v]) => (
                   <div key={k} className={`sopt ${sortBy === k ? 'picked' : ''}`} onClick={() => { setSortBy(k); setSortOpen(false); }}>{v}</div>
                 ))}
@@ -1063,7 +1101,7 @@ export default function MCUViewer() {
               <ChevDown size={12} style={{ opacity: 0.6, transform: phaseOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             {phaseOpen && (
-              <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: T.dropdownBg, border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
+              <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
                 <div className={`sopt ${activePhase === 0 ? 'picked' : ''}`} onClick={() => { setActivePhase(0); setPhaseOpen(false); }}>
                   Phase All
                 </div>
@@ -1104,7 +1142,7 @@ export default function MCUViewer() {
               <Check size={10} />Watched
             </button>
             {filterStatusOpen && (
-              <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: T.dropdownBg, border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 180 }}
+              <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 180 }}
                 onMouseEnter={() => setFilterStatusOpen(true)}
                 onMouseLeave={() => setFilterStatusOpen(false)}>
                 <div className={`sopt ${!statusFilter && !watchedOnly ? 'picked' : ''}`} onClick={() => { setStatusFilter(null); setWatchedOnly(false); setFilterStatusOpen(false); }}>All statuses</div>
@@ -1115,6 +1153,9 @@ export default function MCUViewer() {
             )}
           </div>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button className='fpill' onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')} style={{ background: viewMode === 'calendar' ? 'color-mix(in srgb, var(--theme-accent) 11%, var(--theme-surface))' : 'var(--theme-surface)' }}>
+              {viewMode === 'calendar' ? 'List View' : 'Release Calendar'}
+            </button>
             <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 12, color: T.textMuted, letterSpacing: 2.2, textTransform: 'uppercase' }}>
               {filtered.length} RESULTS
             </span>
@@ -1128,6 +1169,10 @@ export default function MCUViewer() {
             <div style={{ width: `${stickyPhaseProgress.pct}%`, height: '100%', background: phaseGradient, transition: 'width 0.3s ease' }} />
           </div>
           <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 11, letterSpacing: 1.2, color: T.textMuted }}>{stickyPhaseProgress.done}/{stickyPhaseProgress.total}</span>
+        </div>
+        <div style={{ maxWidth: 1400, margin: '4px auto 0', padding: '0 24px', display: 'flex', gap: 4 }}>
+          {PHASES.map(ph => <div key={ph.id} style={{ height: 2, flex: 1, borderRadius: 99, background: ph.color, opacity: activePhase === 0 || activePhase === ph.id ? 0.9 : 0.28 }} />)}
+        </div>
         </div>
       </div>
 
@@ -1154,7 +1199,27 @@ export default function MCUViewer() {
           </div>
         )}
 
-        {phaseKeys.map(pid => {
+        {viewMode === 'calendar' ? (
+          <section className='curvy-panel' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'var(--theme-surface)', borderRadius: 14, padding: 16 }}>
+            <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: "'Bebas Neue',sans-serif" }}>Release Calendar</h3>
+            <div style={{ marginBottom: 12, color: T.textMuted }}>Upcoming</div>
+            {calendarItems.upcoming.length === 0 ? <div style={{ marginBottom: 12, color: T.textMuted }}>No upcoming entries in current filter.</div> : calendarItems.upcoming.map(({ item, rawDate }) => (
+              <div key={'up-'+item.id} className='rrow' style={{ gridTemplateColumns: '70px 52px minmax(0,1fr)', background: 'transparent' }}>
+                <div style={{ fontSize: 11, color: 'var(--theme-warning)' }}>{formatReleaseDate(rawDate, item.year)}</div>
+                <img className='poster' src={posterSrc(item)} alt={item.title} />
+                <button className='title-btn' onClick={() => setDetailItem(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
+              </div>
+            ))}
+            <div style={{ margin: '16px 0 12px', color: T.textMuted }}>Already Released</div>
+            {calendarItems.released.map(({ item, rawDate }) => (
+              <div key={'old-'+item.id} className='rrow' style={{ gridTemplateColumns: '70px 52px minmax(0,1fr)', background: 'transparent' }}>
+                <div style={{ fontSize: 11, color: T.textMuted }}>{formatReleaseDate(rawDate, item.year)}</div>
+                <img className='poster' src={posterSrc(item)} alt={item.title} />
+                <button className='title-btn' onClick={() => setDetailItem(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
+              </div>
+            ))}
+          </section>
+        ) : phaseKeys.map(pid => {
           const ph = PHASES.find(p => p.id === pid);
           const rows = grouped[pid];
           const done = rows.filter(r => r.status === 'watched').length;
@@ -1238,7 +1303,7 @@ export default function MCUViewer() {
                         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 15, color: isWatched ? '#f1bfd3' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
                           {isWatched ? <Check size={14} style={{ color: '#f4a8ca' }} /> : (idx + 1)}
                         </div>
-                        <img className="poster" src={posterCache[item.id] || posterFor(item)} alt={`${item.title} poster`} loading="lazy" />
+                        <img className="poster" src={posterSrc(item)} alt={`${item.title} poster`} loading="lazy" />
 
                         {/* Title block — clickable to expand */}
                         <button className="title-btn" onClick={() => setDetailItem(item)} style={{ overflow: 'hidden' }}>
@@ -1305,8 +1370,9 @@ export default function MCUViewer() {
       {detailItem && (
         <div className="detail-backdrop" onClick={() => setDetailItem(null)} role="dialog" aria-label="Movie details">
           <div className="detail-card glass-panel" onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'grid', gridTemplateColumns: '180px minmax(0,1fr)', gap: 18 }}>
-              <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : (posterCache[detailItem.id] || posterFor(detailItem))} alt={`${detailItem.title} poster`} style={{ width: '100%', borderRadius: 10, border: `1px solid ${T.surfaceBorder}` }} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(140px,180px) minmax(0,1fr)', gap: 18, alignItems: 'start' }}>
+
+              <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : posterSrc(detailItem)} alt={`${detailItem.title} poster`} style={{ width: '100%', borderRadius: 10, border: `1px solid ${T.surfaceBorder}` }} />
               <div>
                 <h2 style={{ fontSize: 32, marginBottom: 8 }}>{detailItem.title}</h2>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
@@ -1317,7 +1383,7 @@ export default function MCUViewer() {
                 </div>
                 {detailLoading && <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 8 }}>Loading live metadata…</div>}
                 {!detailLoading && !detailData && <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Live metadata unavailable for this title right now.</div>}
-                <p style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 12 }}>{detailData?.Plot && detailData.Plot !== 'N/A' ? detailData.Plot : detailItem.desc}</p>
+                <p style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 12, filter: spoilerSafe ? 'blur(5px)' : 'none' }}>{detailData?.Plot && detailData.Plot !== 'N/A' ? detailData.Plot : detailItem.desc}</p>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Prerequisite:</strong> {detailItem.prereq}</div>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Status:</strong> {STATUS_META[detailItem.status]?.label}</div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10, alignItems: 'center' }}>
@@ -1353,7 +1419,7 @@ export default function MCUViewer() {
           <>
             <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={() => setStatusDropdown(null)} aria-hidden="true" />
             <div className="fade-in" role="dialog" aria-label="Set watch status"
-              style={{ position: 'fixed', top: dropdownPos.y, left: dropdownPos.x, background: T.dropdownBg, border: `1px solid ${T.dropdownBorder}`, borderRadius: 11, padding: '9px', zIndex: 999, boxShadow: T.dropdownShadow, minWidth: 235 }}>
+              style={{ position: 'fixed', top: dropdownPos.y, left: dropdownPos.x, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 11, padding: '9px', zIndex: 999, boxShadow: T.dropdownShadow, minWidth: 235 }}>
               <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 10, letterSpacing: 2, color: T.textMuted, marginBottom: 7, paddingBottom: 7, borderBottom: `1px solid ${T.surfaceBorder}`, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 215 }}>
                 {activeItem?.title}
               </div>
