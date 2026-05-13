@@ -706,6 +706,12 @@ export default function MCUViewer() {
     '--theme-border': darkMode ? '#1b1b33' : '#ddd8cf',
     '--theme-text': darkMode ? '#d8e3f5' : '#1a2030',
     '--theme-text-muted': darkMode ? '#8fa1b8' : '#667182',
+    '--theme-success': '#3ec47a',
+    '--theme-success-soft': darkMode ? 'rgba(62,196,122,0.16)' : 'rgba(62,196,122,0.12)',
+    '--theme-warning': '#e8b84b',
+    '--theme-warning-soft': darkMode ? 'rgba(232,184,75,0.16)' : 'rgba(232,184,75,0.12)',
+    '--theme-danger': '#d16a6a',
+    '--theme-danger-soft': darkMode ? 'rgba(209,106,106,0.16)' : 'rgba(209,106,106,0.12)',
     ...activeThemeVars,
   };
 
@@ -752,7 +758,7 @@ export default function MCUViewer() {
         .content-stable{animation:contentStabilize 0.18s ease both}
 
         /* Phase 2: Micro-interactions */
-        @keyframes buttonPulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,0.4)}70%{box-shadow:0 0 0 6px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
+        @keyframes buttonPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--theme-accent) 45%, transparent)}70%{box-shadow:0 0 0 6px transparent}100%{box-shadow:0 0 0 0 transparent}}
         @keyframes statusFlip{0%{transform:rotateX(0)}50%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
         @keyframes slideInRight{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
         @keyframes watchedGlow{0%{text-shadow:0 0 0 rgba(62,196,122,0)}50%{text-shadow:0 0 8px rgba(62,196,122,0.8)}100%{text-shadow:0 0 0 rgba(62,196,122,0)}}
@@ -799,7 +805,7 @@ export default function MCUViewer() {
         .theme-btn:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText};transform:rotate(22deg)}
 
         .poster{width:52px;height:76px;object-fit:cover;border-radius:6px;border:1px solid ${T.surfaceBorder};box-shadow:0 6px 16px rgba(0,0,0,0.22)}
-        .progress-gradient{background:linear-gradient(90deg,#f3a6c2 0%,#f49bc8 32%,#f6b8d0 64%,#ffd2e4 100%);background-size:200% 100%;animation:gradientFlow 3.4s linear infinite}
+        .progress-gradient{background:linear-gradient(90deg,var(--theme-accent) 0%,color-mix(in srgb, var(--theme-accent) 72%, var(--theme-accent-alt)) 40%,var(--theme-accent-alt) 100%);background-size:200% 100%;animation:gradientFlow 3.4s linear infinite}
         @keyframes gradientFlow{0%{background-position:0% 50%}100%{background-position:200% 50%}}
         .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.62);backdrop-filter:blur(12px);z-index:240;display:grid;place-items:center;padding:20px}
         .detail-card{width:min(980px,94vw);max-height:90vh;overflow:auto;background:${darkMode ? 'rgba(12,16,34,0.88)' : 'rgba(255,255,255,0.95)'};backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid ${T.surfaceBorder};border-radius:14px;padding:24px;box-shadow:${darkMode ? '0 22px 60px rgba(0,0,0,0.56)' : '0 18px 44px rgba(0,0,0,0.14)'}}
@@ -826,7 +832,7 @@ export default function MCUViewer() {
 
         .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; color:var(--theme-text-muted) !important }
         .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));backdrop-filter:blur(6px)}
-        .marvel-accent-line{height:3px;background:linear-gradient(90deg,#c0392b 0%,#e8b84b 35%,#4a9ede 70%,#a06cd5 100%);opacity:0.85}
+        .marvel-accent-line{height:3px;background:linear-gradient(90deg,var(--theme-accent) 0%,var(--theme-warning) 35%,#4a9ede 70%,var(--theme-accent-alt) 100%);opacity:0.85}
         .meta-muted{color:var(--theme-text-muted) !important}
 
         /* hide default scrollbar on main while keeping functionality */
@@ -894,8 +900,8 @@ export default function MCUViewer() {
               <input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} />
             </label>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
-            <div style={{ fontSize: 11, letterSpacing: 2, color: '#d16a6a', textTransform: 'uppercase' }}>Danger Zone</div>
-            <button className="fpill" style={{ color: '#d16a6a', background: 'rgba(209,106,106,0.12)' }} onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); }}><Trash2 size={14}/>Reset Filters</button>
+            <div style={{ fontSize: 11, letterSpacing: 2, color: 'var(--theme-danger)', textTransform: 'uppercase' }}>Danger Zone</div>
+            <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); }}><Trash2 size={14}/>Reset Filters</button>
           </div>
         )}
       </div>
@@ -915,10 +921,10 @@ export default function MCUViewer() {
             {/* Status dashboard */}
             <div className="status-dashboard" style={{ background: darkMode ? 'rgba(18,22,42,0.45)' : T.statBg, border: `1px solid ${darkMode ? 'rgba(255,220,235,0.28)' : T.statBorder}`, borderRadius: 10, padding: headerCompact ? '5px 10px' : '8px 14px', minWidth: headerCompact ? 145 : 180, boxShadow: darkMode ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'none', transition: 'all 0.22s ease' }}>
               <div className="stat-card-label" style={{ fontSize: '12px', letterSpacing: 2, color: T.textMuted, fontFamily: "'Bebas Neue',sans-serif" }}>TOTAL WATCHED</div>
-              <div className="stat-card-num" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(40px, 5vw, 48px)', letterSpacing: 1, color: darkMode ? '#f3b1c8' : '#c0392b', lineHeight: 1, textShadow: darkMode ? '0 0 14px rgba(243,177,200,0.28)' : 'none' }}>
+              <div className="stat-card-num" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(40px, 5vw, 48px)', letterSpacing: 1, color: 'var(--theme-accent)', lineHeight: 1, textShadow: darkMode ? '0 0 14px var(--theme-accent-glow)' : 'none' }}>
                 {totalWatched}<span style={{ fontSize: 'clamp(24px, 3vw, 28px)', color: T.numFaint }}>/{activeItems.length}</span>
               </div>
-              <div style={{ display: 'inline-flex', marginTop: 6, alignItems: 'center', gap: 6, borderRadius: 999, padding: '3px 10px', border: `1px solid ${darkMode ? '#e8b84b66' : '#e8b84baa'}`, background: darkMode ? 'rgba(232,184,75,0.14)' : 'rgba(232,184,75,0.10)', color: '#e8b84b', fontFamily: "'Bebas Neue',sans-serif", fontSize: 11, letterSpacing: 1.4 }}>
+              <div style={{ display: 'inline-flex', marginTop: 6, alignItems: 'center', gap: 6, borderRadius: 999, padding: '3px 10px', border: `1px solid color-mix(in srgb, var(--theme-warning) 55%, transparent)`, background: 'var(--theme-warning-soft)', color: 'var(--theme-warning)', fontFamily: "'Bebas Neue',sans-serif", fontSize: 11, letterSpacing: 1.4 }}>
                 MUST-WATCH {essWatched}/{essTotal}
               </div>
             </div>
@@ -999,7 +1005,7 @@ export default function MCUViewer() {
           {/* Sort */}
           <div ref={sortRef} style={{ position: 'relative' }}>
             <button className="fpill" onClick={() => setSortOpen(o => !o)}
-              style={{ color: '#c0392b', borderColor: darkMode ? '#1e1430' : '#f0d8d0', background: darkMode ? '#0d0818' : '#fff5f3', fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
+              style={{ color: 'var(--theme-accent)', borderColor: 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'color-mix(in srgb, var(--theme-accent) 9%, var(--theme-surface))', fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
               {SORT_LABELS[sortBy]}
               <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
@@ -1013,7 +1019,7 @@ export default function MCUViewer() {
           </div>
           <div ref={phaseRef} style={{ position: 'relative' }}>
             <button className="fpill" onClick={() => setPhaseOpen(o => !o)}
-              style={{ color: '#c0392b', borderColor: darkMode ? '#1e1430' : '#f0d8d0', background: darkMode ? '#0d0818' : '#fff5f3', fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
+              style={{ color: 'var(--theme-accent)', borderColor: 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'color-mix(in srgb, var(--theme-accent) 9%, var(--theme-surface))', fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
               {activePhase === 0 ? 'Phase All' : (PHASES.find(ph => ph.id === activePhase)?.name || 'Phase All')}
               <ChevDown size={12} style={{ opacity: 0.6, transform: phaseOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
@@ -1045,14 +1051,14 @@ export default function MCUViewer() {
           })}
           {listMode === 'core' && (
             <button className="fpill"
-              style={essentialOnly ? { borderColor: '#e8b84b88', background: '#e8b84b14', color: '#e8b84b' } : {}}
+              style={essentialOnly ? { borderColor: 'color-mix(in srgb, var(--theme-warning) 50%, transparent)', background: 'var(--theme-warning-soft)', color: 'var(--theme-warning)' } : {}}
               onClick={() => setEssOnly(o => !o)}>
               <Star size={10} />Must-Watch
             </button>
           )}
           <div style={{ position: 'relative' }}>
             <button className="fpill"
-              style={watchedOnly || statusFilter ? { borderColor: '#3ec47a88', background: '#3ec47a14', color: '#3ec47a' } : {}}
+              style={watchedOnly || statusFilter ? { borderColor: 'color-mix(in srgb, var(--theme-success) 50%, transparent)', background: 'var(--theme-success-soft)', color: 'var(--theme-success)' } : {}}
               onClick={() => setFilterStatusOpen(v => !v)}
               onMouseEnter={() => setFilterStatusOpen(true)}
               onMouseLeave={() => setFilterStatusOpen(false)}>
