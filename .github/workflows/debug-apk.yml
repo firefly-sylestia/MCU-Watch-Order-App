@@ -44,6 +44,19 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+
+      - name: Patch Gradle for Java 17
+        run: |
+          find ./node_modules/@capacitor ./node_modules/@capacitor-community ./android \
+            -name "*.gradle" -type f 2>/dev/null | while read -r file; do
+            sed -i \
+              -e 's/JavaVersion.VERSION_21/JavaVersion.VERSION_17/g' \
+              -e 's/jvmTarget = "21"/jvmTarget = "17"/g' \
+              -e "s/jvmTarget = '21'/jvmTarget = '17'/g" \
+              -e 's/jvmToolchain(21)/jvmToolchain(17)/g' \
+              "$file" 2>/dev/null || true
+          done
+
       - name: Make gradlew executable
         run: chmod +x ./android/gradlew
 
