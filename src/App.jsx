@@ -223,6 +223,7 @@ export default function MCUViewer() {
   const [detailData,     setDetailData]     = useState(null);
   const [metaCache,      setMetaCache]      = useState({});
   const [detailLoading,  setDetailLoading]  = useState(false);
+  const [detailPosterFailed, setDetailPosterFailed] = useState(false);
   const [posterCache,    setPosterCache]    = useState({});
   const [settingsOpen,   setSettingsOpen]   = useState(false);
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
@@ -482,7 +483,44 @@ export default function MCUViewer() {
     });
   }, [activeItems]);
   const memoryScore = useMemo(() => Math.max(0, Math.min(100, Math.round((totalWatched / Math.max(1, activeItems.length)) * 100) - (spoilerSafe ? 10 : 0))), [totalWatched, activeItems.length, spoilerSafe]);
-  const OMDB_KEY = '14596ed1';
+  const OMDB_KEY = import.meta.env.VITE_OMDB_API_KEY || '';
+  const TMDB_DIRECT_KEY = import.meta.env.VITE_TMDB_API_KEY || '65eda48cf5803f22304fd21f4f06a35e';
+
+  const fetchTmdbPoster = async (item) => {
+    const q = encodeURIComponent(cleanLookupTitle(item.title));
+    const y = encodeURIComponent(String(item.year || ''));
+    try {
+      const proxyRes = await fetch(`/api/tmdb/poster?title=${q}&year=${y}`);
+      if (proxyRes.ok) {
+        const payload = await proxyRes.json();
+        if (payload?.poster) return payload.poster;
+      }
+    } catch {}
+
+    if (!TMDB_DIRECT_KEY) return '';
+    try {
+      const params = new URLSearchParams({ query: cleanLookupTitle(item.title), include_adult: 'false', language: 'en-US', page: '1', year: String(item.year || '') });
+      const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${TMDB_DIRECT_KEY}&${params.toString()}`);
+      const data = await res.json();
+      const best = (data?.results || []).find(r => r?.poster_path && (r.media_type === 'movie' || r.media_type === 'tv'));
+      return best?.poster_path ? `https://image.tmdb.org/t/p/w500${best.poster_path}` : '';
+    } catch {
+      return '';
+    }
+  };
+
+  const fetchTmdbDetail = async (item) => {
+    const q = encodeURIComponent(cleanLookupTitle(item.title));
+    const y = encodeURIComponent(String(item.year || ''));
+    try {
+      const r = await fetch(`/api/tmdb/poster?title=${q}&year=${y}&details=1`);
+      if (!r.ok) return null;
+      const payload = await r.json();
+      return payload?.details || null;
+    } catch {
+      return null;
+    }
+  };
   const cleanLookupTitle = (title) => title.replace(/\sS\d.*$/i, '').replace(/\sEps?.*$/i, '').trim();
   const formatReleaseDate = (dateStr, fallbackYear) => {
     if (!dateStr) return String(fallbackYear);
@@ -595,9 +633,30 @@ export default function MCUViewer() {
     localStorage.setItem('mcu-user-actions-v1', JSON.stringify({ likes: myLikes, ratings: myRating, rewatch: rewatchCount, bookmarks }));
   }, [myLikes, myRating, rewatchCount, bookmarks]);
 
+  const refreshPostersAndMetadata = async () => {
+    const key = OMDB_KEY;
+    const targets = filtered.slice(0, 60);
+    const posterUpdates = {};
+    const metaUpdates = {};
+    for (const item of targets) {
+      try {
+        const t = encodeURIComponent(cleanLookupTitle(item.title));
+        if (key) {
+          const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}`);
+          const data = await res.json();
+          posterUpdates[item.id] = data?.Poster && data.Poster !== 'N/A' ? data.Poster : await fetchTmdbPoster(item);
+          metaUpdates[item.id] = { rating: data?.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : '', released: data?.Released && data.Released !== 'N/A' ? data.Released : '' };
+        } else {
+          posterUpdates[item.id] = await fetchTmdbPoster(item);
+        }
+      } catch {}
+    }
+    setPosterCache(prev => ({ ...prev, ...posterUpdates }));
+    setMetaCache(prev => ({ ...prev, ...metaUpdates }));
+  };
+
   useEffect(() => {
-    const key = import.meta.env.VITE_OMDB_API_KEY || OMDB_KEY;
-    if (!key) return;
+    const key = OMDB_KEY;
     const targets = filtered.slice(0, 30).filter(i => posterCache[i.id] === undefined || metaCache[i.id] === undefined);
     if (!targets.length) return;
     let cancelled = false;
@@ -607,15 +666,20 @@ export default function MCUViewer() {
       for (const item of targets) {
         try {
           const t = encodeURIComponent(cleanLookupTitle(item.title));
-          const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}`);
-          const data = await res.json();
-          posterUpdates[item.id] = data?.Poster && data.Poster !== 'N/A' ? data.Poster : '';
-          metaUpdates[item.id] = {
-            rating: data?.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : '',
-            released: data?.Released && data.Released !== 'N/A' ? data.Released : ''
-          };
+          if (key) {
+            const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}`);
+            const data = await res.json();
+            posterUpdates[item.id] = data?.Poster && data.Poster !== 'N/A' ? data.Poster : await fetchTmdbPoster(item);
+            metaUpdates[item.id] = {
+              rating: data?.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : '',
+              released: data?.Released && data.Released !== 'N/A' ? data.Released : ''
+            };
+          } else {
+            posterUpdates[item.id] = await fetchTmdbPoster(item);
+            metaUpdates[item.id] = { rating: '', released: '' };
+          }
         } catch {
-          posterUpdates[item.id] = '';
+          posterUpdates[item.id] = await fetchTmdbPoster(item);
           metaUpdates[item.id] = { rating: '', released: '' };
         }
       }
@@ -633,22 +697,42 @@ export default function MCUViewer() {
       if (!detailItem) return;
       setDetailLoading(true);
       setDetailData(null);
-      const key = import.meta.env.VITE_OMDB_API_KEY || OMDB_KEY;
-      if (!key) { setDetailLoading(false); return; }
+      const key = OMDB_KEY;
       try {
-        const t = encodeURIComponent(cleanLookupTitle(detailItem.title));
-        const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}`);
-        const data = await res.json();
-        if (data?.Response === 'True') {
+        if (key) {
+          const t = encodeURIComponent(cleanLookupTitle(detailItem.title));
+          const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}`);
+          const data = await res.json();
+          if (data?.Response === 'True') {
           setDetailData(data);
           if (data.Poster && data.Poster !== 'N/A') {
             setPosterCache(prev => ({ ...prev, [detailItem.id]: data.Poster }));
+          } else {
+            const tmdbPoster = await fetchTmdbPoster(detailItem);
+            if (tmdbPoster) setPosterCache(prev => ({ ...prev, [detailItem.id]: tmdbPoster }));
+            const tmdbDetails = await fetchTmdbDetail(detailItem);
+            if (tmdbDetails) setDetailData(tmdbDetails);
           }
+          } else {
+            const tmdbPoster = await fetchTmdbPoster(detailItem);
+            if (tmdbPoster) setPosterCache(prev => ({ ...prev, [detailItem.id]: tmdbPoster }));
+            const tmdbDetails = await fetchTmdbDetail(detailItem);
+            if (tmdbDetails) setDetailData(tmdbDetails);
+          }
+        } else {
+          const tmdbPoster = await fetchTmdbPoster(detailItem);
+          if (tmdbPoster) setPosterCache(prev => ({ ...prev, [detailItem.id]: tmdbPoster }));
+          const tmdbDetails = await fetchTmdbDetail(detailItem);
+          if (tmdbDetails) setDetailData(tmdbDetails);
         }
       } catch {}
       setDetailLoading(false);
     };
     fetchDetail();
+  }, [detailItem]);
+
+  useEffect(() => {
+    setDetailPosterFailed(false);
   }, [detailItem]);
 
   const openStatusDropdown = (e, itemId) => {
@@ -889,6 +973,12 @@ export default function MCUViewer() {
         @keyframes gradientFlow{0%{background-position:0% 50%}100%{background-position:200% 50%}}
         .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.62);backdrop-filter:blur(12px);z-index:240;display:grid;place-items:center;padding:20px}
         .detail-card{width:min(980px,94vw);max-height:90vh;overflow:auto;background:linear-gradient(145deg, rgba(17,22,44,0.62), rgba(12,16,34,0.5));backdrop-filter:blur(16px) saturate(130%);-webkit-backdrop-filter:blur(16px) saturate(130%);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:24px;box-shadow:${darkMode ? '0 22px 60px rgba(0,0,0,0.56)' : '0 18px 44px rgba(0,0,0,0.14)'}}
+
+        .detail-layout{grid-template-columns:minmax(220px,34%) minmax(0,1fr)}
+        .detail-pill{background:rgba(255,255,255,0.08) !important;border-color:rgba(255,255,255,0.18) !important;backdrop-filter:blur(14px) saturate(120%);-webkit-backdrop-filter:blur(14px) saturate(120%);transform:none !important;box-shadow:none !important}
+        .detail-fallback-poster{position:relative;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 20% 20%, rgba(232,184,75,0.22), transparent 48%),radial-gradient(circle at 80% 30%, rgba(74,158,222,0.24), transparent 44%),linear-gradient(145deg, rgba(14,20,44,0.9), rgba(9,14,34,0.95));overflow:hidden}
+        .detail-fallback-poster::before{content:'';position:absolute;inset:0;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+        .detail-fallback-poster span{position:relative;z-index:1;text-align:center;font-size:clamp(24px,5vw,40px);line-height:1.2;font-weight:700;color:rgba(242,247,255,0.95);text-shadow:0 2px 14px rgba(0,0,0,0.35)}
         .glass-panel{background-color:rgba(30,30,46,0.6);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.05);border-radius:16px}
         .filter-shell{
           position: static;
@@ -902,6 +992,9 @@ export default function MCUViewer() {
           .fpill{padding:7px 14px !important;font-size:14px !important}
           .rrow{grid-template-columns:24px 44px minmax(0,1fr) minmax(82px,auto) !important;gap:6px;padding:12px 10px 12px 8px}
           .poster{width:44px;height:64px}
+          .detail-layout{grid-template-columns:minmax(0,1fr) !important;gap:14px !important}
+          .detail-layout img,.detail-fallback-poster{max-width:280px;margin:0 auto;max-height:360px}
+          .detail-layout > div:last-child{width:100%}
         }
         .header-title-mcu { font-size: clamp(48px, 8vw, 96px) !important; letter-spacing: clamp(2px, 0.8vw, 6px) !important; margin: 0 !important; background:none !important; -webkit-background-clip:initial !important; background-clip:initial !important; }
         .header-title-sub { font-size: clamp(28px, 4.2vw, 56px) !important; letter-spacing: clamp(4px, 1.2vw, 10px) !important; margin-top: 0px !important; }
@@ -989,6 +1082,7 @@ export default function MCUViewer() {
             </label>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: 'var(--theme-danger)', textTransform: 'uppercase' }}>Danger Zone</div>
+            <button className="fpill" onClick={refreshPostersAndMetadata}><Download size={14}/>Fetch Posters & Metadata</button>
             <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); }}><Trash2 size={14}/>Reset Filters</button>
           </div>
         )}
@@ -1208,7 +1302,7 @@ export default function MCUViewer() {
 
         
 
-        <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '24px 24px 80px var(--content-pad)', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch" key={listMode}>
+        <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '24px 16px 80px 16px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch" key={listMode}>
         {phaseKeys.length === 0 && (
           <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: "'Bebas Neue',sans-serif", fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
             NO RESULTS — ADJUST YOUR FILTERS
@@ -1351,6 +1445,13 @@ export default function MCUViewer() {
                           </div>
                           <div style={{ fontSize: 11, color: '#e8b84b', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 0.6, whiteSpace: 'nowrap' }}>★ {RELEASE_INFO[item.title]?.rating || metaCache[item.id]?.rating || '—'}</div>
                           <button className="wbtn"
+                            aria-label={bookmarks[item.id] ? 'Remove bookmark' : 'Add bookmark'}
+                            onClick={() => setBookmarks(p => ({ ...p, [item.id]: p[item.id] ? 0 : 1 }))}
+                            style={{ width: 24, height: 24, background: bookmarks[item.id] ? 'rgba(125,211,252,0.2)' : 'transparent', color: bookmarks[item.id] ? '#7dd3fc' : T.textMuted, borderColor: bookmarks[item.id] ? '#7dd3fc66' : `${T.surfaceBorder}` }}
+                          >
+                            <Bookmark size={11} />
+                          </button>
+                          <button className="wbtn"
                             aria-label={`${statusMeta.label} — click to change`}
                             aria-haspopup="true"
                             aria-expanded={statusDropdown === item.id}
@@ -1386,19 +1487,25 @@ export default function MCUViewer() {
       {detailItem && (
         <div className="detail-backdrop" onClick={() => setDetailItem(null)} role="dialog" aria-label="Movie details">
           <div className="detail-card glass-panel" onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(220px,34%) minmax(0,1fr)', gap: 18, alignItems: 'start', width: '100%' }}>
+            <div className="detail-layout" style={{ display: 'grid', gridTemplateColumns: 'minmax(220px,34%) minmax(0,1fr)', gap: 18, alignItems: 'start', width: '100%' }}>
 
-              <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : posterSrc(detailItem)} alt={`${detailItem.title} poster`} style={{ width: '100%', borderRadius: 10, border: `1px solid ${T.surfaceBorder}` }} />
+              {detailPosterFailed ? (
+                <div className="detail-fallback-poster" style={{ width: '100%', minHeight: 340, borderRadius: 10, border: `1px solid ${T.surfaceBorder}` }}>
+                  <span>{detailItem.title}</span>
+                </div>
+              ) : (
+                <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : posterSrc(detailItem)} onError={() => setDetailPosterFailed(true)} alt={`${detailItem.title} poster`} style={{ width: '100%', borderRadius: 10, border: `1px solid ${T.surfaceBorder}`, maxHeight: 520, objectFit: 'cover' }} />
+              )}
               <div>
                 <h2 style={{ fontSize: 32, marginBottom: 8 }}>{detailItem.title}</h2>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-                  <span className="fpill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>{detailData?.Year || detailItem.year}</span>
-                  <span className="fpill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>{TYPE_META[detailItem.type]?.label}</span>
-                  <span className="fpill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>Phase {detailItem.phase}</span>
-                  {(detailData?.imdbRating && detailData.imdbRating !== 'N/A') && <span className="fpill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>★ {detailData.imdbRating}</span>}
+                  <span className="fpill detail-pill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>{detailData?.Year || detailItem.year}</span>
+                  <span className="fpill detail-pill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>{TYPE_META[detailItem.type]?.label}</span>
+                  <span className="fpill detail-pill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>Phase {detailItem.phase}</span>
+                  {(detailData?.imdbRating && detailData.imdbRating !== 'N/A') && <span className="fpill detail-pill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>★ {detailData.imdbRating}</span>}
                 </div>
                 {detailLoading && <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 8 }}>Loading live metadata…</div>}
-                {!detailLoading && !detailData && <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Live metadata unavailable for this title right now.</div>}
+                {!detailLoading && !detailData && <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Live metadata unavailable from OMDb — showing TMDB fallback where available.</div>}
                 <p style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 12, filter: spoilerSafe ? 'blur(5px)' : 'none', transition: 'filter 0.18s ease' }}>{detailData?.Plot && detailData.Plot !== 'N/A' ? detailData.Plot : detailItem.desc}</p>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Prerequisite:</strong> {detailItem.prereq}</div>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Status:</strong> {STATUS_META[detailItem.status]?.label}</div>
@@ -1485,3 +1592,4 @@ export default function MCUViewer() {
     </div>
   );
 }
+
