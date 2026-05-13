@@ -633,7 +633,7 @@ export default function MCUViewer() {
     headerBorder: '#13132a', navBg: '#08081a', navBorder: '#13132a',
     filterBg: '#07071a', filterBorder: '#10101f',
     surfaceBg: '#0b0b1c', surfaceBorder: '#12122a',
-    rowHoverBg: 'rgba(255,255,255,0.04)', rowWatchedBg: 'rgba(30,30,46,0.4)',
+    rowHoverBg: 'rgba(255,255,255,0.04)', rowWatchedBg: 'rgba(62,196,122,0.22)',
     rowBorder: '#0e0e1e', expandBg: '#090916', expandBorder: '#14142a',
     pillBg: '#0d0d1e', pillBorder: '#1a1a2e', pillText: '#6a7a90',
     pillHoverBorder: '#252540', pillHoverText: '#c5d0e8',
@@ -650,7 +650,7 @@ export default function MCUViewer() {
     headerBorder: '#ddd8d0', navBg: '#ffffff', navBorder: '#e8e2d8',
     filterBg: '#faf8f4', filterBorder: '#e4ddd4',
     surfaceBg: '#ffffff', surfaceBorder: '#e0dbd2',
-    rowHoverBg: 'rgba(0,0,0,0.025)', rowWatchedBg: 'rgba(30,30,46,0.4)',
+    rowHoverBg: 'rgba(0,0,0,0.025)', rowWatchedBg: 'rgba(62,196,122,0.15)',
     rowBorder: '#ede8e0', expandBg: '#faf7f2', expandBorder: '#e4ddd4',
     pillBg: '#f0ece4', pillBorder: '#ddd8cf', pillText: '#6a7080',
     pillHoverBorder: '#c8c2b8', pillHoverText: '#1a2030',
@@ -664,9 +664,9 @@ export default function MCUViewer() {
     phaseSummaryBg: '#f5f2ec', phaseSummaryBorder: '#e4ddd4',
   };
 
-  const appThemeBg = themeMode === 'cosmic' ? 'linear-gradient(180deg,#09051a,#120a26 45%,#1b102f)' : themeMode === 'vibranium' ? 'linear-gradient(180deg,#04161f,#0a2733 45%,#153544)' : T.appBg;
+  const appThemeBg = 'var(--theme-bg)';
   return (
-    <div style={{ width: '100%', minHeight: '100dvh', background: appThemeBg, color: T.text, fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 0.32s cubic-bezier(0.34,1.56,0.64,1), color 0.32s cubic-bezier(0.34,1.56,0.64,1)' }} className="theme-switch">
+    <div data-theme={themeMode} style={{ width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 0.32s cubic-bezier(0.34,1.56,0.64,1), color 0.32s cubic-bezier(0.34,1.56,0.64,1)' }} className="theme-switch">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -723,14 +723,15 @@ export default function MCUViewer() {
         .ntab::after{content:'';position:absolute;bottom:0;left:12px;right:12px;height:2px;border-radius:2px 2px 0 0;background:currentColor;transform:scaleX(0);transform-origin:center;transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1)}
         .ntab.on::after{transform:scaleX(1)}
 
-        .fpill{display:flex;align-items:center;gap:6px;padding:7px 26px;border-radius:12px;border:1px solid transparent;background:${darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(20,24,34,0.06)'};backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);cursor:pointer;font-size:clamp(14px,2.2vw,16px);font-weight:600;letter-spacing:0.03em;color:${T.pillText};transition:background-color 0.18s ease,color 0.18s ease,opacity 0.18s ease,border-color 0.18s ease;white-space:nowrap;box-shadow:none;overflow:visible}
-        .fpill:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText};background:${darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(20,24,34,0.10)'};opacity:0.96}
+        .fpill{display:flex;align-items:center;gap:6px;padding:7px 26px;border-radius:12px;border:1px solid var(--theme-border);background:var(--theme-surface);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);cursor:pointer;font-size:clamp(14px,2.2vw,16px);font-weight:600;letter-spacing:0.03em;color:var(--theme-text);transition:background-color 0.18s ease,color 0.18s ease,opacity 0.18s ease,border-color 0.18s ease;white-space:nowrap;box-shadow:none;overflow:visible}
+        .fpill:hover{border-color:var(--theme-accent);color:var(--theme-accent);background:var(--theme-surface-hover);opacity:0.96}
         .fpill:active{opacity:0.82}
         .fpill:focus-visible,.theme-btn:focus-visible,.lmode-btn:focus-visible{outline:2px solid #c0392b;outline-offset:2px}
 
         .sopt{padding:13px 20px;font-family:'Bebas Neue',sans-serif;font-size:clamp(15px,2.2vw,18px);letter-spacing:2.5px;cursor:pointer;color:${T.pillText};transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1)}
         .sopt:hover{background:${T.sortHoverBg};color:${T.text};transform:translateX(4px)}
-        .sopt.picked{color:#c0392b;font-weight:700}
+        .sopt.picked,.dropdown-item.active{background:var(--theme-surface-hover);border-radius:12px;color:var(--theme-accent);font-weight:700}
+        .curvy-indicator{height:4px;border-radius:99px;background:var(--theme-accent);box-shadow:0 0 8px var(--theme-accent-glow);border:none}
 
         .rrow{position:relative;transition:background 0.2s ease,transform 0.22s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.22s ease,border-color 0.22s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:12px;padding:16px 16px 16px 12px;border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:86px;border-radius:10px;overflow:hidden}
         .rrow:last-child{border-bottom:none}
@@ -780,7 +781,7 @@ export default function MCUViewer() {
 
         .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; }
         .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));backdrop-filter:blur(6px)}
-        .phase-grad-line{height:2px;background:linear-gradient(90deg,#e05252 0%,#e8b84b 25%,#4a9ede 50%,#a06cd5 75%,#3ec47a 100%);opacity:0.9}
+        .phase-grad-line{display:none}
 
         /* hide default scrollbar on main while keeping functionality */
         main::-webkit-scrollbar{width:4px}
@@ -790,8 +791,8 @@ export default function MCUViewer() {
       `}</style>
       <div ref={settingsRef} style={{ position: 'fixed', top: 16, right: 14, zIndex: 260 }}>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div title={profile.name || 'Profile'} style={{ width: 44, height: 44, borderRadius: '50%', border: `1px solid ${T.surfaceBorder}`, display: 'grid', placeItems: 'center', background: darkMode ? 'rgba(16,18,35,0.92)' : '#fff', overflow: 'hidden', flexShrink: 0 }}>
-            <img src={profile.pfp || 'https://placehold.co/80x80/222/fff?text=G'} alt="profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div className="profile-avatar-container" title={profile.name || 'Profile'} style={{ width: 56, height: 56, borderRadius: '50%', border: `2px solid var(--theme-accent)`, padding: 3, background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+            <img className="profile-avatar-img" src={profile.pfp || 'https://placehold.co/80x80/222/fff?text=G'} alt="profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
           </div>
           <button className="theme-btn" onClick={() => setSettingsOpen(o => !o)} aria-label="Open settings menu" title="Settings" style={{ width: 40, height: 40, background: darkMode ? 'rgba(16,18,35,0.92)' : '#fff' }}>
             <Settings size={15} />
@@ -822,7 +823,7 @@ export default function MCUViewer() {
               <input type="checkbox" checked={darkMode} onChange={() => setDarkMode(d => !d)} style={{ width: 36, height: 20 }} />
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
-              {['classic','cosmic','vibranium'].map(t => <button key={t} className="fpill" style={{ padding: '6px 8px', justifyContent: 'center', borderColor: themeMode === t ? '#c0392b' : 'transparent' }} onClick={() => setThemeMode(t)}>{t}</button>)}
+              {['classic','cosmic','vibranium','quantum','mystic','web-slinger'].map(t => <button key={t} className="fpill" style={{ padding: '6px 8px', justifyContent: 'center', borderColor: themeMode === t ? 'var(--theme-accent)' : 'var(--theme-border)' }} onClick={() => setThemeMode(t)}>{t}</button>)}
             </div>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Data</div>
@@ -872,7 +873,6 @@ export default function MCUViewer() {
           </>
         </div>
       </header>
-      <div className="phase-grad-line" aria-hidden="true" />
 
       {/* ━━ LIST MODE SWITCHER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: T.switcherBg, borderBottom: `1px solid ${T.switcherBorder}`, padding: '0 24px', flexShrink: 0 }}>
@@ -1125,7 +1125,7 @@ export default function MCUViewer() {
                   return (
                     <div key={item.id}>
                       {/* Main row */}
-                      <div className={`rrow row-in type-${item.type} ${isWatched ? 'glass-panel' : ''}`} style={{ background: isWatched ? T.rowWatchedBg : 'transparent', opacity: isWatched ? 0.7 : 1, '--phase-color': ph.color, '--phase-glow': ph.glow }}>
+                      <div className={`rrow row-in type-${item.type} ${isWatched ? 'glass-panel' : ''}`} style={{ background: isWatched ? T.rowWatchedBg : 'transparent', opacity: 1, borderLeftColor: isWatched ? '#3ec47a' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow }}>
                         {/* Order / check */}
                         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 15, color: isWatched ? '#f1bfd3' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
                           {isWatched ? <Check size={14} style={{ color: '#f4a8ca' }} /> : (idx + 1)}
@@ -1135,7 +1135,7 @@ export default function MCUViewer() {
                         {/* Title block — clickable to expand */}
                         <button className="title-btn" onClick={() => setDetailItem(item)} style={{ overflow: 'hidden' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: isWatched ? 600 : 700, lineHeight: 1.5, color: isWatched ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.9)', opacity: isWatched ? 0.85 : 1, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: '100%' }}>
+                            <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: isWatched ? 700 : 700, lineHeight: 1.5, color: isWatched ? '#9df1c2' : 'rgba(255,255,255,0.9)', opacity: 1, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: '100%' }}>
                               {item.title}
                             </span>
                             {/* Episode count badge */}
