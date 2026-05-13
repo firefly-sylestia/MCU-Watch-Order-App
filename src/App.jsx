@@ -227,6 +227,8 @@ export default function MCUViewer() {
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [themeMode,      setThemeMode]      = useState('classic');
+  const [spoilerSafeMode, setSpoilerSafeMode] = useState(false);
+  const [viewMode, setViewMode] = useState('list');
   const [timelineMode,   setTimelineMode]   = useState('sacred');
   const [genreFilter] = useState('all'); // hidden filter hook for future genre controls
   const [myLikes,        setMyLikes]        = useState({});
@@ -466,7 +468,7 @@ export default function MCUViewer() {
     'Thor': ['Chris Hemsworth', 'Tom Hiddleston', 'Natalie Portman'],
   };
   const posterFor = (item) => `https://placehold.co/220x330/121a2d/e8edf7?text=${encodeURIComponent(item.title)}`;
-  const spoilerSafe = useMemo(() => totalWatched < Math.max(6, Math.round(activeItems.length * 0.35)), [totalWatched, activeItems.length]);
+  const spoilerSafe = useMemo(() => spoilerSafeMode || (totalWatched < Math.max(6, Math.round(activeItems.length * 0.35))), [spoilerSafeMode, totalWatched, activeItems.length]);
   const characterHeat = useMemo(() => {
     const chars = ['Iron Man', 'Captain America', 'Thor', 'Loki', 'Spider-Man', 'Wanda'];
     return chars.map(c => {
@@ -510,6 +512,24 @@ export default function MCUViewer() {
   const filmCount = activeItems.filter(i => i.type === 'film').length;
   const estRuntimeHours = Math.round(((filmCount * 2.3) + (seriesCount * 6.0)) * 10) / 10;
   const remainingHours = Math.max(0, Math.round((estRuntimeHours * (1 - pct / 100)) * 10) / 10);
+
+  const calendarItems = useMemo(() => {
+    const now = new Date();
+    const withDates = filtered.map(item => {
+      const rawDate = RELEASE_INFO[item.title]?.date || metaCache[item.id]?.released || `${item.year}-01-01`;
+      const parsed = new Date(rawDate);
+      return { item, rawDate, parsed, isUpcoming: !Number.isNaN(parsed.getTime()) ? parsed > now : false };
+    }).sort((a, b) => {
+      const at = Number.isNaN(a.parsed.getTime()) ? Infinity : a.parsed.getTime();
+      const bt = Number.isNaN(b.parsed.getTime()) ? Infinity : b.parsed.getTime();
+      return at - bt;
+    });
+    return {
+      upcoming: withDates.filter(x => x.isUpcoming),
+      released: withDates.filter(x => !x.isUpcoming),
+    };
+  }, [filtered, metaCache]);
+
   const phaseGradient = useMemo(() => {
     let cursor = 0;
     const stops = [];
@@ -913,6 +933,10 @@ export default function MCUViewer() {
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Moon size={14} /> Dark Theme</span>
               <input type="checkbox" checked={darkMode} onChange={() => setDarkMode(d => !d)} style={{ width: 36, height: 20 }} />
             </label>
+            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><EyeOff size={14} /> Spoiler Safe</span>
+              <input type='checkbox' checked={spoilerSafeMode} onChange={() => setSpoilerSafeMode(v => !v)} style={{ width: 36, height: 20 }} />
+            </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
               {THEME_CHOICES.map(({ id: t, label }) => (
                 <button
@@ -1049,7 +1073,7 @@ export default function MCUViewer() {
               <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             {sortOpen && (
-              <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: T.dropdownBg, border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
+              <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: darkMode ? 'rgba(13,18,34,0.68)' : 'rgba(255,255,255,0.72)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
                 {Object.entries(SORT_LABELS).map(([k, v]) => (
                   <div key={k} className={`sopt ${sortBy === k ? 'picked' : ''}`} onClick={() => { setSortBy(k); setSortOpen(false); }}>{v}</div>
                 ))}
@@ -1063,7 +1087,7 @@ export default function MCUViewer() {
               <ChevDown size={12} style={{ opacity: 0.6, transform: phaseOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             {phaseOpen && (
-              <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: T.dropdownBg, border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
+              <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: darkMode ? 'rgba(13,18,34,0.68)' : 'rgba(255,255,255,0.72)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
                 <div className={`sopt ${activePhase === 0 ? 'picked' : ''}`} onClick={() => { setActivePhase(0); setPhaseOpen(false); }}>
                   Phase All
                 </div>
@@ -1104,7 +1128,7 @@ export default function MCUViewer() {
               <Check size={10} />Watched
             </button>
             {filterStatusOpen && (
-              <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: T.dropdownBg, border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 180 }}
+              <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: darkMode ? 'rgba(13,18,34,0.68)' : 'rgba(255,255,255,0.72)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 180 }}
                 onMouseEnter={() => setFilterStatusOpen(true)}
                 onMouseLeave={() => setFilterStatusOpen(false)}>
                 <div className={`sopt ${!statusFilter && !watchedOnly ? 'picked' : ''}`} onClick={() => { setStatusFilter(null); setWatchedOnly(false); setFilterStatusOpen(false); }}>All statuses</div>
@@ -1115,6 +1139,9 @@ export default function MCUViewer() {
             )}
           </div>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button className='fpill' onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')} style={{ background: viewMode === 'calendar' ? 'color-mix(in srgb, var(--theme-accent) 11%, var(--theme-surface))' : 'var(--theme-surface)' }}>
+              {viewMode === 'calendar' ? 'List View' : 'Release Calendar'}
+            </button>
             <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 12, color: T.textMuted, letterSpacing: 2.2, textTransform: 'uppercase' }}>
               {filtered.length} RESULTS
             </span>
@@ -1154,7 +1181,27 @@ export default function MCUViewer() {
           </div>
         )}
 
-        {phaseKeys.map(pid => {
+        {viewMode === 'calendar' ? (
+          <section className='curvy-panel' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'var(--theme-surface)', borderRadius: 14, padding: 16 }}>
+            <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: "'Bebas Neue',sans-serif" }}>Release Calendar</h3>
+            <div style={{ marginBottom: 12, color: T.textMuted }}>Upcoming</div>
+            {calendarItems.upcoming.length === 0 ? <div style={{ marginBottom: 12, color: T.textMuted }}>No upcoming entries in current filter.</div> : calendarItems.upcoming.map(({ item, rawDate }) => (
+              <div key={'up-'+item.id} className='rrow' style={{ gridTemplateColumns: '70px 52px minmax(0,1fr)', background: 'transparent' }}>
+                <div style={{ fontSize: 11, color: 'var(--theme-warning)' }}>{formatReleaseDate(rawDate, item.year)}</div>
+                <img className='poster' src={posterCache[item.id] || posterFor(item)} alt={item.title} />
+                <button className='title-btn' onClick={() => setDetailItem(item)} style={{ textAlign: 'left' }}>{item.title}</button>
+              </div>
+            ))}
+            <div style={{ margin: '16px 0 12px', color: T.textMuted }}>Already Released</div>
+            {calendarItems.released.map(({ item, rawDate }) => (
+              <div key={'old-'+item.id} className='rrow' style={{ gridTemplateColumns: '70px 52px minmax(0,1fr)', background: 'transparent' }}>
+                <div style={{ fontSize: 11, color: T.textMuted }}>{formatReleaseDate(rawDate, item.year)}</div>
+                <img className='poster' src={posterCache[item.id] || posterFor(item)} alt={item.title} />
+                <button className='title-btn' onClick={() => setDetailItem(item)} style={{ textAlign: 'left' }}>{item.title}</button>
+              </div>
+            ))}
+          </section>
+        ) : phaseKeys.map(pid => {
           const ph = PHASES.find(p => p.id === pid);
           const rows = grouped[pid];
           const done = rows.filter(r => r.status === 'watched').length;
@@ -1305,7 +1352,8 @@ export default function MCUViewer() {
       {detailItem && (
         <div className="detail-backdrop" onClick={() => setDetailItem(null)} role="dialog" aria-label="Movie details">
           <div className="detail-card glass-panel" onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'grid', gridTemplateColumns: '180px minmax(0,1fr)', gap: 18 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(140px,180px) minmax(0,1fr)', gap: 18, alignItems: 'start' }}>
+
               <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : (posterCache[detailItem.id] || posterFor(detailItem))} alt={`${detailItem.title} poster`} style={{ width: '100%', borderRadius: 10, border: `1px solid ${T.surfaceBorder}` }} />
               <div>
                 <h2 style={{ fontSize: 32, marginBottom: 8 }}>{detailItem.title}</h2>
@@ -1317,7 +1365,7 @@ export default function MCUViewer() {
                 </div>
                 {detailLoading && <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 8 }}>Loading live metadata…</div>}
                 {!detailLoading && !detailData && <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Live metadata unavailable for this title right now.</div>}
-                <p style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 12 }}>{detailData?.Plot && detailData.Plot !== 'N/A' ? detailData.Plot : detailItem.desc}</p>
+                <p style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 12, filter: spoilerSafe ? 'blur(5px)' : 'none' }}>{detailData?.Plot && detailData.Plot !== 'N/A' ? detailData.Plot : detailItem.desc}</p>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Prerequisite:</strong> {detailItem.prereq}</div>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Status:</strong> {STATUS_META[detailItem.status]?.label}</div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10, alignItems: 'center' }}>
@@ -1353,7 +1401,7 @@ export default function MCUViewer() {
           <>
             <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={() => setStatusDropdown(null)} aria-hidden="true" />
             <div className="fade-in" role="dialog" aria-label="Set watch status"
-              style={{ position: 'fixed', top: dropdownPos.y, left: dropdownPos.x, background: T.dropdownBg, border: `1px solid ${T.dropdownBorder}`, borderRadius: 11, padding: '9px', zIndex: 999, boxShadow: T.dropdownShadow, minWidth: 235 }}>
+              style={{ position: 'fixed', top: dropdownPos.y, left: dropdownPos.x, background: darkMode ? 'rgba(13,18,34,0.68)' : 'rgba(255,255,255,0.72)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 11, padding: '9px', zIndex: 999, boxShadow: T.dropdownShadow, minWidth: 235 }}>
               <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 10, letterSpacing: 2, color: T.textMuted, marginBottom: 7, paddingBottom: 7, borderBottom: `1px solid ${T.surfaceBorder}`, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 215 }}>
                 {activeItem?.title}
               </div>
