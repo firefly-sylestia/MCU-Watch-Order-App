@@ -672,7 +672,7 @@ export default function MCUViewer() {
         .sopt:hover{background:${T.sortHoverBg};color:${T.text};transform:translateX(4px)}
         .sopt.picked{color:#c0392b;font-weight:700}
 
-        .rrow{position:relative;transition:background 0.2s ease,transform 0.22s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.22s ease,border-color 0.22s ease;display:grid;align-items:center;grid-template-columns:40px 52px minmax(0,1fr) 80px 38px;gap:14px;padding:16px 20px;border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:86px;border-radius:10px;overflow:hidden}
+        .rrow{position:relative;transition:background 0.2s ease,transform 0.22s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.22s ease,border-color 0.22s ease;display:grid;align-items:center;grid-template-columns:40px 52px minmax(0,1fr) 108px;gap:14px;padding:16px 20px;border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:86px;border-radius:10px;overflow:hidden}
         .rrow:last-child{border-bottom:none}
         .rrow::before{content:'';position:absolute;inset:0;background:linear-gradient(125deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 28%, rgba(255,255,255,0) 62%);opacity:0;transition:opacity 0.24s ease;pointer-events:none;z-index:0}
         .rrow > *{position:relative;z-index:1}
@@ -699,6 +699,7 @@ export default function MCUViewer() {
         @keyframes gradientFlow{0%{background-position:0% 50%}100%{background-position:200% 50%}}
         .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.62);backdrop-filter:blur(12px);z-index:240;display:grid;place-items:center;padding:20px}
         .detail-card{width:min(980px,94vw);max-height:90vh;overflow:auto;background:rgba(30,30,46,0.4);backdrop-filter:blur(12px);border:1px solid ${T.surfaceBorder};border-radius:14px;padding:24px}
+        .glass-panel{background-color:rgba(30,30,46,0.6);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.05);border-radius:16px}
         .filter-shell{
           position: static;
           z-index: auto;
@@ -801,7 +802,7 @@ export default function MCUViewer() {
       </header>
       <div className="phase-grad-line" aria-hidden="true" />
 
-      {/* ━━ LIST MODE SWITCHER ━━━━━━━━���━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {/* ━━ LIST MODE SWITCHER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: T.switcherBg, borderBottom: `1px solid ${T.switcherBorder}`, padding: '0 24px', flexShrink: 0 }}>
         <div style={{ maxWidth: 1400, margin: '0 auto', display: 'flex', padding: '0 24px', width: '100%' }}>
           {LIST_MODES.map(mode => {
@@ -845,11 +846,6 @@ export default function MCUViewer() {
             <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Analytics</div>
             <div style={{ fontSize: 14, marginTop: 6 }}>{totalWatched}/{totalEntries} watched · ~{remainingHours}h remaining</div>
             <div style={{ fontSize: 13, color: T.textMuted, marginTop: 4 }}>Films: {filmCount} · Series: {seriesCount}</div>
-          </div>
-          <div className="glass-grad" style={{ background: darkMode ? 'linear-gradient(135deg, rgba(18,42,38,0.76), rgba(19,24,42,0.78))' : 'linear-gradient(135deg,#ffffff,#f2fff8)', border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
-            <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Future Projects</div>
-            <div style={{ fontSize: 14, marginTop: 6, color: T.textMuted }}>In list now: Daredevil: Born Again S1, Your Friendly Neighborhood Spider-Man S1.</div>
-            <div style={{ fontSize: 13, color: T.textMuted, marginTop: 4 }}>If missing from your preferred canon, add upcoming films/series as Phase 6 entries in Extended mode.</div>
           </div>
         </div>
       </div>
@@ -1056,7 +1052,7 @@ export default function MCUViewer() {
                   return (
                     <div key={item.id}>
                       {/* Main row */}
-                      <div className={`rrow row-in type-${item.type}`} style={{ background: isWatched ? T.rowWatchedBg : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow }}>
+                      <div className={`rrow row-in type-${item.type} ${isWatched ? 'glass-panel' : ''}`} style={{ background: isWatched ? T.rowWatchedBg : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow }}>
                         {/* Order / check */}
                         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 15, color: isWatched ? '#f1bfd3' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
                           {isWatched ? <Check size={14} style={{ color: '#f4a8ca' }} /> : (idx + 1)}
@@ -1066,7 +1062,7 @@ export default function MCUViewer() {
                         {/* Title block — clickable to expand */}
                         <button className="title-btn" onClick={() => setDetailItem(item)}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: isWatched ? 500 : 600, lineHeight: 1.5, color: isWatched ? 'rgba(255,255,255,0.5)' : T.text, opacity: isWatched ? 0.85 : 1, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif" }}>
+                            <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: isWatched ? 600 : 700, lineHeight: 1.5, color: isWatched ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.9)', opacity: isWatched ? 0.85 : 1, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif" }}>
                               {item.title}
                             </span>
                             {/* Episode count badge */}
@@ -1083,26 +1079,14 @@ export default function MCUViewer() {
                             )}
                             <ChevRight size={10} style={{ color: T.textFaint, transform: 'none', transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
                           </div>
-                          {showPre && (
-                            <div style={{ marginTop: 2, fontSize: '14px', color: T.textMuted, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.2 }}>
-                              {item.prereq}
-                            </div>
-                          )}
-                          <div style={{ marginTop: 1, fontSize: '11px', color: T.textFaint, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.3, textTransform: 'uppercase' }}>
-                            Genre: {m.label}
-                          </div>
                         </button>
 
                         {/* Year column */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, minWidth: 84 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: 104 }}>
                           <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '12px', letterSpacing: 1.4, color: T.text, textAlign: 'center', fontWeight: 600 }}>
                             {formatReleaseDate(RELEASE_INFO[item.title]?.date, item.year)}
                           </div>
-                          <div style={{ fontSize: 10, color: T.textMuted }}>IMDb {RELEASE_INFO[item.title]?.rating || '—'}</div>
-                        </div>
-
-                        {/* Status button */}
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                          <div style={{ fontSize: 11, color: '#e8b84b', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 0.8 }}>★ {RELEASE_INFO[item.title]?.rating || '—'}</div>
                           <button className="wbtn"
                             aria-label={`${statusMeta.label} — click to change`}
                             aria-haspopup="true"
@@ -1113,9 +1097,9 @@ export default function MCUViewer() {
                               if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openStatusDropdown(e, item.id); }
                               if (e.key === 'Escape') setStatusDropdown(null);
                             }}
-                            style={{ width: 26, height: 26, background: statusMeta.bg, color: statusMeta.color, borderColor: statusMeta.color + '55', boxShadow: item.status !== 'unwatched' && darkMode ? `0 0 9px ${statusMeta.color}35` : 'none' }}
+                            style={{ width: 24, height: 24, background: statusMeta.bg, color: statusMeta.color, borderColor: statusMeta.color + '55', boxShadow: item.status !== 'unwatched' && darkMode ? `0 0 9px ${statusMeta.color}35` : 'none' }}
                           >
-                            <statusMeta.Icon size={12} />
+                            <statusMeta.Icon size={11} />
                           </button>
                         </div>
                       </div>
@@ -1137,35 +1121,37 @@ export default function MCUViewer() {
 
       {detailItem && (
         <div className="detail-backdrop" onClick={() => setDetailItem(null)} role="dialog" aria-label="Movie details">
-          <div className="detail-card" onClick={(e) => e.stopPropagation()}>
+          <div className="detail-card glass-panel" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'grid', gridTemplateColumns: '180px minmax(0,1fr)', gap: 18 }}>
               <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : (posterCache[detailItem.id] || posterFor(detailItem))} alt={`${detailItem.title} poster`} style={{ width: '100%', borderRadius: 10, border: `1px solid ${T.surfaceBorder}` }} />
               <div>
                 <h2 style={{ fontSize: 32, marginBottom: 8 }}>{detailItem.title}</h2>
-                <div style={{ fontSize: 16, color: T.textMuted, marginBottom: 10 }}>
-                  {detailData?.Year || detailItem.year} · {TYPE_META[detailItem.type]?.label} · Phase {detailItem.phase}
-                  {detailData?.Runtime ? ` · ${detailData.Runtime}` : ''}
-                  {detailData?.imdbRating && detailData.imdbRating !== 'N/A' ? ` · IMDb ${detailData.imdbRating}` : ''}
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                  <span className="fpill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>{detailData?.Year || detailItem.year}</span>
+                  <span className="fpill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>{TYPE_META[detailItem.type]?.label}</span>
+                  <span className="fpill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>Phase {detailItem.phase}</span>
+                  {(detailData?.imdbRating && detailData.imdbRating !== 'N/A') && <span className="fpill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>★ {detailData.imdbRating}</span>}
                 </div>
                 {detailLoading && <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 8 }}>Loading live metadata…</div>}
                 {!detailLoading && !detailData && <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Live metadata unavailable for this title right now.</div>}
                 <p style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 12 }}>{detailData?.Plot && detailData.Plot !== 'N/A' ? detailData.Plot : detailItem.desc}</p>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Prerequisite:</strong> {detailItem.prereq}</div>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Status:</strong> {STATUS_META[detailItem.status]?.label}</div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
-                  <button className="fpill" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => setMyLikes(p => ({ ...p, [detailItem.id]: (p[detailItem.id] || 0) + 1 }))}>❤️ Likes {myLikes[detailItem.id] || 0}</button>
-                  <button className="fpill" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => setRewatchCount(p => ({ ...p, [detailItem.id]: (p[detailItem.id] || 0) + 1 }))}>↺ Rewatch {rewatchCount[detailItem.id] || 0}</button>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10, alignItems: 'center' }}>
+                  <span style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.1, fontFamily: "'Bebas Neue',sans-serif" }}>QUICK ACTIONS</span>
+                  <button className="fpill" style={{ padding: '3px 8px', fontSize: 10 }} onClick={() => setMyLikes(p => ({ ...p, [detailItem.id]: (p[detailItem.id] || 0) + 1 }))}>❤️ {myLikes[detailItem.id] || 0}</button>
+                  <button className="fpill" style={{ padding: '3px 8px', fontSize: 10 }} onClick={() => setRewatchCount(p => ({ ...p, [detailItem.id]: (p[detailItem.id] || 0) + 1 }))}>↺ {rewatchCount[detailItem.id] || 0}</button>
                   <select value={myRating[detailItem.id] || ''} onChange={(e) => setMyRating(p => ({ ...p, [detailItem.id]: Number(e.target.value) }))}
-                    style={{ fontSize: 12, borderRadius: 8, padding: '4px 6px', background: T.inputBg, color: T.inputColor, border: `1px solid ${T.inputBorder}` }}>
+                    style={{ fontSize: 11, borderRadius: 8, padding: '3px 6px', background: T.inputBg, color: T.inputColor, border: `1px solid ${T.inputBorder}` }}>
                     <option value="">My rating</option>
                     {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}/10</option>)}
                   </select>
                 </div>
                 <div style={{ fontSize: 14 }}><strong>Cast:</strong> {detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
-                  <button className="fpill" onClick={() => setStatusDirect(detailItem.id, 'watched')}><Check size={11}/>Watched</button>
-                  <button className="fpill" onClick={() => setStatusDirect(detailItem.id, 'plan-to-watch')}><Clock size={11}/>Plan</button>
-                  <button className="fpill" onClick={() => setStatusDirect(detailItem.id, 'unwatched')}><EyeOff size={11}/>Unwatch</button>
+                  <button className="fpill glass-panel" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => setStatusDirect(detailItem.id, 'watched')}><Check size={10}/>Watched</button>
+                  <button className="fpill glass-panel" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => setStatusDirect(detailItem.id, 'plan-to-watch')}><Clock size={10}/>Plan</button>
+                  <button className="fpill glass-panel" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => setStatusDirect(detailItem.id, 'unwatched')}><EyeOff size={10}/>Unwatch</button>
                 </div>
               </div>
             </div>
