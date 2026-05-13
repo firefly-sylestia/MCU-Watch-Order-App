@@ -484,6 +484,7 @@ export default function MCUViewer() {
   }, [activeItems]);
   const memoryScore = useMemo(() => Math.max(0, Math.min(100, Math.round((totalWatched / Math.max(1, activeItems.length)) * 100) - (spoilerSafe ? 10 : 0))), [totalWatched, activeItems.length, spoilerSafe]);
   const OMDB_KEY = import.meta.env.VITE_OMDB_API_KEY || '';
+  const OMDB_RATINGS_KEY = import.meta.env.VITE_OMDB_RATINGS_API_KEY || OMDB_KEY;
   const TMDB_DIRECT_KEY = import.meta.env.VITE_TMDB_API_KEY || '65eda48cf5803f22304fd21f4f06a35e';
 
   const fetchTmdbPoster = async (item) => {
@@ -634,7 +635,7 @@ export default function MCUViewer() {
   }, [myLikes, myRating, rewatchCount, bookmarks]);
 
   const refreshPostersAndMetadata = async () => {
-    const key = OMDB_KEY;
+    const key = OMDB_RATINGS_KEY;
     const targets = filtered.slice(0, 60);
     const posterUpdates = {};
     const metaUpdates = {};
@@ -642,7 +643,7 @@ export default function MCUViewer() {
       try {
         const t = encodeURIComponent(cleanLookupTitle(item.title));
         if (key) {
-          const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}`);
+          const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}&y=${encodeURIComponent(String(detailItem.year || ''))}`);
           const data = await res.json();
           posterUpdates[item.id] = data?.Poster && data.Poster !== 'N/A' ? data.Poster : await fetchTmdbPoster(item);
           metaUpdates[item.id] = { rating: data?.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : '', released: data?.Released && data.Released !== 'N/A' ? data.Released : '' };
@@ -656,7 +657,7 @@ export default function MCUViewer() {
   };
 
   useEffect(() => {
-    const key = OMDB_KEY;
+    const key = OMDB_RATINGS_KEY;
     const targets = filtered.slice(0, 30).filter(i => posterCache[i.id] === undefined || metaCache[i.id] === undefined);
     if (!targets.length) return;
     let cancelled = false;
@@ -667,7 +668,7 @@ export default function MCUViewer() {
         try {
           const t = encodeURIComponent(cleanLookupTitle(item.title));
           if (key) {
-            const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}`);
+            const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}&y=${encodeURIComponent(String(detailItem.year || ''))}`);
             const data = await res.json();
             posterUpdates[item.id] = data?.Poster && data.Poster !== 'N/A' ? data.Poster : await fetchTmdbPoster(item);
             metaUpdates[item.id] = {
@@ -701,7 +702,7 @@ export default function MCUViewer() {
       try {
         if (key) {
           const t = encodeURIComponent(cleanLookupTitle(detailItem.title));
-          const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}`);
+          const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}&y=${encodeURIComponent(String(detailItem.year || ''))}`);
           const data = await res.json();
           if (data?.Response === 'True') {
           setDetailData(data);
@@ -1444,7 +1445,7 @@ export default function MCUViewer() {
                           <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '12px', letterSpacing: 1.1, color: T.text, textAlign: 'right', fontWeight: 600, whiteSpace: 'nowrap' }}>
                             {formatReleaseDate(RELEASE_INFO[item.title]?.date || metaCache[item.id]?.released, item.year)}
                           </div>
-                          <div style={{ fontSize: 11, color: '#e8b84b', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 0.6, whiteSpace: 'nowrap' }}>★ {RELEASE_INFO[item.title]?.rating || metaCache[item.id]?.rating || '—'}</div>
+                          <div style={{ fontSize: 11, color: '#e8b84b', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 0.6, whiteSpace: 'nowrap' }}>★ {metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating || '—'}</div>
                           <button className="wbtn"
                             aria-label={bookmarks[item.id] ? 'Remove bookmark' : 'Add bookmark'}
                             onClick={() => setBookmarks(p => ({ ...p, [item.id]: p[item.id] ? 0 : 1 }))}
