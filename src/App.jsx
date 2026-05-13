@@ -65,7 +65,7 @@ const NO_PREREQ = new Set([
   'None (alternate reality, optional)','None (separate continuity)',
 ]);
 
-const SORT_LABELS = { order: 'Chronological', year: 'By Year', title: 'Alphabetical' };
+const SORT_LABELS = { order: 'Chronological', year: 'By Year', title: 'Alphabetical', runtime: 'Runtime', watched: 'Recently Watched', status: 'By Status' };
 
 // ─── ESSENTIAL LIST (60 items) ───────────────────────────────────────────────
 const ESSENTIAL_LIST = [
@@ -224,7 +224,9 @@ export default function MCUViewer() {
   const [detailLoading,  setDetailLoading]  = useState(false);
   const [posterCache,    setPosterCache]    = useState({});
   const [settingsOpen,   setSettingsOpen]   = useState(false);
-  const [profile,        setProfile]        = useState({ name: '', character: 'Iron Man', pfp: '' });
+  const [profile,        setProfile]        = useState({ name: '', pfp: '' });
+  const [uploadedAvatars,setUploadedAvatars]= useState([]);
+  const [themeMode,      setThemeMode]      = useState('classic');
   const [timelineMode,   setTimelineMode]   = useState('sacred');
   const [genreFilter] = useState('all'); // hidden filter hook for future genre controls
   const [myLikes,        setMyLikes]        = useState({});
@@ -387,14 +389,7 @@ export default function MCUViewer() {
     };
     reader.readAsText(file);
   };
-  const CHARACTER_PFPS = {
-    'Iron Man': 'https://ui-avatars.com/api/?name=Iron+Man&background=7a0000&color=fff',
-    'Captain America': 'https://ui-avatars.com/api/?name=Captain+America&background=0f3d91&color=fff',
-    Thor: 'https://ui-avatars.com/api/?name=Thor&background=2c3e50&color=fff',
-    Loki: 'https://ui-avatars.com/api/?name=Loki&background=145a32&color=fff',
-    'Scarlet Witch': 'https://ui-avatars.com/api/?name=Scarlet+Witch&background=8e2430&color=fff',
-    'Spider-Man': 'https://ui-avatars.com/api/?name=Spider-Man&background=b22222&color=fff'
-  };
+  const STATUS_SORT_ORDER = { watching: 0, 'plan-to-watch': 1, unwatched: 2, watched: 3, 'on-hold': 4, dropped: 5 };
   const RELEASE_INFO = {
     'The Fantastic Four: First Steps': { date: '2025-07-25', rating: 'TBD' },
     'Spider-Man: Brand New Day': { date: '2026-07-31', rating: 'TBD' },
@@ -435,10 +430,14 @@ export default function MCUViewer() {
       if (timelineMode === 'whatif' && i.type === 'short') return true;
       if (genreFilter !== 'all' && i.type !== genreFilter) return false;
       return i.title.toLowerCase().includes(q) || i.prereq.toLowerCase().includes(q);
-    }).sort((a, b) =>
-      sortBy === 'title' ? a.title.localeCompare(b.title) :
-      sortBy === 'year'  ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : a.order - b.order
-    );
+    }).sort((a, b) => {
+      if (sortBy === 'title') return a.title.localeCompare(b.title);
+      if (sortBy === 'year') return a.year - b.year;
+      if (sortBy === 'runtime') return (a.episodes || (a.type === 'film' ? 2.3 : 6)) - (b.episodes || (b.type === 'film' ? 2.3 : 6));
+      if (sortBy === 'watched') return (b.watchedDate || '').localeCompare(a.watchedDate || '');
+      if (sortBy === 'status') return (STATUS_SORT_ORDER[a.status] ?? 99) - (STATUS_SORT_ORDER[b.status] ?? 99);
+      return a.order - b.order;
+    });
     const g = {};
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
@@ -495,6 +494,15 @@ export default function MCUViewer() {
     if (item.type === 'series') return 'Drama';
     return 'Action';
   };
+  const inferGenres = (item) => {
+    const g = new Set([inferGenre(item)]);
+    const t = item.title.toLowerCase();
+    if (t.includes('winter soldier') || t.includes('secret invasion')) g.add('Thriller');
+    if (t.includes('guardians') || t.includes('groot') || t.includes('she-hulk')) g.add('Comedy');
+    if (t.includes('moon knight') || t.includes('agatha') || t.includes('multiverse')) g.add('Mystery');
+    if (item.type === 'series') g.add('Serial');
+    return [...g].slice(0, 3);
+  };
   const nextUnwatched = useMemo(() => filtered.find(i => i.status !== 'watched') || null, [filtered]);
   const recentActivity = useMemo(() => [...activeItems].filter(i => i.watchedDate).sort((a,b) => (b.watchedDate||'').localeCompare(a.watchedDate||'')).slice(0,5), [activeItems]);
   const totalEntries = activeItems.length;
@@ -535,6 +543,19 @@ export default function MCUViewer() {
   useEffect(() => {
     localStorage.setItem('mcu-meta-cache-v1', JSON.stringify(metaCache));
   }, [metaCache]);
+  useEffect(() => {
+    try {
+      const p = JSON.parse(localStorage.getItem('mcu-profile-v1') || '{}');
+      if (p?.pfp || p?.name) setProfile(prev => ({ ...prev, ...p }));
+      const avatars = JSON.parse(localStorage.getItem('mcu-uploaded-avatars-v1') || '[]');
+      if (Array.isArray(avatars)) setUploadedAvatars(avatars);
+      const t = localStorage.getItem('mcu-theme-mode-v1');
+      if (t) setThemeMode(t);
+    } catch {}
+  }, []);
+  useEffect(() => { localStorage.setItem('mcu-profile-v1', JSON.stringify(profile)); }, [profile]);
+  useEffect(() => { localStorage.setItem('mcu-uploaded-avatars-v1', JSON.stringify(uploadedAvatars)); }, [uploadedAvatars]);
+  useEffect(() => { localStorage.setItem('mcu-theme-mode-v1', themeMode); }, [themeMode]);
 
   useEffect(() => {
     const key = import.meta.env.VITE_OMDB_API_KEY || OMDB_KEY;
@@ -643,8 +664,9 @@ export default function MCUViewer() {
     phaseSummaryBg: '#f5f2ec', phaseSummaryBorder: '#e4ddd4',
   };
 
+  const appThemeBg = themeMode === 'cosmic' ? 'linear-gradient(180deg,#09051a,#120a26 45%,#1b102f)' : themeMode === 'vibranium' ? 'linear-gradient(180deg,#04161f,#0a2733 45%,#153544)' : T.appBg;
   return (
-    <div style={{ width: '100%', minHeight: '100dvh', background: T.appBg, color: T.text, fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 0.32s cubic-bezier(0.34,1.56,0.64,1), color 0.32s cubic-bezier(0.34,1.56,0.64,1)' }} className="theme-switch">
+    <div style={{ width: '100%', minHeight: '100dvh', background: appThemeBg, color: T.text, fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 0.32s cubic-bezier(0.34,1.56,0.64,1), color 0.32s cubic-bezier(0.34,1.56,0.64,1)' }} className="theme-switch">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -701,7 +723,7 @@ export default function MCUViewer() {
         .ntab::after{content:'';position:absolute;bottom:0;left:12px;right:12px;height:2px;border-radius:2px 2px 0 0;background:currentColor;transform:scaleX(0);transform-origin:center;transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1)}
         .ntab.on::after{transform:scaleX(1)}
 
-        .fpill{display:flex;align-items:center;gap:6px;padding:7px 28px;border-radius:12px;border:1px solid transparent;background:${darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(20,24,34,0.06)'};backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);cursor:pointer;font-size:clamp(14px,2.2vw,16px);font-weight:600;letter-spacing:0.05em;color:${T.pillText};transition:background-color 0.18s ease,color 0.18s ease,opacity 0.18s ease,border-color 0.18s ease;white-space:nowrap;box-shadow:none}
+        .fpill{display:flex;align-items:center;gap:6px;padding:7px 26px;border-radius:12px;border:1px solid transparent;background:${darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(20,24,34,0.06)'};backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);cursor:pointer;font-size:clamp(14px,2.2vw,16px);font-weight:600;letter-spacing:0.03em;color:${T.pillText};transition:background-color 0.18s ease,color 0.18s ease,opacity 0.18s ease,border-color 0.18s ease;white-space:nowrap;box-shadow:none;overflow:visible}
         .fpill:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText};background:${darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(20,24,34,0.10)'};opacity:0.96}
         .fpill:active{opacity:0.82}
         .fpill:focus-visible,.theme-btn:focus-visible,.lmode-btn:focus-visible{outline:2px solid #c0392b;outline-offset:2px}
@@ -769,7 +791,7 @@ export default function MCUViewer() {
       <div ref={settingsRef} style={{ position: 'fixed', top: 16, right: 14, zIndex: 260 }}>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div title={profile.name || 'Profile'} style={{ width: 44, height: 44, borderRadius: '50%', border: `1px solid ${T.surfaceBorder}`, display: 'grid', placeItems: 'center', background: darkMode ? 'rgba(16,18,35,0.92)' : '#fff', overflow: 'hidden', flexShrink: 0 }}>
-            <img src={profile.pfp || CHARACTER_PFPS[profile.character] || CHARACTER_PFPS['Iron Man']} alt="profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img src={profile.pfp || 'https://placehold.co/80x80/222/fff?text=G'} alt="profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
           <button className="theme-btn" onClick={() => setSettingsOpen(o => !o)} aria-label="Open settings menu" title="Settings" style={{ width: 40, height: 40, background: darkMode ? 'rgba(16,18,35,0.92)' : '#fff' }}>
             <Settings size={15} />
@@ -779,18 +801,18 @@ export default function MCUViewer() {
           <div className="fade-in" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, marginTop: 8, minWidth: 320, borderRadius: 12, border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(11,13,26,0.96)' : '#fff', boxShadow: T.dropdownShadow, padding: 10, display: 'grid', gap: 8, maxHeight: '80vh', overflow: 'auto' }}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Profile</div>
             <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 8 }}>
-              {Object.entries(CHARACTER_PFPS).map(([c, src]) => (
-                <button key={c} onClick={() => setProfile(p => ({ ...p, character: c, pfp: '' }))} title={c} style={{ border: profile.character === c && !profile.pfp ? '2px solid #c0392b' : `1px solid ${T.inputBorder}`, borderRadius: '999px', padding: 2, background: 'transparent', cursor: 'pointer' }}>
-                  <img src={src} alt={c} style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: '50%', objectFit: 'cover' }} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 6 }}>
+              {uploadedAvatars.map((src, idx) => (
+                <button key={idx} onClick={() => setProfile(p => ({ ...p, pfp: src }))} title={`Avatar ${idx + 1}`} style={{ border: profile.pfp === src ? '2px solid #c0392b' : `1px solid ${T.inputBorder}`, borderRadius: '999px', padding: 2, background: 'transparent', cursor: 'pointer' }}>
+                  <img src={src} alt={`Avatar ${idx + 1}`} style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: '50%', objectFit: 'cover' }} />
                 </button>
               ))}
-              <label title="Upload custom avatar" style={{ border: profile.pfp ? '2px solid #c0392b' : `1px dashed ${T.inputBorder}`, borderRadius: '999px', padding: 2, display: 'grid', placeItems: 'center', cursor: 'pointer', minHeight: 54, color: T.textMuted }}>
+              <label title="Upload custom avatar" style={{ border: `1px dashed ${T.inputBorder}`, borderRadius: '999px', padding: 2, display: 'grid', placeItems: 'center', cursor: 'pointer', minHeight: 44, color: T.textMuted }}>
                 <div style={{ display: 'grid', placeItems: 'center', fontSize: 11, gap: 2 }}>
                   <Upload size={13} />
                   <span>Custom +</span>
                 </div>
-                <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => setProfile(p => ({ ...p, pfp: String(r.result || '') })); r.readAsDataURL(f); }} style={{ display: 'none' }} />
+                <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const img = String(r.result || ''); setProfile(p => ({ ...p, pfp: img })); setUploadedAvatars(a => [img, ...a.filter(x => x !== img)].slice(0, 24)); }; r.readAsDataURL(f); }} style={{ display: 'none' }} />
               </label>
             </div>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
@@ -799,6 +821,9 @@ export default function MCUViewer() {
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Moon size={14} /> Dark Theme</span>
               <input type="checkbox" checked={darkMode} onChange={() => setDarkMode(d => !d)} style={{ width: 36, height: 20 }} />
             </label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
+              {['classic','cosmic','vibranium'].map(t => <button key={t} className="fpill" style={{ padding: '6px 8px', justifyContent: 'center', borderColor: themeMode === t ? '#c0392b' : 'transparent' }} onClick={() => setThemeMode(t)}>{t}</button>)}
+            </div>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Data</div>
             <button className="fpill" onClick={exportProgress}><Download size={14}/>Export Progress</button>
@@ -1127,7 +1152,7 @@ export default function MCUViewer() {
                             )}
                             <ChevRight size={10} style={{ color: T.textFaint, transform: 'none', transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
                           </div>
-                          <div style={{ marginTop: 2, fontSize: 10, color: 'rgba(255,255,255,0.5)', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2 }}>GENRE: {inferGenre(item).toUpperCase()}</div>
+                          <div style={{ marginTop: 2, fontSize: 10, color: 'rgba(255,255,255,0.5)', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2 }}>GENRES: {inferGenres(item).join(' • ').toUpperCase()}</div>
                         </button>
 
                         {/* Year column */}
