@@ -147,6 +147,7 @@ jobs:
           ls -lh "$APK"
 
       - name: Prepare release asset
+        id: prepare_asset
         run: |
           APK_PATH="${{ steps.find_apk.outputs.apk }}"
           APK_TYPE="${{ steps.find_apk.outputs.apk_type }}"
@@ -156,6 +157,7 @@ jobs:
             NEW_NAME="MCU-Viewing-Order-${{ steps.version.outputs.version }}-unsigned.apk"
           fi
           cp "$APK_PATH" "$NEW_NAME"
+          echo "asset_name=$NEW_NAME" >> $GITHUB_OUTPUT
           echo "✅ APK ready: $NEW_NAME"
           ls -lh "$NEW_NAME"
 
@@ -164,7 +166,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mcu-viewing-order-${{ steps.find_apk.outputs.apk_type }}-apk
-          path: MCU-Viewing-Order-${{ steps.version.outputs.version }}-${{ steps.find_apk.outputs.apk_type }}.apk
+          path: ${{ steps.prepare_asset.outputs.asset_name }}
           if-no-files-found: error
           retention-days: 30
 
@@ -175,7 +177,7 @@ jobs:
           name: "MCU Viewing Order v${{ steps.version.outputs.version }}"
           draft: false
           prerelease: false
-          files: MCU-Viewing-Order-${{ steps.version.outputs.version }}-${{ steps.find_apk.outputs.apk_type }}.apk
+          files: ${{ steps.prepare_asset.outputs.asset_name }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
