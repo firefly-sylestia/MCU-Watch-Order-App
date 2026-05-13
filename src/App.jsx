@@ -25,6 +25,8 @@ const Clock     = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M12
 const Heart     = p => <Icon {...p}><path d="M12 21s-7-4.35-9.5-8.5C.2 8.8 2.1 5 5.8 5c2.1 0 3.3 1.1 4.2 2.4C10.9 6.1 12.1 5 14.2 5 17.9 5 19.8 8.8 21.5 12.5 19 16.65 12 21 12 21z"/></Icon>;
 const Pause     = p => <Icon {...p}><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></Icon>;
 const Trash2    = p => <Icon {...p}><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></Icon>;
+const Upload    = p => <Icon {...p}><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M20 16v4H4v-4"/></Icon>;
+const Download  = p => <Icon {...p}><path d="M12 4v12"/><path d="m17 11-5 5-5-5"/><path d="M20 20H4"/></Icon>;
 const Sun       = p => <Icon {...p}><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></Icon>;
 const Moon      = p => <Icon {...p}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></Icon>;
 const Settings  = p => <Icon {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.02.02a2 2 0 1 1-2.83 2.83l-.02-.02A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.03a1.7 1.7 0 0 0-.4-1.1 1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.87.34l-.02.02a2 2 0 1 1-2.83-2.83l.02-.02A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H2.9a2 2 0 1 1 0-4h.03a1.7 1.7 0 0 0 1.1-.4 1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.87l-.02-.02a2 2 0 1 1 2.83-2.83l.02.02A1.7 1.7 0 0 0 9 4.6c.4 0 .78-.2 1-.6.25-.31.39-.7.4-1.1V2.9a2 2 0 1 1 4 0v.03c0 .4.15.79.4 1.1.22.4.6.6 1 .6.67.07 1.34-.16 1.87-.62l.02-.02a2 2 0 1 1 2.83 2.83l-.02.02a1.7 1.7 0 0 0-.34 1.87c0 .4.2.78.6 1 .31.25.7.39 1.1.4h.03a2 2 0 1 1 0 4h-.03a1.7 1.7 0 0 0-1.1.4 1.7 1.7 0 0 0-.6 1z"/></Icon>;
@@ -222,7 +224,7 @@ export default function MCUViewer() {
   const [detailLoading,  setDetailLoading]  = useState(false);
   const [posterCache,    setPosterCache]    = useState({});
   const [settingsOpen,   setSettingsOpen]   = useState(false);
-  const [profile,        setProfile]        = useState({ name: '', age: '', gender: '', character: 'Iron Man', pfp: '' });
+  const [profile,        setProfile]        = useState({ name: '', character: 'Iron Man', pfp: '' });
   const [timelineMode,   setTimelineMode]   = useState('sacred');
   const [genreFilter] = useState('all'); // hidden filter hook for future genre controls
   const [myLikes,        setMyLikes]        = useState({});
@@ -777,24 +779,35 @@ export default function MCUViewer() {
           <div className="fade-in" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, marginTop: 8, minWidth: 320, borderRadius: 12, border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(11,13,26,0.96)' : '#fff', boxShadow: T.dropdownShadow, padding: 10, display: 'grid', gap: 8, maxHeight: '80vh', overflow: 'auto' }}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Profile</div>
             <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-              <input value={profile.age} onChange={e => setProfile(p => ({ ...p, age: e.target.value }))} placeholder="Age (optional)" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
-              <input value={profile.gender} onChange={e => setProfile(p => ({ ...p, gender: e.target.value }))} placeholder="Gender (optional)" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 6 }}>
-              <select value={profile.character} onChange={e => setProfile(p => ({ ...p, character: e.target.value }))} style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }}>
-                {Object.keys(CHARACTER_PFPS).map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-              <label className="fpill" style={{ cursor: 'pointer' }}>PFP
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 8 }}>
+              {Object.entries(CHARACTER_PFPS).map(([c, src]) => (
+                <button key={c} onClick={() => setProfile(p => ({ ...p, character: c, pfp: '' }))} title={c} style={{ border: profile.character === c && !profile.pfp ? '2px solid #c0392b' : `1px solid ${T.inputBorder}`, borderRadius: '999px', padding: 2, background: 'transparent', cursor: 'pointer' }}>
+                  <img src={src} alt={c} style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: '50%', objectFit: 'cover' }} />
+                </button>
+              ))}
+              <label title="Upload custom avatar" style={{ border: profile.pfp ? '2px solid #c0392b' : `1px dashed ${T.inputBorder}`, borderRadius: '999px', padding: 2, display: 'grid', placeItems: 'center', cursor: 'pointer', minHeight: 54, color: T.textMuted }}>
+                <div style={{ display: 'grid', placeItems: 'center', fontSize: 11, gap: 2 }}>
+                  <Upload size={13} />
+                  <span>Custom +</span>
+                </div>
                 <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => setProfile(p => ({ ...p, pfp: String(r.result || '') })); r.readAsDataURL(f); }} style={{ display: 'none' }} />
               </label>
             </div>
-            <button className="fpill" onClick={() => setDarkMode(d => !d)}>{darkMode ? 'Light Mode' : 'Dark Mode'}</button>
-            <button className="fpill" onClick={exportProgress}>Export Progress</button>
-            <label className="fpill" style={{ cursor: 'pointer' }}>Import Progress
+            <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
+            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Preferences</div>
+            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Moon size={14} /> Dark Theme</span>
+              <input type="checkbox" checked={darkMode} onChange={() => setDarkMode(d => !d)} style={{ width: 36, height: 20 }} />
+            </label>
+            <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
+            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Data</div>
+            <button className="fpill" onClick={exportProgress}><Download size={14}/>Export Progress</button>
+            <label className="fpill" style={{ cursor: 'pointer' }}><Upload size={14}/>Import Progress
               <input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} />
             </label>
-            <button className="fpill" onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); }}>Reset Filters</button>
+            <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
+            <div style={{ fontSize: 11, letterSpacing: 2, color: '#d16a6a', textTransform: 'uppercase' }}>Danger Zone</div>
+            <button className="fpill" style={{ color: '#d16a6a', background: 'rgba(209,106,106,0.12)' }} onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); }}><Trash2 size={14}/>Reset Filters</button>
           </div>
         )}
       </div>
