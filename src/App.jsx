@@ -472,6 +472,15 @@ export default function MCUViewer() {
     const yearMatch = String(dateStr).match(/\b(19|20)\d{2}\b/);
     return yearMatch ? yearMatch[0] : String(fallbackYear);
   };
+  const inferGenre = (item) => {
+    const t = item.title.toLowerCase();
+    if (t.includes('guardians') || t.includes('captain marvel') || t.includes('marvels') || t.includes('secret invasion')) return 'Sci‑Fi';
+    if (t.includes('doctor strange') || t.includes('wanda') || t.includes('agatha')) return 'Fantasy';
+    if (t.includes('what if') || t.includes('i am groot') || t.includes('friendly neighborhood')) return 'Animation';
+    if (t.includes('moon knight') || t.includes('punisher') || t.includes('daredevil')) return 'Crime';
+    if (item.type === 'series') return 'Drama';
+    return 'Action';
+  };
   const nextUnwatched = useMemo(() => filtered.find(i => i.status !== 'watched') || null, [filtered]);
   const recentActivity = useMemo(() => [...activeItems].filter(i => i.watchedDate).sort((a,b) => (b.watchedDate||'').localeCompare(a.watchedDate||'')).slice(0,5), [activeItems]);
   const totalEntries = activeItems.length;
@@ -839,7 +848,8 @@ export default function MCUViewer() {
           <div className="glass-grad" style={{ background: darkMode ? 'linear-gradient(135deg, rgba(20,24,42,0.88), rgba(39,20,49,0.78))' : 'linear-gradient(135deg,#ffffff,#f8f4ff)', border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
             <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Continue Watching</div>
             <div style={{ fontSize: 18, marginTop: 4 }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</div>
-            <div style={{ fontSize: 13, color: T.textMuted, marginTop: 5 }}>{recentActivity.length ? `Recent: ${recentActivity[0].title}` : 'No recent activity'}</div>
+            <div style={{ height: 1, marginTop: 6, background: darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)' }} />
+            <div style={{ fontSize: 13, color: darkMode ? 'rgba(255,255,255,0.72)' : '#5d6675', marginTop: 6 }}>{recentActivity.length ? `Recent: ${recentActivity[0].title}` : 'No recent activity'}</div>
             {nextUnwatched && <button className="fpill" style={{ marginTop: 8 }} onClick={() => { setActivePhase(nextUnwatched.phase); scrollTo(nextUnwatched.phase); }}>Jump to Next</button>}
           </div>
           <div className="glass-grad" style={{ background: darkMode ? 'linear-gradient(135deg, rgba(17,37,48,0.84), rgba(24,21,43,0.78))' : 'linear-gradient(135deg,#ffffff,#f2fbff)', border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
@@ -940,7 +950,7 @@ export default function MCUViewer() {
           </div>
         </div>
       </div>
-      <div style={{ position: 'sticky', top: 0, zIndex: 170, padding: '6px 24px', background: darkMode ? 'rgba(8,10,20,0.78)' : 'rgba(255,255,255,0.86)', backdropFilter: 'blur(6px)', borderBottom: `1px solid ${T.filterBorder}` }}>
+      <div style={{ position: 'sticky', top: 0, zIndex: 170, padding: '6px 24px', background: darkMode ? 'rgba(8,10,20,0.72)' : 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderBottom: `1px solid ${T.filterBorder}` }}>
         <div style={{ maxWidth: 1400, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 10, padding: '0 24px' }}>
           <span style={{ fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.8, fontSize: 12, color: T.textMuted, minWidth: 90 }}>{stickyPhaseProgress.label}</span>
           <div style={{ flex: 1, height: 4, borderRadius: 999, overflow: 'hidden', background: darkMode ? 'rgba(255,255,255,0.12)' : '#eae6de' }}>
@@ -955,7 +965,7 @@ export default function MCUViewer() {
         type="button"
         onClick={() => { if (nextUnwatched) setDetailItem(nextUnwatched); }}
         aria-label="Jump to next unwatched item"
-        style={{ position: 'fixed', right: 16, bottom: 16, zIndex: 120, borderRadius: 999, padding: '10px 14px', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'linear-gradient(135deg, rgba(20,25,46,0.95), rgba(34,18,52,0.95))' : 'linear-gradient(135deg, #ffffff, #f6f0ff)', color: T.text, boxShadow: darkMode ? '0 8px 22px rgba(0,0,0,0.45)' : '0 8px 20px rgba(0,0,0,0.14)', cursor: nextUnwatched ? 'pointer' : 'default', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2, fontSize: 12 }}
+        style={{ position: 'fixed', right: 16, bottom: 16, zIndex: 120, borderRadius: 999, padding: '10px 14px', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(20,25,46,0.72)' : 'rgba(255,255,255,0.78)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', color: T.text, boxShadow: darkMode ? '0 8px 22px rgba(0,0,0,0.45)' : '0 8px 20px rgba(0,0,0,0.14)', cursor: nextUnwatched ? 'pointer' : 'default', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2, fontSize: 12 }}
       >
         {pct}% done · {nextUnwatched ? 'Jump next' : 'All caught up'}
       </button>
@@ -966,7 +976,7 @@ export default function MCUViewer() {
 
         
 
-        <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '24px var(--content-pad) 80px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch" key={listMode}>
+        <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '24px 24px 80px var(--content-pad)', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch" key={listMode}>
         {phaseKeys.length === 0 && (
           <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: "'Bebas Neue',sans-serif", fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
             NO RESULTS — ADJUST YOUR FILTERS
@@ -1079,7 +1089,7 @@ export default function MCUViewer() {
                             )}
                             <ChevRight size={10} style={{ color: T.textFaint, transform: 'none', transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
                           </div>
-                          <div style={{ marginTop: 2, fontSize: 10, color: 'rgba(255,255,255,0.5)', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2 }}>GENRE: {m.label.toUpperCase()}</div>
+                          <div style={{ marginTop: 2, fontSize: 10, color: 'rgba(255,255,255,0.5)', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2 }}>GENRE: {inferGenre(item).toUpperCase()}</div>
                         </button>
 
                         {/* Year column */}
