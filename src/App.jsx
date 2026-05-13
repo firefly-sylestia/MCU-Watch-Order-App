@@ -665,36 +665,63 @@ export default function MCUViewer() {
   };
 
 
+  const THEME_CHOICES = [
+    { id: 'classic', label: 'Iron Man' },
+    { id: 'cosmic', label: 'Captain Marvel' },
+    { id: 'vibranium', label: 'Black Panther' },
+    { id: 'quantum', label: 'Ant-Man' },
+    { id: 'mystic', label: 'Doctor Strange' },
+    { id: 'web-slinger', label: 'Spider-Man' },
+    { id: 'god-of-thunder', label: 'Thor' },
+    { id: 'scarlet-witch', label: 'Scarlet Witch' },
+    { id: 'winter-soldier', label: 'Winter Soldier' },
+  ];
+
   const themeVarsByMode = {
     classic: {
-      '--theme-accent': '#c0392b',
-      '--theme-accent-alt': '#e8b84b',
-      '--theme-accent-glow': darkMode ? 'rgba(192,57,43,0.40)' : 'rgba(192,57,43,0.22)',
+      '--theme-accent': '#d4372f',
+      '--theme-accent-alt': '#f5c04a',
+      '--theme-accent-glow': darkMode ? 'rgba(212,55,47,0.42)' : 'rgba(212,55,47,0.26)',
     },
     cosmic: {
-      '--theme-accent': '#4a9ede',
-      '--theme-accent-alt': '#a06cd5',
-      '--theme-accent-glow': darkMode ? 'rgba(74,158,222,0.42)' : 'rgba(74,158,222,0.25)',
+      '--theme-accent': '#4d7bff',
+      '--theme-accent-alt': '#ffb94a',
+      '--theme-accent-glow': darkMode ? 'rgba(77,123,255,0.45)' : 'rgba(77,123,255,0.24)',
     },
     vibranium: {
-      '--theme-accent': '#3ec47a',
-      '--theme-accent-alt': '#58d6d8',
-      '--theme-accent-glow': darkMode ? 'rgba(62,196,122,0.42)' : 'rgba(62,196,122,0.22)',
+      '--theme-accent': '#7e5dff',
+      '--theme-accent-alt': '#31c0f4',
+      '--theme-accent-glow': darkMode ? 'rgba(126,93,255,0.42)' : 'rgba(126,93,255,0.25)',
     },
     quantum: {
-      '--theme-accent': '#f3a6c2',
-      '--theme-accent-alt': '#ffd2e4',
-      '--theme-accent-glow': darkMode ? 'rgba(243,166,194,0.45)' : 'rgba(243,166,194,0.26)',
+      '--theme-accent': '#ff5da8',
+      '--theme-accent-alt': '#67f2ff',
+      '--theme-accent-glow': darkMode ? 'rgba(255,93,168,0.44)' : 'rgba(255,93,168,0.25)',
     },
     mystic: {
-      '--theme-accent': '#a06cd5',
-      '--theme-accent-alt': '#4a9ede',
-      '--theme-accent-glow': darkMode ? 'rgba(160,108,213,0.42)' : 'rgba(160,108,213,0.24)',
+      '--theme-accent': '#9f66ff',
+      '--theme-accent-alt': '#ff7b39',
+      '--theme-accent-glow': darkMode ? 'rgba(159,102,255,0.42)' : 'rgba(159,102,255,0.24)',
     },
     'web-slinger': {
-      '--theme-accent': '#d34d4d',
-      '--theme-accent-alt': '#4a9ede',
-      '--theme-accent-glow': darkMode ? 'rgba(211,77,77,0.40)' : 'rgba(211,77,77,0.22)',
+      '--theme-accent': '#df3f4c',
+      '--theme-accent-alt': '#2b7bdf',
+      '--theme-accent-glow': darkMode ? 'rgba(223,63,76,0.42)' : 'rgba(223,63,76,0.24)',
+    },
+    'god-of-thunder': {
+      '--theme-accent': '#3ca6ff',
+      '--theme-accent-alt': '#f0f6ff',
+      '--theme-accent-glow': darkMode ? 'rgba(60,166,255,0.46)' : 'rgba(60,166,255,0.26)',
+    },
+    'scarlet-witch': {
+      '--theme-accent': '#c61b59',
+      '--theme-accent-alt': '#ff7cb5',
+      '--theme-accent-glow': darkMode ? 'rgba(198,27,89,0.45)' : 'rgba(198,27,89,0.25)',
+    },
+    'winter-soldier': {
+      '--theme-accent': '#8fa0b8',
+      '--theme-accent-alt': '#4b596f',
+      '--theme-accent-glow': darkMode ? 'rgba(143,160,184,0.40)' : 'rgba(143,160,184,0.24)',
     },
   };
 
@@ -712,10 +739,19 @@ export default function MCUViewer() {
     '--theme-warning-soft': darkMode ? 'rgba(232,184,75,0.16)' : 'rgba(232,184,75,0.12)',
     '--theme-danger': '#d16a6a',
     '--theme-danger-soft': darkMode ? 'rgba(209,106,106,0.16)' : 'rgba(209,106,106,0.12)',
+    '--theme-app-bg': darkMode
+      ? 'radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 36%), radial-gradient(circle at 88% 14%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(155deg,#06060f 0%,#0b1021 40%,#0a0f20 100%)'
+      : 'radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--theme-accent) 18%, #ffffff), transparent 36%), radial-gradient(circle at 88% 14%, color-mix(in srgb, var(--theme-accent-alt) 14%, #ffffff), transparent 40%), linear-gradient(155deg,#fbfaf7 0%,#f5f2eb 45%,#f0ece5 100%)',
+    '--theme-header-bg': darkMode
+      ? 'linear-gradient(180deg, color-mix(in srgb, var(--theme-accent) 14%, #0c1022), #06060f)'
+      : 'linear-gradient(180deg, color-mix(in srgb, var(--theme-accent) 8%, #ffffff), #f6f2ea)',
+    '--theme-watched-bg': darkMode
+      ? 'linear-gradient(100deg, color-mix(in srgb, var(--theme-accent) 22%, rgba(12,18,34,0.95)), color-mix(in srgb, var(--theme-accent-alt) 12%, rgba(10,20,32,0.88)))'
+      : 'linear-gradient(100deg, color-mix(in srgb, var(--theme-accent) 14%, #ffffff), color-mix(in srgb, var(--theme-accent-alt) 8%, #f7f5ef))',
     ...activeThemeVars,
   };
 
-  const appThemeBg = 'var(--theme-bg)';
+  const appThemeBg = 'var(--theme-app-bg)';
   return (
       <div data-theme={themeMode} style={{ ...cssThemeVars, width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 0.32s cubic-bezier(0.34,1.56,0.64,1), color 0.32s cubic-bezier(0.34,1.56,0.64,1)' }} className="theme-switch">
       <style>{`
@@ -784,12 +820,13 @@ export default function MCUViewer() {
         .sopt.picked,.dropdown-item.active{background:var(--theme-surface-hover);border-radius:12px;color:var(--theme-accent);font-weight:700}
         .curvy-indicator{height:4px;border-radius:99px;background:var(--theme-accent);box-shadow:0 0 8px var(--theme-accent-glow);border:none}
         .curvy-panel{position:relative;overflow:hidden;border-radius:14px}
-        .curvy-panel::before{content:'';position:absolute;inset:0 auto 0 0;width:4px;background:linear-gradient(180deg,var(--phase-color,#f3a6c2),color-mix(in srgb,var(--phase-color,#f3a6c2) 70%,#ffd2e4));border-radius:14px 0 0 14px;box-shadow:0 0 14px color-mix(in srgb,var(--phase-color,#f3a6c2) 48%, transparent);z-index:0}
+         .curvy-panel::before{content:'';position:absolute;inset:0 auto 0 0;width:4px;background:linear-gradient(180deg,var(--phase-color,#f3a6c2),color-mix(in srgb,var(--phase-color,#f3a6c2) 70%,#ffd2e4));border-radius:14px 0 0 14px;box-shadow:0 0 14px color-mix(in srgb,var(--phase-color,#f3a6c2) 48%, transparent);z-index:0}
 
         .rrow{position:relative;transition:background 0.2s ease,transform 0.22s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.22s ease,border-color 0.22s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:12px;padding:16px 16px 16px 12px;border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:86px;border-radius:10px;overflow:hidden}
         .rrow:last-child{border-bottom:none}
         .rrow > *{position:relative;z-index:1}
-        .rrow:hover{transform:translateY(-6px);border-left-color:var(--phase-color,#c0392b);box-shadow:0 12px 28px -14px var(--phase-glow,rgba(192,57,43,0.5))}
+        .rrow:hover{transform:translateY(-4px);border-left-color:color-mix(in srgb,var(--theme-accent) 65%, var(--phase-color,#c0392b));box-shadow:0 10px 24px -14px var(--phase-glow,rgba(192,57,43,0.5))}
+        .rrow.curvy-selected{border-left-color:var(--theme-accent);box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 45%, transparent),0 10px 24px -16px var(--theme-accent-glow)}
         .rrow.type-film:hover{background:linear-gradient(90deg, rgba(224,82,82,0.18), ${T.rowHoverBg}) !important}
         .rrow.type-series:hover{background:linear-gradient(90deg, rgba(74,158,222,0.18), ${T.rowHoverBg}) !important}
         .rrow.type-short:hover{background:linear-gradient(90deg, rgba(160,108,213,0.18), ${T.rowHoverBg}) !important}
@@ -877,7 +914,7 @@ export default function MCUViewer() {
               <input type="checkbox" checked={darkMode} onChange={() => setDarkMode(d => !d)} style={{ width: 36, height: 20 }} />
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
-              {['classic','cosmic','vibranium','quantum','mystic','web-slinger'].map(t => (
+              {THEME_CHOICES.map(({ id: t, label }) => (
                 <button
                   key={t}
                   className="fpill"
@@ -891,7 +928,7 @@ export default function MCUViewer() {
                   }}
                   onClick={() => setThemeMode(t)}
                 >
-                  {t}
+                  {label}
                 </button>
               ))}
             </div>
@@ -1136,7 +1173,7 @@ export default function MCUViewer() {
               )}
 
               {/* ── Phase divider injected in list flow ── */}
-              <div className="curvy-panel" style={{ '--phase-color': ph.color, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap', padding: '14px 12px 14px 18px', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? `linear-gradient(120deg, color-mix(in srgb, ${ph.color} 20%, transparent), rgba(22,20,38,0.55))` : `linear-gradient(120deg, color-mix(in srgb, ${ph.color} 14%, #fff), rgba(255,255,255,0.8))` }}>
+              <div className="curvy-panel" style={{ '--phase-color': ph.color, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap', padding: '14px 12px 14px 18px', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? `linear-gradient(120deg, color-mix(in srgb, var(--theme-accent) 16%, color-mix(in srgb, ${ph.color} 26%, transparent)), rgba(22,20,38,0.55))` : `linear-gradient(120deg, color-mix(in srgb, var(--theme-accent) 8%, color-mix(in srgb, ${ph.color} 14%, #fff)), rgba(255,255,255,0.88))` }}>
                 <div style={{ width: 7, height: 54, background: `linear-gradient(180deg, ${ph.color}, color-mix(in srgb, ${ph.color} 58%, #ffd2e4))`, borderRadius: 999, flexShrink: 0, boxShadow: darkMode ? `0 0 14px ${ph.glow}` : '0 0 7px rgba(244,155,200,0.25)' }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: "'Orbitron',sans-serif", fontSize: 'clamp(32px, 4vw, 36px)', letterSpacing: 6, color: ph.color, lineHeight: 1, fontWeight: 700, textShadow: darkMode ? `0 0 18px ${ph.glow}` : 'none' }}>
@@ -1148,7 +1185,7 @@ export default function MCUViewer() {
                 </div>
                 {/* Mini progress */}
                 <div style={{ width: 90, background: darkMode ? 'rgba(255,255,255,0.08)' : T.surfaceBg, border: `1px solid ${darkMode ? 'rgba(255,255,255,0.16)' : T.surfaceBorder}`, borderRadius: 999, height: 4, overflow: 'hidden', position: 'relative', flexShrink: 0, backdropFilter: 'blur(3px)' }}>
-                  <div className="sweep" style={{ height: '100%', width: `${phasePct}%`, background: 'linear-gradient(90deg,#f3a6c2,#ffc0d8)', boxShadow: '0 0 10px rgba(244,155,200,0.5)', borderRadius: 999, transition: 'width 0.5s ease', position: 'relative', overflow: 'hidden', opacity: darkMode ? 0.85 : 0.9 }} />
+                  <div style={{ height: '100%', width: `${phasePct}%`, background: 'linear-gradient(90deg,var(--theme-accent),var(--theme-accent-alt))', boxShadow: '0 0 10px rgba(244,155,200,0.5)', borderRadius: 999, transition: 'width 0.5s ease', position: 'relative', overflow: 'hidden', opacity: darkMode ? 0.85 : 0.9 }} />
                 </div>
                 <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 11, letterSpacing: 1, color: phasePct === 100 ? ph.color : T.textMuted, flexShrink: 0, minWidth: 38, textAlign: 'right' }}>
                   {done}/{rows.length}
@@ -1185,7 +1222,7 @@ export default function MCUViewer() {
               )}
 
               {/* ── Row table ── */}
-              <div className="curvy-panel" style={{ '--phase-color': ph.color, background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 14, overflow: 'hidden', boxShadow: darkMode ? '0 2px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.03)' : '0 1px 6px rgba(0,0,0,0.06)' }}>
+              <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 14, overflow: 'hidden', boxShadow: darkMode ? '0 2px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.03)' : '0 1px 6px rgba(0,0,0,0.06)' }}>
                 {rows.map((item, idx) => {
                   const m = TYPE_META[item.type];
                   const statusMeta = STATUS_META[item.status];
@@ -1196,7 +1233,7 @@ export default function MCUViewer() {
                   return (
                     <div key={item.id}>
                       {/* Main row */}
-                      <div className={`rrow row-in type-${item.type} ${isWatched ? 'glass-panel' : ''}`} style={{ background: isWatched ? T.rowWatchedBg : 'transparent', opacity: 1, borderLeftColor: isWatched ? '#3ec47a' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow }}>
+                      <div className={`rrow row-in type-${item.type} ${isWatched ? 'glass-panel' : ''} ${expandedItem === item.id ? 'curvy-selected' : ''}`} style={{ background: isWatched ? 'var(--theme-watched-bg)' : 'transparent', opacity: 1, borderLeftColor: expandedItem === item.id ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow }}>
                         {/* Order / check */}
                         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 15, color: isWatched ? '#f1bfd3' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
                           {isWatched ? <Check size={14} style={{ color: '#f4a8ca' }} /> : (idx + 1)}
