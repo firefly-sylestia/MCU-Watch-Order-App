@@ -451,7 +451,7 @@ export default function MCUViewer() {
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
 
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, typeFilter, JumpNextOnly, activePhase, timelineMode, genreFilter, q, sortBy, coreIds]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, typeFilter, jumpNextOnly, activePhase, timelineMode, genreFilter, q, sortBy, coreIds]);
 
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
@@ -476,7 +476,7 @@ export default function MCUViewer() {
   };
   const posterFor = (item) => `https://placehold.co/220x330/121a2d/e8edf7?text=${encodeURIComponent(item.title)}`;
   const posterSrc = (item) => posterCache[item.id] || detailData?.Poster || `https://placehold.co/220x330/1a1f33/f7c4de?text=${encodeURIComponent(item.title+'\n'+item.year)}`;
-  const spoilerSafe = useMemo(() => spoilerSafeMode || (totalWatched < Math.max(6, Math.round(activeItems.length * 0.35))), [spoilerSafeMode, totalWatched, activeItems.length]);
+  const spoilerSafeEnabled = useMemo(() => spoilerSafe || spoilerSafeMode || (totalWatched < Math.max(6, Math.round(activeItems.length * 0.35))), [spoilerSafe, spoilerSafeMode, totalWatched, activeItems.length]);
   const characterHeat = useMemo(() => {
     const chars = ['Iron Man', 'Captain America', 'Thor', 'Loki', 'Spider-Man', 'Wanda'];
     return chars.map(c => {
@@ -485,7 +485,7 @@ export default function MCUViewer() {
       return { c, score: Math.round((watched / related) * 100) };
     });
   }, [activeItems]);
-  const memoryScore = useMemo(() => Math.max(0, Math.min(100, Math.round((totalWatched / Math.max(1, activeItems.length)) * 100) - (spoilerSafe ? 10 : 0))), [totalWatched, activeItems.length, spoilerSafe]);
+  const memoryScore = useMemo(() => Math.max(0, Math.min(100, Math.round((totalWatched / Math.max(1, activeItems.length)) * 100) - (spoilerSafeEnabled ? 10 : 0))), [totalWatched, activeItems.length, spoilerSafeEnabled]);
   const OMDB_KEY = '14596ed1';
   const cleanLookupTitle = (title) => title.replace(/\sS\d.*$/i, '').replace(/\sEps?.*$/i, '').trim();
   const formatReleaseDate = (dateStr, fallbackYear) => {
@@ -852,6 +852,12 @@ export default function MCUViewer() {
         .fpill:hover{border-color:var(--theme-accent);color:var(--theme-accent);background:var(--theme-surface-hover);opacity:0.96}
         .fpill:active{opacity:0.82}
         .fpill:focus-visible,.theme-btn:focus-visible,.lmode-btn:focus-visible{outline:2px solid var(--theme-accent);outline-offset:2px}
+        .glass-btn{background:color-mix(in srgb, var(--theme-surface) 58%, transparent);border:1px solid color-mix(in srgb, var(--theme-border) 75%, transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:inset 0 1px 0 rgba(255,255,255,0.08)}
+        .glass-btn:hover{background:color-mix(in srgb, var(--theme-surface-hover) 72%, transparent)}
+        .quick-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:4px}
+        .quick-actions .fpill{justify-content:center;padding:8px 10px !important;font-size:12px !important;letter-spacing:1px;font-family:'Rajdhani',sans-serif;font-weight:700}
+        .status-stack{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+        .status-stack .fpill{justify-content:center;padding:8px 10px !important;font-size:12px !important;letter-spacing:1px;font-family:'Rajdhani',sans-serif;font-weight:700}
 
         .sopt{padding:13px 20px;font-family:'Bebas Neue',sans-serif;font-size:clamp(15px,2.2vw,18px);letter-spacing:2.5px;cursor:pointer;color:${T.pillText};transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1)}
         .sopt:hover{background:${T.sortHoverBg};color:${T.text};transform:translateX(4px)}
@@ -1077,8 +1083,25 @@ export default function MCUViewer() {
       </div>
       <div style={{ background: 'var(--theme-surface)', borderBottom: '1px solid var(--theme-border)', padding: '8px 24px' }}>
         <div style={{ maxWidth: 1400, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 10, padding: '0 24px' }}>
-          <div className='fpill' style={{ justifyContent: 'space-between' }}><span>Now Watching</span><strong>{filtered.find(i => i.status==='watching')?.title || '—'}</strong></div>
-          <div className='fpill' style={{ justifyContent: 'space-between' }}><span>Next Up</span><strong>{nextUnwatched?.title || 'All done'}</strong></div>
+          <div className='fpill' style={{ justifyContent: 'space-between', gap: 8 }}>
+            <span>Now Watching</span>
+            <select value={items.find(i => i.status === 'watching')?.id || ''} onChange={(e) => {
+              const selectedId = Number(e.target.value);
+              if (!selectedId) return;
+              setItems(prev => {
+                const next = prev.map(i => {
+                  if (i.id === selectedId) return { ...i, status: 'watching' };
+                  return i.status === 'watching' ? { ...i, status: 'plan-to-watch' } : i;
+                });
+                persist(next);
+                return next;
+              });
+            }} style={{ maxWidth: 240, background: T.inputBg, color: T.inputColor, border: `1px solid ${T.inputBorder}`, borderRadius: 8, padding: '2px 6px' }}>
+              <option value="">Choose title…</option>
+              {activeItems.map(i => <option key={i.id} value={i.id}>{i.title}</option>)}
+            </select>
+          </div>
+          <div className='fpill' style={{ justifyContent: 'space-between' }}><span>Up Next</span><strong>{nextUnwatched?.title || 'All done'}</strong></div>
           <div className='fpill' style={{ justifyContent: 'space-between' }}><span>Upcoming</span><strong>{calendarItems.upcoming[0]?.item?.title || 'No upcoming'}</strong></div>
         </div>
       </div>
@@ -1165,6 +1188,16 @@ export default function MCUViewer() {
               </div>
             )}
           </div>
+          <button className="fpill"
+            style={jumpNextOnly ? { borderColor: 'color-mix(in srgb, var(--theme-accent) 52%, transparent)', background: 'color-mix(in srgb, var(--theme-accent) 16%, var(--theme-surface))', color: 'var(--theme-accent)' } : {}}
+            onClick={() => setJumpNextOnly(v => !v)}>
+            <Zap size={10} />Jump Next
+          </button>
+          <button className="fpill"
+            style={spoilerSafeEnabled ? { borderColor: 'color-mix(in srgb, var(--theme-warning) 48%, transparent)', background: 'var(--theme-warning-soft)', color: 'var(--theme-warning)' } : {}}
+            onClick={() => setSpoilerSafe(v => !v)}>
+            {spoilerSafeEnabled ? <EyeOff size={10} /> : <Eye size={10} />}Spoiler Safe
+          </button>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
             <button className='fpill' onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')} style={{ background: viewMode === 'calendar' ? 'color-mix(in srgb, var(--theme-accent) 11%, var(--theme-surface))' : 'var(--theme-surface)' }}>
               {viewMode === 'calendar' ? 'List View' : 'Release Calendar'}
@@ -1192,11 +1225,11 @@ export default function MCUViewer() {
 
       <button
         type="button"
-        onClick={() => { if (nextUnwatched) setDetailItem(nextUnwatched); }}
+        onClick={() => setJumpNextOnly(v => !v)}
         aria-label="Jump to next unwatched item"
         style={{ position: 'fixed', right: 16, bottom: 16, zIndex: 120, borderRadius: 999, padding: '10px 14px', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(20,25,46,0.72)' : 'rgba(255,255,255,0.78)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', color: T.text, boxShadow: darkMode ? '0 8px 22px rgba(0,0,0,0.45)' : '0 8px 20px rgba(0,0,0,0.14)', cursor: nextUnwatched ? 'pointer' : 'default', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2, fontSize: 12 }}
       >
-        {pct}% done · {nextUnwatched ? 'Jump next' : 'All caught up'}
+        {pct}% done · {jumpNextOnly ? 'Jump next: on' : 'Jump next'}
       </button>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
@@ -1342,8 +1375,8 @@ export default function MCUViewer() {
                         </button>
 
                         {/* Year column */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: 104, flexShrink: 0 }}>
-                          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '12px', letterSpacing: 1.1, color: T.text, textAlign: 'right', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', gap: 8, minWidth: 132, flexShrink: 0 }}>
+                          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '12px', letterSpacing: 1.1, color: T.text, textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>
                             {formatReleaseDate(RELEASE_INFO[item.title]?.date || metaCache[item.id]?.released, item.year)}
                           </div>
                           <div style={{ fontSize: 11, color: '#e8b84b', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 0.6, whiteSpace: 'nowrap' }}>★ {RELEASE_INFO[item.title]?.rating || metaCache[item.id]?.rating || '—'}</div>
@@ -1368,7 +1401,7 @@ export default function MCUViewer() {
                       {/* Expand panel — description + quick watch buttons */}
                       {isExpanded && (
                         <div className="expand-row" style={{ background: T.expandBg, borderBottom: `1px solid ${T.expandBorder}`, borderLeft: `3px solid ${ph.color}44`, padding: '12px 14px 12px 52px' }}>
-                          <p style={{ fontSize: 12.5, color: T.textMuted, lineHeight: 1.65, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.2, marginBottom: 10, filter: spoilerSafe ? 'blur(4px)' : 'none', transition: 'filter 0.2s' }}>
+                          <p style={{ fontSize: 12.5, color: T.textMuted, lineHeight: 1.65, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.2, marginBottom: 10, filter: spoilerSafeEnabled ? 'blur(4px)' : 'none', transition: 'filter 0.2s' }}>
                             {item.desc}
                           </p>
                           {/* Quick action buttons inside expand */}
@@ -1467,25 +1500,28 @@ export default function MCUViewer() {
                 </div>
                 {detailLoading && <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 8 }}>Loading live metadata…</div>}
                 {!detailLoading && !detailData && <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Live metadata unavailable for this title right now.</div>}
-                <p style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 12, filter: spoilerSafe ? 'blur(5px)' : 'none' }}>{detailData?.Plot && detailData.Plot !== 'N/A' ? detailData.Plot : detailItem.desc}</p>
+                <p style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 12, filter: spoilerSafeEnabled ? 'blur(5px)' : 'none' }}>{detailData?.Plot && detailData.Plot !== 'N/A' ? detailData.Plot : detailItem.desc}</p>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Prerequisite:</strong> {detailItem.prereq}</div>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Status:</strong> {STATUS_META[detailItem.status]?.label}</div>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10, alignItems: 'center' }}>
+                <div style={{ marginBottom: 10 }}>
                   <span style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.1, fontFamily: "'Bebas Neue',sans-serif" }}>QUICK ACTIONS</span>
-                  <button className="fpill" style={{ padding: '3px 8px', fontSize: 10 }} onClick={() => setMyLikes(p => ({ ...p, [detailItem.id]: p[detailItem.id] ? 0 : 1 }))}><Heart size={10}/> {myLikes[detailItem.id] ? 'Liked' : 'Like'}</button>
-                  <button className="fpill" style={{ padding: '3px 8px', fontSize: 10 }} onClick={() => setRewatchCount(p => ({ ...p, [detailItem.id]: (p[detailItem.id] || 0) + 1 }))}>↺ {rewatchCount[detailItem.id] || 0}</button>
-                  <button className="fpill" style={{ padding: '3px 8px', fontSize: 10 }} onClick={() => setRewatchCount(p => ({ ...p, [detailItem.id]: 0 }))}>Reset ↺</button>
-                  <select value={myRating[detailItem.id] || ''} onChange={(e) => setMyRating(p => ({ ...p, [detailItem.id]: Number(e.target.value) }))}
-                    style={{ fontSize: 11, borderRadius: 8, padding: '3px 6px', background: T.inputBg, color: T.inputColor, border: `1px solid ${T.inputBorder}` }}>
-                    <option value="">My rating</option>
-                    {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}/10</option>)}
-                  </select>
+                  <div className="quick-actions">
+                    <button className="fpill glass-btn" onClick={() => setMyLikes(p => ({ ...p, [detailItem.id]: p[detailItem.id] ? 0 : 1 }))}><Heart size={12}/> {myLikes[detailItem.id] ? 'Liked' : 'Like'}</button>
+                    <button className="fpill glass-btn" onClick={() => setRewatchCount(p => ({ ...p, [detailItem.id]: (p[detailItem.id] || 0) + 1 }))}>↺ Re-watch ({rewatchCount[detailItem.id] || 0})</button>
+                    <button className="fpill glass-btn" onClick={() => setRewatchCount(p => ({ ...p, [detailItem.id]: 0 }))}>Reset Re-watch</button>
+                    <select value={myRating[detailItem.id] || ''} onChange={(e) => setMyRating(p => ({ ...p, [detailItem.id]: Number(e.target.value) }))}
+                      style={{ fontSize: 12, borderRadius: 10, padding: '8px 10px', background: 'color-mix(in srgb, var(--theme-surface) 58%, transparent)', color: T.inputColor, border: `1px solid ${T.inputBorder}`, backdropFilter: 'blur(10px)' }}>
+                      <option value="">My rating</option>
+                      {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}/10</option>)}
+                    </select>
+                  </div>
                 </div>
                 <div style={{ fontSize: 14 }}><strong>Cast:</strong> {detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
-                  <button className="fpill glass-panel" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => setStatusDirect(detailItem.id, 'watched')}><Check size={10}/>Watched</button>
-                  <button className="fpill glass-panel" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => setStatusDirect(detailItem.id, 'plan-to-watch')}><Clock size={10}/>Plan</button>
-                  <button className="fpill glass-panel" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => setStatusDirect(detailItem.id, 'unwatched')}><EyeOff size={10}/>Unwatch</button>
+                <div className="status-stack" style={{ marginTop: 12 }}>
+                  <button className="fpill glass-btn" onClick={() => setStatusDirect(detailItem.id, 'watched')}><Check size={11}/>Watched</button>
+                  <button className="fpill glass-btn" onClick={() => setStatusDirect(detailItem.id, 'plan-to-watch')}><Clock size={11}/>Plan</button>
+                  <button className="fpill glass-btn" onClick={() => setStatusDirect(detailItem.id, 'watching')}><Eye size={11}/>Watching</button>
+                  <button className="fpill glass-btn" onClick={() => setStatusDirect(detailItem.id, 'unwatched')}><EyeOff size={11}/>Unwatch</button>
                 </div>
               </div>
             </div>
