@@ -710,6 +710,7 @@ export default function MCUViewer() {
           } else {
             const tmdbPoster = await fetchTmdbPoster(detailItem);
             if (tmdbPoster) setPosterCache(prev => ({ ...prev, [detailItem.id]: tmdbPoster }));
+
             const tmdbDetails = await fetchTmdbDetail(detailItem);
             if (tmdbDetails) setDetailData(tmdbDetails);
           }
