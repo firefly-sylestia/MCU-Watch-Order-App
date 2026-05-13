@@ -31,7 +31,6 @@ const Sun       = p => <Icon {...p}><circle cx="12" cy="12" r="4"/><path d="M12 
 const Moon      = p => <Icon {...p}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></Icon>;
 const Settings  = p => <Icon {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.02.02a2 2 0 1 1-2.83 2.83l-.02-.02A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.03a1.7 1.7 0 0 0-.4-1.1 1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.87.34l-.02.02a2 2 0 1 1-2.83-2.83l.02-.02A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H2.9a2 2 0 1 1 0-4h.03a1.7 1.7 0 0 0 1.1-.4 1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.87l-.02-.02a2 2 0 1 1 2.83-2.83l.02.02A1.7 1.7 0 0 0 9 4.6c.4 0 .78-.2 1-.6.25-.31.39-.7.4-1.1V2.9a2 2 0 1 1 4 0v.03c0 .4.15.79.4 1.1.22.4.6.6 1 .6.67.07 1.34-.16 1.87-.62l.02-.02a2 2 0 1 1 2.83 2.83l-.02.02a1.7 1.7 0 0 0-.34 1.87c0 .4.2.78.6 1 .31.25.7.39 1.1.4h.03a2 2 0 1 1 0 4h-.03a1.7 1.7 0 0 0-1.1.4 1.7 1.7 0 0 0-.6 1z"/></Icon>;
 const Info      = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></Icon>;
-const Bookmark  = p => <Icon {...p}><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"/></Icon>;
 
 // ─── Static data ────────────────────────────────────────────────────────────
 const PHASES = [
@@ -218,9 +217,6 @@ export default function MCUViewer() {
   const [expandedPhase,  setExpandedPhase]  = useState(null); // for phase summary toggle
   const [celebPhase,     setCelebPhase]     = useState(null); // phase completion flash
   const [editingDateId,  setEditingDateId]  = useState(null); // date editing mode
-  const [spoilerSafe,    setSpoilerSafe]    = useState(false);
-  const [jumpNextOnly,   setJumpNextOnly]   = useState(false);
-  const [bookmarks,      setBookmarks]      = useState({});
   const [headerCompact]  = useState(false);
   const [detailItem,     setDetailItem]     = useState(null);
   const [detailData,     setDetailData]     = useState(null);
@@ -431,7 +427,6 @@ export default function MCUViewer() {
       if (listMode === 'core' && essentialOnly && !i.essential) return false;
       if (watchedOnly && i.status !== 'watched') return false;
       if (statusFilter && i.status !== statusFilter) return false;
-      if (jumpNextOnly && i.status !== 'unwatched') return false;
       if (typeFilter && i.type !== typeFilter) return false;
       if (activePhase && i.phase !== activePhase) return false;
       if (timelineMode === 'studio' && i.order % 2 === 0) return true;
@@ -450,8 +445,7 @@ export default function MCUViewer() {
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, typeFilter, JumpNextOnly, activePhase, timelineMode, genreFilter, q, sortBy, coreIds]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, timelineMode, genreFilter, q, sortBy, coreIds]);
 
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
@@ -656,13 +650,6 @@ export default function MCUViewer() {
   };
 
   // ─── Theme tokens ──────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    localStorage.setItem('mcu-bookmarks-v1', JSON.stringify(bookmarks));
-  }, [bookmarks]);
-
-  const toggleBookmark = (id) => setBookmarks(prev => ({ ...prev, [id]: !prev[id] }));
-
   const T = darkMode ? {
     appBg: '#06060f', headerBg: 'linear-gradient(180deg,#0d0d1e 0%,#06060f 100%)',
     headerBorder: '#13132a', navBg: '#08081a', navBorder: '#13132a',
@@ -1365,78 +1352,7 @@ export default function MCUViewer() {
                         {isWatched && <Check size={12} style={{ position: 'absolute', top: 8, right: 8, color: '#9be8bc', filter: 'drop-shadow(0 0 6px rgba(155,232,188,0.75))' }} />}
                       </div>
 
-                      {/* Expand panel — description + quick watch buttons */}
-                      {isExpanded && (
-                        <div className="expand-row" style={{ background: T.expandBg, borderBottom: `1px solid ${T.expandBorder}`, borderLeft: `3px solid ${ph.color}44`, padding: '12px 14px 12px 52px' }}>
-                          <p style={{ fontSize: 12.5, color: T.textMuted, lineHeight: 1.65, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.2, marginBottom: 10, filter: spoilerSafe ? 'blur(4px)' : 'none', transition: 'filter 0.2s' }}>
-                            {item.desc}
-                          </p>
-                          {/* Quick action buttons inside expand */}
-                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                            <button
-                              onClick={() => setStatusDirect(item.id, 'watched')}
-                              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 6, border: `1px solid ${item.status === 'watched' ? '#3ec47a88' : T.expandBorder}`, background: item.status === 'watched' ? '#3ec47a18' : 'transparent', color: item.status === 'watched' ? '#3ec47a' : T.textMuted, cursor: 'pointer', fontFamily: "'Bebas Neue',sans-serif", fontSize: 11, letterSpacing: 1.5, transition: 'all 0.15s' }}
-                              onMouseEnter={e => { if (item.status !== 'watched') { e.currentTarget.style.background = '#3ec47a12'; e.currentTarget.style.color = '#3ec47a'; } }}
-                              onMouseLeave={e => { if (item.status !== 'watched') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T.textMuted; } }}
-                            >
-                              <Check size={11} />WATCHED
-                            </button>
-                            <button
-                              onClick={() => setStatusDirect(item.id, 'plan-to-watch')}
-                              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 6, border: `1px solid ${item.status === 'plan-to-watch' ? '#4a9ede88' : T.expandBorder}`, background: item.status === 'plan-to-watch' ? '#4a9ede18' : 'transparent', color: item.status === 'plan-to-watch' ? '#4a9ede' : T.textMuted, cursor: 'pointer', fontFamily: "'Bebas Neue',sans-serif", fontSize: 11, letterSpacing: 1.5, transition: 'all 0.15s' }}
-                              onMouseEnter={e => { if (item.status !== 'plan-to-watch') { e.currentTarget.style.background = '#4a9ede12'; e.currentTarget.style.color = '#4a9ede'; } }}
-                              onMouseLeave={e => { if (item.status !== 'plan-to-watch') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T.textMuted; } }}
-                            >
-                              <Clock size={11} />PLAN
-                            </button>
-                            <button
-                              onClick={() => setStatusDirect(item.id, 'watching')}
-                              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 6, border: `1px solid ${item.status === 'watching' ? '#e8b84b88' : T.expandBorder}`, background: item.status === 'watching' ? '#e8b84b18' : 'transparent', color: item.status === 'watching' ? '#e8b84b' : T.textMuted, cursor: 'pointer', fontFamily: "'Bebas Neue',sans-serif", fontSize: 11, letterSpacing: 1.5, transition: 'all 0.15s' }}
-                            >
-                              <Eye size={11} />WATCHING
-                            </button>
-                            <button
-                              onClick={() => setStatusDirect(item.id, 'unwatched')}
-                              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 6, border: `1px solid ${item.status === 'unwatched' ? '#55667788' : T.expandBorder}`, background: item.status === 'unwatched' ? '#55667718' : 'transparent', color: item.status === 'unwatched' ? '#8899aa' : T.textMuted, cursor: 'pointer', fontFamily: "'Bebas Neue',sans-serif", fontSize: 11, letterSpacing: 1.5, transition: 'all 0.15s' }}
-                              onMouseEnter={e => { if (item.status !== 'unwatched') { e.currentTarget.style.background = '#55667710'; e.currentTarget.style.color = '#8899aa'; } }}
-                              onMouseLeave={e => { if (item.status !== 'unwatched') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T.textMuted; } }}
-                            >
-                              <EyeOff size={11} />UNWATCH
-                            </button>
-                          </div>
-                          {/* Date editor for watched items */}
-                          {item.status === 'watched' && item.watchedDate && (
-                            <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${T.surfaceBorder}`, display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <span style={{ fontSize: 10, color: T.textMuted, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1 }}>WATCHED:</span>
-                              {editingDateId === item.id ? (
-                                <input
-                                  type="date"
-                                  value={item.watchedDate}
-                                  onChange={e => {
-                                    setItems(prev => prev.map(i => i.id === item.id ? { ...i, watchedDate: e.target.value } : i));
-                                  }}
-                                  onBlur={() => {
-                                    setEditingDateId(null);
-                                    const current = items.find(i => i.id === item.id);
-                                    persist(items);
-                                  }}
-                                  autoFocus
-                                  style={{ padding: '4px 6px', borderRadius: 4, border: `1px solid #c0392b66`, background: T.inputBg, color: T.inputColor, fontSize: 11, fontFamily: "'Rajdhani',sans-serif" }}
-                                />
-                              ) : (
-                                <button
-                                  onClick={() => setEditingDateId(item.id)}
-                                  style={{ fontSize: 11, color: '#3ec47a', background: 'transparent', border: `1px solid #3ec47a44`, borderRadius: 4, padding: '4px 8px', cursor: 'pointer', fontFamily: "'Rajdhani',sans-serif", transition: 'all 0.15s' }}
-                                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#3ec47a88'; e.currentTarget.style.background = '#3ec47a08'; }}
-                                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#3ec47a44'; e.currentTarget.style.background = 'transparent'; }}
-                                >
-                                  {item.watchedDate}
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      
                     </div>
                   );
                 })}
@@ -1508,10 +1424,6 @@ export default function MCUViewer() {
                 {activeItem?.title}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <button onClick={() => { toggleBookmark(activeItem.id); setStatusDropdown(null); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '7px 9px', border: `1px solid ${bookmarks[activeItem?.id] ? '#a06cd577' : 'transparent'}`, background: bookmarks[activeItem?.id] ? '#a06cd515' : 'transparent', color: bookmarks[activeItem?.id] ? '#a06cd5' : T.pillText, borderRadius: 6, cursor: 'pointer', fontFamily: "'Rajdhani',sans-serif", fontSize: 12.5, textAlign: 'left' }}>
-                  <Bookmark size={13} />{bookmarks[activeItem?.id] ? 'Bookmarked' : 'Add Bookmark'}
-                </button>
                 {Object.entries(STATUS_META).map(([key, meta]) => {
                   const isCurrent = key === activeItem?.status;
                   return (
