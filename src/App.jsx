@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 
 // ─── Icon primitives ────────────────────────────────────────────────────────
 const Icon = ({ children, size = 16, style = {} }) => (
@@ -347,9 +350,16 @@ export default function MCUViewer() {
     const offset = elTop - containerTop + container.scrollTop - 16;
     container.scrollTo({ top: offset, behavior: 'smooth' });
   };
-  const exportProgress = () => {
+  const exportProgress = async () => {
     const payload = items.map(({ id, status, watchedDate }) => ({ id, status, watchedDate }));
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const content = JSON.stringify(payload, null, 2);
+    if (Capacitor.isNativePlatform()) {
+      const fileName = `mcu-progress-${Date.now()}.json`;
+      const res = await Filesystem.writeFile({ path: fileName, data: content, directory: Directory.Documents, recursive: true });
+      await Share.share({ title: 'MCU Progress Export', text: 'MCU progress backup JSON', url: res.uri });
+      return;
+    }
+    const blob = new Blob([content], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -683,10 +693,8 @@ export default function MCUViewer() {
 
         .rrow{position:relative;transition:background 0.2s ease,transform 0.22s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.22s ease,border-color 0.22s ease;display:grid;align-items:center;grid-template-columns:40px 52px minmax(0,1fr) 108px;gap:14px;padding:16px 20px;border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:86px;border-radius:10px;overflow:hidden}
         .rrow:last-child{border-bottom:none}
-        .rrow::before{content:'';position:absolute;inset:0;background:linear-gradient(125deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 28%, rgba(255,255,255,0) 62%);opacity:0;transition:opacity 0.24s ease;pointer-events:none;z-index:0}
         .rrow > *{position:relative;z-index:1}
         .rrow:hover{transform:translateY(-6px);border-left-color:var(--phase-color,#c0392b);box-shadow:0 12px 28px -14px var(--phase-glow,rgba(192,57,43,0.5))}
-        .rrow:hover::before{opacity:1}
         .rrow.type-film:hover{background:linear-gradient(90deg, rgba(224,82,82,0.18), ${T.rowHoverBg}) !important}
         .rrow.type-series:hover{background:linear-gradient(90deg, rgba(74,158,222,0.18), ${T.rowHoverBg}) !important}
         .rrow.type-short:hover{background:linear-gradient(90deg, rgba(160,108,213,0.18), ${T.rowHoverBg}) !important}
@@ -1070,9 +1078,9 @@ export default function MCUViewer() {
                         <img className="poster" src={posterCache[item.id] || posterFor(item)} alt={`${item.title} poster`} loading="lazy" />
 
                         {/* Title block — clickable to expand */}
-                        <button className="title-btn" onClick={() => setDetailItem(item)}>
+                        <button className="title-btn" onClick={() => setDetailItem(item)} style={{ overflow: 'hidden' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: isWatched ? 600 : 700, lineHeight: 1.5, color: isWatched ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.9)', opacity: isWatched ? 0.85 : 1, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif" }}>
+                            <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: isWatched ? 600 : 700, lineHeight: 1.5, color: isWatched ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.9)', opacity: isWatched ? 0.85 : 1, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: '100%' }}>
                               {item.title}
                             </span>
                             {/* Episode count badge */}
@@ -1093,7 +1101,7 @@ export default function MCUViewer() {
                         </button>
 
                         {/* Year column */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: 104 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: 104, flexShrink: 0 }}>
                           <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '12px', letterSpacing: 1.4, color: T.text, textAlign: 'center', fontWeight: 600 }}>
                             {formatReleaseDate(RELEASE_INFO[item.title]?.date, item.year)}
                           </div>
