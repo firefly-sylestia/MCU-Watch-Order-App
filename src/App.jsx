@@ -25,6 +25,8 @@ const Clock     = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M12
 const Heart     = p => <Icon {...p}><path d="M12 21s-7-4.35-9.5-8.5C.2 8.8 2.1 5 5.8 5c2.1 0 3.3 1.1 4.2 2.4C10.9 6.1 12.1 5 14.2 5 17.9 5 19.8 8.8 21.5 12.5 19 16.65 12 21 12 21z"/></Icon>;
 const Pause     = p => <Icon {...p}><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></Icon>;
 const Trash2    = p => <Icon {...p}><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></Icon>;
+const Upload    = p => <Icon {...p}><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M20 16v4H4v-4"/></Icon>;
+const Download  = p => <Icon {...p}><path d="M12 4v12"/><path d="m17 11-5 5-5-5"/><path d="M20 20H4"/></Icon>;
 const Sun       = p => <Icon {...p}><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></Icon>;
 const Moon      = p => <Icon {...p}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></Icon>;
 const Settings  = p => <Icon {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.02.02a2 2 0 1 1-2.83 2.83l-.02-.02A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.03a1.7 1.7 0 0 0-.4-1.1 1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.87.34l-.02.02a2 2 0 1 1-2.83-2.83l.02-.02A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H2.9a2 2 0 1 1 0-4h.03a1.7 1.7 0 0 0 1.1-.4 1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.87l-.02-.02a2 2 0 1 1 2.83-2.83l.02.02A1.7 1.7 0 0 0 9 4.6c.4 0 .78-.2 1-.6.25-.31.39-.7.4-1.1V2.9a2 2 0 1 1 4 0v.03c0 .4.15.79.4 1.1.22.4.6.6 1 .6.67.07 1.34-.16 1.87-.62l.02-.02a2 2 0 1 1 2.83 2.83l-.02.02a1.7 1.7 0 0 0-.34 1.87c0 .4.2.78.6 1 .31.25.7.39 1.1.4h.03a2 2 0 1 1 0 4h-.03a1.7 1.7 0 0 0-1.1.4 1.7 1.7 0 0 0-.6 1z"/></Icon>;
@@ -63,7 +65,7 @@ const NO_PREREQ = new Set([
   'None (alternate reality, optional)','None (separate continuity)',
 ]);
 
-const SORT_LABELS = { order: 'Chronological', year: 'By Year', title: 'Alphabetical' };
+const SORT_LABELS = { order: 'Chronological', year: 'By Year', title: 'Alphabetical', runtime: 'Runtime', watched: 'Recently Watched', status: 'By Status' };
 
 // ─── ESSENTIAL LIST (60 items) ───────────────────────────────────────────────
 const ESSENTIAL_LIST = [
@@ -222,7 +224,9 @@ export default function MCUViewer() {
   const [detailLoading,  setDetailLoading]  = useState(false);
   const [posterCache,    setPosterCache]    = useState({});
   const [settingsOpen,   setSettingsOpen]   = useState(false);
-  const [profile,        setProfile]        = useState({ name: '', age: '', gender: '', character: 'Iron Man', pfp: '' });
+  const [profile,        setProfile]        = useState({ name: '', pfp: '' });
+  const [uploadedAvatars,setUploadedAvatars]= useState([]);
+  const [themeMode,      setThemeMode]      = useState('classic');
   const [timelineMode,   setTimelineMode]   = useState('sacred');
   const [genreFilter] = useState('all'); // hidden filter hook for future genre controls
   const [myLikes,        setMyLikes]        = useState({});
@@ -385,14 +389,7 @@ export default function MCUViewer() {
     };
     reader.readAsText(file);
   };
-  const CHARACTER_PFPS = {
-    'Iron Man': 'https://ui-avatars.com/api/?name=Iron+Man&background=7a0000&color=fff',
-    'Captain America': 'https://ui-avatars.com/api/?name=Captain+America&background=0f3d91&color=fff',
-    Thor: 'https://ui-avatars.com/api/?name=Thor&background=2c3e50&color=fff',
-    Loki: 'https://ui-avatars.com/api/?name=Loki&background=145a32&color=fff',
-    'Scarlet Witch': 'https://ui-avatars.com/api/?name=Scarlet+Witch&background=8e2430&color=fff',
-    'Spider-Man': 'https://ui-avatars.com/api/?name=Spider-Man&background=b22222&color=fff'
-  };
+  const STATUS_SORT_ORDER = { watching: 0, 'plan-to-watch': 1, unwatched: 2, watched: 3, 'on-hold': 4, dropped: 5 };
   const RELEASE_INFO = {
     'The Fantastic Four: First Steps': { date: '2025-07-25', rating: 'TBD' },
     'Spider-Man: Brand New Day': { date: '2026-07-31', rating: 'TBD' },
@@ -433,10 +430,14 @@ export default function MCUViewer() {
       if (timelineMode === 'whatif' && i.type === 'short') return true;
       if (genreFilter !== 'all' && i.type !== genreFilter) return false;
       return i.title.toLowerCase().includes(q) || i.prereq.toLowerCase().includes(q);
-    }).sort((a, b) =>
-      sortBy === 'title' ? a.title.localeCompare(b.title) :
-      sortBy === 'year'  ? a.year - b.year : sortBy === 'title' ? a.title.localeCompare(b.title) : a.order - b.order
-    );
+    }).sort((a, b) => {
+      if (sortBy === 'title') return a.title.localeCompare(b.title);
+      if (sortBy === 'year') return a.year - b.year;
+      if (sortBy === 'runtime') return (a.episodes || (a.type === 'film' ? 2.3 : 6)) - (b.episodes || (b.type === 'film' ? 2.3 : 6));
+      if (sortBy === 'watched') return (b.watchedDate || '').localeCompare(a.watchedDate || '');
+      if (sortBy === 'status') return (STATUS_SORT_ORDER[a.status] ?? 99) - (STATUS_SORT_ORDER[b.status] ?? 99);
+      return a.order - b.order;
+    });
     const g = {};
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
@@ -493,6 +494,15 @@ export default function MCUViewer() {
     if (item.type === 'series') return 'Drama';
     return 'Action';
   };
+  const inferGenres = (item) => {
+    const g = new Set([inferGenre(item)]);
+    const t = item.title.toLowerCase();
+    if (t.includes('winter soldier') || t.includes('secret invasion')) g.add('Thriller');
+    if (t.includes('guardians') || t.includes('groot') || t.includes('she-hulk')) g.add('Comedy');
+    if (t.includes('moon knight') || t.includes('agatha') || t.includes('multiverse')) g.add('Mystery');
+    if (item.type === 'series') g.add('Serial');
+    return [...g].slice(0, 3);
+  };
   const nextUnwatched = useMemo(() => filtered.find(i => i.status !== 'watched') || null, [filtered]);
   const recentActivity = useMemo(() => [...activeItems].filter(i => i.watchedDate).sort((a,b) => (b.watchedDate||'').localeCompare(a.watchedDate||'')).slice(0,5), [activeItems]);
   const totalEntries = activeItems.length;
@@ -533,6 +543,19 @@ export default function MCUViewer() {
   useEffect(() => {
     localStorage.setItem('mcu-meta-cache-v1', JSON.stringify(metaCache));
   }, [metaCache]);
+  useEffect(() => {
+    try {
+      const p = JSON.parse(localStorage.getItem('mcu-profile-v1') || '{}');
+      if (p?.pfp || p?.name) setProfile(prev => ({ ...prev, ...p }));
+      const avatars = JSON.parse(localStorage.getItem('mcu-uploaded-avatars-v1') || '[]');
+      if (Array.isArray(avatars)) setUploadedAvatars(avatars);
+      const t = localStorage.getItem('mcu-theme-mode-v1');
+      if (t) setThemeMode(t);
+    } catch {}
+  }, []);
+  useEffect(() => { localStorage.setItem('mcu-profile-v1', JSON.stringify(profile)); }, [profile]);
+  useEffect(() => { localStorage.setItem('mcu-uploaded-avatars-v1', JSON.stringify(uploadedAvatars)); }, [uploadedAvatars]);
+  useEffect(() => { localStorage.setItem('mcu-theme-mode-v1', themeMode); }, [themeMode]);
 
   useEffect(() => {
     const key = import.meta.env.VITE_OMDB_API_KEY || OMDB_KEY;
@@ -610,7 +633,7 @@ export default function MCUViewer() {
     headerBorder: '#13132a', navBg: '#08081a', navBorder: '#13132a',
     filterBg: '#07071a', filterBorder: '#10101f',
     surfaceBg: '#0b0b1c', surfaceBorder: '#12122a',
-    rowHoverBg: 'rgba(255,255,255,0.04)', rowWatchedBg: 'rgba(30,30,46,0.4)',
+    rowHoverBg: 'rgba(255,255,255,0.04)', rowWatchedBg: 'rgba(62,196,122,0.22)',
     rowBorder: '#0e0e1e', expandBg: '#090916', expandBorder: '#14142a',
     pillBg: '#0d0d1e', pillBorder: '#1a1a2e', pillText: '#6a7a90',
     pillHoverBorder: '#252540', pillHoverText: '#c5d0e8',
@@ -627,7 +650,7 @@ export default function MCUViewer() {
     headerBorder: '#ddd8d0', navBg: '#ffffff', navBorder: '#e8e2d8',
     filterBg: '#faf8f4', filterBorder: '#e4ddd4',
     surfaceBg: '#ffffff', surfaceBorder: '#e0dbd2',
-    rowHoverBg: 'rgba(0,0,0,0.025)', rowWatchedBg: 'rgba(30,30,46,0.4)',
+    rowHoverBg: 'rgba(0,0,0,0.025)', rowWatchedBg: 'rgba(62,196,122,0.15)',
     rowBorder: '#ede8e0', expandBg: '#faf7f2', expandBorder: '#e4ddd4',
     pillBg: '#f0ece4', pillBorder: '#ddd8cf', pillText: '#6a7080',
     pillHoverBorder: '#c8c2b8', pillHoverText: '#1a2030',
@@ -641,8 +664,9 @@ export default function MCUViewer() {
     phaseSummaryBg: '#f5f2ec', phaseSummaryBorder: '#e4ddd4',
   };
 
+  const appThemeBg = 'var(--theme-bg)';
   return (
-    <div style={{ width: '100%', minHeight: '100dvh', background: T.appBg, color: T.text, fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 0.32s cubic-bezier(0.34,1.56,0.64,1), color 0.32s cubic-bezier(0.34,1.56,0.64,1)' }} className="theme-switch">
+    <div data-theme={themeMode} style={{ width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 0.32s cubic-bezier(0.34,1.56,0.64,1), color 0.32s cubic-bezier(0.34,1.56,0.64,1)' }} className="theme-switch">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -699,14 +723,15 @@ export default function MCUViewer() {
         .ntab::after{content:'';position:absolute;bottom:0;left:12px;right:12px;height:2px;border-radius:2px 2px 0 0;background:currentColor;transform:scaleX(0);transform-origin:center;transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1)}
         .ntab.on::after{transform:scaleX(1)}
 
-        .fpill{display:flex;align-items:center;gap:6px;padding:7px 28px;border-radius:12px;border:1px solid transparent;background:${darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(20,24,34,0.06)'};backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);cursor:pointer;font-size:clamp(14px,2.2vw,16px);font-weight:600;letter-spacing:0.05em;color:${T.pillText};transition:background-color 0.18s ease,color 0.18s ease,opacity 0.18s ease,border-color 0.18s ease;white-space:nowrap;box-shadow:none}
-        .fpill:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText};background:${darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(20,24,34,0.10)'};opacity:0.96}
+        .fpill{display:flex;align-items:center;gap:6px;padding:7px 26px;border-radius:12px;border:1px solid var(--theme-border);background:var(--theme-surface);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);cursor:pointer;font-size:clamp(14px,2.2vw,16px);font-weight:600;letter-spacing:0.03em;color:var(--theme-text);transition:background-color 0.18s ease,color 0.18s ease,opacity 0.18s ease,border-color 0.18s ease;white-space:nowrap;box-shadow:none;overflow:visible}
+        .fpill:hover{border-color:var(--theme-accent);color:var(--theme-accent);background:var(--theme-surface-hover);opacity:0.96}
         .fpill:active{opacity:0.82}
         .fpill:focus-visible,.theme-btn:focus-visible,.lmode-btn:focus-visible{outline:2px solid #c0392b;outline-offset:2px}
 
         .sopt{padding:13px 20px;font-family:'Bebas Neue',sans-serif;font-size:clamp(15px,2.2vw,18px);letter-spacing:2.5px;cursor:pointer;color:${T.pillText};transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1)}
         .sopt:hover{background:${T.sortHoverBg};color:${T.text};transform:translateX(4px)}
-        .sopt.picked{color:#c0392b;font-weight:700}
+        .sopt.picked,.dropdown-item.active{background:var(--theme-surface-hover);border-radius:12px;color:var(--theme-accent);font-weight:700}
+        .curvy-indicator{height:4px;border-radius:99px;background:var(--theme-accent);box-shadow:0 0 8px var(--theme-accent-glow);border:none}
 
         .rrow{position:relative;transition:background 0.2s ease,transform 0.22s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.22s ease,border-color 0.22s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:12px;padding:16px 16px 16px 12px;border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:86px;border-radius:10px;overflow:hidden}
         .rrow:last-child{border-bottom:none}
@@ -756,7 +781,7 @@ export default function MCUViewer() {
 
         .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; }
         .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));backdrop-filter:blur(6px)}
-        .phase-grad-line{height:2px;background:linear-gradient(90deg,#e05252 0%,#e8b84b 25%,#4a9ede 50%,#a06cd5 75%,#3ec47a 100%);opacity:0.9}
+        .phase-grad-line{display:none}
 
         /* hide default scrollbar on main while keeping functionality */
         main::-webkit-scrollbar{width:4px}
@@ -766,8 +791,8 @@ export default function MCUViewer() {
       `}</style>
       <div ref={settingsRef} style={{ position: 'fixed', top: 16, right: 14, zIndex: 260 }}>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div title={profile.name || 'Profile'} style={{ width: 44, height: 44, borderRadius: '50%', border: `1px solid ${T.surfaceBorder}`, display: 'grid', placeItems: 'center', background: darkMode ? 'rgba(16,18,35,0.92)' : '#fff', overflow: 'hidden', flexShrink: 0 }}>
-            <img src={profile.pfp || CHARACTER_PFPS[profile.character] || CHARACTER_PFPS['Iron Man']} alt="profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div className="profile-avatar-container" title={profile.name || 'Profile'} style={{ width: 56, height: 56, borderRadius: '50%', border: `2px solid var(--theme-accent)`, padding: 3, background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+            <img className="profile-avatar-img" src={profile.pfp || 'https://placehold.co/80x80/222/fff?text=G'} alt="profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
           </div>
           <button className="theme-btn" onClick={() => setSettingsOpen(o => !o)} aria-label="Open settings menu" title="Settings" style={{ width: 40, height: 40, background: darkMode ? 'rgba(16,18,35,0.92)' : '#fff' }}>
             <Settings size={15} />
@@ -777,24 +802,38 @@ export default function MCUViewer() {
           <div className="fade-in" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, marginTop: 8, minWidth: 320, borderRadius: 12, border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(11,13,26,0.96)' : '#fff', boxShadow: T.dropdownShadow, padding: 10, display: 'grid', gap: 8, maxHeight: '80vh', overflow: 'auto' }}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Profile</div>
             <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-              <input value={profile.age} onChange={e => setProfile(p => ({ ...p, age: e.target.value }))} placeholder="Age (optional)" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
-              <input value={profile.gender} onChange={e => setProfile(p => ({ ...p, gender: e.target.value }))} placeholder="Gender (optional)" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 6 }}>
-              <select value={profile.character} onChange={e => setProfile(p => ({ ...p, character: e.target.value }))} style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }}>
-                {Object.keys(CHARACTER_PFPS).map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-              <label className="fpill" style={{ cursor: 'pointer' }}>PFP
-                <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => setProfile(p => ({ ...p, pfp: String(r.result || '') })); r.readAsDataURL(f); }} style={{ display: 'none' }} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 6 }}>
+              {uploadedAvatars.map((src, idx) => (
+                <button key={idx} onClick={() => setProfile(p => ({ ...p, pfp: src }))} title={`Avatar ${idx + 1}`} style={{ border: profile.pfp === src ? '2px solid #c0392b' : `1px solid ${T.inputBorder}`, borderRadius: '999px', padding: 2, background: 'transparent', cursor: 'pointer' }}>
+                  <img src={src} alt={`Avatar ${idx + 1}`} style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: '50%', objectFit: 'cover' }} />
+                </button>
+              ))}
+              <label title="Upload custom avatar" style={{ border: `1px dashed ${T.inputBorder}`, borderRadius: '999px', padding: 2, display: 'grid', placeItems: 'center', cursor: 'pointer', minHeight: 44, color: T.textMuted }}>
+                <div style={{ display: 'grid', placeItems: 'center', fontSize: 11, gap: 2 }}>
+                  <Upload size={13} />
+                  <span>Custom +</span>
+                </div>
+                <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const img = String(r.result || ''); setProfile(p => ({ ...p, pfp: img })); setUploadedAvatars(a => [img, ...a.filter(x => x !== img)].slice(0, 24)); }; r.readAsDataURL(f); }} style={{ display: 'none' }} />
               </label>
             </div>
-            <button className="fpill" onClick={() => setDarkMode(d => !d)}>{darkMode ? 'Light Mode' : 'Dark Mode'}</button>
-            <button className="fpill" onClick={exportProgress}>Export Progress</button>
-            <label className="fpill" style={{ cursor: 'pointer' }}>Import Progress
+            <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
+            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Preferences</div>
+            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Moon size={14} /> Dark Theme</span>
+              <input type="checkbox" checked={darkMode} onChange={() => setDarkMode(d => !d)} style={{ width: 36, height: 20 }} />
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
+              {['classic','cosmic','vibranium','quantum','mystic','web-slinger'].map(t => <button key={t} className="fpill" style={{ padding: '6px 8px', justifyContent: 'center', borderColor: themeMode === t ? 'var(--theme-accent)' : 'var(--theme-border)' }} onClick={() => setThemeMode(t)}>{t}</button>)}
+            </div>
+            <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
+            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Data</div>
+            <button className="fpill" onClick={exportProgress}><Download size={14}/>Export Progress</button>
+            <label className="fpill" style={{ cursor: 'pointer' }}><Upload size={14}/>Import Progress
               <input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} />
             </label>
-            <button className="fpill" onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); }}>Reset Filters</button>
+            <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
+            <div style={{ fontSize: 11, letterSpacing: 2, color: '#d16a6a', textTransform: 'uppercase' }}>Danger Zone</div>
+            <button className="fpill" style={{ color: '#d16a6a', background: 'rgba(209,106,106,0.12)' }} onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); }}><Trash2 size={14}/>Reset Filters</button>
           </div>
         )}
       </div>
@@ -834,7 +873,6 @@ export default function MCUViewer() {
           </>
         </div>
       </header>
-      <div className="phase-grad-line" aria-hidden="true" />
 
       {/* ━━ LIST MODE SWITCHER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: T.switcherBg, borderBottom: `1px solid ${T.switcherBorder}`, padding: '0 24px', flexShrink: 0 }}>
@@ -1087,7 +1125,7 @@ export default function MCUViewer() {
                   return (
                     <div key={item.id}>
                       {/* Main row */}
-                      <div className={`rrow row-in type-${item.type} ${isWatched ? 'glass-panel' : ''}`} style={{ background: isWatched ? T.rowWatchedBg : 'transparent', opacity: isWatched ? 0.7 : 1, '--phase-color': ph.color, '--phase-glow': ph.glow }}>
+                      <div className={`rrow row-in type-${item.type} ${isWatched ? 'glass-panel' : ''}`} style={{ background: isWatched ? T.rowWatchedBg : 'transparent', opacity: 1, borderLeftColor: isWatched ? '#3ec47a' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow }}>
                         {/* Order / check */}
                         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 15, color: isWatched ? '#f1bfd3' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
                           {isWatched ? <Check size={14} style={{ color: '#f4a8ca' }} /> : (idx + 1)}
@@ -1097,7 +1135,7 @@ export default function MCUViewer() {
                         {/* Title block — clickable to expand */}
                         <button className="title-btn" onClick={() => setDetailItem(item)} style={{ overflow: 'hidden' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: isWatched ? 600 : 700, lineHeight: 1.5, color: isWatched ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.9)', opacity: isWatched ? 0.85 : 1, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: '100%' }}>
+                            <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: isWatched ? 700 : 700, lineHeight: 1.5, color: isWatched ? '#9df1c2' : 'rgba(255,255,255,0.9)', opacity: 1, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: '100%' }}>
                               {item.title}
                             </span>
                             {/* Episode count badge */}
@@ -1114,7 +1152,7 @@ export default function MCUViewer() {
                             )}
                             <ChevRight size={10} style={{ color: T.textFaint, transform: 'none', transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
                           </div>
-                          <div style={{ marginTop: 2, fontSize: 10, color: 'rgba(255,255,255,0.5)', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2 }}>GENRE: {inferGenre(item).toUpperCase()}</div>
+                          <div style={{ marginTop: 2, fontSize: 10, color: 'rgba(255,255,255,0.5)', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2 }}>GENRES: {inferGenres(item).join(' • ').toUpperCase()}</div>
                         </button>
 
                         {/* Year column */}
