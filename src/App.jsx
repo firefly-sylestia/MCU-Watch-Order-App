@@ -574,7 +574,7 @@ export default function MCUViewer() {
     headerBorder: '#13132a', navBg: '#08081a', navBorder: '#13132a',
     filterBg: '#07071a', filterBorder: '#10101f',
     surfaceBg: '#0b0b1c', surfaceBorder: '#12122a',
-    rowHoverBg: 'rgba(255,255,255,0.04)', rowWatchedBg: 'rgba(255,192,203,0.05)',
+    rowHoverBg: 'rgba(255,255,255,0.04)', rowWatchedBg: 'rgba(30,30,46,0.4)',
     rowBorder: '#0e0e1e', expandBg: '#090916', expandBorder: '#14142a',
     pillBg: '#0d0d1e', pillBorder: '#1a1a2e', pillText: '#6a7a90',
     pillHoverBorder: '#252540', pillHoverText: '#c5d0e8',
@@ -591,7 +591,7 @@ export default function MCUViewer() {
     headerBorder: '#ddd8d0', navBg: '#ffffff', navBorder: '#e8e2d8',
     filterBg: '#faf8f4', filterBorder: '#e4ddd4',
     surfaceBg: '#ffffff', surfaceBorder: '#e0dbd2',
-    rowHoverBg: 'rgba(0,0,0,0.025)', rowWatchedBg: '#f7f5f0',
+    rowHoverBg: 'rgba(0,0,0,0.025)', rowWatchedBg: 'rgba(30,30,46,0.4)',
     rowBorder: '#ede8e0', expandBg: '#faf7f2', expandBorder: '#e4ddd4',
     pillBg: '#f0ece4', pillBorder: '#ddd8cf', pillText: '#6a7080',
     pillHoverBorder: '#c8c2b8', pillHoverText: '#1a2030',
@@ -697,8 +697,8 @@ export default function MCUViewer() {
         .poster{width:52px;height:76px;object-fit:cover;border-radius:6px;border:1px solid ${T.surfaceBorder};box-shadow:0 6px 16px rgba(0,0,0,0.22)}
         .progress-gradient{background:linear-gradient(90deg,#f3a6c2 0%,#f49bc8 32%,#f6b8d0 64%,#ffd2e4 100%);background-size:200% 100%;animation:gradientFlow 3.4s linear infinite}
         @keyframes gradientFlow{0%{background-position:0% 50%}100%{background-position:200% 50%}}
-        .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.74);backdrop-filter:blur(4px);z-index:240;display:grid;place-items:center;padding:20px}
-        .detail-card{width:min(980px,94vw);max-height:90vh;overflow:auto;background:${T.surfaceBg};border:1px solid ${T.surfaceBorder};border-radius:14px;padding:20px}
+        .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.62);backdrop-filter:blur(12px);z-index:240;display:grid;place-items:center;padding:20px}
+        .detail-card{width:min(980px,94vw);max-height:90vh;overflow:auto;background:rgba(30,30,46,0.4);backdrop-filter:blur(12px);border:1px solid ${T.surfaceBorder};border-radius:14px;padding:24px}
         .filter-shell{
           position: static;
           z-index: auto;
@@ -729,15 +729,17 @@ export default function MCUViewer() {
         main::-webkit-scrollbar-thumb{background:${T.scrollThumb};border-radius:4px}
         main::-webkit-scrollbar-thumb:hover{background:${T.scrollThumbH}}
       `}</style>
-      <div ref={settingsRef} style={{ position: 'fixed', top: 16, right: 14, zIndex: 260, display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div title={profile.name || 'Profile'} style={{ width: 44, height: 44, borderRadius: '50%', border: `1px solid ${T.surfaceBorder}`, display: 'grid', placeItems: 'center', background: darkMode ? 'rgba(16,18,35,0.92)' : '#fff', overflow: 'hidden', flexShrink: 0 }}>
-          <img src={profile.pfp || CHARACTER_PFPS[profile.character] || CHARACTER_PFPS['Iron Man']} alt="profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      <div ref={settingsRef} style={{ position: 'fixed', top: 16, right: 14, zIndex: 260 }}>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div title={profile.name || 'Profile'} style={{ width: 44, height: 44, borderRadius: '50%', border: `1px solid ${T.surfaceBorder}`, display: 'grid', placeItems: 'center', background: darkMode ? 'rgba(16,18,35,0.92)' : '#fff', overflow: 'hidden', flexShrink: 0 }}>
+            <img src={profile.pfp || CHARACTER_PFPS[profile.character] || CHARACTER_PFPS['Iron Man']} alt="profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+          <button className="theme-btn" onClick={() => setSettingsOpen(o => !o)} aria-label="Open settings menu" title="Settings" style={{ width: 40, height: 40, background: darkMode ? 'rgba(16,18,35,0.92)' : '#fff' }}>
+            <Settings size={15} />
+          </button>
         </div>
-        <button className="theme-btn" onClick={() => setSettingsOpen(o => !o)} aria-label="Open settings menu" title="Settings" style={{ width: 40, height: 40, background: darkMode ? 'rgba(16,18,35,0.92)' : '#fff' }}>
-          <Settings size={15} />
-        </button>
         {settingsOpen && (
-          <div className="fade-in" style={{ marginTop: 8, minWidth: 320, borderRadius: 12, border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(11,13,26,0.96)' : '#fff', boxShadow: T.dropdownShadow, padding: 10, display: 'grid', gap: 8, maxHeight: '80vh', overflow: 'auto' }}>
+          <div className="fade-in" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, marginTop: 8, minWidth: 320, borderRadius: 12, border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(11,13,26,0.96)' : '#fff', boxShadow: T.dropdownShadow, padding: 10, display: 'grid', gap: 8, maxHeight: '80vh', overflow: 'auto' }}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Profile</div>
             <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
@@ -955,7 +957,7 @@ export default function MCUViewer() {
 
       <button
         type="button"
-        onClick={() => { if (nextUnwatched) { setActivePhase(nextUnwatched.phase); scrollTo(nextUnwatched.phase); } }}
+        onClick={() => { if (nextUnwatched) setDetailItem(nextUnwatched); }}
         aria-label="Jump to next unwatched item"
         style={{ position: 'fixed', right: 16, bottom: 16, zIndex: 120, borderRadius: 999, padding: '10px 14px', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'linear-gradient(135deg, rgba(20,25,46,0.95), rgba(34,18,52,0.95))' : 'linear-gradient(135deg, #ffffff, #f6f0ff)', color: T.text, boxShadow: darkMode ? '0 8px 22px rgba(0,0,0,0.45)' : '0 8px 20px rgba(0,0,0,0.14)', cursor: nextUnwatched ? 'pointer' : 'default', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2, fontSize: 12 }}
       >
@@ -1064,7 +1066,7 @@ export default function MCUViewer() {
                         {/* Title block — clickable to expand */}
                         <button className="title-btn" onClick={() => setDetailItem(item)}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: isWatched ? 400 : 600, lineHeight: 1.5, color: isWatched ? T.textMuted : T.text, textDecoration: isWatched ? 'line-through' : 'none', textDecorationColor: '#f4a8ca', transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif" }}>
+                            <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: isWatched ? 500 : 600, lineHeight: 1.5, color: isWatched ? 'rgba(255,255,255,0.5)' : T.text, opacity: isWatched ? 0.85 : 1, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif" }}>
                               {item.title}
                             </span>
                             {/* Episode count badge */}
@@ -1092,27 +1094,15 @@ export default function MCUViewer() {
                         </button>
 
                         {/* Year column */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 80 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, minWidth: 84 }}>
                           <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '12px', letterSpacing: 1.4, color: T.text, textAlign: 'center', fontWeight: 600 }}>
                             {formatReleaseDate(RELEASE_INFO[item.title]?.date, item.year)}
                           </div>
                           <div style={{ fontSize: 10, color: T.textMuted }}>IMDb {RELEASE_INFO[item.title]?.rating || '—'}</div>
-                          {(watchedOnly || isWatched) && (
-                            <>
-                              <button className="fpill" style={{ padding: '2px 8px', fontSize: 10 }} onClick={() => setMyLikes(p => ({ ...p, [item.id]: (p[item.id] || 0) + 1 }))}>❤️ {myLikes[item.id] || 0}</button>
-                              <select value={myRating[item.id] || ''} onChange={(e) => setMyRating(p => ({ ...p, [item.id]: Number(e.target.value) }))}
-                                style={{ fontSize: 10, borderRadius: 8, padding: '2px 4px', background: T.inputBg, color: T.inputColor, border: `1px solid ${T.inputBorder}` }}>
-                                <option value="">My ⭐</option>
-                                {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}/10</option>)}
-                              </select>
-                            </>
-                          )}
-                          <button className="fpill" style={{ padding: '2px 8px', fontSize: 10 }} onClick={() => setRewatchCount(p => ({ ...p, [item.id]: (p[item.id] || 0) + 1 }))}>↺ {rewatchCount[item.id] || 0}</button>
-
                         </div>
 
                         {/* Status button */}
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                           <button className="wbtn"
                             aria-label={`${statusMeta.label} — click to change`}
                             aria-haspopup="true"
@@ -1123,7 +1113,7 @@ export default function MCUViewer() {
                               if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openStatusDropdown(e, item.id); }
                               if (e.key === 'Escape') setStatusDropdown(null);
                             }}
-                            style={{ background: statusMeta.bg, color: statusMeta.color, borderColor: statusMeta.color + '55', boxShadow: item.status !== 'unwatched' && darkMode ? `0 0 9px ${statusMeta.color}35` : 'none' }}
+                            style={{ width: 26, height: 26, background: statusMeta.bg, color: statusMeta.color, borderColor: statusMeta.color + '55', boxShadow: item.status !== 'unwatched' && darkMode ? `0 0 9px ${statusMeta.color}35` : 'none' }}
                           >
                             <statusMeta.Icon size={12} />
                           </button>
@@ -1162,6 +1152,15 @@ export default function MCUViewer() {
                 <p style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 12 }}>{detailData?.Plot && detailData.Plot !== 'N/A' ? detailData.Plot : detailItem.desc}</p>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Prerequisite:</strong> {detailItem.prereq}</div>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Status:</strong> {STATUS_META[detailItem.status]?.label}</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+                  <button className="fpill" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => setMyLikes(p => ({ ...p, [detailItem.id]: (p[detailItem.id] || 0) + 1 }))}>❤️ Likes {myLikes[detailItem.id] || 0}</button>
+                  <button className="fpill" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => setRewatchCount(p => ({ ...p, [detailItem.id]: (p[detailItem.id] || 0) + 1 }))}>↺ Rewatch {rewatchCount[detailItem.id] || 0}</button>
+                  <select value={myRating[detailItem.id] || ''} onChange={(e) => setMyRating(p => ({ ...p, [detailItem.id]: Number(e.target.value) }))}
+                    style={{ fontSize: 12, borderRadius: 8, padding: '4px 6px', background: T.inputBg, color: T.inputColor, border: `1px solid ${T.inputBorder}` }}>
+                    <option value="">My rating</option>
+                    {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}/10</option>)}
+                  </select>
+                </div>
                 <div style={{ fontSize: 14 }}><strong>Cast:</strong> {detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
                   <button className="fpill" onClick={() => setStatusDirect(detailItem.id, 'watched')}><Check size={11}/>Watched</button>
