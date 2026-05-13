@@ -665,36 +665,63 @@ export default function MCUViewer() {
   };
 
 
+  const THEME_CHOICES = [
+    { id: 'classic', label: 'Iron Man' },
+    { id: 'cosmic', label: 'Captain Marvel' },
+    { id: 'vibranium', label: 'Black Panther' },
+    { id: 'quantum', label: 'Ant-Man' },
+    { id: 'mystic', label: 'Doctor Strange' },
+    { id: 'web-slinger', label: 'Spider-Man' },
+    { id: 'god-of-thunder', label: 'Thor' },
+    { id: 'scarlet-witch', label: 'Scarlet Witch' },
+    { id: 'winter-soldier', label: 'Winter Soldier' },
+  ];
+
   const themeVarsByMode = {
     classic: {
-      '--theme-accent': '#c0392b',
-      '--theme-accent-alt': '#e8b84b',
-      '--theme-accent-glow': darkMode ? 'rgba(192,57,43,0.40)' : 'rgba(192,57,43,0.22)',
+      '--theme-accent': '#d4372f',
+      '--theme-accent-alt': '#f5c04a',
+      '--theme-accent-glow': darkMode ? 'rgba(212,55,47,0.42)' : 'rgba(212,55,47,0.26)',
     },
     cosmic: {
-      '--theme-accent': '#4a9ede',
-      '--theme-accent-alt': '#a06cd5',
-      '--theme-accent-glow': darkMode ? 'rgba(74,158,222,0.42)' : 'rgba(74,158,222,0.25)',
+      '--theme-accent': '#4d7bff',
+      '--theme-accent-alt': '#ffb94a',
+      '--theme-accent-glow': darkMode ? 'rgba(77,123,255,0.45)' : 'rgba(77,123,255,0.24)',
     },
     vibranium: {
-      '--theme-accent': '#3ec47a',
-      '--theme-accent-alt': '#58d6d8',
-      '--theme-accent-glow': darkMode ? 'rgba(62,196,122,0.42)' : 'rgba(62,196,122,0.22)',
+      '--theme-accent': '#7e5dff',
+      '--theme-accent-alt': '#31c0f4',
+      '--theme-accent-glow': darkMode ? 'rgba(126,93,255,0.42)' : 'rgba(126,93,255,0.25)',
     },
     quantum: {
-      '--theme-accent': '#f3a6c2',
-      '--theme-accent-alt': '#ffd2e4',
-      '--theme-accent-glow': darkMode ? 'rgba(243,166,194,0.45)' : 'rgba(243,166,194,0.26)',
+      '--theme-accent': '#ff5da8',
+      '--theme-accent-alt': '#67f2ff',
+      '--theme-accent-glow': darkMode ? 'rgba(255,93,168,0.44)' : 'rgba(255,93,168,0.25)',
     },
     mystic: {
-      '--theme-accent': '#a06cd5',
-      '--theme-accent-alt': '#4a9ede',
-      '--theme-accent-glow': darkMode ? 'rgba(160,108,213,0.42)' : 'rgba(160,108,213,0.24)',
+      '--theme-accent': '#9f66ff',
+      '--theme-accent-alt': '#ff7b39',
+      '--theme-accent-glow': darkMode ? 'rgba(159,102,255,0.42)' : 'rgba(159,102,255,0.24)',
     },
     'web-slinger': {
-      '--theme-accent': '#d34d4d',
-      '--theme-accent-alt': '#4a9ede',
-      '--theme-accent-glow': darkMode ? 'rgba(211,77,77,0.40)' : 'rgba(211,77,77,0.22)',
+      '--theme-accent': '#df3f4c',
+      '--theme-accent-alt': '#2b7bdf',
+      '--theme-accent-glow': darkMode ? 'rgba(223,63,76,0.42)' : 'rgba(223,63,76,0.24)',
+    },
+    'god-of-thunder': {
+      '--theme-accent': '#3ca6ff',
+      '--theme-accent-alt': '#f0f6ff',
+      '--theme-accent-glow': darkMode ? 'rgba(60,166,255,0.46)' : 'rgba(60,166,255,0.26)',
+    },
+    'scarlet-witch': {
+      '--theme-accent': '#c61b59',
+      '--theme-accent-alt': '#ff7cb5',
+      '--theme-accent-glow': darkMode ? 'rgba(198,27,89,0.45)' : 'rgba(198,27,89,0.25)',
+    },
+    'winter-soldier': {
+      '--theme-accent': '#8fa0b8',
+      '--theme-accent-alt': '#4b596f',
+      '--theme-accent-glow': darkMode ? 'rgba(143,160,184,0.40)' : 'rgba(143,160,184,0.24)',
     },
   };
 
@@ -877,7 +904,7 @@ export default function MCUViewer() {
               <input type="checkbox" checked={darkMode} onChange={() => setDarkMode(d => !d)} style={{ width: 36, height: 20 }} />
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
-              {['classic','cosmic','vibranium','quantum','mystic','web-slinger'].map(t => (
+              {THEME_CHOICES.map(({ id: t, label }) => (
                 <button
                   key={t}
                   className="fpill"
@@ -891,7 +918,7 @@ export default function MCUViewer() {
                   }}
                   onClick={() => setThemeMode(t)}
                 >
-                  {t}
+                  {label}
                 </button>
               ))}
             </div>
