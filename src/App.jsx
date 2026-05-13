@@ -483,7 +483,31 @@ export default function MCUViewer() {
     });
   }, [activeItems]);
   const memoryScore = useMemo(() => Math.max(0, Math.min(100, Math.round((totalWatched / Math.max(1, activeItems.length)) * 100) - (spoilerSafe ? 10 : 0))), [totalWatched, activeItems.length, spoilerSafe]);
-  const OMDB_KEY = '14596ed1';
+  const OMDB_KEY = import.meta.env.VITE_OMDB_API_KEY;
+  const TMDB_DIRECT_KEY = import.meta.env.VITE_TMDB_API_KEY;
+
+  const fetchTmdbPoster = async (item) => {
+    const q = encodeURIComponent(cleanLookupTitle(item.title));
+    const y = encodeURIComponent(String(item.year || ''));
+    try {
+      const proxyRes = await fetch(`/api/tmdb/poster?title=${q}&year=${y}`);
+      if (proxyRes.ok) {
+        const payload = await proxyRes.json();
+        if (payload?.poster) return payload.poster;
+      }
+    } catch {}
+
+    if (!TMDB_DIRECT_KEY) return '';
+    try {
+      const params = new URLSearchParams({ query: cleanLookupTitle(item.title), include_adult: 'false', language: 'en-US', page: '1', year: String(item.year || '') });
+      const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${TMDB_DIRECT_KEY}&${params.toString()}`);
+      const data = await res.json();
+      const best = (data?.results || []).find(r => r?.poster_path && (r.media_type === 'movie' || r.media_type === 'tv'));
+      return best?.poster_path ? `https://image.tmdb.org/t/p/w500${best.poster_path}` : '';
+    } catch {
+      return '';
+    }
+  };
   const cleanLookupTitle = (title) => title.replace(/\sS\d.*$/i, '').replace(/\sEps?.*$/i, '').trim();
   const formatReleaseDate = (dateStr, fallbackYear) => {
     if (!dateStr) return String(fallbackYear);
@@ -597,8 +621,7 @@ export default function MCUViewer() {
   }, [myLikes, myRating, rewatchCount, bookmarks]);
 
   useEffect(() => {
-    const key = import.meta.env.VITE_OMDB_API_KEY || OMDB_KEY;
-    if (!key) return;
+    const key = OMDB_KEY;
     const targets = filtered.slice(0, 30).filter(i => posterCache[i.id] === undefined || metaCache[i.id] === undefined);
     if (!targets.length) return;
     let cancelled = false;
@@ -608,15 +631,20 @@ export default function MCUViewer() {
       for (const item of targets) {
         try {
           const t = encodeURIComponent(cleanLookupTitle(item.title));
-          const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}`);
-          const data = await res.json();
-          posterUpdates[item.id] = data?.Poster && data.Poster !== 'N/A' ? data.Poster : '';
-          metaUpdates[item.id] = {
-            rating: data?.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : '',
-            released: data?.Released && data.Released !== 'N/A' ? data.Released : ''
-          };
+          if (key) {
+            const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}`);
+            const data = await res.json();
+            posterUpdates[item.id] = data?.Poster && data.Poster !== 'N/A' ? data.Poster : await fetchTmdbPoster(item);
+            metaUpdates[item.id] = {
+              rating: data?.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : '',
+              released: data?.Released && data.Released !== 'N/A' ? data.Released : ''
+            };
+          } else {
+            posterUpdates[item.id] = await fetchTmdbPoster(item);
+            metaUpdates[item.id] = { rating: '', released: '' };
+          }
         } catch {
-          posterUpdates[item.id] = '';
+          posterUpdates[item.id] = await fetchTmdbPoster(item);
           metaUpdates[item.id] = { rating: '', released: '' };
         }
       }
@@ -634,17 +662,27 @@ export default function MCUViewer() {
       if (!detailItem) return;
       setDetailLoading(true);
       setDetailData(null);
-      const key = import.meta.env.VITE_OMDB_API_KEY || OMDB_KEY;
-      if (!key) { setDetailLoading(false); return; }
+      const key = OMDB_KEY;
       try {
-        const t = encodeURIComponent(cleanLookupTitle(detailItem.title));
-        const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}`);
-        const data = await res.json();
-        if (data?.Response === 'True') {
+        if (key) {
+          const t = encodeURIComponent(cleanLookupTitle(detailItem.title));
+          const res = await fetch(`https://www.omdbapi.com/?apikey=${key}&t=${t}`);
+          const data = await res.json();
+          if (data?.Response === 'True') {
           setDetailData(data);
           if (data.Poster && data.Poster !== 'N/A') {
             setPosterCache(prev => ({ ...prev, [detailItem.id]: data.Poster }));
+          } else {
+            const tmdbPoster = await fetchTmdbPoster(detailItem);
+            if (tmdbPoster) setPosterCache(prev => ({ ...prev, [detailItem.id]: tmdbPoster }));
           }
+          } else {
+            const tmdbPoster = await fetchTmdbPoster(detailItem);
+            if (tmdbPoster) setPosterCache(prev => ({ ...prev, [detailItem.id]: tmdbPoster }));
+          }
+        } else {
+          const tmdbPoster = await fetchTmdbPoster(detailItem);
+          if (tmdbPoster) setPosterCache(prev => ({ ...prev, [detailItem.id]: tmdbPoster }));
         }
       } catch {}
       setDetailLoading(false);
