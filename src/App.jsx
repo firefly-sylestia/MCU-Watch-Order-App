@@ -783,6 +783,8 @@ export default function MCUViewer() {
         .sopt:hover{background:${T.sortHoverBg};color:${T.text};transform:translateX(4px)}
         .sopt.picked,.dropdown-item.active{background:var(--theme-surface-hover);border-radius:12px;color:var(--theme-accent);font-weight:700}
         .curvy-indicator{height:4px;border-radius:99px;background:var(--theme-accent);box-shadow:0 0 8px var(--theme-accent-glow);border:none}
+        .curvy-panel{position:relative;overflow:hidden;border-radius:14px}
+        .curvy-panel::before{content:'';position:absolute;inset:0 auto 0 0;width:4px;background:linear-gradient(180deg,var(--phase-color,#f3a6c2),color-mix(in srgb,var(--phase-color,#f3a6c2) 70%,#ffd2e4));border-radius:14px 0 0 14px;box-shadow:0 0 14px color-mix(in srgb,var(--phase-color,#f3a6c2) 48%, transparent);z-index:0}
 
         .rrow{position:relative;transition:background 0.2s ease,transform 0.22s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.22s ease,border-color 0.22s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:12px;padding:16px 16px 16px 12px;border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:86px;border-radius:10px;overflow:hidden}
         .rrow:last-child{border-bottom:none}
@@ -1134,8 +1136,8 @@ export default function MCUViewer() {
               )}
 
               {/* ── Phase divider injected in list flow ── */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap', padding: '10px 0', borderBottom: `1px solid ${T.surfaceBorder}` }}>
-                <div style={{ width: 3, height: 38, background: 'linear-gradient(90deg,#f3a6c2,#ffc0d8)', borderRadius: 2, flexShrink: 0, boxShadow: darkMode ? '0 0 12px rgba(244,155,200,0.55)' : '0 0 6px rgba(244,155,200,0.25)' }} />
+              <div className="curvy-panel" style={{ '--phase-color': ph.color, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap', padding: '14px 12px 14px 18px', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? `linear-gradient(120deg, color-mix(in srgb, ${ph.color} 20%, transparent), rgba(22,20,38,0.55))` : `linear-gradient(120deg, color-mix(in srgb, ${ph.color} 14%, #fff), rgba(255,255,255,0.8))` }}>
+                <div style={{ width: 7, height: 54, background: `linear-gradient(180deg, ${ph.color}, color-mix(in srgb, ${ph.color} 58%, #ffd2e4))`, borderRadius: 999, flexShrink: 0, boxShadow: darkMode ? `0 0 14px ${ph.glow}` : '0 0 7px rgba(244,155,200,0.25)' }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: "'Orbitron',sans-serif", fontSize: 'clamp(32px, 4vw, 36px)', letterSpacing: 6, color: ph.color, lineHeight: 1, fontWeight: 700, textShadow: darkMode ? `0 0 18px ${ph.glow}` : 'none' }}>
               {ph.name}
@@ -1177,13 +1179,13 @@ export default function MCUViewer() {
 
               {/* Phase summary card — suggestion 4 */}
               {summaryOpen && (
-                <div className="fade-in" style={{ background: T.phaseSummaryBg, border: `1px solid ${T.phaseSummaryBorder}`, borderLeft: `3px solid ${ph.color}`, borderRadius: '0 8px 8px 0', padding: '10px 14px', marginBottom: 10, fontSize: 14, color: T.textMuted, lineHeight: 1.6, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.2 }}>
+                <div className="fade-in curvy-panel" style={{ '--phase-color': ph.color, background: T.phaseSummaryBg, border: `1px solid ${T.phaseSummaryBorder}`, borderRadius: 12, padding: '12px 14px 12px 18px', marginBottom: 10, fontSize: 14, color: T.textMuted, lineHeight: 1.6, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.2 }}>
                   {ph.summary}
                 </div>
               )}
 
               {/* ── Row table ── */}
-              <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, overflow: 'hidden', boxShadow: darkMode ? '0 2px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.03)' : '0 1px 6px rgba(0,0,0,0.06)' }}>
+              <div className="curvy-panel" style={{ '--phase-color': ph.color, background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 14, overflow: 'hidden', boxShadow: darkMode ? '0 2px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.03)' : '0 1px 6px rgba(0,0,0,0.06)' }}>
                 {rows.map((item, idx) => {
                   const m = TYPE_META[item.type];
                   const statusMeta = STATUS_META[item.status];
