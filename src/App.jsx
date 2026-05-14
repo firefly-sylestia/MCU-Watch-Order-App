@@ -270,6 +270,33 @@ const extractCacheValues = (cache) => Object.entries(cache || {}).reduce((acc, [
   return acc;
 }, {});
 
+const slugifyPosterName = (value) => String(value || '')
+  .toLowerCase()
+  .replace(/&/g, 'and')
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-+|-+$/g, '');
+
+const posterFileName = (item, ext = 'jpg') => `${String(item.id).padStart(3, '0')}-${slugifyPosterName(item.title)}.${ext}`;
+const posterExportName = (item, ext = 'jpg') => posterFileName(item, ext);
+
+const getPosterExtension = (src) => {
+  const withoutQuery = String(src || '').split('?')[0];
+  const match = withoutQuery.match(/\.([a-zA-Z0-9]+)$/);
+  const ext = match?.[1]?.toLowerCase();
+  return ext && ext.length <= 5 ? ext : 'jpg';
+};
+
+const triggerDownload = (blob, filename) => {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
+
 const wrapCacheEntries = (values, previousCache = {}) => {
   const now = Date.now();
   return Object.entries(values || {}).reduce((acc, [k, value]) => {
@@ -324,12 +351,15 @@ export default function MCUViewer() {
   const [detailLoading,  setDetailLoading]  = useState(false);
   const [detailPosterFailed, setDetailPosterFailed] = useState(false);
   const [posterCache,    setPosterCache]    = useState({});
+  const [localPosterMap, setLocalPosterMap] = useState({});
+  const [posterFetchState, setPosterFetchState] = useState({ active: false, done: 0, total: 0, message: '' });
+  const [posterExportState, setPosterExportState] = useState({ active: false, done: 0, total: 0, message: '' });
   const [settingsOpen,   setSettingsOpen]   = useState(false);
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
   const [themeMode,      setThemeMode]      = useState('classic');
-  const [spoilerSafeMode, setSpoilerSafeMode] = useState(false);
+  const [spoilerSafeMode, setSpoilerSafeMode] = useState(true);
   const [reduceMotion, setReduceMotion] = useState(true);
   const [viewMode, setViewMode] = useState('list');
   const [densityMode, setDensityMode] = useState('comfortable');
@@ -423,13 +453,13 @@ export default function MCUViewer() {
           best = +e.target.dataset.phase;
         }
       });
-      if (best !== null) setActivePhase(best);
+      if (best !== null && activePhase !== 0) setActivePhase(best);
     }, { root, rootMargin: '0px 0px -70% 0px', threshold: 0 });
     const timer = setTimeout(() => {
       Object.values(phaseRefs.current).forEach(el => el && obsRef.current?.observe(el));
     }, 50);
     return () => { clearTimeout(timer); obsRef.current?.disconnect(); };
-  }, [listMode, essentialOnly]);
+  }, [listMode, essentialOnly, activePhase]);
 
   useEffect(() => {
     const fn = e => { if (sortRef.current && !sortRef.current.contains(e.target)) setSortOpen(false); };
@@ -490,6 +520,63 @@ export default function MCUViewer() {
       } catch {}
     };
     reader.readAsText(file);
+  };
+
+  const exportFetchedPosters = async () => {
+    const exportable = activeItems.filter(item => {
+      const src = posterCache[item.id] || localPosterSrc(item);
+      return src && !src.includes('placehold.co');
+    });
+    if (!exportable.length) {
+      setPosterExportState({ active: false, done: 0, total: 0, message: 'No fetched posters to export yet.' });
+      return;
+    }
+
+    setPosterExportState({ active: true, done: 0, total: exportable.length, message: 'Preparing poster image downloads…' });
+    const manifest = [];
+
+    for (const [index, item] of exportable.entries()) {
+      const src = posterCache[item.id] || localPosterSrc(item);
+      const ext = getPosterExtension(src);
+      const filename = posterExportName(item, ext);
+      try {
+        const response = await fetch(src);
+        if (!response.ok) throw new Error('Poster unavailable');
+        const blob = await response.blob();
+        manifest.push({ id: item.id, title: item.title, file: filename, source: src });
+
+        if (Capacitor.isNativePlatform()) {
+          const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          await Filesystem.writeFile({ path: `mcu-posters/${filename}`, data: base64, directory: Directory.Documents, recursive: true });
+        } else {
+          triggerDownload(blob, filename);
+        }
+      } catch {
+        manifest.push({ id: item.id, title: item.title, file: filename, source: src, error: 'Could not export this poster image.' });
+      }
+      setPosterExportState({ active: true, done: index + 1, total: exportable.length, message: `Exported ${index + 1}/${exportable.length} poster images…` });
+      await new Promise(resolve => setTimeout(resolve, 80));
+    }
+
+    const manifestBlob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), posters: manifest }, null, 2)], { type: 'application/json' });
+    if (Capacitor.isNativePlatform()) {
+      const data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+        reader.onerror = reject;
+        reader.readAsDataURL(manifestBlob);
+      });
+      const result = await Filesystem.writeFile({ path: 'mcu-posters/manifest.json', data, directory: Directory.Documents, recursive: true });
+      await Share.share({ title: 'MCU Poster Images', text: 'Exported poster images and manifest', url: result.uri });
+    } else {
+      triggerDownload(manifestBlob, 'mcu-posters-manifest.json');
+    }
+    setPosterExportState({ active: false, done: exportable.length, total: exportable.length, message: `Exported ${exportable.length} poster images.` });
   };
 
   const STATUS_SORT_ORDER = { watching: 0, 'plan-to-watch': 1, unwatched: 2, watched: 3, 'on-hold': 4, dropped: 5 };
@@ -571,17 +658,25 @@ export default function MCUViewer() {
     'Thor': ['Chris Hemsworth', 'Tom Hiddleston', 'Natalie Portman'],
   };
 
-  const posterSrc = (item) => posterCache[item.id] || detailData?.Poster || `https://placehold.co/220x330/1a1f33/f7c4de?text=${encodeURIComponent(item.title+'\n'+item.year)}`;
+  const localPosterSrc = (item) => {
+    const mapped = localPosterMap[item.id] || localPosterMap[String(item.id)] || localPosterMap[slugifyPosterName(item.title)];
+    if (!mapped) return '';
+    return mapped.startsWith('/') ? mapped : `/posters/${mapped}`;
+  };
+  const posterSrc = (item) => localPosterSrc(item) || posterCache[item.id] || detailData?.Poster || `https://placehold.co/220x330/1a1f33/f7c4de?text=${encodeURIComponent(item.title+'\n'+item.year)}`;
   const spoilerSafe = useMemo(() => spoilerSafeMode, [spoilerSafeMode]);
 
   const memoryScore = useMemo(() => Math.max(0, Math.min(100, Math.round((totalWatched / Math.max(1, activeItems.length)) * 100) - (spoilerSafe ? 10 : 0))), [totalWatched, activeItems.length, spoilerSafe]);
   const TMDB_DIRECT_KEY = import.meta.env.VITE_TMDB_API_KEY || '65eda48cf5803f22304fd21f4f06a35e';
 
   const fetchTmdbPoster = async (item) => {
+    const local = localPosterSrc(item);
+    if (local) return local;
+    if (posterCache[item.id]) return posterCache[item.id];
     const q = encodeURIComponent(cleanLookupTitle(item.title));
     const y = encodeURIComponent(String(item.year || ''));
     try {
-      const proxyRes = await fetch(`/api/tmdb/poster?title=${q}&year=${y}`);
+      const proxyRes = await fetchWithTimeout(`/api/tmdb/poster?title=${q}&year=${y}`, {}, 7000);
       if (proxyRes.ok) {
         const payload = await proxyRes.json();
         if (payload?.poster) return payload.poster;
@@ -591,7 +686,7 @@ export default function MCUViewer() {
     if (!TMDB_DIRECT_KEY) return '';
     try {
       const params = new URLSearchParams({ query: cleanLookupTitle(item.title), include_adult: 'false', language: 'en-US', page: '1', year: String(item.year || '') });
-      const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${TMDB_DIRECT_KEY}&${params.toString()}`);
+      const res = await fetchWithTimeout(`https://api.themoviedb.org/3/search/multi?api_key=${TMDB_DIRECT_KEY}&${params.toString()}`, {}, 7000);
       const data = await res.json();
       const best = (data?.results || []).find(r => r?.poster_path && (r.media_type === 'movie' || r.media_type === 'tv'));
       return best?.poster_path ? `https://image.tmdb.org/t/p/w500${best.poster_path}` : '';
@@ -613,7 +708,7 @@ export default function MCUViewer() {
     const q = encodeURIComponent(cleanLookupTitle(item.title));
     const y = encodeURIComponent(String(item.year || ''));
     try {
-      const r = await fetch(`/api/tmdb/poster?title=${q}&year=${y}&details=1`);
+      const r = await fetchWithTimeout(`/api/tmdb/poster?title=${q}&year=${y}&details=1`, {}, 7000);
       if (!r.ok) return null;
       const payload = await r.json();
       return payload?.details || null;
@@ -742,6 +837,23 @@ export default function MCUViewer() {
     } catch {}
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/posters/posters.json', { cache: 'no-store' })
+      .then(res => res.ok ? res.json() : {})
+      .then(data => {
+        if (cancelled) return;
+        const byId = data?.byId || {};
+        const byTitle = Object.entries(data?.byTitle || {}).reduce((acc, [title, src]) => {
+          acc[slugifyPosterName(title)] = src;
+          return acc;
+        }, {});
+        setLocalPosterMap({ ...byTitle, ...byId });
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
   useDebouncedEffect(() => {
     const managed = createManagedCache(wrapCacheEntries(posterCache), { maxItems: 220, maxSerializedSize: 450_000, eviction: 'lru' });
     safeLocalStorageSetItem(CACHE_KEYS.poster, JSON.stringify(managed));
@@ -798,12 +910,14 @@ export default function MCUViewer() {
 
   // ─── Manual refresh: OMDB for ratings only, TMDB for posters ────────────
   const refreshPostersAndMetadata = async () => {
+    if (posterFetchState.active) return;
     const targets = filtered.slice(0, 60);
     const posterUpdates = {};
     const metaUpdates = {};
-    for (const item of targets) {
+    setPosterFetchState({ active: true, done: 0, total: targets.length, message: 'Fetching posters and ratings…' });
+    for (const [index, item] of targets.entries()) {
       try {
-        // Always fetch poster from TMDB
+        // Always fetch poster from local manifest first, then TMDB
         const tmdbPoster = await fetchTmdbPoster(item);
         posterUpdates[item.id] = tmdbPoster || posterCache[item.id] || '';
         // Fetch rating only from OMDB with the ratings key
@@ -815,9 +929,11 @@ export default function MCUViewer() {
       } catch {
         metaUpdates[item.id] = metaUpdates[item.id] || { rating: '', released: '' };
       }
+      setPosterFetchState({ active: true, done: index + 1, total: targets.length, message: `Fetched ${index + 1}/${targets.length} entries…` });
     }
     setPosterCache(prev => ({ ...prev, ...posterUpdates }));
     setMetaCache(prev => ({ ...prev, ...metaUpdates }));
+    setPosterFetchState({ active: false, done: targets.length, total: targets.length, message: `Fetched ${targets.length} entries.` });
   };
 
   // ─── Detail panel fetch: TMDB for everything, OMDB only for rating ──────
@@ -1168,7 +1284,7 @@ export default function MCUViewer() {
             <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 6 }}>
               {uploadedAvatars.map((src, idx) => (
-                <button key={idx} onClick={() => setProfile(p => ({ ...p, pfp: src }))} title={`Avatar ${idx + 1}`} style={{ border: profile.pfp === src ? '2px solid var(--theme-accent)' : `1px solid ${T.inputBorder}`, borderRadius: '999px', padding: 2, background: 'transparent', cursor: 'pointer' }}>
+                <button key={idx} onClick={() => setProfile(p => ({ ...p, pfp: src }))} title={`Avatar ${idx + 1}`} style={{ border: `1px solid ${T.inputBorder}`, borderRadius: '999px', padding: 2, background: profile.pfp === src ? 'var(--theme-surface-hover)' : 'transparent', cursor: 'pointer' }}>
                   <img src={src} alt={`Avatar ${idx + 1}`} style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: '50%', objectFit: 'cover' }} />
                 </button>
               ))}
@@ -1180,6 +1296,7 @@ export default function MCUViewer() {
                 <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const img = String(r.result || ''); setAvatarCropSrc(img); }; r.readAsDataURL(f); }} style={{ display: 'none' }} />
               </label>
             </div>
+            <button className="fpill" onClick={() => setProfile(p => ({ ...p, pfp: '' }))} disabled={!profile.pfp} style={{ justifyContent: 'center', opacity: profile.pfp ? 1 : 0.55 }}><Trash2 size={14}/>Remove Profile Picture</button>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Preferences</div>
             <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
@@ -1214,12 +1331,15 @@ export default function MCUViewer() {
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Data</div>
             <button className="fpill" onClick={exportProgress}><Download size={14}/>Export Progress</button>
+            <button className="fpill" onClick={exportFetchedPosters} disabled={posterExportState.active} style={{ opacity: posterExportState.active ? 0.75 : 1 }}><Download size={14}/>{posterExportState.active ? `Exporting ${posterExportState.done}/${posterExportState.total}` : 'Export Fetched Posters'}</button>
+            {posterExportState.message && <div style={{ fontSize: 11, color: T.textMuted }}>{posterExportState.message}</div>}
             <label className="fpill" style={{ cursor: 'pointer' }}><Upload size={14}/>Import Progress
               <input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} />
             </label>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: 'var(--theme-danger)', textTransform: 'uppercase' }}>Danger Zone</div>
-            <button className="fpill" onClick={refreshPostersAndMetadata}><Download size={14}/>Fetch Posters & Ratings</button>
+            <button className="fpill" onClick={refreshPostersAndMetadata} disabled={posterFetchState.active} style={{ opacity: posterFetchState.active ? 0.75 : 1 }}><Download size={14}/>{posterFetchState.active ? `Fetching ${posterFetchState.done}/${posterFetchState.total}` : 'Fetch Posters & Ratings'}</button>
+            {posterFetchState.message && <div style={{ fontSize: 11, color: T.textMuted }}>{posterFetchState.message}</div>}
             <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); }}><Trash2 size={14}/>Reset Filters</button>
           </div>
         )}
@@ -1268,7 +1388,7 @@ export default function MCUViewer() {
             return (
               <button key={mode.id} className={`lmode-btn ${isActive ? 'active' : ''}`}
                 style={{ '--mc': mode.color }}
-                onClick={() => { setListMode(mode.id); setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setSortBy('order'); setActivePhase(0); setExpandedItem(null); setExpandedPhase(null); }}
+                onClick={() => { setListMode(mode.id); setExpandedItem(null); setExpandedPhase(null); }}
                 aria-pressed={isActive}
               >
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
@@ -1451,7 +1571,7 @@ export default function MCUViewer() {
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} style={{ overflow: 'visible', flex: '0 0 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
-        <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '24px 16px 80px 16px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch" key={listMode}>
+        <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '24px 16px 80px 16px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: "'Bebas Neue',sans-serif", fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
