@@ -226,12 +226,10 @@ const slugifyPosterName = (value) => String(value || '')
   .replace(/[^a-z0-9]+/g, '-')
   .replace(/^-+|-+$/g, '');
 
-const posterFileName = (item, ext = 'webp') => `${String(item.id).padStart(3, '0')}-${slugifyPosterName(item.title)}.${ext}`;
-const posterExportName = (item, ext = 'webp') => posterFileName(item, ext);
+const posterFileName = (item, ext = 'jpg') => `${String(item.id).padStart(3, '0')}-${slugifyPosterName(item.title)}.${ext}`;
+const posterExportName = (item, ext = 'jpg') => posterFileName(item, ext);
 
 
-
-const toWebpPath = (src = '') => src.replace(/\.(jpg|jpeg|png)(\?.*)?$/i, '.webp$2');
 
 const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poster' }) {
   const wrapRef = useRef(null);
@@ -252,12 +250,8 @@ const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poste
     return () => obs.disconnect();
   }, [src]);
 
-  const webpSrc = toWebpPath(src);
   return <div ref={wrapRef} className={`${className} poster-shell ${loaded ? 'is-loaded' : ''}`}>
-    {visible && <picture>
-      <source srcSet={webpSrc} type="image/webp" />
-      <img className={className} src={src} alt={alt} loading="lazy" decoding="async" onLoad={() => setLoaded(true)} />
-    </picture>}
+    {visible && <img className={className} src={src} alt={alt} loading="lazy" decoding="async" onLoad={() => setLoaded(true)} />}
   </div>;
 });
 const TMDB_LOOKUP_OVERRIDES = {
