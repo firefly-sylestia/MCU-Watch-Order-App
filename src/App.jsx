@@ -308,6 +308,7 @@ const POSTER_OVERRIDES = {
   // Keep combined or episodic entries pinned to the correct franchise/show when TMDB search is ambiguous.
   12: '/posters/012-i-am-groot-s1-and-s2.jpg',
   30: '/posters/030-guardians-holiday-special.jpg',
+  103: '/posters/009-A-Funny-Thing-Happened-on-the-Way-to-Thors-Hammer.jpg',
   151: '/posters/151-agents-of-shield-s6-and-s7.jpg',
 };
 
@@ -328,6 +329,21 @@ const triggerDownload = (blob, filename) => {
   a.remove();
   URL.revokeObjectURL(url);
 };
+
+const inferFileExtFromSrc = (src) => getPosterExtension(src);
+
+const fetchBlob = async (src) => {
+  const response = await fetch(src);
+  if (!response.ok) throw new Error('Poster unavailable');
+  return response.blob();
+};
+
+const blobToBase64 = (blob) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => resolve(String(reader.result || '').split(',')[1] || '');
+  reader.onerror = reject;
+  reader.readAsDataURL(blob);
+});
 
 const wrapCacheEntries = (values, previousCache = {}) => {
   const now = Date.now();
@@ -443,6 +459,7 @@ export default function MCUViewer() {
   const [headerCompact]  = useState(false);
   const [detailItem,     setDetailItem]     = useState(null);
   const [detailData,     setDetailData]     = useState(null);
+  const [detailPlotState, setDetailPlotState] = useState({ active: 'primary', primary: '', secondary: '', loadingSecondary: false, secondaryProvider: 'OMDb' });
   const [metaCache,      setMetaCache]      = useState({});
   const [detailLoading,  setDetailLoading]  = useState(false);
   const [detailPosterFailed, setDetailPosterFailed] = useState(false);
@@ -1441,29 +1458,30 @@ export default function MCUViewer() {
       if (!detailItem) return;
       setDetailLoading(true);
       setDetailData(null);
+      setDetailPlotState({ active: 'primary', primary: detailItem.desc, secondary: '', loadingSecondary: false, secondaryProvider: 'OMDb' });
       const fallback = { Plot: metaCache[detailItem.id]?.plot || detailItem.desc, Year: String(detailItem.year), Released: metaCache[detailItem.id]?.released || '', Actors: metaCache[detailItem.id]?.cast || '', imdbRating: metaCache[detailItem.id]?.rating || 'N/A' };
 
       try {
-        const [tmdbPoster, tmdbDetails, omdbInfo] = await Promise.all([
+        const [tmdbPoster, tmdbDetails] = await Promise.all([
           fetchTmdbPoster(detailItem),
           fetchTmdbDetail(detailItem),
-          fetchOmdbInfo(detailItem),
         ]);
 
         if (tmdbPoster) {
           setPosterCache(prev => ({ ...prev, [detailItem.id]: tmdbPoster }));
         }
 
-        const merged = normalizeDetailData({ item: detailItem, tmdb: tmdbDetails, omdb: omdbInfo, fallback });
+        const merged = normalizeDetailData({ item: detailItem, tmdb: tmdbDetails, omdb: null, fallback });
         setDetailData(merged);
+        setDetailPlotState(prev => ({ ...prev, primary: tmdbDetails?.Plot || merged.Plot || detailItem.desc }));
 
         setMetaCache(prev => ({
           ...prev,
           [detailItem.id]: {
             ...prev[detailItem.id],
-            rating: omdbInfo?.rating || tmdbDetails?.imdbRating || prev[detailItem.id]?.rating || '',
-            released: omdbInfo?.released || tmdbDetails?.Released || prev[detailItem.id]?.released || '',
-            plot: omdbInfo?.plot || tmdbDetails?.Plot || prev[detailItem.id]?.plot || '',
+            rating: tmdbDetails?.imdbRating || prev[detailItem.id]?.rating || '',
+            released: tmdbDetails?.Released || prev[detailItem.id]?.released || '',
+            plot: tmdbDetails?.Plot || prev[detailItem.id]?.plot || '',
             cast: tmdbDetails?.Actors || prev[detailItem.id]?.cast || '',
           }
         }));
@@ -1475,6 +1493,18 @@ export default function MCUViewer() {
     };
     fetchDetail();
   }, [detailItem]);
+
+  const fetchSecondaryPlotForDetail = async () => {
+    if (!detailItem || detailPlotState.secondary || detailPlotState.loadingSecondary) return;
+    setDetailPlotState(prev => ({ ...prev, loadingSecondary: true }));
+    try {
+      const omdbInfo = await fetchOmdbInfo(detailItem);
+      const secondary = omdbInfo?.plot || detailItem.desc;
+      setDetailPlotState(prev => ({ ...prev, secondary, loadingSecondary: false }));
+    } catch {
+      setDetailPlotState(prev => ({ ...prev, secondary: detailItem.desc, loadingSecondary: false }));
+    }
+  };
 
   useEffect(() => {
     setDetailPosterFailed(false);
@@ -2251,7 +2281,18 @@ export default function MCUViewer() {
                 </div>
                 {detailLoading && <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 8 }}>Loading metadata…</div>}
                 {!detailLoading && !detailData && <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Showing local data.</div>}
-                <p style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 12, filter: spoilerSafe ? 'blur(5px)' : 'none', transition: 'filter 0.18s ease' }}>{detailData?.Plot && detailData.Plot !== 'N/A' ? detailData.Plot : detailItem.desc}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <span style={{ fontSize: 11, color: T.textMuted }}>Description</span>
+                  <button className="fpill glass-panel" style={{ padding: '4px 8px', fontSize: 10 }} onClick={() => setDetailPlotState(prev => ({ ...prev, active: 'primary' }))}>V1 (TMDB)</button>
+                  <button className="fpill glass-panel" style={{ padding: '4px 8px', fontSize: 10 }} onClick={async () => { if (!detailPlotState.secondary) await fetchSecondaryPlotForDetail(); setDetailPlotState(prev => ({ ...prev, active: 'secondary' })); }}>
+                    {detailPlotState.loadingSecondary ? 'Loading V2…' : 'V2 (OMDb)'}
+                  </button>
+                </div>
+                <p style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 12, filter: spoilerSafe ? 'blur(5px)' : 'none', transition: 'filter 0.18s ease' }}>
+                  {detailPlotState.active === 'secondary'
+                    ? (detailPlotState.secondary || detailItem.desc)
+                    : (detailPlotState.primary || detailData?.Plot || detailItem.desc)}
+                </p>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Prerequisite:</strong> {detailItem.prereq}</div>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Status:</strong> {STATUS_META[detailItem.status]?.label}</div>
 
