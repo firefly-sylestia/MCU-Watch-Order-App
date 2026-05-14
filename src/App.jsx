@@ -206,6 +206,7 @@ const OMDB_RATINGS_KEY = '2c971c17';
 const CACHE_KEYS = {
   poster: 'mcu-poster-cache-v1',
   meta: 'mcu-meta-cache-v1',
+  posterExportFailures: 'mcu-poster-export-failures-v1',
   userActions: 'mcu-user-actions-v1',
   userActionsLikes: 'mcu-user-actions-likes-v1',
   userActionsRatings: 'mcu-user-actions-ratings-v1',
@@ -278,6 +279,64 @@ const slugifyPosterName = (value) => String(value || '')
 
 const posterFileName = (item, ext = 'jpg') => `${String(item.id).padStart(3, '0')}-${slugifyPosterName(item.title)}.${ext}`;
 const posterExportName = (item, ext = 'jpg') => posterFileName(item, ext);
+
+
+const TMDB_LOOKUP_OVERRIDES = {
+  1: { tmdbId: 1771, mediaType: 'movie' },
+  2: { tmdbId: 1726, mediaType: 'movie' },
+  3: { tmdbId: 1724, mediaType: 'movie' },
+  4: { tmdbId: 10138, mediaType: 'movie' },
+  5: { tmdbId: 10195, mediaType: 'movie' },
+  6: { tmdbId: 24428, mediaType: 'movie' },
+  8: { tmdbId: 118340, mediaType: 'movie' },
+  9: { tmdbId: 100402, mediaType: 'movie' },
+  10: { tmdbId: 68721, mediaType: 'movie' },
+  11: { tmdbId: 283995, mediaType: 'movie' },
+  12: { tmdbId: 232125, mediaType: 'tv' },
+  13: { tmdbId: 99861, mediaType: 'movie' },
+  17: { tmdbId: 497698, mediaType: 'movie' },
+  20: { tmdbId: 363088, mediaType: 'movie' },
+  25: { tmdbId: 85271, mediaType: 'tv' },
+  26: { tmdbId: 88396, mediaType: 'tv' },
+  28: { tmdbId: 634649, mediaType: 'movie' },
+  29: { tmdbId: 88329, mediaType: 'tv' },
+  30: { tmdbId: 774752, mediaType: 'movie' },
+  31: { tmdbId: 84958, mediaType: 'tv' },
+  32: { tmdbId: 640146, mediaType: 'movie' },
+  33: { tmdbId: 84958, mediaType: 'tv' },
+  34: { tmdbId: 91363, mediaType: 'tv' },
+  35: { tmdbId: 91363, mediaType: 'tv' },
+  36: { tmdbId: 91363, mediaType: 'tv' },
+  37: { tmdbId: 533535, mediaType: 'movie' },
+  38: { tmdbId: 616037, mediaType: 'movie' },
+  39: { tmdbId: 447365, mediaType: 'movie' },
+  40: { tmdbId: 505642, mediaType: 'movie' },
+  41: { tmdbId: 92749, mediaType: 'tv' },
+  42: { tmdbId: 566525, mediaType: 'movie' },
+  43: { tmdbId: 453395, mediaType: 'movie' },
+  44: { tmdbId: 138501, mediaType: 'tv' },
+  45: { tmdbId: 524434, mediaType: 'movie' },
+  46: { tmdbId: 92783, mediaType: 'tv' },
+  47: { tmdbId: 92782, mediaType: 'tv' },
+  48: { tmdbId: 609681, mediaType: 'movie' },
+  49: { tmdbId: 114472, mediaType: 'tv' },
+  50: { tmdbId: 122226, mediaType: 'tv' },
+  51: { tmdbId: 202555, mediaType: 'tv' },
+  53: { tmdbId: 822119, mediaType: 'movie' },
+  54: { tmdbId: 114471, mediaType: 'tv' },
+  55: { tmdbId: 986056, mediaType: 'movie' },
+  56: { tmdbId: 617126, mediaType: 'movie' },
+  58: { tmdbId: 894205, mediaType: 'movie' },
+  60: { tmdbId: 138505, mediaType: 'tv' },
+  151: { tmdbId: 1403, mediaType: 'tv' },
+};
+
+const POSTER_OVERRIDES = {
+  // Keep combined or episodic entries pinned to the correct franchise/show when TMDB search is ambiguous.
+  12: '/posters/012-i-am-groot-s1-and-s2.jpg',
+  30: '/posters/030-guardians-holiday-special.jpg',
+  151: '/posters/151-agents-of-shield-s6-and-s7.jpg',
+};
 
 const getPosterExtension = (src) => {
   const withoutQuery = String(src || '').split('?')[0];
@@ -354,6 +413,7 @@ export default function MCUViewer() {
   const [localPosterMap, setLocalPosterMap] = useState({});
   const [posterFetchState, setPosterFetchState] = useState({ active: false, done: 0, total: 0, message: '' });
   const [posterExportState, setPosterExportState] = useState({ active: false, done: 0, total: 0, message: '' });
+  const [posterExportFailures, setPosterExportFailures] = useState({});
   const [settingsOpen,   setSettingsOpen]   = useState(false);
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
@@ -522,21 +582,24 @@ export default function MCUViewer() {
     reader.readAsText(file);
   };
 
-  const exportFetchedPosters = async () => {
-    const exportable = activeItems.filter(item => {
-      const src = posterCache[item.id] || localPosterSrc(item);
+  const exportFetchedPosters = async (mode = 'all') => {
+    const failedIds = new Set(Object.keys(posterExportFailures).map(Number));
+    const sourceItems = mode === 'failed' ? activeItems.filter(item => failedIds.has(item.id)) : activeItems;
+    const exportable = sourceItems.filter(item => {
+      const src = localPosterSrc(item) || posterCache[item.id];
       return src && !src.includes('placehold.co');
     });
     if (!exportable.length) {
-      setPosterExportState({ active: false, done: 0, total: 0, message: 'No fetched posters to export yet.' });
+      setPosterExportState({ active: false, done: 0, total: 0, message: mode === 'failed' ? 'No failed poster exports to retry.' : 'No fetched or local posters to export yet.' });
       return;
     }
 
-    setPosterExportState({ active: true, done: 0, total: exportable.length, message: 'Preparing poster image downloads…' });
+    setPosterExportState({ active: true, done: 0, total: exportable.length, message: mode === 'failed' ? 'Retrying failed poster exports…' : 'Preparing poster image downloads…' });
     const manifest = [];
+    const nextFailures = { ...posterExportFailures };
 
     for (const [index, item] of exportable.entries()) {
-      const src = posterCache[item.id] || localPosterSrc(item);
+      const src = localPosterSrc(item) || posterCache[item.id];
       const ext = getPosterExtension(src);
       const filename = posterExportName(item, ext);
       try {
@@ -556,14 +619,18 @@ export default function MCUViewer() {
         } else {
           triggerDownload(blob, filename);
         }
+        delete nextFailures[item.id];
       } catch {
+        nextFailures[item.id] = { id: item.id, title: item.title, source: src, failedAt: new Date().toISOString() };
         manifest.push({ id: item.id, title: item.title, file: filename, source: src, error: 'Could not export this poster image.' });
       }
-      setPosterExportState({ active: true, done: index + 1, total: exportable.length, message: `Exported ${index + 1}/${exportable.length} poster images…` });
+      setPosterExportFailures({ ...nextFailures });
+      safeLocalStorageSetItem(CACHE_KEYS.posterExportFailures, JSON.stringify(nextFailures));
+      setPosterExportState({ active: true, done: index + 1, total: exportable.length, message: `${mode === 'failed' ? 'Retried' : 'Exported'} ${index + 1}/${exportable.length} poster images…` });
       await new Promise(resolve => setTimeout(resolve, 80));
     }
 
-    const manifestBlob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), posters: manifest }, null, 2)], { type: 'application/json' });
+    const manifestBlob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), mode, posters: manifest }, null, 2)], { type: 'application/json' });
     if (Capacitor.isNativePlatform()) {
       const data = await new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -571,12 +638,13 @@ export default function MCUViewer() {
         reader.onerror = reject;
         reader.readAsDataURL(manifestBlob);
       });
-      const result = await Filesystem.writeFile({ path: 'mcu-posters/manifest.json', data, directory: Directory.Documents, recursive: true });
+      const result = await Filesystem.writeFile({ path: mode === 'failed' ? 'mcu-posters/failed-manifest.json' : 'mcu-posters/manifest.json', data, directory: Directory.Documents, recursive: true });
       await Share.share({ title: 'MCU Poster Images', text: 'Exported poster images and manifest', url: result.uri });
     } else {
-      triggerDownload(manifestBlob, 'mcu-posters-manifest.json');
+      triggerDownload(manifestBlob, mode === 'failed' ? 'mcu-posters-failed-manifest.json' : 'mcu-posters-manifest.json');
     }
-    setPosterExportState({ active: false, done: exportable.length, total: exportable.length, message: `Exported ${exportable.length} poster images.` });
+    const failedCount = Object.keys(nextFailures).length;
+    setPosterExportState({ active: false, done: exportable.length, total: exportable.length, message: `${mode === 'failed' ? 'Retried' : 'Exported'} ${exportable.length} poster images.${failedCount ? ` ${failedCount} failed export${failedCount === 1 ? '' : 's'} saved for retry.` : ''}` });
   };
 
   const STATUS_SORT_ORDER = { watching: 0, 'plan-to-watch': 1, unwatched: 2, watched: 3, 'on-hold': 4, dropped: 5 };
@@ -659,24 +727,26 @@ export default function MCUViewer() {
   };
 
   const localPosterSrc = (item) => {
-    const mapped = localPosterMap[item.id] || localPosterMap[String(item.id)] || localPosterMap[slugifyPosterName(item.title)];
+    const mapped = POSTER_OVERRIDES[item.id] || localPosterMap[item.id] || localPosterMap[String(item.id)] || localPosterMap[slugifyPosterName(item.title)];
     if (!mapped) return '';
     return mapped.startsWith('/') ? mapped : `/posters/${mapped}`;
   };
-  const posterSrc = (item) => localPosterSrc(item) || posterCache[item.id] || detailData?.Poster || `https://placehold.co/220x330/1a1f33/f7c4de?text=${encodeURIComponent(item.title+'\n'+item.year)}`;
+  const posterSrc = (item) => localPosterSrc(item) || posterCache[item.id] || `https://placehold.co/220x330/1a1f33/f7c4de?text=${encodeURIComponent(item.title+'\n'+item.year)}`;
   const spoilerSafe = useMemo(() => spoilerSafeMode, [spoilerSafeMode]);
 
   const memoryScore = useMemo(() => Math.max(0, Math.min(100, Math.round((totalWatched / Math.max(1, activeItems.length)) * 100) - (spoilerSafe ? 10 : 0))), [totalWatched, activeItems.length, spoilerSafe]);
   const TMDB_DIRECT_KEY = import.meta.env.VITE_TMDB_API_KEY || '65eda48cf5803f22304fd21f4f06a35e';
 
-  const fetchTmdbPoster = async (item) => {
+  const fetchTmdbPoster = async (item, { force = false } = {}) => {
     const local = localPosterSrc(item);
     if (local) return local;
-    if (posterCache[item.id]) return posterCache[item.id];
+    if (!force && posterCache[item.id]) return posterCache[item.id];
+    const stableLookup = TMDB_LOOKUP_OVERRIDES[item.id];
     const q = encodeURIComponent(cleanLookupTitle(item.title));
     const y = encodeURIComponent(String(item.year || ''));
+    const stableParams = stableLookup ? `&tmdbId=${encodeURIComponent(stableLookup.tmdbId)}&mediaType=${encodeURIComponent(stableLookup.mediaType)}` : '';
     try {
-      const proxyRes = await fetchWithTimeout(`/api/tmdb/poster?title=${q}&year=${y}`, {}, 7000);
+      const proxyRes = await fetchWithTimeout(`/api/tmdb/poster?title=${q}&year=${y}${stableParams}`, {}, 7000);
       if (proxyRes.ok) {
         const payload = await proxyRes.json();
         if (payload?.poster) return payload.poster;
@@ -685,6 +755,11 @@ export default function MCUViewer() {
 
     if (!TMDB_DIRECT_KEY) return '';
     try {
+      if (stableLookup) {
+        const detailRes = await fetchWithTimeout(`https://api.themoviedb.org/3/${stableLookup.mediaType}/${stableLookup.tmdbId}?api_key=${TMDB_DIRECT_KEY}&language=en-US`, {}, 7000);
+        const detail = await detailRes.json();
+        return detail?.poster_path ? `https://image.tmdb.org/t/p/w500${detail.poster_path}` : '';
+      }
       const params = new URLSearchParams({ query: cleanLookupTitle(item.title), include_adult: 'false', language: 'en-US', page: '1', year: String(item.year || '') });
       const res = await fetchWithTimeout(`https://api.themoviedb.org/3/search/multi?api_key=${TMDB_DIRECT_KEY}&${params.toString()}`, {}, 7000);
       const data = await res.json();
@@ -705,10 +780,12 @@ export default function MCUViewer() {
   };
 
   const fetchTmdbDetail = async (item) => {
+    const stableLookup = TMDB_LOOKUP_OVERRIDES[item.id];
     const q = encodeURIComponent(cleanLookupTitle(item.title));
     const y = encodeURIComponent(String(item.year || ''));
+    const stableParams = stableLookup ? `&tmdbId=${encodeURIComponent(stableLookup.tmdbId)}&mediaType=${encodeURIComponent(stableLookup.mediaType)}` : '';
     try {
-      const r = await fetchWithTimeout(`/api/tmdb/poster?title=${q}&year=${y}&details=1`, {}, 7000);
+      const r = await fetchWithTimeout(`/api/tmdb/poster?title=${q}&year=${y}&details=1${stableParams}`, {}, 7000);
       if (!r.ok) return null;
       const payload = await r.json();
       return payload?.details || null;
@@ -720,7 +797,8 @@ export default function MCUViewer() {
     Poster: tmdb?.Poster || fallback.Poster || posterCache[item.id] || '',
     Year: tmdb?.Year || omdb?.year || fallback.Year || String(item.year),
     Plot: omdb?.plot || tmdb?.Plot || fallback.Plot || item.desc,
-    Actors: tmdb?.Actors || fallback.Actors || '',
+    Released: tmdb?.Released || omdb?.released || fallback.Released || metaCache[item.id]?.released || '',
+    Actors: tmdb?.Actors || fallback.Actors || metaCache[item.id]?.cast || '',
     imdbRating: omdb?.rating || tmdb?.imdbRating || fallback.imdbRating || metaCache[item.id]?.rating || 'N/A',
   });
 
@@ -834,6 +912,7 @@ export default function MCUViewer() {
       setPosterCache(extractCacheValues(createManagedCache(saved, { maxItems: 220, maxSerializedSize: 450_000, eviction: 'lru' })));
       const metaSaved = JSON.parse(localStorage.getItem(CACHE_KEYS.meta) || '{}');
       setMetaCache(extractCacheValues(createManagedCache(metaSaved, { maxItems: 260, maxSerializedSize: 500_000, eviction: 'timestamp' })));
+      setPosterExportFailures(JSON.parse(localStorage.getItem(CACHE_KEYS.posterExportFailures) || '{}'));
     } catch {}
   }, []);
 
@@ -908,32 +987,96 @@ export default function MCUViewer() {
     }
   }, [myLikes, myRating, rewatchCount, bookmarks], 400);
 
-  // ─── Manual refresh: OMDB for ratings only, TMDB for posters ────────────
+  const hasCompleteMetadata = (item, posterValues = posterCache, metaValues = metaCache) => {
+    const meta = metaValues[item.id] || {};
+    const hasPoster = Boolean(localPosterSrc(item) || posterValues[item.id]);
+    return hasPoster && Boolean(meta.released || RELEASE_INFO[item.title]?.date) && Boolean(meta.rating || RELEASE_INFO[item.title]?.rating) && Boolean(meta.plot) && Boolean(meta.cast);
+  };
+
+  const fetchAndCacheMetadataItem = async (item, { forcePoster = false, forceAll = false } = {}) => {
+    let posterValue = localPosterSrc(item) || posterCache[item.id] || '';
+    let metaValue = { ...(metaCache[item.id] || {}) };
+
+    if (forcePoster && !localPosterSrc(item)) posterValue = '';
+
+    const needsPoster = !posterValue;
+    const needsTmdbDetails = forceAll || !metaValue.plot || !metaValue.cast || !metaValue.released;
+    const needsOmdbInfo = forceAll || !metaValue.rating || !metaValue.released || !metaValue.plot;
+
+    const tmdbDetails = needsTmdbDetails ? await fetchTmdbDetail(item) : null;
+    if (needsPoster && !localPosterSrc(item)) {
+      posterValue = await fetchTmdbPoster(item, { force: forcePoster });
+    }
+
+    const omdbInfo = needsOmdbInfo ? await fetchOmdbInfo(item) : null;
+    metaValue = {
+      ...metaValue,
+      released: omdbInfo?.released || tmdbDetails?.Released || metaValue.released || '',
+      rating: omdbInfo?.rating || tmdbDetails?.imdbRating || metaValue.rating || '',
+      plot: omdbInfo?.plot || tmdbDetails?.Plot || metaValue.plot || '',
+      cast: tmdbDetails?.Actors || metaValue.cast || '',
+    };
+
+    if (posterValue && !localPosterSrc(item)) {
+      setPosterCache(prev => {
+        const next = { ...prev, [item.id]: posterValue };
+        const managed = createManagedCache(wrapCacheEntries(next), { maxItems: 220, maxSerializedSize: 450_000, eviction: 'lru' });
+        safeLocalStorageSetItem(CACHE_KEYS.poster, JSON.stringify(managed));
+        return next;
+      });
+    }
+    setMetaCache(prev => {
+      const next = { ...prev, [item.id]: { ...prev[item.id], ...metaValue } };
+      const managed = createManagedCache(wrapCacheEntries(next), { maxItems: 260, maxSerializedSize: 500_000, eviction: 'timestamp' });
+      safeLocalStorageSetItem(CACHE_KEYS.meta, JSON.stringify(managed));
+      return next;
+    });
+    return { poster: posterValue, meta: metaValue };
+  };
+
+  // ─── Manual build: one title at a time; skips cached metadata ────────────
   const refreshPostersAndMetadata = async () => {
     if (posterFetchState.active) return;
-    const targets = filtered.slice(0, 60);
-    const posterUpdates = {};
-    const metaUpdates = {};
-    setPosterFetchState({ active: true, done: 0, total: targets.length, message: 'Fetching posters and ratings…' });
+    const targets = filtered.filter(item => !hasCompleteMetadata(item));
+    if (!targets.length) {
+      setPosterFetchState({ active: false, done: 0, total: 0, message: 'Metadata cache is already complete for this view.' });
+      return;
+    }
+
+    setPosterFetchState({ active: true, done: 0, total: targets.length, message: `Building metadata for ${targets.length} missing entries…` });
     for (const [index, item] of targets.entries()) {
       try {
-        // Always fetch poster from local manifest first, then TMDB
-        const tmdbPoster = await fetchTmdbPoster(item);
-        posterUpdates[item.id] = tmdbPoster || posterCache[item.id] || '';
-        // Fetch rating only from OMDB with the ratings key
-        const ratingData = await fetchOmdbInfo(item);
-        metaUpdates[item.id] = {
-          rating: ratingData?.rating || '',
-          released: ratingData?.released || '',
-        };
-      } catch {
-        metaUpdates[item.id] = metaUpdates[item.id] || { rating: '', released: '' };
-      }
-      setPosterFetchState({ active: true, done: index + 1, total: targets.length, message: `Fetched ${index + 1}/${targets.length} entries…` });
+        await fetchAndCacheMetadataItem(item);
+      } catch {}
+      setPosterFetchState({ active: true, done: index + 1, total: targets.length, message: `Cached ${index + 1}/${targets.length}: ${item.title}` });
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
-    setPosterCache(prev => ({ ...prev, ...posterUpdates }));
-    setMetaCache(prev => ({ ...prev, ...metaUpdates }));
-    setPosterFetchState({ active: false, done: targets.length, total: targets.length, message: `Fetched ${targets.length} entries.` });
+    setPosterFetchState({ active: false, done: targets.length, total: targets.length, message: `Built metadata for ${targets.length} entries.` });
+  };
+
+  const refreshPosterForItem = async (item) => {
+    if (localPosterSrc(item)) {
+      setPosterFetchState({ active: false, done: 0, total: 0, message: `${item.title} uses a local poster override.` });
+      return;
+    }
+    setPosterFetchState({ active: true, done: 0, total: 1, message: `Refreshing poster for ${item.title}…` });
+    setPosterCache(prev => {
+      const next = { ...prev };
+      delete next[item.id];
+      return next;
+    });
+    try {
+      const poster = await fetchTmdbPoster(item, { force: true });
+      if (poster) {
+        setPosterCache(prev => ({ ...prev, [item.id]: poster }));
+        setDetailPosterFailed(false);
+        setPosterFetchState({ active: false, done: 1, total: 1, message: `Poster refreshed for ${item.title}.` });
+      } else {
+        setPosterFetchState({ active: false, done: 1, total: 1, message: `No TMDB poster found for ${item.title}.` });
+      }
+    } catch {
+      setPosterFetchState({ active: false, done: 1, total: 1, message: `Could not refresh poster for ${item.title}.` });
+    }
   };
 
   // ─── Detail panel fetch: TMDB for everything, OMDB only for rating ──────
@@ -942,7 +1085,7 @@ export default function MCUViewer() {
       if (!detailItem) return;
       setDetailLoading(true);
       setDetailData(null);
-      const fallback = { Plot: detailItem.desc, Year: String(detailItem.year), imdbRating: metaCache[detailItem.id]?.rating || 'N/A' };
+      const fallback = { Plot: metaCache[detailItem.id]?.plot || detailItem.desc, Year: String(detailItem.year), Released: metaCache[detailItem.id]?.released || '', Actors: metaCache[detailItem.id]?.cast || '', imdbRating: metaCache[detailItem.id]?.rating || 'N/A' };
 
       try {
         const [tmdbPoster, tmdbDetails, omdbInfo] = await Promise.all([
@@ -958,9 +1101,16 @@ export default function MCUViewer() {
         const merged = normalizeDetailData({ item: detailItem, tmdb: tmdbDetails, omdb: omdbInfo, fallback });
         setDetailData(merged);
 
-        if (omdbInfo?.rating || omdbInfo?.released) {
-          setMetaCache(prev => ({ ...prev, [detailItem.id]: { ...prev[detailItem.id], rating: omdbInfo.rating || prev[detailItem.id]?.rating || '', released: omdbInfo.released || prev[detailItem.id]?.released || '' } }));
-        }
+        setMetaCache(prev => ({
+          ...prev,
+          [detailItem.id]: {
+            ...prev[detailItem.id],
+            rating: omdbInfo?.rating || tmdbDetails?.imdbRating || prev[detailItem.id]?.rating || '',
+            released: omdbInfo?.released || tmdbDetails?.Released || prev[detailItem.id]?.released || '',
+            plot: omdbInfo?.plot || tmdbDetails?.Plot || prev[detailItem.id]?.plot || '',
+            cast: tmdbDetails?.Actors || prev[detailItem.id]?.cast || '',
+          }
+        }));
       } catch {
         setDetailData(normalizeDetailData({ item: detailItem, fallback }));
       } finally {
@@ -1331,14 +1481,15 @@ export default function MCUViewer() {
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Data</div>
             <button className="fpill" onClick={exportProgress}><Download size={14}/>Export Progress</button>
-            <button className="fpill" onClick={exportFetchedPosters} disabled={posterExportState.active} style={{ opacity: posterExportState.active ? 0.75 : 1 }}><Download size={14}/>{posterExportState.active ? `Exporting ${posterExportState.done}/${posterExportState.total}` : 'Export Fetched Posters'}</button>
+            <button className="fpill" onClick={() => exportFetchedPosters('all')} disabled={posterExportState.active} style={{ opacity: posterExportState.active ? 0.75 : 1 }}><Download size={14}/>{posterExportState.active ? `Exporting ${posterExportState.done}/${posterExportState.total}` : 'Export All Posters'}</button>
+            <button className="fpill" onClick={() => exportFetchedPosters('failed')} disabled={posterExportState.active || !Object.keys(posterExportFailures).length} style={{ opacity: posterExportState.active || !Object.keys(posterExportFailures).length ? 0.55 : 1 }}><Download size={14}/>Export Failed Posters ({Object.keys(posterExportFailures).length})</button>
             {posterExportState.message && <div style={{ fontSize: 11, color: T.textMuted }}>{posterExportState.message}</div>}
             <label className="fpill" style={{ cursor: 'pointer' }}><Upload size={14}/>Import Progress
               <input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} />
             </label>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: 'var(--theme-danger)', textTransform: 'uppercase' }}>Danger Zone</div>
-            <button className="fpill" onClick={refreshPostersAndMetadata} disabled={posterFetchState.active} style={{ opacity: posterFetchState.active ? 0.75 : 1 }}><Download size={14}/>{posterFetchState.active ? `Fetching ${posterFetchState.done}/${posterFetchState.total}` : 'Fetch Posters & Ratings'}</button>
+            <button className="fpill" onClick={refreshPostersAndMetadata} disabled={posterFetchState.active} style={{ opacity: posterFetchState.active ? 0.75 : 1 }}><Download size={14}/>{posterFetchState.active ? `Building ${posterFetchState.done}/${posterFetchState.total}` : 'Build Metadata'}</button>
             {posterFetchState.message && <div style={{ fontSize: 11, color: T.textMuted }}>{posterFetchState.message}</div>}
             <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); }}><Trash2 size={14}/>Reset Filters</button>
           </div>
@@ -1780,6 +1931,7 @@ export default function MCUViewer() {
                   <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setMyLikes(p => ({ ...p, [detailItem.id]: p[detailItem.id] ? 0 : 1 }))}><Heart size={12}/> {myLikes[detailItem.id] ? 'Liked' : 'Like'}</button>
                   <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setBookmarks(p => ({ ...p, [detailItem.id]: p[detailItem.id] ? 0 : 1 }))}><Bookmark size={12}/> {bookmarks[detailItem.id] ? 'Saved' : 'Bookmark'}</button>
                   <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setRewatchCount(p => ({ ...p, [detailItem.id]: (p[detailItem.id] || 0) + 1 }))}><Clock size={12}/> Re-watch {rewatchCount[detailItem.id] || 0}</button>
+                  <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => refreshPosterForItem(detailItem)} disabled={posterFetchState.active}><Download size={12}/> Refresh poster</button>
                   <select value={myRating[detailItem.id] || ''} onChange={(e) => setMyRating(p => ({ ...p, [detailItem.id]: Number(e.target.value) }))}
                     style={{ fontSize: 11, borderRadius: 10, padding: '7px 10px', background: 'rgba(6,10,28,0.65)', color: T.inputColor, border: `1px solid ${T.inputBorder}`, gridColumn: '1 / -1' }}>
                     <option value="">My rating</option>
