@@ -391,11 +391,13 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   statusDropdown,
   rating,
   onOpenDetail,
+  onSetStatus,
   onToggleBookmark,
   onOpenStatus,
 }) {
   const StatusIcon = statusMeta.Icon;
   const TypeIcon = typeMeta.Icon;
+  const ToggleWatchIcon = isWatched ? EyeOff : Eye;
   return (
     <div>
       <div className={`rrow row-in type-${item.type} ${isWatched ? 'glass-panel' : ''} ${isExpanded ? 'curvy-selected' : ''}`} style={{ background: isWatched ? 'var(--theme-watched-bg)' : 'transparent', opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow }}>
@@ -406,7 +408,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
 
         <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
           <div style={TITLE_ROW_STATIC.titleLine}>
-            <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: 700, lineHeight: 1.5, color: isWatched ? '#9df1c2' : 'var(--theme-text)', opacity: 1, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: '100%' }}>{item.title}</span>
+            <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: 700, lineHeight: 1.5, color: isWatched ? '#9df1c2' : 'var(--theme-text)', opacity: 1, transition: 'color 0.26s', fontFamily: "'Bangers','Bebas Neue',sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: '100%' }}>{item.title}</span>
             {item.episodes && <span style={{ fontSize: 9, color: T.textMuted, background: T.expandBg, border: `1px solid ${T.expandBorder}`, borderRadius: 3, padding: '1px 5px', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1, flexShrink: 0 }}>{item.episodes} EP</span>}
             <span style={{ fontSize: 14, color: typeMeta.color, opacity: 0.82, fontWeight: 700, letterSpacing: 0.6, display: 'flex', alignItems: 'center', gap: 2, fontFamily: "'Bebas Neue',sans-serif", flexShrink: 0 }}><TypeIcon size={8} />{typeMeta.label}</span>
             <span style={{ fontSize: 8.5, color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}`, borderRadius: 3, padding: '1px 4px', letterSpacing: 1, fontFamily: "'Bebas Neue',sans-serif", flexShrink: 0 }}>{releaseStatusText}</span>
@@ -1060,7 +1062,7 @@ export default function MCUViewer() {
 
   const releaseStatusStyle = (status) => ({
     released: { color: '#3ec47a', background: 'rgba(62,196,122,0.1)', border: 'rgba(62,196,122,0.35)' },
-    upcoming: { color: '#e8b84b', background: 'rgba(232,184,75,0.12)', border: 'rgba(232,184,75,0.38)' },
+    upcoming: { color: 'var(--theme-accent-alt)', background: 'rgba(232,184,75,0.12)', border: 'rgba(232,184,75,0.38)' },
     TBA: { color: '#a7b1c2', background: 'rgba(167,177,194,0.1)', border: 'rgba(167,177,194,0.28)' },
   }[status] || { color: T.textMuted, background: T.expandBg, border: T.expandBorder });
 
@@ -1667,7 +1669,7 @@ export default function MCUViewer() {
     '--theme-text-muted': darkMode ? '#8fa1b8' : '#667182',
     '--theme-success': '#3ec47a',
     '--theme-success-soft': darkMode ? 'rgba(62,196,122,0.16)' : 'rgba(62,196,122,0.12)',
-    '--theme-warning': '#e8b84b',
+    '--theme-warning': 'var(--theme-accent-alt)',
     '--theme-warning-soft': darkMode ? 'rgba(232,184,75,0.16)' : 'rgba(232,184,75,0.12)',
     '--theme-danger': '#d16a6a',
     '--theme-danger-soft': darkMode ? 'rgba(209,106,106,0.16)' : 'rgba(209,106,106,0.12)',
@@ -2020,7 +2022,7 @@ export default function MCUViewer() {
               <SlidersH size={13} />
               FILTERS
               {activeFilterCount > 0 && (
-                <span style={{ background: 'var(--theme-accent)', color: '#fff', borderRadius: 999, fontSize: 10, fontFamily: "'Rajdhani',sans-serif", fontWeight: 700, padding: '1px 6px', lineHeight: 1.4 }}>{activeFilterCount}</span>
+                <span style={{ background: 'var(--theme-accent)', color: '#fff', borderRadius: 999, fontSize: 10, fontFamily: "'Bangers','Bebas Neue',sans-serif", fontWeight: 700, padding: '1px 6px', lineHeight: 1.4 }}>{activeFilterCount}</span>
               )}
               <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
@@ -2189,7 +2191,7 @@ export default function MCUViewer() {
 
                 {/* Phase divider */}
                 <div className="curvy-panel" style={{ '--phase-color': ph.color, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap', padding: '14px 12px 14px 18px', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? `linear-gradient(120deg, color-mix(in srgb, var(--theme-accent) 16%, color-mix(in srgb, ${ph.color} 26%, transparent)), rgba(22,20,38,0.55))` : `linear-gradient(120deg, color-mix(in srgb, var(--theme-accent) 8%, color-mix(in srgb, ${ph.color} 14%, #fff)), rgba(255,255,255,0.88))` }}>
-                  <div style={{ width: 7, height: 54, background: `linear-gradient(180deg, ${ph.color}, color-mix(in srgb, ${ph.color} 58%, #ffd2e4))`, borderRadius: 999, flexShrink: 0, boxShadow: darkMode ? `0 0 14px ${ph.glow}` : '0 0 7px rgba(244,155,200,0.25)' }} />
+                  <div style={{ width: 10, height: 54, background: `linear-gradient(180deg, color-mix(in srgb, ${ph.color} 86%, var(--theme-accent-alt)), color-mix(in srgb, ${ph.color} 40%, #ffffff))`, borderRadius: 999, flexShrink: 0, border: `1px solid color-mix(in srgb, ${ph.color} 45%, transparent)`, boxShadow: darkMode ? `0 0 18px ${ph.glow}, inset 0 0 8px rgba(255,255,255,0.18)` : `0 0 8px color-mix(in srgb, ${ph.color} 35%, transparent)` }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: "'Orbitron',sans-serif", fontSize: 'clamp(32px, 4vw, 36px)', letterSpacing: 6, color: ph.color, lineHeight: 1, fontWeight: 700, textShadow: darkMode ? `0 0 18px ${ph.glow}` : 'none' }}>
                       {ph.name}
@@ -2227,7 +2229,7 @@ export default function MCUViewer() {
                 </div>
 
                 {summaryOpen && (
-                  <div className="fade-in curvy-panel" style={{ '--phase-color': ph.color, background: T.phaseSummaryBg, border: `1px solid ${T.phaseSummaryBorder}`, borderRadius: 12, padding: '12px 14px 12px 18px', marginBottom: 10, fontSize: 14, color: T.textMuted, lineHeight: 1.6, fontFamily: "'Rajdhani',sans-serif", letterSpacing: 0.2 }}>
+                  <div className="fade-in curvy-panel" style={{ '--phase-color': ph.color, background: T.phaseSummaryBg, border: `1px solid ${T.phaseSummaryBorder}`, borderRadius: 12, padding: '12px 14px 12px 18px', marginBottom: 10, fontSize: 14, color: T.textMuted, lineHeight: 1.6, fontFamily: "'Bangers','Bebas Neue',sans-serif", letterSpacing: 0.2 }}>
                     {ph.summary}
                   </div>
                 )}
@@ -2258,6 +2260,7 @@ export default function MCUViewer() {
                         statusDropdown={statusDropdown}
                         rating={metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
                         onOpenDetail={openDetail}
+                        onSetStatus={setStatusDirect}
                         onToggleBookmark={toggleBookmark}
                         onOpenStatus={openStatusDropdown}
                       />
@@ -2299,8 +2302,8 @@ export default function MCUViewer() {
                 {!detailLoading && !detailData && <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Showing local data.</div>}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                   <span style={{ fontSize: 11, color: T.textMuted }}>Description</span>
-                  <button className="fpill glass-panel" style={{ padding: '4px 8px', fontSize: 10 }} onClick={() => setDetailPlotState(prev => ({ ...prev, active: 'primary' }))}>V1 (TMDB)</button>
-                  <button className="fpill glass-panel" style={{ padding: '4px 8px', fontSize: 10 }} onClick={async () => { if (!detailPlotState.secondary) await fetchSecondaryPlotForDetail(); setDetailPlotState(prev => ({ ...prev, active: 'secondary' })); }}>
+                  <button className="fpill glass-panel" style={{ padding: '3px 7px', fontSize: 9 }} onClick={() => setDetailPlotState(prev => ({ ...prev, active: 'primary' }))}>V1 (TMDB)</button>
+                  <button className="fpill glass-panel" style={{ padding: '3px 7px', fontSize: 9 }} onClick={async () => { if (!detailPlotState.secondary) await fetchSecondaryPlotForDetail(); setDetailPlotState(prev => ({ ...prev, active: 'secondary' })); }}>
                     {detailPlotState.loadingSecondary ? 'Loading V2…' : 'V2 (OMDb)'}
                   </button>
                 </div>
@@ -2322,11 +2325,11 @@ export default function MCUViewer() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10, alignItems: 'center' }}>
                   <span style={{ gridColumn: '1 / -1', fontSize: 11, color: T.textMuted, letterSpacing: 1.1, fontFamily: "'Bebas Neue',sans-serif" }}>QUICK ACTIONS</span>
-                  <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setMyLikes(p => ({ ...p, [detailItem.id]: p[detailItem.id] ? 0 : 1 }))}><Heart size={12}/> {myLikes[detailItem.id] ? 'Liked' : 'Like'}</button>
-                  <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setBookmarks(p => ({ ...p, [detailItem.id]: p[detailItem.id] ? 0 : 1 }))}><Bookmark size={12}/> {bookmarks[detailItem.id] ? 'Saved' : 'Bookmark'}</button>
-                  <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setRewatchCount(p => ({ ...p, [detailItem.id]: (p[detailItem.id] || 0) + 1 }))}><Clock size={12}/> Re-watch {rewatchCount[detailItem.id] || 0}</button>
-                  <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => refreshPosterForItem(detailItem)} disabled={posterFetchState.active}><Download size={12}/> Refresh poster</button>
-                  <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => exportPosterForItem(detailItem)}><Download size={12}/> Export this poster</button>
+                  <button className="fpill glass-panel" style={{ padding: '6px 8px', fontSize: 10, justifyContent: 'center', background: myLikes[detailItem.id] ? 'color-mix(in srgb, var(--theme-danger) 24%, transparent)' : 'rgba(255,255,255,0.07)', borderColor: myLikes[detailItem.id] ? 'color-mix(in srgb, var(--theme-danger) 60%, transparent)' : 'rgba(255,255,255,0.16)', color: myLikes[detailItem.id] ? 'var(--theme-danger)' : T.text }} onClick={() => setMyLikes(p => ({ ...p, [detailItem.id]: p[detailItem.id] ? 0 : 1 }))}><Heart size={11}/> {myLikes[detailItem.id] ? 'Liked' : 'Like'}</button>
+                  <button className="fpill glass-panel" style={{ padding: '6px 8px', fontSize: 9, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setBookmarks(p => ({ ...p, [detailItem.id]: p[detailItem.id] ? 0 : 1 }))}><Bookmark size={12}/> {bookmarks[detailItem.id] ? 'Saved' : 'Bookmark'}</button>
+                  <button className="fpill glass-panel" style={{ padding: '6px 8px', fontSize: 9, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setRewatchCount(p => ({ ...p, [detailItem.id]: (p[detailItem.id] || 0) + 1 }))}><Clock size={12}/> Re-watch {rewatchCount[detailItem.id] || 0}</button>
+                  <button className="fpill glass-panel" style={{ padding: '6px 8px', fontSize: 9, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => refreshPosterForItem(detailItem)} disabled={posterFetchState.active}><Download size={12}/> Refresh poster</button>
+                  <button className="fpill glass-panel" style={{ padding: '6px 8px', fontSize: 9, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => exportPosterForItem(detailItem)}><Download size={12}/> Export this poster</button>
                   <select value={myRating[detailItem.id] || ''} onChange={(e) => setMyRating(p => ({ ...p, [detailItem.id]: Number(e.target.value) }))}
                     style={{ fontSize: 11, borderRadius: 10, padding: '7px 10px', background: 'rgba(6,10,28,0.65)', color: T.inputColor, border: `1px solid ${T.inputBorder}`, gridColumn: '1 / -1' }}>
                     <option value="">My rating</option>
@@ -2335,10 +2338,10 @@ export default function MCUViewer() {
                 </div>
                 <div style={{ fontSize: 14 }}><strong>Cast:</strong> {detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8, marginTop: 12 }}>
-                  <button className="fpill glass-panel" style={{ padding: '8px 10px', fontSize: 12, justifyContent: 'center', background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setStatusDirect(detailItem.id, 'watched')}><Check size={10}/>Watched</button>
-                  <button className="fpill glass-panel" style={{ padding: '8px 10px', fontSize: 12, justifyContent: 'center', background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setStatusDirect(detailItem.id, 'watching')}><Eye size={10}/>Watching</button>
-                  <button className="fpill glass-panel" style={{ padding: '8px 10px', fontSize: 12, justifyContent: 'center', background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setStatusDirect(detailItem.id, 'plan-to-watch')}><Clock size={10}/>Plan</button>
-                  <button className="fpill glass-panel" style={{ padding: '8px 10px', fontSize: 12, justifyContent: 'center', background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setStatusDirect(detailItem.id, 'unwatched')}><EyeOff size={10}/>Unwatch</button>
+                  <button className="fpill glass-panel" style={{ padding: '7px 8px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setStatusDirect(detailItem.id, 'watched')}><Check size={10}/>Watched</button>
+                  <button className="fpill glass-panel" style={{ padding: '7px 8px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setStatusDirect(detailItem.id, 'watching')}><Eye size={10}/>Watching</button>
+                  <button className="fpill glass-panel" style={{ padding: '7px 8px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setStatusDirect(detailItem.id, 'plan-to-watch')}><Clock size={10}/>Plan</button>
+                  <button className="fpill glass-panel" style={{ padding: '7px 8px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setStatusDirect(detailItem.id, 'unwatched')}><EyeOff size={10}/>Unwatch</button>
                 </div>
               </div>
             </div>
@@ -2353,7 +2356,7 @@ export default function MCUViewer() {
         <CropModal
           src={avatarCropSrc}
           cropTarget="avatar"
-          theme={{ cardBg: T.surfaceBg, cardShadow: T.dropdownShadow, cardBorder: T.surfaceBorder, textPrimary: T.text, textDim: T.textMuted, accent: '#4a9ede', accent2: '#e8b84b' }}
+          theme={{ cardBg: T.surfaceBg, cardShadow: T.dropdownShadow, cardBorder: T.surfaceBorder, textPrimary: T.text, textDim: T.textMuted, accent: '#4a9ede', accent2: 'var(--theme-accent-alt)' }}
           onCancel={() => setAvatarCropSrc('')}
           onConfirm={(img) => {
             setProfile(p => ({ ...p, pfp: img }));
@@ -2376,7 +2379,7 @@ export default function MCUViewer() {
               </div>
               <button
                 onClick={() => { setBookmarks(p => ({ ...p, [activeItem.id]: p[activeItem.id] ? 0 : 1 })); setStatusDropdown(null); }}
-                style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '7px 9px', border: `1px solid ${bookmarks[activeItem?.id] ? '#7dd3fc66' : 'transparent'}`, background: bookmarks[activeItem?.id] ? 'rgba(125,211,252,0.12)' : 'transparent', color: bookmarks[activeItem?.id] ? '#7dd3fc' : T.pillText, borderRadius: 6, cursor: 'pointer', fontFamily: "'Rajdhani',sans-serif", fontSize: 12.5, textAlign: 'left' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '7px 9px', border: `1px solid ${bookmarks[activeItem?.id] ? '#7dd3fc66' : 'transparent'}`, background: bookmarks[activeItem?.id] ? 'rgba(125,211,252,0.12)' : 'transparent', color: bookmarks[activeItem?.id] ? '#7dd3fc' : T.pillText, borderRadius: 6, cursor: 'pointer', fontFamily: "'Bangers','Bebas Neue',sans-serif", fontSize: 12.5, textAlign: 'left' }}
               >
                 <Bookmark size={13} />
                 {bookmarks[activeItem?.id] ? 'Remove bookmark' : 'Add bookmark'}
@@ -2390,7 +2393,7 @@ export default function MCUViewer() {
                       onClick={() => { setStatusDirect(activeItem.id, key); setStatusDropdown(null); }}
                       onKeyDown={e => { if (e.key === 'Escape') setStatusDropdown(null); }}
                       aria-pressed={isCurrent}
-                      style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '7px 9px', border: `1px solid ${isCurrent ? meta.color + '77' : 'transparent'}`, background: isCurrent ? meta.color + '15' : 'transparent', color: isCurrent ? meta.color : T.pillText, borderRadius: 6, cursor: 'pointer', fontFamily: "'Rajdhani',sans-serif", fontSize: 12.5, fontWeight: isCurrent ? 600 : 400, letterSpacing: 0.4, textAlign: 'left', transition: 'all 0.13s' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '7px 9px', border: `1px solid ${isCurrent ? meta.color + '77' : 'transparent'}`, background: isCurrent ? meta.color + '15' : 'transparent', color: isCurrent ? meta.color : T.pillText, borderRadius: 6, cursor: 'pointer', fontFamily: "'Bangers','Bebas Neue',sans-serif", fontSize: 12.5, fontWeight: isCurrent ? 600 : 400, letterSpacing: 0.4, textAlign: 'left', transition: 'all 0.13s' }}
                       onMouseEnter={e => { if (!isCurrent) { e.currentTarget.style.background = meta.color + '10'; e.currentTarget.style.color = meta.color; } }}
                       onMouseLeave={e => { if (!isCurrent) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T.pillText; } }}
                     >
