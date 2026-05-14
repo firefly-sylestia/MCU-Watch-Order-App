@@ -202,6 +202,98 @@ const LIST_MODES = [
 // ─── OMDB ratings key (for ratings only — posters use TMDB) ─────────────────
 const OMDB_RATINGS_KEY = '2c971c17';
 
+const CACHE_KEYS = {
+  poster: 'mcu-poster-cache-v1',
+  meta: 'mcu-meta-cache-v1',
+  userActions: 'mcu-user-actions-v1',
+  userActionsLikes: 'mcu-user-actions-likes-v1',
+  userActionsRatings: 'mcu-user-actions-ratings-v1',
+  userActionsRewatch: 'mcu-user-actions-rewatch-v1',
+  userActionsBookmarks: 'mcu-user-actions-bookmarks-v1',
+};
+
+const safeLocalStorageSetItem = (key, value) => {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (err) {
+    if (err?.name === 'QuotaExceededError') {
+      console.warn(`Storage quota exceeded while writing ${key}.`, err);
+      return false;
+    }
+    throw err;
+  }
+};
+
+const createManagedCache = (entries = {}, options = {}) => {
+  const {
+    maxItems = 120,
+    maxSerializedSize = 350_000,
+    eviction = 'lru',
+  } = options;
+
+  const normalized = Object.entries(entries || {}).reduce((acc, [k, v]) => {
+    if (v && typeof v === 'object' && 'value' in v) acc[k] = v;
+    else if (v !== undefined) acc[k] = { value: v, touchedAt: Date.now(), createdAt: Date.now() };
+    return acc;
+  }, {});
+
+  const toOrderedEntries = () => Object.entries(normalized).sort(([, a], [, b]) => {
+    const aTime = eviction === 'timestamp' ? (a.createdAt || a.touchedAt || 0) : (a.touchedAt || a.createdAt || 0);
+    const bTime = eviction === 'timestamp' ? (b.createdAt || b.touchedAt || 0) : (b.touchedAt || b.createdAt || 0);
+    return aTime - bTime;
+  });
+
+  const trim = () => {
+    let ordered = toOrderedEntries();
+    while (ordered.length > maxItems) {
+      const [oldestKey] = ordered.shift();
+      delete normalized[oldestKey];
+    }
+    let serialized = JSON.stringify(normalized);
+    while (serialized.length > maxSerializedSize && ordered.length) {
+      const [oldestKey] = ordered.shift();
+      delete normalized[oldestKey];
+      serialized = JSON.stringify(normalized);
+    }
+    return normalized;
+  };
+
+  trim();
+  return normalized;
+};
+
+const extractCacheValues = (cache) => Object.entries(cache || {}).reduce((acc, [k, v]) => {
+  if (v && typeof v === 'object' && 'value' in v) acc[k] = v.value;
+  else acc[k] = v;
+  return acc;
+}, {});
+
+const wrapCacheEntries = (values, previousCache = {}) => {
+  const now = Date.now();
+  return Object.entries(values || {}).reduce((acc, [k, value]) => {
+    if (value === undefined || value === null || value === '') return acc;
+    const prev = previousCache[k];
+    const prevValue = prev && typeof prev === 'object' && 'value' in prev ? prev.value : prev;
+    const prevCreatedAt = prev && typeof prev === 'object' && 'createdAt' in prev ? prev.createdAt : now;
+    acc[k] = {
+      value,
+      createdAt: prevCreatedAt,
+      touchedAt: prevValue === value ? (prev?.touchedAt || now) : now,
+    };
+    return acc;
+  }, {});
+};
+
+const useDebouncedEffect = (effect, deps, delay = 350) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      effect();
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [...deps, delay]);
+};
+
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function MCUViewer() {
   const [items,          setItems]          = useState(RAW);
@@ -624,15 +716,22 @@ export default function MCUViewer() {
 
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem('mcu-poster-cache-v1') || '{}');
-      setPosterCache(saved);
-      const metaSaved = JSON.parse(localStorage.getItem('mcu-meta-cache-v1') || '{}');
-      setMetaCache(metaSaved);
+      const saved = JSON.parse(localStorage.getItem(CACHE_KEYS.poster) || '{}');
+      setPosterCache(extractCacheValues(createManagedCache(saved, { maxItems: 220, maxSerializedSize: 450_000, eviction: 'lru' })));
+      const metaSaved = JSON.parse(localStorage.getItem(CACHE_KEYS.meta) || '{}');
+      setMetaCache(extractCacheValues(createManagedCache(metaSaved, { maxItems: 260, maxSerializedSize: 500_000, eviction: 'timestamp' })));
     } catch {}
   }, []);
 
-  useEffect(() => { localStorage.setItem('mcu-poster-cache-v1', JSON.stringify(posterCache)); }, [posterCache]);
-  useEffect(() => { localStorage.setItem('mcu-meta-cache-v1', JSON.stringify(metaCache)); }, [metaCache]);
+  useDebouncedEffect(() => {
+    const managed = createManagedCache(wrapCacheEntries(posterCache), { maxItems: 220, maxSerializedSize: 450_000, eviction: 'lru' });
+    safeLocalStorageSetItem(CACHE_KEYS.poster, JSON.stringify(managed));
+  }, [posterCache], 350);
+
+  useDebouncedEffect(() => {
+    const managed = createManagedCache(wrapCacheEntries(metaCache), { maxItems: 260, maxSerializedSize: 500_000, eviction: 'timestamp' });
+    safeLocalStorageSetItem(CACHE_KEYS.meta, JSON.stringify(managed));
+  }, [metaCache], 350);
 
   useEffect(() => {
     try {
@@ -654,17 +753,29 @@ export default function MCUViewer() {
 
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem('mcu-user-actions-v1') || '{}');
-      setMyLikes(saved.likes || {});
-      setMyRating(saved.ratings || {});
-      setRewatchCount(saved.rewatch || {});
-      setBookmarks(saved.bookmarks || {});
+      const saved = JSON.parse(localStorage.getItem(CACHE_KEYS.userActions) || '{}');
+      const likesSaved = JSON.parse(localStorage.getItem(CACHE_KEYS.userActionsLikes) || 'null');
+      const ratingsSaved = JSON.parse(localStorage.getItem(CACHE_KEYS.userActionsRatings) || 'null');
+      const rewatchSaved = JSON.parse(localStorage.getItem(CACHE_KEYS.userActionsRewatch) || 'null');
+      const bookmarksSaved = JSON.parse(localStorage.getItem(CACHE_KEYS.userActionsBookmarks) || 'null');
+      setMyLikes(likesSaved || saved.likes || {});
+      setMyRating(ratingsSaved || saved.ratings || {});
+      setRewatchCount(rewatchSaved || saved.rewatch || {});
+      setBookmarks(bookmarksSaved || saved.bookmarks || {});
     } catch {}
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('mcu-user-actions-v1', JSON.stringify({ likes: myLikes, ratings: myRating, rewatch: rewatchCount, bookmarks }));
-  }, [myLikes, myRating, rewatchCount, bookmarks]);
+  useDebouncedEffect(() => {
+    const payload = { likes: myLikes, ratings: myRating, rewatch: rewatchCount, bookmarks };
+    const serialized = JSON.stringify(payload);
+    const ok = safeLocalStorageSetItem(CACHE_KEYS.userActions, serialized);
+    if (!ok || serialized.length > 200_000) {
+      safeLocalStorageSetItem(CACHE_KEYS.userActionsLikes, JSON.stringify(myLikes));
+      safeLocalStorageSetItem(CACHE_KEYS.userActionsRatings, JSON.stringify(myRating));
+      safeLocalStorageSetItem(CACHE_KEYS.userActionsRewatch, JSON.stringify(rewatchCount));
+      safeLocalStorageSetItem(CACHE_KEYS.userActionsBookmarks, JSON.stringify(bookmarks));
+    }
+  }, [myLikes, myRating, rewatchCount, bookmarks], 400);
 
   // ─── Manual refresh: OMDB for ratings only, TMDB for posters ────────────
   const refreshPostersAndMetadata = async () => {
