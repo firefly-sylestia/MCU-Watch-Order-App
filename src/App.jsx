@@ -446,8 +446,6 @@ export default function MCUViewer() {
   const [metaCache,      setMetaCache]      = useState({});
   const [detailLoading,  setDetailLoading]  = useState(false);
   const [detailPosterFailed, setDetailPosterFailed] = useState(false);
-  const [posterRefreshQuery, setPosterRefreshQuery] = useState('');
-  const [posterRefreshYear, setPosterRefreshYear] = useState('');
   const [posterCache,    setPosterCache]    = useState({});
   const [localPosterMap, setLocalPosterMap] = useState({});
   const [posterFetchState, setPosterFetchState] = useState({ active: false, done: 0, total: 0, message: '' });
@@ -1143,7 +1141,18 @@ export default function MCUViewer() {
           acc[slugifyPosterName(title)] = src;
           return acc;
         }, {});
-        setLocalPosterMap({ ...byTitle, ...byId });
+        const inferred = Object.entries(byId).reduce((acc, [id, src]) => {
+          const fileName = String(src).split('/').pop() || '';
+          const inferredTitle = fileName
+            .replace(/\.[a-z0-9]+$/i, '')
+            .replace(/^\d+[-_. ]+/, '')
+            .replace(/[-_.]+/g, ' ')
+            .trim();
+          if (inferredTitle) acc[slugifyPosterName(inferredTitle)] = src;
+          acc[String(Number(id))] = src;
+          return acc;
+        }, {});
+        setLocalPosterMap({ ...inferred, ...byTitle, ...byId });
       })
       .catch(() => {});
     return () => { cancelled = true; };
@@ -1291,8 +1300,7 @@ export default function MCUViewer() {
       return next;
     });
     try {
-      const lookupItem = { ...item, title: custom.title?.trim() || item.title, year: Number(custom.year) || item.year };
-      const poster = await fetchTmdbPoster(lookupItem, { force: true });
+      const poster = await fetchTmdbPoster(item, { force: true });
       if (poster) {
         setPosterCache(prev => ({ ...prev, [item.id]: poster }));
         setDetailPosterFailed(false);
@@ -1302,6 +1310,28 @@ export default function MCUViewer() {
       }
     } catch {
       setPosterFetchState({ active: false, done: 1, total: 1, message: `Could not refresh poster for ${item.title}.` });
+    }
+  };
+
+  const exportPosterForItem = async (item) => {
+    const src = localPosterSrc(item) || posterCache[item.id];
+    if (!src) {
+      setPosterExportState({ active: false, done: 0, total: 0, message: `No poster available to export for ${item.title}.` });
+      return;
+    }
+    const ext = inferFileExtFromSrc(src);
+    const filename = posterExportName(item, ext);
+    try {
+      const blob = await fetchBlob(src);
+      if (Capacitor.isNativePlatform()) {
+        const base64 = await blobToBase64(blob);
+        await Filesystem.writeFile({ path: `mcu-posters/${filename}`, data: base64, directory: Directory.Documents, recursive: true });
+      } else {
+        triggerDownload(blob, filename);
+      }
+      setPosterExportState({ active: false, done: 1, total: 1, message: `Exported poster for ${item.title}.` });
+    } catch {
+      setPosterExportState({ active: false, done: 1, total: 1, message: `Could not export poster for ${item.title}.` });
     }
   };
 
@@ -1641,7 +1671,6 @@ export default function MCUViewer() {
   return (
     <div data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 0.4s cubic-bezier(0.34,1.56,0.64,1), color 0.32s cubic-bezier(0.34,1.56,0.64,1)' }} className="theme-switch">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         html,body{scroll-behavior:smooth}
         ::-webkit-scrollbar{width:5px}
@@ -2239,9 +2268,8 @@ export default function MCUViewer() {
                   <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setMyLikes(p => ({ ...p, [detailItem.id]: p[detailItem.id] ? 0 : 1 }))}><Heart size={12}/> {myLikes[detailItem.id] ? 'Liked' : 'Like'}</button>
                   <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setBookmarks(p => ({ ...p, [detailItem.id]: p[detailItem.id] ? 0 : 1 }))}><Bookmark size={12}/> {bookmarks[detailItem.id] ? 'Saved' : 'Bookmark'}</button>
                   <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setRewatchCount(p => ({ ...p, [detailItem.id]: (p[detailItem.id] || 0) + 1 }))}><Clock size={12}/> Re-watch {rewatchCount[detailItem.id] || 0}</button>
-                  <input value={posterRefreshQuery} onChange={(e) => setPosterRefreshQuery(e.target.value)} placeholder="Poster title override" style={{ minWidth: 160, flex: '1 1 180px', padding: '7px 9px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
-                  <input value={posterRefreshYear} onChange={(e) => setPosterRefreshYear(e.target.value.replace(/[^0-9]/g, '').slice(0,4))} placeholder="Year" style={{ width: 76, padding: '7px 9px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
-                  <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => refreshPosterForItem(detailItem, { title: posterRefreshQuery, year: posterRefreshYear })} disabled={posterFetchState.active}><Download size={12}/> Refresh poster</button>
+                  <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => refreshPosterForItem(detailItem)} disabled={posterFetchState.active}><Download size={12}/> Refresh poster</button>
+                  <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => exportPosterForItem(detailItem)}><Download size={12}/> Export this poster</button>
                   <select value={myRating[detailItem.id] || ''} onChange={(e) => setMyRating(p => ({ ...p, [detailItem.id]: Number(e.target.value) }))}
                     style={{ fontSize: 11, borderRadius: 10, padding: '7px 10px', background: 'rgba(6,10,28,0.65)', color: T.inputColor, border: `1px solid ${T.inputBorder}`, gridColumn: '1 / -1' }}>
                     <option value="">My rating</option>
