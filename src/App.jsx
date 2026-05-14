@@ -160,6 +160,22 @@ const safeLocalStorageSetItem = (key, value) => {
   }
 };
 
+const scheduleStorageWrite = (() => {
+  const queue = new Map();
+  let scheduled = false;
+  const flush = () => {
+    scheduled = false;
+    for (const [key, value] of queue) safeLocalStorageSetItem(key, value);
+    queue.clear();
+  };
+  return (key, value) => {
+    queue.set(key, value);
+    if (scheduled) return;
+    scheduled = true;
+    runWhenIdle(flush, 1200);
+  };
+})();
+
 const createManagedCache = (entries = {}, options = {}) => {
   const {
     maxItems = 120,
@@ -210,10 +226,40 @@ const slugifyPosterName = (value) => String(value || '')
   .replace(/[^a-z0-9]+/g, '-')
   .replace(/^-+|-+$/g, '');
 
-const posterFileName = (item, ext = 'jpg') => `${String(item.id).padStart(3, '0')}-${slugifyPosterName(item.title)}.${ext}`;
-const posterExportName = (item, ext = 'jpg') => posterFileName(item, ext);
+const posterFileName = (item, ext = 'webp') => `${String(item.id).padStart(3, '0')}-${slugifyPosterName(item.title)}.${ext}`;
+const posterExportName = (item, ext = 'webp') => posterFileName(item, ext);
 
 
+
+const toWebpPath = (src = '') => src.replace(/\.(jpg|jpeg|png)(\?.*)?$/i, '.webp$2');
+
+const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poster' }) {
+  const wrapRef = useRef(null);
+  const [visible, setVisible] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    setLoaded(false);
+    const node = wrapRef.current;
+    if (!node) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setVisible(true);
+        obs.disconnect();
+      }
+    }, { rootMargin: '280px' });
+    obs.observe(node);
+    return () => obs.disconnect();
+  }, [src]);
+
+  const webpSrc = toWebpPath(src);
+  return <div ref={wrapRef} className={`${className} poster-shell ${loaded ? 'is-loaded' : ''}`}>
+    {visible && <picture>
+      <source srcSet={webpSrc} type="image/webp" />
+      <img className={className} src={src} alt={alt} loading="lazy" decoding="async" onLoad={() => setLoaded(true)} />
+    </picture>}
+  </div>;
+});
 const TMDB_LOOKUP_OVERRIDES = {
   1: { tmdbId: 1771, mediaType: 'movie' },
   2: { tmdbId: 1726, mediaType: 'movie' },
@@ -345,7 +391,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 15, color: isWatched ? '#f1bfd3' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
           {isWatched ? <Check size={14} style={{ color: '#f4a8ca' }} /> : (idx + 1)}
         </div>
-        <img className="poster" src={poster} alt={`${item.title} poster`} loading="lazy" />
+        <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} />
 
         <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
           <div style={TITLE_ROW_STATIC.titleLine}>
@@ -371,6 +417,24 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   );
 });
 
+
+const VirtualizedPhaseRows = ({ rows, rowHeight, renderRow }) => {
+  const [scrollTop, setScrollTop] = useState(0);
+  const viewportHeight = Math.min(rows.length * rowHeight, 680);
+  const overscan = 6;
+  const start = Math.max(0, Math.floor(scrollTop / rowHeight) - overscan);
+  const visibleCount = Math.ceil(viewportHeight / rowHeight) + overscan * 2;
+  const end = Math.min(rows.length, start + visibleCount);
+  const visibleRows = rows.slice(start, end);
+
+  return <div style={{ maxHeight: 680, height: viewportHeight, overflowY: rows.length * rowHeight > viewportHeight ? 'auto' : 'visible' }} onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}>
+    <div style={{ height: rows.length * rowHeight, position: 'relative' }}>
+      <div style={{ transform: `translateY(${start * rowHeight}px)` }}>
+        {visibleRows.map((item, idx) => renderRow(item, start + idx))}
+      </div>
+    </div>
+  </div>;
+};
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function MCUViewer() {
   const initialUiState = useMemo(() => readSavedUiState(), []);
@@ -1032,12 +1096,12 @@ export default function MCUViewer() {
 
   useDebouncedEffect(() => {
     const managed = createManagedCache(wrapCacheEntries(posterCache), { maxItems: 220, maxSerializedSize: 450_000, eviction: 'lru' });
-    safeLocalStorageSetItem(CACHE_KEYS.poster, JSON.stringify(managed));
+    scheduleStorageWrite(CACHE_KEYS.poster, JSON.stringify(managed));
   }, [posterCache], 350);
 
   useDebouncedEffect(() => {
     const managed = createManagedCache(wrapCacheEntries(metaCache), { maxItems: 260, maxSerializedSize: 500_000, eviction: 'timestamp' });
-    safeLocalStorageSetItem(CACHE_KEYS.meta, JSON.stringify(managed));
+    scheduleStorageWrite(CACHE_KEYS.meta, JSON.stringify(managed));
   }, [metaCache], 350);
 
   useEffect(() => {
@@ -1053,10 +1117,10 @@ export default function MCUViewer() {
     } catch {}
   }, []);
 
-  useEffect(() => { localStorage.setItem('mcu-profile-v1', JSON.stringify(profile)); }, [profile]);
-  useEffect(() => { localStorage.setItem('mcu-uploaded-avatars-v1', JSON.stringify(uploadedAvatars)); }, [uploadedAvatars]);
-  useEffect(() => { localStorage.setItem('mcu-theme-mode-v1', themeMode); }, [themeMode]);
-  useEffect(() => { localStorage.setItem('mcu-reduce-motion-v1', reduceMotion ? '1' : '0'); }, [reduceMotion]);
+  useEffect(() => { scheduleStorageWrite('mcu-profile-v1', JSON.stringify(profile)); }, [profile]);
+  useEffect(() => { scheduleStorageWrite('mcu-uploaded-avatars-v1', JSON.stringify(uploadedAvatars)); }, [uploadedAvatars]);
+  useEffect(() => { scheduleStorageWrite('mcu-theme-mode-v1', themeMode); }, [themeMode]);
+  useEffect(() => { scheduleStorageWrite('mcu-reduce-motion-v1', reduceMotion ? '1' : '0'); }, [reduceMotion]);
 
   useEffect(() => {
     try {
@@ -1118,14 +1182,14 @@ export default function MCUViewer() {
       setPosterCache(prev => {
         const next = { ...prev, [item.id]: posterValue };
         const managed = createManagedCache(wrapCacheEntries(next), { maxItems: 220, maxSerializedSize: 450_000, eviction: 'lru' });
-        safeLocalStorageSetItem(CACHE_KEYS.poster, JSON.stringify(managed));
+        scheduleStorageWrite(CACHE_KEYS.poster, JSON.stringify(managed));
         return next;
       });
     }
     setMetaCache(prev => {
       const next = { ...prev, [item.id]: { ...prev[item.id], ...metaValue } };
       const managed = createManagedCache(wrapCacheEntries(next), { maxItems: 260, maxSerializedSize: 500_000, eviction: 'timestamp' });
-      safeLocalStorageSetItem(CACHE_KEYS.meta, JSON.stringify(managed));
+      scheduleStorageWrite(CACHE_KEYS.meta, JSON.stringify(managed));
       return next;
     });
     return { poster: posterValue, meta: metaValue };
@@ -1605,7 +1669,7 @@ export default function MCUViewer() {
         .theme-btn{width:32px;height:32px;border-radius:50%;border:1px solid ${T.pillBorder};background:${T.pillBg};color:${T.pillText};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0}
         .theme-btn:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText};transform:rotate(22deg)}
 
-        .poster{width:52px;height:76px;object-fit:cover;border-radius:6px;border:1px solid ${T.surfaceBorder};box-shadow:0 6px 16px rgba(0,0,0,0.22)}
+        .poster-shell{width:52px;height:76px;border-radius:6px;overflow:hidden;background:linear-gradient(120deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));position:relative}.poster-shell::before{content:"";position:absolute;inset:0;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:1;transition:opacity .24s}.poster-shell.is-loaded::before{opacity:0}.poster-shell picture,.poster-shell img{display:block;width:100%;height:100%}.poster{width:52px;height:76px;object-fit:cover;border-radius:6px;border:1px solid ${T.surfaceBorder};box-shadow:0 6px 16px rgba(0,0,0,0.22)}
         .progress-gradient{background:${phaseGradient};background-size:200% 100%;animation:gradientPulse 4s ease-in-out infinite alternate}
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
         .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.62);backdrop-filter:blur(12px);z-index:240;display:grid;place-items:center;padding:20px}
@@ -1967,7 +2031,7 @@ export default function MCUViewer() {
               {calendarItems.upcoming.length === 0 ? <div style={{ marginBottom: 12, color: T.textMuted }}>No dated upcoming entries in current filter.</div> : calendarItems.upcoming.map(({ item, rawDate, label, releaseStatus }) => (
                 <div key={'up-'+item.id} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
                   <div style={{ fontSize: 11, color: 'var(--theme-warning)' }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
-                  <img className='poster' src={posterSrc(item)} alt={item.title} />
+                  <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
                   <button className='title-btn' onClick={() => setDetailItem(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
                 </div>
               ))}
@@ -1975,7 +2039,7 @@ export default function MCUViewer() {
               {calendarItems.tba.length === 0 ? <div style={{ marginBottom: 12, color: T.textMuted }}>No TBA entries in current filter.</div> : calendarItems.tba.map(({ item, rawDate, label, releaseStatus }) => (
                 <div key={'tba-'+item.id} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
                   <div style={{ fontSize: 11, color: T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
-                  <img className='poster' src={posterSrc(item)} alt={item.title} />
+                  <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
                   <button className='title-btn' onClick={() => setDetailItem(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
                 </div>
               ))}
@@ -1983,7 +2047,7 @@ export default function MCUViewer() {
               {calendarItems.released.map(({ item, rawDate, label, releaseStatus }) => (
                 <div key={'old-'+item.id} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
                   <div style={{ fontSize: 11, color: T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
-                  <img className='poster' src={posterSrc(item)} alt={item.title} />
+                  <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
                   <button className='title-btn' onClick={() => setDetailItem(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
                 </div>
               ))}
@@ -2052,7 +2116,7 @@ export default function MCUViewer() {
 
                 {/* Row table */}
                 <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 14, overflow: 'hidden', boxShadow: darkMode ? '0 2px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.03)' : '0 1px 6px rgba(0,0,0,0.06)' }}>
-                  {rows.map((item, idx) => {
+                  <VirtualizedPhaseRows rows={rows} rowHeight={densityMode === 'compact' ? 78 : 92} renderRow={(item, idx) => {
                     const itemReleaseStatus = releaseStatusFor(item);
                     const itemReleaseInfo = releaseInfoFor(item);
                     return (
@@ -2080,7 +2144,8 @@ export default function MCUViewer() {
                         onOpenStatus={openStatusDropdown}
                       />
                     );
-                  })}
+                  }}/>
+
                 </div>
               </section>
             );
