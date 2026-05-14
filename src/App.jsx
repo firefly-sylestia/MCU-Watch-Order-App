@@ -68,6 +68,12 @@ const TITLE_ROW_STATIC = {
   genreMeta: { marginTop: 2, fontSize: 10, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1.2 },
 };
 const DESKTOP_TEXT_SCALES = [0.9, 1, 1.1, 1.2, 1.35];
+const LOKI_LANGUAGE_OPTIONS = [
+  { id: 'midgard', label: 'Midgardian (English)' },
+  { id: 'asgard', label: 'Asgardian Royal Script' },
+  { id: 'tva', label: 'TVA Bureaucratic' },
+  { id: 'frost', label: 'Jotun Whisper' },
+];
 
 // ─── Static data ────────────────────────────────────────────────────────────
 const LIST_MODES = [
@@ -400,10 +406,17 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   isWorthy = false,
   multiverseShuffle = false,
   onThorLongPress,
+  lokiLanguage = 'midgard',
 }) {
   const StatusIcon = statusMeta.Icon;
   const TypeIcon = typeMeta.Icon;
   const RowStatusIcon = statusMeta.Icon;
+  const renderLokiLabel = (text) => {
+    if (lokiLanguage === 'asgard') return `ᚨ ${text.toUpperCase()} ᚱ`;
+    if (lokiLanguage === 'tva') return `${text.toUpperCase()} // APPROVED`;
+    if (lokiLanguage === 'frost') return `❄ ${text.toLowerCase()} ❄`;
+    return text;
+  };
   return (
     <div>
       <div className={`rrow row-in type-${item.type} ${isWatched ? 'glass-panel' : ''} ${isExpanded ? 'curvy-selected' : ''}`} onPointerDown={() => { if (item.title.toLowerCase().includes('thor')) { window.__thorPress = setTimeout(() => onThorLongPress?.(item), 650); } }} onPointerUp={() => clearTimeout(window.__thorPress)} onPointerLeave={() => clearTimeout(window.__thorPress)} style={{ background: isWatched ? 'var(--theme-watched-bg)' : 'transparent', opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow, borderColor: multiverseShuffle ? `hsl(${(item.id * 47) % 360} 90% 60% / 0.7)` : undefined }}>
@@ -446,7 +459,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
               <RowStatusIcon size={10} />
-              {statusLabelOverride || statusMeta.label}
+              {renderLokiLabel(statusLabelOverride || statusMeta.label)}
             </span>
             <ChevDown size={10} style={{ opacity: 0.8, transform: statusDropdown === item.id ? 'rotate(180deg)' : 'none' }} />
           </button>
@@ -541,6 +554,7 @@ export default function MCUViewer() {
   const [spiderSense, setSpiderSense] = useState(false);
   const [multiverseShuffle, setMultiverseShuffle] = useState(false);
   const [desktopTextScale, setDesktopTextScale] = useState(1.1);
+  const [lokiLanguage, setLokiLanguage] = useState('midgard');
 
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
@@ -625,6 +639,10 @@ export default function MCUViewer() {
       setMultiverseShuffle(true);
       setEasterEgg('Multiverse borders destabilized ✨');
       setTimeout(() => setMultiverseShuffle(false), 3000);
+    }
+    if (normalized === 'loki') {
+      setEasterEgg('Glorious Purpose unlocked: Loki Languages 🐍');
+      setLokiLanguage('asgard');
     }
     setSpiderSense(normalized.includes('spider'));
   }, [search]);
@@ -1006,6 +1024,13 @@ export default function MCUViewer() {
     'Captain America: The First Avenger': ['Chris Evans', 'Hayley Atwell', 'Sebastian Stan'],
     'Thor': ['Chris Hemsworth', 'Tom Hiddleston', 'Natalie Portman'],
   };
+  const lokiize = useCallback((value) => {
+    const text = String(value || '');
+    if (lokiLanguage === 'asgard') return `ᚨ ${text.toUpperCase()} ᚱ`;
+    if (lokiLanguage === 'tva') return `${text.toUpperCase()} // APPROVED`;
+    if (lokiLanguage === 'frost') return `❄ ${text.toLowerCase()} ❄`;
+    return text;
+  }, [lokiLanguage]);
 
   const localPosterSrc = (item) => {
     const mapped = POSTER_OVERRIDES[item.id] || localPosterMap[item.id] || localPosterMap[String(item.id)] || localPosterMap[slugifyPosterName(item.title)];
@@ -2090,6 +2115,14 @@ export default function MCUViewer() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6 }}>
               {DESKTOP_TEXT_SCALES.map(scale => <button key={scale} className='fpill' onClick={() => setDesktopTextScale(scale)} style={{ justifyContent: 'center', borderColor: desktopTextScale === scale ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{Math.round(scale * 100)}%</button>)}
             </div>
+            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase', marginTop: 2 }}>Loki Language</div>
+            <div style={{ display: 'grid', gap: 6 }}>
+              {LOKI_LANGUAGE_OPTIONS.map(opt => (
+                <button key={opt.id} className='fpill' onClick={() => setLokiLanguage(opt.id)} style={{ justifyContent: 'center', borderColor: lokiLanguage === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
             {/* Theme picker with color swatches */}
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase', marginTop: 2 }}>Theme</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
@@ -2130,7 +2163,7 @@ export default function MCUViewer() {
               <div className="header-title-mcu" style={{ fontSize: 'clamp(44px, 9vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: 'var(--theme-accent)' }}>MCU</div>
               <div className="header-title-sub" style={{ fontSize: 'clamp(26px, 4.2vw, 35px)', letterSpacing: 'clamp(3px, 1.1vw, 9px)', color: 'var(--theme-accent-alt)', marginTop: 0 }}>VIEWING ORDER</div>
               <div className="header-tagline" style={{ fontSize: '14px', color: 'var(--theme-warning)', letterSpacing: headerCompact ? 1.4 : 3, fontFamily: 'var(--font-marvel-ui)', marginTop: 1, transition: 'all 0.22s ease' }}>
-                {`PHASES 1–6 · ${activeItems.length} ENTRIES · ${LIST_MODES.find(m => m.id === listMode)?.sublabel.toUpperCase()}`}
+                {lokiize(`PHASES 1–6 · ${activeItems.length} ENTRIES · ${LIST_MODES.find(m => m.id === listMode)?.sublabel.toUpperCase()}`)}
               </div>
             </div>
             <div style={{ background: darkMode ? 'rgba(18,22,42,0.45)' : T.statBg, border: `1px solid ${darkMode ? 'rgba(255,220,235,0.28)' : T.statBorder}`, borderRadius: 10, padding: headerCompact ? '5px 10px' : '8px 14px', minWidth: headerCompact ? 145 : 180, boxShadow: darkMode ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'none', transition: 'all 0.22s ease' }}>
@@ -2515,6 +2548,7 @@ export default function MCUViewer() {
                         isWorthy={Boolean(worthyIds[item.id])}
                         multiverseShuffle={multiverseShuffle}
                         onThorLongPress={(pressedItem) => setWorthyIds(prev => ({ ...prev, [pressedItem.id]: !prev[pressedItem.id] }))}
+                        lokiLanguage={lokiLanguage}
                       />
                     );
                   }}/>
