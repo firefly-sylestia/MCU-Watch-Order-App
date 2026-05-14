@@ -61,6 +61,7 @@ const STATUS_META = {
 };
 
 const SORT_LABELS = { order: 'Chronological', year: 'By Year', title: 'Alphabetical', runtime: 'Runtime', watched: 'Recently Watched', status: 'By Status' };
+const HIDDEN_FILTER_STATUSES = new Set(['watched', 'dropped']);
 const TITLE_ROW_STATIC = {
   titleBtn: { overflow: 'hidden' },
   titleLine: { display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' },
@@ -112,7 +113,7 @@ const VALID_TYPES = new Set([null, ...Object.keys(TYPE_META)]);
 const VALID_STATUSES = new Set([null, ...Object.keys(STATUS_META)]);
 const VALID_DENSITY_MODES = new Set(['comfortable', 'compact']);
 const VALID_TIMELINE_MODES = new Set(['sacred', 'studio', 'whatif']);
-const AUTO_HIDDEN_STATUSES = new Set(['watched', 'dropped']);
+const AUTO_HIDDEN_STATUSES = HIDDEN_FILTER_STATUSES;
 
 const readSavedUiState = () => {
   if (typeof window === 'undefined') return UI_STATE_DEFAULTS;
@@ -636,7 +637,7 @@ export default function MCUViewer() {
   };
 
   const exportProgress = async () => {
-    const payload = items.map(({ id, status, watchedDate }) => ({ id, status, watchedDate }));
+    const payload = items.map(({ id, status, watchedDate, statusChangedAt }) => ({ id, status, watchedDate, statusChangedAt }));
     const content = JSON.stringify(payload, null, 2);
     if (Capacitor.isNativePlatform()) {
       const fileName = `mcu-progress-${Date.now()}.json`;
@@ -734,7 +735,7 @@ export default function MCUViewer() {
         const imported = JSON.parse(String(reader.result));
         setItems(prev => {
           const map = new Map(imported.map(x => [x.id, x]));
-          const next = prev.map(i => map.has(i.id) ? { ...i, status: map.get(i.id).status || 'unwatched', watchedDate: map.get(i.id).watchedDate || null } : i);
+          const next = prev.map(i => map.has(i.id) ? { ...i, status: map.get(i.id).status || 'unwatched', watchedDate: map.get(i.id).watchedDate || null, statusChangedAt: map.get(i.id).statusChangedAt || map.get(i.id).watchedDate || null } : i);
           persist(next);
           return next;
         });
@@ -837,9 +838,10 @@ export default function MCUViewer() {
     const f = items.filter(i => {
       if (listMode === 'core' && !coreIds.has(i.id)) return false;
       if (listMode === 'core' && essentialOnly && !i.essential) return false;
+      const statusFilterIsAutoHidden = statusFilter && HIDDEN_FILTER_STATUSES.has(statusFilter);
+      if (!showCompleted && !watchedOnly && !statusFilterIsAutoHidden && AUTO_HIDDEN_STATUSES.has(i.status)) return false;
       if (watchedOnly && i.status !== 'watched') return false;
       if (statusFilter && i.status !== statusFilter) return false;
-      if (!showCompleted && !watchedOnly && !statusFilter && AUTO_HIDDEN_STATUSES.has(i.status)) return false;
       if (typeFilter && i.type !== typeFilter) return false;
       if (activePhase && i.phase !== activePhase) return false;
       if (timelineMode === 'studio' && i.order % 2 === 0) return true;
@@ -1101,9 +1103,9 @@ export default function MCUViewer() {
 
   const nextUnwatched = useMemo(() => filtered.find(i => i.status !== 'watched') || null, [filtered]);
   const recentActivity = useMemo(() => [...activeItems].filter(i => i.watchedDate).sort((a,b) => (b.watchedDate||'').localeCompare(a.watchedDate||'')).slice(0,5), [activeItems]);
-  const recentHiddenItems = useMemo(() => [...activeItems]
-    .filter(i => AUTO_HIDDEN_STATUSES.has(i.status))
-    .sort((a, b) => (b.statusChangedAt || b.watchedDate || '').localeCompare(a.statusChangedAt || a.watchedDate || ''))
+  const recentlyWatchedItems = useMemo(() => [...activeItems]
+    .filter(i => i.status === 'watched' && i.watchedDate)
+    .sort((a, b) => (b.watchedDate || b.statusChangedAt || '').localeCompare(a.watchedDate || a.statusChangedAt || ''))
     .slice(0, 4), [activeItems]);
   const totalEntries = activeItems.length;
   const seriesCount = activeItems.filter(i => i.type === 'series').length;
@@ -2100,6 +2102,7 @@ export default function MCUViewer() {
                     onMouseLeave={() => setFilterStatusOpen(false)}>
                     <div className={`sopt ${!statusFilter && !watchedOnly ? 'picked' : ''}`} onClick={() => { setStatusFilter(null); setWatchedOnly(false); setFilterStatusOpen(false); }}>All statuses</div>
                     <div className={`sopt ${watchedOnly ? 'picked' : ''}`} onClick={() => { setWatchedOnly(true); setStatusFilter(null); setFilterStatusOpen(false); }}>Watched only</div>
+                    <div className={`sopt ${statusFilter === 'watched' ? 'picked' : ''}`} onClick={() => { setStatusFilter('watched'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Watched status</div>
                     <div className={`sopt ${statusFilter === 'watching' ? 'picked' : ''}`} onClick={() => { setStatusFilter('watching'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Watching</div>
                     <div className={`sopt ${statusFilter === 'plan-to-watch' ? 'picked' : ''}`} onClick={() => { setStatusFilter('plan-to-watch'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Plan to Watch</div>
                     <div className={`sopt ${statusFilter === 'dropped' ? 'picked' : ''}`} onClick={() => { setStatusFilter('dropped'); setWatchedOnly(false); setShowCompleted(false); setFilterStatusOpen(false); }}>Dropped</div>
@@ -2119,18 +2122,18 @@ export default function MCUViewer() {
         )}
       </div>
 
-      {recentHiddenItems.length > 0 && !showCompleted && !watchedOnly && !statusFilter && (
+      {recentlyWatchedItems.length > 0 && !showCompleted && !watchedOnly && !statusFilter && (
         <div style={{ background: T.filterBg, borderBottom: `1px solid ${T.filterBorder}`, padding: '8px 24px', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Hidden recently</span>
-          {recentHiddenItems.map(item => {
-            const meta = STATUS_META[item.status] || STATUS_META.unwatched;
+          <span style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Recently watched</span>
+          {recentlyWatchedItems.map(item => {
+            const meta = STATUS_META.watched;
             return (
-              <button key={item.id} className="fpill" onClick={() => { setStatusFilter(item.status); setWatchedOnly(false); }} style={{ padding: '5px 10px', fontSize: 11, color: meta.color, borderColor: `${meta.color}55`, background: `${meta.color}12` }}>
+              <button key={item.id} className="fpill" onClick={() => { setWatchedOnly(true); setStatusFilter(null); }} style={{ padding: '5px 10px', fontSize: 11, color: meta.color, borderColor: `${meta.color}55`, background: `${meta.color}12` }}>
                 <meta.Icon size={10} />{item.title}
               </button>
             );
           })}
-          <button className="fpill" onClick={() => setShowCompleted(true)} style={{ padding: '5px 10px', fontSize: 11 }}>Show all hidden</button>
+          <button className="fpill" onClick={() => { setWatchedOnly(true); setStatusFilter(null); }} style={{ padding: '5px 10px', fontSize: 11 }}>Show watched</button>
         </div>
       )}
 
