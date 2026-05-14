@@ -112,6 +112,7 @@ const VALID_TYPES = new Set([null, ...Object.keys(TYPE_META)]);
 const VALID_STATUSES = new Set([null, ...Object.keys(STATUS_META)]);
 const VALID_DENSITY_MODES = new Set(['comfortable', 'compact']);
 const VALID_TIMELINE_MODES = new Set(['sacred', 'studio', 'whatif']);
+const AUTO_HIDDEN_STATUSES = new Set(['watched', 'dropped']);
 
 const readSavedUiState = () => {
   if (typeof window === 'undefined') return UI_STATE_DEFAULTS;
@@ -498,8 +499,7 @@ export default function MCUViewer() {
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
   const [themeMode,      setThemeMode]      = useState('classic');
   const [spoilerSafeMode, setSpoilerSafeMode] = useState(true);
-  const [reduceMotion, setReduceMotion] = useState(true);
-  const [performanceMode, setPerformanceMode] = useState(true);
+  const [showCompleted, setShowCompleted] = useState(false);
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
@@ -529,7 +529,8 @@ export default function MCUViewer() {
         setItems(prev => prev.map(i => ({
           ...i,
           status: saved[i.id]?.status || 'unwatched',
-          watchedDate: saved[i.id]?.watchedDate || null
+          watchedDate: saved[i.id]?.watchedDate || null,
+          statusChangedAt: saved[i.id]?.statusChangedAt || saved[i.id]?.watchedDate || null
         })));
       } catch {}
     }
@@ -539,7 +540,7 @@ export default function MCUViewer() {
     const data = {};
     next.forEach(i => {
       if (i.status !== 'unwatched' || i.watchedDate) {
-        data[i.id] = { status: i.status, watchedDate: i.watchedDate };
+        data[i.id] = { status: i.status, watchedDate: i.watchedDate, statusChangedAt: i.statusChangedAt || i.watchedDate || null };
       }
     });
     localStorage.setItem('mcu-v7', JSON.stringify(data));
@@ -549,7 +550,7 @@ export default function MCUViewer() {
     setItems(prev => {
       const n = prev.map(i => {
         if (i.id !== id) return i;
-        const updated = { ...i, status: newStatus };
+        const updated = { ...i, status: newStatus, statusChangedAt: new Date().toISOString() };
         if (newStatus === 'watched' && !i.watchedDate) {
           updated.watchedDate = new Date().toISOString().slice(0, 16);
         } else if (newStatus !== 'watched') {
@@ -566,6 +567,7 @@ export default function MCUViewer() {
           setTimeout(() => setCelebPhase(null), 2400);
         }
       }
+      if (AUTO_HIDDEN_STATUSES.has(newStatus)) setShowCompleted(false);
       persist(n);
       return n;
     });
@@ -816,7 +818,7 @@ export default function MCUViewer() {
       const n = prev.map(i => {
         if (i.phase !== phaseId) return i;
         if (listMode === 'core' && !coreIds.has(i.id)) return i;
-        const updated = { ...i, status: newStatus };
+        const updated = { ...i, status: newStatus, statusChangedAt: new Date().toISOString() };
         if (newStatus === 'watched' && !i.watchedDate) {
           updated.watchedDate = new Date().toISOString().slice(0, 16);
         } else if (newStatus !== 'watched') {
@@ -824,6 +826,7 @@ export default function MCUViewer() {
         }
         return updated;
       });
+      if (AUTO_HIDDEN_STATUSES.has(newStatus)) setShowCompleted(false);
       persist(n);
       return n;
     });
@@ -836,6 +839,7 @@ export default function MCUViewer() {
       if (listMode === 'core' && essentialOnly && !i.essential) return false;
       if (watchedOnly && i.status !== 'watched') return false;
       if (statusFilter && i.status !== statusFilter) return false;
+      if (!showCompleted && !watchedOnly && !statusFilter && AUTO_HIDDEN_STATUSES.has(i.status)) return false;
       if (typeFilter && i.type !== typeFilter) return false;
       if (activePhase && i.phase !== activePhase) return false;
       if (timelineMode === 'studio' && i.order % 2 === 0) return true;
@@ -854,7 +858,7 @@ export default function MCUViewer() {
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, timelineMode, genreFilter, q, sortBy, coreIds]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, showCompleted, typeFilter, activePhase, timelineMode, genreFilter, q, sortBy, coreIds]);
 
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
@@ -1097,6 +1101,10 @@ export default function MCUViewer() {
 
   const nextUnwatched = useMemo(() => filtered.find(i => i.status !== 'watched') || null, [filtered]);
   const recentActivity = useMemo(() => [...activeItems].filter(i => i.watchedDate).sort((a,b) => (b.watchedDate||'').localeCompare(a.watchedDate||'')).slice(0,5), [activeItems]);
+  const recentHiddenItems = useMemo(() => [...activeItems]
+    .filter(i => AUTO_HIDDEN_STATUSES.has(i.status))
+    .sort((a, b) => (b.statusChangedAt || b.watchedDate || '').localeCompare(a.statusChangedAt || a.watchedDate || ''))
+    .slice(0, 4), [activeItems]);
   const totalEntries = activeItems.length;
   const seriesCount = activeItems.filter(i => i.type === 'series').length;
   const filmCount = activeItems.filter(i => i.type === 'film').length;
@@ -1205,18 +1213,12 @@ export default function MCUViewer() {
       if (Array.isArray(avatars)) setUploadedAvatars(avatars);
       const t = localStorage.getItem('mcu-theme-mode-v1');
       if (t) setThemeMode(t);
-      const rm = localStorage.getItem('mcu-reduce-motion-v1');
-      if (rm !== null) setReduceMotion(rm === '1');
-      const pm = localStorage.getItem('mcu-performance-mode-v1');
-      if (pm !== null) setPerformanceMode(pm === '1');
     } catch {}
   }, []);
 
   useEffect(() => { scheduleStorageWrite('mcu-profile-v1', JSON.stringify(profile)); }, [profile]);
   useEffect(() => { scheduleStorageWrite('mcu-uploaded-avatars-v1', JSON.stringify(uploadedAvatars)); }, [uploadedAvatars]);
   useEffect(() => { scheduleStorageWrite('mcu-theme-mode-v1', themeMode); }, [themeMode]);
-  useEffect(() => { scheduleStorageWrite('mcu-reduce-motion-v1', reduceMotion ? '1' : '0'); }, [reduceMotion]);
-  useEffect(() => { scheduleStorageWrite('mcu-performance-mode-v1', performanceMode ? '1' : '0'); }, [performanceMode]);
 
   useEffect(() => {
     try {
@@ -1691,7 +1693,7 @@ export default function MCUViewer() {
   };
 
   // Count active filters for the collapsed bar badge
-  const activeFilterCount = [typeFilter, statusFilter, watchedOnly, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
+  const activeFilterCount = [typeFilter, statusFilter, watchedOnly, showCompleted, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
 
   const renderPhaseSelector = () => (
     <div ref={phaseRef} style={{ position: 'relative', flex: '0 0 auto' }}>
@@ -1701,7 +1703,7 @@ export default function MCUViewer() {
         <ChevDown size={12} style={{ opacity: 0.6, transform: phaseOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
       </button>
       {phaseOpen && (
-        <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: smoothMode ? 'none' : T.dropdownShadow, minWidth: 200 }}>
+        <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: 'none', minWidth: 200 }}>
           <div className={`sopt ${activePhase === 0 ? 'picked' : ''}`} onClick={() => { setActivePhase(0); setPhaseOpen(false); }}>Phase All</div>
           {PHASES.map((ph) => (
             <div key={ph.id} className={`sopt ${activePhase === ph.id ? 'picked' : ''}`} style={activePhase === ph.id ? { color: ph.color, fontWeight: 700 } : {}} onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); setPhaseOpen(false); }}>{ph.name}</div>
@@ -1714,10 +1716,10 @@ export default function MCUViewer() {
   const appThemeBg = 'var(--theme-app-bg)';
   const smoothMode = performanceMode || reduceMotion;
   return (
-    <div data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: smoothMode ? 'none' : 'background 0.24s ease, color 0.2s ease' }} className={`theme-switch ${smoothMode ? 'performance-mode' : ''}`}>
+    <div data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'none' }} className="theme-switch performance-mode">
       <style>{`
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-        html,body{scroll-behavior:${smoothMode ? 'auto' : 'smooth'}}
+        html,body{scroll-behavior:auto}
         ::-webkit-scrollbar{width:5px}
         ::-webkit-scrollbar-track{background:${T.scrollTrack}}
         ::-webkit-scrollbar-thumb{background:${T.scrollThumb};border-radius:4px}
@@ -1739,22 +1741,22 @@ export default function MCUViewer() {
         .section-up{animation:none}
 
         @keyframes fadeIn{from{opacity:0;transform:scale(0.97) translateY(-4px)}to{opacity:1;transform:scale(1) translateY(0)}}
-        .fade-in{animation:${smoothMode ? 'none' : 'fadeIn 0.16s ease both'}}
+        .fade-in{animation:none}
 
         @keyframes expandDown{from{opacity:0;max-height:0;padding-top:0;padding-bottom:0}to{opacity:1;max-height:600px;padding-top:10px;padding-bottom:10px}}
         .expand-row{animation:expandDown 0.28s cubic-bezier(0.34,1.56,0.64,1) both;overflow:hidden}
 
         @keyframes filtersSlide{from{opacity:0;max-height:0}to{opacity:1;max-height:220px}}
-        .filters-open{animation:${smoothMode ? 'none' : 'filtersSlide 0.26s ease both'};overflow:visible}
+        .filters-open{animation:none;overflow:visible}
 
         @keyframes themeFadeSwitch{from{opacity:0.7}to{opacity:1}}
-        .theme-switch{animation:${smoothMode ? 'none' : 'themeFadeSwitch 0.25s ease both'}}
+        .theme-switch{animation:none}
 
         @keyframes listModeSlide{from{opacity:0.8;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
-        .list-mode-switch{animation:${smoothMode ? 'none' : 'listModeSlide 0.2s ease both'}}
+        .list-mode-switch{animation:none}
 
         @keyframes buttonPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--theme-accent) 45%, transparent)}70%{box-shadow:0 0 0 6px transparent}100%{box-shadow:0 0 0 0 transparent}}
-        .button-click{animation:${smoothMode ? 'none' : 'buttonPulse 0.6s ease both'}}
+        .button-click{animation:none}
 
         .wbtn{position:relative;width:30px;height:30px;border-radius:50%;border:1.5px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background 0.14s ease,border-color 0.14s ease,color 0.14s ease;flex-shrink:0;box-shadow:none}
         .wbtn:hover{border-color:rgba(255,255,255,0.28)!important;background:rgba(255,255,255,0.1)!important}
@@ -1803,7 +1805,7 @@ export default function MCUViewer() {
         .theme-btn:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText}}
 
         .poster-shell{width:52px;height:76px;border-radius:6px;overflow:hidden;background:linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.025));position:relative;flex-shrink:0}.poster-shell::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));opacity:1;transition:opacity .12s;pointer-events:none}.poster-shell.is-loaded::before{opacity:0}.poster-shell picture,.poster-shell img{display:block;width:100%;height:100%}.poster{width:52px;height:76px;object-fit:cover;border-radius:6px;border:1px solid ${T.surfaceBorder};box-shadow:none}
-        .progress-gradient{background:${phaseGradient};background-size:200% 100%;animation:${smoothMode ? 'none' : 'gradientPulse 4s ease-in-out infinite alternate'}}
+        .progress-gradient{background:${phaseGradient};background-size:200% 100%;animation:none}
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
         .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.62);backdrop-filter:blur(12px);z-index:240;display:grid;place-items:center;padding:20px}
         .detail-card{width:min(980px,94vw);max-height:90vh;overflow:auto;background:linear-gradient(145deg, rgba(17,22,44,0.62), rgba(12,16,34,0.5));backdrop-filter:blur(16px) saturate(130%);-webkit-backdrop-filter:blur(16px) saturate(130%);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:24px;box-shadow:${darkMode ? '0 22px 60px rgba(0,0,0,0.56)' : '0 18px 44px rgba(0,0,0,0.14)'}}
@@ -1816,7 +1818,7 @@ export default function MCUViewer() {
         .glass-panel{background-color:rgba(30,30,46,0.78);border:1px solid rgba(255,255,255,0.05);border-radius:16px}
         .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02))}
         .meta-muted{color:var(--theme-text-muted) !important}
-        ${smoothMode ? `*{scroll-behavior:auto !important}.sweep::after,.phase-flash{animation:none !important}.wbtn,.fpill,.rrow,.theme-switch,.list-mode-switch{transition:none !important}` : ''}
+        *{scroll-behavior:auto !important}.sweep::after,.phase-flash{animation:none !important}.wbtn,.fpill,.rrow,.theme-switch,.list-mode-switch{transition:none !important}
 
         /* Mobile */
         @media (max-width: 767px) {
@@ -1869,7 +1871,7 @@ export default function MCUViewer() {
           </button>
         </div>
         {settingsOpen && (
-          <div className="fade-in" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, marginTop: 8, minWidth: 320, borderRadius: 12, border: '1px solid var(--theme-border)', background: 'var(--theme-surface)', boxShadow: smoothMode ? 'none' : T.dropdownShadow, padding: 10, display: 'grid', gap: 8, maxHeight: '80vh', overflow: 'auto',  }}>
+          <div className="fade-in" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, marginTop: 8, minWidth: 320, borderRadius: 12, border: '1px solid var(--theme-border)', background: 'var(--theme-surface)', boxShadow: 'none', padding: 10, display: 'grid', gap: 8, maxHeight: '80vh', overflow: 'auto',  }}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Profile</div>
             <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 6 }}>
@@ -1896,14 +1898,6 @@ export default function MCUViewer() {
             <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><EyeOff size={14} /> Spoiler Safe</span>
               <input type='checkbox' checked={spoilerSafeMode} onChange={() => setSpoilerSafeMode(v => !v)} style={{ width: 36, height: 20 }} />
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Pause size={14} /> Reduce Motion</span>
-              <input type='checkbox' checked={reduceMotion} onChange={() => setReduceMotion(v => !v)} style={{ width: 36, height: 20 }} />
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Zap size={14} /> Smooth Performance</span>
-              <input type='checkbox' checked={performanceMode} onChange={() => setPerformanceMode(v => !v)} style={{ width: 36, height: 20 }} />
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 6 }}>
               <button className='fpill' onClick={() => setDensityMode('comfortable')} style={{ borderColor: densityMode === 'comfortable' ? 'var(--theme-accent)' : 'var(--theme-border)', justifyContent: 'center' }}>Comfortable</button>
@@ -1936,7 +1930,7 @@ export default function MCUViewer() {
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: 'var(--theme-danger)', textTransform: 'uppercase' }}>Danger Zone</div>
             {posterFetchState.message && <div style={{ fontSize: 11, color: T.textMuted }}>{posterFetchState.message}</div>}
-            <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setActivePhase(0); }}><Trash2 size={14}/>Reset Filters</button>
+            <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setShowCompleted(false); setActivePhase(0); }}><Trash2 size={14}/>Reset Filters</button>
           </div>
         )}
       </div>
@@ -2066,7 +2060,7 @@ export default function MCUViewer() {
                   <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                 </button>
                 {sortOpen && (
-                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: smoothMode ? 'none' : T.dropdownShadow, minWidth: 200 }}>
+                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: 'none', minWidth: 200 }}>
                     {Object.entries(SORT_LABELS).map(([k, v]) => (
                       <div key={k} className={`sopt ${sortBy === k ? 'picked' : ''}`} onClick={() => { setSortBy(k); setSortOpen(false); }}>{v}</div>
                     ))}
@@ -2102,20 +2096,22 @@ export default function MCUViewer() {
                   <Check size={10} />Status
                 </button>
                 {filterStatusOpen && (
-                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: smoothMode ? 'none' : T.dropdownShadow, minWidth: 180 }}
+                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: 'none', minWidth: 180 }}
                     onMouseEnter={() => setFilterStatusOpen(true)}
                     onMouseLeave={() => setFilterStatusOpen(false)}>
                     <div className={`sopt ${!statusFilter && !watchedOnly ? 'picked' : ''}`} onClick={() => { setStatusFilter(null); setWatchedOnly(false); setFilterStatusOpen(false); }}>All statuses</div>
                     <div className={`sopt ${watchedOnly ? 'picked' : ''}`} onClick={() => { setWatchedOnly(true); setStatusFilter(null); setFilterStatusOpen(false); }}>Watched only</div>
                     <div className={`sopt ${statusFilter === 'watching' ? 'picked' : ''}`} onClick={() => { setStatusFilter('watching'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Watching</div>
                     <div className={`sopt ${statusFilter === 'plan-to-watch' ? 'picked' : ''}`} onClick={() => { setStatusFilter('plan-to-watch'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Plan to Watch</div>
+                    <div className={`sopt ${statusFilter === 'dropped' ? 'picked' : ''}`} onClick={() => { setStatusFilter('dropped'); setWatchedOnly(false); setShowCompleted(false); setFilterStatusOpen(false); }}>Dropped</div>
+                    <div className={`sopt ${showCompleted ? 'picked' : ''}`} onClick={() => { setShowCompleted(v => !v); setStatusFilter(null); setWatchedOnly(false); setFilterStatusOpen(false); }}>{showCompleted ? 'Hide watched/dropped' : 'Show watched/dropped'}</div>
                   </div>
                 )}
               </div>
               {/* Reset */}
               {activeFilterCount > 0 && (
                 <button className="fpill" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', padding: '7px 12px' }}
-                  onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setSortBy('order'); }}>
+                  onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setShowCompleted(false); setSortBy('order'); }}>
                   <Trash2 size={10} /> Clear
                 </button>
               )}
@@ -2123,6 +2119,21 @@ export default function MCUViewer() {
           </div>
         )}
       </div>
+
+      {recentHiddenItems.length > 0 && !showCompleted && !watchedOnly && !statusFilter && (
+        <div style={{ background: T.filterBg, borderBottom: `1px solid ${T.filterBorder}`, padding: '8px 24px', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Hidden recently</span>
+          {recentHiddenItems.map(item => {
+            const meta = STATUS_META[item.status] || STATUS_META.unwatched;
+            return (
+              <button key={item.id} className="fpill" onClick={() => { setStatusFilter(item.status); setWatchedOnly(false); }} style={{ padding: '5px 10px', fontSize: 11, color: meta.color, borderColor: `${meta.color}55`, background: `${meta.color}12` }}>
+                <meta.Icon size={10} />{item.title}
+              </button>
+            );
+          })}
+          <button className="fpill" onClick={() => setShowCompleted(true)} style={{ padding: '5px 10px', fontSize: 11 }}>Show all hidden</button>
+        </div>
+      )}
 
 
       {/* ━━ JUMP NEXT BUTTON ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
@@ -2142,14 +2153,14 @@ export default function MCUViewer() {
             onClick={() => setDockStatusOpen(v => !v)}
             aria-label="Open quick status filters"
             className="bottom-action-bar"
-            style={{ border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(20,25,46,0.72)' : 'rgba(255,255,255,0.78)', color: T.text, boxShadow: smoothMode ? 'none' : (darkMode ? '0 8px 22px rgba(0,0,0,0.45)' : '0 8px 20px rgba(0,0,0,0.14)'), fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1.2, fontSize: 12 }}
+            style={{ border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(20,25,46,0.72)' : 'rgba(255,255,255,0.78)', color: T.text, boxShadow: 'none', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1.2, fontSize: 12 }}
           >
             Status Menu <ChevDown size={12} style={{ transform: dockStatusOpen ? 'rotate(180deg)' : 'none' }} />
           </button>
           {dockStatusOpen && (
-            <div className="fade-in" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, minWidth: 172, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 10, overflow: 'hidden', boxShadow: smoothMode ? 'none' : T.dropdownShadow }}>
-              <div className="sopt" onClick={() => { setStatusFilter(null); setWatchedOnly(false); setDockStatusOpen(false); }}>All statuses</div>
-              <div className="sopt" onClick={() => { setWatchedOnly(true); setStatusFilter(null); setDockStatusOpen(false); }}>Watched</div>
+            <div className="fade-in" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, minWidth: 172, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 10, overflow: 'hidden', boxShadow: 'none' }}>
+              <div className="sopt" onClick={() => { setStatusFilter(null); setWatchedOnly(false); setShowCompleted(false); setDockStatusOpen(false); }}>All statuses</div>
+              <div className="sopt" onClick={() => { setWatchedOnly(true); setStatusFilter(null); setShowCompleted(true); setDockStatusOpen(false); }}>Watched</div>
               <div className="sopt" onClick={() => { setStatusFilter('watching'); setWatchedOnly(false); setDockStatusOpen(false); }}>Watching</div>
               <div className="sopt" onClick={() => { setStatusFilter('on-hold'); setWatchedOnly(false); setDockStatusOpen(false); }}>On Hold</div>
               <div className="sopt" onClick={() => { setStatusFilter('dropped'); setWatchedOnly(false); setDockStatusOpen(false); }}>Dropped</div>
@@ -2259,7 +2270,7 @@ export default function MCUViewer() {
                 )}
 
                 {/* Row table */}
-                <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 14, overflow: 'hidden', boxShadow: smoothMode ? 'none' : (darkMode ? '0 2px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.03)' : '0 1px 6px rgba(0,0,0,0.06)') }}>
+                <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 14, overflow: 'hidden', boxShadow: 'none' }}>
                   <PhaseRows rows={rows} renderRow={(item, idx) => {
                     const itemReleaseStatus = releaseStatusFor(item);
                     const itemReleaseInfo = releaseInfoFor(item);
@@ -2397,7 +2408,7 @@ export default function MCUViewer() {
           <>
             <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={() => setStatusDropdown(null)} aria-hidden="true" />
             <div className="fade-in" role="dialog" aria-label="Set watch status"
-              style={{ position: 'fixed', top: dropdownPos.y, left: dropdownPos.x, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 11, padding: '9px', zIndex: 999, boxShadow: smoothMode ? 'none' : T.dropdownShadow, minWidth: 235 }}>
+              style={{ position: 'fixed', top: dropdownPos.y, left: dropdownPos.x, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 11, padding: '9px', zIndex: 999, boxShadow: 'none', minWidth: 235 }}>
               <div style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 10, letterSpacing: 2, color: T.textMuted, marginBottom: 7, paddingBottom: 7, borderBottom: `1px solid ${T.surfaceBorder}`, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 215 }}>
                 {activeItem?.title}
               </div>
