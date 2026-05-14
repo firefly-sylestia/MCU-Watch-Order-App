@@ -237,7 +237,6 @@ export default function MCUViewer() {
   const [themeMode,      setThemeMode]      = useState('classic');
   const [spoilerSafeMode, setSpoilerSafeMode] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(true);
-  const [prefetchPriority, setPrefetchPriority] = useState('high');
   const [viewMode, setViewMode] = useState('list');
   const [densityMode, setDensityMode] = useState('comfortable');
   const [timelineMode,   setTimelineMode]   = useState('sacred');
@@ -645,8 +644,6 @@ export default function MCUViewer() {
       if (t) setThemeMode(t);
       const rm = localStorage.getItem('mcu-reduce-motion-v1');
       if (rm !== null) setReduceMotion(rm === '1');
-      const pp = localStorage.getItem('mcu-prefetch-priority-v1');
-      if (pp) setPrefetchPriority(pp);
     } catch {}
   }, []);
 
@@ -654,7 +651,6 @@ export default function MCUViewer() {
   useEffect(() => { localStorage.setItem('mcu-uploaded-avatars-v1', JSON.stringify(uploadedAvatars)); }, [uploadedAvatars]);
   useEffect(() => { localStorage.setItem('mcu-theme-mode-v1', themeMode); }, [themeMode]);
   useEffect(() => { localStorage.setItem('mcu-reduce-motion-v1', reduceMotion ? '1' : '0'); }, [reduceMotion]);
-  useEffect(() => { localStorage.setItem('mcu-prefetch-priority-v1', prefetchPriority); }, [prefetchPriority]);
 
   useEffect(() => {
     try {
@@ -693,41 +689,6 @@ export default function MCUViewer() {
     setPosterCache(prev => ({ ...prev, ...posterUpdates }));
     setMetaCache(prev => ({ ...prev, ...metaUpdates }));
   };
-
-  // ─── Background auto-fetch: TMDB for poster, OMDB for rating only ───────
-  useEffect(() => {
-    const sourceItems = listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items;
-    const limit = prefetchPriority === 'high' ? sourceItems.length : prefetchPriority === 'balanced' ? 80 : 32;
-    const targets = sourceItems.filter(i => posterCache[i.id] === undefined || metaCache[i.id] === undefined).slice(0, limit);
-    if (!targets.length) return;
-    let cancelled = false;
-    const run = async () => {
-      const posterUpdates = {};
-      const metaUpdates = {};
-      for (const item of targets) {
-        try {
-          // Poster: TMDB always
-          const tmdbPoster = await fetchTmdbPoster(item);
-          posterUpdates[item.id] = tmdbPoster || '';
-          // Rating: OMDB ratings key, using correct item.year (was buggy before)
-          const ratingData = await fetchOmdbRating(item);
-          metaUpdates[item.id] = {
-            rating: ratingData?.rating || '',
-            released: ratingData?.released || '',
-          };
-        } catch {
-          posterUpdates[item.id] = posterUpdates[item.id] || '';
-          metaUpdates[item.id] = { rating: '', released: '' };
-        }
-      }
-      if (!cancelled) {
-        setPosterCache(prev => ({ ...prev, ...posterUpdates }));
-        setMetaCache(prev => ({ ...prev, ...metaUpdates }));
-      }
-    };
-    run();
-    return () => { cancelled = true; };
-  }, [listMode, items, posterCache, metaCache, prefetchPriority]);
 
   // ─── Detail panel fetch: TMDB for everything, OMDB only for rating ──────
   useEffect(() => {
@@ -1098,14 +1059,6 @@ export default function MCUViewer() {
             <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Pause size={14} /> Reduce Motion</span>
               <input type='checkbox' checked={reduceMotion} onChange={() => setReduceMotion(v => !v)} style={{ width: 36, height: 20 }} />
-            </label>
-            <label style={{ display: 'grid', gap: 6, padding: '8px 2px' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Zap size={14} /> Prefetch Priority</span>
-              <select value={prefetchPriority} onChange={(e) => setPrefetchPriority(e.target.value)} style={{ padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }}>
-                <option value="high">High (load all)</option>
-                <option value="balanced">Balanced</option>
-                <option value="low">Low (data saver)</option>
-              </select>
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 6 }}>
               <button className='fpill' onClick={() => setDensityMode('comfortable')} style={{ borderColor: densityMode === 'comfortable' ? 'var(--theme-accent)' : 'var(--theme-border)', justifyContent: 'center' }}>Comfortable</button>
