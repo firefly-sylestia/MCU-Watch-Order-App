@@ -67,6 +67,7 @@ const TITLE_ROW_STATIC = {
   titleLine: { display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' },
   genreMeta: { marginTop: 2, fontSize: 10, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1.2 },
 };
+const DESKTOP_TEXT_SCALES = [0.9, 1, 1.1, 1.2, 1.35];
 
 // ─── Static data ────────────────────────────────────────────────────────────
 const LIST_MODES = [
@@ -395,13 +396,17 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   bulkSelectMode = false,
   isSelected = false,
   onToggleSelected,
+  statusLabelOverride = null,
+  isWorthy = false,
+  multiverseShuffle = false,
+  onThorLongPress,
 }) {
   const StatusIcon = statusMeta.Icon;
   const TypeIcon = typeMeta.Icon;
   const RowStatusIcon = statusMeta.Icon;
   return (
     <div>
-      <div className={`rrow row-in type-${item.type} ${isWatched ? 'glass-panel' : ''} ${isExpanded ? 'curvy-selected' : ''}`} style={{ background: isWatched ? 'var(--theme-watched-bg)' : 'transparent', opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow }}>
+      <div className={`rrow row-in type-${item.type} ${isWatched ? 'glass-panel' : ''} ${isExpanded ? 'curvy-selected' : ''}`} onPointerDown={() => { if (item.title.toLowerCase().includes('thor')) { window.__thorPress = setTimeout(() => onThorLongPress?.(item), 650); } }} onPointerUp={() => clearTimeout(window.__thorPress)} onPointerLeave={() => clearTimeout(window.__thorPress)} style={{ background: isWatched ? 'var(--theme-watched-bg)' : 'transparent', opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow, borderColor: multiverseShuffle ? `hsl(${(item.id * 47) % 360} 90% 60% / 0.7)` : undefined }}>
         <div style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 15, color: isWatched ? '#f1bfd3' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
           {bulkSelectMode ? (
             <input
@@ -441,7 +446,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
               <RowStatusIcon size={10} />
-              {statusMeta.label}
+              {statusLabelOverride || statusMeta.label}
             </span>
             <ChevDown size={10} style={{ opacity: 0.8, transform: statusDropdown === item.id ? 'rotate(180deg)' : 'none' }} />
           </button>
@@ -456,6 +461,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             }}
             style={{ width: 28, height: 28, background: statusMeta.bg || 'transparent', color: statusMeta.color || T.textMuted, borderColor: `${statusMeta.color || T.surfaceBorder}66` }}
           ><RowStatusIcon size={12} /></button>
+          {isWorthy && <span style={{ fontSize: 10, fontWeight: 700, color: '#9bd6ff', border: '1px solid #7dc3ff88', borderRadius: 999, padding: '1px 6px', background: 'rgba(60,166,255,0.14)', letterSpacing: 1 }}>WORTHY</span>}
         </div>
         {isWatched && <Check size={12} style={{ position: 'absolute', top: 8, right: 8, color: '#9be8bc', filter: 'drop-shadow(0 0 6px rgba(155,232,188,0.75))' }} />}
       </div>
@@ -529,6 +535,12 @@ export default function MCUViewer() {
   const [easterEgg,      setEasterEgg]      = useState('');
   const [scrollCheckpoint, setScrollCheckpoint] = useState(initialUiState.scrollTop);
   const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
+  const [grootMode, setGrootMode] = useState(false);
+  const [worthyIds, setWorthyIds] = useState({});
+  const [snapMode, setSnapMode] = useState(false);
+  const [spiderSense, setSpiderSense] = useState(false);
+  const [multiverseShuffle, setMultiverseShuffle] = useState(false);
+  const [desktopTextScale, setDesktopTextScale] = useState(1.1);
 
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
@@ -579,6 +591,15 @@ export default function MCUViewer() {
       });
       const item = n.find(i => i.id === id);
       if (newStatus === 'watched' && item) {
+        if (item.title.toLowerCase().includes('infinity war')) {
+          const watchedCount = n.filter(entry => entry.status === 'watched').length;
+          const threshold = Math.ceil(n.length / 2);
+          if (watchedCount >= threshold) {
+            setSnapMode(true);
+            setEasterEgg('🫰 Perfectly balanced… as all things should be.');
+            setTimeout(() => setSnapMode(false), 1800);
+          }
+        }
         const phaseItems = n.filter(i => i.phase === item.phase && (listMode === 'core' ? coreIds.has(i.id) : true));
         const allDone = phaseItems.every(i => i.status === 'watched');
         if (allDone) {
@@ -587,10 +608,26 @@ export default function MCUViewer() {
         }
       }
       if (AUTO_HIDDEN_STATUSES.has(newStatus)) setShowCompleted(false);
+      if (newStatus === 'unwatched') setRewatchCount(prevCount => ({ ...prevCount, [id]: 0 }));
       persist(n);
       return n;
     });
   };
+
+  useEffect(() => {
+    const normalized = search.trim().toLowerCase();
+    if (normalized === 'groot') {
+      setGrootMode(true);
+      setEasterEgg('I am Groot 🌱');
+      setTimeout(() => setGrootMode(false), 3500);
+    }
+    if (normalized === 'multiverse') {
+      setMultiverseShuffle(true);
+      setEasterEgg('Multiverse borders destabilized ✨');
+      setTimeout(() => setMultiverseShuffle(false), 3000);
+    }
+    setSpiderSense(normalized.includes('spider'));
+  }, [search]);
 
   useEffect(() => {
     const el = mainRef.current;
@@ -1148,6 +1185,7 @@ export default function MCUViewer() {
   };
 
   const nextUnwatched = useMemo(() => filtered.find(i => i.status !== 'watched') || null, [filtered]);
+  const allWatched = useMemo(() => activeItems.length > 0 && activeItems.every(i => i.status === 'watched'), [activeItems]);
   const recentActivity = useMemo(() => [...activeItems].filter(i => i.watchedDate).sort((a,b) => (b.watchedDate||'').localeCompare(a.watchedDate||'')).slice(0,5), [activeItems]);
   const recentlyWatchedItems = useMemo(() => [...activeItems]
     .filter(i => i.status === 'watched' && i.watchedDate)
@@ -1890,6 +1928,9 @@ export default function MCUViewer() {
         .list-mode-switch{animation:none}
 
         @keyframes buttonPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--theme-accent) 45%, transparent)}70%{box-shadow:0 0 0 6px transparent}100%{box-shadow:0 0 0 0 transparent}}
+        @keyframes spiderPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+        @keyframes snapFade{0%{filter:grayscale(0)}40%{filter:grayscale(1) brightness(1.2)}100%{filter:grayscale(0)}}
+        .snap-blip{animation:snapFade 1.6s ease}
         .button-click{animation:none}
 
         .wbtn{position:relative;width:30px;height:30px;border-radius:50%;border:1.5px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background 0.14s ease,border-color 0.14s ease,color 0.14s ease;flex-shrink:0;box-shadow:none}
@@ -2045,6 +2086,10 @@ export default function MCUViewer() {
               <button className='fpill' onClick={() => setDensityMode('comfortable')} style={{ borderColor: densityMode === 'comfortable' ? 'var(--theme-accent)' : 'var(--theme-border)', justifyContent: 'center' }}>Comfortable</button>
               <button className='fpill' onClick={() => setDensityMode('compact')} style={{ borderColor: densityMode === 'compact' ? 'var(--theme-accent)' : 'var(--theme-border)', justifyContent: 'center' }}>Compact</button>
             </div>
+            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase', marginTop: 2 }}>Desktop Text Size</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6 }}>
+              {DESKTOP_TEXT_SCALES.map(scale => <button key={scale} className='fpill' onClick={() => setDesktopTextScale(scale)} style={{ justifyContent: 'center', borderColor: desktopTextScale === scale ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{Math.round(scale * 100)}%</button>)}
+            </div>
             {/* Theme picker with color swatches */}
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase', marginTop: 2 }}>Theme</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
@@ -2148,7 +2193,15 @@ export default function MCUViewer() {
             <div style={{ fontSize: 18, marginTop: 4 }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</div>
             <div style={{ height: 1, marginTop: 6, background: darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)' }} />
             <div style={{ fontSize: 13, color: darkMode ? 'rgba(255,255,255,0.72)' : '#5d6675', marginTop: 6 }}>{recentActivity.length ? `Recent: ${recentActivity[0].title}` : 'No recent activity'}</div>
-            {nextUnwatched && <button className="fpill" style={{ marginTop: 8 }} onClick={() => { setActivePhase(nextUnwatched.phase); scrollTo(nextUnwatched.phase); setDetailItem(nextUnwatched); }}>Jump Next</button>}
+            <button className="fpill" style={{ marginTop: 8 }} onClick={() => {
+              if (nextUnwatched) { setActivePhase(nextUnwatched.phase); scrollTo(nextUnwatched.phase); setDetailItem(nextUnwatched); return; }
+              if (allWatched) { setEasterEgg('🏆 Congratulations! You completed every phase.'); return; }
+              const phaseIds = PHASES.map(p => p.id);
+              const idx = Math.max(0, phaseIds.indexOf(activePhase || 1));
+              const nextPhaseId = phaseIds[(idx + 1) % phaseIds.length];
+              setActivePhase(nextPhaseId);
+              scrollTo(nextPhaseId);
+            }}>{allWatched ? 'Congratulations 🎉' : 'Jump Next'}</button>
           </div>
           <button className="glass-grad" onClick={() => setAnalyticsOpen(true)} style={{ textAlign: 'left', background: darkMode ? 'linear-gradient(135deg, rgba(17,37,48,0.84), rgba(24,21,43,0.78))' : 'linear-gradient(135deg,#ffffff,#f2fbff)', border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12, color: T.text }}>
             <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Analytics</div>
@@ -2180,7 +2233,7 @@ export default function MCUViewer() {
               <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder=""
                 aria-label="Search titles"
-                style={{ width: '100%', background: T.inputBg, border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '7px 12px 7px 30px', color: T.inputColor, fontSize: 14, letterSpacing: 0.3 }} />
+                style={{ width: '100%', background: T.inputBg, border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '7px 12px 7px 30px', color: T.inputColor, fontSize: 14, letterSpacing: 0.3, boxShadow: spiderSense ? '0 0 0 2px rgba(220,20,60,0.45), 0 0 16px rgba(220,20,60,0.35)' : 'none', animation: spiderSense ? 'spiderPulse 0.85s ease-in-out infinite' : 'none' }} />
             </div>
             <div className='filter-row-actions' style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 12, color: T.textMuted, letterSpacing: 2.2 }}>
@@ -2328,7 +2381,7 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} style={{ overflow: 'visible', flex: '0 0 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
+      <main ref={mainRef} className={snapMode ? 'snap-blip' : ''} style={{ overflow: 'visible', flex: '0 0 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px', fontSize: `calc(1rem * ${desktopTextScale})` }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '24px 16px 80px 16px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
@@ -2458,6 +2511,10 @@ export default function MCUViewer() {
                         bulkSelectMode={bulkSelectMode}
                         isSelected={selectedIds.has(item.id)}
                         onToggleSelected={toggleSelected}
+                        statusLabelOverride={grootMode ? 'I am Groot' : null}
+                        isWorthy={Boolean(worthyIds[item.id])}
+                        multiverseShuffle={multiverseShuffle}
+                        onThorLongPress={(pressedItem) => setWorthyIds(prev => ({ ...prev, [pressedItem.id]: !prev[pressedItem.id] }))}
                       />
                     );
                   }}/>
