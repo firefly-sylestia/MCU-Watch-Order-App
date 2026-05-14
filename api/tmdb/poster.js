@@ -17,11 +17,25 @@ export default async function handler(req, res) {
   const best = (data.results || []).find(i => i.poster_path && (i.media_type === 'movie' || i.media_type === 'tv'));
   if (!best?.poster_path) return res.status(404).json({ poster: null });
 
+  let actors = 'N/A';
+  if (req.query.details === '1') {
+    try {
+      const mediaType = best.media_type === 'tv' ? 'tv' : 'movie';
+      const creditsRes = await fetch(`https://api.themoviedb.org/3/${mediaType}/${best.id}/credits?language=en-US`, {
+        headers: { Authorization: `Bearer ${token}`, accept: 'application/json' },
+      });
+      if (creditsRes.ok) {
+        const credits = await creditsRes.json();
+        actors = (credits?.cast || []).slice(0, 5).map(c => c?.name).filter(Boolean).join(', ') || 'N/A';
+      }
+    } catch {}
+  }
+
   const details = req.query.details === '1' ? {
     Plot: best.overview || 'N/A',
     Year: (best.release_date || best.first_air_date || '').slice(0,4) || 'N/A',
     imdbRating: best.vote_average ? Number(best.vote_average).toFixed(1) : 'N/A',
-    Actors: 'TMDB cast lookup not enabled',
+    Actors: actors,
   } : null;
 
   return res.status(200).json({
