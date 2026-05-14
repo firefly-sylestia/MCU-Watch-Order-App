@@ -389,6 +389,8 @@ export default function MCUViewer() {
   const [metaCache,      setMetaCache]      = useState({});
   const [detailLoading,  setDetailLoading]  = useState(false);
   const [detailPosterFailed, setDetailPosterFailed] = useState(false);
+  const [posterRefreshQuery, setPosterRefreshQuery] = useState('');
+  const [posterRefreshYear, setPosterRefreshYear] = useState('');
   const [posterCache,    setPosterCache]    = useState({});
   const [localPosterMap, setLocalPosterMap] = useState({});
   const [posterFetchState, setPosterFetchState] = useState({ active: false, done: 0, total: 0, message: '' });
@@ -1142,7 +1144,8 @@ export default function MCUViewer() {
       return next;
     });
     try {
-      const poster = await fetchTmdbPoster(item, { force: true });
+      const lookupItem = { ...item, title: custom.title?.trim() || item.title, year: Number(custom.year) || item.year };
+      const poster = await fetchTmdbPoster(lookupItem, { force: true });
       if (poster) {
         setPosterCache(prev => ({ ...prev, [item.id]: poster }));
         setDetailPosterFailed(false);
@@ -1596,13 +1599,15 @@ export default function MCUViewer() {
           .fpill{padding:10px 16px !important;font-size:15px !important;min-height:44px}
           .rrow{grid-template-columns:24px 44px minmax(0,1fr) !important;gap:8px;padding:14px 10px 14px 8px;min-height:96px}
           .rrow .row-actions{grid-column:2 / -1;flex-direction:row !important;align-items:center !important;justify-content:space-between !important;min-width:0 !important;width:100%;gap:8px}
-          .calendar-row{grid-template-columns:88px 44px minmax(0,1fr) !important}
+          .calendar-row{grid-template-columns:minmax(74px,84px) 44px minmax(0,1fr) !important}
           .bottom-action-bar{left:12px !important;right:12px !important;bottom:max(12px, env(safe-area-inset-bottom)) !important;width:auto;display:flex;justify-content:center;min-height:44px}
           main > div{padding-bottom:112px !important}
           .poster{width:44px;height:64px}
           .detail-layout{grid-template-columns:minmax(0,1fr) !important;gap:14px !important}
           .detail-layout img,.detail-fallback-poster{max-width:280px;margin:0 auto;max-height:360px}
           .detail-layout > div:last-child{width:100%}
+          .filter-row-actions{margin-left:0 !important;flex-wrap:wrap;justify-content:flex-end}
+          .filter-row-actions .fpill{padding:8px 10px !important;font-size:13px !important}
         }
         .header-title-mcu { font-size: clamp(48px, 8vw, 96px) !important; letter-spacing: clamp(2px, 0.8vw, 6px) !important; margin: 0 !important; }
         .header-title-sub { font-size: clamp(28px, 4.2vw, 56px) !important; letter-spacing: clamp(4px, 1.2vw, 10px) !important; margin-top: 0px !important; }
@@ -1687,11 +1692,9 @@ export default function MCUViewer() {
             <label className="fpill" style={{ cursor: 'pointer' }}><Upload size={14}/>Import Progress
               <input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} />
             </label>
-            <button className="fpill" onClick={handleMetadataBuildClick} style={{ justifyContent: 'center', borderColor: metadataBuild.status === 'running' ? 'var(--theme-warning)' : 'var(--theme-border)' }}><Download size={14}/>{metadataButtonLabel}</button>
             <div style={{ fontSize: 12, color: T.textMuted, lineHeight: 1.35, padding: '0 2px' }}>{metadataStatusText}</div>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: 'var(--theme-danger)', textTransform: 'uppercase' }}>Danger Zone</div>
-            <button className="fpill" onClick={refreshPostersAndMetadata} disabled={posterFetchState.active} style={{ opacity: posterFetchState.active ? 0.75 : 1 }}><Download size={14}/>{posterFetchState.active ? `Building ${posterFetchState.done}/${posterFetchState.total}` : 'Build Metadata'}</button>
             {posterFetchState.message && <div style={{ fontSize: 11, color: T.textMuted }}>{posterFetchState.message}</div>}
             <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setActivePhase(0); }}><Trash2 size={14}/>Reset Filters</button>
           </div>
@@ -1802,7 +1805,8 @@ export default function MCUViewer() {
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search titles..."
                 style={{ width: '100%', background: T.inputBg, border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '7px 12px 7px 30px', color: T.inputColor, fontSize: 14, letterSpacing: 0.3 }} />
             </div>
-            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className='filter-row-actions' style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button className="fpill" onClick={handleMetadataBuildClick} style={{ justifyContent: 'center', borderColor: metadataBuild.status === 'running' ? 'var(--theme-warning)' : 'var(--theme-border)' }}><Download size={14}/>{metadataButtonLabel}</button>
               <button className='fpill' onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')} style={{ background: viewMode === 'calendar' ? 'color-mix(in srgb, var(--theme-accent) 11%, var(--theme-surface))' : 'var(--theme-surface)', padding: '7px 14px' }}>
                 {viewMode === 'calendar' ? 'List' : 'Calendar'}
               </button>
@@ -2088,7 +2092,9 @@ export default function MCUViewer() {
                   <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setMyLikes(p => ({ ...p, [detailItem.id]: p[detailItem.id] ? 0 : 1 }))}><Heart size={12}/> {myLikes[detailItem.id] ? 'Liked' : 'Like'}</button>
                   <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setBookmarks(p => ({ ...p, [detailItem.id]: p[detailItem.id] ? 0 : 1 }))}><Bookmark size={12}/> {bookmarks[detailItem.id] ? 'Saved' : 'Bookmark'}</button>
                   <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setRewatchCount(p => ({ ...p, [detailItem.id]: (p[detailItem.id] || 0) + 1 }))}><Clock size={12}/> Re-watch {rewatchCount[detailItem.id] || 0}</button>
-                  <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => refreshPosterForItem(detailItem)} disabled={posterFetchState.active}><Download size={12}/> Refresh poster</button>
+                  <input value={posterRefreshQuery} onChange={(e) => setPosterRefreshQuery(e.target.value)} placeholder="Poster title override" style={{ minWidth: 160, flex: '1 1 180px', padding: '7px 9px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
+                  <input value={posterRefreshYear} onChange={(e) => setPosterRefreshYear(e.target.value.replace(/[^0-9]/g, '').slice(0,4))} placeholder="Year" style={{ width: 76, padding: '7px 9px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
+                  <button className="fpill glass-panel" style={{ padding: '7px 10px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => refreshPosterForItem(detailItem, { title: posterRefreshQuery, year: posterRefreshYear })} disabled={posterFetchState.active}><Download size={12}/> Refresh poster</button>
                   <select value={myRating[detailItem.id] || ''} onChange={(e) => setMyRating(p => ({ ...p, [detailItem.id]: Number(e.target.value) }))}
                     style={{ fontSize: 11, borderRadius: 10, padding: '7px 10px', background: 'rgba(6,10,28,0.65)', color: T.inputColor, border: `1px solid ${T.inputBorder}`, gridColumn: '1 / -1' }}>
                     <option value="">My rating</option>
