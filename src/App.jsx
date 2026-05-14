@@ -391,6 +391,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   statusDropdown,
   rating,
   onOpenDetail,
+  onSetStatus,
   onToggleBookmark,
   onOpenStatus,
 }) {
@@ -2259,6 +2260,7 @@ export default function MCUViewer() {
                         statusDropdown={statusDropdown}
                         rating={metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
                         onOpenDetail={openDetail}
+                        onSetStatus={setStatusDirect}
                         onToggleBookmark={toggleBookmark}
                         onOpenStatus={openStatusDropdown}
                       />
