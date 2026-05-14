@@ -46,7 +46,7 @@ const UserCircle = p => <Icon {...p}><circle cx="12" cy="8" r="4"/><path d="M4 2
 
 
 const TYPE_META = {
-  film:   { label: 'Film',   Icon: Film, color: '#e8b84b' },
+  film:   { label: 'Film',   Icon: Film, color: '#d4372f' },
   series: { label: 'Series', Icon: Tv,   color: '#4a9ede' },
   short:  { label: 'Short',  Icon: Zap,  color: '#a06cd5' },
 };
@@ -54,7 +54,7 @@ const TYPE_META = {
 const STATUS_META = {
   watched:        { label: 'Watched',        color: '#3ec47a', Icon: Check,  bg: 'rgba(62,196,122,0.1)'  },
   'plan-to-watch':{ label: 'Plan to Watch',  color: '#4a9ede', Icon: Clock,  bg: 'rgba(74,158,222,0.1)'  },
-  watching:       { label: 'Watching',       color: '#e8b84b', Icon: Eye,    bg: 'rgba(232,184,75,0.1)'  },
+  watching:       { label: 'Watching',       color: '#d4372f', Icon: Eye,    bg: 'rgba(212,55,47,0.1)'   },
   'on-hold':      { label: 'On Hold',        color: '#f39c12', Icon: Pause,  bg: 'rgba(243,156,18,0.1)'  },
   dropped:        { label: 'Dropped',        color: '#e05252', Icon: Trash2, bg: 'rgba(224,82,82,0.1)'   },
   unwatched:      { label: 'Unwatched',      color: '#334455', Icon: EyeOff, bg: 'transparent'           },
@@ -418,7 +418,15 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
 
         <div className="row-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: 104, flexShrink: 0 }}>
           <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '12px', letterSpacing: 1.1, color: T.text, textAlign: 'right', fontWeight: 600, whiteSpace: 'nowrap' }}>{releaseLabel}</div>
-          <div style={{ fontSize: 11, color: '#e8b84b', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 0.6, whiteSpace: 'nowrap' }}>★ {rating || '—'}</div>
+          <div style={{ fontSize: 11, color: 'var(--theme-warning)', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 0.6, whiteSpace: 'nowrap' }}>★ {rating || '—'}</div>
+          <button
+            className="wbtn"
+            aria-label={isWatched ? 'Mark as unwatched' : 'Mark as watched'}
+            onClick={() => onSetStatus(item.id, isWatched ? 'unwatched' : 'watched')}
+            style={{ minWidth: 52, height: 24, padding: '0 8px', background: isWatched ? 'var(--theme-success-soft)' : 'transparent', color: isWatched ? 'var(--theme-success)' : T.textMuted, borderColor: isWatched ? 'color-mix(in srgb, var(--theme-success) 60%, transparent)' : `${T.surfaceBorder}`, borderRadius: 999, fontSize: 10, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 0.8 }}
+          >
+            <Check size={10} />{isWatched ? 'Watched' : 'Watch'}
+          </button>
           <button className="wbtn" aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} style={{ width: 24, height: 24, background: isBookmarked ? 'rgba(125,211,252,0.2)' : 'transparent', color: isBookmarked ? '#7dd3fc' : T.textMuted, borderColor: isBookmarked ? '#7dd3fc66' : `${T.surfaceBorder}` }}><Bookmark size={11} /></button>
           <button className="wbtn" aria-label={`${statusMeta.label} — click to change`} aria-haspopup="true" aria-expanded={statusDropdown === item.id} onClick={e => onOpenStatus(e, item.id)} onContextMenu={e => e.preventDefault()} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenStatus(e, item.id); } }} style={{ width: 24, height: 24, background: statusMeta.bg, color: statusMeta.color, borderColor: statusMeta.color + '55' }}><StatusIcon size={11} /></button>
         </div>
@@ -1683,7 +1691,7 @@ export default function MCUViewer() {
   const renderPhaseSelector = () => (
     <div ref={phaseRef} style={{ position: 'relative', flex: '0 0 auto' }}>
       <button className="fpill" onClick={() => setPhaseOpen(o => !o)}
-        style={{ color: 'var(--theme-accent)', borderColor: 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'color-mix(in srgb, var(--theme-accent) 9%, var(--theme-surface))', fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(13px, 2.2vw, 16px)', letterSpacing: 2, padding: '7px 14px', whiteSpace: 'nowrap' }}>
+        style={{ color: activePhase === 0 ? 'var(--theme-accent)' : (PHASES.find(ph => ph.id === activePhase)?.color || 'var(--theme-accent)'), borderColor: activePhase === 0 ? 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))' : `${PHASES.find(ph => ph.id === activePhase)?.color || '#c0392b'}88`, background: activePhase === 0 ? 'color-mix(in srgb, var(--theme-accent) 9%, var(--theme-surface))' : `color-mix(in srgb, ${PHASES.find(ph => ph.id === activePhase)?.color || '#c0392b'} 12%, var(--theme-surface))`, fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(13px, 2.2vw, 16px)', letterSpacing: 2, padding: '7px 14px', whiteSpace: 'nowrap' }}>
         {activePhase === 0 ? 'Phase All' : (PHASES.find(ph => ph.id === activePhase)?.name || 'Phase All')}
         <ChevDown size={12} style={{ opacity: 0.6, transform: phaseOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
       </button>
@@ -1691,7 +1699,7 @@ export default function MCUViewer() {
         <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: T.dropdownShadow, minWidth: 200 }}>
           <div className={`sopt ${activePhase === 0 ? 'picked' : ''}`} onClick={() => { setActivePhase(0); setPhaseOpen(false); }}>Phase All</div>
           {PHASES.map((ph) => (
-            <div key={ph.id} className={`sopt ${activePhase === ph.id ? 'picked' : ''}`} onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); setPhaseOpen(false); }}>{ph.name}</div>
+            <div key={ph.id} className={`sopt ${activePhase === ph.id ? 'picked' : ''}`} style={activePhase === ph.id ? { color: ph.color, fontWeight: 700 } : {}} onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); setPhaseOpen(false); }}>{ph.name}</div>
           ))}
         </div>
       )}
@@ -1760,7 +1768,7 @@ export default function MCUViewer() {
         .sopt.picked,.dropdown-item.active{background:var(--theme-surface-hover);border-radius:12px;color:var(--theme-accent);font-weight:700}
         .curvy-indicator{height:4px;border-radius:99px;background:var(--theme-accent);border:none}
         .curvy-panel{position:relative;overflow:hidden;border-radius:14px}
-        .curvy-panel::before{content:'';position:absolute;inset:0 auto 0 0;width:4px;background:linear-gradient(180deg,var(--phase-color,#f3a6c2),color-mix(in srgb,var(--phase-color,#f3a6c2) 70%,#ffd2e4));border-radius:14px 0 0 14px;box-shadow:0 0 14px color-mix(in srgb,var(--phase-color,#f3a6c2) 48%, transparent);z-index:0}
+        .curvy-panel::before{display:none}
 
         .section-up{content-visibility:auto;contain-intrinsic-size:900px}
         .rrow{position:relative;contain:layout paint;transition:background 0.2s ease,transform 0.22s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.22s ease,border-color 0.22s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:var(--row-min-h,86px);border-radius:10px;overflow:hidden}
@@ -1802,7 +1810,7 @@ export default function MCUViewer() {
 
         /* Mobile */
         @media (max-width: 767px) {
-          .header-inner { padding: 10px 14px 8px !important; }
+          .header-inner { padding: 10px 10px 8px !important; }
           .fpill{padding:10px 16px !important;font-size:15px !important;min-height:44px}
           .rrow{grid-template-columns:24px 44px minmax(0,1fr) !important;gap:8px;padding:14px 10px 14px 8px;min-height:96px}
           .rrow .row-actions{grid-column:2 / -1;flex-direction:row !important;align-items:center !important;justify-content:space-between !important;min-width:0 !important;width:100%;gap:8px}
@@ -1815,8 +1823,14 @@ export default function MCUViewer() {
           .detail-layout{grid-template-columns:minmax(0,1fr) !important;gap:14px !important}
           .detail-layout img,.detail-fallback-poster{max-width:280px;margin:0 auto;max-height:360px}
           .detail-layout > div:last-child{width:100%}
-          .filter-row-actions{margin-left:0 !important;flex-wrap:wrap;justify-content:flex-end}
+          .filter-row-actions{margin-left:0 !important;flex-wrap:wrap;justify-content:flex-end;gap:6px !important}
           .filter-row-actions .fpill{padding:8px 10px !important;font-size:13px !important}
+          .filters-open{padding:0 12px 12px !important}
+        }
+        @media (min-width: 1600px) {
+          main{--content-max:1200px !important}
+          .rrow{font-size:17px}
+          .header-inner{max-width:1240px;margin:0 auto}
         }
         .header-title-mcu { font-size: clamp(48px, 8vw, 96px) !important; letter-spacing: clamp(2px, 0.8vw, 6px) !important; margin: 0 !important; }
         .header-title-sub { font-size: clamp(28px, 4.2vw, 56px) !important; letter-spacing: clamp(4px, 1.2vw, 10px) !important; margin-top: 0px !important; }
@@ -2014,7 +2028,8 @@ export default function MCUViewer() {
             {/* Search always visible */}
             <div style={{ position: 'relative', flex: '1 1 170px', minWidth: 130, maxWidth: 320 }}>
               <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search titles..."
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder=""
+                aria-label="Search titles"
                 style={{ width: '100%', background: T.inputBg, border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '7px 12px 7px 30px', color: T.inputColor, fontSize: 14, letterSpacing: 0.3 }} />
             </div>
             <div className='filter-row-actions' style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -2100,7 +2115,7 @@ export default function MCUViewer() {
       <div className="bottom-action-dock">
         <button type="button" onClick={handleMetadataBuildClick} className="dock-btn"
           style={{ borderColor: metadataBuild.status === 'running' ? 'var(--theme-warning)' : T.surfaceBorder }}>
-          {metadataBuild.status === 'running' ? `Meta ${metadataBuild.done}/${metadataBuild.total}` : 'Build meta'}
+          {metadataBuild.status === 'running' ? `Fetch ${metadataBuild.done}/${metadataBuild.total}` : 'Fetch'}
         </button>
         <button type="button" className="dock-btn"
           onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
