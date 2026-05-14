@@ -1192,6 +1192,8 @@ export default function MCUViewer() {
     } catch {
       setPosterFetchState({ active: false, done: 1, total: 1, message: `Could not refresh poster for ${item.title}.` });
     }
+  };
+
   // ─── Build metadata: one title at a time, never automatically on load ───
   const getMetadataTargets = ({ retryOnly = false, refreshAll = false } = {}) => {
     if (retryOnly && metadataBuild.failedIds.length) {
@@ -2230,4 +2232,4 @@ export default function MCUViewer() {
       })()}
     </div>
   );
-  }
+}
