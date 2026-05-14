@@ -1710,7 +1710,7 @@ export default function MCUViewer() {
     if (x + dropW > window.innerWidth - 8) x = window.innerWidth - dropW - 8;
     if (y < 8) y = rect.bottom + 8;
     setDropdownPos({ x, y });
-    setStatusDropdown(prev => prev === itemId ? null : itemId);
+    setStatusDropdown(itemId);
   };
 
   // ─── Theme tokens ──────────────────────────────────────────────────────────
