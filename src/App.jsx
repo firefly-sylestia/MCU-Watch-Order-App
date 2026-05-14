@@ -60,8 +60,6 @@ const STATUS_META = {
 };
 
 const SORT_LABELS = { order: 'Chronological', year: 'By Year', title: 'Alphabetical', runtime: 'Runtime', watched: 'Recently Watched', status: 'By Status' };
-const ROW_VIRTUAL_HEIGHT = 122;
-const ROW_VIRTUAL_OVERSCAN = 5;
 const TITLE_ROW_STATIC = {
   titleBtn: { overflow: 'hidden' },
   titleLine: { display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' },
@@ -426,24 +424,11 @@ export default function MCUViewer() {
   const [bookmarks,      setBookmarks]      = useState({});
   const [scrollCheckpoint, setScrollCheckpoint] = useState(initialUiState.scrollTop);
   const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
-  const [virtualScrollY, setVirtualScrollY] = useState(0);
-  const [viewportHeight, setViewportHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 900);
 
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
   const phaseRef   = useRef(null);
-  const obsRef     = useRef(null);
-  useEffect(() => {
-    const onScroll = () => setVirtualScrollY(window.scrollY || 0);
-    const onResize = () => setViewportHeight(window.innerHeight || 900);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onResize);
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onResize);
-    };
-  }, []);
-  const isScrolling= useRef(false);
+  const obsRef     = useRef(null);  const isScrolling= useRef(false);
   const mainRef    = useRef(null);
   const settingsRef= useRef(null);
   const restoredUiStateRef = useRef(false);
@@ -2067,20 +2052,7 @@ export default function MCUViewer() {
 
                 {/* Row table */}
                 <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 14, overflow: 'hidden', boxShadow: darkMode ? '0 2px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.03)' : '0 1px 6px rgba(0,0,0,0.06)' }}>
-                  {(() => {
-                    const sectionTop = phaseRefs.current[pid]?.getBoundingClientRect?.().top ?? 0;
-                    const absoluteTop = sectionTop + virtualScrollY;
-                    const startIdx = Math.max(0, Math.floor((virtualScrollY - absoluteTop) / ROW_VIRTUAL_HEIGHT) - ROW_VIRTUAL_OVERSCAN);
-                    const visibleCount = Math.ceil(viewportHeight / ROW_VIRTUAL_HEIGHT) + ROW_VIRTUAL_OVERSCAN * 2;
-                    const endIdx = Math.min(rows.length, startIdx + visibleCount);
-                    const topPad = startIdx * ROW_VIRTUAL_HEIGHT;
-                    const bottomPad = Math.max(0, (rows.length - endIdx) * ROW_VIRTUAL_HEIGHT);
-                    const visibleRows = rows.slice(startIdx, endIdx);
-                    return (
-                      <>
-                        {topPad > 0 && <div style={{ height: topPad }} aria-hidden="true" />}
-                        {visibleRows.map((item, localIdx) => {
-                          const idx = startIdx + localIdx;
+                  {rows.map((item, idx) => {
                     const itemReleaseStatus = releaseStatusFor(item);
                     const itemReleaseInfo = releaseInfoFor(item);
                     return (
@@ -2108,11 +2080,7 @@ export default function MCUViewer() {
                         onOpenStatus={openStatusDropdown}
                       />
                     );
-                        })}
-                        {bottomPad > 0 && <div style={{ height: bottomPad }} aria-hidden="true" />}
-                      </>
-                    );
-                  })()}
+                  })}
                 </div>
               </section>
             );
