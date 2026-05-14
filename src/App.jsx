@@ -60,6 +60,13 @@ const STATUS_META = {
 };
 
 const SORT_LABELS = { order: 'Chronological', year: 'By Year', title: 'Alphabetical', runtime: 'Runtime', watched: 'Recently Watched', status: 'By Status' };
+const ROW_VIRTUAL_HEIGHT = 122;
+const ROW_VIRTUAL_OVERSCAN = 5;
+const TITLE_ROW_STATIC = {
+  titleBtn: { overflow: 'hidden' },
+  titleLine: { display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' },
+  genreMeta: { marginTop: 2, fontSize: 10, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2 },
+};
 
 // ─── Static data ────────────────────────────────────────────────────────────
 const LIST_MODES = [
@@ -135,6 +142,12 @@ const readSavedUiState = () => {
 };
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const runWhenIdle = (cb, timeout = 400) => {
+  if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+    return window.requestIdleCallback(cb, { timeout });
+  }
+  return setTimeout(() => cb({ timeRemaining: () => 0, didTimeout: true }), 32);
+};
 
 const safeLocalStorageSetItem = (key, value) => {
   try {
@@ -336,8 +349,8 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
         </div>
         <img className="poster" src={poster} alt={`${item.title} poster`} loading="lazy" />
 
-        <button className="title-btn" onClick={() => onOpenDetail(item)} style={{ overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+        <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
+          <div style={TITLE_ROW_STATIC.titleLine}>
             <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: 700, lineHeight: 1.5, color: isWatched ? '#9df1c2' : 'var(--theme-text)', opacity: 1, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: '100%' }}>{item.title}</span>
             {item.episodes && <span style={{ fontSize: 9, color: T.textMuted, background: T.expandBg, border: `1px solid ${T.expandBorder}`, borderRadius: 3, padding: '1px 5px', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1, flexShrink: 0 }}>{item.episodes} EP</span>}
             <span style={{ fontSize: 14, color: typeMeta.color, opacity: 0.82, fontWeight: 700, letterSpacing: 0.6, display: 'flex', alignItems: 'center', gap: 2, fontFamily: "'Bebas Neue',sans-serif", flexShrink: 0 }}><TypeIcon size={8} />{typeMeta.label}</span>
@@ -345,7 +358,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             {!item.essential && <span style={{ fontSize: 8.5, color: T.textMuted, background: T.expandBg, border: `1px solid ${T.expandBorder}`, borderRadius: 3, padding: '1px 4px', letterSpacing: 1, fontFamily: "'Bebas Neue',sans-serif", flexShrink: 0 }}>OPT</span>}
             <ChevRight size={10} style={{ color: T.textFaint, transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
           </div>
-          <div className="meta-muted" style={{ marginTop: 2, fontSize: 10, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2 }}>GENRES: {genres.join(' • ').toUpperCase()}</div>
+          <div className="meta-muted" style={TITLE_ROW_STATIC.genreMeta}>GENRES: {genres.join(' • ').toUpperCase()}</div>
         </button>
 
         <div className="row-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: 104, flexShrink: 0 }}>
@@ -413,11 +426,23 @@ export default function MCUViewer() {
   const [bookmarks,      setBookmarks]      = useState({});
   const [scrollCheckpoint, setScrollCheckpoint] = useState(initialUiState.scrollTop);
   const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
+  const [virtualScrollY, setVirtualScrollY] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 900);
 
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
   const phaseRef   = useRef(null);
   const obsRef     = useRef(null);
+  useEffect(() => {
+    const onScroll = () => setVirtualScrollY(window.scrollY || 0);
+    const onResize = () => setViewportHeight(window.innerHeight || 900);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
+    };
+  }, []);
   const isScrolling= useRef(false);
   const mainRef    = useRef(null);
   const settingsRef= useRef(null);
@@ -776,6 +801,7 @@ export default function MCUViewer() {
   const fetchTmdbPoster = async (item, { force = false } = {}) => {
     const local = localPosterSrc(item);
     if (local) return local;
+    if (item.type === 'short' && !TMDB_LOOKUP_OVERRIDES[item.id]) return '';
     if (!force && posterCache[item.id]) return posterCache[item.id];
     const stableLookup = TMDB_LOOKUP_OVERRIDES[item.id];
     const q = encodeURIComponent(cleanLookupTitle(item.title));
@@ -816,6 +842,7 @@ export default function MCUViewer() {
   };
 
   const fetchTmdbDetail = async (item) => {
+    if (item.type === 'short' && !TMDB_LOOKUP_OVERRIDES[item.id]) return null;
     const stableLookup = TMDB_LOOKUP_OVERRIDES[item.id];
     const q = encodeURIComponent(cleanLookupTitle(item.title));
     const y = encodeURIComponent(String(item.year || ''));
@@ -829,14 +856,21 @@ export default function MCUViewer() {
       return null;
     }
   };
-  const normalizeDetailData = ({ item, tmdb = null, omdb = null, fallback = {} }) => ({
-    Poster: tmdb?.Poster || fallback.Poster || posterCache[item.id] || '',
-    Year: tmdb?.Year || omdb?.year || fallback.Year || String(item.year),
-    Plot: omdb?.plot || tmdb?.Plot || fallback.Plot || item.desc,
-    Released: tmdb?.Released || omdb?.released || fallback.Released || metaCache[item.id]?.released || '',
-    Actors: tmdb?.Actors || fallback.Actors || metaCache[item.id]?.cast || '',
-    imdbRating: omdb?.rating || tmdb?.imdbRating || fallback.imdbRating || metaCache[item.id]?.rating || 'N/A',
-  });
+  const normalizeDetailData = ({ item, tmdb = null, omdb = null, fallback = {} }) => {
+    const expectedYear = Number(item.year);
+    const tmdbYear = Number(tmdb?.Year);
+    const omdbYear = Number(String(omdb?.year || '').slice(0, 4));
+    const trustTmdbYear = Number.isFinite(tmdbYear) && Math.abs(tmdbYear - expectedYear) <= 1;
+    const trustOmdbYear = Number.isFinite(omdbYear) && Math.abs(omdbYear - expectedYear) <= 1;
+    return {
+      Poster: (trustTmdbYear ? tmdb?.Poster : '') || fallback.Poster || posterCache[item.id] || '',
+      Year: (trustTmdbYear ? tmdb?.Year : '') || (trustOmdbYear ? omdb?.year : '') || fallback.Year || String(item.year),
+      Plot: (trustOmdbYear ? omdb?.plot : '') || (trustTmdbYear ? tmdb?.Plot : '') || fallback.Plot || item.desc,
+      Released: (trustTmdbYear ? tmdb?.Released : '') || (trustOmdbYear ? omdb?.released : '') || fallback.Released || metaCache[item.id]?.released || '',
+      Actors: (trustTmdbYear ? tmdb?.Actors : '') || fallback.Actors || metaCache[item.id]?.cast || '',
+      imdbRating: (trustOmdbYear ? omdb?.rating : '') || (trustTmdbYear ? tmdb?.imdbRating : '') || fallback.imdbRating || metaCache[item.id]?.rating || 'N/A',
+    };
+  };
 
   const fetchOmdbInfo = async (item) => {
     const q = encodeURIComponent(cleanLookupTitle(item.title));
@@ -1122,12 +1156,21 @@ export default function MCUViewer() {
     }
 
     setPosterFetchState({ active: true, done: 0, total: targets.length, message: `Building metadata for ${targets.length} missing entries…` });
-    for (const [index, item] of targets.entries()) {
-      try {
-        await fetchAndCacheMetadataItem(item);
-      } catch {}
-      setPosterFetchState({ active: true, done: index + 1, total: targets.length, message: `Cached ${index + 1}/${targets.length}: ${item.title}` });
-      await new Promise(resolve => setTimeout(resolve, 100));
+    const batchSize = 3;
+    let done = 0;
+    for (let i = 0; i < targets.length; i += batchSize) {
+      await new Promise(resolve => runWhenIdle(async () => {
+        const batch = targets.slice(i, i + batchSize);
+        for (const item of batch) {
+          try {
+            await fetchAndCacheMetadataItem(item);
+          } catch {}
+          done += 1;
+          setPosterFetchState({ active: true, done, total: targets.length, message: `Cached ${done}/${targets.length}: ${item.title}` });
+        }
+        resolve();
+      }));
+      await wait(24);
     }
     setPosterFetchState({ active: false, done: targets.length, total: targets.length, message: `Built metadata for ${targets.length} entries.` });
   };
@@ -1600,8 +1643,10 @@ export default function MCUViewer() {
           .rrow{grid-template-columns:24px 44px minmax(0,1fr) !important;gap:8px;padding:14px 10px 14px 8px;min-height:96px}
           .rrow .row-actions{grid-column:2 / -1;flex-direction:row !important;align-items:center !important;justify-content:space-between !important;min-width:0 !important;width:100%;gap:8px}
           .calendar-row{grid-template-columns:minmax(74px,84px) 44px minmax(0,1fr) !important}
-          .bottom-action-bar{left:12px !important;right:12px !important;bottom:max(12px, env(safe-area-inset-bottom)) !important;width:auto;display:flex;justify-content:center;min-height:44px}
-          main > div{padding-bottom:112px !important}
+          .bottom-action-dock{left:12px !important;right:12px !important;bottom:max(12px, env(safe-area-inset-bottom)) !important}
+          .dock-btn{font-size:11px !important;padding:9px 10px !important;min-height:40px}
+          .bottom-action-bar{min-height:40px;padding:9px 10px !important}
+          main > div{padding-bottom:130px !important}
           .poster{width:44px;height:64px}
           .detail-layout{grid-template-columns:minmax(0,1fr) !important;gap:14px !important}
           .detail-layout img,.detail-fallback-poster{max-width:280px;margin:0 auto;max-height:360px}
@@ -1616,7 +1661,9 @@ export default function MCUViewer() {
         .stat-card-label { font-size: clamp(11px, 1.8vw, 14px) !important; }
         .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; color:var(--theme-text-muted) !important }
 
-        .bottom-action-bar{position:fixed;right:16px;bottom:16px;z-index:120;border-radius:999px;padding:10px 14px}
+        .bottom-action-dock{position:fixed;right:16px;bottom:16px;z-index:120;display:flex;gap:8px;align-items:center}
+        .dock-btn{border-radius:999px;border:1px solid ${T.surfaceBorder};background:${darkMode ? 'rgba(20,25,46,0.72)' : 'rgba(255,255,255,0.78)'};color:${T.text};backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:10px 12px;font-family:'Bebas Neue',sans-serif;letter-spacing:1.1px;font-size:12px;cursor:pointer;white-space:nowrap}
+        .bottom-action-bar{border-radius:999px;padding:10px 14px;white-space:nowrap}
         main::-webkit-scrollbar{width:4px}
         main::-webkit-scrollbar-track{background:transparent}
         main::-webkit-scrollbar-thumb{background:${T.scrollThumb};border-radius:4px}
@@ -1806,10 +1853,6 @@ export default function MCUViewer() {
                 style={{ width: '100%', background: T.inputBg, border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '7px 12px 7px 30px', color: T.inputColor, fontSize: 14, letterSpacing: 0.3 }} />
             </div>
             <div className='filter-row-actions' style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <button className="fpill" onClick={handleMetadataBuildClick} style={{ justifyContent: 'center', borderColor: metadataBuild.status === 'running' ? 'var(--theme-warning)' : 'var(--theme-border)' }}><Download size={14}/>{metadataButtonLabel}</button>
-              <button className='fpill' onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')} style={{ background: viewMode === 'calendar' ? 'color-mix(in srgb, var(--theme-accent) 11%, var(--theme-surface))' : 'var(--theme-surface)', padding: '7px 14px' }}>
-                {viewMode === 'calendar' ? 'List' : 'Calendar'}
-              </button>
               <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 12, color: T.textMuted, letterSpacing: 2.2 }}>
                 {filtered.length}
               </span>
@@ -1902,15 +1945,26 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ JUMP NEXT BUTTON ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <button
-        type="button"
-        onClick={() => { if (nextUnwatched) setDetailItem(nextUnwatched); }}
-        aria-label="Jump to next unwatched item"
-        className="bottom-action-bar"
-        style={{ border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(20,25,46,0.72)' : 'rgba(255,255,255,0.78)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', color: T.text, boxShadow: darkMode ? '0 8px 22px rgba(0,0,0,0.45)' : '0 8px 20px rgba(0,0,0,0.14)', cursor: nextUnwatched ? 'pointer' : 'default', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2, fontSize: 12 }}
-      >
-        {pct}% done · {nextUnwatched ? 'Jump next' : 'All caught up'}
-      </button>
+      <div className="bottom-action-dock">
+        <button type="button" onClick={handleMetadataBuildClick} className="dock-btn"
+          style={{ borderColor: metadataBuild.status === 'running' ? 'var(--theme-warning)' : T.surfaceBorder }}>
+          {metadataBuild.status === 'running' ? `Meta ${metadataBuild.done}/${metadataBuild.total}` : 'Build meta'}
+        </button>
+        <button type="button" className="dock-btn"
+          onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
+          style={{ background: viewMode === 'calendar' ? 'color-mix(in srgb, var(--theme-accent) 16%, rgba(20,25,46,0.82))' : undefined }}>
+          {viewMode === 'calendar' ? 'List' : 'Calendar'}
+        </button>
+        <button
+          type="button"
+          onClick={() => { if (nextUnwatched) setDetailItem(nextUnwatched); }}
+          aria-label="Jump to next unwatched item"
+          className="bottom-action-bar"
+          style={{ border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(20,25,46,0.72)' : 'rgba(255,255,255,0.78)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', color: T.text, boxShadow: darkMode ? '0 8px 22px rgba(0,0,0,0.45)' : '0 8px 20px rgba(0,0,0,0.14)', cursor: nextUnwatched ? 'pointer' : 'default', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2, fontSize: 12 }}
+        >
+          {pct}% done · {nextUnwatched ? 'Jump next' : 'All caught up'}
+        </button>
+      </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} style={{ overflow: 'visible', flex: '0 0 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
@@ -2013,7 +2067,20 @@ export default function MCUViewer() {
 
                 {/* Row table */}
                 <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 14, overflow: 'hidden', boxShadow: darkMode ? '0 2px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.03)' : '0 1px 6px rgba(0,0,0,0.06)' }}>
-                  {rows.map((item, idx) => {
+                  {(() => {
+                    const sectionTop = phaseRefs.current[pid]?.getBoundingClientRect?.().top ?? 0;
+                    const absoluteTop = sectionTop + virtualScrollY;
+                    const startIdx = Math.max(0, Math.floor((virtualScrollY - absoluteTop) / ROW_VIRTUAL_HEIGHT) - ROW_VIRTUAL_OVERSCAN);
+                    const visibleCount = Math.ceil(viewportHeight / ROW_VIRTUAL_HEIGHT) + ROW_VIRTUAL_OVERSCAN * 2;
+                    const endIdx = Math.min(rows.length, startIdx + visibleCount);
+                    const topPad = startIdx * ROW_VIRTUAL_HEIGHT;
+                    const bottomPad = Math.max(0, (rows.length - endIdx) * ROW_VIRTUAL_HEIGHT);
+                    const visibleRows = rows.slice(startIdx, endIdx);
+                    return (
+                      <>
+                        {topPad > 0 && <div style={{ height: topPad }} aria-hidden="true" />}
+                        {visibleRows.map((item, localIdx) => {
+                          const idx = startIdx + localIdx;
                     const itemReleaseStatus = releaseStatusFor(item);
                     const itemReleaseInfo = releaseInfoFor(item);
                     return (
@@ -2041,7 +2108,11 @@ export default function MCUViewer() {
                         onOpenStatus={openStatusDropdown}
                       />
                     );
-                  })}
+                        })}
+                        {bottomPad > 0 && <div style={{ height: bottomPad }} aria-hidden="true" />}
+                      </>
+                    );
+                  })()}
                 </div>
               </section>
             );
