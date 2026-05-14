@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap');
 /* ═══════════════════════════════════════════════════════════════════════════
    LUMINARY PANELS — Apple UI Morphing Style
    Premium dark theme with 120fps GPU-accelerated animations
@@ -50,10 +50,10 @@
   --duration-morph: 600ms;
   
   /* Typography */
-  --sans: "Rajdhani", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --sans: "Inter", "Rajdhani", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-marvel-display: "Bangers", "Bebas Neue", Impact, sans-serif;
-  --font-marvel-ui: "Bebas Neue", "Rajdhani", system-ui, sans-serif;
-  --font-marvel-body: "Rajdhani", system-ui, sans-serif;
+  --font-marvel-ui: "Rajdhani", "Inter", system-ui, sans-serif;
+  --font-marvel-body: "Inter", "Rajdhani", system-ui, sans-serif;
   --mono: "SF Mono", "Monaco", "Menlo", "Consolas", monospace;
   
   font: 16px/1.5 var(--sans);
@@ -167,6 +167,70 @@ a:hover {
   font-family: var(--font-marvel-display);
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+
+/* ── Watch Status Controls ─────────────────────────────────────────────────── */
+.wbtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 18px rgba(0, 0, 0, 0.18);
+  transition:
+    transform 180ms var(--ease-spring),
+    border-color 180ms var(--ease-out),
+    background 180ms var(--ease-out),
+    box-shadow 220ms var(--ease-out),
+    color 180ms var(--ease-out);
+}
+
+.wbtn:hover {
+  transform: translate3d(0, -1px, 0) scale(1.03);
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  background: rgba(255, 255, 255, 0.10) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 12px 28px rgba(0, 0, 0, 0.25), 0 0 18px rgba(124, 255, 218, 0.12);
+}
+
+.wbtn:active {
+  transform: translate3d(0, 0, 0) scale(0.95);
+  transition-duration: 80ms;
+}
+
+.wbtn:focus-visible,
+.sopt:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.status-pill {
+  text-transform: uppercase;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.status-toggle::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  filter: blur(10px);
+  transition: opacity 180ms var(--ease-out);
+  z-index: -1;
+}
+
+.status-toggle:hover::after {
+  opacity: 0.16;
+}
+
+.fade-in[role="dialog"] button {
+  min-height: 34px;
 }
 
 /* ── GPU Acceleration Layers ────────────────────────────────────────────────── */
