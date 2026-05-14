@@ -106,6 +106,37 @@ Add these 4 secrets:
 
 ---
 
+## Local Signed Release Build (Using `build-release.sh`)
+
+Use this when building a local signed release APK from your machine.
+
+### Required environment variables
+
+Before running the script, export all 4 required variables:
+
+```bash
+export KEYSTORE_PATH="/absolute/path/to/your/release.keystore"
+export KEYSTORE_PASSWORD="your_store_password"
+export KEY_ALIAS="your_key_alias"
+export KEY_PASSWORD="your_key_password"
+```
+
+Then run:
+
+```bash
+./build-release.sh
+```
+
+### What this script does
+
+- Resolves the repository root from the script location (no hardcoded repo path)
+- Fails immediately if any required signing env var is missing
+- Runs `npm run build`
+- Runs `npx cap sync android`
+- Runs `./gradlew assembleRelease` from `android/`
+
+Signing values are read by `android/app/build.gradle` from environment variables via `signingConfigs.release`, which remains the single source of truth.
+
 ## Step 4: Create a Release
 
 Once all secrets are configured, create a release by pushing a version tag:
