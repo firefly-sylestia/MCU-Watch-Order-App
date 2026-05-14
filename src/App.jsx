@@ -718,7 +718,7 @@ export default function MCUViewer() {
       }
     };
     fetchDetail();
-  }, [detailItem]);
+  }, [detailItem, metaCache]);
 
   useEffect(() => {
     setDetailPosterFailed(false);
