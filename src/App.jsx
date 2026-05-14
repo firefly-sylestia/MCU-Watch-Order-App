@@ -211,7 +211,62 @@ const CACHE_KEYS = {
   userActionsRatings: 'mcu-user-actions-ratings-v1',
   userActionsRewatch: 'mcu-user-actions-rewatch-v1',
   userActionsBookmarks: 'mcu-user-actions-bookmarks-v1',
+  uiState: 'mcu-ui-state-v1',
 };
+
+
+const UI_STATE_DEFAULTS = {
+  listMode: 'core',
+  search: '',
+  sortBy: 'order',
+  essentialOnly: false,
+  watchedOnly: false,
+  statusFilter: null,
+  typeFilter: null,
+  activePhase: 0,
+  filtersOpen: false,
+  viewMode: 'list',
+  densityMode: 'comfortable',
+  timelineMode: 'sacred',
+  scrollTop: 0,
+};
+
+const VALID_LIST_MODES = new Set(LIST_MODES.map(mode => mode.id));
+const VALID_VIEW_MODES = new Set(['list', 'calendar']);
+const VALID_PHASES = new Set([0, ...PHASES.map(phase => phase.id)]);
+const VALID_TYPES = new Set([null, ...Object.keys(TYPE_META)]);
+const VALID_STATUSES = new Set([null, ...Object.keys(STATUS_META)]);
+const VALID_DENSITY_MODES = new Set(['comfortable', 'compact']);
+const VALID_TIMELINE_MODES = new Set(['sacred', 'studio', 'whatif']);
+
+const readSavedUiState = () => {
+  if (typeof window === 'undefined') return UI_STATE_DEFAULTS;
+  try {
+    const raw = window.localStorage.getItem(CACHE_KEYS.uiState);
+    if (!raw) return UI_STATE_DEFAULTS;
+    const saved = JSON.parse(raw);
+    return {
+      ...UI_STATE_DEFAULTS,
+      listMode: VALID_LIST_MODES.has(saved.listMode) ? saved.listMode : UI_STATE_DEFAULTS.listMode,
+      search: typeof saved.search === 'string' ? saved.search : UI_STATE_DEFAULTS.search,
+      sortBy: SORT_LABELS[saved.sortBy] ? saved.sortBy : UI_STATE_DEFAULTS.sortBy,
+      essentialOnly: Boolean(saved.essentialOnly),
+      watchedOnly: Boolean(saved.watchedOnly),
+      statusFilter: VALID_STATUSES.has(saved.statusFilter) ? saved.statusFilter : UI_STATE_DEFAULTS.statusFilter,
+      typeFilter: VALID_TYPES.has(saved.typeFilter) ? saved.typeFilter : UI_STATE_DEFAULTS.typeFilter,
+      activePhase: VALID_PHASES.has(Number(saved.activePhase)) ? Number(saved.activePhase) : UI_STATE_DEFAULTS.activePhase,
+      filtersOpen: Boolean(saved.filtersOpen),
+      viewMode: VALID_VIEW_MODES.has(saved.viewMode) ? saved.viewMode : UI_STATE_DEFAULTS.viewMode,
+      densityMode: VALID_DENSITY_MODES.has(saved.densityMode) ? saved.densityMode : UI_STATE_DEFAULTS.densityMode,
+      timelineMode: VALID_TIMELINE_MODES.has(saved.timelineMode) ? saved.timelineMode : UI_STATE_DEFAULTS.timelineMode,
+      scrollTop: Number.isFinite(Number(saved.scrollTop)) ? Math.max(0, Number(saved.scrollTop)) : UI_STATE_DEFAULTS.scrollTop,
+    };
+  } catch {
+    return UI_STATE_DEFAULTS;
+  }
+};
+
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const safeLocalStorageSetItem = (key, value) => {
   try {
@@ -324,20 +379,21 @@ const useDebouncedEffect = (effect, deps, delay = 350) => {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function MCUViewer() {
+  const initialUiState = useMemo(() => readSavedUiState(), []);
   const [items,          setItems]          = useState(RAW);
-  const [listMode,       setListMode]       = useState('core');
-  const [search,         setSearch]         = useState('');
-  const [sortBy,         setSortBy]         = useState('order');
-  const [essentialOnly,  setEssOnly]        = useState(false);
-  const [watchedOnly,    setWatchedOnly]    = useState(false);
-  const [statusFilter,   setStatusFilter]   = useState(null);
-  const [typeFilter,     setTypeFilter]     = useState(null);
-  const [activePhase,    setActivePhase]    = useState(0);
+  const [listMode,       setListMode]       = useState(initialUiState.listMode);
+  const [search,         setSearch]         = useState(initialUiState.search);
+  const [sortBy,         setSortBy]         = useState(initialUiState.sortBy);
+  const [essentialOnly,  setEssOnly]        = useState(initialUiState.essentialOnly);
+  const [watchedOnly,    setWatchedOnly]    = useState(initialUiState.watchedOnly);
+  const [statusFilter,   setStatusFilter]   = useState(initialUiState.statusFilter);
+  const [typeFilter,     setTypeFilter]     = useState(initialUiState.typeFilter);
+  const [activePhase,    setActivePhase]    = useState(initialUiState.activePhase);
   const [sortOpen,       setSortOpen]       = useState(false);
   const [phaseOpen,      setPhaseOpen]      = useState(false);
   const [statusDropdown, setStatusDropdown] = useState(null);
   const [filterStatusOpen, setFilterStatusOpen] = useState(false);
-  const [filtersOpen,    setFiltersOpen]    = useState(false); // collapsed by default
+  const [filtersOpen,    setFiltersOpen]    = useState(initialUiState.filtersOpen);
   const [dropdownPos,    setDropdownPos]    = useState({ x: 0, y: 0 });
   const [darkMode,       setDarkMode]       = useState(true);
   const [expandedItem,   setExpandedItem]   = useState(null);
@@ -361,14 +417,16 @@ export default function MCUViewer() {
   const [themeMode,      setThemeMode]      = useState('classic');
   const [spoilerSafeMode, setSpoilerSafeMode] = useState(true);
   const [reduceMotion, setReduceMotion] = useState(true);
-  const [viewMode, setViewMode] = useState('list');
-  const [densityMode, setDensityMode] = useState('comfortable');
-  const [timelineMode,   setTimelineMode]   = useState('sacred');
+  const [viewMode, setViewMode] = useState(initialUiState.viewMode);
+  const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
+  const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
   const [genreFilter] = useState('all');
   const [myLikes,        setMyLikes]        = useState({});
   const [myRating,       setMyRating]       = useState({});
   const [rewatchCount,   setRewatchCount]   = useState({});
   const [bookmarks,      setBookmarks]      = useState({});
+  const [scrollCheckpoint, setScrollCheckpoint] = useState(initialUiState.scrollTop);
+  const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
 
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
@@ -377,6 +435,8 @@ export default function MCUViewer() {
   const isScrolling= useRef(false);
   const mainRef    = useRef(null);
   const settingsRef= useRef(null);
+  const restoredUiStateRef = useRef(false);
+  const metadataBuildRef = useRef({ paused: false, running: false });
 
   useEffect(() => {
     const s = localStorage.getItem('mcu-v7');
@@ -430,14 +490,25 @@ export default function MCUViewer() {
 
   useEffect(() => {
     const el = mainRef.current;
-    if (!el) return;
+    let scrollSaveTimer;
+    const getCurrentScrollTop = () => {
+      const canScrollMain = el && el.scrollHeight > el.clientHeight + 1;
+      return canScrollMain ? el.scrollTop : window.scrollY;
+    };
     const onScroll = () => {
       isScrolling.current = true;
       clearTimeout(isScrolling._t);
+      clearTimeout(scrollSaveTimer);
       isScrolling._t = setTimeout(() => { isScrolling.current = false; }, 150);
+      scrollSaveTimer = setTimeout(() => setScrollCheckpoint(getCurrentScrollTop()), 220);
     };
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
+    el?.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      clearTimeout(scrollSaveTimer);
+      el?.removeEventListener('scroll', onScroll);
+      window.removeEventListener('scroll', onScroll);
+    };
   }, []);
 
   useEffect(() => {
@@ -480,11 +551,17 @@ export default function MCUViewer() {
   const scrollTo = id => {
     const el = phaseRefs.current[id];
     const container = mainRef.current;
-    if (!el || !container) return;
-    const containerTop = container.getBoundingClientRect().top;
-    const elTop = el.getBoundingClientRect().top;
-    const offset = elTop - containerTop + container.scrollTop - 16;
-    container.scrollTo({ top: offset, behavior: 'smooth' });
+    if (!el) return;
+    const canScrollMain = container && container.scrollHeight > container.clientHeight + 1;
+    if (canScrollMain) {
+      const containerTop = container.getBoundingClientRect().top;
+      const elTop = el.getBoundingClientRect().top;
+      const offset = elTop - containerTop + container.scrollTop - 16;
+      container.scrollTo({ top: offset, behavior: 'smooth' });
+      return;
+    }
+    const top = el.getBoundingClientRect().top + window.scrollY - 82;
+    window.scrollTo({ top, behavior: 'smooth' });
   };
 
   const exportProgress = async () => {
@@ -638,6 +715,44 @@ export default function MCUViewer() {
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
     [items, listMode, coreIds]
   );
+
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const container = mainRef.current;
+      const canScrollMain = container && container.scrollHeight > container.clientHeight + 1;
+      if (initialUiState.scrollTop > 0) {
+        if (canScrollMain) container.scrollTop = initialUiState.scrollTop;
+        else window.scrollTo({ top: initialUiState.scrollTop, behavior: 'auto' });
+      } else if (initialUiState.activePhase > 0) {
+        scrollTo(initialUiState.activePhase);
+      }
+      restoredUiStateRef.current = true;
+    }, 180);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useDebouncedEffect(() => {
+    if (!restoredUiStateRef.current) return;
+    const container = mainRef.current;
+    const canScrollMain = container && container.scrollHeight > container.clientHeight + 1;
+    const scrollTop = canScrollMain ? container.scrollTop : window.scrollY;
+    safeLocalStorageSetItem(CACHE_KEYS.uiState, JSON.stringify({
+      listMode,
+      search,
+      sortBy,
+      essentialOnly,
+      watchedOnly,
+      statusFilter,
+      typeFilter,
+      activePhase,
+      filtersOpen,
+      viewMode,
+      densityMode,
+      timelineMode,
+      scrollTop,
+    }));
+  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, scrollCheckpoint], 300);
   const totalWatched = useMemo(() => activeItems.filter(i => i.status === 'watched').length, [activeItems]);
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
@@ -908,33 +1023,105 @@ export default function MCUViewer() {
     }
   }, [myLikes, myRating, rewatchCount, bookmarks], 400);
 
-  // ─── Manual refresh: OMDB for ratings only, TMDB for posters ────────────
-  const refreshPostersAndMetadata = async () => {
-    if (posterFetchState.active) return;
-    const targets = filtered.slice(0, 60);
-    const posterUpdates = {};
-    const metaUpdates = {};
-    setPosterFetchState({ active: true, done: 0, total: targets.length, message: 'Fetching posters and ratings…' });
-    for (const [index, item] of targets.entries()) {
-      try {
-        // Always fetch poster from local manifest first, then TMDB
-        const tmdbPoster = await fetchTmdbPoster(item);
-        posterUpdates[item.id] = tmdbPoster || posterCache[item.id] || '';
-        // Fetch rating only from OMDB with the ratings key
-        const ratingData = await fetchOmdbInfo(item);
-        metaUpdates[item.id] = {
-          rating: ratingData?.rating || '',
-          released: ratingData?.released || '',
-        };
-      } catch {
-        metaUpdates[item.id] = metaUpdates[item.id] || { rating: '', released: '' };
-      }
-      setPosterFetchState({ active: true, done: index + 1, total: targets.length, message: `Fetched ${index + 1}/${targets.length} entries…` });
+  // ─── Build metadata: one title at a time, never automatically on load ───
+  const getMetadataTargets = ({ retryOnly = false, refreshAll = false } = {}) => {
+    if (retryOnly && metadataBuild.failedIds.length) {
+      const failed = new Set(metadataBuild.failedIds);
+      return activeItems.filter(item => failed.has(item.id));
     }
-    setPosterCache(prev => ({ ...prev, ...posterUpdates }));
-    setMetaCache(prev => ({ ...prev, ...metaUpdates }));
-    setPosterFetchState({ active: false, done: targets.length, total: targets.length, message: `Fetched ${targets.length} entries.` });
+    return activeItems.filter(item => {
+      if (refreshAll) return true;
+      const hasPoster = Boolean(posterCache[item.id]);
+      const meta = metaCache[item.id] || {};
+      const hasMetadata = Boolean(meta.rating || meta.released);
+      return !hasPoster || !hasMetadata;
+    });
   };
+
+  const runMetadataBuild = async (options = {}) => {
+    if (metadataBuildRef.current.running) return;
+    const targets = getMetadataTargets(options);
+    metadataBuildRef.current = { paused: false, running: true };
+    setMetadataBuild({ status: targets.length ? 'running' : 'complete', currentTitle: '', done: 0, total: targets.length, failedIds: [] });
+
+    if (!targets.length) {
+      metadataBuildRef.current.running = false;
+      return;
+    }
+
+    const failedIds = [];
+    let done = 0;
+    for (const item of targets) {
+      if (metadataBuildRef.current.paused) break;
+      setMetadataBuild(prev => ({ ...prev, status: 'running', currentTitle: item.title, done, failedIds: [...failedIds] }));
+      try {
+        const tmdbPoster = await fetchTmdbPoster(item);
+        if (tmdbPoster) {
+          setPosterCache(prev => ({ ...prev, [item.id]: tmdbPoster }));
+        }
+
+        const ratingData = await fetchOmdbInfo(item);
+        setMetaCache(prev => ({
+          ...prev,
+          [item.id]: {
+            ...prev[item.id],
+            rating: ratingData?.rating || prev[item.id]?.rating || '',
+            released: ratingData?.released || prev[item.id]?.released || '',
+          },
+        }));
+      } catch {
+        failedIds.push(item.id);
+      }
+      done += 1;
+      setMetadataBuild(prev => ({ ...prev, done, currentTitle: item.title, failedIds: [...failedIds] }));
+      await wait(250);
+    }
+
+    const paused = metadataBuildRef.current.paused;
+    metadataBuildRef.current = { paused: false, running: false };
+    setMetadataBuild(prev => ({
+      ...prev,
+      status: paused ? 'paused' : (failedIds.length ? 'error' : 'complete'),
+      currentTitle: paused ? prev.currentTitle : '',
+      done,
+      total: targets.length,
+      failedIds,
+    }));
+  };
+
+  const pauseMetadataBuild = () => {
+    if (!metadataBuildRef.current.running) return;
+    metadataBuildRef.current.paused = true;
+    setMetadataBuild(prev => ({ ...prev, status: 'paused' }));
+  };
+
+  const handleMetadataBuildClick = () => {
+    if (metadataBuild.status === 'running') {
+      pauseMetadataBuild();
+      return;
+    }
+    runMetadataBuild({ retryOnly: metadataBuild.status === 'error' });
+  };
+
+  const metadataButtonLabel = metadataBuild.status === 'running'
+    ? 'Pause build'
+    : metadataBuild.status === 'paused'
+      ? 'Resume build'
+      : metadataBuild.status === 'error'
+        ? 'Retry failed'
+        : metadataBuild.status === 'complete'
+          ? 'Build missing metadata'
+          : 'Build metadata';
+
+  const metadataStatusText = metadataBuild.status === 'running'
+    ? `Building ${metadataBuild.done}/${metadataBuild.total}${metadataBuild.currentTitle ? ` · ${metadataBuild.currentTitle}` : ''}`
+    : metadataBuild.status === 'paused'
+      ? `Paused ${metadataBuild.done}/${metadataBuild.total}`
+      : metadataBuild.status === 'error'
+        ? `${metadataBuild.failedIds.length} failed · retry available`
+        : metadataBuild.status === 'complete'
+          ? `Done · ${metadataBuild.total} checked`
+          : 'Fetches one title at a time';
 
   // ─── Detail panel fetch: TMDB for everything, OMDB only for rating ──────
   useEffect(() => {
@@ -1143,6 +1330,24 @@ export default function MCUViewer() {
   // Count active filters for the collapsed bar badge
   const activeFilterCount = [typeFilter, statusFilter, watchedOnly, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
 
+  const renderPhaseSelector = () => (
+    <div ref={phaseRef} style={{ position: 'relative', flex: '0 0 auto' }}>
+      <button className="fpill" onClick={() => setPhaseOpen(o => !o)}
+        style={{ color: 'var(--theme-accent)', borderColor: 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'color-mix(in srgb, var(--theme-accent) 9%, var(--theme-surface))', fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(13px, 2.2vw, 16px)', letterSpacing: 2, padding: '7px 14px', whiteSpace: 'nowrap' }}>
+        {activePhase === 0 ? 'Phase All' : (PHASES.find(ph => ph.id === activePhase)?.name || 'Phase All')}
+        <ChevDown size={12} style={{ opacity: 0.6, transform: phaseOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+      </button>
+      {phaseOpen && (
+        <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: T.dropdownShadow, minWidth: 200 }}>
+          <div className={`sopt ${activePhase === 0 ? 'picked' : ''}`} onClick={() => { setActivePhase(0); setPhaseOpen(false); }}>Phase All</div>
+          {PHASES.map((ph) => (
+            <div key={ph.id} className={`sopt ${activePhase === ph.id ? 'picked' : ''}`} onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); setPhaseOpen(false); }}>{ph.name}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   const appThemeBg = 'var(--theme-app-bg)';
   return (
     <div data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: "'Rajdhani',system-ui,sans-serif", display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 0.4s cubic-bezier(0.34,1.56,0.64,1), color 0.32s cubic-bezier(0.34,1.56,0.64,1)' }} className="theme-switch">
@@ -1336,11 +1541,11 @@ export default function MCUViewer() {
             <label className="fpill" style={{ cursor: 'pointer' }}><Upload size={14}/>Import Progress
               <input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} />
             </label>
+            <button className="fpill" onClick={handleMetadataBuildClick} style={{ justifyContent: 'center', borderColor: metadataBuild.status === 'running' ? 'var(--theme-warning)' : 'var(--theme-border)' }}><Download size={14}/>{metadataButtonLabel}</button>
+            <div style={{ fontSize: 12, color: T.textMuted, lineHeight: 1.35, padding: '0 2px' }}>{metadataStatusText}</div>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: 'var(--theme-danger)', textTransform: 'uppercase' }}>Danger Zone</div>
-            <button className="fpill" onClick={refreshPostersAndMetadata} disabled={posterFetchState.active} style={{ opacity: posterFetchState.active ? 0.75 : 1 }}><Download size={14}/>{posterFetchState.active ? `Fetching ${posterFetchState.done}/${posterFetchState.total}` : 'Fetch Posters & Ratings'}</button>
-            {posterFetchState.message && <div style={{ fontSize: 11, color: T.textMuted }}>{posterFetchState.message}</div>}
-            <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); }}><Trash2 size={14}/>Reset Filters</button>
+            <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setActivePhase(0); }}><Trash2 size={14}/>Reset Filters</button>
           </div>
         )}
       </div>
@@ -1442,6 +1647,7 @@ export default function MCUViewer() {
               )}
               <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
+            {renderPhaseSelector()}
             {/* Search always visible */}
             <div style={{ position: 'relative', flex: '1 1 170px', minWidth: 130, maxWidth: 320 }}>
               <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
@@ -1474,22 +1680,6 @@ export default function MCUViewer() {
                   <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: T.dropdownShadow, minWidth: 200 }}>
                     {Object.entries(SORT_LABELS).map(([k, v]) => (
                       <div key={k} className={`sopt ${sortBy === k ? 'picked' : ''}`} onClick={() => { setSortBy(k); setSortOpen(false); }}>{v}</div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {/* Phase */}
-              <div ref={phaseRef} style={{ position: 'relative' }}>
-                <button className="fpill" onClick={() => setPhaseOpen(o => !o)}
-                  style={{ color: 'var(--theme-accent)', borderColor: 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'color-mix(in srgb, var(--theme-accent) 9%, var(--theme-surface))', fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
-                  {activePhase === 0 ? 'Phase All' : (PHASES.find(ph => ph.id === activePhase)?.name || 'Phase All')}
-                  <ChevDown size={12} style={{ opacity: 0.6, transform: phaseOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-                </button>
-                {phaseOpen && (
-                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: T.dropdownShadow, minWidth: 200 }}>
-                    <div className={`sopt ${activePhase === 0 ? 'picked' : ''}`} onClick={() => { setActivePhase(0); setPhaseOpen(false); }}>Phase All</div>
-                    {PHASES.map((ph) => (
-                      <div key={ph.id} className={`sopt ${activePhase === ph.id ? 'picked' : ''}`} onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); setPhaseOpen(false); }}>{ph.name}</div>
                     ))}
                   </div>
                 )}
