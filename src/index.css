@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap');
 /* ═══════════════════════════════════════════════════════════════════════════
    LUMINARY PANELS — Apple UI Morphing Style
    Premium dark theme with 120fps GPU-accelerated animations
@@ -80,6 +81,7 @@ body {
   min-height: 100dvh;
   background: var(--bg);
   color: var(--text);
+  font-family: "Rajdhani", "Bebas Neue", system-ui, sans-serif;
   overflow-x: hidden;
   overscroll-behavior-y: auto;
   -webkit-overflow-scrolling: touch;
