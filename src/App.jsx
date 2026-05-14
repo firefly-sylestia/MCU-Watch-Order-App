@@ -236,6 +236,8 @@ export default function MCUViewer() {
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [themeMode,      setThemeMode]      = useState('classic');
   const [spoilerSafeMode, setSpoilerSafeMode] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(true);
+  const [prefetchPriority, setPrefetchPriority] = useState('high');
   const [viewMode, setViewMode] = useState('list');
   const [densityMode, setDensityMode] = useState('comfortable');
   const [timelineMode,   setTimelineMode]   = useState('sacred');
@@ -504,6 +506,15 @@ export default function MCUViewer() {
       return '';
     }
   };
+  const fetchWithTimeout = async (url, options = {}, timeoutMs = 9000) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  };
 
   const fetchTmdbDetail = async (item) => {
     const q = encodeURIComponent(cleanLookupTitle(item.title));
@@ -516,6 +527,23 @@ export default function MCUViewer() {
     } catch {
       return null;
     }
+  };
+  const fetchOmdbRating = async (item) => {
+    const q = encodeURIComponent(cleanLookupTitle(item.title));
+    const y = encodeURIComponent(String(item.year || ''));
+    try {
+      const proxied = await fetchWithTimeout(`/api/omdb/rating?title=${q}&year=${y}`, {}, 7000);
+      if (proxied.ok) return await proxied.json();
+    } catch {}
+    try {
+      const direct = await fetchWithTimeout(`https://www.omdbapi.com/?apikey=${OMDB_RATINGS_KEY}&t=${q}&y=${y}`, {}, 7000);
+      const data = await direct.json();
+      return {
+        rating: data?.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : '',
+        released: data?.Released && data.Released !== 'N/A' ? data.Released : '',
+      };
+    } catch {}
+    return { rating: '', released: '' };
   };
 
   const cleanLookupTitle = (title) => title.replace(/\sS\d.*$/i, '').replace(/\sEps?.*$/i, '').trim();
@@ -615,12 +643,18 @@ export default function MCUViewer() {
       if (Array.isArray(avatars)) setUploadedAvatars(avatars);
       const t = localStorage.getItem('mcu-theme-mode-v1');
       if (t) setThemeMode(t);
+      const rm = localStorage.getItem('mcu-reduce-motion-v1');
+      if (rm !== null) setReduceMotion(rm === '1');
+      const pp = localStorage.getItem('mcu-prefetch-priority-v1');
+      if (pp) setPrefetchPriority(pp);
     } catch {}
   }, []);
 
   useEffect(() => { localStorage.setItem('mcu-profile-v1', JSON.stringify(profile)); }, [profile]);
   useEffect(() => { localStorage.setItem('mcu-uploaded-avatars-v1', JSON.stringify(uploadedAvatars)); }, [uploadedAvatars]);
   useEffect(() => { localStorage.setItem('mcu-theme-mode-v1', themeMode); }, [themeMode]);
+  useEffect(() => { localStorage.setItem('mcu-reduce-motion-v1', reduceMotion ? '1' : '0'); }, [reduceMotion]);
+  useEffect(() => { localStorage.setItem('mcu-prefetch-priority-v1', prefetchPriority); }, [prefetchPriority]);
 
   useEffect(() => {
     try {
@@ -647,13 +681,10 @@ export default function MCUViewer() {
         const tmdbPoster = await fetchTmdbPoster(item);
         posterUpdates[item.id] = tmdbPoster || posterCache[item.id] || '';
         // Fetch rating only from OMDB with the ratings key
-        const t = encodeURIComponent(cleanLookupTitle(item.title));
-        const y = encodeURIComponent(String(item.year || ''));
-        const res = await fetch(`https://www.omdbapi.com/?apikey=${OMDB_RATINGS_KEY}&t=${t}&y=${y}`);
-        const data = await res.json();
+        const ratingData = await fetchOmdbRating(item);
         metaUpdates[item.id] = {
-          rating: data?.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : '',
-          released: data?.Released && data.Released !== 'N/A' ? data.Released : '',
+          rating: ratingData?.rating || '',
+          released: ratingData?.released || '',
         };
       } catch {
         metaUpdates[item.id] = metaUpdates[item.id] || { rating: '', released: '' };
@@ -666,7 +697,8 @@ export default function MCUViewer() {
   // ─── Background auto-fetch: TMDB for poster, OMDB for rating only ───────
   useEffect(() => {
     const sourceItems = listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items;
-    const targets = sourceItems.filter(i => posterCache[i.id] === undefined || metaCache[i.id] === undefined);
+    const limit = prefetchPriority === 'high' ? sourceItems.length : prefetchPriority === 'balanced' ? 80 : 32;
+    const targets = sourceItems.filter(i => posterCache[i.id] === undefined || metaCache[i.id] === undefined).slice(0, limit);
     if (!targets.length) return;
     let cancelled = false;
     const run = async () => {
@@ -678,13 +710,10 @@ export default function MCUViewer() {
           const tmdbPoster = await fetchTmdbPoster(item);
           posterUpdates[item.id] = tmdbPoster || '';
           // Rating: OMDB ratings key, using correct item.year (was buggy before)
-          const t = encodeURIComponent(cleanLookupTitle(item.title));
-          const y = encodeURIComponent(String(item.year || ''));
-          const res = await fetch(`https://www.omdbapi.com/?apikey=${OMDB_RATINGS_KEY}&t=${t}&y=${y}`);
-          const data = await res.json();
+          const ratingData = await fetchOmdbRating(item);
           metaUpdates[item.id] = {
-            rating: data?.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : '',
-            released: data?.Released && data.Released !== 'N/A' ? data.Released : '',
+            rating: ratingData?.rating || '',
+            released: ratingData?.released || '',
           };
         } catch {
           posterUpdates[item.id] = posterUpdates[item.id] || '';
@@ -698,7 +727,7 @@ export default function MCUViewer() {
     };
     run();
     return () => { cancelled = true; };
-  }, [listMode, items, posterCache, metaCache]);
+  }, [listMode, items, posterCache, metaCache, prefetchPriority]);
 
   // ─── Detail panel fetch: TMDB for everything, OMDB only for rating ──────
   useEffect(() => {
@@ -714,21 +743,21 @@ export default function MCUViewer() {
         if (tmdbDetails) setDetailData(tmdbDetails);
 
         // Separately fetch just the OMDB rating
-        const t = encodeURIComponent(cleanLookupTitle(detailItem.title));
-        const y = encodeURIComponent(String(detailItem.year || ''));
         try {
-          const ratingRes = await fetch(`https://www.omdbapi.com/?apikey=${OMDB_RATINGS_KEY}&t=${t}&y=${y}`);
-          const ratingData = await ratingRes.json();
-          if (ratingData?.imdbRating && ratingData.imdbRating !== 'N/A') {
-            setDetailData(prev => prev ? { ...prev, imdbRating: ratingData.imdbRating } : { imdbRating: ratingData.imdbRating });
-            setMetaCache(prev => ({ ...prev, [detailItem.id]: { ...prev[detailItem.id], rating: ratingData.imdbRating } }));
+          const ratingData = await fetchOmdbRating(detailItem);
+          if (ratingData?.rating) {
+            setDetailData(prev => prev ? { ...prev, imdbRating: ratingData.rating } : { imdbRating: ratingData.rating });
+            setMetaCache(prev => ({ ...prev, [detailItem.id]: { ...prev[detailItem.id], rating: ratingData.rating } }));
           }
         } catch {}
-      } catch {}
-      setDetailLoading(false);
+      } catch {
+        setDetailData({ Plot: detailItem.desc, Year: String(detailItem.year), imdbRating: metaCache[detailItem.id]?.rating || 'N/A' });
+      } finally {
+        setDetailLoading(false);
+      }
     };
     fetchDetail();
-  }, [detailItem]);
+  }, [detailItem, metaCache]);
 
   useEffect(() => {
     setDetailPosterFailed(false);
@@ -937,7 +966,7 @@ export default function MCUViewer() {
         .expand-row{animation:expandDown 0.28s cubic-bezier(0.34,1.56,0.64,1) both;overflow:hidden}
 
         @keyframes filtersSlide{from{opacity:0;max-height:0}to{opacity:1;max-height:220px}}
-        .filters-open{animation:filtersSlide 0.26s cubic-bezier(0.34,1.56,0.64,1) both;overflow:hidden}
+        .filters-open{animation:filtersSlide 0.26s cubic-bezier(0.34,1.56,0.64,1) both;overflow:visible}
 
         @keyframes themeFadeSwitch{from{opacity:0.7}to{opacity:1}}
         .theme-switch{animation:themeFadeSwitch 0.35s ease both}
@@ -1003,6 +1032,7 @@ export default function MCUViewer() {
         .glass-panel{background-color:rgba(30,30,46,0.6);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.05);border-radius:16px}
         .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));backdrop-filter:blur(6px)}
         .meta-muted{color:var(--theme-text-muted) !important}
+        ${reduceMotion ? `*{animation:none !important;transition:none !important;scroll-behavior:auto !important}` : ''}
 
         /* Mobile */
         @media (max-width: 767px) {
@@ -1064,6 +1094,18 @@ export default function MCUViewer() {
             <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><EyeOff size={14} /> Spoiler Safe</span>
               <input type='checkbox' checked={spoilerSafeMode} onChange={() => setSpoilerSafeMode(v => !v)} style={{ width: 36, height: 20 }} />
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Pause size={14} /> Reduce Motion</span>
+              <input type='checkbox' checked={reduceMotion} onChange={() => setReduceMotion(v => !v)} style={{ width: 36, height: 20 }} />
+            </label>
+            <label style={{ display: 'grid', gap: 6, padding: '8px 2px' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Zap size={14} /> Prefetch Priority</span>
+              <select value={prefetchPriority} onChange={(e) => setPrefetchPriority(e.target.value)} style={{ padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }}>
+                <option value="high">High (load all)</option>
+                <option value="balanced">Balanced</option>
+                <option value="low">Low (data saver)</option>
+              </select>
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 6 }}>
               <button className='fpill' onClick={() => setDensityMode('comfortable')} style={{ borderColor: densityMode === 'comfortable' ? 'var(--theme-accent)' : 'var(--theme-border)', justifyContent: 'center' }}>Comfortable</button>
@@ -1222,7 +1264,7 @@ export default function MCUViewer() {
                   <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                 </button>
                 {sortOpen && (
-                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
+                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: T.dropdownShadow, minWidth: 200 }}>
                     {Object.entries(SORT_LABELS).map(([k, v]) => (
                       <div key={k} className={`sopt ${sortBy === k ? 'picked' : ''}`} onClick={() => { setSortBy(k); setSortOpen(false); }}>{v}</div>
                     ))}
@@ -1237,7 +1279,7 @@ export default function MCUViewer() {
                   <ChevDown size={12} style={{ opacity: 0.6, transform: phaseOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                 </button>
                 {phaseOpen && (
-                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 200 }}>
+                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: T.dropdownShadow, minWidth: 200 }}>
                     <div className={`sopt ${activePhase === 0 ? 'picked' : ''}`} onClick={() => { setActivePhase(0); setPhaseOpen(false); }}>Phase All</div>
                     {PHASES.map((ph) => (
                       <div key={ph.id} className={`sopt ${activePhase === ph.id ? 'picked' : ''}`} onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); setPhaseOpen(false); }}>{ph.name}</div>
@@ -1274,7 +1316,7 @@ export default function MCUViewer() {
                   <Check size={10} />Status
                 </button>
                 {filterStatusOpen && (
-                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 200, boxShadow: T.dropdownShadow, minWidth: 180 }}
+                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: T.dropdownShadow, minWidth: 180 }}
                     onMouseEnter={() => setFilterStatusOpen(true)}
                     onMouseLeave={() => setFilterStatusOpen(false)}>
                     <div className={`sopt ${!statusFilter && !watchedOnly ? 'picked' : ''}`} onClick={() => { setStatusFilter(null); setWatchedOnly(false); setFilterStatusOpen(false); }}>All statuses</div>
