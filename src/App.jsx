@@ -418,23 +418,11 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
 });
 
 
-const VirtualizedPhaseRows = ({ rows, rowHeight, renderRow }) => {
-  const [scrollTop, setScrollTop] = useState(0);
-  const viewportHeight = Math.min(rows.length * rowHeight, 680);
-  const overscan = 6;
-  const start = Math.max(0, Math.floor(scrollTop / rowHeight) - overscan);
-  const visibleCount = Math.ceil(viewportHeight / rowHeight) + overscan * 2;
-  const end = Math.min(rows.length, start + visibleCount);
-  const visibleRows = rows.slice(start, end);
-
-  return <div style={{ maxHeight: 680, height: viewportHeight, overflowY: rows.length * rowHeight > viewportHeight ? 'auto' : 'visible' }} onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}>
-    <div style={{ height: rows.length * rowHeight, position: 'relative' }}>
-      <div style={{ transform: `translateY(${start * rowHeight}px)` }}>
-        {visibleRows.map((item, idx) => renderRow(item, start + idx))}
-      </div>
-    </div>
-  </div>;
-};
+const PhaseRows = ({ rows, renderRow }) => (
+  <div>
+    {rows.map((item, idx) => renderRow(item, idx))}
+  </div>
+);
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function MCUViewer() {
   const initialUiState = useMemo(() => readSavedUiState(), []);
@@ -640,6 +628,79 @@ export default function MCUViewer() {
     a.download = 'mcu-progress.json';
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const shareProgressCard = async () => {
+    try {
+      const recent = recentActivity.slice(0, 3);
+      const currentPhase = activePhase === 0 ? stickyPhaseProgress.label : (PHASES.find(p => p.id === activePhase)?.name || stickyPhaseProgress.label);
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1350;
+      const ctx = canvas.getContext('2d');
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      gradient.addColorStop(0, '#120e2f');
+      gradient.addColorStop(1, '#2e143a');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ff5ea8';
+      ctx.font = '700 60px sans-serif';
+      ctx.fillText('MCU VIEWING PROGRESS', 72, 110);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 180px sans-serif';
+      ctx.fillText(`${pct}%`, 72, 300);
+      ctx.font = '500 44px sans-serif';
+      ctx.fillText(`Current Phase: ${currentPhase}`, 72, 380);
+      ctx.fillText(`Completed: ${totalWatched}/${activeItems.length}`, 72, 445);
+      ctx.fillText(`Recent Completion`, 72, 530);
+
+      const drawPoster = async (item, idx) => {
+        const x = 72 + idx * 310;
+        const y = 570;
+        const w = 270;
+        const h = 405;
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = posterSrc(item);
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+        ctx.drawImage(img, x, y, w, h);
+        ctx.fillStyle = 'rgba(0,0,0,0.52)';
+        ctx.fillRect(x, y + h - 80, w, 80);
+        ctx.fillStyle = '#fff';
+        ctx.font = '600 22px sans-serif';
+        ctx.fillText(item.title.slice(0, 20), x + 10, y + h - 28);
+      };
+
+      await Promise.all(recent.map((item, idx) => drawPoster(item, idx).catch(() => null)));
+      ctx.fillStyle = '#dacfff';
+      ctx.font = '500 30px sans-serif';
+      ctx.fillText('Shared from MCU Viewing Order', 72, 1260);
+
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.95));
+      if (!blob) return;
+      const file = new File([blob], `mcu-progress-card-${Date.now()}.png`, { type: 'image/png' });
+      if (Capacitor.isNativePlatform()) {
+        const base64 = await new Promise(resolve => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(String(reader.result || '').split(',')[1] || '');
+          reader.readAsDataURL(file);
+        });
+        const res = await Filesystem.writeFile({ path: file.name, data: base64, directory: Directory.Cache });
+        await Share.share({ title: 'My MCU Progress', text: `${pct}% complete · ${currentPhase}`, url: res.uri });
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.name;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Failed to share progress card', e);
+    }
   };
 
   const importProgress = (file) => {
@@ -1782,6 +1843,7 @@ export default function MCUViewer() {
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Data</div>
             <button className="fpill" onClick={exportProgress}><Download size={14}/>Export Progress</button>
+            <button className="fpill" onClick={shareProgressCard}><Upload size={14}/>Share Progress Card</button>
             <button className="fpill" onClick={() => exportFetchedPosters('all')} disabled={posterExportState.active} style={{ opacity: posterExportState.active ? 0.75 : 1 }}><Download size={14}/>{posterExportState.active ? `Exporting ${posterExportState.done}/${posterExportState.total}` : 'Export All Posters'}</button>
             <button className="fpill" onClick={() => exportFetchedPosters('failed')} disabled={posterExportState.active || !Object.keys(posterExportFailures).length} style={{ opacity: posterExportState.active || !Object.keys(posterExportFailures).length ? 0.55 : 1 }}><Download size={14}/>Export Failed Posters ({Object.keys(posterExportFailures).length})</button>
             {posterExportState.message && <div style={{ fontSize: 11, color: T.textMuted }}>{posterExportState.message}</div>}
@@ -1979,19 +2041,6 @@ export default function MCUViewer() {
         )}
       </div>
 
-      {/* ━━ STICKY PHASE PROGRESS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 160, padding: '6px 24px', background: darkMode ? 'rgba(8,10,20,0.72)' : 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderBottom: `1px solid ${T.filterBorder}` }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 10, padding: '0 24px' }}>
-          <span style={{ fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.8, fontSize: 12, color: T.textMuted, minWidth: 90 }}>{stickyPhaseProgress.label}</span>
-          <div style={{ flex: 1, height: 4, borderRadius: 999, overflow: 'hidden', background: darkMode ? 'rgba(255,255,255,0.12)' : '#eae6de' }}>
-            <div style={{ width: `${stickyPhaseProgress.pct}%`, height: '100%', background: phaseGradient, transition: 'width 0.3s ease' }} />
-          </div>
-          <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 11, letterSpacing: 1.2, color: T.textMuted }}>{stickyPhaseProgress.done}/{stickyPhaseProgress.total}</span>
-        </div>
-        <div style={{ maxWidth: 1400, margin: '4px auto 0', padding: '0 24px', display: 'flex', gap: 4 }}>
-          {PHASES.map(ph => <div key={ph.id} style={{ height: 2, flex: 1, borderRadius: 99, background: ph.color, opacity: activePhase === 0 || activePhase === ph.id ? 0.9 : 0.28 }} />)}
-        </div>
-      </div>
 
       {/* ━━ JUMP NEXT BUTTON ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div className="bottom-action-dock">
@@ -2116,7 +2165,7 @@ export default function MCUViewer() {
 
                 {/* Row table */}
                 <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 14, overflow: 'hidden', boxShadow: darkMode ? '0 2px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.03)' : '0 1px 6px rgba(0,0,0,0.06)' }}>
-                  <VirtualizedPhaseRows rows={rows} rowHeight={densityMode === 'compact' ? 78 : 92} renderRow={(item, idx) => {
+                  <PhaseRows rows={rows} renderRow={(item, idx) => {
                     const itemReleaseStatus = releaseStatusFor(item);
                     const itemReleaseInfo = releaseInfoFor(item);
                     return (
