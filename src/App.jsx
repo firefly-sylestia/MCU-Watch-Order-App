@@ -199,9 +199,6 @@ const LIST_MODES = [
   { id: 'extended', label: 'Extended', sublabel: 'Full Chronological', color: '#4a9ede', desc: 'All entries incl. Netflix, SHIELD & more' },
 ];
 
-// ─── OMDB ratings key (for ratings only — posters use TMDB) ─────────────────
-const OMDB_RATINGS_KEY = '2c971c17';
-
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function MCUViewer() {
   const [items,          setItems]          = useState(RAW);
@@ -532,17 +529,21 @@ export default function MCUViewer() {
     const y = encodeURIComponent(String(item.year || ''));
     try {
       const proxied = await fetchWithTimeout(`/api/omdb/rating?title=${q}&year=${y}`, {}, 7000);
-      if (proxied.ok) return await proxied.json();
-    } catch {}
-    try {
-      const direct = await fetchWithTimeout(`https://www.omdbapi.com/?apikey=${OMDB_RATINGS_KEY}&t=${q}&y=${y}`, {}, 7000);
-      const data = await direct.json();
-      return {
-        rating: data?.imdbRating && data.imdbRating !== 'N/A' ? data.imdbRating : '',
-        released: data?.Released && data.Released !== 'N/A' ? data.Released : '',
-      };
-    } catch {}
-    return { rating: '', released: '' };
+      const payload = await proxied.json().catch(() => ({}));
+      if (proxied.ok) return { ...payload, status: 'ok' };
+      if (proxied.status === 429) return { rating: '', released: '', status: 'rate_limited' };
+      return { rating: '', released: '', status: payload?.error ? 'error' : 'unavailable' };
+    } catch {
+      return { rating: '', released: '', status: 'error' };
+    }
+  };
+
+  const formatRatingDisplay = (item) => {
+    const cached = metaCache[item.id];
+    if (cached?.rating) return cached.rating;
+    if (cached?.ratingStatus === 'rate_limited') return 'Rate limited';
+    if (cached?.ratingStatus === 'error' || cached?.ratingStatus === 'unavailable') return 'Unavailable';
+    return RELEASE_INFO[item.title]?.rating || '—';
   };
 
   const cleanLookupTitle = (title) => title.replace(/\sS\d.*$/i, '').replace(/\sEps?.*$/i, '').trim();
@@ -681,9 +682,10 @@ export default function MCUViewer() {
         metaUpdates[item.id] = {
           rating: ratingData?.rating || '',
           released: ratingData?.released || '',
+          ratingStatus: ratingData?.status || 'ok',
         };
       } catch {
-        metaUpdates[item.id] = metaUpdates[item.id] || { rating: '', released: '' };
+        metaUpdates[item.id] = metaUpdates[item.id] || { rating: '', released: '', ratingStatus: 'error' };
       }
     }
     setPosterCache(prev => ({ ...prev, ...posterUpdates }));
@@ -706,9 +708,10 @@ export default function MCUViewer() {
         // Separately fetch just the OMDB rating
         try {
           const ratingData = await fetchOmdbRating(detailItem);
-          if (ratingData?.rating) {
-            setDetailData(prev => prev ? { ...prev, imdbRating: ratingData.rating } : { imdbRating: ratingData.rating });
-            setMetaCache(prev => ({ ...prev, [detailItem.id]: { ...prev[detailItem.id], rating: ratingData.rating } }));
+          if (ratingData?.rating || ratingData?.status) {
+            const nextRating = ratingData?.rating || (ratingData?.status === 'rate_limited' ? 'Rate limited' : 'Unavailable');
+            setDetailData(prev => prev ? { ...prev, imdbRating: nextRating } : { imdbRating: nextRating });
+            setMetaCache(prev => ({ ...prev, [detailItem.id]: { ...prev[detailItem.id], rating: ratingData.rating || '', ratingStatus: ratingData?.status || 'ok' } }));
           }
         } catch {}
       } catch {
@@ -1448,7 +1451,7 @@ export default function MCUViewer() {
                             <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '12px', letterSpacing: 1.1, color: T.text, textAlign: 'right', fontWeight: 600, whiteSpace: 'nowrap' }}>
                               {formatReleaseDate(RELEASE_INFO[item.title]?.date || metaCache[item.id]?.released, item.year)}
                             </div>
-                            <div style={{ fontSize: 11, color: '#e8b84b', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 0.6, whiteSpace: 'nowrap' }}>★ {metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating || '—'}</div>
+                            <div style={{ fontSize: 11, color: '#e8b84b', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 0.6, whiteSpace: 'nowrap' }}>★ {formatRatingDisplay(item)}</div>
                             <button className="wbtn"
                               aria-label={bookmarks[item.id] ? 'Remove bookmark' : 'Add bookmark'}
                               onClick={() => setBookmarks(p => ({ ...p, [item.id]: p[item.id] ? 0 : 1 }))}
