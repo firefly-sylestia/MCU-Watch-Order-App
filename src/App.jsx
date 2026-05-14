@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import CropModal from './components/CropModal';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import {
   ESSENTIAL_LIST,
   NO_PREREQ,
@@ -2389,6 +2390,7 @@ export default function MCUViewer() {
           </>
         );
       })()}
+      <SpeedInsights />
     </div>
   );
 }
