@@ -1,11 +1,35 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-export PATH=$JAVA_HOME/bin:$PATH
-export ANDROID_HOME=/workspaces/Luminary-Panels--One-UI-8.5-Panels/android-sdk
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$SCRIPT_DIR"
+ANDROID_DIR="$REPO_ROOT/android"
 
-cd /workspaces/Luminary-Panels--One-UI-8.5-Panels
+export JAVA_HOME="${JAVA_HOME:-/usr/lib/jvm/java-17-openjdk-amd64}"
+export PATH="$JAVA_HOME/bin:$PATH"
+export ANDROID_HOME="${ANDROID_HOME:-$REPO_ROOT/android-sdk}"
+
+required_env_vars=(
+  "KEYSTORE_PATH"
+  "KEYSTORE_PASSWORD"
+  "KEY_ALIAS"
+  "KEY_PASSWORD"
+)
+
+for var_name in "${required_env_vars[@]}"; do
+  if [ -z "${!var_name:-}" ]; then
+    echo "❌ Missing required environment variable: $var_name"
+    echo "Set all required values before running build-release.sh"
+    exit 1
+  fi
+done
+
+if [ ! -f "$KEYSTORE_PATH" ]; then
+  echo "❌ KEYSTORE_PATH does not point to an existing file: $KEYSTORE_PATH"
+  exit 1
+fi
+
+cd "$REPO_ROOT"
 
 echo "🔨 Building web assets..."
 npm run build
@@ -14,36 +38,30 @@ echo "📱 Syncing with Capacitor..."
 npx cap sync android
 
 echo "⚙️ Patching Gradle files..."
-find /workspaces/Luminary-Panels--One-UI-8.5-Panels/node_modules/@capacitor /workspaces/Luminary-Panels--One-UI-8.5-Panels/node_modules/@capacitor-community -name "*.gradle" -type f -exec sed -i \
+find "$REPO_ROOT/node_modules/@capacitor" "$REPO_ROOT/node_modules/@capacitor-community" -name "*.gradle" -type f -exec sed -i \
   -e 's/JavaVersion.VERSION_21/JavaVersion.VERSION_17/g' \
   -e 's/jvmTarget = "21"/jvmTarget = "17"/g' \
   -e "s/jvmTarget = '21'/jvmTarget = '17'/g" \
   -e 's/jvmToolchain(21)/jvmToolchain(17)/g' {} \;
 
-find /workspaces/Luminary-Panels--One-UI-8.5-Panels/android -name "*.gradle" -type f -exec sed -i \
+find "$ANDROID_DIR" -name "*.gradle" -type f -exec sed -i \
   -e 's/JavaVersion.VERSION_21/JavaVersion.VERSION_17/g' \
   -e 's/jvmToolchain(21)/jvmToolchain(17)/g' {} \;
 
 echo "🔑 Building signed release APK..."
-cd /workspaces/Luminary-Panels--One-UI-8.5-Panels/android
-
-./gradlew assembleRelease \
-  -Pandroid.injected.signing.store.file=/workspaces/Luminary-Panels--One-UI-8.5-Panels/android/luminary.keystore \
-  -Pandroid.injected.signing.store.password=luminary123 \
-  -Pandroid.injected.signing.key.alias=luminary_key \
-  -Pandroid.injected.signing.key.password=luminary123
+cd "$ANDROID_DIR"
+./gradlew assembleRelease
 
 echo ""
 echo "✅ Release APK built successfully!"
 echo "📦 Renaming APK..."
 
-# Find and rename the APK
-APK_PATH=$(find /workspaces/Luminary-Panels--One-UI-8.5-Panels/android -name "app-release.apk" 2>/dev/null | head -1)
+APK_PATH=$(find "$ANDROID_DIR" -name "app-release.apk" 2>/dev/null | head -1)
 if [ -n "$APK_PATH" ]; then
   NEW_NAME="Luminary-Panels-1.1.6-release.apk"
-  cp "$APK_PATH" "/workspaces/Luminary-Panels--One-UI-8.5-Panels/$NEW_NAME"
-  echo "✨ Final APK: /workspaces/Luminary-Panels--One-UI-8.5-Panels/$NEW_NAME"
-  ls -lh "/workspaces/Luminary-Panels--One-UI-8.5-Panels/$NEW_NAME"
+  cp "$APK_PATH" "$REPO_ROOT/$NEW_NAME"
+  echo "✨ Final APK: $REPO_ROOT/$NEW_NAME"
+  ls -lh "$REPO_ROOT/$NEW_NAME"
 else
   echo "Could not find app-release.apk"
 fi
