@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
 /* ═══════════════════════════════════════════════════════════════════════════
    LUMINARY PANELS — Apple UI Morphing Style
    Premium dark theme with 120fps GPU-accelerated animations
@@ -50,10 +50,10 @@
   --duration-morph: 600ms;
   
   /* Typography */
-  --sans: "Inter", "Rajdhani", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-marvel-display: "Bangers", "Bebas Neue", Impact, sans-serif;
-  --font-marvel-ui: "Rajdhani", "Inter", system-ui, sans-serif;
-  --font-marvel-body: "Inter", "Rajdhani", system-ui, sans-serif;
+  --sans: "Inter", "Manrope", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-marvel-display: "Space Grotesk", "Manrope", "Inter", system-ui, sans-serif;
+  --font-marvel-ui: "Manrope", "Inter", system-ui, sans-serif;
+  --font-marvel-body: "Inter", "Manrope", system-ui, sans-serif;
   --mono: "SF Mono", "Monaco", "Menlo", "Consolas", monospace;
   
   font: 16px/1.5 var(--sans);
