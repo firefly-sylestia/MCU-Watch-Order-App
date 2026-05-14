@@ -412,9 +412,9 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   const TypeIcon = typeMeta.Icon;
   const RowStatusIcon = statusMeta.Icon;
   const renderLokiLabel = (text) => {
-    if (lokiLanguage === 'asgard') return `ᚨ ${text.toUpperCase()} ᚱ`;
-    if (lokiLanguage === 'tva') return `${text.toUpperCase()} // APPROVED`;
-    if (lokiLanguage === 'frost') return `❄ ${text.toLowerCase()} ❄`;
+    if (lokiLanguage === 'asgard') return `By decree of Asgard, ${text}`;
+    if (lokiLanguage === 'tva') return `Filed by TVA: ${text}`;
+    if (lokiLanguage === 'frost') return `Whispered in Jotun: ${text}`;
     return text;
   };
   return (
@@ -554,6 +554,8 @@ export default function MCUViewer() {
   const [spiderSense, setSpiderSense] = useState(false);
   const [multiverseShuffle, setMultiverseShuffle] = useState(false);
   const [desktopTextScale, setDesktopTextScale] = useState(1.1);
+  const [lightningStrike, setLightningStrike] = useState(false);
+  const [spiderDrop, setSpiderDrop] = useState(false);
   const [lokiLanguage, setLokiLanguage] = useState('midgard');
 
   const phaseRefs  = useRef({});
@@ -631,20 +633,30 @@ export default function MCUViewer() {
   useEffect(() => {
     const normalized = search.trim().toLowerCase();
     if (normalized === 'groot') {
-      setGrootMode(true);
-      setEasterEgg('I am Groot 🌱');
-      setTimeout(() => setGrootMode(false), 3500);
+      setGrootMode(v => !v);
+      setEasterEgg('Groot mode toggled.');
     }
     if (normalized === 'multiverse') {
-      setMultiverseShuffle(true);
-      setEasterEgg('Multiverse borders destabilized ✨');
-      setTimeout(() => setMultiverseShuffle(false), 3000);
+      setMultiverseShuffle(v => !v);
+      setEasterEgg('Multiverse borders toggled.');
     }
     if (normalized === 'loki') {
-      setEasterEgg('Glorious Purpose unlocked: Loki Languages 🐍');
       setLokiLanguage('asgard');
+      setEasterEgg('Loki language mode enabled.');
     }
-    setSpiderSense(normalized.includes('spider'));
+    if (normalized === 'snap') {
+      setSnapMode(true);
+      setEasterEgg('Perfectly balanced as all things should be.');
+      setTimeout(() => setSnapMode(false), 1800);
+    }
+    if (normalized === 'spider man' || normalized === 'spiderman') {
+      setSpiderSense(true);
+      setSpiderDrop(true);
+      setTimeout(() => setSpiderDrop(false), 2600);
+      setEasterEgg('Spider mode activated.');
+    } else {
+      setSpiderSense(normalized.includes('spider'));
+    }
   }, [search]);
 
   useEffect(() => {
@@ -1026,9 +1038,9 @@ export default function MCUViewer() {
   };
   const lokiize = useCallback((value) => {
     const text = String(value || '');
-    if (lokiLanguage === 'asgard') return `ᚨ ${text.toUpperCase()} ᚱ`;
-    if (lokiLanguage === 'tva') return `${text.toUpperCase()} // APPROVED`;
-    if (lokiLanguage === 'frost') return `❄ ${text.toLowerCase()} ❄`;
+    if (lokiLanguage === 'asgard') return `By decree of Asgard, ${text}`;
+    if (lokiLanguage === 'tva') return `Filed by TVA: ${text}`;
+    if (lokiLanguage === 'frost') return `Whispered in Jotun: ${text}`;
     return text;
   }, [lokiLanguage]);
 
@@ -1262,6 +1274,31 @@ export default function MCUViewer() {
     .sort((a, b) => (b.watchedDate || b.statusChangedAt || '').localeCompare(a.watchedDate || a.statusChangedAt || '')), [activeItems, myRating, reviews, rewatchCount]);
 
   const setStarRating = (id, rating) => setMyRating(prev => ({ ...prev, [id]: rating }));
+
+  
+
+  const shareReviewCard = async (item) => {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 900; canvas.height = 1200;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#0f1224'; ctx.fillRect(0,0,900,1200);
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = posterSrc(item);
+      await new Promise((res) => { img.onload = res; img.onerror = res; });
+      ctx.globalAlpha = 0.95;
+      try { ctx.drawImage(img, 80, 80, 740, 860); } catch {}
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = 'rgba(0,0,0,0.62)'; ctx.fillRect(80, 760, 740, 180);
+      ctx.fillStyle = '#fff'; ctx.font = '700 46px sans-serif'; ctx.fillText(item.title.slice(0,28), 100, 830);
+      ctx.font = '600 34px sans-serif'; ctx.fillText(`Rating: ${myRating[item.id] || 0}/5`, 100, 885);
+      ctx.font = '400 24px sans-serif'; ctx.fillText((reviews[item.id] || 'No review').slice(0,80), 100, 1060);
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) return;
+      triggerDownload(blob, `${slugifyPosterName(item.title)}-review-card.png`);
+    } catch (e) { console.error('Failed review card', e); }
+  };
 
   const shareAnalysisCard = async () => {
     try {
@@ -1955,6 +1992,8 @@ export default function MCUViewer() {
         @keyframes buttonPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--theme-accent) 45%, transparent)}70%{box-shadow:0 0 0 6px transparent}100%{box-shadow:0 0 0 0 transparent}}
         @keyframes spiderPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
         @keyframes snapFade{0%{filter:grayscale(0)}40%{filter:grayscale(1) brightness(1.2)}100%{filter:grayscale(0)}}
+        @keyframes fadeInOut{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
+        @keyframes spiderDrop{0%{transform:translate(-50%,-120px)}35%{transform:translate(-50%,18vh)}70%{transform:translate(-50%,35vh)}100%{transform:translate(-50%,45vh);opacity:0}}
         .snap-blip{animation:snapFade 1.6s ease}
         .button-click{animation:none}
 
@@ -2062,6 +2101,8 @@ export default function MCUViewer() {
         main::-webkit-scrollbar-thumb:hover{background:${T.scrollThumbH}}
       `}</style>
 
+      {lightningStrike && <div style={{ position:'fixed', inset:0, pointerEvents:'none', background:'linear-gradient(180deg, rgba(180,220,255,0.95), rgba(255,255,255,0))', mixBlendMode:'screen', zIndex:9999, animation:'fadeInOut 0.7s ease' }} />}
+      {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
       {easterEgg && (
         <div className="glass-panel" style={{ position: 'fixed', top: 84, left: '50%', transform: 'translateX(-50%)', zIndex: 900, padding: '10px 14px', borderRadius: 999, color: 'var(--theme-accent)', background: 'var(--theme-surface)', border: '1px solid var(--theme-accent)' }}>
           ✨ {easterEgg}
@@ -2319,14 +2360,12 @@ export default function MCUViewer() {
                 <button className="fpill"
                   style={watchedOnly || statusFilter ? { borderColor: 'color-mix(in srgb, var(--theme-success) 50%, transparent)', background: 'var(--theme-success-soft)', color: 'var(--theme-success)' } : {}}
                   onClick={() => setFilterStatusOpen(v => !v)}
-                  onMouseEnter={() => setFilterStatusOpen(true)}
-                  onMouseLeave={() => setFilterStatusOpen(false)}>
+                  >
                   <Check size={10} />Status
                 </button>
                 {filterStatusOpen && (
                   <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: 'none', minWidth: 180 }}
-                    onMouseEnter={() => setFilterStatusOpen(true)}
-                    onMouseLeave={() => setFilterStatusOpen(false)}>
+                    >
                     <div className={`sopt ${!statusFilter && !watchedOnly ? 'picked' : ''}`} onClick={() => { setStatusFilter(null); setWatchedOnly(false); setFilterStatusOpen(false); }}>All statuses</div>
                     <div className={`sopt ${watchedOnly ? 'picked' : ''}`} onClick={() => { setWatchedOnly(true); setStatusFilter(null); setFilterStatusOpen(false); }}>Watched only</div>
                     <div className={`sopt ${statusFilter === 'watched' ? 'picked' : ''}`} onClick={() => { setStatusFilter('watched'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Watched status</div>
@@ -2547,7 +2586,7 @@ export default function MCUViewer() {
                         statusLabelOverride={grootMode ? 'I am Groot' : null}
                         isWorthy={Boolean(worthyIds[item.id])}
                         multiverseShuffle={multiverseShuffle}
-                        onThorLongPress={(pressedItem) => setWorthyIds(prev => ({ ...prev, [pressedItem.id]: !prev[pressedItem.id] }))}
+                        onThorLongPress={(pressedItem) => { setWorthyIds(prev => ({ ...prev, [pressedItem.id]: !prev[pressedItem.id] })); setLightningStrike(true); setTimeout(() => setLightningStrike(false), 700); setEasterEgg('The thunder answers.'); }}
                         lokiLanguage={lokiLanguage}
                       />
                     );
@@ -2672,6 +2711,7 @@ export default function MCUViewer() {
                     rows={2}
                     style={{ width: '100%', resize: 'vertical', borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: 10, lineHeight: 1.4 }}
                   />
+                  <button className="fpill" style={{ padding: '6px 10px', fontSize: 11, width: 'fit-content' }} onClick={() => shareReviewCard(item)}><Upload size={12}/>Share Review Card</button>
                 </div>
               ))}
             </div>
