@@ -397,7 +397,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
 }) {
   const StatusIcon = statusMeta.Icon;
   const TypeIcon = typeMeta.Icon;
-  const ToggleWatchIcon = isWatched ? EyeOff : Eye;
+  const RowStatusIcon = statusMeta.Icon;
   return (
     <div>
       <div className={`rrow row-in type-${item.type} ${isWatched ? 'glass-panel' : ''} ${isExpanded ? 'curvy-selected' : ''}`} style={{ background: isWatched ? 'var(--theme-watched-bg)' : 'transparent', opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow }}>
@@ -423,14 +423,18 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
           <div style={{ fontSize: 11, color: 'var(--theme-warning)', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.6, whiteSpace: 'nowrap' }}>★ {rating || '—'}</div>
           <button
             className="wbtn"
-            aria-label={isWatched ? 'Mark as unwatched' : 'Mark as watched'}
-            onClick={() => onSetStatus(item.id, isWatched ? 'unwatched' : 'watched')}
-            style={{ minWidth: 52, height: 24, padding: '0 8px', background: isWatched ? 'var(--theme-success-soft)' : 'transparent', color: isWatched ? 'var(--theme-success)' : T.textMuted, borderColor: isWatched ? 'color-mix(in srgb, var(--theme-success) 60%, transparent)' : `${T.surfaceBorder}`, borderRadius: 999, fontSize: 10, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.8 }}
+            aria-label="Open status menu"
+            onClick={(event) => onOpenStatus(item.id, event.currentTarget.getBoundingClientRect())}
+            style={{ minWidth: 92, height: 24, padding: '0 8px', background: statusMeta.bg || 'transparent', color: statusMeta.color || T.textMuted, borderColor: `${statusMeta.color || T.surfaceBorder}66`, borderRadius: 999, fontSize: 10, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.8, justifyContent: 'space-between' }}
           >
-            <Check size={10} />{isWatched ? 'Watched' : 'Watch'}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+              <RowStatusIcon size={10} />
+              {statusMeta.label}
+            </span>
+            <ChevDown size={10} style={{ opacity: 0.8, transform: statusDropdown === item.id ? 'rotate(180deg)' : 'none' }} />
           </button>
           <button className="wbtn" aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} style={{ width: 24, height: 24, background: isBookmarked ? 'rgba(125,211,252,0.2)' : 'transparent', color: isBookmarked ? '#7dd3fc' : T.textMuted, borderColor: isBookmarked ? '#7dd3fc66' : `${T.surfaceBorder}` }}><Bookmark size={11} /></button>
-          <button className="wbtn" aria-label={isWatched ? 'Mark as unwatched' : 'Mark as watched'} onClick={() => onSetStatus(item.id, isWatched ? 'unwatched' : 'watched')} style={{ width: 24, height: 24, background: isWatched ? 'var(--theme-success-soft)' : 'transparent', color: isWatched ? 'var(--theme-success)' : T.textMuted, borderColor: isWatched ? 'color-mix(in srgb, var(--theme-success) 60%, transparent)' : `${T.surfaceBorder}` }}><ToggleWatchIcon size={11} /></button>
+          <button className="wbtn" aria-label="Set status" onClick={(event) => onOpenStatus(item.id, event.currentTarget.getBoundingClientRect())} style={{ width: 24, height: 24, background: statusMeta.bg || 'transparent', color: statusMeta.color || T.textMuted, borderColor: `${statusMeta.color || T.surfaceBorder}66` }}><RowStatusIcon size={11} /></button>
         </div>
         {isWatched && <Check size={12} style={{ position: 'absolute', top: 8, right: 8, color: '#9be8bc', filter: 'drop-shadow(0 0 6px rgba(155,232,188,0.75))' }} />}
       </div>
