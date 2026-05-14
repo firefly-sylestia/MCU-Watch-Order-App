@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
+import CropModal from './components/CropModal';
 
 // ─── Icon primitives ────────────────────────────────────────────────────────
 const Icon = ({ children, size = 16, style = {} }) => (
@@ -231,6 +232,7 @@ export default function MCUViewer() {
   const [settingsOpen,   setSettingsOpen]   = useState(false);
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
+  const [avatarCropSrc, setAvatarCropSrc] = useState('');
   const [themeMode,      setThemeMode]      = useState('classic');
   const [spoilerSafeMode, setSpoilerSafeMode] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(true);
@@ -524,7 +526,15 @@ export default function MCUViewer() {
       return null;
     }
   };
-  const fetchOmdbRating = async (item) => {
+  const normalizeDetailData = ({ item, tmdb = null, omdb = null, fallback = {} }) => ({
+    Poster: tmdb?.Poster || fallback.Poster || posterCache[item.id] || '',
+    Year: tmdb?.Year || omdb?.year || fallback.Year || String(item.year),
+    Plot: omdb?.plot || tmdb?.Plot || fallback.Plot || item.desc,
+    Actors: tmdb?.Actors || fallback.Actors || '',
+    imdbRating: omdb?.rating || tmdb?.imdbRating || fallback.imdbRating || metaCache[item.id]?.rating || 'N/A',
+  });
+
+  const fetchOmdbInfo = async (item) => {
     const q = encodeURIComponent(cleanLookupTitle(item.title));
     const y = encodeURIComponent(String(item.year || ''));
     try {
@@ -545,7 +555,6 @@ export default function MCUViewer() {
     if (cached?.ratingStatus === 'error' || cached?.ratingStatus === 'unavailable') return 'Unavailable';
     return RELEASE_INFO[item.title]?.rating || '—';
   };
-
   const cleanLookupTitle = (title) => title.replace(/\sS\d.*$/i, '').replace(/\sEps?.*$/i, '').trim();
 
   const formatReleaseDate = (dateStr, fallbackYear) => {
@@ -625,15 +634,22 @@ export default function MCUViewer() {
 
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem('mcu-poster-cache-v1') || '{}');
-      setPosterCache(saved);
-      const metaSaved = JSON.parse(localStorage.getItem('mcu-meta-cache-v1') || '{}');
-      setMetaCache(metaSaved);
+      const saved = JSON.parse(localStorage.getItem(CACHE_KEYS.poster) || '{}');
+      setPosterCache(extractCacheValues(createManagedCache(saved, { maxItems: 220, maxSerializedSize: 450_000, eviction: 'lru' })));
+      const metaSaved = JSON.parse(localStorage.getItem(CACHE_KEYS.meta) || '{}');
+      setMetaCache(extractCacheValues(createManagedCache(metaSaved, { maxItems: 260, maxSerializedSize: 500_000, eviction: 'timestamp' })));
     } catch {}
   }, []);
 
-  useEffect(() => { localStorage.setItem('mcu-poster-cache-v1', JSON.stringify(posterCache)); }, [posterCache]);
-  useEffect(() => { localStorage.setItem('mcu-meta-cache-v1', JSON.stringify(metaCache)); }, [metaCache]);
+  useDebouncedEffect(() => {
+    const managed = createManagedCache(wrapCacheEntries(posterCache), { maxItems: 220, maxSerializedSize: 450_000, eviction: 'lru' });
+    safeLocalStorageSetItem(CACHE_KEYS.poster, JSON.stringify(managed));
+  }, [posterCache], 350);
+
+  useDebouncedEffect(() => {
+    const managed = createManagedCache(wrapCacheEntries(metaCache), { maxItems: 260, maxSerializedSize: 500_000, eviction: 'timestamp' });
+    safeLocalStorageSetItem(CACHE_KEYS.meta, JSON.stringify(managed));
+  }, [metaCache], 350);
 
   useEffect(() => {
     try {
@@ -655,17 +671,29 @@ export default function MCUViewer() {
 
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem('mcu-user-actions-v1') || '{}');
-      setMyLikes(saved.likes || {});
-      setMyRating(saved.ratings || {});
-      setRewatchCount(saved.rewatch || {});
-      setBookmarks(saved.bookmarks || {});
+      const saved = JSON.parse(localStorage.getItem(CACHE_KEYS.userActions) || '{}');
+      const likesSaved = JSON.parse(localStorage.getItem(CACHE_KEYS.userActionsLikes) || 'null');
+      const ratingsSaved = JSON.parse(localStorage.getItem(CACHE_KEYS.userActionsRatings) || 'null');
+      const rewatchSaved = JSON.parse(localStorage.getItem(CACHE_KEYS.userActionsRewatch) || 'null');
+      const bookmarksSaved = JSON.parse(localStorage.getItem(CACHE_KEYS.userActionsBookmarks) || 'null');
+      setMyLikes(likesSaved || saved.likes || {});
+      setMyRating(ratingsSaved || saved.ratings || {});
+      setRewatchCount(rewatchSaved || saved.rewatch || {});
+      setBookmarks(bookmarksSaved || saved.bookmarks || {});
     } catch {}
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('mcu-user-actions-v1', JSON.stringify({ likes: myLikes, ratings: myRating, rewatch: rewatchCount, bookmarks }));
-  }, [myLikes, myRating, rewatchCount, bookmarks]);
+  useDebouncedEffect(() => {
+    const payload = { likes: myLikes, ratings: myRating, rewatch: rewatchCount, bookmarks };
+    const serialized = JSON.stringify(payload);
+    const ok = safeLocalStorageSetItem(CACHE_KEYS.userActions, serialized);
+    if (!ok || serialized.length > 200_000) {
+      safeLocalStorageSetItem(CACHE_KEYS.userActionsLikes, JSON.stringify(myLikes));
+      safeLocalStorageSetItem(CACHE_KEYS.userActionsRatings, JSON.stringify(myRating));
+      safeLocalStorageSetItem(CACHE_KEYS.userActionsRewatch, JSON.stringify(rewatchCount));
+      safeLocalStorageSetItem(CACHE_KEYS.userActionsBookmarks, JSON.stringify(bookmarks));
+    }
+  }, [myLikes, myRating, rewatchCount, bookmarks], 400);
 
   // ─── Manual refresh: OMDB for ratings only, TMDB for posters ────────────
   const refreshPostersAndMetadata = async () => {
@@ -678,7 +706,7 @@ export default function MCUViewer() {
         const tmdbPoster = await fetchTmdbPoster(item);
         posterUpdates[item.id] = tmdbPoster || posterCache[item.id] || '';
         // Fetch rating only from OMDB with the ratings key
-        const ratingData = await fetchOmdbRating(item);
+        const ratingData = await fetchOmdbInfo(item);
         metaUpdates[item.id] = {
           rating: ratingData?.rating || '',
           released: ratingData?.released || '',
@@ -698,6 +726,8 @@ export default function MCUViewer() {
       if (!detailItem) return;
       setDetailLoading(true);
       setDetailData(null);
+      const fallback = { Plot: detailItem.desc, Year: String(detailItem.year), imdbRating: metaCache[detailItem.id]?.rating || 'N/A' };
+
       try {
         // Always use TMDB for full details + poster
         const tmdbPoster = await fetchTmdbPoster(detailItem);
@@ -715,13 +745,13 @@ export default function MCUViewer() {
           }
         } catch {}
       } catch {
-        setDetailData({ Plot: detailItem.desc, Year: String(detailItem.year), imdbRating: metaCache[detailItem.id]?.rating || 'N/A' });
+        setDetailData(normalizeDetailData({ item: detailItem, fallback }));
       } finally {
         setDetailLoading(false);
       }
     };
     fetchDetail();
-  }, [detailItem, metaCache]);
+  }, [detailItem]);
 
   useEffect(() => {
     setDetailPosterFailed(false);
@@ -1046,7 +1076,7 @@ export default function MCUViewer() {
                   <Upload size={13} />
                   <span>Custom +</span>
                 </div>
-                <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const img = String(r.result || ''); setProfile(p => ({ ...p, pfp: img })); setUploadedAvatars(a => [img, ...a.filter(x => x !== img)].slice(0, 24)); }; r.readAsDataURL(f); }} style={{ display: 'none' }} />
+                <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const img = String(r.result || ''); setAvatarCropSrc(img); }; r.readAsDataURL(f); }} style={{ display: 'none' }} />
               </label>
             </div>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
@@ -1549,6 +1579,20 @@ export default function MCUViewer() {
             </div>
           </div>
         </div>
+      )}
+
+      {avatarCropSrc && (
+        <CropModal
+          src={avatarCropSrc}
+          cropTarget="avatar"
+          theme={{ cardBg: T.surfaceBg, cardShadow: T.dropdownShadow, cardBorder: T.surfaceBorder, textPrimary: T.text, textDim: T.textMuted, accent: '#4a9ede', accent2: '#e8b84b' }}
+          onCancel={() => setAvatarCropSrc('')}
+          onConfirm={(img) => {
+            setProfile(p => ({ ...p, pfp: img }));
+            setUploadedAvatars(a => [img, ...a.filter(x => x !== img)].slice(0, 24));
+            setAvatarCropSrc('');
+          }}
+        />
       )}
 
       {/* ━━ STATUS DROPDOWN ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
