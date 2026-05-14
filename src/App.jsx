@@ -1,8 +1,15 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import CropModal from './components/CropModal';
+import {
+  ESSENTIAL_LIST,
+  NO_PREREQ,
+  PHASES,
+  RAW,
+  RELEASE_INFO,
+} from './data/mcuData';
 
 // ─── Icon primitives ────────────────────────────────────────────────────────
 const Icon = ({ children, size = 16, style = {} }) => (
@@ -36,15 +43,6 @@ const Bookmark  = p => <Icon {...p}><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4
 const SlidersH  = p => <Icon {...p}><line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><circle cx="12" cy="4" r="2"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><circle cx="10" cy="12" r="2"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><circle cx="14" cy="20" r="2"/></Icon>;
 const UserCircle = p => <Icon {...p}><circle cx="12" cy="8" r="4"/><path d="M4 20c1.9-3.4 5-5 8-5s6.1 1.6 8 5"/></Icon>;
 
-// ─── Static data ────────────────────────────────────────────────────────────
-const PHASES = [
-  { id: 1, name: 'Phase 1', color: '#e8b84b', glow: 'rgba(232,184,75,0.28)',  tagline: 'Assembling the Avengers',      summary: 'The birth of the MCU. Six heroes are introduced — Iron Man, Captain America, Thor, Hulk, Black Widow and Hawkeye — culminating in their first team-up against Loki and the Chitauri invasion of New York.' },
-  { id: 2, name: 'Phase 2', color: '#e05252', glow: 'rgba(224,82,82,0.28)',   tagline: 'Expanding the Universe',       summary: 'The Avengers go their separate ways but face escalating threats. HYDRA is exposed within SHIELD, the Guardians of the Galaxy are introduced, and Ultron nearly destroys humanity — setting the stage for a fractured alliance.' },
-  { id: 3, name: 'Phase 3', color: '#4a9ede', glow: 'rgba(74,158,222,0.28)',  tagline: 'The Infinity Saga Finale',     summary: 'The defining arc of the MCU. Civil War tears the Avengers apart, Thanos collects the Infinity Stones in Infinity War, and Endgame delivers the universe-spanning conclusion to 22 films.' },
-  { id: 4, name: 'Phase 4', color: '#a06cd5', glow: 'rgba(160,108,213,0.28)', tagline: 'The Multiverse Begins',         summary: 'Post-Endgame, the world is reeling. Disney+ series deepen character stories, the multiverse cracks open in No Way Home and Multiverse of Madness, and an entirely new roster of heroes emerges.' },
-  { id: 5, name: 'Phase 5', color: '#3ec47a', glow: 'rgba(62,196,122,0.28)',  tagline: 'The Multiverse Saga Escalates', summary: 'Kang the Conqueror emerges as the central threat across the multiverse. New heroes like Ms. Marvel, the Marvels and Ironheart push the MCU forward while legacy characters continue their arcs.' },
-  { id: 6, name: 'Phase 6', color: '#25c4a0', glow: 'rgba(37,196,160,0.28)',  tagline: 'A New Age Begins',              summary: 'The Multiverse Saga reaches its climax with Avengers: Doomsday and Secret Wars. The Fantastic Four join the MCU, and entirely new stories reshape the Marvel universe going forward.' },
-];
 
 const TYPE_META = {
   film:   { label: 'Film',   Icon: Film, color: '#e8b84b' },
@@ -61,140 +59,9 @@ const STATUS_META = {
   unwatched:      { label: 'Unwatched',      color: '#334455', Icon: EyeOff, bg: 'transparent'           },
 };
 
-const NO_PREREQ = new Set([
-  'None','None (standalone)','None (mostly standalone)',
-  'None (multiverse)','None (intro to FF)','None (supernatural entry)',
-  'None (prequel to Homecoming)','General MCU knowledge',
-  'None (new arc starts)','None (alternate reality)',
-  'None (alternate reality, optional)','None (separate continuity)',
-]);
-
 const SORT_LABELS = { order: 'Chronological', year: 'By Year', title: 'Alphabetical', runtime: 'Runtime', watched: 'Recently Watched', status: 'By Status' };
 
-// ─── ESSENTIAL LIST (60 items) ───────────────────────────────────────────────
-const ESSENTIAL_LIST = [
-  { id: 1,  order: 1,  phase: 1, type: 'film',   year: 2011, essential: true,  episodes: null, title: "Captain America: The First Avenger", prereq: "None",                                    desc: "Steve Rogers, a scrawny kid from Brooklyn, is transformed into a super-soldier to fight HYDRA and the villainous Red Skull during World War II. Sets the entire MCU in motion." },
-  { id: 2,  order: 2,  phase: 1, type: 'film',   year: 2008, essential: true,  episodes: null, title: "Iron Man",                          prereq: "None",                                    desc: "Billionaire weapons manufacturer Tony Stark builds a powered suit of armor to escape captivity, then becomes Iron Man to fight evil — and discovers a far greater conspiracy." },
-  { id: 3,  order: 3,  phase: 1, type: 'film',   year: 2008, essential: true,  episodes: null, title: "The Incredible Hulk",               prereq: "None",                                    desc: "Bruce Banner, hunted by the U.S. military, struggles to cure himself of the Hulk while a shadowy general creates an even bigger monster: the Abomination." },
-  { id: 4,  order: 4,  phase: 1, type: 'film',   year: 2010, essential: true,  episodes: null, title: "Iron Man 2",                        prereq: "Iron Man",                                desc: "Tony Stark faces a Russian physicist out for revenge and a rival weapons manufacturer while the government pushes him to hand over the Iron Man technology." },
-  { id: 5,  order: 5,  phase: 1, type: 'film',   year: 2011, essential: true,  episodes: null, title: "Thor",                             prereq: "None",                                    desc: "Thor, the arrogant prince of Asgard, is stripped of his power and cast to Earth, where he must prove himself worthy again while Loki schemes to take the throne." },
-  { id: 6,  order: 6,  phase: 1, type: 'film',   year: 2012, essential: true,  episodes: null, title: "The Avengers",                     prereq: "None",                                    desc: "Nick Fury assembles Iron Man, Captain America, Thor, Hulk, Black Widow and Hawkeye to stop Loki from using the Tesseract to bring an alien army to Earth." },
-  { id: 7,  order: 7,  phase: 2, type: 'film',   year: 2013, essential: true,  episodes: null, title: "Thor: The Dark World",              prereq: "Thor, The Avengers",                     desc: "An ancient enemy, the Dark Elves, seeks to plunge the universe into darkness using a weapon called the Aether — and Thor must ally with the treacherous Loki to stop them." },
-  { id: 8,  order: 8,  phase: 2, type: 'film',   year: 2014, essential: true,  episodes: null, title: "Guardians of the Galaxy",           prereq: "None (standalone)",                      desc: "Outlaw Peter Quill teams up with a motley group of space misfits — Gamora, Drax, Rocket and Groot — to prevent a powerful orb from falling into the wrong hands." },
-  { id: 9,  order: 9,  phase: 2, type: 'film',   year: 2014, essential: true,  episodes: null, title: "Captain America: The Winter Soldier",prereq: "Captain America: The First Avenger",    desc: "Steve Rogers uncovers a massive conspiracy within SHIELD and faces a deadly assassin known as the Winter Soldier, whose identity reveals a heartbreaking truth." },
-  { id: 10, order: 10, phase: 2, type: 'film',   year: 2013, essential: true,  episodes: null, title: "Iron Man 3",                        prereq: "Iron Man 2, The Avengers",               desc: "Tony Stark, suffering PTSD after the Battle of New York, faces a mysterious terrorist called the Mandarin whose attacks push Tony to his very limits." },
-  { id: 11, order: 11, phase: 2, type: 'film',   year: 2017, essential: true,  episodes: null, title: "Guardians of the Galaxy Vol. 2",    prereq: "Guardians of the Galaxy",               desc: "Peter Quill discovers the truth about his celestial father Ego, while the Guardians battle their own complicated family dynamics across the galaxy." },
-  { id: 12, order: 12, phase: 2, type: 'series', year: 2023, essential: false, episodes: 10,   title: "I Am Groot S1 & S2",                prereq: "Guardians Vol. 1",                       desc: "A series of comedy shorts following Baby Groot's misadventures and interactions with alien creatures. Entirely standalone, light-hearted fun between bigger MCU entries." },
-  { id: 13, order: 13, phase: 2, type: 'film',   year: 2015, essential: true,  episodes: null, title: "Avengers: Age of Ultron",           prereq: "All Phase 1-2 films",                    desc: "Tony Stark's experiment to create a peacekeeping AI, Ultron, goes catastrophically wrong. The Avengers must stop their creation before it causes extinction — and recruit two new heroes in the process." },
-  { id: 14, order: 14, phase: 3, type: 'film',   year: 2016, essential: true,  episodes: null, title: "Doctor Strange",                   prereq: "General MCU knowledge",                  desc: "Brilliant but arrogant neurosurgeon Stephen Strange has a career-ending accident and discovers a hidden world of magic and alternate dimensions, becoming a powerful sorcerer." },
-  { id: 15, order: 15, phase: 3, type: 'film',   year: 2015, essential: true,  episodes: null, title: "Ant-Man",                          prereq: "Age of Ultron",                           desc: "Ex-con Scott Lang must embrace his inner hero and help his mentor Dr. Hank Pym pull off a heist using a suit that allows the wearer to shrink to the size of an ant." },
-  { id: 16, order: 16, phase: 3, type: 'film',   year: 2016, essential: true,  episodes: null, title: "Captain America: Civil War",        prereq: "All previous MCU films",                 desc: "The Avengers fracture over government oversight — Iron Man supports the Sokovia Accords while Captain America refuses to sign. Introduces Black Panther and Spider-Man to the MCU." },
-  { id: 17, order: 17, phase: 4, type: 'film',   year: 2021, essential: true,  episodes: null, title: "Black Widow",                       prereq: "Captain America: Civil War",             desc: "Set after Civil War, Natasha Romanoff confronts her past and the brutal spy program that made her who she is — the Red Room — alongside her estranged family." },
-  { id: 18, order: 18, phase: 3, type: 'film',   year: 2018, essential: true,  episodes: null, title: "Black Panther",                     prereq: "Civil War",                              desc: "T'Challa returns to Wakanda to claim the throne, but a ruthless outsider with a legitimate claim challenges him — forcing T'Challa to decide what kind of king he wants to be." },
-  { id: 19, order: 19, phase: 3, type: 'film',   year: 2017, essential: true,  episodes: null, title: "Spider-Man: Homecoming",            prereq: "Civil War",                              desc: "15-year-old Peter Parker tries to balance high school life with being Spider-Man, while trying to impress Tony Stark and stop a black-market weapons dealer called the Vulture." },
-  { id: 20, order: 20, phase: 3, type: 'film',   year: 2018, essential: true,  episodes: null, title: "Ant-Man & the Wasp",               prereq: "Ant-Man, Civil War",                     desc: "Scott Lang joins forces with Hope van Dyne as the Wasp to uncover secrets from the quantum realm — including a mysterious ghost who can phase through solid matter." },
-  { id: 21, order: 21, phase: 3, type: 'film',   year: 2017, essential: true,  episodes: null, title: "Thor: Ragnarok",                   prereq: "Thor: The Dark World, Age of Ultron",    desc: "Thor is stranded on a trash planet, loses his hammer, and must escape from the grandmaster's arena to stop the goddess of death Hela from conquering Asgard — with Hulk's help." },
-  { id: 22, order: 22, phase: 3, type: 'film',   year: 2018, essential: true,  episodes: null, title: "Avengers: Infinity War",            prereq: "All Phase 3 films",                      desc: "Thanos, armed with the Infinity Gauntlet, hunts all six Infinity Stones. The Avengers and Guardians unite across the universe to stop him — and suffer their greatest defeat." },
-  { id: 23, order: 23, phase: 3, type: 'film',   year: 2019, essential: true,  episodes: null, title: "Captain Marvel",                   prereq: "General MCU knowledge",                  desc: "Carol Danvers discovers her past as an Air Force pilot and unlocks the full extent of her cosmic powers while caught in the middle of a galactic war between the Kree and the Skrulls." },
-  { id: 24, order: 24, phase: 3, type: 'film',   year: 2019, essential: true,  episodes: null, title: "Avengers: Endgame",                prereq: "Infinity War",                            desc: "Five years after Thanos wiped out half of all life, the surviving Avengers attempt a time heist to undo the snap in a desperate final stand that brings the Infinity Saga to a close." },
-  { id: 25, order: 25, phase: 4, type: 'series', year: 2021, essential: true,  episodes: 9,    title: "WandaVision S1",                   prereq: "Avengers: Endgame",                       desc: "Wanda Maximoff and Vision live an idyllic suburban life — but their sitcom reality isn't what it seems. A mystery unravels that redefines Wanda's power and shatters her world. 9 episodes." },
-  { id: 26, order: 26, phase: 4, type: 'series', year: 2021, essential: true,  episodes: 6,    title: "The Falcon & the Winter Soldier S1",prereq: "Endgame, Captain America history",       desc: "Sam Wilson and Bucky Barnes navigate a divided post-blip world while confronting a radical new group, the Flag Smashers, and a man who has stolen the Captain America shield. 6 episodes." },
-  { id: 27, order: 27, phase: 3, type: 'film',   year: 2019, essential: true,  episodes: null, title: "Spider-Man: Far From Home",        prereq: "Avengers: Endgame",                       desc: "Peter Parker tries to take a vacation in Europe after Endgame but is pulled into a mission with Nick Fury to stop Elemental creatures — and meets the mysterious Mysterio." },
-  { id: 28, order: 28, phase: 4, type: 'film',   year: 2021, essential: true,  episodes: null, title: "Spider-Man: No Way Home",          prereq: "Far From Home, Multiverse concept",       desc: "Peter asks Doctor Strange to make the world forget he is Spider-Man. The spell goes wrong, tearing open the multiverse and bringing villains and heroes from other realities into his world." },
-  { id: 29, order: 29, phase: 4, type: 'series', year: 2021, essential: true,  episodes: 6,    title: "Hawkeye S1",                       prereq: "Avengers movies",                         desc: "Retired Avenger Clint Barton is forced out of retirement when his Ronin past catches up with him in New York. He teams up with aspiring archer Kate Bishop to stop the Tracksuit Mafia. 6 episodes." },
-  { id: 30, order: 30, phase: 4, type: 'film',   year: 2022, essential: false, episodes: null, title: "Guardians Holiday Special",        prereq: "Guardians films",                         desc: "The Guardians of the Galaxy celebrate Christmas by kidnapping Kevin Bacon as a gift for Peter Quill — a hilarious, heartwarming holiday special that introduces Mantis's big secret." },
-  { id: 31, order: 31, phase: 4, type: 'series', year: 2021, essential: true,  episodes: 6,    title: "Loki S1",                          prereq: "Avengers: Endgame",                       desc: "The Variant Loki is captured by the TVA — the Time Variance Authority — and must help them track down a rogue variant of himself while uncovering a vast conspiracy about the sacred timeline. 6 episodes." },
-  { id: 32, order: 32, phase: 5, type: 'film',   year: 2023, essential: true,  episodes: null, title: "Ant-Man & the Wasp: Quantumania",  prereq: "Ant-Man films, Loki S1",                 desc: "Scott Lang and his family are pulled into the Quantum Realm where they encounter Kang the Conqueror — the most powerful villain the MCU has faced yet, with terrifying implications for the multiverse." },
-  { id: 33, order: 33, phase: 5, type: 'series', year: 2023, essential: true,  episodes: 6,    title: "Loki S2",                          prereq: "Loki S1, Quantumania",                   desc: "Loki grapples with time-slipping across different eras of the TVA while fighting to save his friends and the multiverse itself from a catastrophic collapse. 6 episodes." },
-  { id: 34, order: 34, phase: 4, type: 'series', year: 2021, essential: false, episodes: 9,    title: "What If...? S1",                   prereq: "General MCU knowledge",                  desc: "An animated anthology exploring alternate MCU timelines: what if Peggy Carter got the serum? What if T'Challa became Star-Lord? Each episode reframes a familiar story with startling results. 9 episodes." },
-  { id: 35, order: 35, phase: 4, type: 'series', year: 2023, essential: false, episodes: 9,    title: "What If...? S2",                   prereq: "What If...? S1",                          desc: "More animated alternate realities, including Captain Carter in the MCU timeline and a Captain America who never got the serum. Continues the Watcher's anthology. 9 episodes." },
-  { id: 36, order: 36, phase: 5, type: 'series', year: 2024, essential: false, episodes: 10,   title: "What If...? S3",                   prereq: "What If...? S1-2",                        desc: "The final season of What If brings together characters from across the multiverse for a grand finale, paying off threads from all three seasons in a big animated event. 10 episodes." },
-  { id: 37, order: 37, phase: 5, type: 'film',   year: 2024, essential: false, episodes: null, title: "Deadpool & Wolverine",             prereq: "General MCU knowledge (optional)",        desc: "Wade Wilson is recruited by the TVA and teams up with a variant Wolverine to save his universe — and deliver the MCU's most irreverent, fourth-wall-breaking, R-rated adventure yet." },
-  { id: 38, order: 38, phase: 4, type: 'film',   year: 2022, essential: true,  episodes: null, title: "Thor: Love and Thunder",           prereq: "Thor: Ragnarok, Avengers",               desc: "Thor embarks on a journey of self-discovery while Jane Foster wields Mjolnir as the Mighty Thor. The villain Gorr the God Butcher hunts deities across the cosmos." },
-  { id: 39, order: 39, phase: 5, type: 'film',   year: 2023, essential: true,  episodes: null, title: "Guardians of the Galaxy Vol. 3",  prereq: "Guardians Vol. 1-2",                     desc: "The Guardians must protect Rocket Raccoon from his traumatic past and the High Evolutionary, the monster who created him. An emotional, definitive finale for the original team." },
-  { id: 40, order: 40, phase: 4, type: 'film',   year: 2022, essential: true,  episodes: null, title: "Black Panther: Wakanda Forever",  prereq: "Black Panther",                           desc: "Wakanda mourns the loss of T'Challa and faces a new threat from Talokan, an underwater nation led by the powerful Namor — forcing Shuri to decide her own destiny as a warrior." },
-  { id: 41, order: 41, phase: 4, type: 'series', year: 2022, essential: false, episodes: 6,    title: "Moon Knight S1",                  prereq: "None (standalone, optional)",             desc: "Steven Grant, a mild-mannered gift shop employee, discovers he shares a body with mercenary Marc Spector — an avatar of the Egyptian moon god Khonshu. 6 episodes." },
-  { id: 42, order: 42, phase: 4, type: 'film',   year: 2021, essential: true,  episodes: null, title: "Shang-Chi & the Legend of the Ten Rings", prereq: "None (standalone)",             desc: "Shaun, a parking valet living in San Francisco, is drawn into the world of the Ten Rings organization when agents from his past find him — and he learns the truth about his father Wenwu." },
-  { id: 43, order: 43, phase: 4, type: 'film',   year: 2022, essential: true,  episodes: null, title: "Doctor Strange: Multiverse of Madness", prereq: "Doctor Strange, WandaVision",  desc: "Strange and America Chavez travel across the multiverse pursued by a terrifying threat. This Doctor Strange sequel is the most horror-inflected MCU film, directed by Sam Raimi." },
-  { id: 44, order: 44, phase: 5, type: 'series', year: 2024, essential: false, episodes: 9,    title: "Agatha All Along S1",             prereq: "WandaVision",                             desc: "The Scarlet Witch's nemesis Agatha Harkness assembles a ragtag coven to run the Witches Road — a deadly gauntlet that promises to restore lost powers. 9 episodes." },
-  { id: 45, order: 45, phase: 4, type: 'film',   year: 2021, essential: true,  episodes: null, title: "Eternals",                         prereq: "None (mostly standalone)",               desc: "Ten immortal beings who have secretly lived on Earth for 7,000 years reunite to face an emerging threat that could trigger the end of the planet — and uncover a devastating truth about their mission." },
-  { id: 46, order: 46, phase: 4, type: 'series', year: 2022, essential: false, episodes: 9,    title: "She-Hulk: Attorney at Law S1",    prereq: "The Incredible Hulk, Avengers",           desc: "Jennifer Walters, a lawyer and Bruce Banner's cousin, acquires Hulk powers and must balance her personal and professional life while handling superhuman legal cases. 9 episodes." },
-  { id: 47, order: 47, phase: 4, type: 'series', year: 2022, essential: true,  episodes: 6,    title: "Ms. Marvel S1",                   prereq: "General MCU knowledge",                  desc: "16-year-old Kamala Khan, a Pakistani-American fan of the Avengers from Jersey City, discovers she has unique powers and must figure out who she is — as a hero and as a person. 6 episodes." },
-  { id: 48, order: 48, phase: 5, type: 'film',   year: 2023, essential: true,  episodes: null, title: "The Marvels",                      prereq: "Captain Marvel, WandaVision, Ms. Marvel", desc: "Carol Danvers, Monica Rambeau and Kamala Khan find their powers entangled, forcing them to swap places every time they use them. A light, fast-paced team-up across the cosmos." },
-  { id: 49, order: 49, phase: 5, type: 'series', year: 2023, essential: false, episodes: 6,    title: "Secret Invasion S1",              prereq: "Captain Marvel, Avengers",               desc: "Nick Fury returns to Earth to face a faction of Skrulls who have been secretly infiltrating human society for years — a grounded spy thriller in the MCU. 6 episodes." },
-  { id: 50, order: 50, phase: 5, type: 'series', year: 2024, essential: false, episodes: 5,    title: "Echo S1",                          prereq: "Daredevil, Hawkeye (optional)",           desc: "Maya Lopez returns to her hometown of Tamaha, Oklahoma, where she reconnects with her Native American heritage while a dark past and Kingpin's criminal empire catch up to her. 5 episodes." },
-  { id: 51, order: 51, phase: 5, type: 'series', year: 2025, essential: false, episodes: 9,    title: "Daredevil: Born Again S1",         prereq: "General MCU knowledge (optional)",        desc: "Matt Murdock returns as Daredevil in the MCU proper, picking up threads from the Netflix era while Wilson Fisk rises to become New York's mayor in a gripping crime drama. 9 episodes." },
-  { id: 52, order: 52, phase: 5, type: 'series', year: 2025, essential: false, episodes: 9,    title: "Daredevil: Born Again S2",         prereq: "Born Again S1 (optional)",               desc: "The second season of Daredevil: Born Again continues Matt Murdock's battle against Wilson Fisk and expands the street-level side of the MCU further. 9 episodes." },
-  { id: 53, order: 53, phase: 5, type: 'film',   year: 2025, essential: true,  episodes: null, title: "Captain America: Brave New World", prereq: "All previous MCU films",                 desc: "Sam Wilson leads as the new Captain America, navigating international intrigue while a dangerous conspiracy involving the Red Hulk and Adamantium threatens global stability." },
-  { id: 54, order: 54, phase: 5, type: 'series', year: 2025, essential: false, episodes: 6,    title: "Ironheart S1",                     prereq: "Black Panther: Wakanda Forever",          desc: "Riri Williams, a genius MIT student who built her own Iron Man suit, ventures to Chicago where she encounters the mysterious Hood and gets pulled into a dangerous magical conspiracy. 6 episodes." },
-  { id: 55, order: 55, phase: 5, type: 'film',   year: 2025, essential: true,  episodes: null, title: "Thunderbolts*",                   prereq: "General MCU knowledge",                  desc: "A group of reformed villains and antiheroes — including Yelena Belova, US Agent, Ghost and the Winter Soldier — are assembled for a mission that uncovers a threat none of them expected." },
-  { id: 56, order: 56, phase: 6, type: 'film',   year: 2025, essential: true,  episodes: null, title: "Fantastic Four: First Steps",      prereq: "None (new arc starts)",                  desc: "The Fantastic Four make their MCU debut in a retro-futuristic 1960s-inspired setting, facing the world-devouring Galactus and his herald, Silver Surfer, in a cosmic spectacle." },
-  { id: 57, order: 57, phase: 6, type: 'series', year: 2026, essential: false, episodes: null, title: "Wonder Man S1",                    prereq: "General MCU knowledge",                  desc: "Simon Williams, a fading Hollywood actor, is recruited by MODOK to become Wonder Man. A satirical look at the entertainment industry through the lens of superhero action." },
-  { id: 58, order: 58, phase: 4, type: 'film',   year: 2022, essential: false, episodes: null, title: "Werewolf by Night",               prereq: "None (standalone, optional)",             desc: "A group of hunters gather at a mysterious manor to compete for a powerful relic — but one among them is a monster hunter with a monstrous secret. A black-and-white horror tribute." },
-  { id: 59, order: 59, phase: 6, type: 'series', year: 2025, essential: false, episodes: null, title: "Eyes of Wakanda S1",               prereq: "Black Panther (optional)",               desc: "An animated anthology following Wakandan warriors throughout history as they retrieve Vibranium weapons from around the world — expanding the mythology of the Black Panther universe." },
-  { id: 60, order: 60, phase: 6, type: 'series', year: 2025, essential: false, episodes: null, title: "Marvel Zombies S1",               prereq: "None (alternate reality, optional)",      desc: "Set in an alternate MCU reality overrun by a zombie plague, a group of young heroes — including Kamala Khan — must fight to survive in a horror-tinged animated series for mature audiences." },
-];
-
-// ─── ADDITIONAL LIST ─────────────────────────────────────────────────────────
-const ADDITIONAL_LIST = [
-  { id: 101, order: 101, phase: 1, type: 'short',  year: 2013, essential: false, episodes: 1,  title: "Agent Carter (One-Shot)",            prereq: "CATFA",                          desc: "A short film following Peggy Carter one year after WWII, proving her worth to SSR colleagues who underestimate her — a precursor to the full Agent Carter series." },
-  { id: 102, order: 102, phase: 1, type: 'series', year: 2015, essential: false, episodes: 18, title: "Agent Carter S1 & S2",               prereq: "CATFA",                          desc: "Peggy Carter works as an SSR agent after the war, fighting Howard Stark's enemies and later an adversary in Hollywood. 10 episodes across 2 seasons of spy-era adventure." },
-  { id: 103, order: 103, phase: 1, type: 'short',  year: 2011, essential: false, episodes: 1,  title: "A Funny Thing Happened on the Way to Thor's Hammer", prereq: "None",          desc: "A brief comedic short following Agent Coulson stopping a convenience store robbery on his way to the Thor investigation. Charm in under 4 minutes." },
-  { id: 104, order: 104, phase: 1, type: 'short',  year: 2011, essential: false, episodes: 1,  title: "The Consultant",                     prereq: "The Avengers",                   desc: "Coulson and Sitwell reveal the behind-the-scenes deal that kept the Abomination out of the Avengers Initiative — a clever retcon connecting The Incredible Hulk to the wider MCU." },
-  { id: 105, order: 105, phase: 1, type: 'short',  year: 2012, essential: false, episodes: 1,  title: "Item 47",                            prereq: "The Avengers",                   desc: "A couple discovers a Chitauri weapon from the Battle of New York and uses it to rob banks, attracting SHIELD's attention. The first short to hint at the wider post-Avengers world." },
-  { id: 106, order: 106, phase: 2, type: 'series', year: 2013, essential: false, episodes: 7,  title: "Agents of SHIELD S1 Eps 1–7",       prereq: "The Avengers",                   desc: "Coulson's new SHIELD team investigates superhuman activity in the post-Avengers world. Episodes 1–7 establish the team and introduce the Centipede organization threatening SHIELD." },
-  { id: 107, order: 107, phase: 2, type: 'series', year: 2013, essential: false, episodes: 5,  title: "Agents of SHIELD S1 Eps 8–12",      prereq: "The Avengers",                   desc: "The mystery of Coulson's resurrection deepens as the team faces escalating threats. These 5 episodes tie in with Thor: The Dark World's fallout." },
-  { id: 108, order: 108, phase: 2, type: 'short',  year: 2014, essential: false, episodes: 1,  title: "All Hail the King",                  prereq: "Iron Man 3",                     desc: "Trevor Slattery, imprisoned after Iron Man 3, is interviewed in jail — until a mysterious visitor arrives with very bad news about the real Mandarin. A short that reshapes Iron Man 3's legacy." },
-  { id: 109, order: 109, phase: 2, type: 'series', year: 2013, essential: false, episodes: 3,  title: "Agents of SHIELD S1 Eps 13–15",     prereq: "The Avengers",                   desc: "The team uncovers more about the Clairvoyant and the mysterious GH compound, raising the stakes in the first season's escalating conspiracy." },
-  { id: 110, order: 110, phase: 2, type: 'series', year: 2013, essential: false, episodes: 1,  title: "Agents of SHIELD S1 Ep 16",         prereq: "The Avengers",                   desc: "A pivotal episode that directly ties into the events of Captain America: The Winter Soldier — watch this immediately before or after CATWS for maximum impact." },
-  { id: 111, order: 111, phase: 2, type: 'series', year: 2014, essential: false, episodes: 9,  title: "Agents of SHIELD S1 Eps 17–22 & S2 Eps 1–2", prereq: "CATWS",              desc: "HYDRA's infiltration of SHIELD tears Coulson's team apart. These post-Winter Soldier episodes are dramatically more intense and pay off the season-long conspiracy." },
-  { id: 112, order: 112, phase: 2, type: 'series', year: 2014, essential: false, episodes: 1,  title: "Agents of SHIELD S2 Ep 3",          prereq: "CATWS",                          desc: "A standalone episode deepening the new SHIELD's mission as Coulson's team begins to rebuild after the HYDRA fallout." },
-  { id: 113, order: 113, phase: 2, type: 'series', year: 2014, essential: false, episodes: 2,  title: "Agents of SHIELD S2 Eps 4–5",       prereq: "CATWS",                          desc: "More fallout from HYDRA's rise as the team investigates alien writing and Coulson's mysterious compulsion deepens." },
-  { id: 114, order: 114, phase: 2, type: 'series', year: 2015, essential: false, episodes: 13, title: "Daredevil S1",                       prereq: "None (mostly standalone)",       desc: "Blind lawyer Matt Murdock fights crime in Hell's Kitchen as Daredevil by night, battling the criminal kingpin Wilson Fisk in one of Marvel's darkest and most acclaimed stories. 13 episodes." },
-  { id: 115, order: 115, phase: 2, type: 'series', year: 2015, essential: false, episodes: 13, title: "Jessica Jones S1",                   prereq: "None (mostly standalone)",       desc: "Hard-drinking private investigator Jessica Jones hunts a mind-controlling villain named Kilgrave who has terrorized her before — a dark, gripping psychological thriller. 13 episodes." },
-  { id: 116, order: 116, phase: 2, type: 'series', year: 2014, essential: false, episodes: 14, title: "Agents of SHIELD S2 Eps 6–19",      prereq: "CATWS",                          desc: "The team tracks Inhumans and deals with a splinter SHIELD faction. The Inhuman mythology that will dominate later seasons is built here over 14 episodes." },
-  { id: 117, order: 117, phase: 2, type: 'series', year: 2014, essential: false, episodes: 3,  title: "Agents of SHIELD S2 Eps 20–22",     prereq: "CATWS",                          desc: "Season 2 finale — the two SHIELD factions clash and a major Inhuman transformation reshapes the status quo heading into Phase 3 of the show." },
-  { id: 118, order: 118, phase: 2, type: 'series', year: 2014, essential: false, episodes: 5,  title: "WHiH Newsfront S1",                  prereq: "Age of Ultron context",           desc: "An in-universe digital series from WHiH World News, covering Avengers-related events. Short web episodes that add texture to the MCU's media landscape." },
-  { id: 119, order: 119, phase: 2, type: 'series', year: 2016, essential: false, episodes: 13, title: "Daredevil S2",                       prereq: "Daredevil S1",                   desc: "Matt Murdock faces the Punisher's brutal war on crime and the return of Elektra while the Hand rises as a new supernatural threat. Introduces Frank Castle in a landmark performance. 13 episodes." },
-  { id: 120, order: 120, phase: 2, type: 'series', year: 2016, essential: false, episodes: 13, title: "Luke Cage S1",                       prereq: "Jessica Jones (recommended)",    desc: "Former convict Luke Cage, a bulletproof man with super strength, becomes an unwilling hero in Harlem when a crime boss threatens his community. 13 episodes." },
-  { id: 121, order: 121, phase: 2, type: 'series', year: 2015, essential: false, episodes: 10, title: "Agents of SHIELD S3 Eps 1–10",      prereq: "Previous SHIELD seasons",        desc: "The ATCU hunts Inhumans while Coulson searches for a dangerous Inhuman in space. The first half of Season 3 deepens the Inhuman world and introduces the mythical Hive." },
-  { id: 122, order: 122, phase: 2, type: 'series', year: 2017, essential: false, episodes: 13, title: "Iron Fist S1",                       prereq: "Daredevil, Luke Cage, JJ",       desc: "Danny Rand, heir to a corporate empire and master of the Iron Fist, returns to New York after 15 years to reclaim his company and fight the Hand. 13 episodes." },
-  { id: 123, order: 123, phase: 2, type: 'series', year: 2015, essential: false, episodes: 4,  title: "Agents of SHIELD S3 Eps 11–14",     prereq: "Previous SHIELD seasons",        desc: "Hive's plan begins to take shape as the team suffers a major loss — these four episodes represent the emotional heart of Season 3." },
-  { id: 124, order: 124, phase: 2, type: 'series', year: 2015, essential: false, episodes: 1,  title: "WHiH Newsfront S2 Ep 1",            prereq: "Ongoing MCU events",              desc: "A WHiH interview segment with Christine Everhart covering the Avengers and the political debate around superhero accountability — tying into Civil War's themes." },
-  { id: 125, order: 125, phase: 2, type: 'series', year: 2015, essential: false, episodes: 2,  title: "Agents of SHIELD S3 Eps 15–16",     prereq: "Previous SHIELD seasons",        desc: "The stakes escalate as Hive's power grows and the team is forced to make impossible choices to protect the world." },
-  { id: 126, order: 126, phase: 2, type: 'series', year: 2015, essential: false, episodes: 1,  title: "WHiH Newsfront S2 Ep 2",            prereq: "Ongoing MCU events",              desc: "Another WHiH segment covering the political aftermath of Age of Ultron and the Sokovia Accords debate that will drive Captain America: Civil War." },
-  { id: 127, order: 127, phase: 2, type: 'series', year: 2015, essential: false, episodes: 2,  title: "Agents of SHIELD S3 Eps 17–18",     prereq: "Previous SHIELD seasons",        desc: "The team races to stop Hive before his plan reaches the point of no return in two tense penultimate episodes." },
-  { id: 128, order: 128, phase: 2, type: 'series', year: 2015, essential: false, episodes: 3,  title: "WHiH Newsfront S2 Eps 3–5",         prereq: "Ongoing MCU events",              desc: "The final WHiH digital shorts covering pre-Civil War tensions, including commentary on the Sokovia Accords and superhero registration from an in-universe media perspective." },
-  { id: 129, order: 129, phase: 2, type: 'series', year: 2017, essential: false, episodes: 8,  title: "The Defenders S1",                  prereq: "All Netflix street-level shows",  desc: "Daredevil, Jessica Jones, Luke Cage and Iron Fist unite to face the Hand and its mysterious leader Alexandra in New York City's biggest street-level crisis. 8 episodes." },
-  { id: 130, order: 130, phase: 2, type: 'series', year: 2015, essential: false, episodes: 1,  title: "Agents of SHIELD S3 Ep 19",         prereq: "Previous SHIELD seasons",        desc: "A standalone bottle episode taking place largely on the Quinjet as the team processes loss and prepares for the Season 3 finale." },
-  { id: 131, order: 131, phase: 2, type: 'series', year: 2015, essential: false, episodes: 3,  title: "Agents of SHIELD S3 Eps 20–22",     prereq: "Previous SHIELD seasons",        desc: "The Season 3 finale pits Coulson's team against Hive in a devastating conclusion that permanently changes the team's lineup heading into Phase 3." },
-  { id: 132, order: 132, phase: 3, type: 'series', year: 2017, essential: false, episodes: 8,  title: "Inhumans S1",                        prereq: "Agents of SHIELD context",       desc: "The Inhuman royal family of Attilan is overthrown by Maximus and scattered across Hawaii. Largely standalone but expands the Inhuman mythology introduced in SHIELD. 8 episodes." },
-  { id: 133, order: 133, phase: 3, type: 'series', year: 2017, essential: false, episodes: 13, title: "The Punisher S1",                    prereq: "Daredevil S2",                   desc: "Frank Castle, after exacting revenge for his family's murder, uncovers a conspiracy that leads back to government and military corruption. One of Marvel Netflix's most intense series. 13 episodes." },
-  { id: 134, order: 134, phase: 3, type: 'series', year: 2018, essential: false, episodes: 10, title: "Cloak & Dagger S1",                  prereq: "General MCU knowledge",           desc: "Two teenagers in New Orleans — Tandy Bowen with light daggers and Tyrone Johnson with teleportation — discover their linked powers and a vast corporate conspiracy. 10 episodes." },
-  { id: 135, order: 135, phase: 3, type: 'series', year: 2016, essential: false, episodes: 8,  title: "Agents of SHIELD S4 Eps 1–8",       prereq: "Previous SHIELD seasons",        desc: "The Ghost Rider arc begins — Robbie Reyes joins the team while Daisy goes rogue. These 8 episodes are widely considered among the best in the series." },
-  { id: 136, order: 136, phase: 3, type: 'series', year: 2016, essential: false, episodes: 6,  title: "Agents of SHIELD: Slingshot S1",    prereq: "SHIELD context",                  desc: "A digital miniseries of 6 short episodes following Elena 'Yo-Yo' Rodriguez between Seasons 3 and 4, fleshing out her backstory and motivations." },
-  { id: 137, order: 137, phase: 3, type: 'series', year: 2016, essential: false, episodes: 14, title: "Agents of SHIELD S4 Eps 9–22",      prereq: "Previous SHIELD seasons",        desc: "The LMD and Framework arcs — Daisy and team face Life Model Decoys and then a virtual reality dystopia. Season 4 is a creative high point for the show. 14 episodes." },
-  { id: 138, order: 138, phase: 3, type: 'series', year: 2018, essential: false, episodes: 13, title: "Jessica Jones S2",                  prereq: "Jessica Jones S1",               desc: "Jessica investigates the mad scientist who gave her powers and faces unexpected personal revelations in a more introspective second season. 13 episodes." },
-  { id: 139, order: 139, phase: 3, type: 'series', year: 2017, essential: false, episodes: 10, title: "Agents of SHIELD S5 Eps 1–10",      prereq: "Previous SHIELD seasons",        desc: "The team is sent to a dystopian future where Earth has been destroyed and humans serve alien overlords called the Kree. The space-set opening of Season 5 is a bold sci-fi swing." },
-  { id: 140, order: 140, phase: 3, type: 'series', year: 2018, essential: false, episodes: 13, title: "Luke Cage S2",                       prereq: "Luke Cage S1",                   desc: "Luke Cage protects Harlem from a Jamaican crime lord while battling for the soul of his neighbourhood in a musically rich second season. 13 episodes." },
-  { id: 141, order: 141, phase: 3, type: 'series', year: 2018, essential: false, episodes: 10, title: "Iron Fist S2",                       prereq: "Iron Fist S1",                   desc: "Danny Rand faces a new Triad war in New York and the return of Davos while questioning his role as the Iron Fist in a more focused second season. 10 episodes." },
-  { id: 142, order: 142, phase: 3, type: 'series', year: 2018, essential: false, episodes: 13, title: "Daredevil S3",                       prereq: "Daredevil S2",                   desc: "Matt Murdock, broken and faithless, re-emerges as a darker Daredevil to stop Wilson Fisk — who has secretly taken control of the FBI from inside prison. Widely considered Marvel Netflix's best season. 13 episodes." },
-  { id: 143, order: 143, phase: 3, type: 'series', year: 2019, essential: false, episodes: 10, title: "Cloak & Dagger S2",                  prereq: "Cloak & Dagger S1",              desc: "Tandy and Tyrone face a new threat — the Mayhem villain and a human trafficking ring — as their powers and relationship evolve in a more confident second season. 10 episodes." },
-  { id: 144, order: 144, phase: 3, type: 'series', year: 2017, essential: false, episodes: 3,  title: "Agents of SHIELD S5 Eps 11–13",     prereq: "Previous SHIELD seasons",        desc: "The team begins to piece together how Earth was destroyed in the future timeline and whether they can prevent it — a mystery-box set of episodes." },
-  { id: 145, order: 145, phase: 3, type: 'series', year: 2017, essential: false, episodes: 33, title: "Runaways S1 & S2 & S3 Eps 1–4",    prereq: "None (standalone)",               desc: "Six teenagers discover their parents are secretly a criminal cult called the Pride and go on the run. Seasons 1–2 plus the first 4 episodes of Season 3. 33 episodes." },
-  { id: 146, order: 146, phase: 3, type: 'series', year: 2019, essential: false, episodes: 13, title: "The Punisher S2",                    prereq: "The Punisher S1",                desc: "Frank Castle protects a mysterious teenager on the run while his old identity catches up with him. The final Netflix Punisher season before the character moved to the MCU proper. 13 episodes." },
-  { id: 147, order: 147, phase: 3, type: 'series', year: 2019, essential: false, episodes: 13, title: "Jessica Jones S3",                   prereq: "Jessica Jones S2",               desc: "Jessica Jones faces a serial killer obsessed with justice while navigating a complicated relationship with her half-sister Trish. The final season of the acclaimed Netflix series. 13 episodes." },
-  { id: 148, order: 148, phase: 3, type: 'series', year: 2017, essential: false, episodes: 5,  title: "Agents of SHIELD S5 Eps 14–18",     prereq: "Previous SHIELD seasons",        desc: "The race to prevent Earth's destruction accelerates as Graviton emerges and the team is split over whether the future can truly be changed." },
-  { id: 149, order: 149, phase: 3, type: 'series', year: 2017, essential: false, episodes: 4,  title: "Agents of SHIELD S5 Eps 19–22",     prereq: "Previous SHIELD seasons",        desc: "Season 5 finale — the team makes the choice that defines their fate, in a deeply emotional conclusion to one of the show's strongest seasons." },
-  { id: 150, order: 150, phase: 3, type: 'series', year: 2019, essential: false, episodes: 6,  title: "Runaways S3 Eps 5–10",              prereq: "Runaways S1 & S2",               desc: "The final stretch of Runaways Season 3 brings the Hostel crew face-to-face with Morgan le Fay in a magical finale that closes the chapter on this beloved group of young heroes." },
-  { id: 151, order: 151, phase: 4, type: 'series', year: 2019, essential: false, episodes: 26, title: "Agents of SHIELD S6 & S7",           prereq: "Previous SHIELD seasons",        desc: "Season 6 explores the consequences of the Infinity War snap for SHIELD, while Season 7 — the final season — sends the team back in time in a love letter to the whole series. 26 combined episodes." },
-  { id: 152, order: 152, phase: 4, type: 'series', year: 2020, essential: false, episodes: 10, title: "Helstrom S1",                        prereq: "None (mostly standalone)",       desc: "The son and daughter of a mysterious and powerful serial killer use their unique abilities to hunt the worst of humanity in this darker, horror-inflected series. 10 episodes." },
-  { id: 153, order: 153, phase: 4, type: 'series', year: 2023, essential: false, episodes: 10, title: "The Daily Bugle S1 & S2",            prereq: "Spider-Man films",               desc: "An in-universe web series presenting J. Jonah Jameson's Daily Bugle coverage of Spider-Man and Avengers events. Short comedic episodes that add texture to the MCU's world." },
-  { id: 154, order: 154, phase: 5, type: 'series', year: 2024, essential: false, episodes: 10, title: "Your Friendly Neighborhood Spider-Man S1", prereq: "None (separate continuity)", desc: "An animated series set in an alternate MCU continuity featuring a younger Peter Parker learning the ropes as Spider-Man before the events of the live-action films. 10 episodes." },
-];
-
-const RAW = [...ESSENTIAL_LIST, ...ADDITIONAL_LIST].map(d => ({ ...d, status: 'unwatched', watchedDate: null }));
-
+// ─── Static data ────────────────────────────────────────────────────────────
 const LIST_MODES = [
   { id: 'core',     label: 'MCU',      sublabel: 'Curated List',       color: '#c0392b', desc: '60 curated films & series'           },
   { id: 'extended', label: 'Extended', sublabel: 'Full Chronological', color: '#4a9ede', desc: 'All entries incl. Netflix, SHIELD & more' },
@@ -435,6 +302,63 @@ const useDebouncedEffect = (effect, deps, delay = 350) => {
     return () => clearTimeout(timer);
   }, [...deps, delay]);
 };
+
+
+const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
+  item,
+  idx,
+  ph,
+  T,
+  typeMeta,
+  statusMeta,
+  releaseStatus,
+  releaseStatusStyleObj,
+  releaseStatusText,
+  releaseLabel,
+  poster,
+  genres,
+  isExpanded,
+  isWatched,
+  isBookmarked,
+  statusDropdown,
+  rating,
+  onOpenDetail,
+  onToggleBookmark,
+  onOpenStatus,
+}) {
+  const StatusIcon = statusMeta.Icon;
+  const TypeIcon = typeMeta.Icon;
+  return (
+    <div>
+      <div className={`rrow row-in type-${item.type} ${isWatched ? 'glass-panel' : ''} ${isExpanded ? 'curvy-selected' : ''}`} style={{ background: isWatched ? 'var(--theme-watched-bg)' : 'transparent', opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow }}>
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 15, color: isWatched ? '#f1bfd3' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
+          {isWatched ? <Check size={14} style={{ color: '#f4a8ca' }} /> : (idx + 1)}
+        </div>
+        <img className="poster" src={poster} alt={`${item.title} poster`} loading="lazy" />
+
+        <button className="title-btn" onClick={() => onOpenDetail(item)} style={{ overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: 700, lineHeight: 1.5, color: isWatched ? '#9df1c2' : 'var(--theme-text)', opacity: 1, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: '100%' }}>{item.title}</span>
+            {item.episodes && <span style={{ fontSize: 9, color: T.textMuted, background: T.expandBg, border: `1px solid ${T.expandBorder}`, borderRadius: 3, padding: '1px 5px', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1, flexShrink: 0 }}>{item.episodes} EP</span>}
+            <span style={{ fontSize: 14, color: typeMeta.color, opacity: 0.82, fontWeight: 700, letterSpacing: 0.6, display: 'flex', alignItems: 'center', gap: 2, fontFamily: "'Bebas Neue',sans-serif", flexShrink: 0 }}><TypeIcon size={8} />{typeMeta.label}</span>
+            <span style={{ fontSize: 8.5, color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}`, borderRadius: 3, padding: '1px 4px', letterSpacing: 1, fontFamily: "'Bebas Neue',sans-serif", flexShrink: 0 }}>{releaseStatusText}</span>
+            {!item.essential && <span style={{ fontSize: 8.5, color: T.textMuted, background: T.expandBg, border: `1px solid ${T.expandBorder}`, borderRadius: 3, padding: '1px 4px', letterSpacing: 1, fontFamily: "'Bebas Neue',sans-serif", flexShrink: 0 }}>OPT</span>}
+            <ChevRight size={10} style={{ color: T.textFaint, transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
+          </div>
+          <div className="meta-muted" style={{ marginTop: 2, fontSize: 10, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2 }}>GENRES: {genres.join(' • ').toUpperCase()}</div>
+        </button>
+
+        <div className="row-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: 104, flexShrink: 0 }}>
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '12px', letterSpacing: 1.1, color: T.text, textAlign: 'right', fontWeight: 600, whiteSpace: 'nowrap' }}>{releaseLabel}</div>
+          <div style={{ fontSize: 11, color: '#e8b84b', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 0.6, whiteSpace: 'nowrap' }}>★ {rating || '—'}</div>
+          <button className="wbtn" aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} style={{ width: 24, height: 24, background: isBookmarked ? 'rgba(125,211,252,0.2)' : 'transparent', color: isBookmarked ? '#7dd3fc' : T.textMuted, borderColor: isBookmarked ? '#7dd3fc66' : `${T.surfaceBorder}` }}><Bookmark size={11} /></button>
+          <button className="wbtn" aria-label={`${statusMeta.label} — click to change`} aria-haspopup="true" aria-expanded={statusDropdown === item.id} onClick={e => onOpenStatus(e, item.id)} onContextMenu={e => e.preventDefault()} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenStatus(e, item.id); } }} style={{ width: 24, height: 24, background: statusMeta.bg, color: statusMeta.color, borderColor: statusMeta.color + '55' }}><StatusIcon size={11} /></button>
+        </div>
+        {isWatched && <Check size={12} style={{ position: 'absolute', top: 8, right: 8, color: '#9be8bc', filter: 'drop-shadow(0 0 6px rgba(155,232,188,0.75))' }} />}
+      </div>
+    </div>
+  );
+});
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function MCUViewer() {
@@ -725,14 +649,9 @@ export default function MCUViewer() {
   };
 
   const STATUS_SORT_ORDER = { watching: 0, 'plan-to-watch': 1, unwatched: 2, watched: 3, 'on-hold': 4, dropped: 5 };
-  const RELEASE_INFO = {
-    'The Fantastic Four: First Steps': { date: '2025-07-25', rating: 'TBD' },
-    'Spider-Man: Brand New Day': { date: '2026-07-31', rating: 'TBD' },
-    'Avengers: Doomsday': { date: '2026-12-18', rating: 'TBD' },
-    'Avengers: Secret Wars': { date: '2027-12-17', rating: 'TBD' },
-  };
-
   const coreIds = useMemo(() => new Set(ESSENTIAL_LIST.map(i => i.id)), []);
+  const openDetail = useCallback((item) => setDetailItem(item), []);
+  const toggleBookmark = useCallback((id) => setBookmarks(p => ({ ...p, [id]: p[id] ? 0 : 1 })), []);
 
   const markPhaseWatched = (phaseId, newStatus) => {
     setItems(prev => {
@@ -946,12 +865,47 @@ export default function MCUViewer() {
   };
   const cleanLookupTitle = (title) => title.replace(/\sS\d.*$/i, '').replace(/\sEps?.*$/i, '').trim();
 
-  const formatReleaseDate = (dateStr, fallbackYear) => {
-    if (!dateStr) return String(fallbackYear);
-    const d = new Date(dateStr);
-    if (!Number.isNaN(d.getTime())) return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-    const yearMatch = String(dateStr).match(/\b(19|20)\d{2}\b/);
-    return yearMatch ? yearMatch[0] : String(fallbackYear);
+  const isRealReleaseDate = (dateStr) => /^\d{4}-\d{2}-\d{2}$/.test(String(dateStr || ''));
+
+  const parseRealReleaseDate = (dateStr) => {
+    if (!isRealReleaseDate(dateStr)) return null;
+    const parsed = new Date(`${dateStr}T00:00:00`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
+
+  const releaseInfoFor = (item) => {
+    const stored = RELEASE_INFO[item.title] || {};
+    return {
+      date: item.releaseDate || stored.date || metaCache[item.id]?.released || '',
+      label: item.releaseLabel || stored.label || '',
+      status: item.releaseStatus || stored.status || '',
+    };
+  };
+
+  const releaseStatusFor = (item, now = new Date()) => {
+    const info = releaseInfoFor(item);
+    const parsed = parseRealReleaseDate(info.date);
+    if (parsed) return parsed > now ? 'upcoming' : 'released';
+    if (info.status === 'released') return 'released';
+    if (info.status === 'upcoming') return 'upcoming';
+    if (Number(item.year) && Number(item.year) < now.getFullYear()) return 'released';
+    return 'TBA';
+  };
+
+  const releaseStatusLabel = (status) => status === 'TBA' ? 'TBA' : status.charAt(0).toUpperCase() + status.slice(1);
+
+  const releaseStatusStyle = (status) => ({
+    released: { color: '#3ec47a', background: 'rgba(62,196,122,0.1)', border: 'rgba(62,196,122,0.35)' },
+    upcoming: { color: '#e8b84b', background: 'rgba(232,184,75,0.12)', border: 'rgba(232,184,75,0.38)' },
+    TBA: { color: '#a7b1c2', background: 'rgba(167,177,194,0.1)', border: 'rgba(167,177,194,0.28)' },
+  }[status] || { color: T.textMuted, background: T.expandBg, border: T.expandBorder });
+
+  const formatReleaseDate = (dateStr, fallbackYear, label = '', status = '') => {
+    const d = parseRealReleaseDate(dateStr);
+    if (d) return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    if (label) return label;
+    if (status === 'TBA') return Number(fallbackYear) ? `${fallbackYear} · TBA` : 'TBA';
+    return Number(fallbackYear) ? String(fallbackYear) : 'TBA';
   };
 
   const inferGenre = (item) => {
@@ -985,17 +939,24 @@ export default function MCUViewer() {
   const calendarItems = useMemo(() => {
     const now = new Date();
     const withDates = filtered.map(item => {
-      const rawDate = RELEASE_INFO[item.title]?.date || metaCache[item.id]?.released || `${item.year}-01-01`;
-      const parsed = new Date(rawDate);
-      return { item, rawDate, parsed, isUpcoming: !Number.isNaN(parsed.getTime()) ? parsed > now : false };
-    }).sort((a, b) => {
-      const at = Number.isNaN(a.parsed.getTime()) ? Infinity : a.parsed.getTime();
-      const bt = Number.isNaN(b.parsed.getTime()) ? Infinity : b.parsed.getTime();
-      return at - bt;
-    });
+      const info = releaseInfoFor(item);
+      const parsed = parseRealReleaseDate(info.date);
+      const releaseStatus = releaseStatusFor(item, now);
+      const yearSort = Number(item.year) || 9999;
+      return {
+        item,
+        rawDate: info.date,
+        label: info.label,
+        parsed,
+        releaseStatus,
+        hasRealDate: Boolean(parsed),
+        sortTime: parsed ? parsed.getTime() : Date.UTC(yearSort, 11, 31),
+      };
+    }).sort((a, b) => a.sortTime - b.sortTime || a.item.order - b.item.order);
     return {
-      upcoming: withDates.filter(x => x.isUpcoming),
-      released: withDates.filter(x => !x.isUpcoming),
+      upcoming: withDates.filter(x => x.releaseStatus === 'upcoming' && x.hasRealDate),
+      released: withDates.filter(x => x.releaseStatus === 'released'),
+      tba: withDates.filter(x => x.releaseStatus === 'TBA' || (x.releaseStatus === 'upcoming' && !x.hasRealDate)),
     };
   }, [filtered, metaCache]);
 
@@ -1591,16 +1552,17 @@ export default function MCUViewer() {
         .curvy-panel{position:relative;overflow:hidden;border-radius:14px}
         .curvy-panel::before{content:'';position:absolute;inset:0 auto 0 0;width:4px;background:linear-gradient(180deg,var(--phase-color,#f3a6c2),color-mix(in srgb,var(--phase-color,#f3a6c2) 70%,#ffd2e4));border-radius:14px 0 0 14px;box-shadow:0 0 14px color-mix(in srgb,var(--phase-color,#f3a6c2) 48%, transparent);z-index:0}
 
-        .rrow{position:relative;transition:background 0.2s ease,transform 0.22s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.22s ease,border-color 0.22s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:var(--row-min-h,86px);border-radius:10px;overflow:hidden}
+        .section-up{content-visibility:auto;contain-intrinsic-size:900px}
+        .rrow{position:relative;contain:layout paint;transition:background 0.2s ease,transform 0.22s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.22s ease,border-color 0.22s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:var(--row-min-h,86px);border-radius:10px;overflow:hidden}
         .rrow:last-child{border-bottom:none}
         .rrow > *{position:relative;z-index:1}
-        .rrow:hover{transform:translateY(-4px);border-left-color:color-mix(in srgb,var(--theme-accent) 65%, var(--phase-color,#c0392b));box-shadow:0 10px 24px -14px var(--phase-glow,rgba(192,57,43,0.5))}
+        .rrow:hover{transform:translateY(-2px);border-left-color:color-mix(in srgb,var(--theme-accent) 65%, var(--phase-color,#c0392b));box-shadow:0 10px 24px -14px var(--phase-glow,rgba(192,57,43,0.5))}
         .rrow.curvy-selected{border-left-color:var(--theme-accent);box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 45%, transparent),0 10px 24px -16px color-mix(in srgb,var(--theme-accent) 38%, transparent)}
         .rrow.type-film:hover{background:linear-gradient(90deg, rgba(224,82,82,0.18), ${T.rowHoverBg}) !important}
         .rrow.type-series:hover{background:linear-gradient(90deg, rgba(74,158,222,0.18), ${T.rowHoverBg}) !important}
         .rrow.type-short:hover{background:linear-gradient(90deg, rgba(160,108,213,0.18), ${T.rowHoverBg}) !important}
 
-        .title-btn{background:none;border:none;cursor:pointer;text-align:left;padding:0;color:inherit;font-family:inherit;display:block;width:100%}
+        .title-btn{background:none;border:none;cursor:pointer;text-align:left;padding:6px 0;color:inherit;font-family:inherit;display:block;width:100%;min-height:44px}
         .title-btn:focus-visible{outline:2px solid var(--theme-accent);outline-offset:2px;border-radius:3px}
 
         .hexbg{background-image:radial-gradient(circle,${T.hexDot} 1px,transparent 1px);background-size:28px 28px}
@@ -1631,8 +1593,12 @@ export default function MCUViewer() {
         /* Mobile */
         @media (max-width: 767px) {
           .header-inner { padding: 10px 14px 8px !important; }
-          .fpill{padding:7px 14px !important;font-size:14px !important}
-          .rrow{grid-template-columns:24px 44px minmax(0,1fr) minmax(82px,auto) !important;gap:6px;padding:12px 10px 12px 8px}
+          .fpill{padding:10px 16px !important;font-size:15px !important;min-height:44px}
+          .rrow{grid-template-columns:24px 44px minmax(0,1fr) !important;gap:8px;padding:14px 10px 14px 8px;min-height:96px}
+          .rrow .row-actions{grid-column:2 / -1;flex-direction:row !important;align-items:center !important;justify-content:space-between !important;min-width:0 !important;width:100%;gap:8px}
+          .calendar-row{grid-template-columns:88px 44px minmax(0,1fr) !important}
+          .bottom-action-bar{left:12px !important;right:12px !important;bottom:max(12px, env(safe-area-inset-bottom)) !important;width:auto;display:flex;justify-content:center;min-height:44px}
+          main > div{padding-bottom:112px !important}
           .poster{width:44px;height:64px}
           .detail-layout{grid-template-columns:minmax(0,1fr) !important;gap:14px !important}
           .detail-layout img,.detail-fallback-poster{max-width:280px;margin:0 auto;max-height:360px}
@@ -1645,6 +1611,7 @@ export default function MCUViewer() {
         .stat-card-label { font-size: clamp(11px, 1.8vw, 14px) !important; }
         .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; color:var(--theme-text-muted) !important }
 
+        .bottom-action-bar{position:fixed;right:16px;bottom:16px;z-index:120;border-radius:999px;padding:10px 14px}
         main::-webkit-scrollbar{width:4px}
         main::-webkit-scrollbar-track{background:transparent}
         main::-webkit-scrollbar-thumb{background:${T.scrollThumb};border-radius:4px}
@@ -1935,7 +1902,8 @@ export default function MCUViewer() {
         type="button"
         onClick={() => { if (nextUnwatched) setDetailItem(nextUnwatched); }}
         aria-label="Jump to next unwatched item"
-        style={{ position: 'fixed', right: 16, bottom: 16, zIndex: 120, borderRadius: 999, padding: '10px 14px', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(20,25,46,0.72)' : 'rgba(255,255,255,0.78)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', color: T.text, boxShadow: darkMode ? '0 8px 22px rgba(0,0,0,0.45)' : '0 8px 20px rgba(0,0,0,0.14)', cursor: nextUnwatched ? 'pointer' : 'default', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2, fontSize: 12 }}
+        className="bottom-action-bar"
+        style={{ border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(20,25,46,0.72)' : 'rgba(255,255,255,0.78)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', color: T.text, boxShadow: darkMode ? '0 8px 22px rgba(0,0,0,0.45)' : '0 8px 20px rgba(0,0,0,0.14)', cursor: nextUnwatched ? 'pointer' : 'default', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2, fontSize: 12 }}
       >
         {pct}% done · {nextUnwatched ? 'Jump next' : 'All caught up'}
       </button>
@@ -1952,18 +1920,26 @@ export default function MCUViewer() {
           {viewMode === 'calendar' ? (
             <section className='curvy-panel' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'var(--theme-surface)', borderRadius: 14, padding: 16 }}>
               <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: "'Bebas Neue',sans-serif" }}>Release Calendar</h3>
-              <div style={{ marginBottom: 12, color: T.textMuted }}>Upcoming</div>
-              {calendarItems.upcoming.length === 0 ? <div style={{ marginBottom: 12, color: T.textMuted }}>No upcoming entries in current filter.</div> : calendarItems.upcoming.map(({ item, rawDate }) => (
-                <div key={'up-'+item.id} className='rrow' style={{ gridTemplateColumns: '70px 52px minmax(0,1fr)', background: 'transparent' }}>
-                  <div style={{ fontSize: 11, color: 'var(--theme-warning)' }}>{formatReleaseDate(rawDate, item.year)}</div>
+              <div style={{ marginBottom: 12, color: T.textMuted }}>Upcoming with real dates</div>
+              {calendarItems.upcoming.length === 0 ? <div style={{ marginBottom: 12, color: T.textMuted }}>No dated upcoming entries in current filter.</div> : calendarItems.upcoming.map(({ item, rawDate, label, releaseStatus }) => (
+                <div key={'up-'+item.id} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
+                  <div style={{ fontSize: 11, color: 'var(--theme-warning)' }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
+                  <img className='poster' src={posterSrc(item)} alt={item.title} />
+                  <button className='title-btn' onClick={() => setDetailItem(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
+                </div>
+              ))}
+              <div style={{ margin: '16px 0 12px', color: T.textMuted }}>TBA / release window only</div>
+              {calendarItems.tba.length === 0 ? <div style={{ marginBottom: 12, color: T.textMuted }}>No TBA entries in current filter.</div> : calendarItems.tba.map(({ item, rawDate, label, releaseStatus }) => (
+                <div key={'tba-'+item.id} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
+                  <div style={{ fontSize: 11, color: T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
                   <img className='poster' src={posterSrc(item)} alt={item.title} />
                   <button className='title-btn' onClick={() => setDetailItem(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
                 </div>
               ))}
               <div style={{ margin: '16px 0 12px', color: T.textMuted }}>Already Released</div>
-              {calendarItems.released.map(({ item, rawDate }) => (
-                <div key={'old-'+item.id} className='rrow' style={{ gridTemplateColumns: '70px 52px minmax(0,1fr)', background: 'transparent' }}>
-                  <div style={{ fontSize: 11, color: T.textMuted }}>{formatReleaseDate(rawDate, item.year)}</div>
+              {calendarItems.released.map(({ item, rawDate, label, releaseStatus }) => (
+                <div key={'old-'+item.id} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
+                  <div style={{ fontSize: 11, color: T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
                   <img className='poster' src={posterSrc(item)} alt={item.title} />
                   <button className='title-btn' onClick={() => setDetailItem(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
                 </div>
@@ -2034,71 +2010,32 @@ export default function MCUViewer() {
                 {/* Row table */}
                 <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 14, overflow: 'hidden', boxShadow: darkMode ? '0 2px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.03)' : '0 1px 6px rgba(0,0,0,0.06)' }}>
                   {rows.map((item, idx) => {
-                    const m = TYPE_META[item.type];
-                    const statusMeta = STATUS_META[item.status];
-                    const showPre = !NO_PREREQ.has(item.prereq);
-                    const isWatched = item.status === 'watched';
-                    const isExpanded = expandedItem === item.id;
-
+                    const itemReleaseStatus = releaseStatusFor(item);
+                    const itemReleaseInfo = releaseInfoFor(item);
                     return (
-                      <div key={item.id}>
-                        <div className={`rrow row-in type-${item.type} ${isWatched ? 'glass-panel' : ''} ${expandedItem === item.id ? 'curvy-selected' : ''}`} style={{ background: isWatched ? 'var(--theme-watched-bg)' : 'transparent', opacity: 1, borderLeftColor: expandedItem === item.id ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow }}>
-                          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 15, color: isWatched ? '#f1bfd3' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
-                            {isWatched ? <Check size={14} style={{ color: '#f4a8ca' }} /> : (idx + 1)}
-                          </div>
-                          <img className="poster" src={posterSrc(item)} alt={`${item.title} poster`} loading="lazy" />
-
-                          <button className="title-btn" onClick={() => setDetailItem(item)} style={{ overflow: 'hidden' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: 700, lineHeight: 1.5, color: isWatched ? '#9df1c2' : 'var(--theme-text)', opacity: 1, transition: 'color 0.26s', fontFamily: "'Rajdhani',sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: '100%' }}>
-                                {item.title}
-                              </span>
-                              {item.episodes && (
-                                <span style={{ fontSize: 9, color: T.textMuted, background: T.expandBg, border: `1px solid ${T.expandBorder}`, borderRadius: 3, padding: '1px 5px', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1, flexShrink: 0 }}>
-                                  {item.episodes} EP
-                                </span>
-                              )}
-                              <span style={{ fontSize: 14, color: m.color, opacity: 0.82, fontWeight: 700, letterSpacing: 0.6, display: 'flex', alignItems: 'center', gap: 2, fontFamily: "'Bebas Neue',sans-serif", flexShrink: 0 }}>
-                                <m.Icon size={8} />{m.label}
-                              </span>
-                              {!item.essential && (
-                                <span style={{ fontSize: 8.5, color: T.textMuted, background: T.expandBg, border: `1px solid ${T.expandBorder}`, borderRadius: 3, padding: '1px 4px', letterSpacing: 1, fontFamily: "'Bebas Neue',sans-serif", flexShrink: 0 }}>OPT</span>
-                              )}
-                              <ChevRight size={10} style={{ color: T.textFaint, transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
-                            </div>
-                            <div className="meta-muted" style={{ marginTop: 2, fontSize: 10, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1.2 }}>GENRES: {inferGenres(item).join(' • ').toUpperCase()}</div>
-                          </button>
-
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: 104, flexShrink: 0 }}>
-                            <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '12px', letterSpacing: 1.1, color: T.text, textAlign: 'right', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                              {formatReleaseDate(RELEASE_INFO[item.title]?.date || metaCache[item.id]?.released, item.year)}
-                            </div>
-                            <div style={{ fontSize: 11, color: '#e8b84b', fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 0.6, whiteSpace: 'nowrap' }}>★ {metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating || '—'}</div>
-                            <button className="wbtn"
-                              aria-label={bookmarks[item.id] ? 'Remove bookmark' : 'Add bookmark'}
-                              onClick={() => setBookmarks(p => ({ ...p, [item.id]: p[item.id] ? 0 : 1 }))}
-                              style={{ width: 24, height: 24, background: bookmarks[item.id] ? 'rgba(125,211,252,0.2)' : 'transparent', color: bookmarks[item.id] ? '#7dd3fc' : T.textMuted, borderColor: bookmarks[item.id] ? '#7dd3fc66' : `${T.surfaceBorder}` }}
-                            >
-                              <Bookmark size={11} />
-                            </button>
-                            <button className="wbtn"
-                              aria-label={`${statusMeta.label} — click to change`}
-                              aria-haspopup="true"
-                              aria-expanded={statusDropdown === item.id}
-                              onClick={e => openStatusDropdown(e, item.id)}
-                              onContextMenu={e => e.preventDefault()}
-                              onKeyDown={e => {
-                                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openStatusDropdown(e, item.id); }
-                                if (e.key === 'Escape') setStatusDropdown(null);
-                              }}
-                              style={{ width: 24, height: 24, background: statusMeta.bg, color: statusMeta.color, borderColor: statusMeta.color + '55', boxShadow: item.status !== 'unwatched' && darkMode ? `0 0 9px ${statusMeta.color}35` : 'none' }}
-                            >
-                              <statusMeta.Icon size={11} />
-                            </button>
-                          </div>
-                          {isWatched && <Check size={12} style={{ position: 'absolute', top: 8, right: 8, color: '#9be8bc', filter: 'drop-shadow(0 0 6px rgba(155,232,188,0.75))' }} />}
-                        </div>
-                      </div>
+                      <MemoizedTitleRow
+                        key={item.id}
+                        item={item}
+                        idx={idx}
+                        ph={ph}
+                        T={T}
+                        typeMeta={TYPE_META[item.type]}
+                        statusMeta={STATUS_META[item.status]}
+                        releaseStatus={itemReleaseStatus}
+                        releaseStatusText={releaseStatusLabel(itemReleaseStatus)}
+                        releaseStatusStyleObj={releaseStatusStyle(itemReleaseStatus)}
+                        releaseLabel={formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}
+                        poster={posterSrc(item)}
+                        genres={inferGenres(item)}
+                        isExpanded={expandedItem === item.id}
+                        isWatched={item.status === 'watched'}
+                        isBookmarked={Boolean(bookmarks[item.id])}
+                        statusDropdown={statusDropdown}
+                        rating={metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
+                        onOpenDetail={openDetail}
+                        onToggleBookmark={toggleBookmark}
+                        onOpenStatus={openStatusDropdown}
+                      />
                     );
                   })}
                 </div>
