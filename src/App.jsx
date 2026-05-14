@@ -233,26 +233,14 @@ const posterExportName = (item, ext = 'jpg') => posterFileName(item, ext);
 
 
 const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poster' }) {
-  const wrapRef = useRef(null);
-  const [visible, setVisible] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     setLoaded(false);
-    const node = wrapRef.current;
-    if (!node) return;
-    const obs = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setVisible(true);
-        obs.disconnect();
-      }
-    }, { rootMargin: '280px' });
-    obs.observe(node);
-    return () => obs.disconnect();
   }, [src]);
 
-  return <div ref={wrapRef} className={`${className} poster-shell ${loaded ? 'is-loaded' : ''}`}>
-    {visible && <img className={className} src={src} alt={alt} loading="lazy" decoding="async" onLoad={() => setLoaded(true)} />}
+  return <div className={`${className} poster-shell ${loaded ? 'is-loaded' : ''}`}>
+    <img className={className} src={src} alt={alt} loading="lazy" decoding="async" onLoad={() => setLoaded(true)} />
   </div>;
 });
 const TMDB_LOOKUP_OVERRIDES = {
@@ -422,10 +410,12 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
           <div style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: '12px', letterSpacing: 1.1, color: T.text, textAlign: 'right', fontWeight: 600, whiteSpace: 'nowrap' }}>{releaseLabel}</div>
           <div style={{ fontSize: 11, color: 'var(--theme-warning)', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.6, whiteSpace: 'nowrap' }}>★ {rating || '—'}</div>
           <button
-            className="wbtn"
-            aria-label="Open status menu"
-            onClick={(event) => onOpenStatus(item.id, event.currentTarget.getBoundingClientRect())}
-            style={{ minWidth: 92, height: 24, padding: '0 8px', background: statusMeta.bg || 'transparent', color: statusMeta.color || T.textMuted, borderColor: `${statusMeta.color || T.surfaceBorder}66`, borderRadius: 999, fontSize: 10, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.8, justifyContent: 'space-between' }}
+            className="wbtn status-pill"
+            aria-label={`Open status menu for ${item.title}`}
+            aria-haspopup="menu"
+            aria-expanded={statusDropdown === item.id}
+            onClick={(event) => onOpenStatus(event, item.id)}
+            style={{ minWidth: 104, height: 28, padding: '0 10px', background: statusMeta.bg || 'transparent', color: statusMeta.color || T.textMuted, borderColor: `${statusMeta.color || T.surfaceBorder}66`, borderRadius: 999, fontSize: 10.5, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.9, justifyContent: 'space-between' }}
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
               <RowStatusIcon size={10} />
@@ -434,7 +424,16 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             <ChevDown size={10} style={{ opacity: 0.8, transform: statusDropdown === item.id ? 'rotate(180deg)' : 'none' }} />
           </button>
           <button className="wbtn" aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} style={{ width: 24, height: 24, background: isBookmarked ? 'rgba(125,211,252,0.2)' : 'transparent', color: isBookmarked ? '#7dd3fc' : T.textMuted, borderColor: isBookmarked ? '#7dd3fc66' : `${T.surfaceBorder}` }}><Bookmark size={11} /></button>
-          <button className="wbtn" aria-label="Set status" onClick={(event) => onOpenStatus(item.id, event.currentTarget.getBoundingClientRect())} style={{ width: 24, height: 24, background: statusMeta.bg || 'transparent', color: statusMeta.color || T.textMuted, borderColor: `${statusMeta.color || T.surfaceBorder}66` }}><RowStatusIcon size={11} /></button>
+          <button
+            className="wbtn status-toggle"
+            aria-label={isWatched ? `Mark ${item.title} as unwatched` : `Mark ${item.title} as watched`}
+            title={isWatched ? 'Mark unwatched' : 'Mark watched'}
+            onClick={(event) => {
+              event.stopPropagation();
+              onSetStatus(item.id, isWatched ? 'unwatched' : 'watched');
+            }}
+            style={{ width: 28, height: 28, background: statusMeta.bg || 'transparent', color: statusMeta.color || T.textMuted, borderColor: `${statusMeta.color || T.surfaceBorder}66` }}
+          ><RowStatusIcon size={12} /></button>
         </div>
         {isWatched && <Check size={12} style={{ position: 'absolute', top: 8, right: 8, color: '#9be8bc', filter: 'drop-shadow(0 0 6px rgba(155,232,188,0.75))' }} />}
       </div>
@@ -585,25 +584,11 @@ export default function MCUViewer() {
   }, []);
 
   useEffect(() => {
-    const root = mainRef.current;
-    if (!root) return;
-    obsRef.current?.disconnect();
-    obsRef.current = new IntersectionObserver(entries => {
-      let best = null, bestTop = Infinity;
-      entries.forEach(e => {
-        const top = e.boundingClientRect.top;
-        if (e.isIntersecting && top >= 0 && top < bestTop) {
-          bestTop = top;
-          best = +e.target.dataset.phase;
-        }
-      });
-      if (best !== null && activePhase !== 0) setActivePhase(best);
-    }, { root, rootMargin: '0px 0px -70% 0px', threshold: 0 });
-    const timer = setTimeout(() => {
-      Object.values(phaseRefs.current).forEach(el => el && obsRef.current?.observe(el));
-    }, 50);
-    return () => { clearTimeout(timer); obsRef.current?.disconnect(); };
-  }, [listMode, essentialOnly, activePhase]);
+    // Phase selection is a filter, so do not rewrite it from scroll position.
+    // Rewriting the active phase while the user scrolls can temporarily filter
+    // every other phase out of the DOM, which looks like the list disappears.
+    return () => obsRef.current?.disconnect();
+  }, []);
 
   useEffect(() => {
     const fn = e => { if (sortRef.current && !sortRef.current.contains(e.target)) setSortOpen(false); };
@@ -1527,7 +1512,6 @@ export default function MCUViewer() {
   }, [detailItem]);
 
   const openStatusDropdown = (e, itemId) => {
-    if (isScrolling.current) return;
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
     const dropW = 240, dropH = 280;
@@ -1733,11 +1717,11 @@ export default function MCUViewer() {
         @keyframes phaseFlash{0%{opacity:0}20%{opacity:0.22}80%{opacity:0.18}100%{opacity:0}}
         .phase-flash{animation:phaseFlash 2.4s ease both}
 
-        @keyframes rowIn{from{opacity:0;transform:translateX(-5px)}to{opacity:1;transform:translateX(0)}}
-        .row-in{animation:rowIn 0.2s ease both}
+        @keyframes rowIn{from{opacity:1;transform:none}to{opacity:1;transform:none}}
+        .row-in{animation:none}
 
         @keyframes sectionUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-        .section-up{animation:sectionUp 0.32s ease both}
+        .section-up{animation:none}
 
         @keyframes fadeIn{from{opacity:0;transform:scale(0.97) translateY(-4px)}to{opacity:1;transform:scale(1) translateY(0)}}
         .fade-in{animation:fadeIn 0.16s ease both}
@@ -1757,9 +1741,12 @@ export default function MCUViewer() {
         @keyframes buttonPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--theme-accent) 45%, transparent)}70%{box-shadow:0 0 0 6px transparent}100%{box-shadow:0 0 0 0 transparent}}
         .button-click{animation:buttonPulse 0.6s ease both}
 
-        .wbtn{width:30px;height:30px;border-radius:50%;border:1.5px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.16s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.18s,background 0.18s;flex-shrink:0}
-        .wbtn:hover{transform:scale(1.12)}
-        .wbtn:active{transform:scale(0.88);animation:buttonPulse 0.4s}
+        .wbtn{position:relative;width:30px;height:30px;border-radius:50%;border:1.5px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:transform 0.16s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.18s,background 0.18s,border-color 0.18s,color 0.18s;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 8px 18px rgba(0,0,0,0.18)}
+        .wbtn:hover{transform:translate3d(0,-1px,0) scale(1.08);border-color:rgba(255,255,255,0.28)!important;background:rgba(255,255,255,0.1)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,0.14),0 12px 28px rgba(0,0,0,0.25),0 0 18px rgba(124,255,218,0.12)}
+        .wbtn:active{transform:scale(0.92);animation:buttonPulse 0.4s}
+        .status-pill{text-transform:uppercase;font-weight:800;line-height:1;border-radius:999px}
+        .status-toggle::after{content:'';position:absolute;inset:-4px;border-radius:inherit;background:currentColor;opacity:0;filter:blur(10px);transition:opacity 0.18s ease;z-index:-1}
+        .status-toggle:hover::after{opacity:0.16}
 
         .ntab{position:relative;font-family:'Bebas Neue',sans-serif;font-size:clamp(16px,2.4vw,22px);letter-spacing:3px;padding:14px 20px;border:none;background:transparent;cursor:pointer;transition:color 0.2s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
         .ntab::after{content:'';position:absolute;bottom:0;left:12px;right:12px;height:2px;border-radius:2px 2px 0 0;background:currentColor;transform:scaleX(0);transform-origin:center;transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1)}
@@ -1777,11 +1764,11 @@ export default function MCUViewer() {
         .curvy-panel{position:relative;overflow:hidden;border-radius:14px}
         .curvy-panel::before{display:none}
 
-        .section-up{content-visibility:auto;contain-intrinsic-size:900px}
-        .rrow{position:relative;contain:layout paint;transition:background 0.2s ease,transform 0.22s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.22s ease,border-color 0.22s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:var(--row-min-h,86px);border-radius:10px;overflow:hidden}
+        .section-up{content-visibility:visible;contain-intrinsic-size:auto}
+        .rrow{position:relative;contain:layout paint;content-visibility:visible;transition:background 0.2s ease,box-shadow 0.22s ease,border-color 0.22s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:var(--row-min-h,86px);border-radius:10px;overflow:hidden}
         .rrow:last-child{border-bottom:none}
         .rrow > *{position:relative;z-index:1}
-        .rrow:hover{transform:translateY(-2px);border-left-color:color-mix(in srgb,var(--theme-accent) 65%, var(--phase-color,#c0392b));box-shadow:0 10px 24px -14px var(--phase-glow,rgba(192,57,43,0.5))}
+        .rrow:hover{border-left-color:color-mix(in srgb,var(--theme-accent) 65%, var(--phase-color,#c0392b));box-shadow:0 10px 24px -14px var(--phase-glow,rgba(192,57,43,0.5))}
         .rrow.curvy-selected{border-left-color:var(--theme-accent);box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 45%, transparent),0 10px 24px -16px color-mix(in srgb,var(--theme-accent) 38%, transparent)}
         .rrow.type-film:hover{background:linear-gradient(90deg, rgba(224,82,82,0.18), ${T.rowHoverBg}) !important}
         .rrow.type-series:hover{background:linear-gradient(90deg, rgba(74,158,222,0.18), ${T.rowHoverBg}) !important}

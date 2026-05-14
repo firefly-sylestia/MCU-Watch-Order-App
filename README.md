@@ -1,9 +1,9 @@
 # MCU Viewing Order
 
 A clean, modern Marvel Cinematic Universe (MCU) viewing-order tracker.
-Browse all films, series, and shorts across Phases 1–6 in the proper
-chronological watch order, mark what you have seen, filter by type or
-essential/optional, and keep your progress saved locally.
+Browse films, series, shorts, and specials across MCU Phases 1–6 in
+chronological watch order, mark what you have seen, filter the list, and keep
+your progress saved locally.
 
 The app ships as both a web app (Vite + React) and a native Android app
 (Capacitor).
@@ -13,14 +13,34 @@ The app ships as both a web app (Vite + React) and a native Android app
 ## Features
 
 - Complete chronological viewing order across MCU Phases 1–6
-- Filter by film, series, or short
-- Filter to essentials only or already-watched only
-- Search by title or prerequisite
-- Sort chronological, by year, or alphabetical
+- Core and expanded list modes for essential or completionist watch plans
+- Status tracking for each title: Watched, Watching, Plan to Watch, On Hold,
+  Dropped, and Unwatched
+- Quick eye-button toggle for watched/unwatched from each row
+- Status dropdown on each row for changing detailed watch state
 - Per-phase progress bars and overall completion percentage
-- Progress saved automatically to local storage
-- Premium dark UI with smooth, GPU-accelerated animations
+- Search by title or prerequisite
+- Filter by type, status, watched-only, essentials, phase, and timeline mode
+- Sort chronological, by year, alphabetical, runtime, recently watched, or status
+- Bookmark, like, rewatch count, progress export/import, and share-card tools
+- Poster and metadata caching with optional refresh/export actions
+- Premium Marvel-inspired dark UI using Inter/Rajdhani for readability and
+  Bangers/Bebas Neue for display headings
+- Scroll-stable list rendering tuned to avoid disappearing rows during fast
+  up/down scrolling
 - Native Android build via Capacitor
+
+---
+
+## Watch status controls
+
+Each row has two status actions:
+
+1. **Status pill** — opens the status menu so you can choose any watch state.
+2. **Eye/status icon** — instantly toggles between `Watched` and `Unwatched`.
+
+Progress is stored in browser local storage under the app's progress cache key,
+so refreshing the page keeps your watch state on the same device/browser.
 
 ---
 
@@ -51,8 +71,8 @@ The signed release variant uses `build-release.sh`.
 
 ## App identity
 
-| Field          | Value                          |
-| -------------- | ------------------------------ |
-| App name       | MCU Viewing Order              |
-| Package / appId| `com.mcuviewingorder.app`      |
-| Web title      | MCU Viewing Order              |
+| Field           | Value                     |
+| --------------- | ------------------------- |
+| App name        | MCU Viewing Order         |
+| Package / appId | `com.mcuviewingorder.app` |
+| Web title       | MCU Viewing Order         |
