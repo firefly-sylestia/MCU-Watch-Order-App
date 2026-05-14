@@ -85,6 +85,19 @@ const CACHE_KEYS = {
   userActionsRewatch: 'mcu-user-actions-rewatch-v1',
   userActionsBookmarks: 'mcu-user-actions-bookmarks-v1',
   uiState: 'mcu-ui-state-v1',
+  authSession: 'mcu-auth-session-v1',
+  cloudStore: 'mcu-cloud-store-v1',
+  pendingSync: 'mcu-pending-sync-v1',
+};
+
+const AUTH_PROVIDER = 'supabase-auth';
+const GUEST_USER_ID = 'guest';
+const nowIso = () => new Date().toISOString();
+const stampValue = (value) => ({ value, updatedAt: nowIso() });
+const resolveByLatest = (localField, remoteField) => {
+  if (!localField) return remoteField;
+  if (!remoteField) return localField;
+  return new Date(localField.updatedAt || 0) >= new Date(remoteField.updatedAt || 0) ? localField : remoteField;
 };
 
 
@@ -424,6 +437,14 @@ export default function MCUViewer() {
   const [bookmarks,      setBookmarks]      = useState({});
   const [scrollCheckpoint, setScrollCheckpoint] = useState(initialUiState.scrollTop);
   const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authSession, setAuthSession] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(CACHE_KEYS.authSession) || 'null'); } catch { return null; }
+  });
+  const [online, setOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
+  const userId = authSession?.userId || GUEST_USER_ID;
+  const [syncMessage, setSyncMessage] = useState('');
+  const [lastSyncedAt, setLastSyncedAt] = useState(null);
 
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
@@ -457,6 +478,18 @@ export default function MCUViewer() {
     });
     localStorage.setItem('mcu-v7', JSON.stringify(data));
   };
+
+  const persistLocalUserSnapshot = useCallback((uid, payload) => {
+    safeLocalStorageSetItem(`mcu-user-snapshot-${uid}`, JSON.stringify(payload));
+  }, []);
+
+  const readCloudStore = useCallback(() => {
+    try { return JSON.parse(localStorage.getItem(CACHE_KEYS.cloudStore) || '{}'); } catch { return {}; }
+  }, []);
+
+  const writeCloudStore = useCallback((nextStore) => {
+    safeLocalStorageSetItem(CACHE_KEYS.cloudStore, JSON.stringify(nextStore));
+  }, []);
 
   const setStatusDirect = (id, newStatus) => {
     setItems(prev => {
@@ -1084,6 +1117,82 @@ export default function MCUViewer() {
     }
   }, [myLikes, myRating, rewatchCount, bookmarks], 400);
 
+  useEffect(() => {
+    const onOnline = () => setOnline(true);
+    const onOffline = () => setOnline(false);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    return () => {
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    safeLocalStorageSetItem(CACHE_KEYS.authSession, JSON.stringify(authSession || null));
+  }, [authSession]);
+
+  useEffect(() => {
+    try {
+      const snap = JSON.parse(localStorage.getItem(`mcu-user-snapshot-${userId}`) || '{}');
+      if (snap.items) {
+        setItems(prev => prev.map(i => ({ ...i, status: snap.items[i.id]?.status || 'unwatched', watchedDate: snap.items[i.id]?.watchedDate || null })));
+      }
+      if (snap.ratings) setMyRating(Object.fromEntries(Object.entries(snap.ratings).map(([k, v]) => [k, v?.value ?? v])));
+      if (snap.bookmarks) setBookmarks(Object.fromEntries(Object.entries(snap.bookmarks).map(([k, v]) => [k, v?.value ?? v])));
+      if (snap.customPosters) setPosterCache(prev => ({ ...prev, ...Object.fromEntries(Object.entries(snap.customPosters).map(([k, v]) => [k, v?.value ?? v])) }));
+    } catch {}
+  }, [userId]);
+
+  useDebouncedEffect(() => {
+    const itemsPayload = {};
+    items.forEach(i => {
+      if (i.status !== 'unwatched' || i.watchedDate) itemsPayload[i.id] = { status: i.status, watchedDate: i.watchedDate, updatedAt: nowIso() };
+    });
+    const snapshot = {
+      items: itemsPayload,
+      ratings: Object.fromEntries(Object.entries(myRating).map(([k, v]) => [k, stampValue(v)])),
+      bookmarks: Object.fromEntries(Object.entries(bookmarks).map(([k, v]) => [k, stampValue(v)])),
+      customPosters: Object.fromEntries(Object.entries(posterCache).map(([k, v]) => [k, stampValue(v)])),
+      updatedAt: nowIso(),
+    };
+    persistLocalUserSnapshot(userId, snapshot);
+    const pending = JSON.parse(localStorage.getItem(CACHE_KEYS.pendingSync) || '{}');
+    pending[userId] = snapshot;
+    safeLocalStorageSetItem(CACHE_KEYS.pendingSync, JSON.stringify(pending));
+  }, [items, myRating, bookmarks, posterCache, userId, persistLocalUserSnapshot], 500);
+
+  useEffect(() => {
+    if (!authSession?.userId || !online) return;
+    const pending = JSON.parse(localStorage.getItem(CACHE_KEYS.pendingSync) || '{}');
+    const local = pending[userId];
+    if (!local) return;
+    const cloudStore = readCloudStore();
+    const remote = cloudStore[userId] || {};
+    const merged = {
+      items: {},
+      ratings: {},
+      bookmarks: {},
+      customPosters: {},
+      updatedAt: nowIso(),
+    };
+    const ids = new Set([...Object.keys(local.items || {}), ...Object.keys(remote.items || {})]);
+    ids.forEach(id => { merged.items[id] = resolveByLatest(local.items?.[id], remote.items?.[id]); });
+    const ratingIds = new Set([...Object.keys(local.ratings || {}), ...Object.keys(remote.ratings || {})]);
+    ratingIds.forEach(id => { merged.ratings[id] = resolveByLatest(local.ratings?.[id], remote.ratings?.[id]); });
+    const bmIds = new Set([...Object.keys(local.bookmarks || {}), ...Object.keys(remote.bookmarks || {})]);
+    bmIds.forEach(id => { merged.bookmarks[id] = resolveByLatest(local.bookmarks?.[id], remote.bookmarks?.[id]); });
+    const posterIds = new Set([...Object.keys(local.customPosters || {}), ...Object.keys(remote.customPosters || {})]);
+    posterIds.forEach(id => { merged.customPosters[id] = resolveByLatest(local.customPosters?.[id], remote.customPosters?.[id]); });
+    cloudStore[userId] = merged;
+    writeCloudStore(cloudStore);
+    persistLocalUserSnapshot(userId, merged);
+    setLastSyncedAt(nowIso());
+    setSyncMessage('Synced (latest timestamp wins per field).');
+    delete pending[userId];
+    safeLocalStorageSetItem(CACHE_KEYS.pendingSync, JSON.stringify(pending));
+  }, [authSession, online, userId, readCloudStore, writeCloudStore, persistLocalUserSnapshot]);
+
   const hasCompleteMetadata = (item, posterValues = posterCache, metaValues = metaCache) => {
     const meta = metaValues[item.id] || {};
     const hasPoster = Boolean(localPosterSrc(item) || posterValues[item.id]);
@@ -1664,7 +1773,31 @@ export default function MCUViewer() {
           <button className="theme-btn" onClick={() => setSettingsOpen(o => !o)} aria-label="Open settings menu" title="Settings" style={{ width: 40, height: 40, background: darkMode ? 'rgba(16,18,35,0.92)' : '#fff' }}>
             <Settings size={15} />
           </button>
+          <button className="theme-btn" onClick={() => setAuthOpen(o => !o)} aria-label="Open account menu" title="Account" style={{ width: 40, height: 40, background: darkMode ? 'rgba(16,18,35,0.92)' : '#fff' }}>
+            <UserCircle size={15} />
+          </button>
         </div>
+        {authOpen && (
+          <div className="fade-in" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 60, marginTop: 8, minWidth: 280, borderRadius: 12, border: '1px solid var(--theme-border)', background: 'var(--theme-surface)', boxShadow: T.dropdownShadow, padding: 10, display: 'grid', gap: 8 }}>
+            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Account ({AUTH_PROVIDER})</div>
+            <div style={{ fontSize: 12, color: T.textMuted }}>{authSession ? `Signed in as ${authSession.email}` : 'Guest mode active (local only).'}</div>
+            <div style={{ fontSize: 12, color: T.textMuted }}>{online ? 'Online' : 'Offline'}{lastSyncedAt ? ` • Last sync ${new Date(lastSyncedAt).toLocaleString()}` : ''}</div>
+            {syncMessage && <div style={{ fontSize: 11, color: T.textMuted }}>{syncMessage}</div>}
+            {!authSession ? (
+              <button className="fpill" onClick={() => {
+                const email = window.prompt('Sign in with email (mock Supabase Auth):');
+                if (!email) return;
+                setAuthSession({ userId: email.trim().toLowerCase(), email: email.trim().toLowerCase(), provider: AUTH_PROVIDER, signedInAt: nowIso() });
+                setAuthOpen(false);
+              }}><UserCircle size={14}/>Sign in</button>
+            ) : (
+              <>
+                <button className="fpill" onClick={() => setAuthOpen(false)}><Info size={14}/>Account</button>
+                <button className="fpill" onClick={() => { setAuthSession(null); setAuthOpen(false); }}><Trash2 size={14}/>Sign out</button>
+              </>
+            )}
+          </div>
+        )}
         {settingsOpen && (
           <div className="fade-in" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, marginTop: 8, minWidth: 320, borderRadius: 12, border: '1px solid var(--theme-border)', background: 'var(--theme-surface)', boxShadow: T.dropdownShadow, padding: 10, display: 'grid', gap: 8, maxHeight: '80vh', overflow: 'auto', backdropFilter: 'blur(12px)' }}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Profile</div>
