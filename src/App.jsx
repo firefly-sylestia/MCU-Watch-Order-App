@@ -68,13 +68,6 @@ const TITLE_ROW_STATIC = {
   genreMeta: { marginTop: 2, fontSize: 10, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1.2 },
 };
 const DESKTOP_TEXT_SCALES = [0.9, 1, 1.1, 1.2, 1.35];
-const LOKI_LANGUAGE_OPTIONS = [
-  { id: 'midgard', label: 'Midgardian (English)' },
-  { id: 'asgard', label: 'Asgardian Royal Script' },
-  { id: 'tva', label: 'TVA Bureaucratic' },
-  { id: 'frost', label: 'Jotun Whisper' },
-];
-
 // ─── Static data ────────────────────────────────────────────────────────────
 const LIST_MODES = [
   { id: 'core',     label: 'MCU',      sublabel: 'Curated List',       color: '#c0392b', desc: '60 curated films & series'           },
@@ -406,17 +399,10 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   isWorthy = false,
   multiverseShuffle = false,
   onThorLongPress,
-  lokiLanguage = 'midgard',
 }) {
   const StatusIcon = statusMeta.Icon;
   const TypeIcon = typeMeta.Icon;
   const RowStatusIcon = statusMeta.Icon;
-  const renderLokiLabel = (text) => {
-    if (lokiLanguage === 'asgard') return `By decree of Asgard, ${text}`;
-    if (lokiLanguage === 'tva') return `Filed by TVA: ${text}`;
-    if (lokiLanguage === 'frost') return `Whispered in Jotun: ${text}`;
-    return text;
-  };
   return (
     <div>
       <div className={`rrow row-in type-${item.type} ${isWatched ? 'glass-panel' : ''} ${isExpanded ? 'curvy-selected' : ''}`} onPointerDown={() => { if (item.title.toLowerCase().includes('thor')) { window.__thorPress = setTimeout(() => onThorLongPress?.(item), 650); } }} onPointerUp={() => clearTimeout(window.__thorPress)} onPointerLeave={() => clearTimeout(window.__thorPress)} style={{ background: isWatched ? 'var(--theme-watched-bg)' : 'transparent', opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow, borderColor: multiverseShuffle ? `hsl(${(item.id * 47) % 360} 90% 60% / 0.7)` : undefined }}>
@@ -459,7 +445,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
               <RowStatusIcon size={10} />
-              {renderLokiLabel(statusLabelOverride || statusMeta.label)}
+              {statusLabelOverride || statusMeta.label}
             </span>
             <ChevDown size={10} style={{ opacity: 0.8, transform: statusDropdown === item.id ? 'rotate(180deg)' : 'none' }} />
           </button>
@@ -545,7 +531,6 @@ export default function MCUViewer() {
   const [analyticsOpen,  setAnalyticsOpen]  = useState(false);
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [selectedIds,    setSelectedIds]    = useState(() => new Set());
-  const [easterEgg,      setEasterEgg]      = useState('');
   const [scrollCheckpoint, setScrollCheckpoint] = useState(initialUiState.scrollTop);
   const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
   const [grootMode, setGrootMode] = useState(false);
@@ -556,7 +541,6 @@ export default function MCUViewer() {
   const [desktopTextScale, setDesktopTextScale] = useState(1.1);
   const [lightningStrike, setLightningStrike] = useState(false);
   const [spiderDrop, setSpiderDrop] = useState(false);
-  const [lokiLanguage, setLokiLanguage] = useState('midgard');
 
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
@@ -612,7 +596,6 @@ export default function MCUViewer() {
           const threshold = Math.ceil(n.length / 2);
           if (watchedCount >= threshold) {
             setSnapMode(true);
-            setEasterEgg('🫰 Perfectly balanced… as all things should be.');
             setTimeout(() => setSnapMode(false), 1800);
           }
         }
@@ -634,26 +617,18 @@ export default function MCUViewer() {
     const normalized = search.trim().toLowerCase();
     if (normalized === 'groot') {
       setGrootMode(v => !v);
-      setEasterEgg('Groot mode toggled.');
     }
     if (normalized === 'multiverse') {
       setMultiverseShuffle(v => !v);
-      setEasterEgg('Multiverse borders toggled.');
-    }
-    if (normalized === 'loki') {
-      setLokiLanguage('asgard');
-      setEasterEgg('Loki language mode enabled.');
     }
     if (normalized === 'snap') {
       setSnapMode(true);
-      setEasterEgg('Perfectly balanced as all things should be.');
       setTimeout(() => setSnapMode(false), 1800);
     }
     if (normalized === 'spider man' || normalized === 'spiderman') {
       setSpiderSense(true);
       setSpiderDrop(true);
       setTimeout(() => setSpiderDrop(false), 2600);
-      setEasterEgg('Spider mode activated.');
     } else {
       setSpiderSense(normalized.includes('spider'));
     }
@@ -1036,13 +1011,20 @@ export default function MCUViewer() {
     'Captain America: The First Avenger': ['Chris Evans', 'Hayley Atwell', 'Sebastian Stan'],
     'Thor': ['Chris Hemsworth', 'Tom Hiddleston', 'Natalie Portman'],
   };
-  const lokiize = useCallback((value) => {
-    const text = String(value || '');
-    if (lokiLanguage === 'asgard') return `By decree of Asgard, ${text}`;
-    if (lokiLanguage === 'tva') return `Filed by TVA: ${text}`;
-    if (lokiLanguage === 'frost') return `Whispered in Jotun: ${text}`;
-    return text;
-  }, [lokiLanguage]);
+  const saveImageToDevice = useCallback(async (blob, filename) => {
+    const base64 = await blobToBase64(blob);
+    const isNative = Capacitor.isNativePlatform();
+    if (isNative && Capacitor.getPlatform() === 'android') {
+      await Filesystem.writeFile({
+        path: `Pictures/MCUViewingOrder/${filename}`,
+        data: base64,
+        directory: Directory.ExternalStorage,
+        recursive: true,
+      });
+      return;
+    }
+    triggerDownload(blob, filename);
+  }, []);
 
   const localPosterSrc = (item) => {
     const mapped = POSTER_OVERRIDES[item.id] || localPosterMap[item.id] || localPosterMap[String(item.id)] || localPosterMap[slugifyPosterName(item.title)];
@@ -1280,23 +1262,35 @@ export default function MCUViewer() {
   const shareReviewCard = async (item) => {
     try {
       const canvas = document.createElement('canvas');
-      canvas.width = 900; canvas.height = 1200;
+      canvas.width = 1600; canvas.height = 2200;
       const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#0f1224'; ctx.fillRect(0,0,900,1200);
+      if (!ctx) return;
+      const padding = 96;
+      const cardX = padding;
+      const cardY = 260;
+      const cardW = canvas.width - (padding * 2);
+      const posterH = 1280;
+      ctx.fillStyle = '#0b1020';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.src = posterSrc(item);
       await new Promise((res) => { img.onload = res; img.onerror = res; });
-      ctx.globalAlpha = 0.95;
-      try { ctx.drawImage(img, 80, 80, 740, 860); } catch {}
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = 'rgba(0,0,0,0.62)'; ctx.fillRect(80, 760, 740, 180);
-      ctx.fillStyle = '#fff'; ctx.font = '700 46px sans-serif'; ctx.fillText(item.title.slice(0,28), 100, 830);
-      ctx.font = '600 34px sans-serif'; ctx.fillText(`Rating: ${myRating[item.id] || 0}/5`, 100, 885);
-      ctx.font = '400 24px sans-serif'; ctx.fillText((reviews[item.id] || 'No review').slice(0,80), 100, 1060);
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      try { ctx.drawImage(img, cardX, cardY, cardW, posterH); } catch {}
+      ctx.fillStyle = '#0e162e';
+      ctx.fillRect(cardX, cardY + posterH, cardW, 620);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 62px Inter, sans-serif';
+      ctx.fillText(item.title.slice(0, 34), cardX + 36, cardY + posterH + 96);
+      ctx.font = '600 42px Inter, sans-serif';
+      ctx.fillText(`Rating: ${myRating[item.id] || 0}/5`, cardX + 36, cardY + posterH + 172);
+      ctx.fillStyle = '#a7b1c2';
+      ctx.font = '500 30px Inter, sans-serif';
+      ctx.fillText((reviews[item.id] || 'No review yet.').slice(0, 120), cardX + 36, cardY + posterH + 246);
+      ctx.fillText('MCU Viewing Order', cardX + 36, canvas.height - 56);
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
       if (!blob) return;
-      triggerDownload(blob, `${slugifyPosterName(item.title)}-review-card.png`);
+      await saveImageToDevice(blob, `${slugifyPosterName(item.title)}-review-card.png`);
     } catch (e) { console.error('Failed review card', e); }
   };
 
@@ -1467,10 +1461,8 @@ export default function MCUViewer() {
       if (event.key === sequence[index]) {
         index += 1;
         if (index === sequence.length) {
-          setEasterEgg('Avengers assembled: Quantum Theme unlocked for this session.');
           setThemeMode('mystic');
           index = 0;
-          window.setTimeout(() => setEasterEgg(''), 4200);
         }
       } else {
         index = event.key === sequence[0] ? 1 : 0;
@@ -2103,11 +2095,6 @@ export default function MCUViewer() {
 
       {lightningStrike && <div style={{ position:'fixed', inset:0, pointerEvents:'none', background:'linear-gradient(180deg, rgba(180,220,255,0.95), rgba(255,255,255,0))', mixBlendMode:'screen', zIndex:9999, animation:'fadeInOut 0.7s ease' }} />}
       {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
-      {easterEgg && (
-        <div className="glass-panel" style={{ position: 'fixed', top: 84, left: '50%', transform: 'translateX(-50%)', zIndex: 900, padding: '10px 14px', borderRadius: 999, color: 'var(--theme-accent)', background: 'var(--theme-surface)', border: '1px solid var(--theme-accent)' }}>
-          ✨ {easterEgg}
-        </div>
-      )}
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div ref={settingsRef} style={{ position: 'fixed', top: 16, right: 14, zIndex: 260 }}>
@@ -2156,15 +2143,7 @@ export default function MCUViewer() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6 }}>
               {DESKTOP_TEXT_SCALES.map(scale => <button key={scale} className='fpill' onClick={() => setDesktopTextScale(scale)} style={{ justifyContent: 'center', borderColor: desktopTextScale === scale ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{Math.round(scale * 100)}%</button>)}
             </div>
-            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase', marginTop: 2 }}>Loki Language</div>
-            <div style={{ display: 'grid', gap: 6 }}>
-              {LOKI_LANGUAGE_OPTIONS.map(opt => (
-                <button key={opt.id} className='fpill' onClick={() => setLokiLanguage(opt.id)} style={{ justifyContent: 'center', borderColor: lokiLanguage === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-            {/* Theme picker with color swatches */}
+{/* Theme picker with color swatches */}
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase', marginTop: 2 }}>Theme</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
               {THEME_CHOICES.map(({ id: t, label, swatch }) => (
@@ -2204,7 +2183,7 @@ export default function MCUViewer() {
               <div className="header-title-mcu" style={{ fontSize: 'clamp(44px, 9vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: 'var(--theme-accent)' }}>MCU</div>
               <div className="header-title-sub" style={{ fontSize: 'clamp(26px, 4.2vw, 35px)', letterSpacing: 'clamp(3px, 1.1vw, 9px)', color: 'var(--theme-accent-alt)', marginTop: 0 }}>VIEWING ORDER</div>
               <div className="header-tagline" style={{ fontSize: '14px', color: 'var(--theme-warning)', letterSpacing: headerCompact ? 1.4 : 3, fontFamily: 'var(--font-marvel-ui)', marginTop: 1, transition: 'all 0.22s ease' }}>
-                {lokiize(`PHASES 1–6 · ${activeItems.length} ENTRIES · ${LIST_MODES.find(m => m.id === listMode)?.sublabel.toUpperCase()}`)}
+                {`PHASES 1–6 · ${activeItems.length} ENTRIES · ${LIST_MODES.find(m => m.id === listMode)?.sublabel.toUpperCase()}`}
               </div>
             </div>
             <div style={{ background: darkMode ? 'rgba(18,22,42,0.45)' : T.statBg, border: `1px solid ${darkMode ? 'rgba(255,220,235,0.28)' : T.statBorder}`, borderRadius: 10, padding: headerCompact ? '5px 10px' : '8px 14px', minWidth: headerCompact ? 145 : 180, boxShadow: darkMode ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'none', transition: 'all 0.22s ease' }}>
@@ -2269,7 +2248,7 @@ export default function MCUViewer() {
             <div style={{ fontSize: 13, color: darkMode ? 'rgba(255,255,255,0.72)' : '#5d6675', marginTop: 6 }}>{recentActivity.length ? `Recent: ${recentActivity[0].title}` : 'No recent activity'}</div>
             <button className="fpill" style={{ marginTop: 8 }} onClick={() => {
               if (nextUnwatched) { setActivePhase(nextUnwatched.phase); scrollTo(nextUnwatched.phase); setDetailItem(nextUnwatched); return; }
-              if (allWatched) { setEasterEgg('🏆 Congratulations! You completed every phase.'); return; }
+              if (allWatched) { return; }
               const phaseIds = PHASES.map(p => p.id);
               const idx = Math.max(0, phaseIds.indexOf(activePhase || 1));
               const nextPhaseId = phaseIds[(idx + 1) % phaseIds.length];
@@ -2586,8 +2565,7 @@ export default function MCUViewer() {
                         statusLabelOverride={grootMode ? 'I am Groot' : null}
                         isWorthy={Boolean(worthyIds[item.id])}
                         multiverseShuffle={multiverseShuffle}
-                        onThorLongPress={(pressedItem) => { setWorthyIds(prev => ({ ...prev, [pressedItem.id]: !prev[pressedItem.id] })); setLightningStrike(true); setTimeout(() => setLightningStrike(false), 700); setEasterEgg('The thunder answers.'); }}
-                        lokiLanguage={lokiLanguage}
+                        onThorLongPress={(pressedItem) => { setWorthyIds(prev => ({ ...prev, [pressedItem.id]: !prev[pressedItem.id] })); setLightningStrike(true); setTimeout(() => setLightningStrike(false), 700); }}
                       />
                     );
                   }}/>
