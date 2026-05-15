@@ -38,6 +38,7 @@ const Trash2    = p => <Icon {...p}><path d="M3 6h18"/><path d="M8 6V4h8v2"/><pa
 const Upload    = p => <Icon {...p}><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M20 16v4H4v-4"/></Icon>;
 const Download  = p => <Icon {...p}><path d="M12 4v12"/><path d="m17 11-5 5-5-5"/><path d="M20 20H4"/></Icon>;
 const Sun       = p => <Icon {...p}><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></Icon>;
+const Star      = p => <Icon {...p}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></Icon>;
 const Moon      = p => <Icon {...p}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></Icon>;
 const Settings  = p => <Icon {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.02.02a2 2 0 1 1-2.83 2.83l-.02-.02A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.03a1.7 1.7 0 0 0-.4-1.1 1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.87.34l-.02.02a2 2 0 1 1-2.83-2.83l.02-.02A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H2.9a2 2 0 1 1 0-4h.03a1.7 1.7 0 0 0 1.1-.4 1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.87l-.02-.02a2 2 0 1 1 2.83-2.83l.02.02A1.7 1.7 0 0 0 9 4.6c.4 0 .78-.2 1-.6.25-.31.39-.7.4-1.1V2.9a2 2 0 1 1 4 0v.03c0 .4.15.79.4 1.1.22.4.6.6 1 .6.67.07 1.34-.16 1.87-.62l.02-.02a2 2 0 1 1 2.83 2.83l-.02.02a1.7 1.7 0 0 0-.34 1.87c0 .4.2.78.6 1 .31.25.7.39 1.1.4h.03a2 2 0 1 1 0 4h-.03a1.7 1.7 0 0 0-1.1.4 1.7 1.7 0 0 0-.6 1z"/></Icon>;
 const Info      = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></Icon>;
@@ -2152,6 +2153,10 @@ export default function MCUViewer() {
 
         .detail-layout{grid-template-columns:minmax(220px,34%) minmax(0,1fr)}
         .detail-pill{background:rgba(255,255,255,0.08) !important;border-color:rgba(255,255,255,0.18) !important;transform:none !important;box-shadow:none !important}
+        .detail-btn{padding:7px 10px !important;font-size:10px !important;line-height:1.2;justify-content:center;border-radius:10px !important;background:rgba(255,255,255,0.06) !important;border-color:rgba(255,255,255,0.14) !important}
+        .detail-btn:hover{background:rgba(255,255,255,0.11) !important;border-color:rgba(255,255,255,0.25) !important;color:var(--theme-text) !important}
+        .detail-btn.is-active{background:color-mix(in srgb, var(--theme-danger) 20%, rgba(255,255,255,0.08)) !important;border-color:color-mix(in srgb, var(--theme-danger) 55%, rgba(255,255,255,0.2)) !important;color:var(--theme-danger) !important}
+        .detail-btn-group{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px;align-items:center}
         .detail-fallback-poster{position:relative;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 20% 20%, rgba(232,184,75,0.22), transparent 48%),radial-gradient(circle at 80% 30%, rgba(74,158,222,0.24), transparent 44%),linear-gradient(145deg, rgba(14,20,44,0.9), rgba(9,14,34,0.95));overflow:hidden}
         .detail-fallback-poster::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,0.03)}
         .detail-fallback-poster span{position:relative;z-index:1;text-align:center;font-size:clamp(24px,5vw,40px);line-height:1.2;font-weight:700;color:rgba(242,247,255,0.95);text-shadow:0 2px 14px rgba(0,0,0,0.35)}
@@ -2727,8 +2732,8 @@ export default function MCUViewer() {
                 {!detailLoading && !detailData && <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Showing local data.</div>}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                   <span style={{ fontSize: 11, color: T.textMuted }}>Description</span>
-                  <button className="fpill glass-panel" style={{ padding: '3px 7px', fontSize: 9 }} onClick={() => setDetailPlotState(prev => ({ ...prev, active: 'primary' }))}>V1 (TMDB)</button>
-                  <button className="fpill glass-panel" style={{ padding: '3px 7px', fontSize: 9 }} onClick={async () => { if (!detailPlotState.secondary) await fetchSecondaryPlotForDetail(); setDetailPlotState(prev => ({ ...prev, active: 'secondary' })); }}>
+                  <button className="fpill glass-panel detail-btn" style={{ padding: '4px 8px', fontSize: 9 }} onClick={() => setDetailPlotState(prev => ({ ...prev, active: 'primary' }))}>V1 (TMDB)</button>
+                  <button className="fpill glass-panel detail-btn" style={{ padding: '4px 8px', fontSize: 9 }} onClick={async () => { if (!detailPlotState.secondary) await fetchSecondaryPlotForDetail(); setDetailPlotState(prev => ({ ...prev, active: 'secondary' })); }}>
                     {detailPlotState.loadingSecondary ? 'Loading V2…' : 'V2 (OMDb)'}
                   </button>
                 </div>
@@ -2749,19 +2754,19 @@ export default function MCUViewer() {
                   </button>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10, alignItems: 'center' }}>
+                <div className="detail-btn-group">
                   <span style={{ gridColumn: '1 / -1', fontSize: 11, color: T.textMuted, letterSpacing: 1.1, fontFamily: 'var(--font-marvel-ui)' }}>QUICK ACTIONS</span>
-                  <button className="fpill glass-panel" style={{ padding: '6px 8px', fontSize: 10, justifyContent: 'center', background: myLikes[detailItem.id] ? 'color-mix(in srgb, var(--theme-danger) 24%, transparent)' : 'rgba(255,255,255,0.07)', borderColor: myLikes[detailItem.id] ? 'color-mix(in srgb, var(--theme-danger) 60%, transparent)' : 'rgba(255,255,255,0.16)', color: myLikes[detailItem.id] ? 'var(--theme-danger)' : T.text }} onClick={() => setMyLikes(p => ({ ...p, [detailItem.id]: p[detailItem.id] ? 0 : 1 }))}><Heart size={11}/> {myLikes[detailItem.id] ? 'Liked' : 'Like'}</button>
-                  <button className="fpill glass-panel" style={{ padding: '6px 8px', fontSize: 9, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setBookmarks(p => ({ ...p, [detailItem.id]: p[detailItem.id] ? 0 : 1 }))}><Bookmark size={12}/> {bookmarks[detailItem.id] ? 'Saved' : 'Bookmark'}</button>
-                  <button className="fpill glass-panel" style={{ padding: '6px 8px', fontSize: 9, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => refreshPosterForItem(detailItem)} disabled={posterFetchState.active}><Download size={12}/> Refresh poster</button>
-                  <button className="fpill glass-panel" style={{ padding: '6px 8px', fontSize: 9, justifyContent: 'center', background: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => exportPosterForItem(detailItem)}><Download size={12}/> Export this poster</button>
+                  <button className={`fpill glass-panel detail-btn ${myLikes[detailItem.id] ? 'is-active' : ''}`} style={{ color: myLikes[detailItem.id] ? 'var(--theme-danger)' : T.text }} onClick={() => setMyLikes(p => ({ ...p, [detailItem.id]: p[detailItem.id] ? 0 : 1 }))}><Heart size={11}/> {myLikes[detailItem.id] ? 'Liked' : 'Like'}</button>
+                  <button className="fpill glass-panel detail-btn" style={{}} onClick={() => setBookmarks(p => ({ ...p, [detailItem.id]: p[detailItem.id] ? 0 : 1 }))}><Bookmark size={12}/> {bookmarks[detailItem.id] ? 'Saved' : 'Bookmark'}</button>
+                  <button className="fpill glass-panel detail-btn" style={{}} onClick={() => refreshPosterForItem(detailItem)} disabled={posterFetchState.active}><Download size={12}/> Refresh poster</button>
+                  <button className="fpill glass-panel detail-btn" style={{}} onClick={() => exportPosterForItem(detailItem)}><Download size={12}/> Export this poster</button>
                 </div>
                 <div style={{ fontSize: 14 }}><strong>Cast:</strong> {detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8, marginTop: 12 }}>
-                  <button className="fpill glass-panel" style={{ padding: '7px 8px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setStatusDirect(detailItem.id, 'watched')}><Check size={10}/>Watched</button>
-                  <button className="fpill glass-panel" style={{ padding: '7px 8px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setStatusDirect(detailItem.id, 'watching')}><Eye size={10}/>Watching</button>
-                  <button className="fpill glass-panel" style={{ padding: '7px 8px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setStatusDirect(detailItem.id, 'plan-to-watch')}><Clock size={10}/>Plan</button>
-                  <button className="fpill glass-panel" style={{ padding: '7px 8px', fontSize: 11, justifyContent: 'center', background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.16)' }} onClick={() => setStatusDirect(detailItem.id, 'unwatched')}><EyeOff size={10}/>Unwatch</button>
+                <div className="detail-btn-group" style={{ marginTop: 12 }}>
+                  <button className="fpill glass-panel detail-btn" style={{}} onClick={() => setStatusDirect(detailItem.id, 'watched')}><Check size={10}/>Watched</button>
+                  <button className="fpill glass-panel detail-btn" style={{}} onClick={() => setStatusDirect(detailItem.id, 'watching')}><Eye size={10}/>Watching</button>
+                  <button className="fpill glass-panel detail-btn" style={{}} onClick={() => setStatusDirect(detailItem.id, 'plan-to-watch')}><Clock size={10}/>Plan</button>
+                  <button className="fpill glass-panel detail-btn" style={{}} onClick={() => setStatusDirect(detailItem.id, 'unwatched')}><EyeOff size={10}/>Unwatch</button>
                 </div>
               </div>
             </div>
