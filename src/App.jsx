@@ -541,7 +541,7 @@ export default function MCUViewer() {
   const [snapMode, setSnapMode] = useState(false);
   const [spiderSense, setSpiderSense] = useState(false);
   const [multiverseShuffle, setMultiverseShuffle] = useState(false);
-  const [desktopTextScale, setDesktopTextScale] = useState(1.1);
+  const [desktopTextScale, setDesktopTextScale] = useState(1);
   const [lightningStrike, setLightningStrike] = useState(false);
   const [spiderDrop, setSpiderDrop] = useState(false);
 
@@ -1303,29 +1303,38 @@ export default function MCUViewer() {
         vibranium: { page: '#051a24', card: '#0a2d3a', text: '#ecfbff', subtext: '#9fd3de' },
       };
       const theme = themes[reviewCardTheme] || themes.midnight;
-      const padding = 96;
+      const padding = 88;
       const cardX = padding;
-      const cardY = 260;
+      const cardY = 130;
       const cardW = canvas.width - (padding * 2);
-      const posterH = 1280;
+      const posterW = 460;
+      const posterH = 690;
+      const posterX = cardX + 52;
+      const posterY = cardY + 120;
       ctx.fillStyle = theme.page;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = theme.card;
+      ctx.fillRect(cardX, cardY, cardW, canvas.height - (cardY + 120));
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.src = posterSrc(item);
       await new Promise((res) => { img.onload = res; img.onerror = res; });
-      try { ctx.drawImage(img, cardX, cardY, cardW, posterH); } catch {}
-      ctx.fillStyle = theme.card;
-      ctx.fillRect(cardX, cardY + posterH, cardW, 620);
+      try { ctx.drawImage(img, posterX, posterY, posterW, posterH); } catch {}
       ctx.fillStyle = '#ffffff';
-      ctx.font = '700 62px Inter, sans-serif';
-      ctx.fillText(item.title.slice(0, 34), cardX + 36, cardY + posterH + 96);
-      ctx.font = '600 42px Inter, sans-serif';
-      ctx.fillText(`Rating: ${myRating[item.id] || 0}/5`, cardX + 36, cardY + posterH + 172);
+      ctx.font = '700 56px Inter, sans-serif';
+      drawWrappedText(ctx, item.title, posterX + posterW + 54, posterY + 84, cardW - posterW - 150, 62, 3);
+      const rating = myRating[item.id] || 0;
+      ctx.font = '700 74px Inter, sans-serif';
+      ctx.fillStyle = '#ffd166';
+      ctx.fillText('★'.repeat(Math.max(1, rating)), posterX + posterW + 54, posterY + 210);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '600 34px Inter, sans-serif';
+      ctx.fillText(`${profile.name || 'Reviewer'} · ${rating}/5`, posterX + posterW + 54, posterY + 260);
       ctx.fillStyle = theme.subtext;
-      ctx.font = '500 30px Inter, sans-serif';
-      drawWrappedText(ctx, reviews[item.id] || 'No review yet.', cardX + 36, cardY + posterH + 246, cardW - 72, 42, 4);
-      ctx.fillText('MCU Viewing Order', cardX + 36, canvas.height - 56);
+      ctx.font = '500 44px Inter, sans-serif';
+      drawWrappedText(ctx, reviews[item.id] || 'No review yet.', posterX, posterY + posterH + 110, cardW - 110, 58, 7);
+      ctx.font = '600 28px Inter, sans-serif';
+      ctx.fillText('Review Card', cardX + 52, canvas.height - 70);
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
       if (!blob) return;
       const result = await saveImageToDevice(blob, `${slugifyPosterName(item.title)}-review-card.png`);
@@ -1987,7 +1996,7 @@ export default function MCUViewer() {
 
   const appThemeBg = 'var(--theme-app-bg)';
   return (
-    <div data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'none' }} className="theme-switch performance-mode">
+    <div data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': desktopTextScale, width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: 'calc(16px * var(--text-scale))', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'none' }} className="theme-switch performance-mode">
       <style>{`
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         html,body{scroll-behavior:auto}
@@ -2477,7 +2486,7 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} className={snapMode ? 'snap-blip' : ''} style={{ overflow: 'visible', flex: '0 0 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px', fontSize: `calc(1rem * ${desktopTextScale})` }}>
+      <main ref={mainRef} className={snapMode ? 'snap-blip' : ''} style={{ overflow: 'visible', flex: '0 0 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '24px 16px 80px 16px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
@@ -2697,7 +2706,7 @@ export default function MCUViewer() {
 
       {analyticsOpen && (
         <div className="detail-backdrop" onClick={() => setAnalyticsOpen(false)} role="dialog" aria-label="Analysis history">
-          <div className="detail-card glass-panel" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 980 }}>
+          <div className="detail-card glass-panel" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 1080, border: '1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border))', boxShadow: '0 28px 80px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 14 }}>
               <div>
                 <h2 style={{ fontSize: 30, marginBottom: 4 }}>Analysis</h2>
@@ -2720,14 +2729,17 @@ export default function MCUViewer() {
               </div>
               {reviewShareStatus.message && <div style={{ fontSize: 12, color: reviewShareStatus.type === 'error' ? 'var(--theme-danger)' : 'var(--theme-success)' }}>{reviewShareStatus.message}</div>}
             </div>
-            <div style={{ display: 'grid', gap: 10, maxHeight: '58vh', overflow: 'auto', paddingRight: 4 }}>
+            <div style={{ display: 'grid', gap: 12, maxHeight: '58vh', overflow: 'auto', paddingRight: 4 }}>
               {historyItems.length === 0 && <div style={{ color: T.textMuted, padding: 16 }}>No watched history yet. Mark an item watched to start your analysis log.</div>}
               {historyItems.map(item => (
-                <div key={item.id} className="glass-panel" style={{ borderRadius: 12, padding: 12, display: 'grid', gap: 9 }}>
+                <div key={item.id} className="glass-panel" style={{ borderRadius: 16, padding: 14, display: 'grid', gap: 10, border: '1px solid color-mix(in srgb, var(--theme-accent) 16%, var(--theme-border))', background: 'linear-gradient(145deg, color-mix(in srgb, var(--theme-surface) 88%, #11142b), color-mix(in srgb, var(--theme-surface) 96%, #04050a))' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline', flexWrap: 'wrap' }}>
                     <strong style={{ fontSize: 16 }}>{item.title}</strong>
                     <span style={{ color: T.textMuted, fontSize: 12 }}>{item.watchedDate || 'No watch date'} · ~{Math.round(estimateRuntimeHours(item) * 10) / 10}h</span>
                   </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: 12, alignItems: 'start' }}>
+                    <img src={posterSrc(item)} alt={item.title} style={{ width: 100, height: 145, borderRadius: 10, objectFit: 'cover', border: `1px solid ${T.surfaceBorder}` }} />
+                    <div style={{ display: 'grid', gap: 8 }}>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                     <button className="fpill" style={{ padding: '6px 9px', fontSize: 11 }} onClick={() => setRewatchCount(p => ({ ...p, [item.id]: (p[item.id] || 0) + 1 }))}><Clock size={12}/>Re-watch {rewatchCount[item.id] || 0}</button>
                     <button className="fpill" style={{ padding: '6px 9px', fontSize: 11 }} onClick={() => setRewatchCount(p => ({ ...p, [item.id]: Math.max(0, (p[item.id] || 0) - 1) }))}>−</button>
@@ -2744,6 +2756,8 @@ export default function MCUViewer() {
                     style={{ width: '100%', resize: 'vertical', borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: 10, lineHeight: 1.4 }}
                   />
                   <button className="fpill" style={{ padding: '6px 10px', fontSize: 11, width: 'fit-content' }} onClick={() => shareReviewCard(item)}><Upload size={12}/>Share Review Card</button>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
