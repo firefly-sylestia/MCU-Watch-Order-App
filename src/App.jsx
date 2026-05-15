@@ -105,6 +105,7 @@ const UI_STATE_DEFAULTS = {
   viewMode: 'list',
   densityMode: 'comfortable',
   timelineMode: 'sacred',
+  autoHideStatuses: false,
   scrollTop: 0,
 };
 
@@ -137,6 +138,7 @@ const readSavedUiState = () => {
       viewMode: VALID_VIEW_MODES.has(saved.viewMode) ? saved.viewMode : UI_STATE_DEFAULTS.viewMode,
       densityMode: VALID_DENSITY_MODES.has(saved.densityMode) ? saved.densityMode : UI_STATE_DEFAULTS.densityMode,
       timelineMode: VALID_TIMELINE_MODES.has(saved.timelineMode) ? saved.timelineMode : UI_STATE_DEFAULTS.timelineMode,
+      autoHideStatuses: typeof saved.autoHideStatuses === 'boolean' ? saved.autoHideStatuses : UI_STATE_DEFAULTS.autoHideStatuses,
       scrollTop: Number.isFinite(Number(saved.scrollTop)) ? Math.max(0, Number(saved.scrollTop)) : UI_STATE_DEFAULTS.scrollTop,
     };
   } catch {
@@ -519,7 +521,7 @@ export default function MCUViewer() {
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
   const [themeMode,      setThemeMode]      = useState('classic');
   const [spoilerSafeMode, setSpoilerSafeMode] = useState(true);
-  const [showCompleted, setShowCompleted] = useState(false);
+  const [autoHideStatuses, setAutoHideStatuses] = useState(initialUiState.autoHideStatuses);
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
@@ -610,7 +612,7 @@ export default function MCUViewer() {
           setTimeout(() => setCelebPhase(null), 2400);
         }
       }
-      if (AUTO_HIDDEN_STATUSES.has(newStatus)) setShowCompleted(false);
+      if (AUTO_HIDDEN_STATUSES.has(newStatus)) setAutoHideStatuses(true);
       if (newStatus === 'unwatched') setRewatchCount(prevCount => ({ ...prevCount, [id]: 0 }));
       persist(n);
       return n;
@@ -898,7 +900,7 @@ export default function MCUViewer() {
         else if (newStatus !== 'watched') updated.watchedDate = null;
         return updated;
       });
-      if (AUTO_HIDDEN_STATUSES.has(newStatus)) setShowCompleted(false);
+      if (AUTO_HIDDEN_STATUSES.has(newStatus)) setAutoHideStatuses(true);
       persist(n);
       return n;
     });
@@ -919,7 +921,7 @@ export default function MCUViewer() {
         }
         return updated;
       });
-      if (AUTO_HIDDEN_STATUSES.has(newStatus)) setShowCompleted(false);
+      if (AUTO_HIDDEN_STATUSES.has(newStatus)) setAutoHideStatuses(true);
       persist(n);
       return n;
     });
@@ -931,7 +933,7 @@ export default function MCUViewer() {
       if (listMode === 'core' && !coreIds.has(i.id)) return false;
       if (listMode === 'core' && essentialOnly && !i.essential) return false;
       const statusFilterIsAutoHidden = statusFilter && HIDDEN_FILTER_STATUSES.has(statusFilter);
-      if (!showCompleted && !watchedOnly && !statusFilterIsAutoHidden && AUTO_HIDDEN_STATUSES.has(i.status)) return false;
+      if (autoHideStatuses && !watchedOnly && !statusFilterIsAutoHidden && AUTO_HIDDEN_STATUSES.has(i.status)) return false;
       if (watchedOnly && i.status !== 'watched') return false;
       if (statusFilter && i.status !== statusFilter) return false;
       if (typeFilter && i.type !== typeFilter) return false;
@@ -952,7 +954,7 @@ export default function MCUViewer() {
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, showCompleted, typeFilter, activePhase, timelineMode, genreFilter, q, sortBy, coreIds]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, q, sortBy, coreIds]);
 
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
@@ -993,9 +995,10 @@ export default function MCUViewer() {
       viewMode,
       densityMode,
       timelineMode,
+      autoHideStatuses,
       scrollTop,
     }));
-  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, scrollCheckpoint], 300);
+  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, scrollCheckpoint], 300);
   const totalWatched = useMemo(() => activeItems.filter(i => i.status === 'watched').length, [activeItems]);
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
@@ -1975,7 +1978,7 @@ export default function MCUViewer() {
   };
 
   // Count active filters for the collapsed bar badge
-  const activeFilterCount = [typeFilter, statusFilter, watchedOnly, showCompleted, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
+  const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
 
   const renderPhaseSelector = () => (
     <div ref={phaseRef} style={{ position: 'relative', flex: '0 0 auto' }}>
@@ -2347,8 +2350,18 @@ export default function MCUViewer() {
                 style={{ width: '100%', background: T.inputBg, border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '7px 12px 7px 30px', color: T.inputColor, fontSize: 14, letterSpacing: 0.3, boxShadow: spiderSense ? '0 0 0 2px rgba(220,20,60,0.45), 0 0 16px rgba(220,20,60,0.35)' : 'none', animation: spiderSense ? 'spiderPulse 0.85s ease-in-out infinite' : 'none' }} />
             </div>
             <div className='filter-row-actions' style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 12, color: T.textMuted, letterSpacing: 2.2 }}>
-                {filtered.length}
+              {autoHideStatuses && !watchedOnly && !statusFilter && (
+                <>
+                  <span style={{ fontSize: 11, padding: '4px 8px', borderRadius: 999, border: `1px solid ${T.filterBorder}`, background: T.inputBg, color: T.textMuted, letterSpacing: 0.4 }}>
+                    Watched & Dropped hidden
+                  </span>
+                  <button className="fpill" style={{ padding: '5px 10px', fontSize: 11 }} onClick={() => setAutoHideStatuses(false)}>
+                    Show all statuses
+                  </button>
+                </>
+              )}
+              <span style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 12, color: T.textMuted, letterSpacing: 1.6 }}>
+                {filtered.length}/{activeItems.length} shown
               </span>
             </div>
           </div>
@@ -2408,8 +2421,8 @@ export default function MCUViewer() {
                     <div className={`sopt ${statusFilter === 'watched' ? 'picked' : ''}`} onClick={() => { setStatusFilter('watched'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Watched status</div>
                     <div className={`sopt ${statusFilter === 'watching' ? 'picked' : ''}`} onClick={() => { setStatusFilter('watching'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Watching</div>
                     <div className={`sopt ${statusFilter === 'plan-to-watch' ? 'picked' : ''}`} onClick={() => { setStatusFilter('plan-to-watch'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Plan to Watch</div>
-                    <div className={`sopt ${statusFilter === 'dropped' ? 'picked' : ''}`} onClick={() => { setStatusFilter('dropped'); setWatchedOnly(false); setShowCompleted(false); setFilterStatusOpen(false); }}>Dropped</div>
-                    <div className={`sopt ${showCompleted ? 'picked' : ''}`} onClick={() => { setShowCompleted(v => !v); setStatusFilter(null); setWatchedOnly(false); setFilterStatusOpen(false); }}>{showCompleted ? 'Hide watched/dropped' : 'Show watched/dropped'}</div>
+                    <div className={`sopt ${statusFilter === 'dropped' ? 'picked' : ''}`} onClick={() => { setStatusFilter('dropped'); setWatchedOnly(false); setAutoHideStatuses(false); setFilterStatusOpen(false); }}>Dropped</div>
+                    <div className={`sopt ${autoHideStatuses ? 'picked' : ''}`} onClick={() => { setAutoHideStatuses(v => !v); setStatusFilter(null); setWatchedOnly(false); setFilterStatusOpen(false); }}>{autoHideStatuses ? 'Hide watched/dropped: ON' : 'Hide watched/dropped: OFF'}</div>
                   </div>
                 )}
               </div>
@@ -2430,7 +2443,7 @@ export default function MCUViewer() {
               {/* Reset */}
               {activeFilterCount > 0 && (
                 <button className="fpill" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', padding: '7px 12px' }}
-                  onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setShowCompleted(false); setSortBy('order'); }}>
+                  onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setSortBy('order'); }}>
                   <Trash2 size={10} /> Clear
                 </button>
               )}
@@ -2439,7 +2452,7 @@ export default function MCUViewer() {
         )}
       </div>
 
-      {recentlyWatchedItems.length > 0 && !showCompleted && !watchedOnly && !statusFilter && (
+      {recentlyWatchedItems.length > 0 && autoHideStatuses && !watchedOnly && !statusFilter && (
         <div style={{ background: T.filterBg, borderBottom: `1px solid ${T.filterBorder}`, padding: '8px 24px', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Recently watched</span>
           {recentlyWatchedItems.map(item => {
@@ -2478,8 +2491,8 @@ export default function MCUViewer() {
           </button>
           {dockStatusOpen && (
             <div className="fade-in" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, minWidth: 172, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 10, overflow: 'hidden', boxShadow: 'none' }}>
-              <div className="sopt" onClick={() => { setStatusFilter(null); setWatchedOnly(false); setShowCompleted(false); setDockStatusOpen(false); }}>All statuses</div>
-              <div className="sopt" onClick={() => { setWatchedOnly(true); setStatusFilter(null); setShowCompleted(true); setDockStatusOpen(false); }}>Watched</div>
+              <div className="sopt" onClick={() => { setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setDockStatusOpen(false); }}>All statuses</div>
+              <div className="sopt" onClick={() => { setWatchedOnly(true); setStatusFilter(null); setAutoHideStatuses(false); setDockStatusOpen(false); }}>Watched</div>
               <div className="sopt" onClick={() => { setStatusFilter('watching'); setWatchedOnly(false); setDockStatusOpen(false); }}>Watching</div>
               <div className="sopt" onClick={() => { setStatusFilter('on-hold'); setWatchedOnly(false); setDockStatusOpen(false); }}>On Hold</div>
               <div className="sopt" onClick={() => { setStatusFilter('dropped'); setWatchedOnly(false); setDockStatusOpen(false); }}>Dropped</div>
