@@ -544,6 +544,7 @@ export default function MCUViewer() {
   const [desktopTextScale, setDesktopTextScale] = useState(1);
   const [lightningStrike, setLightningStrike] = useState(false);
   const [spiderDrop, setSpiderDrop] = useState(false);
+  const headerMinimized = scrollCheckpoint > 56;
 
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
@@ -2108,6 +2109,9 @@ export default function MCUViewer() {
         /* Mobile */
         @media (max-width: 767px) {
           .header-inner { padding: 10px 10px 8px !important; }
+          .header-title-mcu { font-size: clamp(34px, 7.2vw, 48px) !important; letter-spacing: clamp(1px, 0.5vw, 3px) !important; }
+          .header-title-sub { font-size: clamp(18px, 4.2vw, 28px) !important; letter-spacing: clamp(1px, 0.7vw, 4px) !important; }
+          .header-tagline { font-size: 11px !important; letter-spacing: 1px !important; margin-top: 0 !important; }
           .fpill{padding:10px 16px !important;font-size:15px !important;min-height:44px}
           .rrow{grid-template-columns:24px 44px minmax(0,1fr) !important;gap:8px;padding:14px 10px 14px 8px;min-height:96px}
           .rrow .row-actions{grid-column:2 / -1;flex-direction:row !important;align-items:center !important;justify-content:space-between !important;min-width:0 !important;width:100%;gap:8px}
@@ -2131,9 +2135,9 @@ export default function MCUViewer() {
           .rrow{font-size:17px}
           .header-inner{max-width:1240px;margin:0 auto}
         }
-        .header-title-mcu { font-size: clamp(48px, 8vw, 96px) !important; letter-spacing: clamp(2px, 0.8vw, 6px) !important; margin: 0 !important; }
-        .header-title-sub { font-size: clamp(28px, 4.2vw, 56px) !important; letter-spacing: clamp(4px, 1.2vw, 10px) !important; margin-top: 0px !important; }
-        .header-tagline { font-size: clamp(12px, 2.2vw, 15px) !important; margin-top: 1px !important; }
+        .header-title-mcu { font-size: clamp(42px, 7vw, 82px) !important; letter-spacing: clamp(1.5px, 0.7vw, 5px) !important; margin: 0 !important; }
+        .header-title-sub { font-size: clamp(24px, 3.6vw, 46px) !important; letter-spacing: clamp(2px, 0.9vw, 7px) !important; margin-top: 0px !important; }
+        .header-tagline { font-size: clamp(11px, 1.9vw, 13px) !important; margin-top: 1px !important; }
         .stat-card-num { font-size: clamp(28px, 4.5vw, 48px) !important; }
         .stat-card-label { font-size: clamp(11px, 1.8vw, 14px) !important; }
         .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; color:var(--theme-text-muted) !important }
@@ -2231,22 +2235,22 @@ export default function MCUViewer() {
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <header className="hexbg" style={{ background: 'var(--theme-header-bg)', borderBottom: `1px solid ${T.headerBorder}`, flexShrink: 0 }}>
-        <div className="header-inner" style={{ width: '100%', padding: 'calc(env(safe-area-inset-top, 0px) + 28px) 32px 14px', transition: 'padding 0.25s ease' }}>
+        <div className="header-inner" style={{ width: '100%', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 24px) 30px 12px', transition: 'padding 0.2s ease' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
-            <div style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.88, marginBottom: 0, fontWeight: 900 }}>
+            <div style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
               <div className="header-title-mcu" style={{ fontSize: 'clamp(44px, 9vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: 'var(--theme-accent)' }}>MCU</div>
               <div className="header-title-sub" style={{ fontSize: 'clamp(26px, 4.2vw, 35px)', letterSpacing: 'clamp(3px, 1.1vw, 9px)', color: 'var(--theme-accent-alt)', marginTop: 0 }}>VIEWING ORDER</div>
-              <div className="header-tagline" style={{ fontSize: '14px', color: 'var(--theme-warning)', letterSpacing: headerCompact ? 1.4 : 3, fontFamily: 'var(--font-marvel-ui)', marginTop: 1, transition: 'all 0.22s ease' }}>
-                {`PHASES 1–6 · ${activeItems.length} ENTRIES · ${LIST_MODES.find(m => m.id === listMode)?.sublabel.toUpperCase()}`}
+              <div className="header-tagline" style={{ fontSize: '14px', color: 'var(--theme-warning)', letterSpacing: headerMinimized ? 0.8 : 1.5, fontFamily: 'var(--font-marvel-ui)', marginTop: 1, transition: 'all 0.2s ease' }}>
+                {`${activeItems.length} Items · ${listMode === 'core' ? 'MCU' : 'Extended'}`}
               </div>
             </div>
-            <div style={{ background: darkMode ? 'rgba(18,22,42,0.45)' : T.statBg, border: `1px solid ${darkMode ? 'rgba(255,220,235,0.28)' : T.statBorder}`, borderRadius: 10, padding: headerCompact ? '5px 10px' : '8px 14px', minWidth: headerCompact ? 145 : 180, boxShadow: darkMode ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'none', transition: 'all 0.22s ease' }}>
-              <div className="stat-card-label" style={{ fontSize: '12px', letterSpacing: 2, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)' }}>TOTAL WATCHED</div>
+            <div style={{ background: darkMode ? 'rgba(18,22,42,0.38)' : T.statBg, border: `1px solid ${darkMode ? 'rgba(255,220,235,0.2)' : T.statBorder}`, borderRadius: 10, padding: headerMinimized ? '5px 9px' : '7px 12px', minWidth: headerMinimized ? 126 : 164, boxShadow: 'none', transition: 'all 0.2s ease' }}>
+              <div className="stat-card-label" style={{ fontSize: '11px', letterSpacing: 1.2, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)' }}>WATCHED</div>
               <div className="stat-card-num" style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 'clamp(40px, 5vw, 48px)', letterSpacing: 1, color: 'var(--theme-accent)', lineHeight: 1 }}>
                 {totalWatched}<span style={{ fontSize: 'clamp(24px, 3vw, 28px)', color: T.numFaint }}>/{activeItems.length}</span>
               </div>
-              <div style={{ display: 'inline-flex', marginTop: 6, alignItems: 'center', gap: 6, borderRadius: 999, padding: '3px 10px', border: `1px solid color-mix(in srgb, var(--theme-warning) 55%, transparent)`, background: 'var(--theme-warning-soft)', color: 'var(--theme-warning)', fontFamily: 'var(--font-marvel-ui)', fontSize: 11, letterSpacing: 1.4 }}>
-                MUST-WATCH {essWatched}/{essTotal}
+              <div style={{ display: 'inline-flex', marginTop: 4, alignItems: 'center', gap: 6, borderRadius: 999, padding: '2px 8px', border: `1px solid color-mix(in srgb, var(--theme-warning) 30%, transparent)`, background: 'transparent', color: 'var(--theme-warning)', fontFamily: 'var(--font-marvel-ui)', fontSize: 10, letterSpacing: 0.9 }}>
+                Core {essWatched}/{essTotal}
               </div>
             </div>
           </div>
