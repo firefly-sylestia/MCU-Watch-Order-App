@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   LUMINARY PANELS — App Component Styles
-   Apple UI Morphing Animations with 120fps Performance
+   MCU VIEWING TRACKER — Application Surface Styles
+   Cinematic timeline interactions and readable depth hierarchy
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Main App Container ─────────────────────────────────────────────────────── */
@@ -27,7 +27,7 @@
   justify-content: center;
   flex: 1;
   padding: 24px 16px;
-  animation: morphIn 600ms var(--ease-out) both;
+  animation: cinematicIn 600ms var(--ease-out) both;
 }
 
 @media (min-width: 768px) {
@@ -37,7 +37,7 @@
   }
 }
 
-/* ── Hero Section ───────────────────────────────────────────────────────────── */
+/* ── Brand Crest Section ───────────────────────────────────────────────────────────── */
 .hero {
   position: relative;
   display: flex;
@@ -76,7 +76,7 @@
   animation-delay: 350ms;
 }
 
-/* ── Counter Component ──────────────────────────────────────────────────────── */
+/* ── Progress Counter Component ──────────────────────────────────────────────────────── */
 .counter {
   display: inline-flex;
   align-items: center;
@@ -115,7 +115,7 @@
   outline-offset: 3px;
 }
 
-/* ── Next Steps Section ─────────────────────────────────────────────────────── */
+/* ── Content Rail Section ─────────────────────────────────────────────────────── */
 #next-steps {
   display: flex;
   flex-direction: column;
@@ -141,7 +141,7 @@
   }
 }
 
-/* ── Documentation Section ──────────────────────────────────────────────────── */
+/* ── Reference Rail Section ──────────────────────────────────────────────────── */
 #docs {
   border-bottom: 1px solid var(--border);
 }
@@ -161,7 +161,7 @@
   filter: drop-shadow(0 4px 12px var(--accent-glow));
 }
 
-/* ── Social Links ───────────────────────────────────────────────────────────── */
+/* ── Resource Links ───────────────────────────────────────────────────────────── */
 #next-steps ul {
   list-style: none;
   padding: 0;
@@ -205,7 +205,7 @@
 #next-steps ul a:hover {
   background: var(--bg-elevated);
   border-color: var(--border-hover);
-  box-shadow: var(--shadow-sm), 0 4px 20px var(--accent-glow);
+  box-shadow: var(--shadow-sm), 0 0 18px var(--accent-glow);
   transform: translate3d(0, -3px, 0);
 }
 
@@ -225,7 +225,7 @@
   opacity: 0.85;
 }
 
-/* ── Spacer ─────────────────────────────────────────────────────────────────── */
+/* ── Timeline Spacer ───────────────────────────────────────────────────────── */
 #spacer {
   height: 60px;
   border-top: 1px solid var(--border);
@@ -265,7 +265,7 @@
   filter: drop-shadow(0 0 6px var(--accent-glow-2));
 }
 
-/* ── Code Blocks ────────────────────────────────────────────────────────────── */
+/* ── Inline Code Tokens ────────────────────────────────────────────────────────────── */
 code {
   display: inline-flex;
   padding: 4px 10px;
@@ -277,21 +277,23 @@ code {
   border: 1px solid rgba(124, 255, 218, 0.15);
 }
 
-/* ── Smooth Morphing Transitions ────────────────────────────────────────────── */
+/* ── Cinematic State Transitions ────────────────────────────────────────────── */
+.cinematic-element,
 .morph-element {
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   will-change: transform, opacity;
   transition:
-    transform var(--duration-morph) var(--ease-morph),
+    transform var(--duration-cinematic) var(--ease-cinematic),
     opacity var(--duration-normal) var(--ease-out),
-    border-radius var(--duration-morph) var(--ease-morph),
+    border-radius var(--duration-cinematic) var(--ease-cinematic),
     background var(--duration-normal) var(--ease-out);
 }
 
-/* ── Entering Animation Classes ─────────────────────────────────────────────── */
+/* ── Entrance Animation Classes ─────────────────────────────────────────────── */
+.enter-cinematic,
 .enter-morph {
-  animation: morphIn var(--duration-morph) var(--ease-out) both;
+  animation: cinematicIn var(--duration-cinematic) var(--ease-out) both;
 }
 
 .enter-bounce {
@@ -299,14 +301,14 @@ code {
 }
 
 .enter-float {
-  animation: floatUp var(--duration-morph) var(--ease-out) both;
+  animation: floatUp var(--duration-cinematic) var(--ease-out) both;
 }
 
 .enter-scale {
-  animation: morphScale var(--duration-morph) var(--ease-spring) both;
+  animation: cinematicScale var(--duration-cinematic) var(--ease-spring) both;
 }
 
-/* ── Interactive Hover States ───────────────────────────────────────────────── */
+/* ── Interactive Hover Behaviors ───────────────────────────────────────────────── */
 .hover-lift {
   transition:
     transform var(--duration-normal) var(--ease-spring),
@@ -334,7 +336,7 @@ code {
   transform: scale(1.05);
 }
 
-/* ── Press States ───────────────────────────────────────────────────────────── */
+/* ── Press Interaction States ───────────────────────────────────────────────────────────── */
 .press-shrink:active {
   transform: scale(0.95);
   transition-duration: 60ms;
@@ -345,7 +347,7 @@ code {
   transition: transform 80ms var(--ease-bounce);
 }
 
-/* ── Glow Effects ───────────────────────────────────────────────────────────── */
+/* ── Arc-Reactor Glow Effects ───────────────────────────────────────────────────────────── */
 .glow-accent {
   box-shadow: 0 0 20px var(--accent-glow);
 }
@@ -354,7 +356,7 @@ code {
   animation: pulseGlow 3s var(--ease-smooth) infinite;
 }
 
-/* ── Loading States ─────────────────────────────────────────────────────────── */
+/* ── Loading Skeleton States ─────────────────────────────────────────────────────────── */
 .skeleton {
   position: relative;
   overflow: hidden;
@@ -394,7 +396,7 @@ code {
   }
 }
 
-/* ── Dark Mode Forced ───────────────────────────────────────────────────────── */
+/* ── Dark Mode Enforcement ───────────────────────────────────────────────────────── */
 @media (prefers-color-scheme: light) {
   :root {
     color-scheme: dark;
