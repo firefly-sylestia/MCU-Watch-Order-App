@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
+import { Media } from '@capacitor-community/media';
 import CropModal from './components/CropModal';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import {
@@ -528,6 +529,8 @@ export default function MCUViewer() {
   const [rewatchCount,   setRewatchCount]   = useState({});
   const [reviews,        setReviews]        = useState({});
   const [bookmarks,      setBookmarks]      = useState({});
+  const [reviewCardTheme, setReviewCardTheme] = useState('midnight');
+  const [reviewShareStatus, setReviewShareStatus] = useState({ type: '', message: '' });
   const [analyticsOpen,  setAnalyticsOpen]  = useState(false);
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [selectedIds,    setSelectedIds]    = useState(() => new Set());
@@ -730,7 +733,7 @@ export default function MCUViewer() {
       ctx.fillStyle = '#ff5ea8';
       ctx.font = '700 60px sans-serif';
       ctx.fillText('MCU VIEWING PROGRESS', 72, 110);
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = theme.text;
       ctx.font = '700 180px sans-serif';
       ctx.fillText(`${pct}%`, 72, 300);
       ctx.font = '500 44px sans-serif';
@@ -1015,15 +1018,26 @@ export default function MCUViewer() {
     const base64 = await blobToBase64(blob);
     const isNative = Capacitor.isNativePlatform();
     if (isNative && Capacitor.getPlatform() === 'android') {
+      const dataUri = `data:image/png;base64,${base64}`;
+      try {
+        try { await Media.createAlbum({ name: 'MCUViewingOrder' }); } catch {}
+        const albums = await Media.getAlbums();
+        const album = (albums?.albums || []).find(a => a.name === 'MCUViewingOrder');
+        if (album?.identifier) {
+          await Media.savePhoto({ path: dataUri, albumIdentifier: album.identifier, fileName: filename.replace(/\.png$/i, '') });
+          return { method: 'mediastore' };
+        }
+      } catch {}
       await Filesystem.writeFile({
         path: `Pictures/MCUViewingOrder/${filename}`,
         data: base64,
         directory: Directory.ExternalStorage,
         recursive: true,
       });
-      return;
+      return { method: 'filesystem' };
     }
     triggerDownload(blob, filename);
+    return { method: 'download' };
   }, []);
 
   const localPosterSrc = (item) => {
@@ -1257,7 +1271,25 @@ export default function MCUViewer() {
 
   const setStarRating = (id, rating) => setMyRating(prev => ({ ...prev, [id]: rating }));
 
-  
+  const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight, maxLines = 3) => {
+    const words = String(text || '').split(/\s+/).filter(Boolean);
+    let line = '';
+    let lineCount = 0;
+    for (let i = 0; i < words.length; i += 1) {
+      const testLine = line ? `${line} ${words[i]}` : words[i];
+      if (ctx.measureText(testLine).width > maxWidth && line) {
+        ctx.fillText(line, x, y + (lineCount * lineHeight));
+        line = words[i];
+        lineCount += 1;
+        if (lineCount >= maxLines - 1) break;
+      } else {
+        line = testLine;
+      }
+    }
+    const remaining = words.slice(words.findIndex(w => line.includes(w))).join(' ');
+    const finalLine = lineCount >= maxLines - 1 && ctx.measureText(line).width > maxWidth * 0.96 ? `${line.slice(0, Math.max(0, line.length - 1))}…` : line;
+    ctx.fillText(finalLine || remaining || '', x, y + (lineCount * lineHeight));
+  };
 
   const shareReviewCard = async (item) => {
     try {
@@ -1265,33 +1297,46 @@ export default function MCUViewer() {
       canvas.width = 1600; canvas.height = 2200;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
+      const themes = {
+        midnight: { page: '#0b1020', card: '#0e162e', text: '#ffffff', subtext: '#a7b1c2' },
+        stark: { page: '#111111', card: '#1f1f1f', text: '#f5f5f5', subtext: '#c9c9c9' },
+        vibranium: { page: '#051a24', card: '#0a2d3a', text: '#ecfbff', subtext: '#9fd3de' },
+      };
+      const theme = themes[reviewCardTheme] || themes.midnight;
       const padding = 96;
       const cardX = padding;
       const cardY = 260;
       const cardW = canvas.width - (padding * 2);
       const posterH = 1280;
-      ctx.fillStyle = '#0b1020';
+      ctx.fillStyle = theme.page;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.src = posterSrc(item);
       await new Promise((res) => { img.onload = res; img.onerror = res; });
       try { ctx.drawImage(img, cardX, cardY, cardW, posterH); } catch {}
-      ctx.fillStyle = '#0e162e';
+      ctx.fillStyle = theme.card;
       ctx.fillRect(cardX, cardY + posterH, cardW, 620);
       ctx.fillStyle = '#ffffff';
       ctx.font = '700 62px Inter, sans-serif';
       ctx.fillText(item.title.slice(0, 34), cardX + 36, cardY + posterH + 96);
       ctx.font = '600 42px Inter, sans-serif';
       ctx.fillText(`Rating: ${myRating[item.id] || 0}/5`, cardX + 36, cardY + posterH + 172);
-      ctx.fillStyle = '#a7b1c2';
+      ctx.fillStyle = theme.subtext;
       ctx.font = '500 30px Inter, sans-serif';
-      ctx.fillText((reviews[item.id] || 'No review yet.').slice(0, 120), cardX + 36, cardY + posterH + 246);
+      drawWrappedText(ctx, reviews[item.id] || 'No review yet.', cardX + 36, cardY + posterH + 246, cardW - 72, 42, 4);
       ctx.fillText('MCU Viewing Order', cardX + 36, canvas.height - 56);
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
       if (!blob) return;
-      await saveImageToDevice(blob, `${slugifyPosterName(item.title)}-review-card.png`);
-    } catch (e) { console.error('Failed review card', e); }
+      const result = await saveImageToDevice(blob, `${slugifyPosterName(item.title)}-review-card.png`);
+      const methodLabel = result?.method === 'mediastore' ? 'Gallery saved' : result?.method === 'filesystem' ? 'Saved to Pictures folder' : 'Downloaded';
+      setReviewShareStatus({ type: 'success', message: `Review card ready: ${methodLabel}.` });
+      window.setTimeout(() => setReviewShareStatus({ type: '', message: '' }), 2800);
+    } catch (e) {
+      console.error('Failed review card', e);
+      setReviewShareStatus({ type: 'error', message: 'Review card save failed. Please retry.' });
+      window.setTimeout(() => setReviewShareStatus({ type: '', message: '' }), 3200);
+    }
   };
 
   const shareAnalysisCard = async () => {
@@ -2666,6 +2711,15 @@ export default function MCUViewer() {
               <div className="glass-panel" style={{ padding: 12, borderRadius: 12 }}><div style={{ color: T.textMuted, fontSize: 11 }}>RE-WATCHES</div><div style={{ fontSize: 24, fontWeight: 800 }}>{Object.values(rewatchCount).reduce((a, b) => a + (Number(b) || 0), 0)}</div></div>
             </div>
             <button className="fpill" onClick={shareAnalysisCard} style={{ marginBottom: 12 }}><Upload size={14}/>Share Analysis Card</button>
+            <div className="glass-panel" style={{ marginBottom: 10, padding: 10, borderRadius: 10, display: 'grid', gap: 8 }}>
+              <div style={{ fontSize: 11, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase' }}>Review Card Theme</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 6 }}>
+                {[{id:'midnight',label:'Midnight'},{id:'stark',label:'Stark'},{id:'vibranium',label:'Vibranium'}].map(opt => (
+                  <button key={opt.id} className="fpill" onClick={() => setReviewCardTheme(opt.id)} style={{ justifyContent:'center', padding:'6px 8px', fontSize:11, borderColor: reviewCardTheme === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{opt.label}</button>
+                ))}
+              </div>
+              {reviewShareStatus.message && <div style={{ fontSize: 12, color: reviewShareStatus.type === 'error' ? 'var(--theme-danger)' : 'var(--theme-success)' }}>{reviewShareStatus.message}</div>}
+            </div>
             <div style={{ display: 'grid', gap: 10, maxHeight: '58vh', overflow: 'auto', paddingRight: 4 }}>
               {historyItems.length === 0 && <div style={{ color: T.textMuted, padding: 16 }}>No watched history yet. Mark an item watched to start your analysis log.</div>}
               {historyItems.map(item => (
