@@ -24,7 +24,7 @@ const Icon = ({ children, size = 16, style = {} }) => (
 const Search    = p => <Icon {...p}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></Icon>;
 const Eye       = p => <Icon {...p}><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></Icon>;
 const EyeOff    = p => <Icon {...p}><path d="m3 3 18 18"/><path d="M10.5 10.5a2 2 0 0 0 3 3"/><path d="M9.9 4.2A10.9 10.9 0 0 1 12 4c6.5 0 10 8 10 8a17.6 17.6 0 0 1-3.2 4.2"/><path d="M6.6 6.6A17.5 17.5 0 0 0 2 12s3.5 8 10 8a10.7 10.7 0 0 0 5.4-1.4"/></Icon>;
-const Star      = p => <Icon {...p}><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></Icon>;
+const RatingGem = p => <Icon {...p}><path d="M12 2 21 9 12 22 3 9 12 2Z"/></Icon>;
 const Film      = p => <Icon {...p}><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20"/><path d="M17 2v20"/><path d="M2 7h20"/><path d="M2 17h20"/></Icon>;
 const Tv        = p => <Icon {...p}><rect x="2" y="7" width="20" height="15" rx="2"/><path d="M17 2 12 7 7 2"/></Icon>;
 const Zap       = p => <Icon {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></Icon>;
@@ -1273,7 +1273,7 @@ export default function MCUViewer() {
     .filter(i => i.watchedDate || rewatchCount[i.id] || myRating[i.id] || reviews[i.id])
     .sort((a, b) => (b.watchedDate || b.statusChangedAt || '').localeCompare(a.watchedDate || a.statusChangedAt || '')), [activeItems, myRating, reviews, rewatchCount]);
 
-  const setStarRating = (id, rating) => setMyRating(prev => ({ ...prev, [id]: rating }));
+  const setReviewRating = (id, rating) => setMyRating(prev => ({ ...prev, [id]: rating }));
 
   const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight, maxLines = 3) => {
     const words = String(text || '').split(/\s+/).filter(Boolean);
@@ -1317,28 +1317,79 @@ export default function MCUViewer() {
       const posterY = cardY + 120;
       ctx.fillStyle = theme.page;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = theme.card;
-      ctx.fillRect(cardX, cardY, cardW, canvas.height - (cardY + 120));
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.src = posterSrc(item);
       await new Promise((res) => { img.onload = res; img.onerror = res; });
-      try { ctx.drawImage(img, posterX, posterY, posterW, posterH); } catch {}
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '700 56px Inter, sans-serif';
-      drawWrappedText(ctx, item.title, posterX + posterW + 54, posterY + 84, cardW - posterW - 150, 62, 3);
       const rating = myRating[item.id] || 0;
-      ctx.font = '700 74px Inter, sans-serif';
-      ctx.fillStyle = '#ffd166';
-      ctx.fillText('★'.repeat(Math.max(1, rating)), posterX + posterW + 54, posterY + 210);
+      const reviewText = (reviews[item.id] || '').trim();
+      const compact = reviewText.length < 90;
+      const topPanelH = compact ? 720 : 790;
+      const cutoutR = compact ? 62 : 74;
+      const cardBottom = cardY + topPanelH + (compact ? 290 : 380);
+      const panelTop = posterY - 36;
+      const panelBottom = panelTop + topPanelH;
+
+      ctx.fillStyle = 'rgba(124,255,218,0.18)';
+      ctx.beginPath();
+      ctx.roundRect(posterX + posterW + 26, panelTop, cardW - posterW - 98, topPanelH, 30);
+      ctx.fill();
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(cardX, cardY);
+      ctx.lineTo(cardX + cardW - cutoutR, cardY);
+      ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + cutoutR);
+      ctx.lineTo(cardX + cardW, cardBottom);
+      ctx.lineTo(cardX, cardBottom);
+      ctx.closePath();
+      ctx.clip();
+
+      ctx.fillStyle = theme.card;
+      ctx.fillRect(cardX, cardY, cardW, cardBottom - cardY);
+      try { ctx.drawImage(img, posterX, posterY, posterW, posterH); } catch {}
+
       ctx.fillStyle = '#ffffff';
-      ctx.font = '600 34px Inter, sans-serif';
-      ctx.fillText(`${profile.name || 'Reviewer'} · ${rating}/5`, posterX + posterW + 54, posterY + 260);
+      ctx.font = '700 56px Space Grotesk, sans-serif';
+      drawWrappedText(ctx, item.title, posterX + posterW + 54, posterY + 84, cardW - posterW - 150, 62, 3);
+
+      const ratingRatio = Math.max(0, Math.min(10, rating)) / 10;
+      const trackX = posterX + posterW + 54;
+      const trackY = posterY + 190;
+      const trackW = cardW - posterW - 170;
+      const trackH = compact ? 18 : 22;
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.beginPath();
+      ctx.roundRect(trackX, trackY, trackW, trackH, 30);
+      ctx.fill();
+      ctx.fillStyle = '#7cffda';
+      ctx.beginPath();
+      ctx.roundRect(trackX, trackY, trackW * ratingRatio, trackH, 30);
+      ctx.fill();
+
+      ctx.fillStyle = '#7cffda';
+      for (let i = 0; i < 3; i += 1) {
+        const x = trackX + (i * 48);
+        ctx.beginPath();
+        ctx.moveTo(x + 18, trackY + 30);
+        ctx.lineTo(x + 36, trackY + 48);
+        ctx.lineTo(x + 18, trackY + 66);
+        ctx.lineTo(x, trackY + 48);
+        ctx.closePath();
+        ctx.strokeStyle = i < Math.round(rating / 3.34) ? '#7cffda' : 'rgba(124,255,218,0.28)';
+        ctx.lineWidth = 2.8;
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 36px Manrope, sans-serif';
+      ctx.fillText(`${profile.name || 'Reviewer'} · ${rating}/10`, trackX, posterY + 294);
       ctx.fillStyle = theme.subtext;
       ctx.font = '500 44px Inter, sans-serif';
-      drawWrappedText(ctx, reviews[item.id] || 'No review yet.', posterX, posterY + posterH + 110, cardW - 110, 58, 7);
-      ctx.font = '600 28px Inter, sans-serif';
-      ctx.fillText('Review Card', cardX + 52, canvas.height - 70);
+      drawWrappedText(ctx, reviewText || 'No review yet.', posterX, posterY + posterH + (compact ? 88 : 110), cardW - 110, 58, compact ? 5 : 7);
+      ctx.font = '600 28px Space Grotesk, sans-serif';
+      ctx.fillText('Review Card', cardX + 52, cardBottom - 34);
+      ctx.restore();
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
       if (!blob) return;
       const result = await saveImageToDevice(blob, `${slugifyPosterName(item.title)}-review-card.png`);
@@ -2727,7 +2778,7 @@ export default function MCUViewer() {
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 14 }}>
               <div>
                 <h2 style={{ fontSize: 30, marginBottom: 4 }}>Analysis</h2>
-                <div style={{ color: T.textMuted, fontSize: 13 }}>Full history, dates, re-watch counts, star ratings, and reviews.</div>
+                <div style={{ color: T.textMuted, fontSize: 13 }}>Full history, dates, re-watch counts, modern 10-point ratings, and reviews.</div>
               </div>
               <button className="fpill" onClick={() => setAnalyticsOpen(false)}>Close</button>
             </div>
@@ -2749,7 +2800,7 @@ export default function MCUViewer() {
             <div style={{ display: 'grid', gap: 12, maxHeight: '58vh', overflow: 'auto', paddingRight: 4 }}>
               {historyItems.length === 0 && <div style={{ color: T.textMuted, padding: 16 }}>No watched history yet. Mark an item watched to start your analysis log.</div>}
               {historyItems.map(item => (
-                <div key={item.id} className="glass-panel" style={{ borderRadius: 16, padding: 14, display: 'grid', gap: 10, border: '1px solid color-mix(in srgb, var(--theme-accent) 16%, var(--theme-border))', background: 'linear-gradient(145deg, color-mix(in srgb, var(--theme-surface) 88%, #11142b), color-mix(in srgb, var(--theme-surface) 96%, #04050a))' }}>
+                <div key={item.id} className="glass-panel" style={{ borderRadius: 16, padding: 14, display: 'grid', gap: 10, border: '1px solid color-mix(in srgb, var(--theme-accent) 35%, var(--theme-border))', background: 'linear-gradient(145deg, color-mix(in srgb, var(--theme-surface) 80%, #102445), color-mix(in srgb, var(--theme-surface) 98%, #04050a))', clipPath: 'polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 0 100%)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline', flexWrap: 'wrap' }}>
                     <strong style={{ fontSize: 16 }}>{item.title}</strong>
                     <span style={{ color: T.textMuted, fontSize: 12 }}>{item.watchedDate || 'No watch date'} · ~{Math.round(estimateRuntimeHours(item) * 10) / 10}h</span>
@@ -2760,10 +2811,11 @@ export default function MCUViewer() {
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                     <button className="fpill" style={{ padding: '6px 9px', fontSize: 11 }} onClick={() => setRewatchCount(p => ({ ...p, [item.id]: (p[item.id] || 0) + 1 }))}><Clock size={12}/>Re-watch {rewatchCount[item.id] || 0}</button>
                     <button className="fpill" style={{ padding: '6px 9px', fontSize: 11 }} onClick={() => setRewatchCount(p => ({ ...p, [item.id]: Math.max(0, (p[item.id] || 0) - 1) }))}>−</button>
-                    <span style={{ color: T.textMuted, fontSize: 12 }}>Rating</span>
-                    {[1,2,3,4,5].map(n => (
-                      <button key={n} aria-label={`${n} star rating for ${item.title}`} onClick={() => setStarRating(item.id, n)} style={{ border: 0, background: 'transparent', color: (myRating[item.id] || 0) >= n ? 'var(--theme-warning)' : T.textFaint, fontSize: 20, cursor: 'pointer' }}>★</button>
+                    <span style={{ color: T.textMuted, fontSize: 12, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700 }}>Rating</span>
+                    {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                      <button key={n} aria-label={`${n} out of 10 rating for ${item.title}`} onClick={() => setReviewRating(item.id, n)} style={{ border: 0, width: 24, height: 24, borderRadius: 8, background: (myRating[item.id] || 0) >= n ? 'rgba(124,255,218,0.2)' : 'transparent', color: (myRating[item.id] || 0) >= n ? '#7cffda' : T.textFaint, display: 'grid', placeItems: 'center', cursor: 'pointer' }}><RatingGem size={14}/></button>
                     ))}
+                    <span style={{ fontSize: 12, fontWeight: 800, fontFamily: 'Manrope, sans-serif', color: '#7cffda' }}>{myRating[item.id] || 0}/10</span>
                   </div>
                   <textarea
                     value={reviews[item.id] || ''}
