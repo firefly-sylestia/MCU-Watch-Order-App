@@ -1147,14 +1147,14 @@ export default function MCUViewer() {
     }
     if (heroPosters.length <= 1 || document.visibilityState !== 'visible') return;
 
-    const HERO_INTERVAL_MS = 2000;
-    const HERO_TRANSITION_MS = 2000;
+    const HERO_INTERVAL_MS = 5000;
+    const HERO_TRANSITION_MS = 600;
     heroIntervalRef.current = window.setInterval(() => {
       setHeroIndex((i) => {
         const currentIndex = i % heroPosters.length;
         const upcomingIndex = pickRandomIndex(currentIndex);
         const upcomingSrc = heroPosters[upcomingIndex];
-        if (!upcomingSrc || upcomingSrc === currentHeroSrc) return upcomingIndex;
+        if (!upcomingSrc) return upcomingIndex;
         const img = new Image();
         img.onload = () => {
           setNextHeroSrc(upcomingSrc);
@@ -1188,7 +1188,7 @@ export default function MCUViewer() {
             const currentIndex = i % heroPosters.length;
             const upcomingIndex = pickRandomIndex(currentIndex);
             const upcomingSrc = heroPosters[upcomingIndex];
-            if (!upcomingSrc || upcomingSrc === currentHeroSrc) return upcomingIndex;
+        if (!upcomingSrc) return upcomingIndex;
             const img = new Image();
             img.onload = () => {
               setNextHeroSrc(upcomingSrc);
@@ -2562,11 +2562,11 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <header className="hexbg" style={{ position: 'relative', zIndex: 120, background: 'transparent', borderBottom: `1px solid ${T.headerBorder}`, flexShrink: 0 }}>
+      <header className="hexbg" style={{ position: 'relative', zIndex: 120, background: 'transparent', borderBottom: 'none', flexShrink: 0 }}>
         <div className="header-inner" style={{ width: '100%', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 24px) 30px 12px', transition: 'padding 0.2s ease' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             <div style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
-              <div className="header-title-mcu" style={{ fontSize: 'clamp(44px, 9vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: '#fff', display: 'inline-block', padding: '0 24px', margin: '10px 0 40px', background: 'rgba(212,55,47,0.5)', borderRadius: 6 }}>MCU</div>
+              <div className="header-title-mcu" style={{ fontSize: 'clamp(44px, 9vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: '#fff', display: 'inline-block', padding: '0 12px', margin: '10px 0 40px', background: 'rgba(212,55,47,0.5)', borderRadius: 6 }}>MCU</div>
               <div className="header-title-sub" style={{ fontSize: 'clamp(26px, 4.2vw, 35px)', letterSpacing: 'clamp(3px, 1.1vw, 9px)', color: 'var(--theme-accent-alt)', marginTop: 0 }}>VIEWING ORDER</div>
               <div className="header-tagline" style={{ fontSize: '14px', color: 'var(--theme-warning)', letterSpacing: headerMinimized ? 0.8 : 1.5, fontFamily: 'var(--font-marvel-ui)', marginTop: 1, transition: 'all 0.2s ease' }}>
                 {`${activeItems.length} Items`}
@@ -2576,10 +2576,24 @@ export default function MCUViewer() {
         </div>
       </header>
 
-      <div style={{ height: isDesktopViewport ? 300 : 230, background: 'transparent', flexShrink: 0 }} />
+      {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <div style={{ position: 'relative', height: isDesktopViewport ? 300 : 230, background: 'transparent', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 210 }}>
+        {/* Carousel posters */}
+        {currentHeroSrc && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src={currentHeroSrc} alt="Current poster" style={{ height: '100%', width: 'auto', objectFit: 'cover', maxWidth: '100%', opacity: 1, transition: 'opacity 0.6s ease-in-out', borderRadius: 8 }} />
+          </div>
+        )}
+        {nextHeroSrc && heroTransitioning && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src={nextHeroSrc} alt="Next poster" style={{ height: '100%', width: 'auto', objectFit: 'cover', maxWidth: '100%', opacity: 1, transition: 'opacity 0.6s ease-in-out', borderRadius: 8 }} />
+          </div>
+        )}
+        {/* Blend border */}
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 8, background: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.02) 20%, transparent 50%, rgba(0,0,0,0.02) 80%, transparent 100%), linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.04) 10%, transparent 50%, rgba(0,0,0,0.04) 90%, transparent 100%)' }} />
+      </div>
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 220, marginTop: 0 }}>
-        <div style={{ height: 14, background: darkMode ? 'linear-gradient(180deg, rgba(8,12,20,0) 0%, rgba(8,12,20,0.42) 100%)' : 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 100%)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }} />
         {/* Toggle row — always visible */}
         <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
