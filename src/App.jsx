@@ -1069,14 +1069,13 @@ export default function MCUViewer() {
   };
   const posterSrc = (item) => localPosterSrc(item) || posterCache[item.id] || `https://placehold.co/220x330/1a1f33/f7c4de?text=${encodeURIComponent(item.title+'\n'+item.year)}`;
   const heroPosters = useMemo(() => activeItems.slice(0, 8).map(item => posterSrc(item)), [activeItems, posterCache, localPosterMap]);
-  const reduceMotion = useMemo(() => typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches, []);
 
   useEffect(() => {
     if (heroIntervalRef.current) {
       window.clearInterval(heroIntervalRef.current);
       heroIntervalRef.current = null;
     }
-    if (reduceMotion || heroPosters.length <= 1 || document.visibilityState !== 'visible') return;
+    if (heroPosters.length <= 1 || document.visibilityState !== 'visible') return;
 
     heroPosters.slice(0, 3).forEach((src) => { const img = new Image(); img.src = src; });
     heroIntervalRef.current = window.setInterval(() => {
@@ -1089,7 +1088,7 @@ export default function MCUViewer() {
         heroIntervalRef.current = null;
         return;
       }
-      if (document.visibilityState === 'visible' && !heroIntervalRef.current && !reduceMotion && heroPosters.length > 1) {
+      if (document.visibilityState === 'visible' && !heroIntervalRef.current && heroPosters.length > 1) {
         heroIntervalRef.current = window.setInterval(() => {
           setHeroIndex(i => (i + 1) % heroPosters.length);
         }, 5000);
@@ -1104,7 +1103,7 @@ export default function MCUViewer() {
         heroIntervalRef.current = null;
       }
     };
-  }, [heroPosters, reduceMotion]);
+  }, [heroPosters]);
   const spoilerSafe = useMemo(() => spoilerSafeMode, [spoilerSafeMode]);
 
   const memoryScore = useMemo(() => Math.max(0, Math.min(100, Math.round((totalWatched / Math.max(1, activeItems.length)) * 100) - (spoilerSafe ? 10 : 0))), [totalWatched, activeItems.length, spoilerSafe]);
