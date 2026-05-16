@@ -68,7 +68,7 @@ const SORT_LABELS = { order: 'Chronological', year: 'By Year', title: 'Alphabeti
 const HIDDEN_FILTER_STATUSES = new Set(['watched', 'dropped']);
 const TITLE_ROW_STATIC = {
   titleBtn: { overflow: 'hidden' },
-  titleLine: { display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' },
+  titleLine: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   genreMeta: { marginTop: 2, fontSize: 10, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1.2 },
 };
 const DESKTOP_TEXT_SCALES = [0.9, 1, 1.1, 1.2, 1.35];
@@ -2385,8 +2385,7 @@ export default function MCUViewer() {
       `}</style>
 
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: currentHeroSrc ? `url(${currentHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: heroTransitioning ? 0.18 : 0.34, filter: 'saturate(1.05) blur(2px)', transition: 'opacity 0.95s ease-in-out' }} />
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: nextHeroSrc ? `url(${nextHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: heroTransitioning ? 0.34 : 0, filter: 'saturate(1.05) blur(2px)', transition: 'opacity 0.95s ease-in-out' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: currentHeroSrc ? `url(${currentHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: 0.2, filter: 'saturate(1.05) blur(2px)', transition: 'opacity 0.95s ease-in-out' }} />
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: heroTransitioning ? 0.55 : 1, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${darkMode ? 'rgba(4,5,15,0.05)' : 'rgba(255,255,255,0.08)'} 0%, ${darkMode ? 'rgba(4,5,15,0.18)' : 'rgba(231,238,248,0.22)'} 45%, ${darkMode ? 'rgba(4,5,15,0.52)' : 'rgba(231,238,248,0.58)'} 70%, ${darkMode ? 'rgba(4,5,15,0.96)' : 'rgba(231,238,248,0.96)'} 100%)` }} />
       </div>
@@ -2586,19 +2585,7 @@ export default function MCUViewer() {
                 aria-label="Search titles"
                 style={{ width: '100%', background: 'transparent', border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '7px 12px 7px 30px', color: T.inputColor, fontSize: 14, letterSpacing: 0.3, boxShadow: spiderSense ? '0 0 0 2px rgba(220,20,60,0.45), 0 0 16px rgba(220,20,60,0.35)' : 'none', animation: spiderSense ? 'spiderPulse 0.85s ease-in-out infinite' : 'none' }} />
             </div>
-            <div className='filter-row-actions' style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end', minWidth: 0 }}>
-              {autoHideStatuses && !watchedOnly && !statusFilter && (
-                <>
-                  <span style={{ fontSize: 11, padding: '4px 8px', borderRadius: 999, border: `1px solid ${T.filterBorder}`, background: T.inputBg, color: T.textMuted, letterSpacing: 0.4 }}>
-                    Watched & Dropped hidden
-                  </span>
-                  <button className="fpill" style={{ padding: '5px 10px', fontSize: 11 }} onClick={() => setAutoHideStatuses(false)}>
-                    Show all statuses
-                  </button>
-                </>
-              )}
-              
-            </div>
+            <div className='filter-row-actions' style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end', minWidth: 0 }} />
           </div>
         </div>
 
@@ -2703,22 +2690,6 @@ export default function MCUViewer() {
           })}
         </div>
       </div>
-
-      {recentlyWatchedItems.length > 0 && autoHideStatuses && !watchedOnly && !statusFilter && (
-        <div style={{ background: T.filterBg, borderBottom: `1px solid ${T.filterBorder}`, padding: '8px 24px', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Recently watched</span>
-          {recentlyWatchedItems.map(item => {
-            const meta = STATUS_META.watched;
-            return (
-              <button key={item.id} className="fpill" onClick={() => { setWatchedOnly(true); setStatusFilter(null); }} style={{ padding: '5px 10px', fontSize: 11, color: meta.color, borderColor: `${meta.color}55`, background: `${meta.color}12` }}>
-                <meta.Icon size={10} />{item.title}
-              </button>
-            );
-          })}
-          <button className="fpill" onClick={() => { setWatchedOnly(true); setStatusFilter(null); }} style={{ padding: '5px 10px', fontSize: 11 }}>Show watched</button>
-        </div>
-      )}
-
 
       {/* ━━ JUMP NEXT BUTTON ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div className="bottom-action-dock">
