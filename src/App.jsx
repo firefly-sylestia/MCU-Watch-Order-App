@@ -32,7 +32,7 @@ const ChevDown  = p => <Icon {...p}><path d="m6 9 6 6 6-6"/></Icon>;
 const ChevRight = p => <Icon {...p}><path d="m9 6 6 6-6 6"/></Icon>;
 const Check     = p => <Icon {...p}><path d="M20 6 9 17l-5-5"/></Icon>;
 const Clock     = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></Icon>;
-const Heart     = p => <Icon {...p}><path d="M12 21s-7-4.35-9.5-8.5C.2 8.8 2.1 5 5.8 5c2.1 0 3.3 1.1 4.2 2.4C10.9 6.1 12.1 5 14.2 5 17.9 5 19.8 8.8 21.5 12.5 19 16.65 12 21 12 21z"/></Icon>;
+const Heart     = p => <Icon {...p}><path d="M12 21C12 21 4 16 4 10a4 4 0 0 1 7-2.6A4 4 0 0 1 18 10c0 6-8 11-8 11Z"/></Icon>;
 const Pause     = p => <Icon {...p}><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></Icon>;
 const Trash2    = p => <Icon {...p}><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></Icon>;
 const Upload    = p => <Icon {...p}><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M20 16v4H4v-4"/></Icon>;
@@ -119,7 +119,7 @@ const VALID_TYPES = new Set([null, ...Object.keys(TYPE_META)]);
 const VALID_STATUSES = new Set([null, ...Object.keys(STATUS_META)]);
 const VALID_DENSITY_MODES = new Set(['comfortable', 'compact']);
 const VALID_TIMELINE_MODES = new Set(['sacred', 'studio', 'whatif']);
-const AUTO_HIDDEN_STATUSES = HIDDEN_FILTER_STATUSES;
+const AUTO_HIDDEN_STATUSES = new Set();
 
 const readSavedUiState = () => {
   if (typeof window === 'undefined') return UI_STATE_DEFAULTS;
@@ -1129,7 +1129,8 @@ export default function MCUViewer() {
     }
     if (heroPosters.length <= 1 || document.visibilityState !== 'visible') return;
 
-    heroIntervalRef.current = window.setInterval(() => {
+    const startCarousel = () => {
+      heroIntervalRef.current = window.setInterval(() => {
       setHeroIndex((i) => {
         const currentIndex = i % heroPosters.length;
         const upcomingIndex = pickRandomIndex(currentIndex);
@@ -1154,7 +1155,9 @@ export default function MCUViewer() {
         preloadNext(upcomingIndex);
         return upcomingIndex;
       });
-    }, 5000);
+      }, 6200);
+    };
+    startCarousel();
 
     const onVisibility = () => {
       if (document.visibilityState !== 'visible' && heroIntervalRef.current) {
@@ -1163,9 +1166,7 @@ export default function MCUViewer() {
         return;
       }
       if (document.visibilityState === 'visible' && !heroIntervalRef.current && heroPosters.length > 1) {
-        heroIntervalRef.current = window.setInterval(() => {
-          setHeroIndex(i => pickRandomIndex(i % heroPosters.length));
-        }, 5000);
+        startCarousel();
       }
     };
 
@@ -2200,13 +2201,15 @@ export default function MCUViewer() {
   const renderPhaseSelector = () => (
     <div ref={phaseRef} style={{ position: 'relative', flex: '0 0 auto' }}>
       <button className="fpill" onClick={() => setPhaseOpen(o => !o)}
-        style={{ color: activePhase === 0 ? 'var(--theme-accent)' : (PHASES.find(ph => ph.id === activePhase)?.color || 'var(--theme-accent)'), borderColor: activePhase === 0 ? 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))' : `${PHASES.find(ph => ph.id === activePhase)?.color || '#c0392b'}88`, background: activePhase === 0 ? 'color-mix(in srgb, var(--theme-accent) 9%, var(--theme-surface))' : `color-mix(in srgb, ${PHASES.find(ph => ph.id === activePhase)?.color || '#c0392b'} 12%, var(--theme-surface))`, fontFamily: 'var(--font-marvel-ui)', fontSize: 'clamp(13px, 2.2vw, 16px)', letterSpacing: 2, padding: '7px 14px', whiteSpace: 'nowrap' }}>
-        {activePhase === 0 ? 'Phase All' : (PHASES.find(ph => ph.id === activePhase)?.name || 'Phase All')}
+        style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, background: T.filterBg, color: T.text, fontFamily: 'var(--font-marvel-display)', fontSize: 13, letterSpacing: 1.2, padding: '7px 14px', whiteSpace: 'nowrap' }}>
+        {activePhase === 0
+          ? <>P<span style={{ fontSize: '0.74em', letterSpacing: 1.7 }}>HASE ALL</span></>
+          : <>P<span style={{ fontSize: '0.74em', letterSpacing: 1.7 }}>{(PHASES.find(ph => ph.id === activePhase)?.name || 'HASE ALL').replace(/^Phase\s*/i, 'HASE ')}</span></>}
         <ChevDown size={12} style={{ opacity: 0.6, transform: phaseOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
       </button>
       {phaseOpen && (
         <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: 'none', minWidth: 200 }}>
-          <div className={`sopt ${activePhase === 0 ? 'picked' : ''}`} onClick={() => { setActivePhase(0); setPhaseOpen(false); }}>Phase All</div>
+          <div className={`sopt ${activePhase === 0 ? 'picked' : ''}`} onClick={() => { setActivePhase(0); setPhaseOpen(false); }}>PHASE ALL</div>
           {PHASES.map((ph) => (
             <div key={ph.id} className={`sopt ${activePhase === ph.id ? 'picked' : ''}`} style={activePhase === ph.id ? { color: ph.color, fontWeight: 700 } : {}} onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); setPhaseOpen(false); }}>{ph.name}</div>
           ))}
@@ -2289,7 +2292,7 @@ export default function MCUViewer() {
 
         .section-up{content-visibility:visible;contain-intrinsic-size:auto}
         .phase-rows-full{display:block}
-        .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 0.14s ease,border-color 0.14s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:var(--row-min-h,86px);border-radius:12px;overflow:hidden;background:rgba(8,14,28,0.34);backdrop-filter:blur(7px)}
+        .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 0.14s ease,border-color 0.14s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:var(--row-min-h,86px);border-radius:12px;overflow:hidden;background:${darkMode ? 'rgba(8,14,28,0.42)' : 'rgba(255,255,255,0.45)'};backdrop-filter:blur(9px)}
         .rrow:last-child{border-bottom:none}
         .rrow > *{position:relative;z-index:1}
         .rrow:hover{border-left-color:color-mix(in srgb,var(--theme-accent) 65%, var(--phase-color,#c0392b))}
@@ -2372,7 +2375,8 @@ export default function MCUViewer() {
         .stat-card-label { font-size: clamp(11px, 1.8vw, 14px) !important; }
         .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; color:var(--theme-text-muted) !important }
 
-        .settings-menu{width:min(360px,calc(100vw - 28px));max-height:min(80vh,calc(100dvh - 92px));overscroll-behavior:contain}.settings-menu .fpill{min-width:0}.bottom-action-dock{position:fixed;right:16px;bottom:16px;z-index:120;display:flex;gap:8px;align-items:center}
+        .settings-menu{width:min(360px,calc(100vw - 28px));max-height:min(80vh,calc(100dvh - 92px));overscroll-behavior:contain;color:${darkMode ? '#f5f8ff' : '#1b2338'}}.settings-menu .fpill{min-width:0}.bottom-action-dock{position:fixed;right:16px;bottom:16px;z-index:120;display:flex;gap:8px;align-items:center}
+        .fade-in[style*="--comp-dropdown-bg"], .dock-status-menu .fade-in, [aria-haspopup="menu"] + .fade-in { color:${darkMode ? '#f4f7ff' : '#162033'} }
         .dock-btn{border-radius:999px;border:1px solid ${T.surfaceBorder};background:${darkMode ? 'rgba(20,25,46,0.9)' : 'rgba(255,255,255,0.92)'};color:${T.text};padding:10px 12px;font-family:var(--font-marvel-ui);letter-spacing:1.1px;font-size:12px;cursor:pointer;white-space:nowrap}
         .bottom-action-bar{border-radius:999px;padding:10px 14px;white-space:nowrap}
         .fpill,.wbtn,.sopt,.meta-muted,input,textarea,select,button{font-size:calc(1em * var(--text-scale))}
@@ -2382,12 +2386,7 @@ export default function MCUViewer() {
         main::-webkit-scrollbar-thumb:hover{background:${T.scrollThumbH}}
       `}</style>
 
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: currentHeroSrc ? `url(${currentHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: heroTransitioning ? 0.18 : 0.34, filter: 'saturate(1.05) blur(2px)', transition: 'opacity 0.95s ease-in-out' }} />
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: nextHeroSrc ? `url(${nextHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: heroTransitioning ? 0.34 : 0, filter: 'saturate(1.05) blur(2px)', transition: 'opacity 0.95s ease-in-out' }} />
-        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: heroTransitioning ? 0.55 : 1, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
-        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${darkMode ? 'rgba(4,5,15,0.05)' : 'rgba(255,255,255,0.08)'} 0%, ${darkMode ? 'rgba(4,5,15,0.18)' : 'rgba(231,238,248,0.22)'} 45%, ${darkMode ? 'rgba(4,5,15,0.52)' : 'rgba(231,238,248,0.58)'} 70%, ${darkMode ? 'rgba(4,5,15,0.96)' : 'rgba(231,238,248,0.96)'} 100%)` }} />
-      </div>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', background: darkMode ? '#070b18' : '#eef3fb' }} />
       {lightningStrike && <div style={{ position:'fixed', inset:0, pointerEvents:'none', background:'linear-gradient(180deg, rgba(180,220,255,0.95), rgba(255,255,255,0))', mixBlendMode:'screen', zIndex:9999, animation:'fadeInOut 0.7s ease' }} />}
       {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
 
@@ -2515,6 +2514,15 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <section style={{ position: 'sticky', top: 0, zIndex: 210, height: '33vh', minHeight: 220, maxHeight: 420, overflow: 'hidden', borderBottom: `1px solid ${T.headerBorder}`, background: darkMode ? 'rgba(9,12,25,0.88)' : 'rgba(245,248,254,0.85)', backdropFilter: 'blur(10px)' }}>
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: currentHeroSrc ? `url(${currentHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 18%', opacity: heroTransitioning ? 0.28 : 0.48, transition: 'opacity 1s ease-in-out' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: nextHeroSrc ? `url(${nextHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 18%', opacity: heroTransitioning ? 0.48 : 0, transition: 'opacity 1s ease-in-out' }} />
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, rgba(4,6,16,0.08) 0%, ${darkMode ? 'rgba(4,6,16,0.62)' : 'rgba(237,242,251,0.6)'} 80%, ${darkMode ? 'rgba(4,6,16,0.9)' : 'rgba(237,242,251,0.92)'} 100%)` }} />
+        <div style={{ position: 'absolute', top: 14, right: 16, display: 'flex', gap: 8 }}>
+          <button className="fpill" onClick={() => setHeroIndex(i => Math.max(0, i - 1))}>Prev</button>
+          <button className="fpill" onClick={() => setHeroIndex(i => i + 1)}>Next</button>
+        </div>
+      </section>
       <header className="hexbg" style={{ position: 'relative', zIndex: 120, background: 'transparent', borderBottom: `1px solid ${T.headerBorder}`, flexShrink: 0 }}>
         <div className="header-inner" style={{ width: '100%', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 24px) 30px 12px', transition: 'padding 0.2s ease' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
@@ -2539,10 +2547,10 @@ export default function MCUViewer() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
             <button
               onClick={() => setFiltersOpen(v => !v)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: `1px solid ${filtersOpen ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: filtersOpen ? 'color-mix(in srgb, var(--theme-accent) 10%, var(--theme-surface))' : T.filterBg, color: filtersOpen ? 'var(--theme-accent)' : T.textMuted, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 2, transition: 'all 0.18s' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 999, border: `1px solid ${T.filterBorder}`, background: T.filterBg, color: filtersOpen ? 'var(--theme-accent)' : T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.4, transition: 'all 0.18s' }}
             >
               <SlidersH size={13} />
-              FX
+              FILTER
               {activeFilterCount > 0 && (
                 <span style={{ background: 'var(--theme-accent)', color: '#fff', borderRadius: 999, fontSize: 10, fontFamily: 'var(--font-marvel-display)', fontWeight: 700, padding: '1px 6px', lineHeight: 1.4 }}>{activeFilterCount}</span>
               )}
@@ -2921,6 +2929,7 @@ export default function MCUViewer() {
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Prerequisite:</strong> {detailItem.prereq}</div>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Release:</strong> {formatReleaseDate(releaseInfoFor(detailItem).date, detailItem.year, releaseInfoFor(detailItem).label, releaseStatusFor(detailItem))}</div>
                 <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Status:</strong> {STATUS_META[detailItem.status]?.label}</div>
+                {detailData?.Director && detailData.Director !== 'N/A' && <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Director:</strong> {detailData.Director}</div>}
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                   <span style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.1, fontFamily: 'var(--font-marvel-ui)' }}>SPOILER SAFE</span>

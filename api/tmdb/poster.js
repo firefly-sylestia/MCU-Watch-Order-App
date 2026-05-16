@@ -30,6 +30,7 @@ export default async function handler(req, res) {
   if (!best?.poster_path) return res.status(404).json({ poster: null });
 
   let actors = 'N/A';
+  let director = 'N/A';
   if (req.query.details === '1') {
     try {
       const mediaType = best.media_type === 'tv' ? 'tv' : 'movie';
@@ -39,6 +40,14 @@ export default async function handler(req, res) {
       if (creditsRes.ok) {
         const credits = await creditsRes.json();
         actors = (credits?.cast || []).slice(0, 5).map(c => c?.name).filter(Boolean).join(', ') || 'N/A';
+        if (mediaType === 'movie') {
+          director = (credits?.crew || []).find(c => c?.job === 'Director')?.name || 'N/A';
+        } else {
+          director = (credits?.crew || []).find(c => c?.job === 'Director')?.name
+            || (credits?.crew || []).find(c => c?.job === 'Series Director')?.name
+            || (credits?.crew || []).find(c => c?.department === 'Directing')?.name
+            || 'N/A';
+        }
       }
     } catch {}
   }
@@ -49,6 +58,7 @@ export default async function handler(req, res) {
     Released: best.release_date || best.first_air_date || '',
     imdbRating: best.vote_average ? Number(best.vote_average).toFixed(1) : 'N/A',
     Actors: actors,
+    Director: director,
   } : null;
 
   return res.status(200).json({
