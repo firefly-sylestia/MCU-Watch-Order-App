@@ -60,7 +60,7 @@ const STATUS_META = {
   watching:       { label: 'Watching',       color: '#d4372f', Icon: Eye,    bg: 'rgba(212,55,47,0.1)'   },
   'on-hold':      { label: 'On Hold',        color: '#f39c12', Icon: Pause,  bg: 'rgba(243,156,18,0.1)'  },
   dropped:        { label: 'Dropped',        color: '#e05252', Icon: Trash2, bg: 'rgba(224,82,82,0.1)'   },
-  unwatched:      { label: 'Unwatched',      color: '#334455', Icon: EyeOff, bg: 'transparent'           },
+  unwatched:      { label: 'Not Watched',    color: '#334455', Icon: EyeOff, bg: 'transparent'           },
 };
 
 const SORT_LABELS = { order: 'Chronological', year: 'By Year', title: 'Alphabetical', runtime: 'Runtime', watched: 'Recently Watched', status: 'By Status' };
@@ -508,6 +508,9 @@ export default function MCUViewer() {
   const [headerCompact]  = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [heroIndex, setHeroIndex] = useState(0);
+  const [currentHeroSrc, setCurrentHeroSrc] = useState('');
+  const [nextHeroSrc, setNextHeroSrc] = useState('');
+  const [heroTransitioning, setHeroTransitioning] = useState(false);
   const [detailItem,     setDetailItem]     = useState(null);
   const [detailData,     setDetailData]     = useState(null);
   const [detailPlotState, setDetailPlotState] = useState({ active: 'primary', primary: '', secondary: '', loadingSecondary: false, secondaryProvider: 'OMDb' });
@@ -559,6 +562,7 @@ export default function MCUViewer() {
   const settingsRef= useRef(null);
   const sidebarRef = useRef(null);
   const heroIntervalRef = useRef(null);
+  const heroFadeTimeoutRef = useRef(null);
   const restoredUiStateRef = useRef(false);
   const metadataBuildRef = useRef({ paused: false, running: false });
 
@@ -635,6 +639,10 @@ export default function MCUViewer() {
       persist(n);
       return n;
     });
+    if (watchedOnly && newStatus === 'watched') {
+      setWatchedOnly(false);
+      setStatusFilter(null);
+    }
   };
 
   useEffect(() => {
@@ -956,7 +964,7 @@ export default function MCUViewer() {
       if (typeFilter && i.type !== typeFilter) return false;
       if (activePhase && i.phase !== activePhase) return false;
       if (timelineMode === 'studio' && i.order % 2 === 0) return true;
-      if (timelineMode === 'whatif' && i.type === 'short') return true;
+      if (timelineMode === 'whatif' && i.type !== 'short') return true;
       if (genreFilter !== 'all' && i.type !== genreFilter) return false;
       const searchTerm = search.toLowerCase();
       return i.title.toLowerCase().includes(searchTerm) || i.prereq.toLowerCase().includes(searchTerm);
@@ -1068,18 +1076,60 @@ export default function MCUViewer() {
     return mapped.startsWith('/') ? mapped : `/posters/${mapped}`;
   };
   const posterSrc = (item) => localPosterSrc(item) || posterCache[item.id] || `https://placehold.co/220x330/1a1f33/f7c4de?text=${encodeURIComponent(item.title+'\n'+item.year)}`;
-  const heroPosters = useMemo(() => activeItems.slice(0, 8).map(item => posterSrc(item)), [activeItems, posterCache, localPosterMap]);
+  const heroPosters = useMemo(() => activeItems.slice(0, 8).map(item => posterSrc(item)).filter(Boolean), [activeItems, posterCache, localPosterMap]);
 
   useEffect(() => {
+    if (!heroPosters.length) {
+      setCurrentHeroSrc('');
+      setNextHeroSrc('');
+      setHeroTransitioning(false);
+      return;
+    }
+    const normalizedIndex = heroIndex % heroPosters.length;
+    const preloadNext = (fromIndex) => {
+      const nextSrcCandidate = heroPosters[(fromIndex + 1) % heroPosters.length];
+      if (!nextSrcCandidate) return;
+      const img = new Image();
+      img.src = nextSrcCandidate;
+    };
+    setCurrentHeroSrc((prev) => prev || heroPosters[normalizedIndex] || '');
+    preloadNext(normalizedIndex);
+
     if (heroIntervalRef.current) {
       window.clearInterval(heroIntervalRef.current);
       heroIntervalRef.current = null;
     }
+    if (heroFadeTimeoutRef.current) {
+      window.clearTimeout(heroFadeTimeoutRef.current);
+      heroFadeTimeoutRef.current = null;
+    }
     if (heroPosters.length <= 1 || document.visibilityState !== 'visible') return;
 
-    heroPosters.slice(0, 3).forEach((src) => { const img = new Image(); img.src = src; });
     heroIntervalRef.current = window.setInterval(() => {
-      setHeroIndex(i => (i + 1) % heroPosters.length);
+      setHeroIndex((i) => {
+        const currentIndex = i % heroPosters.length;
+        const upcomingIndex = (i + 1) % heroPosters.length;
+        const upcomingSrc = heroPosters[upcomingIndex];
+        if (!upcomingSrc || upcomingSrc === currentHeroSrc) return upcomingIndex;
+        const img = new Image();
+        img.onload = () => {
+          setNextHeroSrc(upcomingSrc);
+          setHeroTransitioning(true);
+          if (heroFadeTimeoutRef.current) window.clearTimeout(heroFadeTimeoutRef.current);
+          heroFadeTimeoutRef.current = window.setTimeout(() => {
+            setCurrentHeroSrc(upcomingSrc);
+            setNextHeroSrc('');
+            setHeroTransitioning(false);
+          }, 650);
+        };
+        img.onerror = () => {
+          setNextHeroSrc('');
+          setHeroTransitioning(false);
+        };
+        img.src = upcomingSrc;
+        preloadNext(upcomingIndex);
+        return upcomingIndex;
+      });
     }, 5000);
 
     const onVisibility = () => {
@@ -1102,8 +1152,12 @@ export default function MCUViewer() {
         window.clearInterval(heroIntervalRef.current);
         heroIntervalRef.current = null;
       }
+      if (heroFadeTimeoutRef.current) {
+        window.clearTimeout(heroFadeTimeoutRef.current);
+        heroFadeTimeoutRef.current = null;
+      }
     };
-  }, [heroPosters]);
+  }, [heroPosters, heroIndex, currentHeroSrc]);
   const spoilerSafe = useMemo(() => spoilerSafeMode, [spoilerSafeMode]);
 
   const memoryScore = useMemo(() => Math.max(0, Math.min(100, Math.round((totalWatched / Math.max(1, activeItems.length)) * 100) - (spoilerSafe ? 10 : 0))), [totalWatched, activeItems.length, spoilerSafe]);
@@ -1391,12 +1445,7 @@ export default function MCUViewer() {
 
       ctx.save();
       ctx.beginPath();
-      ctx.moveTo(cardX, cardY);
-      ctx.lineTo(cardX + cardW - cutoutR, cardY);
-      ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + cutoutR);
-      ctx.lineTo(cardX + cardW, cardBottom);
-      ctx.lineTo(cardX, cardBottom);
-      ctx.closePath();
+      ctx.roundRect(cardX, cardY, cardW, cardBottom - cardY, 38);
       ctx.clip();
 
       ctx.fillStyle = theme.card;
@@ -1422,17 +1471,11 @@ export default function MCUViewer() {
       ctx.fill();
 
       ctx.fillStyle = '#7cffda';
-      for (let i = 0; i < 3; i += 1) {
+      for (let i = 0; i < 5; i += 1) {
         const x = trackX + (i * 48);
-        ctx.beginPath();
-        ctx.moveTo(x + 18, trackY + 30);
-        ctx.lineTo(x + 36, trackY + 48);
-        ctx.lineTo(x + 18, trackY + 66);
-        ctx.lineTo(x, trackY + 48);
-        ctx.closePath();
-        ctx.strokeStyle = i < Math.round(rating / 3.34) ? '#7cffda' : 'rgba(124,255,218,0.28)';
-        ctx.lineWidth = 2.8;
-        ctx.stroke();
+        ctx.fillStyle = i < Math.round(rating / 2) ? '#7cffda' : 'rgba(124,255,218,0.28)';
+        ctx.font = '700 32px Inter, sans-serif';
+        ctx.fillText('★', x, trackY + 62);
       }
 
       ctx.fillStyle = '#ffffff';
@@ -1443,6 +1486,19 @@ export default function MCUViewer() {
       drawWrappedText(ctx, reviewText || 'No review yet.', posterX, posterY + posterH + (compact ? 88 : 110), cardW - 110, 58, compact ? 5 : 7);
       ctx.font = '600 28px Space Grotesk, sans-serif';
       ctx.fillText('Review Card', cardX + 52, cardBottom - 34);
+      ctx.globalCompositeOperation = 'destination-out';
+      const notchR = Math.max(22, Math.round(cutoutR * 0.46));
+      [
+        [cardX + 10, cardY + 10],
+        [cardX + cardW - 10, cardY + 10],
+        [cardX + 10, cardBottom - 10],
+        [cardX + cardW - 10, cardBottom - 10],
+      ].forEach(([cx, cy]) => {
+        ctx.beginPath();
+        ctx.arc(cx, cy, notchR, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalCompositeOperation = 'source-over';
       ctx.restore();
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
       if (!blob) return;
@@ -2263,12 +2319,13 @@ export default function MCUViewer() {
         main::-webkit-scrollbar-thumb:hover{background:${T.scrollThumbH}}
       `}</style>
 
-      <div style={{ position: 'fixed', inset: 0, zIndex: -1, backgroundImage: heroPosters[heroIndex] ? `linear-gradient(rgba(4,5,15,0.75), rgba(4,5,15,0.9)), url(${heroPosters[heroIndex]})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center', filter: 'saturate(1.1)', transition: 'background-image 0.8s ease' }} />
+      <div style={{ position: 'fixed', inset: 0, zIndex: -2, backgroundImage: currentHeroSrc ? `linear-gradient(rgba(4,5,15,0.75), rgba(4,5,15,0.9)), url(${currentHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center', filter: 'saturate(1.1)', opacity: heroTransitioning ? 0 : 1, transition: 'opacity 0.65s ease' }} />
+      <div style={{ position: 'fixed', inset: 0, zIndex: -1, backgroundImage: nextHeroSrc ? `linear-gradient(rgba(4,5,15,0.75), rgba(4,5,15,0.9)), url(${nextHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center', filter: 'saturate(1.1)', opacity: heroTransitioning ? 1 : 0, transition: 'opacity 0.65s ease' }} />
       {lightningStrike && <div style={{ position:'fixed', inset:0, pointerEvents:'none', background:'linear-gradient(180deg, rgba(180,220,255,0.95), rgba(255,255,255,0))', mixBlendMode:'screen', zIndex:9999, animation:'fadeInOut 0.7s ease' }} />}
       {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <button className="theme-btn" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar menu" style={{ position: 'fixed', top: 16, left: 14, zIndex: 270, width: 42, height: 42 }}><Menu size={16} /></button>
+      <button className="theme-btn" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar menu" style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 16px)', left: 14, zIndex: 270, width: 42, height: 42 }}><Menu size={16} /></button>
       {sidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 255 }} />}
       <aside ref={sidebarRef} style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 'min(300px,82vw)', padding: '86px 14px 20px', background: darkMode ? 'rgba(7,9,20,0.95)' : 'rgba(255,255,255,0.95)', backdropFilter: 'blur(12px)', borderRight: `1px solid ${T.surfaceBorder}`, transform: sidebarOpen ? 'translateX(0)' : 'translateX(-105%)', transition: 'transform 0.25s ease', zIndex: 260, overflowY: 'auto' }}>
         <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
@@ -2278,23 +2335,15 @@ export default function MCUViewer() {
           </div>
           <button className="fpill" onClick={() => { setSettingsOpen(true); setSidebarOpen(false); }} style={{ width: '100%', justifyContent: 'center' }}><Settings size={13}/>Settings & Profile</button>
         </div>
-        <button className="fpill" onClick={() => { setSidebarOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }} style={{ width: '100%', justifyContent: 'center' }}>Top</button>
                 <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Quick Phases</div>
+        <button className="fpill" onClick={() => { setSidebarOpen(false); setAnalyticsOpen(true); }} style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}>Analytics</button>
         <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
           {PHASES.map(ph => <button key={ph.id} className="fpill" onClick={() => { setSidebarOpen(false); setActivePhase(ph.id); scrollTo(ph.id); }} style={{ justifyContent: 'space-between' }}><span>{ph.name}</span><ChevRight size={13} /></button>)}
         </div>
       </aside>
 
-      <div ref={settingsRef} style={{ position: 'fixed', top: 16, right: 14, zIndex: 260 }}>
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div title={profile.name || 'Profile'} style={{ width: 56, height: 56, borderRadius: '50%', border: 'none', padding: 3, background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
-            {profile.pfp ? <img src={profile.pfp} alt="profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'linear-gradient(145deg,var(--theme-accent),var(--theme-accent-alt))', color: '#fff', display: 'grid', placeItems: 'center' }}><UserCircle size={28} /></div>}
-          </div>
-          <button className="theme-btn" onClick={() => setSettingsOpen(o => !o)} aria-label="Open settings menu" title="Settings" style={{ width: 40, height: 40, background: darkMode ? 'rgba(16,18,35,0.92)' : '#fff' }}>
-            <Settings size={15} />
-          </button>
-        </div>
+      <div ref={settingsRef} style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 16px)', right: 14, zIndex: 260 }}>
         {settingsOpen && (
           <div className="fade-in settings-menu" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, marginTop: 8, minWidth: 320, borderRadius: 12, border: '1px solid var(--theme-border)', background: 'var(--theme-surface)', boxShadow: 'none', padding: 10, display: 'grid', gap: 8, maxHeight: '80vh', overflow: 'auto',  }}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Profile</div>
@@ -2375,7 +2424,7 @@ export default function MCUViewer() {
                 {`${activeItems.length} Items · ${listMode === 'core' ? 'MCU' : 'Extended'}`}
               </div>
             </div>
-            <div style={{ background: darkMode ? 'rgba(18,22,42,0.38)' : T.statBg, border: `1px solid ${darkMode ? 'rgba(255,220,235,0.2)' : T.statBorder}`, borderRadius: 10, padding: headerMinimized ? '5px 9px' : '7px 12px', minWidth: headerMinimized ? 126 : 164, boxShadow: 'none', transition: 'all 0.2s ease' }}>
+            <div style={{ background: darkMode ? 'linear-gradient(145deg, rgba(45,12,22,0.75), rgba(18,22,42,0.58))' : T.statBg, border: `1px solid ${darkMode ? 'rgba(255,120,150,0.45)' : T.statBorder}`, borderRadius: 10, padding: headerMinimized ? '5px 9px' : '7px 12px', minWidth: headerMinimized ? 126 : 164, boxShadow: darkMode ? '0 0 22px rgba(225,35,85,0.28)' : '0 8px 22px rgba(0,0,0,0.08)', transition: 'all 0.2s ease' }}>
               <div className="stat-card-label" style={{ fontSize: '11px', letterSpacing: 1.2, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)' }}>WATCHED</div>
               <div className="stat-card-num" style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 'clamp(40px, 5vw, 48px)', letterSpacing: 1, color: 'var(--theme-accent)', lineHeight: 1 }}>
                 {totalWatched}<span style={{ fontSize: 'clamp(24px, 3vw, 28px)', color: T.numFaint }}>/{activeItems.length}</span>
@@ -2430,7 +2479,7 @@ export default function MCUViewer() {
       {/* ━━ ANALYTICS STRIP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: T.switcherBg, borderBottom: `1px solid ${T.switcherBorder}`, padding: '10px 24px', flexShrink: 0 }}>
         <div style={{ maxWidth: 1400, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 20, padding: '0 24px' }}>
-          <div className="glass-grad" style={{ background: darkMode ? 'linear-gradient(135deg, rgba(20,24,42,0.88), rgba(39,20,49,0.78))' : 'linear-gradient(135deg,#ffffff,#f8f4ff)', border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12 }}>
+          <div className="glass-grad" style={{ background: darkMode ? 'linear-gradient(135deg, rgba(36,20,52,0.9), rgba(10,34,53,0.85))' : 'linear-gradient(135deg,#ffffff,#f8f4ff)', border: `1px solid color-mix(in srgb, var(--theme-accent) 45%, ${T.surfaceBorder})`, borderRadius: 10, padding: 12, boxShadow: darkMode ? '0 12px 30px rgba(0,0,0,0.3)' : '0 10px 18px rgba(0,0,0,0.06)' }}>
             <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Continue Watching</div>
             <div style={{ fontSize: 18, marginTop: 4 }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</div>
             <div style={{ height: 1, marginTop: 6, background: darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)' }} />
@@ -2445,7 +2494,7 @@ export default function MCUViewer() {
               scrollTo(nextPhaseId);
             }}>{allWatched ? 'Congratulations 🎉' : 'Jump Next'}</button>
           </div>
-          <button className="glass-grad" onClick={() => setAnalyticsOpen(true)} style={{ textAlign: 'left', background: darkMode ? 'linear-gradient(135deg, rgba(17,37,48,0.84), rgba(24,21,43,0.78))' : 'linear-gradient(135deg,#ffffff,#f2fbff)', border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 12, color: T.text }}>
+          <button className="glass-grad" onClick={() => setAnalyticsOpen(true)} style={{ textAlign: 'left', background: darkMode ? 'linear-gradient(135deg, rgba(17,37,48,0.9), rgba(24,21,43,0.84))' : 'linear-gradient(135deg,#ffffff,#f2fbff)', border: `1px solid color-mix(in srgb, var(--theme-warning) 40%, ${T.surfaceBorder})`, borderRadius: 10, padding: 12, color: T.text, boxShadow: darkMode ? '0 12px 30px rgba(0,0,0,0.3)' : '0 10px 18px rgba(0,0,0,0.06)' }}>
             <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Analytics</div>
             <div style={{ fontSize: 14, marginTop: 6 }}>{totalWatched}/{totalEntries} watched · ~{Math.round(totalWatchedHours * 10) / 10}h watched · ~{remainingHours}h remaining</div>
             <div style={{ fontSize: 13, color: T.textMuted, marginTop: 4 }}>Films: {filmCount} · Series: {seriesCount} · Open analysis history ›</div>
@@ -2526,7 +2575,7 @@ export default function MCUViewer() {
                   </button>
                 );
               })}
-              {listMode === 'core' && (
+              {(listMode === 'core' || listMode === 'extended') && (
                 <button className="fpill"
                   style={essentialOnly ? { borderColor: 'color-mix(in srgb, var(--theme-warning) 50%, transparent)', background: 'var(--theme-warning-soft)', color: 'var(--theme-warning)' } : {}}
                   onClick={() => setEssOnly(o => !o)}>
@@ -2888,9 +2937,9 @@ export default function MCUViewer() {
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                     <button className="fpill" style={{ padding: '6px 9px', fontSize: 11 }} onClick={() => setRewatchCount(p => ({ ...p, [item.id]: (p[item.id] || 0) + 1 }))}><Clock size={12}/>Re-watch {rewatchCount[item.id] || 0}</button>
                     <button className="fpill" style={{ padding: '6px 9px', fontSize: 11 }} onClick={() => setRewatchCount(p => ({ ...p, [item.id]: Math.max(0, (p[item.id] || 0) - 1) }))}>−</button>
-                    <span style={{ color: T.textMuted, fontSize: 12, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700 }}>Rating</span>
-                    {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                      <button key={n} aria-label={`${n} out of 10 rating for ${item.title}`} onClick={() => setReviewRating(item.id, n)} style={{ border: 0, width: 24, height: 24, borderRadius: 8, background: (myRating[item.id] || 0) >= n ? 'rgba(124,255,218,0.2)' : 'transparent', color: (myRating[item.id] || 0) >= n ? '#7cffda' : T.textFaint, display: 'grid', placeItems: 'center', cursor: 'pointer' }}><RatingGem size={14}/></button>
+                    <span style={{ color: T.textMuted, fontSize: 12, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700 }}>Star Rating</span>
+                    {[1,2,3,4,5].map(n => (
+                      <button key={n} aria-label={`${n} stars for ${item.title}`} onClick={() => setReviewRating(item.id, n * 2)} style={{ border: 0, width: 26, height: 26, borderRadius: 8, background: (myRating[item.id] || 0) >= (n * 2) ? 'rgba(124,255,218,0.2)' : 'transparent', color: (myRating[item.id] || 0) >= (n * 2) ? '#ffd35c' : T.textFaint, display: 'grid', placeItems: 'center', cursor: 'pointer', fontSize: 16, fontWeight: 700 }}><span>★</span></button>
                     ))}
                     <span style={{ fontSize: 12, fontWeight: 800, fontFamily: 'Manrope, sans-serif', color: '#7cffda' }}>{myRating[item.id] || 0}/10</span>
                   </div>
