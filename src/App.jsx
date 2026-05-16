@@ -511,8 +511,15 @@ export default function MCUViewer() {
   const [editingDateId,  setEditingDateId]  = useState(null);
   const [headerCompact]  = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [heroIndex, setHeroIndex] = useState(0);
-  const [currentHeroSrc, setCurrentHeroSrc] = useState('');
+  const [heroIndex, setHeroIndex] = useState(() => {
+    if (typeof window === 'undefined') return 0;
+    const saved = Number(window.sessionStorage.getItem('mcu-hero-index-v1'));
+    return Number.isFinite(saved) ? Math.max(0, saved) : 0;
+  });
+  const [currentHeroSrc, setCurrentHeroSrc] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return window.sessionStorage.getItem('mcu-hero-src-v1') || '';
+  });
   const [nextHeroSrc, setNextHeroSrc] = useState('');
   const [heroTransitioning, setHeroTransitioning] = useState(false);
   const [detailItem,     setDetailItem]     = useState(null);
@@ -1097,6 +1104,17 @@ export default function MCUViewer() {
   );
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.sessionStorage.setItem('mcu-hero-index-v1', String(heroIndex));
+  }, [heroIndex]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!currentHeroSrc) return;
+    window.sessionStorage.setItem('mcu-hero-src-v1', currentHeroSrc);
+  }, [currentHeroSrc]);
+
+  useEffect(() => {
     if (!heroPosters.length) {
       setCurrentHeroSrc('');
       setNextHeroSrc('');
@@ -1129,8 +1147,8 @@ export default function MCUViewer() {
     }
     if (heroPosters.length <= 1 || document.visibilityState !== 'visible') return;
 
-    const HERO_INTERVAL_MS = 6800;
-    const HERO_TRANSITION_MS = 1200;
+    const HERO_INTERVAL_MS = 2000;
+    const HERO_TRANSITION_MS = 2000;
     heroIntervalRef.current = window.setInterval(() => {
       setHeroIndex((i) => {
         const currentIndex = i % heroPosters.length;
@@ -1166,7 +1184,30 @@ export default function MCUViewer() {
       }
       if (document.visibilityState === 'visible' && !heroIntervalRef.current && heroPosters.length > 1) {
         heroIntervalRef.current = window.setInterval(() => {
-          setHeroIndex(i => pickRandomIndex(i % heroPosters.length));
+          setHeroIndex((i) => {
+            const currentIndex = i % heroPosters.length;
+            const upcomingIndex = pickRandomIndex(currentIndex);
+            const upcomingSrc = heroPosters[upcomingIndex];
+            if (!upcomingSrc || upcomingSrc === currentHeroSrc) return upcomingIndex;
+            const img = new Image();
+            img.onload = () => {
+              setNextHeroSrc(upcomingSrc);
+              setHeroTransitioning(true);
+              if (heroFadeTimeoutRef.current) window.clearTimeout(heroFadeTimeoutRef.current);
+              heroFadeTimeoutRef.current = window.setTimeout(() => {
+                setCurrentHeroSrc(upcomingSrc);
+                setNextHeroSrc('');
+                setHeroTransitioning(false);
+              }, HERO_TRANSITION_MS);
+            };
+            img.onerror = () => {
+              setNextHeroSrc('');
+              setHeroTransitioning(false);
+            };
+            img.src = upcomingSrc;
+            preloadNext(upcomingIndex);
+            return upcomingIndex;
+          });
         }, HERO_INTERVAL_MS);
       }
     };
@@ -2065,7 +2106,7 @@ export default function MCUViewer() {
   } : {
     appBg: '#f2f0eb', headerBg: 'linear-gradient(180deg,#ffffff 0%,#f2f0eb 100%)',
     headerBorder: '#ddd8d0', navBg: '#ffffff', navBorder: '#e8e2d8',
-    filterBg: '#faf8f4', filterBorder: '#e4ddd4',
+    filterBg: 'rgba(250,248,244,0.52)', filterBorder: 'rgba(214,205,194,0.58)',
     surfaceBg: '#ffffff', surfaceBorder: '#e0dbd2',
     rowHoverBg: 'rgba(0,0,0,0.025)', rowWatchedBg: 'rgba(62,196,122,0.15)',
     rowBorder: '#ede8e0', expandBg: '#faf7f2', expandBorder: '#e4ddd4',
@@ -2073,12 +2114,12 @@ export default function MCUViewer() {
     pillHoverBorder: '#c8c2b8', pillHoverText: '#1a2030',
     inputBg: '#ffffff', inputBorder: '#ddd8cf', inputColor: '#1a2030',
     dropdownBg: '#ffffff', dropdownBorder: '#ddd8cf', dropdownShadow: '0 24px 64px rgba(0,0,0,0.16)',
-    text: '#1a2030', textMuted: '#8090a0', textFaint: '#c0bcb4',
+    text: '#111827', textMuted: '#4b5563', textFaint: '#6b7280',
     sortHoverBg: '#f5f2ec', statBg: '#ffffff', statBorder: '#e4ddd4',
     numFaint: '#a0a8b0', footerText: '#a0a8b0',
     scrollTrack: '#ece8e0', scrollThumb: '#ccc8c0', scrollThumbH: '#b8b4ac',
     hexDot: 'rgba(0,0,0,0.025)', switcherBg: '#f8f5f0', switcherBorder: '#e4ddd4',
-    phaseSummaryBg: '#f5f2ec', phaseSummaryBorder: '#e4ddd4',
+    phaseSummaryBg: 'rgba(245,242,236,0.58)', phaseSummaryBorder: 'rgba(214,205,194,0.5)',
   };
 
   const THEME_CHOICES = [
@@ -2525,7 +2566,7 @@ export default function MCUViewer() {
         <div className="header-inner" style={{ width: '100%', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 24px) 30px 12px', transition: 'padding 0.2s ease' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             <div style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
-              <div className="header-title-mcu" style={{ fontSize: 'clamp(44px, 9vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: '#fff', display: 'inline-block', padding: '0 8px', background: 'rgba(212,55,47,0.5)', borderRadius: 6 }}>MCU</div>
+              <div className="header-title-mcu" style={{ fontSize: 'clamp(44px, 9vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: '#fff', display: 'inline-block', padding: '0 24px', margin: '10px 0 40px', background: 'rgba(212,55,47,0.5)', borderRadius: 6 }}>MCU</div>
               <div className="header-title-sub" style={{ fontSize: 'clamp(26px, 4.2vw, 35px)', letterSpacing: 'clamp(3px, 1.1vw, 9px)', color: 'var(--theme-accent-alt)', marginTop: 0 }}>VIEWING ORDER</div>
               <div className="header-tagline" style={{ fontSize: '14px', color: 'var(--theme-warning)', letterSpacing: headerMinimized ? 0.8 : 1.5, fontFamily: 'var(--font-marvel-ui)', marginTop: 1, transition: 'all 0.2s ease' }}>
                 {`${activeItems.length} Items`}
@@ -2535,7 +2576,7 @@ export default function MCUViewer() {
         </div>
       </header>
 
-      <div style={{ height: isDesktopViewport ? 110 : 72, background: 'transparent', flexShrink: 0 }} />
+      <div style={{ height: isDesktopViewport ? 300 : 230, background: 'transparent', flexShrink: 0 }} />
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 220, marginTop: 0 }}>
         <div style={{ height: 14, background: darkMode ? 'linear-gradient(180deg, rgba(8,12,20,0) 0%, rgba(8,12,20,0.42) 100%)' : 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 100%)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }} />
