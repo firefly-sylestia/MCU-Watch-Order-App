@@ -2289,7 +2289,7 @@ export default function MCUViewer() {
 
         .section-up{content-visibility:visible;contain-intrinsic-size:auto}
         .phase-rows-full{display:block}
-        .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 0.14s ease,border-color 0.14s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:var(--row-min-h,86px);border-radius:10px;overflow:hidden}
+        .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 0.14s ease,border-color 0.14s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:var(--row-min-h,86px);border-radius:10px;overflow:hidden;background:rgba(8,14,28,0.24);backdrop-filter:blur(4px)}
         .rrow:last-child{border-bottom:none}
         .rrow > *{position:relative;z-index:1}
         .rrow:hover{border-left-color:color-mix(in srgb,var(--theme-accent) 65%, var(--phase-color,#c0392b))}
@@ -2325,7 +2325,7 @@ export default function MCUViewer() {
         .detail-fallback-poster{position:relative;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 20% 20%, rgba(232,184,75,0.22), transparent 48%),radial-gradient(circle at 80% 30%, rgba(74,158,222,0.24), transparent 44%),linear-gradient(145deg, rgba(14,20,44,0.9), rgba(9,14,34,0.95));overflow:hidden}
         .detail-fallback-poster::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,0.03)}
         .detail-fallback-poster span{position:relative;z-index:1;text-align:center;font-size:clamp(24px,5vw,40px);line-height:1.2;font-weight:700;color:rgba(242,247,255,0.95);text-shadow:0 2px 14px rgba(0,0,0,0.35)}
-        .glass-panel{background-color:rgba(30,30,46,0.78);border:1px solid rgba(255,255,255,0.05);border-radius:16px}
+        .glass-panel{background-color:rgba(30,30,46,0.42);border:1px solid rgba(255,255,255,0.04);border-radius:16px}
         .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02))}
         .meta-muted{color:var(--theme-text-muted) !important}
         *{scroll-behavior:auto !important}.sweep::after,.phase-flash{animation:none !important}.wbtn,.fpill,.rrow,.theme-switch,.list-mode-switch{transition:none !important}
@@ -2382,11 +2382,11 @@ export default function MCUViewer() {
         main::-webkit-scrollbar-thumb:hover{background:${T.scrollThumbH}}
       `}</style>
 
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '52vh', minHeight: 320, maxHeight: '58vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: currentHeroSrc ? `url(${currentHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: heroTransitioning ? 0.07 : 0.14, filter: 'saturate(1.05) blur(2px)', transition: 'opacity 0.95s ease-in-out' }} />
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: nextHeroSrc ? `url(${nextHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: heroTransitioning ? 0.14 : 0, filter: 'saturate(1.05) blur(2px)', transition: 'opacity 0.95s ease-in-out' }} />
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: currentHeroSrc ? `url(${currentHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: heroTransitioning ? 0.18 : 0.34, filter: 'saturate(1.05) blur(2px)', transition: 'opacity 0.95s ease-in-out' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: nextHeroSrc ? `url(${nextHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: heroTransitioning ? 0.34 : 0, filter: 'saturate(1.05) blur(2px)', transition: 'opacity 0.95s ease-in-out' }} />
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: heroTransitioning ? 0.55 : 1, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
-        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${darkMode ? 'rgba(4,5,15,0.10)' : 'rgba(255,255,255,0.15)'} 0%, ${darkMode ? 'rgba(4,5,15,0.40)' : 'rgba(231,238,248,0.50)'} 66%, ${darkMode ? 'rgba(4,5,15,0.90)' : 'rgba(231,238,248,0.95)'} 100%)` }} />
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${darkMode ? 'rgba(4,5,15,0.05)' : 'rgba(255,255,255,0.08)'} 0%, ${darkMode ? 'rgba(4,5,15,0.18)' : 'rgba(231,238,248,0.22)'} 45%, ${darkMode ? 'rgba(4,5,15,0.52)' : 'rgba(231,238,248,0.58)'} 70%, ${darkMode ? 'rgba(4,5,15,0.96)' : 'rgba(231,238,248,0.96)'} 100%)` }} />
       </div>
       {lightningStrike && <div style={{ position:'fixed', inset:0, pointerEvents:'none', background:'linear-gradient(180deg, rgba(180,220,255,0.95), rgba(255,255,255,0))', mixBlendMode:'screen', zIndex:9999, animation:'fadeInOut 0.7s ease' }} />}
       {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
@@ -2459,7 +2459,7 @@ export default function MCUViewer() {
 
       <div ref={settingsRef} style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 16px)', right: 14, zIndex: 260 }}>
         {settingsOpen && (
-          <div className="fade-in settings-menu" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, marginTop: 8, minWidth: 320, borderRadius: 12, border: '2px solid var(--theme-accent)', background: darkMode ? '#0d1323' : '#ffffff', boxShadow: 'none', padding: 10, display: 'grid', gap: 8, maxHeight: '80vh', overflow: 'auto',  }}>
+          <div className="fade-in settings-menu" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, marginTop: 8, minWidth: 320, borderRadius: 12, border: '1px solid color-mix(in srgb, var(--theme-accent) 35%, transparent)', background: darkMode ? 'rgba(13,19,35,0.52)' : 'rgba(255,255,255,0.48)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', boxShadow: 'none', padding: 10, display: 'grid', gap: 8, maxHeight: '80vh', overflow: 'auto',  }}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Profile</div>
             <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 6 }}>
@@ -2515,24 +2515,16 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <header className="hexbg" style={{ position: 'relative', zIndex: 120, background: 'var(--theme-header-bg)', borderBottom: `1px solid ${T.headerBorder}`, flexShrink: 0 }}>
+      <header className="hexbg" style={{ position: 'relative', zIndex: 120, background: 'transparent', borderBottom: `1px solid ${T.headerBorder}`, flexShrink: 0 }}>
         <div className="header-inner" style={{ width: '100%', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 24px) 30px 12px', transition: 'padding 0.2s ease' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             <div style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
-              <div className="header-title-mcu" style={{ fontSize: 'clamp(44px, 9vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: '#fff', background: 'rgba(225,6,0,0.56)', border: '2px solid rgba(255,59,48,0.65)', display: 'inline-block', padding: '2px 8px', borderRadius: 4 }}>MCU</div>
+              <div className="header-title-mcu" style={{ fontSize: 'clamp(44px, 9vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: '#fff', display: 'inline-block', padding: '0' }}>MCU</div>
               <div className="header-title-sub" style={{ fontSize: 'clamp(26px, 4.2vw, 35px)', letterSpacing: 'clamp(3px, 1.1vw, 9px)', color: 'var(--theme-accent-alt)', marginTop: 0 }}>VIEWING ORDER</div>
               <div className="header-tagline" style={{ fontSize: '14px', color: 'var(--theme-warning)', letterSpacing: headerMinimized ? 0.8 : 1.5, fontFamily: 'var(--font-marvel-ui)', marginTop: 1, transition: 'all 0.2s ease' }}>
-                {`${activeItems.length} Items · ${listMode === 'core' ? 'MCU' : 'Extended'}`}
+                {`${activeItems.length} Items`}
               </div>
             </div>
-          </div>
-          {/* Master progress bar */}
-          <div style={{ background: darkMode ? 'rgba(255,255,255,0.08)' : T.surfaceBg, border: `1px solid ${darkMode ? 'rgba(255,255,255,0.18)' : T.surfaceBorder}`, borderRadius: 999, height: 7, overflow: 'hidden', position: 'relative', marginBottom: 2,  }}>
-            <div className="sweep progress-gradient" style={{ height: '100%', width: `${pct}%`, background: phaseGradient, boxShadow: 'none', borderRadius: 999, transition: 'width 0.7s cubic-bezier(.4,0,.2,1)', position: 'relative', overflow: 'hidden' }} />
-          </div>
-          <div className="progress-labels" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'clamp(12px, 2vw, 16px)', color: T.textMuted, letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)' }}>
-            <span>{pct}% COMPLETE</span>
-            <span>{activeItems.length - totalWatched} REMAINING</span>
           </div>
         </div>
       </header>
@@ -2559,16 +2551,7 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ background: T.filterBg, borderBottom: `1px solid ${T.filterBorder}`, flexShrink: 0, position: 'relative', zIndex: 220 }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '10px 24px 0' }}>
-          <div style={{ background: darkMode ? 'rgba(255,255,255,0.08)' : T.surfaceBg, border: `1px solid ${darkMode ? 'rgba(255,255,255,0.18)' : T.surfaceBorder}`, borderRadius: 999, height: 7, overflow: 'hidden', position: 'relative', marginBottom: 4 }}>
-            <div className="sweep progress-gradient" style={{ height: '100%', width: `${pct}%`, background: phaseGradient, boxShadow: 'none', borderRadius: 999, transition: 'width 0.7s cubic-bezier(.4,0,.2,1)', position: 'relative', overflow: 'hidden' }} />
-          </div>
-          <div className="progress-labels" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'clamp(11px, 1.5vw, 13px)', color: T.textMuted, letterSpacing: 1.4, fontFamily: 'var(--font-marvel-ui)' }}>
-            <span>{pct}% COMPLETE</span>
-            <span>{activeItems.length - totalWatched} REMAINING</span>
-          </div>
-        </div>
+      <div style={{ background: 'transparent', borderBottom: `1px solid ${T.filterBorder}`, flexShrink: 0, position: 'relative', zIndex: 220, backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>
         {/* Toggle row — always visible */}
         <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
