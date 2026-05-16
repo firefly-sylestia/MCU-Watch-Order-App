@@ -485,7 +485,7 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
     </div>
   );
 });
-// ─── Component ─────────────────────────��─────────────────────────────────────
+// ─── Component ───────────────────────────────────────────────────────────────
 export default function MCUViewer() {
   const initialUiState = useMemo(() => readSavedUiState(), []);
   const [items,          setItems]          = useState(RAW);
@@ -1147,7 +1147,7 @@ export default function MCUViewer() {
     }
     if (heroPosters.length <= 1 || document.visibilityState !== 'visible') return;
 
-    const HERO_INTERVAL_MS = 2000;
+    const HERO_INTERVAL_MS = 5000;
     const HERO_TRANSITION_MS = 600;
     heroIntervalRef.current = window.setInterval(() => {
       setHeroIndex((i) => {
@@ -2368,8 +2368,8 @@ export default function MCUViewer() {
         .detail-fallback-poster{position:relative;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 20% 20%, rgba(232,184,75,0.22), transparent 48%),radial-gradient(circle at 80% 30%, rgba(74,158,222,0.24), transparent 44%),linear-gradient(145deg, rgba(14,20,44,0.9), rgba(9,14,34,0.95));overflow:hidden}
         .detail-fallback-poster::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,0.03)}
         .detail-fallback-poster span{position:relative;z-index:1;text-align:center;font-size:clamp(24px,5vw,40px);line-height:1.2;font-weight:700;color:rgba(242,247,255,0.95);text-shadow:0 2px 14px rgba(0,0,0,0.35)}
-        .glass-panel{background-color:rgba(30,30,46,0.32);border:1px solid rgba(255,255,255,0.04);border-radius:16px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-        .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+        .glass-panel{background-color:rgba(30,30,46,0.42);border:1px solid rgba(255,255,255,0.04);border-radius:16px}
+        .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02))}
         .meta-muted{color:var(--theme-text-muted) !important}
         *{scroll-behavior:auto !important}.sweep::after,.phase-flash{animation:none !important}.wbtn,.fpill,.rrow,.theme-switch,.list-mode-switch{transition:none !important}
 
@@ -2562,18 +2562,7 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <header className="hexbg" style={{ position: 'relative', zIndex: 120, background: 'transparent', borderBottom: 'none', flexShrink: 0, overflow: 'hidden' }}>
-        {/* Header carousel background */}
-        {currentHeroSrc && (
-          <div style={{ position: 'absolute', inset: 0, zIndex: -1, overflow: 'hidden', borderBottomLeftRadius: 20, borderBottomRightRadius: 20 }}>
-            <img src={currentHeroSrc} alt="Header background" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }} />
-          </div>
-        )}
-        {nextHeroSrc && heroTransitioning && (
-          <div style={{ position: 'absolute', inset: 0, zIndex: -1, overflow: 'hidden', borderBottomLeftRadius: 20, borderBottomRightRadius: 20 }}>
-            <img src={nextHeroSrc} alt="Header background next" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%', opacity: heroTransitioning ? 1 : 0, transition: 'opacity 0.6s ease-in-out' }} />
-          </div>
-        )}
+      <header className="hexbg" style={{ position: 'relative', zIndex: 120, background: 'transparent', borderBottom: 'none', flexShrink: 0 }}>
         <div className="header-inner" style={{ width: '100%', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 24px) 30px 12px', transition: 'padding 0.2s ease' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             <div style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
@@ -2587,24 +2576,24 @@ export default function MCUViewer() {
         </div>
       </header>
 
-      {/* ━━ POSTER CAROUSEL (EXTENDED) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ position: 'relative', height: isDesktopViewport ? 380 : 280, background: 'transparent', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 210, borderBottomLeftRadius: 24, borderBottomRightRadius: 24, marginTop: -80 }}>
+      {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <div style={{ position: 'relative', height: isDesktopViewport ? 300 : 230, background: 'transparent', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 210 }}>
         {/* Carousel posters */}
         {currentHeroSrc && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottomLeftRadius: 24, borderBottomRightRadius: 24, overflow: 'hidden' }}>
-            <img src={currentHeroSrc} alt="Current poster" style={{ height: '100%', width: '100%', objectFit: 'cover', objectPosition: 'center', opacity: 1, transition: 'opacity 0.6s ease-in-out', borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }} />
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src={currentHeroSrc} alt="Current poster" style={{ height: '100%', width: 'auto', objectFit: 'cover', maxWidth: '100%', opacity: 1, transition: 'opacity 0.6s ease-in-out', borderRadius: 8 }} />
           </div>
         )}
         {nextHeroSrc && heroTransitioning && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottomLeftRadius: 24, borderBottomRightRadius: 24, overflow: 'hidden' }}>
-            <img src={nextHeroSrc} alt="Next poster" style={{ height: '100%', width: '100%', objectFit: 'cover', objectPosition: 'center', opacity: 1, transition: 'opacity 0.6s ease-in-out', borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }} />
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src={nextHeroSrc} alt="Next poster" style={{ height: '100%', width: 'auto', objectFit: 'cover', maxWidth: '100%', opacity: 1, transition: 'opacity 0.6s ease-in-out', borderRadius: 8 }} />
           </div>
         )}
-        {/* Blend border with rounded corners */}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderBottomLeftRadius: 24, borderBottomRightRadius: 24, background: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.02) 15%, transparent 50%, rgba(0,0,0,0.02) 85%, transparent 100%), linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.03) 5%, transparent 50%, rgba(0,0,0,0.1) 95%, transparent 100%)' }} />
+        {/* Blend border */}
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 8, background: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.02) 20%, transparent 50%, rgba(0,0,0,0.02) 80%, transparent 100%), linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.04) 10%, transparent 50%, rgba(0,0,0,0.04) 90%, transparent 100%)' }} />
       </div>
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ background: darkMode ? 'rgba(7,10,22,0.65)' : 'rgba(255,255,255,0.7)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 220, marginTop: 0 }}>
+      <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 220, marginTop: 0 }}>
         {/* Toggle row — always visible */}
         <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
@@ -2826,7 +2815,7 @@ export default function MCUViewer() {
                 )}
 
                 {/* Phase divider */}
-                <div className="curvy-panel" style={{ '--phase-color': ph.color, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap', padding: '10px 10px 10px 12px', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? `linear-gradient(120deg, color-mix(in srgb, var(--theme-accent) 12%, color-mix(in srgb, ${ph.color} 20%, transparent)), rgba(22,20,38,0.28))` : `linear-gradient(120deg, color-mix(in srgb, var(--theme-accent) 6%, color-mix(in srgb, ${ph.color} 11%, #fff)), rgba(255,255,255,0.5))`, backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
+                <div className="curvy-panel" style={{ '--phase-color': ph.color, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap', padding: '10px 10px 10px 12px', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? `linear-gradient(120deg, color-mix(in srgb, var(--theme-accent) 12%, color-mix(in srgb, ${ph.color} 20%, transparent)), rgba(22,20,38,0.38))` : `linear-gradient(120deg, color-mix(in srgb, var(--theme-accent) 6%, color-mix(in srgb, ${ph.color} 11%, #fff)), rgba(255,255,255,0.7))` }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: 'var(--font-marvel-display)', fontSize: 'clamp(23px, 3vw, 28px)', letterSpacing: 2.2, color: ph.color, lineHeight: 1, fontWeight: 700, textShadow: darkMode ? `0 0 18px ${ph.glow}` : 'none' }}>
                       {ph.name}
