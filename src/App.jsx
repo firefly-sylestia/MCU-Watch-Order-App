@@ -2376,8 +2376,11 @@ export default function MCUViewer() {
         main::-webkit-scrollbar-thumb:hover{background:${T.scrollThumbH}}
       `}</style>
 
-      <div style={{ position: 'fixed', inset: 0, zIndex: -2, backgroundImage: currentHeroSrc ? `linear-gradient(rgba(4,5,15,0.68), rgba(4,5,15,0.88)), url(${currentHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center center', backgroundRepeat: 'no-repeat', filter: 'saturate(1.12)', opacity: heroTransitioning ? 0 : 1, transition: 'opacity 0.65s ease' }} />
-      <div style={{ position: 'fixed', inset: 0, zIndex: -1, backgroundImage: nextHeroSrc ? `linear-gradient(rgba(4,5,15,0.68), rgba(4,5,15,0.88)), url(${nextHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center center', backgroundRepeat: 'no-repeat', filter: 'saturate(1.12)', opacity: heroTransitioning ? 1 : 0, transition: 'opacity 0.65s ease' }} />
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '52vh', minHeight: 320, maxHeight: '58vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: currentHeroSrc ? `linear-gradient(rgba(4,5,15,0.40), rgba(4,5,15,0.62)), url(${currentHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 18%', backgroundRepeat: 'no-repeat', filter: 'saturate(1.12)', opacity: heroTransitioning ? 0 : 1, transition: 'opacity 0.8s ease' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: nextHeroSrc ? `linear-gradient(rgba(4,5,15,0.40), rgba(4,5,15,0.62)), url(${nextHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 18%', backgroundRepeat: 'no-repeat', filter: 'saturate(1.12)', opacity: heroTransitioning ? 1 : 0, transition: 'opacity 0.8s ease' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(4,5,15,0.15) 0%, rgba(4,5,15,0.45) 66%, rgba(4,5,15,0.92) 100%)' }} />
+      </div>
       {lightningStrike && <div style={{ position:'fixed', inset:0, pointerEvents:'none', background:'linear-gradient(180deg, rgba(180,220,255,0.95), rgba(255,255,255,0))', mixBlendMode:'screen', zIndex:9999, animation:'fadeInOut 0.7s ease' }} />}
       {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
 
