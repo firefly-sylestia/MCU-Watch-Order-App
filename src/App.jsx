@@ -551,6 +551,16 @@ export default function MCUViewer() {
   const [lightningStrike, setLightningStrike] = useState(false);
   const [spiderDrop, setSpiderDrop] = useState(false);
   const headerMinimized = scrollCheckpoint > 56;
+  const phaseRefs  = useRef({});
+  const sortRef    = useRef(null);
+  const phaseRef   = useRef(null);
+  const obsRef     = useRef(null);  const isScrolling= useRef(false);
+  const mainRef    = useRef(null);
+  const settingsRef= useRef(null);
+  const sidebarRef = useRef(null);
+  const heroIntervalRef = useRef(null);
+  const restoredUiStateRef = useRef(false);
+  const metadataBuildRef = useRef({ paused: false, running: false });
 
   const heroPosters = useMemo(() => activeItems.slice(0, 8).map(item => posterSrc(item)), [activeItems]);
   const reduceMotion = useMemo(() => typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches, []);
@@ -603,18 +613,6 @@ export default function MCUViewer() {
     window.addEventListener('popstate', onBack);
     return () => window.removeEventListener('popstate', onBack);
   }, [sidebarOpen, settingsOpen, detailItem, analyticsOpen]);
-
-  const phaseRefs  = useRef({});
-  const sortRef    = useRef(null);
-  const phaseRef   = useRef(null);
-  const obsRef     = useRef(null);  const isScrolling= useRef(false);
-  const mainRef    = useRef(null);
-  const settingsRef= useRef(null);
-  const sidebarRef = useRef(null);
-  const heroIntervalRef = useRef(null);
-  const restoredUiStateRef = useRef(false);
-  const metadataBuildRef = useRef({ paused: false, running: false });
-
 
   useEffect(() => {
     const s = localStorage.getItem('mcu-v7');
