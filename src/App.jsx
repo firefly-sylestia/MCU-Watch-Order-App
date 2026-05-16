@@ -2202,7 +2202,7 @@ export default function MCUViewer() {
   const renderPhaseSelector = () => (
     <div ref={phaseRef} style={{ position: 'relative', flex: '0 0 auto' }}>
       <button className="fpill" onClick={() => setPhaseOpen(o => !o)}
-        style={{ color: activePhase === 0 ? 'var(--theme-accent)' : (PHASES.find(ph => ph.id === activePhase)?.color || 'var(--theme-accent)'), borderColor: activePhase === 0 ? 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))' : `${PHASES.find(ph => ph.id === activePhase)?.color || '#c0392b'}88`, background: activePhase === 0 ? 'color-mix(in srgb, var(--theme-accent) 9%, var(--theme-surface))' : `color-mix(in srgb, ${PHASES.find(ph => ph.id === activePhase)?.color || '#c0392b'} 12%, var(--theme-surface))`, fontFamily: 'var(--font-marvel-ui)', fontSize: 'clamp(13px, 2.2vw, 16px)', letterSpacing: 2, padding: '7px 14px', whiteSpace: 'nowrap' }}>
+        style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '5px 10px', color: activePhase === 0 ? T.textMuted : (PHASES.find(ph => ph.id === activePhase)?.color || T.text), background: T.filterBg, fontFamily: 'var(--font-marvel-ui)', fontSize: 12, letterSpacing: 1.4, whiteSpace: 'nowrap' }}>
         {activePhase === 0 ? 'Phase All' : (PHASES.find(ph => ph.id === activePhase)?.name || 'Phase All')}
         <ChevDown size={12} style={{ opacity: 0.6, transform: phaseOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
       </button>
@@ -2385,7 +2385,7 @@ export default function MCUViewer() {
       `}</style>
 
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: currentHeroSrc ? `url(${currentHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: 0.2, filter: 'saturate(1.05) blur(2px)', transition: 'opacity 0.95s ease-in-out' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: currentHeroSrc ? `url(${currentHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: 0.3, transition: 'opacity 0.95s ease-in-out' }} />
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: heroTransitioning ? 0.55 : 1, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${darkMode ? 'rgba(4,5,15,0.05)' : 'rgba(255,255,255,0.08)'} 0%, ${darkMode ? 'rgba(4,5,15,0.18)' : 'rgba(231,238,248,0.22)'} 45%, ${darkMode ? 'rgba(4,5,15,0.52)' : 'rgba(231,238,248,0.58)'} 70%, ${darkMode ? 'rgba(4,5,15,0.96)' : 'rgba(231,238,248,0.96)'} 100%)` }} />
       </div>
@@ -2536,26 +2536,6 @@ export default function MCUViewer() {
       </header>
 
       <div style={{ height: isDesktopViewport ? 110 : 72, background: 'transparent', flexShrink: 0 }} />
-      <section
-        aria-label="Featured MCU carousel"
-        style={{
-          position: 'relative',
-          height: '33vh',
-          minHeight: 220,
-          maxHeight: 420,
-          margin: '0 16px 8px',
-          borderRadius: 18,
-          overflow: 'hidden',
-          background: 'transparent',
-          border: '1px solid transparent',
-          flexShrink: 0,
-        }}
-      >
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: currentHeroSrc ? `url(${currentHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 26%', opacity: heroTransitioning ? 0.1 : 0.26, transform: 'scale(1.02)', transition: 'opacity 1.2s ease, transform 2.6s ease' }} />
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: nextHeroSrc ? `url(${nextHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 26%', opacity: heroTransitioning ? 0.28 : 0, transform: heroTransitioning ? 'scale(1.03)' : 'scale(1.01)', transition: 'opacity 1.2s ease, transform 2.4s ease' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.08) 60%, rgba(0,0,0,0.12) 100%)' }} />
-      </section>
-
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 220, marginTop: 0 }}>
         <div style={{ height: 14, background: darkMode ? 'linear-gradient(180deg, rgba(8,12,20,0) 0%, rgba(8,12,20,0.42) 100%)' : 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 100%)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }} />
@@ -2567,17 +2547,17 @@ export default function MCUViewer() {
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: `1px solid ${filtersOpen ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: filtersOpen ? 'color-mix(in srgb, var(--theme-accent) 10%, var(--theme-surface))' : T.filterBg, color: filtersOpen ? 'var(--theme-accent)' : T.textMuted, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 2, transition: 'all 0.18s' }}
             >
               <SlidersH size={13} />
-              FX
+              Filters
               {activeFilterCount > 0 && (
                 <span style={{ background: 'var(--theme-accent)', color: '#fff', borderRadius: 999, fontSize: 10, fontFamily: 'var(--font-marvel-display)', fontWeight: 700, padding: '1px 6px', lineHeight: 1.4 }}>{activeFilterCount}</span>
               )}
               <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             {renderPhaseSelector()}
-            <div className="glass-grad" style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 360 }}>
+            <button className="glass-grad" onClick={() => nextUnwatched && setDetailItem(nextUnwatched)} style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 360, background: T.filterBg, cursor: nextUnwatched ? 'pointer' : 'default' }}>
               <span style={{ fontSize: 10, letterSpacing: 1.6, color: T.textMuted, textTransform: 'uppercase' }}>Continue</span>
               <span style={{ fontSize: 12, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</span>
-            </div>
+            </button>
             {/* Search always visible */}
             <div style={{ position: 'relative', flex: '1 1 220px', minWidth: 170, maxWidth: isDesktopViewport ? 320 : '100%' }}>
               <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
