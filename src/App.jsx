@@ -1009,13 +1009,8 @@ export default function MCUViewer() {
   useEffect(() => {
     const timer = setTimeout(() => {
       const container = mainRef.current;
-      const canScrollMain = container && container.scrollHeight > container.clientHeight + 1;
-      if (initialUiState.scrollTop > 0) {
-        if (canScrollMain) container.scrollTop = initialUiState.scrollTop;
-        else window.scrollTo({ top: initialUiState.scrollTop, behavior: 'auto' });
-      } else if (initialUiState.activePhase > 0) {
-        scrollTo(initialUiState.activePhase);
-      }
+      if (container) container.scrollTop = 0;
+      window.scrollTo({ top: 0, behavior: 'auto' });
       restoredUiStateRef.current = true;
     }, 180);
     return () => clearTimeout(timer);
@@ -1094,7 +1089,12 @@ export default function MCUViewer() {
     return mapped.startsWith('/') ? mapped : `/posters/${mapped}`;
   };
   const posterSrc = (item) => localPosterSrc(item) || posterCache[item.id] || `https://placehold.co/220x330/1a1f33/f7c4de?text=${encodeURIComponent(item.title+'\n'+item.year)}`;
-  const heroPosters = useMemo(() => activeItems.slice(0, 8).map(item => posterSrc(item)).filter(Boolean), [activeItems, posterCache, localPosterMap]);
+  const heroPosters = useMemo(
+    () => filtered
+      .map(item => localPosterSrc(item))
+      .filter(Boolean),
+    [filtered, localPosterMap]
+  );
 
   useEffect(() => {
     if (!heroPosters.length) {
@@ -1103,9 +1103,15 @@ export default function MCUViewer() {
       setHeroTransitioning(false);
       return;
     }
+    const pickRandomIndex = (excludeIndex = -1) => {
+      if (heroPosters.length <= 1) return 0;
+      let next = Math.floor(Math.random() * heroPosters.length);
+      if (next === excludeIndex) next = (next + 1 + Math.floor(Math.random() * (heroPosters.length - 1))) % heroPosters.length;
+      return next;
+    };
     const normalizedIndex = heroIndex % heroPosters.length;
     const preloadNext = (fromIndex) => {
-      const nextSrcCandidate = heroPosters[(fromIndex + 1) % heroPosters.length];
+      const nextSrcCandidate = heroPosters[pickRandomIndex(fromIndex)];
       if (!nextSrcCandidate) return;
       const img = new Image();
       img.src = nextSrcCandidate;
@@ -1126,7 +1132,7 @@ export default function MCUViewer() {
     heroIntervalRef.current = window.setInterval(() => {
       setHeroIndex((i) => {
         const currentIndex = i % heroPosters.length;
-        const upcomingIndex = (i + 1) % heroPosters.length;
+        const upcomingIndex = pickRandomIndex(currentIndex);
         const upcomingSrc = heroPosters[upcomingIndex];
         if (!upcomingSrc || upcomingSrc === currentHeroSrc) return upcomingIndex;
         const img = new Image();
@@ -1158,7 +1164,7 @@ export default function MCUViewer() {
       }
       if (document.visibilityState === 'visible' && !heroIntervalRef.current && heroPosters.length > 1) {
         heroIntervalRef.current = window.setInterval(() => {
-          setHeroIndex(i => (i + 1) % heroPosters.length);
+          setHeroIndex(i => pickRandomIndex(i % heroPosters.length));
         }, 5000);
       }
     };
@@ -2377,9 +2383,10 @@ export default function MCUViewer() {
       `}</style>
 
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '52vh', minHeight: 320, maxHeight: '58vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: currentHeroSrc ? `linear-gradient(rgba(4,5,15,0.40), rgba(4,5,15,0.62)), url(${currentHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 18%', backgroundRepeat: 'no-repeat', filter: 'saturate(1.12)', opacity: heroTransitioning ? 0 : 1, transition: 'opacity 0.8s ease' }} />
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: nextHeroSrc ? `linear-gradient(rgba(4,5,15,0.40), rgba(4,5,15,0.62)), url(${nextHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 18%', backgroundRepeat: 'no-repeat', filter: 'saturate(1.12)', opacity: heroTransitioning ? 1 : 0, transition: 'opacity 0.8s ease' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(4,5,15,0.15) 0%, rgba(4,5,15,0.45) 66%, rgba(4,5,15,0.92) 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: currentHeroSrc ? `url(${currentHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: heroTransitioning ? 0.07 : 0.14, filter: 'saturate(1.05) blur(2px)', transition: 'opacity 0.95s ease-in-out' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: nextHeroSrc ? `url(${nextHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: heroTransitioning ? 0.14 : 0, filter: 'saturate(1.05) blur(2px)', transition: 'opacity 0.95s ease-in-out' }} />
+        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: heroTransitioning ? 0.55 : 1, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${darkMode ? 'rgba(4,5,15,0.10)' : 'rgba(255,255,255,0.15)'} 0%, ${darkMode ? 'rgba(4,5,15,0.40)' : 'rgba(231,238,248,0.50)'} 66%, ${darkMode ? 'rgba(4,5,15,0.90)' : 'rgba(231,238,248,0.95)'} 100%)` }} />
       </div>
       {lightningStrike && <div style={{ position:'fixed', inset:0, pointerEvents:'none', background:'linear-gradient(180deg, rgba(180,220,255,0.95), rgba(255,255,255,0))', mixBlendMode:'screen', zIndex:9999, animation:'fadeInOut 0.7s ease' }} />}
       {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
@@ -2387,7 +2394,7 @@ export default function MCUViewer() {
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       {!isDesktopViewport && <button className="theme-btn" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar menu" style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 10px)', left: 12, zIndex: 280, width: 44, height: 44, background: darkMode ? 'rgba(10,14,28,0.94)' : '#ffffff', borderColor: darkMode ? 'rgba(255,255,255,0.24)' : T.pillBorder, boxShadow: darkMode ? '0 8px 24px rgba(0,0,0,0.35)' : '0 6px 16px rgba(0,0,0,0.12)' }}><Menu size={17} /></button>}
       {!isDesktopViewport && sidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 255 }} />}
-      <aside ref={sidebarRef} style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 'min(320px,84vw)', padding: '86px 14px 20px', background: darkMode ? '#070914' : '#ffffff', borderRight: `1px solid ${T.surfaceBorder}`, transform: (isDesktopViewport || sidebarOpen) ? 'translateX(0)' : 'translateX(-105%)', transition: 'transform 0.34s cubic-bezier(.22,.9,.24,1)', zIndex: 260, overflowY: 'auto' }}>
+      <aside ref={sidebarRef} style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 'min(320px,84vw)', padding: '86px 14px 20px', background: darkMode ? 'rgba(7,9,20,0.74)' : 'rgba(255,255,255,0.72)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRight: `1px solid ${T.surfaceBorder}`, transform: (isDesktopViewport || sidebarOpen) ? 'translateX(0)' : 'translateX(-105%)', transition: 'transform 0.34s cubic-bezier(.22,.9,.24,1)', zIndex: 260, overflowY: 'auto' }}>
         <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {profile.pfp ? <img src={profile.pfp} alt="profile" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover' }} /> : <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(145deg,var(--theme-accent),var(--theme-accent-alt))', color: '#fff', display: 'grid', placeItems: 'center' }}><UserCircle size={18} /></div>}
@@ -2398,6 +2405,28 @@ export default function MCUViewer() {
                 <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Quick Phases</div>
         <button className="fpill" onClick={() => { setSidebarOpen(false); setAnalyticsOpen(true); }} style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}>Analytics</button>
+        <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Viewing List</div>
+        <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
+          {LIST_MODES.map(mode => {
+            const isActive = listMode === mode.id;
+            return (
+              <button
+                key={`side-${mode.id}`}
+                className="fpill"
+                onClick={() => { setListMode(mode.id); setExpandedItem(null); setExpandedPhase(null); setSidebarOpen(false); }}
+                style={{
+                  justifyContent: 'space-between',
+                  borderColor: isActive ? mode.color : 'var(--theme-border)',
+                  background: isActive ? `${mode.color}18` : 'var(--theme-surface)',
+                  color: isActive ? mode.color : 'var(--theme-text)',
+                }}
+              >
+                <span>{mode.label}</span>
+                {isActive && <Check size={12} />}
+              </button>
+            );
+          })}
+        </div>
         <div style={{ marginTop: 10, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 10, display: 'grid', gap: 6, background: T.surfaceBg }}>
           <div style={{ fontSize: 11, letterSpacing: 1.6, color: T.textMuted }}>WATCHED</div>
           <div style={{ fontSize: 22, fontFamily: 'var(--font-marvel-ui)', color: 'var(--theme-accent)' }}>{totalWatched}/{activeItems.length}</div>
@@ -2408,6 +2437,10 @@ export default function MCUViewer() {
           {PHASES.map(ph => <button key={ph.id} className="fpill" onClick={() => { setSidebarOpen(false); setActivePhase(ph.id); scrollTo(ph.id); }} style={{ justifyContent: 'space-between' }}><span>{ph.name}</span><ChevRight size={13} /></button>)}
         </div>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Theme</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6, marginTop: 8 }}>
+          <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', color: darkMode ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Moon size={12} />Dark</button>
+          <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', color: !darkMode ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Sun size={12} />Light</button>
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6, marginTop: 8 }}>
           {THEME_CHOICES.map(({ id: t, label, swatch }) => (
             <button key={t} className="fpill"
@@ -2482,11 +2515,11 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <header className="hexbg" style={{ background: 'var(--theme-header-bg)', borderBottom: `1px solid ${T.headerBorder}`, flexShrink: 0 }}>
+      <header className="hexbg" style={{ position: 'relative', zIndex: 120, background: 'var(--theme-header-bg)', borderBottom: `1px solid ${T.headerBorder}`, flexShrink: 0 }}>
         <div className="header-inner" style={{ width: '100%', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 24px) 30px 12px', transition: 'padding 0.2s ease' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             <div style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
-              <div className="header-title-mcu" style={{ fontSize: 'clamp(44px, 9vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: '#fff', background: '#e10600', border: '2px solid #ff3b30', display: 'inline-block', padding: '4px 12px', borderRadius: 4 }}>MCU</div>
+              <div className="header-title-mcu" style={{ fontSize: 'clamp(44px, 9vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: '#fff', background: 'rgba(225,6,0,0.56)', border: '2px solid rgba(255,59,48,0.65)', display: 'inline-block', padding: '2px 8px', borderRadius: 4 }}>MCU</div>
               <div className="header-title-sub" style={{ fontSize: 'clamp(26px, 4.2vw, 35px)', letterSpacing: 'clamp(3px, 1.1vw, 9px)', color: 'var(--theme-accent-alt)', marginTop: 0 }}>VIEWING ORDER</div>
               <div className="header-tagline" style={{ fontSize: '14px', color: 'var(--theme-warning)', letterSpacing: headerMinimized ? 0.8 : 1.5, fontFamily: 'var(--font-marvel-ui)', marginTop: 1, transition: 'all 0.2s ease' }}>
                 {`${activeItems.length} Items · ${listMode === 'core' ? 'MCU' : 'Extended'}`}
@@ -2503,37 +2536,6 @@ export default function MCUViewer() {
           </div>
         </div>
       </header>
-
-      {/* ━━ LIST MODE SWITCHER (MCU / Extended) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ background: 'var(--theme-surface)', borderBottom: `1px solid ${T.navBorder}`, padding: '0 24px', flexShrink: 0 }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto', display: 'flex', padding: '0 24px', width: '100%' }}>
-          {LIST_MODES.map(mode => {
-            const isActive = listMode === mode.id;
-            const modeItems = mode.id === 'core' ? items.filter(i => coreIds.has(i.id)) : items;
-            const modeWatched = modeItems.filter(i => i.status === 'watched').length;
-            const modePct = modeItems.length ? Math.round((modeWatched / modeItems.length) * 100) : 0;
-            return (
-              <button key={mode.id} className={`lmode-btn ${isActive ? 'active' : ''}`}
-                style={{ '--mc': mode.color }}
-                onClick={() => { setListMode(mode.id); setExpandedItem(null); setExpandedPhase(null); }}
-                aria-pressed={isActive}
-              >
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                  <span style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 16, letterSpacing: 3.2, color: isActive ? mode.color : T.textMuted, transition: 'color 0.2s' }}>
-                    {mode.label}
-                  </span>
-                  <span style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 12, letterSpacing: 1.8, color: isActive ? mode.color + 'bb' : T.textFaint, transition: 'color 0.2s' }}>
-                    {modeItems.length}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1 }}>
-                  {modePct > 0 && <span style={{ fontSize: 10, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1.2, color: modePct === 100 ? mode.color : T.textFaint }}>Progress · {modePct}%</span>}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
 
       {/* ━━ ANALYTICS STRIP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: T.switcherBg, borderBottom: `1px solid ${T.switcherBorder}`, padding: '10px 24px', flexShrink: 0 }}>
@@ -2558,6 +2560,15 @@ export default function MCUViewer() {
 
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: T.filterBg, borderBottom: `1px solid ${T.filterBorder}`, flexShrink: 0, position: 'relative', zIndex: 220 }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '10px 24px 0' }}>
+          <div style={{ background: darkMode ? 'rgba(255,255,255,0.08)' : T.surfaceBg, border: `1px solid ${darkMode ? 'rgba(255,255,255,0.18)' : T.surfaceBorder}`, borderRadius: 999, height: 7, overflow: 'hidden', position: 'relative', marginBottom: 4 }}>
+            <div className="sweep progress-gradient" style={{ height: '100%', width: `${pct}%`, background: phaseGradient, boxShadow: 'none', borderRadius: 999, transition: 'width 0.7s cubic-bezier(.4,0,.2,1)', position: 'relative', overflow: 'hidden' }} />
+          </div>
+          <div className="progress-labels" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'clamp(11px, 1.5vw, 13px)', color: T.textMuted, letterSpacing: 1.4, fontFamily: 'var(--font-marvel-ui)' }}>
+            <span>{pct}% COMPLETE</span>
+            <span>{activeItems.length - totalWatched} REMAINING</span>
+          </div>
+        </div>
         {/* Toggle row — always visible */}
         <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
@@ -2685,6 +2696,19 @@ export default function MCUViewer() {
             </div>
           </div>
         )}
+      </div>
+      <div style={{ position: 'fixed', right: 16, bottom: isDesktopViewport ? 20 : 74, zIndex: 230 }}>
+        <div style={{ display: 'flex', borderRadius: 999, overflow: 'hidden', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(10,14,28,0.93)' : 'rgba(255,255,255,0.95)', boxShadow: darkMode ? '0 10px 26px rgba(0,0,0,0.4)' : '0 8px 20px rgba(0,0,0,0.12)' }}>
+          {LIST_MODES.map(mode => {
+            const active = listMode === mode.id;
+            return (
+              <button key={`float-${mode.id}`} onClick={() => { setListMode(mode.id); setExpandedItem(null); setExpandedPhase(null); }}
+                style={{ border: 0, padding: '8px 12px', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1.4, fontSize: 12, cursor: 'pointer', background: active ? `${mode.color}22` : 'transparent', color: active ? mode.color : T.textMuted }}>
+                {mode.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {recentlyWatchedItems.length > 0 && autoHideStatuses && !watchedOnly && !statusFilter && (
