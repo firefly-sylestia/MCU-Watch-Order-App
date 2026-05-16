@@ -45,6 +45,7 @@ const Info      = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M12
 const Bookmark  = p => <Icon {...p}><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"/></Icon>;
 const SlidersH  = p => <Icon {...p}><line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><circle cx="12" cy="4" r="2"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><circle cx="10" cy="12" r="2"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><circle cx="14" cy="20" r="2"/></Icon>;
 const UserCircle = p => <Icon {...p}><circle cx="12" cy="8" r="4"/><path d="M4 20c1.9-3.4 5-5 8-5s6.1 1.6 8 5"/></Icon>;
+const Menu = p => <Icon {...p}><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></Icon>;
 
 
 const TYPE_META = {
@@ -505,6 +506,8 @@ export default function MCUViewer() {
   const [celebPhase,     setCelebPhase]     = useState(null);
   const [editingDateId,  setEditingDateId]  = useState(null);
   const [headerCompact]  = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [heroIndex, setHeroIndex] = useState(0);
   const [detailItem,     setDetailItem]     = useState(null);
   const [detailData,     setDetailData]     = useState(null);
   const [detailPlotState, setDetailPlotState] = useState({ active: 'primary', primary: '', secondary: '', loadingSecondary: false, secondaryProvider: 'OMDb' });
@@ -548,16 +551,68 @@ export default function MCUViewer() {
   const [lightningStrike, setLightningStrike] = useState(false);
   const [spiderDrop, setSpiderDrop] = useState(false);
   const headerMinimized = scrollCheckpoint > 56;
-
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
   const phaseRef   = useRef(null);
   const obsRef     = useRef(null);  const isScrolling= useRef(false);
   const mainRef    = useRef(null);
   const settingsRef= useRef(null);
+  const sidebarRef = useRef(null);
+  const heroIntervalRef = useRef(null);
   const restoredUiStateRef = useRef(false);
   const metadataBuildRef = useRef({ paused: false, running: false });
 
+  const heroPosters = useMemo(() => activeItems.slice(0, 8).map(item => posterSrc(item)), [activeItems]);
+  const reduceMotion = useMemo(() => typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches, []);
+
+  useEffect(() => {
+    if (heroIntervalRef.current) {
+      window.clearInterval(heroIntervalRef.current);
+      heroIntervalRef.current = null;
+    }
+    if (reduceMotion || heroPosters.length <= 1 || document.visibilityState !== 'visible') return;
+
+    heroPosters.slice(0, 3).forEach((src) => { const img = new Image(); img.src = src; });
+    heroIntervalRef.current = window.setInterval(() => {
+      setHeroIndex(i => (i + 1) % heroPosters.length);
+    }, 5000);
+
+    const onVisibility = () => {
+      if (document.visibilityState !== 'visible' && heroIntervalRef.current) {
+        window.clearInterval(heroIntervalRef.current);
+        heroIntervalRef.current = null;
+        return;
+      }
+      if (document.visibilityState === 'visible' && !heroIntervalRef.current && !reduceMotion && heroPosters.length > 1) {
+        heroIntervalRef.current = window.setInterval(() => {
+          setHeroIndex(i => (i + 1) % heroPosters.length);
+        }, 5000);
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      if (heroIntervalRef.current) {
+        window.clearInterval(heroIntervalRef.current);
+        heroIntervalRef.current = null;
+      }
+    };
+  }, [heroPosters, reduceMotion]);
+
+  useEffect(() => {
+    const hasOverlay = sidebarOpen || settingsOpen || detailItem || analyticsOpen;
+    if (!hasOverlay) return;
+    window.history.pushState({ mcuOverlay: true }, '');
+    const onBack = () => {
+      if (detailItem) setDetailItem(null);
+      else if (analyticsOpen) setAnalyticsOpen(false);
+      else if (settingsOpen) setSettingsOpen(false);
+      else if (sidebarOpen) setSidebarOpen(false);
+    };
+    window.addEventListener('popstate', onBack);
+    return () => window.removeEventListener('popstate', onBack);
+  }, [sidebarOpen, settingsOpen, detailItem, analyticsOpen]);
 
   useEffect(() => {
     const s = localStorage.getItem('mcu-v7');
@@ -928,7 +983,6 @@ export default function MCUViewer() {
     });
   };
 
-  const q = search.toLowerCase();
   const { filtered, grouped, phaseKeys } = useMemo(() => {
     const f = items.filter(i => {
       if (listMode === 'core' && !coreIds.has(i.id)) return false;
@@ -942,7 +996,8 @@ export default function MCUViewer() {
       if (timelineMode === 'studio' && i.order % 2 === 0) return true;
       if (timelineMode === 'whatif' && i.type === 'short') return true;
       if (genreFilter !== 'all' && i.type !== genreFilter) return false;
-      return i.title.toLowerCase().includes(q) || i.prereq.toLowerCase().includes(q);
+      const searchTerm = search.toLowerCase();
+      return i.title.toLowerCase().includes(searchTerm) || i.prereq.toLowerCase().includes(searchTerm);
     }).sort((a, b) => {
       if (sortBy === 'title') return a.title.localeCompare(b.title);
       if (sortBy === 'year') return a.year - b.year;
@@ -955,7 +1010,7 @@ export default function MCUViewer() {
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, q, sortBy, coreIds]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy, coreIds]);
 
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
@@ -2210,10 +2265,29 @@ export default function MCUViewer() {
         main::-webkit-scrollbar-thumb:hover{background:${T.scrollThumbH}}
       `}</style>
 
+      <div style={{ position: 'fixed', inset: 0, zIndex: -1, backgroundImage: heroPosters[heroIndex] ? `linear-gradient(rgba(4,5,15,0.75), rgba(4,5,15,0.9)), url(${heroPosters[heroIndex]})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center', filter: 'saturate(1.1)', transition: 'background-image 0.8s ease' }} />
       {lightningStrike && <div style={{ position:'fixed', inset:0, pointerEvents:'none', background:'linear-gradient(180deg, rgba(180,220,255,0.95), rgba(255,255,255,0))', mixBlendMode:'screen', zIndex:9999, animation:'fadeInOut 0.7s ease' }} />}
       {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <button className="theme-btn" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar menu" style={{ position: 'fixed', top: 16, left: 14, zIndex: 270, width: 42, height: 42 }}><Menu size={16} /></button>
+      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 255 }} />}
+      <aside ref={sidebarRef} style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 'min(300px,82vw)', padding: '86px 14px 20px', background: darkMode ? 'rgba(7,9,20,0.95)' : 'rgba(255,255,255,0.95)', backdropFilter: 'blur(12px)', borderRight: `1px solid ${T.surfaceBorder}`, transform: sidebarOpen ? 'translateX(0)' : 'translateX(-105%)', transition: 'transform 0.25s ease', zIndex: 260, overflowY: 'auto' }}>
+        <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {profile.pfp ? <img src={profile.pfp} alt="profile" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover' }} /> : <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(145deg,var(--theme-accent),var(--theme-accent-alt))', color: '#fff', display: 'grid', placeItems: 'center' }}><UserCircle size={18} /></div>}
+            <div style={{ fontSize: 12, color: T.textMuted }}>{profile.name || 'Marvel Fan'}</div>
+          </div>
+          <button className="fpill" onClick={() => { setSettingsOpen(true); setSidebarOpen(false); }} style={{ width: '100%', justifyContent: 'center' }}><Settings size={13}/>Settings & Profile</button>
+        </div>
+        <button className="fpill" onClick={() => { setSidebarOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }} style={{ width: '100%', justifyContent: 'center' }}>Top</button>
+                <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
+        <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Quick Phases</div>
+        <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
+          {PHASES.map(ph => <button key={ph.id} className="fpill" onClick={() => { setSidebarOpen(false); setActivePhase(ph.id); scrollTo(ph.id); }} style={{ justifyContent: 'space-between' }}><span>{ph.name}</span><ChevRight size={13} /></button>)}
+        </div>
+      </aside>
+
       <div ref={settingsRef} style={{ position: 'fixed', top: 16, right: 14, zIndex: 260 }}>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div title={profile.name || 'Profile'} style={{ width: 56, height: 56, borderRadius: '50%', border: 'none', padding: 3, background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
@@ -2297,7 +2371,7 @@ export default function MCUViewer() {
         <div className="header-inner" style={{ width: '100%', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 24px) 30px 12px', transition: 'padding 0.2s ease' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             <div style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
-              <div className="header-title-mcu" style={{ fontSize: 'clamp(44px, 9vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: 'var(--theme-accent)' }}>MCU</div>
+              <div className="header-title-mcu" style={{ fontSize: 'clamp(44px, 9vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: '#fff', background: '#e10600', border: '2px solid #ff3b30', display: 'inline-block', padding: '4px 12px', borderRadius: 4 }}>MCU</div>
               <div className="header-title-sub" style={{ fontSize: 'clamp(26px, 4.2vw, 35px)', letterSpacing: 'clamp(3px, 1.1vw, 9px)', color: 'var(--theme-accent-alt)', marginTop: 0 }}>VIEWING ORDER</div>
               <div className="header-tagline" style={{ fontSize: '14px', color: 'var(--theme-warning)', letterSpacing: headerMinimized ? 0.8 : 1.5, fontFamily: 'var(--font-marvel-ui)', marginTop: 1, transition: 'all 0.2s ease' }}>
                 {`${activeItems.length} Items · ${listMode === 'core' ? 'MCU' : 'Extended'}`}
@@ -2703,7 +2777,7 @@ export default function MCUViewer() {
           })}
 
           <div style={{ textAlign: 'center', marginTop: 44, fontFamily: 'var(--font-marvel-ui)', fontSize: 9, color: T.footerText, letterSpacing: 3.5 }}>
-            MCU VIEWING ORDER &nbsp;·&nbsp; PHASES 1–6 &nbsp;·&nbsp; PROGRESS SAVED LOCALLY
+            Made with ♥️ by Marvel Fan
           </div>
         </div>
       </main>
