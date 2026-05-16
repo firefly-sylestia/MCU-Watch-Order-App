@@ -2308,11 +2308,11 @@ export default function MCUViewer() {
         .progress-gradient{background:${phaseGradient};background-size:200% 100%;animation:none}
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
         .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.62);backdrop-filter:blur(12px);z-index:240;display:grid;place-items:center;padding:20px}
-        .detail-card{width:min(980px,94vw);max-height:90vh;overflow:auto;background:linear-gradient(145deg, rgba(17,22,44,0.62), rgba(12,16,34,0.5));backdrop-filter:blur(16px) saturate(130%);-webkit-backdrop-filter:blur(16px) saturate(130%);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:24px;box-shadow:${darkMode ? '0 22px 60px rgba(0,0,0,0.56)' : '0 18px 44px rgba(0,0,0,0.14)'}}
+        .detail-card{width:min(1080px,94vw);max-height:92vh;overflow:auto;background:linear-gradient(145deg, rgba(17,22,44,0.72), rgba(12,16,34,0.62));backdrop-filter:blur(16px) saturate(130%);-webkit-backdrop-filter:blur(16px) saturate(130%);border:1px solid rgba(255,255,255,0.14);border-radius:14px;padding:18px;box-shadow:${darkMode ? '0 22px 60px rgba(0,0,0,0.56)' : '0 18px 44px rgba(0,0,0,0.14)'}}
 
         .detail-layout{grid-template-columns:minmax(220px,34%) minmax(0,1fr)}
         .detail-pill{background:rgba(255,255,255,0.08) !important;border-color:rgba(255,255,255,0.18) !important;transform:none !important;box-shadow:none !important}
-        .detail-btn{padding:7px 10px !important;font-size:10px !important;line-height:1.2;justify-content:center;border-radius:10px !important;background:rgba(255,255,255,0.06) !important;border-color:rgba(255,255,255,0.14) !important}
+        .detail-btn{padding:8px 11px !important;font-size:12px !important;line-height:1.2;justify-content:center;border-radius:10px !important;background:rgba(255,255,255,0.06) !important;border-color:rgba(255,255,255,0.14) !important}
         .detail-btn:hover{background:rgba(255,255,255,0.11) !important;border-color:rgba(255,255,255,0.25) !important;color:var(--theme-text) !important}
         .detail-btn.is-active{background:color-mix(in srgb, var(--theme-danger) 20%, rgba(255,255,255,0.08)) !important;border-color:color-mix(in srgb, var(--theme-danger) 55%, rgba(255,255,255,0.2)) !important;color:var(--theme-danger) !important}
         .detail-btn-group{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px;align-items:center}
@@ -2348,6 +2348,12 @@ export default function MCUViewer() {
           .settings-menu{position:fixed !important;top:88px !important;right:10px !important;left:10px !important;width:auto !important;min-width:0 !important;max-height:calc(100dvh - 112px) !important;padding:12px !important}
           .settings-menu .fpill{padding:9px 10px !important;font-size:13px !important;white-space:normal !important}
         }
+        @media (min-width: 1024px) {
+          .header-inner{max-width:1400px;margin:0 auto}
+          .header-title-sub{margin-top:2px !important}
+          .lmode-btn{padding:12px 20px 10px}
+          .rrow{grid-template-columns:34px 56px minmax(0,1fr) minmax(120px,auto);padding:14px 14px 14px 10px;min-height:84px}
+        }
         @media (min-width: 1600px) {
           main{--content-max:1200px !important}
           .rrow{font-size:17px}
@@ -2370,13 +2376,13 @@ export default function MCUViewer() {
         main::-webkit-scrollbar-thumb:hover{background:${T.scrollThumbH}}
       `}</style>
 
-      <div style={{ position: 'fixed', inset: 0, zIndex: -2, backgroundImage: currentHeroSrc ? `linear-gradient(rgba(4,5,15,0.75), rgba(4,5,15,0.9)), url(${currentHeroSrc})` : 'none', backgroundSize: '88%', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', filter: 'saturate(1.1)', opacity: heroTransitioning ? 0 : 1, transition: 'opacity 0.65s ease' }} />
-      <div style={{ position: 'fixed', inset: 0, zIndex: -1, backgroundImage: nextHeroSrc ? `linear-gradient(rgba(4,5,15,0.75), rgba(4,5,15,0.9)), url(${nextHeroSrc})` : 'none', backgroundSize: '88%', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', filter: 'saturate(1.1)', opacity: heroTransitioning ? 1 : 0, transition: 'opacity 0.65s ease' }} />
+      <div style={{ position: 'fixed', inset: 0, zIndex: -2, backgroundImage: currentHeroSrc ? `linear-gradient(rgba(4,5,15,0.68), rgba(4,5,15,0.88)), url(${currentHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center center', backgroundRepeat: 'no-repeat', filter: 'saturate(1.12)', opacity: heroTransitioning ? 0 : 1, transition: 'opacity 0.65s ease' }} />
+      <div style={{ position: 'fixed', inset: 0, zIndex: -1, backgroundImage: nextHeroSrc ? `linear-gradient(rgba(4,5,15,0.68), rgba(4,5,15,0.88)), url(${nextHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center center', backgroundRepeat: 'no-repeat', filter: 'saturate(1.12)', opacity: heroTransitioning ? 1 : 0, transition: 'opacity 0.65s ease' }} />
       {lightningStrike && <div style={{ position:'fixed', inset:0, pointerEvents:'none', background:'linear-gradient(180deg, rgba(180,220,255,0.95), rgba(255,255,255,0))', mixBlendMode:'screen', zIndex:9999, animation:'fadeInOut 0.7s ease' }} />}
       {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {!isDesktopViewport && <button className="theme-btn" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar menu" style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 16px)', left: 14, zIndex: 270, width: 42, height: 42 }}><Menu size={16} /></button>}
+      {!isDesktopViewport && <button className="theme-btn" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar menu" style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 10px)', left: 12, zIndex: 280, width: 44, height: 44, background: darkMode ? 'rgba(10,14,28,0.94)' : '#ffffff', borderColor: darkMode ? 'rgba(255,255,255,0.24)' : T.pillBorder, boxShadow: darkMode ? '0 8px 24px rgba(0,0,0,0.35)' : '0 6px 16px rgba(0,0,0,0.12)' }}><Menu size={17} /></button>}
       {!isDesktopViewport && sidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 255 }} />}
       <aside ref={sidebarRef} style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 'min(320px,84vw)', padding: '86px 14px 20px', background: darkMode ? '#070914' : '#ffffff', borderRight: `1px solid ${T.surfaceBorder}`, transform: (isDesktopViewport || sidebarOpen) ? 'translateX(0)' : 'translateX(-105%)', transition: 'transform 0.34s cubic-bezier(.22,.9,.24,1)', zIndex: 260, overflowY: 'auto' }}>
         <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
@@ -2397,6 +2403,18 @@ export default function MCUViewer() {
         </div>
         <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
           {PHASES.map(ph => <button key={ph.id} className="fpill" onClick={() => { setSidebarOpen(false); setActivePhase(ph.id); scrollTo(ph.id); }} style={{ justifyContent: 'space-between' }}><span>{ph.name}</span><ChevRight size={13} /></button>)}
+        </div>
+        <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Theme</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6, marginTop: 8 }}>
+          {THEME_CHOICES.map(({ id: t, label, swatch }) => (
+            <button key={t} className="fpill"
+              style={{ justifyContent: 'center', gap: 6, fontSize: 11, borderColor: themeMode === t ? swatch : 'var(--theme-border)', boxShadow: themeMode === t ? `0 0 0 1px ${swatch}, 0 0 10px ${swatch}44` : 'none', background: themeMode === t ? `${swatch}18` : 'var(--theme-surface)', color: themeMode === t ? swatch : 'var(--theme-text)' }}
+              onClick={() => setThemeMode(t)}
+            >
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: swatch, flexShrink: 0, display: 'inline-block' }} />
+              {label}
+            </button>
+          ))}
         </div>
         <div style={{ textAlign: 'center', marginTop: 16, fontFamily: 'var(--font-marvel-ui)', fontSize: 9, color: T.footerText, letterSpacing: 2.5 }}>
           Made with ♥ by Marvel Fan
@@ -2441,19 +2459,6 @@ export default function MCUViewer() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6 }}>
               {DESKTOP_TEXT_SCALES.map(scale => <button key={scale} className='fpill' onClick={() => setDesktopTextScale(scale)} style={{ justifyContent: 'center', borderColor: desktopTextScale === scale ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{Math.round(scale * 100)}%</button>)}
             </div>
-{/* Theme picker with color swatches */}
-            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase', marginTop: 2 }}>Theme</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
-              {THEME_CHOICES.map(({ id: t, label, swatch }) => (
-                <button key={t} className="fpill"
-                  style={{ padding: '7px 8px', justifyContent: 'center', gap: 5, fontSize: 11, borderColor: themeMode === t ? swatch : 'var(--theme-border)', boxShadow: themeMode === t ? `0 0 0 1px ${swatch}, 0 0 12px ${swatch}55` : 'none', background: themeMode === t ? `${swatch}18` : 'var(--theme-surface)', color: themeMode === t ? swatch : 'var(--theme-text)', transition: 'all 0.18s' }}
-                  onClick={() => setThemeMode(t)}
-                >
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: swatch, flexShrink: 0, display: 'inline-block', boxShadow: themeMode === t ? `0 0 6px ${swatch}` : 'none' }} />
-                  {label}
-                </button>
-              ))}
-            </div>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Data</div>
             <button className="fpill" onClick={exportProgress}><Download size={14}/>Export Progress</button>
@@ -2482,15 +2487,6 @@ export default function MCUViewer() {
               <div className="header-title-sub" style={{ fontSize: 'clamp(26px, 4.2vw, 35px)', letterSpacing: 'clamp(3px, 1.1vw, 9px)', color: 'var(--theme-accent-alt)', marginTop: 0 }}>VIEWING ORDER</div>
               <div className="header-tagline" style={{ fontSize: '14px', color: 'var(--theme-warning)', letterSpacing: headerMinimized ? 0.8 : 1.5, fontFamily: 'var(--font-marvel-ui)', marginTop: 1, transition: 'all 0.2s ease' }}>
                 {`${activeItems.length} Items · ${listMode === 'core' ? 'MCU' : 'Extended'}`}
-              </div>
-            </div>
-            <div style={{ background: darkMode ? 'linear-gradient(145deg, rgba(45,12,22,0.75), rgba(18,22,42,0.58))' : T.statBg, border: `1px solid ${darkMode ? 'rgba(255,120,150,0.45)' : T.statBorder}`, borderRadius: 10, padding: headerMinimized ? '5px 9px' : '7px 12px', minWidth: headerMinimized ? 126 : 164, boxShadow: darkMode ? '0 0 22px rgba(225,35,85,0.28)' : '0 8px 22px rgba(0,0,0,0.08)', transition: 'all 0.2s ease' }}>
-              <div className="stat-card-label" style={{ fontSize: '11px', letterSpacing: 1.2, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)' }}>WATCHED</div>
-              <div className="stat-card-num" style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 'clamp(40px, 5vw, 48px)', letterSpacing: 1, color: 'var(--theme-accent)', lineHeight: 1 }}>
-                {totalWatched}<span style={{ fontSize: 'clamp(24px, 3vw, 28px)', color: T.numFaint }}>/{activeItems.length}</span>
-              </div>
-              <div style={{ display: 'inline-flex', marginTop: 4, alignItems: 'center', gap: 6, borderRadius: 999, padding: '2px 8px', border: `1px solid color-mix(in srgb, var(--theme-warning) 30%, transparent)`, background: 'transparent', color: 'var(--theme-warning)', fontFamily: 'var(--font-marvel-ui)', fontSize: 10, letterSpacing: 0.9 }}>
-                Core {essWatched}/{essTotal}
               </div>
             </div>
           </div>
@@ -2561,7 +2557,7 @@ export default function MCUViewer() {
       <div style={{ background: T.filterBg, borderBottom: `1px solid ${T.filterBorder}`, flexShrink: 0, position: 'relative', zIndex: 220 }}>
         {/* Toggle row — always visible */}
         <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
             <button
               onClick={() => setFiltersOpen(v => !v)}
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: `1px solid ${filtersOpen ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: filtersOpen ? 'color-mix(in srgb, var(--theme-accent) 10%, var(--theme-surface))' : T.filterBg, color: filtersOpen ? 'var(--theme-accent)' : T.textMuted, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 2, transition: 'all 0.18s' }}
@@ -2575,13 +2571,13 @@ export default function MCUViewer() {
             </button>
             {renderPhaseSelector()}
             {/* Search always visible */}
-            <div style={{ position: 'relative', flex: '1 1 170px', minWidth: 130, maxWidth: 320 }}>
+            <div style={{ position: 'relative', flex: '1 1 220px', minWidth: 170, maxWidth: isDesktopViewport ? 320 : '100%' }}>
               <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder=""
                 aria-label="Search titles"
                 style={{ width: '100%', background: T.inputBg, border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '7px 12px 7px 30px', color: T.inputColor, fontSize: 14, letterSpacing: 0.3, boxShadow: spiderSense ? '0 0 0 2px rgba(220,20,60,0.45), 0 0 16px rgba(220,20,60,0.35)' : 'none', animation: spiderSense ? 'spiderPulse 0.85s ease-in-out infinite' : 'none' }} />
             </div>
-            <div className='filter-row-actions' style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className='filter-row-actions' style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end', minWidth: 0 }}>
               {autoHideStatuses && !watchedOnly && !statusFilter && (
                 <>
                   <span style={{ fontSize: 11, padding: '4px 8px', borderRadius: 999, border: `1px solid ${T.filterBorder}`, background: T.inputBg, color: T.textMuted, letterSpacing: 0.4 }}>
