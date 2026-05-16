@@ -556,10 +556,38 @@ export default function MCUViewer() {
   const reduceMotion = useMemo(() => typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches, []);
 
   useEffect(() => {
-    if (!heroPosters.length || reduceMotion) return;
+    if (heroIntervalRef.current) {
+      window.clearInterval(heroIntervalRef.current);
+      heroIntervalRef.current = null;
+    }
+    if (reduceMotion || heroPosters.length <= 1 || document.visibilityState !== 'visible') return;
+
     heroPosters.slice(0, 3).forEach((src) => { const img = new Image(); img.src = src; });
-    const id = window.setInterval(() => setHeroIndex(i => (i + 1) % heroPosters.length), 5000);
-    return () => window.clearInterval(id);
+    heroIntervalRef.current = window.setInterval(() => {
+      setHeroIndex(i => (i + 1) % heroPosters.length);
+    }, 5000);
+
+    const onVisibility = () => {
+      if (document.visibilityState !== 'visible' && heroIntervalRef.current) {
+        window.clearInterval(heroIntervalRef.current);
+        heroIntervalRef.current = null;
+        return;
+      }
+      if (document.visibilityState === 'visible' && !heroIntervalRef.current && !reduceMotion && heroPosters.length > 1) {
+        heroIntervalRef.current = window.setInterval(() => {
+          setHeroIndex(i => (i + 1) % heroPosters.length);
+        }, 5000);
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      if (heroIntervalRef.current) {
+        window.clearInterval(heroIntervalRef.current);
+        heroIntervalRef.current = null;
+      }
+    };
   }, [heroPosters, reduceMotion]);
 
   useEffect(() => {
@@ -583,6 +611,7 @@ export default function MCUViewer() {
   const mainRef    = useRef(null);
   const settingsRef= useRef(null);
   const sidebarRef = useRef(null);
+  const heroIntervalRef = useRef(null);
   const restoredUiStateRef = useRef(false);
   const metadataBuildRef = useRef({ paused: false, running: false });
 
@@ -956,7 +985,6 @@ export default function MCUViewer() {
     });
   };
 
-  const q = search.toLowerCase();
   const { filtered, grouped, phaseKeys } = useMemo(() => {
     const f = items.filter(i => {
       if (listMode === 'core' && !coreIds.has(i.id)) return false;
@@ -970,7 +998,8 @@ export default function MCUViewer() {
       if (timelineMode === 'studio' && i.order % 2 === 0) return true;
       if (timelineMode === 'whatif' && i.type === 'short') return true;
       if (genreFilter !== 'all' && i.type !== genreFilter) return false;
-      return i.title.toLowerCase().includes(q) || i.prereq.toLowerCase().includes(q);
+      const searchTerm = search.toLowerCase();
+      return i.title.toLowerCase().includes(searchTerm) || i.prereq.toLowerCase().includes(searchTerm);
     }).sort((a, b) => {
       if (sortBy === 'title') return a.title.localeCompare(b.title);
       if (sortBy === 'year') return a.year - b.year;
@@ -983,7 +1012,7 @@ export default function MCUViewer() {
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, q, sortBy, coreIds]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy, coreIds]);
 
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
