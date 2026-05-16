@@ -2289,7 +2289,7 @@ export default function MCUViewer() {
 
         .section-up{content-visibility:visible;contain-intrinsic-size:auto}
         .phase-rows-full{display:block}
-        .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 0.14s ease,border-color 0.14s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:var(--row-min-h,86px);border-radius:10px;overflow:hidden;background:rgba(8,14,28,0.24);backdrop-filter:blur(4px)}
+        .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 0.14s ease,border-color 0.14s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:var(--row-min-h,86px);border-radius:12px;overflow:hidden;background:rgba(8,14,28,0.34);backdrop-filter:blur(7px)}
         .rrow:last-child{border-bottom:none}
         .rrow > *{position:relative;z-index:1}
         .rrow:hover{border-left-color:color-mix(in srgb,var(--theme-accent) 65%, var(--phase-color,#c0392b))}
@@ -2298,7 +2298,7 @@ export default function MCUViewer() {
         .rrow.type-series:hover{background:linear-gradient(90deg, rgba(74,158,222,0.18), ${T.rowHoverBg}) !important}
         .rrow.type-short:hover{background:linear-gradient(90deg, rgba(160,108,213,0.18), ${T.rowHoverBg}) !important}
 
-        .title-btn{background:none;border:none;cursor:pointer;text-align:left;padding:6px 0;color:inherit;font-family:inherit;display:block;width:100%;min-height:44px}
+        .title-btn{background:none;border:none;cursor:pointer;text-align:left;padding:6px 0;color:var(--theme-text);font-family:inherit;display:block;width:100%;min-height:44px;text-shadow:0 1px 4px rgba(0,0,0,0.35)}
         .title-btn:focus-visible{outline:2px solid var(--theme-accent);outline-offset:2px;border-radius:3px}
 
         .hexbg{background-image:radial-gradient(circle,${T.hexDot} 1px,transparent 1px);background-size:28px 28px}
@@ -2310,11 +2310,11 @@ export default function MCUViewer() {
         .theme-btn{width:32px;height:32px;border-radius:50%;border:1px solid ${T.pillBorder};background:${T.pillBg};color:${T.pillText};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0}
         .theme-btn:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText}}
 
-        .poster-shell{width:52px;height:76px;border-radius:6px;overflow:hidden;background:linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.025));position:relative;flex-shrink:0}.poster-shell::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));opacity:1;transition:opacity .12s;pointer-events:none}.poster-shell.is-loaded::before{opacity:0}.poster-shell picture,.poster-shell img{display:block;width:100%;height:100%}.poster{width:52px;height:76px;object-fit:cover;border-radius:6px;border:1px solid ${T.surfaceBorder};box-shadow:none}
+        .poster-shell{width:52px;height:76px;border-radius:6px;overflow:hidden;background:linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.025));position:relative;flex-shrink:0}.poster-shell::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));opacity:1;transition:opacity .12s;pointer-events:none}.poster-shell.is-loaded::before{opacity:0}.poster-shell picture,.poster-shell img{display:block;width:100%;height:100%}.poster{width:52px;height:76px;object-fit:cover;border-radius:6px;border:1px solid ${T.surfaceBorder};box-shadow:none;opacity:0;transform:translateY(8px) scale(0.98);transition:opacity .22s ease-out,transform .22s ease-out}.poster-shell.is-loaded .poster{opacity:1;transform:translateY(0) scale(1)}
         .progress-gradient{background:${phaseGradient};background-size:200% 100%;animation:none}
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
         .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.62);backdrop-filter:blur(12px);z-index:240;display:grid;place-items:center;padding:20px}
-        .detail-card{width:min(1080px,94vw);max-height:92vh;overflow:auto;background:linear-gradient(145deg, rgba(17,22,44,0.72), rgba(12,16,34,0.62));backdrop-filter:blur(16px) saturate(130%);-webkit-backdrop-filter:blur(16px) saturate(130%);border:1px solid rgba(255,255,255,0.14);border-radius:14px;padding:18px;box-shadow:${darkMode ? '0 22px 60px rgba(0,0,0,0.56)' : '0 18px 44px rgba(0,0,0,0.14)'}}
+        .detail-card{width:min(1080px,94vw);max-height:92vh;overflow:auto;background:linear-gradient(145deg, rgba(17,22,44,0.62), rgba(12,16,34,0.5));backdrop-filter:blur(18px) saturate(130%);-webkit-backdrop-filter:blur(18px) saturate(130%);border:1px solid rgba(255,255,255,0.14);border-radius:14px;padding:18px;box-shadow:${darkMode ? '0 22px 60px rgba(0,0,0,0.56)' : '0 18px 44px rgba(0,0,0,0.14)'}}
 
         .detail-layout{grid-template-columns:minmax(220px,34%) minmax(0,1fr)}
         .detail-pill{background:rgba(255,255,255,0.08) !important;border-color:rgba(255,255,255,0.18) !important;transform:none !important;box-shadow:none !important}
@@ -2530,9 +2530,9 @@ export default function MCUViewer() {
       </header>
 
       {/* ━━ ANALYTICS STRIP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ background: T.switcherBg, borderBottom: `1px solid ${T.switcherBorder}`, padding: '10px 24px', flexShrink: 0 }}>
+      <div style={{ background: 'transparent', borderBottom: 'none', padding: '4px 24px 12px', flexShrink: 0 }}>
         <div style={{ maxWidth: 1400, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 20, padding: '0 24px' }}>
-          <div className="glass-grad" style={{ background: darkMode ? 'linear-gradient(135deg, rgba(36,20,52,0.9), rgba(10,34,53,0.85))' : 'linear-gradient(135deg,#ffffff,#f8f4ff)', border: `1px solid color-mix(in srgb, var(--theme-accent) 45%, ${T.surfaceBorder})`, borderRadius: 10, padding: 12, boxShadow: darkMode ? '0 12px 30px rgba(0,0,0,0.3)' : '0 10px 18px rgba(0,0,0,0.06)' }}>
+          <div className="glass-grad" style={{ background: darkMode ? 'linear-gradient(135deg, rgba(36,20,52,0.66), rgba(10,34,53,0.58))' : 'linear-gradient(135deg,rgba(255,255,255,0.62),rgba(248,244,255,0.54))', border: `1px solid color-mix(in srgb, var(--theme-accent) 45%, ${T.surfaceBorder})`, borderRadius: 14, padding: 12, boxShadow: darkMode ? '0 10px 20px rgba(0,0,0,0.18)' : '0 8px 14px rgba(0,0,0,0.05)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}>
             <div style={{ fontSize: 12, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Continue Watching</div>
             <div style={{ fontSize: 18, marginTop: 4 }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</div>
             <div style={{ height: 1, marginTop: 6, background: darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)' }} />
@@ -2551,7 +2551,8 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ background: 'transparent', borderBottom: `1px solid ${T.filterBorder}`, flexShrink: 0, position: 'relative', zIndex: 220, backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>
+      <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 220, backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', marginTop: 6 }}>
+        <div style={{ height: 24, background: darkMode ? 'linear-gradient(180deg, rgba(8,12,20,0) 0%, rgba(8,12,20,0.48) 100%)' : 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.52) 100%)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }} />
         {/* Toggle row — always visible */}
         <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
@@ -2560,7 +2561,7 @@ export default function MCUViewer() {
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: `1px solid ${filtersOpen ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: filtersOpen ? 'color-mix(in srgb, var(--theme-accent) 10%, var(--theme-surface))' : T.filterBg, color: filtersOpen ? 'var(--theme-accent)' : T.textMuted, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 2, transition: 'all 0.18s' }}
             >
               <SlidersH size={13} />
-              FILTERS
+              FX
               {activeFilterCount > 0 && (
                 <span style={{ background: 'var(--theme-accent)', color: '#fff', borderRadius: 999, fontSize: 10, fontFamily: 'var(--font-marvel-display)', fontWeight: 700, padding: '1px 6px', lineHeight: 1.4 }}>{activeFilterCount}</span>
               )}
@@ -2585,9 +2586,7 @@ export default function MCUViewer() {
                   </button>
                 </>
               )}
-              <span style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 12, color: T.textMuted, letterSpacing: 1.6 }}>
-                {filtered.length}/{activeItems.length} shown
-              </span>
+              
             </div>
           </div>
         </div>
@@ -2659,7 +2658,7 @@ export default function MCUViewer() {
               <button className="fpill"
                 style={bulkSelectMode ? { borderColor: 'var(--theme-accent)', background: 'color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface))', color: 'var(--theme-accent)' } : {}}
                 onClick={() => { setBulkSelectMode(v => !v); clearBulkSelection(); }}>
-                <Check size={10} />{bulkSelectMode ? `Selecting ${selectedIds.size}` : 'Bulk Select'}
+                <Check size={10} />{bulkSelectMode ? `Selecting ${selectedIds.size}` : 'Select'}
               </button>
               {bulkSelectMode && (
                 <>
@@ -2951,7 +2950,13 @@ export default function MCUViewer() {
                 </div>
 
                 <div className="detail-btn-group">
-                  <button className="fpill glass-panel detail-btn" style={{}} onClick={() => exportPosterForItem(detailItem)}><Download size={12}/> Export details card</button>
+                  <button
+                    className={`fpill glass-panel detail-btn ${myLikes[detailItem.id] ? 'is-active' : ''}`}
+                    onClick={() => setMyLikes(prev => ({ ...prev, [detailItem.id]: !prev[detailItem.id] }))}
+                  >
+                    <Heart size={12}/> {myLikes[detailItem.id] ? 'Liked' : 'Like'}
+                  </button>
+                  <button className="fpill glass-panel detail-btn" style={{ fontSize: 14, fontWeight: 700 }} onClick={() => exportPosterForItem(detailItem)}><Download size={14}/> Export Details Card</button>
                 </div>
                 <div style={{ fontSize: 14 }}><strong>Cast:</strong> {detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</div>
               </div>
@@ -2991,7 +2996,7 @@ export default function MCUViewer() {
             <div style={{ display: 'grid', gap: 12, maxHeight: '58vh', overflow: 'auto', paddingRight: 4 }}>
               {historyItems.length === 0 && <div style={{ color: T.textMuted, padding: 16 }}>No watched history yet. Mark an item watched to start your analysis log.</div>}
               {historyItems.map(item => (
-                <div key={item.id} className="glass-panel" style={{ borderRadius: 16, padding: 14, display: 'grid', gap: 10, border: '1px solid color-mix(in srgb, var(--theme-accent) 35%, var(--theme-border))', background: 'linear-gradient(145deg, color-mix(in srgb, var(--theme-surface) 80%, #102445), color-mix(in srgb, var(--theme-surface) 98%, #04050a))', clipPath: 'polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 0 100%)' }}>
+                <div key={item.id} className="glass-panel" style={{ borderRadius: 16, padding: 14, display: 'grid', gap: 10, border: '1px solid color-mix(in srgb, var(--theme-accent) 35%, var(--theme-border))', background: 'linear-gradient(145deg, color-mix(in srgb, var(--theme-surface) 76%, #102445), color-mix(in srgb, var(--theme-surface) 95%, #04050a))', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline', flexWrap: 'wrap' }}>
                     <strong style={{ fontSize: 16 }}>{item.title}</strong>
                     <span style={{ color: T.textMuted, fontSize: 12 }}>{item.watchedDate || 'No watch date'} · ~{Math.round(estimateRuntimeHours(item) * 10) / 10}h</span>
