@@ -11,6 +11,7 @@ import {
   PHASES,
   RAW,
   RELEASE_INFO,
+  UPCOMING_PLACEHOLDERS,
 } from './data/mcuData';
 
 // ─── Icon primitives ────────────────────────────────────────────────────────
@@ -499,6 +500,7 @@ export default function MCUViewer() {
   const [activePhase,    setActivePhase]    = useState(initialUiState.activePhase);
   const [sortOpen,       setSortOpen]       = useState(false);
   const [phaseOpen,      setPhaseOpen]      = useState(false);
+  const [carouselPulse,  setCarouselPulse]  = useState(0);
   const [statusDropdown, setStatusDropdown] = useState(null);
   const [filterStatusOpen, setFilterStatusOpen] = useState(false);
   const [dockStatusOpen, setDockStatusOpen] = useState(false);
@@ -566,7 +568,7 @@ export default function MCUViewer() {
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : false));
   const [lightningStrike, setLightningStrike] = useState(false);
   const [spiderDrop, setSpiderDrop] = useState(false);
-  const headerMinimized = scrollCheckpoint > 56;
+  const headerMinimized = false;
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
   const phaseRef   = useRef(null);
@@ -1001,7 +1003,7 @@ export default function MCUViewer() {
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap]);
 
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
@@ -2096,7 +2098,7 @@ export default function MCUViewer() {
     numFaint: '#4a5566', footerText: '#1e2a38',
     scrollTrack: '#07070f', scrollThumb: '#16162a', scrollThumbH: '#222238',
     hexDot: 'rgba(255,255,255,0.01)', switcherBg: '#080818', switcherBorder: '#13132a',
-    phaseSummaryBg: 'transparent', phaseSummaryBorder: '#13132a',
+    phaseSummaryBg: 'color-mix(in srgb, #ffffff 5%, transparent)', phaseSummaryBorder: '#13132a',
   } : {
     appBg: '#f2f0eb', headerBg: 'linear-gradient(180deg,#ffffff 0%,#f2f0eb 100%)',
     headerBorder: '#ddd8d0', navBg: '#ffffff', navBorder: '#e8e2d8',
@@ -2113,7 +2115,7 @@ export default function MCUViewer() {
     numFaint: '#a0a8b0', footerText: '#a0a8b0',
     scrollTrack: '#ece8e0', scrollThumb: '#ccc8c0', scrollThumbH: '#b8b4ac',
     hexDot: 'rgba(0,0,0,0.025)', switcherBg: '#f8f5f0', switcherBorder: '#e4ddd4',
-    phaseSummaryBg: 'transparent', phaseSummaryBorder: 'rgba(214,205,194,0.5)',
+    phaseSummaryBg: 'color-mix(in srgb, #ffffff 5%, transparent)', phaseSummaryBorder: 'rgba(214,205,194,0.5)',
   };
 
   const THEME_CHOICES = [
@@ -2226,7 +2228,7 @@ export default function MCUViewer() {
       ? `linear-gradient(180deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 18%, #0c1022), #06060f)`
       : `linear-gradient(180deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 10%, #ffffff), #f6f2ea)`,
     '--theme-watched-bg': darkMode
-      ? `linear-gradient(100deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 22%, rgba(12,18,34,0.95)), color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 12%, rgba(10,20,32,0.88)))`
+      ? `linear-gradient(100deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 18%, rgba(12,18,34,0.62)), color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 10%, rgba(10,20,32,0.54)))`
       : `linear-gradient(100deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 14%, #ffffff), color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 8%, #f7f5ef))`,
     ...activeThemeVars,
   };
@@ -2269,31 +2271,32 @@ export default function MCUViewer() {
         @keyframes sweep{0%{transform:translateX(-120%)}100%{transform:translateX(220%)}}
         @keyframes scrollRail{0%{transform:translateX(0)}100%{transform:translateX(-22%)}}
         @keyframes heroPop{0%{transform:scale(0.86) translateY(10px);opacity:0.5}100%{transform:scale(1.05) translateY(-6px);opacity:1}}
+        @keyframes posterPop{0%{transform:scale(1)}45%{transform:scale(1.06)}100%{transform:scale(1)}}
         .sweep::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent);animation:sweep 3.2s ease-in-out infinite}
 
         @keyframes phaseFlash{0%{opacity:0}20%{opacity:0.22}80%{opacity:0.18}100%{opacity:0}}
         .phase-flash{animation:phaseFlash 2.4s ease both}
 
         @keyframes rowIn{from{opacity:1;transform:none}to{opacity:1;transform:none}}
-        .row-in{animation:none}
+        .row-in{animation:rowIn 320ms var(--ease-out) both}
 
         @keyframes sectionUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-        .section-up{animation:none}
+        .section-up{animation:sectionUp 360ms var(--ease-out) both}
 
         @keyframes fadeIn{from{opacity:0;transform:scale(0.97) translateY(-4px)}to{opacity:1;transform:scale(1) translateY(0)}}
-        .fade-in{animation:none}
+        .fade-in{animation:fadeIn 240ms var(--ease-out) both}
 
         @keyframes expandDown{from{opacity:0;max-height:0;padding-top:0;padding-bottom:0}to{opacity:1;max-height:600px;padding-top:10px;padding-bottom:10px}}
         .expand-row{animation:expandDown 0.28s cubic-bezier(0.34,1.56,0.64,1) both;overflow:hidden}
 
         @keyframes filtersSlide{from{opacity:0;max-height:0}to{opacity:1;max-height:220px}}
-        .filters-open{animation:none;overflow:visible}
+        .filters-open{animation:filtersSlide 220ms var(--ease-out) both;overflow:visible}
 
         @keyframes themeFadeSwitch{from{opacity:0.7}to{opacity:1}}
-        .theme-switch{animation:none}
+        .theme-switch{animation:themeFadeSwitch 260ms var(--ease-out) both}
 
         @keyframes listModeSlide{from{opacity:0.8;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
-        .list-mode-switch{animation:none}
+        .list-mode-switch{animation:listModeSlide 220ms var(--ease-out) both}
 
         @keyframes buttonPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--theme-accent) 45%, transparent)}70%{box-shadow:0 0 0 6px transparent}100%{box-shadow:0 0 0 0 transparent}}
         @keyframes spiderPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
@@ -2301,7 +2304,7 @@ export default function MCUViewer() {
         @keyframes fadeInOut{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
         @keyframes spiderDrop{0%{transform:translate(-50%,-120px)}35%{transform:translate(-50%,18vh)}70%{transform:translate(-50%,35vh)}100%{transform:translate(-50%,45vh);opacity:0}}
         .snap-blip{animation:snapFade 1.6s ease}
-        .button-click{animation:none}
+        .button-click{animation:buttonPulse 420ms ease-out}
 
         .wbtn{position:relative;width:30px;height:30px;border-radius:50%;border:1.5px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background 0.14s ease,border-color 0.14s ease,color 0.14s ease;flex-shrink:0;box-shadow:none}
         .wbtn:hover{border-color:rgba(255,255,255,0.28)!important;background:rgba(255,255,255,0.1)!important}
@@ -2328,11 +2331,11 @@ export default function MCUViewer() {
 
         .section-up{content-visibility:visible;contain-intrinsic-size:auto}
         .hero-rail::-webkit-scrollbar{height:0;width:0;display:none}
-        .phase-rows-full{display:block}
-        .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 0.14s ease,border-color 0.14s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:var(--row-min-h,86px);border-radius:12px;overflow:hidden;background:rgba(8,14,28,0.34);backdrop-filter:blur(7px)}
+        .phase-rows-full{display:block;position:relative}
+        .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 220ms var(--ease-out),border-color 220ms var(--ease-out),transform 220ms var(--ease-out),box-shadow 260ms var(--ease-out);display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid transparent;min-height:var(--row-min-h,86px);border-radius:12px;overflow:hidden;background:transparent;backdrop-filter:none}
         .rrow:last-child{border-bottom:none}
         .rrow > *{position:relative;z-index:1}
-        .rrow:hover{border-left-color:color-mix(in srgb,var(--theme-accent) 65%, var(--phase-color,#c0392b))}
+        .rrow:hover{border-left-color:color-mix(in srgb,var(--theme-accent) 65%, var(--phase-color,#c0392b));transform:translateY(-1px)}
         .rrow.curvy-selected{border-left-color:var(--theme-accent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--theme-accent) 40%, transparent)}
         .rrow.type-film:hover{background:linear-gradient(90deg, rgba(224,82,82,0.18), ${T.rowHoverBg}) !important}
         .rrow.type-series:hover{background:linear-gradient(90deg, rgba(74,158,222,0.18), ${T.rowHoverBg}) !important}
@@ -2350,7 +2353,7 @@ export default function MCUViewer() {
         .theme-btn{width:32px;height:32px;border-radius:50%;border:1px solid ${T.pillBorder};background:${T.pillBg};color:${T.pillText};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0}
         .theme-btn:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText}}
 
-        .poster-shell{width:52px;height:76px;border-radius:6px;overflow:hidden;background:linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.025));position:relative;flex-shrink:0}.poster-shell::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));opacity:1;transition:opacity .12s;pointer-events:none}.poster-shell.is-loaded::before{opacity:0}.poster-shell picture,.poster-shell img{display:block;width:100%;height:100%}.poster{width:52px;height:76px;object-fit:cover;border-radius:6px;border:1px solid ${T.surfaceBorder};box-shadow:none;opacity:1;transform:none;transition:opacity .22s ease-out,transform .22s ease-out}.poster-shell:not(.is-loaded) .poster{opacity:0.82;transform:translateY(4px)}.poster.is-loaded{opacity:1;transform:none}
+        .poster-shell{width:52px;height:76px;border-radius:9px;overflow:hidden;background:linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.025));position:relative;flex-shrink:0;box-shadow:0 8px 18px rgba(0,0,0,0.3),0 0 0 1px color-mix(in srgb,var(--theme-accent) 14%, transparent)}.poster-shell::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));opacity:1;transition:opacity .12s;pointer-events:none}.poster-shell.is-loaded::before{opacity:0}.poster-shell picture,.poster-shell img{display:block;width:100%;height:100%}.poster{width:52px;height:76px;object-fit:cover;border-radius:9px;border:1px solid ${T.surfaceBorder};box-shadow:0 10px 24px rgba(0,0,0,0.35);opacity:1;transform:none;transition:opacity .24s ease-out,transform .24s ease-out,filter .24s ease-out}.poster-shell:not(.is-loaded) .poster{opacity:0.82;transform:translateY(4px)}.poster.is-loaded{opacity:1;transform:none}
         .progress-gradient{background:${phaseGradient};background-size:200% 100%;animation:none}
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
         .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.62);backdrop-filter:blur(12px);z-index:240;display:grid;place-items:center;padding:20px}
@@ -2368,7 +2371,7 @@ export default function MCUViewer() {
         .glass-panel{background-color:rgba(30,30,46,0.42);border:1px solid rgba(255,255,255,0.04);border-radius:16px}
         .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02))}
         .meta-muted{color:var(--theme-text-muted) !important}
-        *{scroll-behavior:auto !important}.sweep::after,.phase-flash{animation:none !important}.wbtn,.fpill,.rrow,.theme-switch,.list-mode-switch{transition:none !important}
+        *{scroll-behavior:smooth}.sweep::after,.phase-flash{animation:none !important}
 
         /* Mobile */
         @media (max-width: 767px) {
@@ -2415,7 +2418,7 @@ export default function MCUViewer() {
         .settings-menu{width:min(360px,calc(100vw - 28px));max-height:min(80vh,calc(100dvh - 92px));overscroll-behavior:contain}.settings-menu .fpill{min-width:0}.bottom-action-dock{position:fixed;right:16px;bottom:16px;z-index:120;display:flex;gap:8px;align-items:center}
         .dock-btn{border-radius:999px;border:1px solid ${T.surfaceBorder};background:${darkMode ? 'rgba(20,25,46,0.9)' : 'rgba(255,255,255,0.92)'};color:${T.text};padding:10px 12px;font-family:var(--font-marvel-ui);letter-spacing:1.1px;font-size:12px;cursor:pointer;white-space:nowrap}
         .bottom-action-bar{border-radius:999px;padding:10px 14px;white-space:nowrap}
-        .fpill,.wbtn,.sopt,.meta-muted,input,textarea,select,button{font-size:calc(1em * var(--text-scale))}
+        main,.rrow,.title-btn,.fpill,.wbtn,.sopt,.meta-muted,input,textarea,select,button,.header-tagline{font-size:calc(1em * var(--text-scale))}
         main::-webkit-scrollbar{width:4px}
         main::-webkit-scrollbar-track{background:transparent}
         main::-webkit-scrollbar-thumb{background:${T.scrollThumb};border-radius:4px}
@@ -2566,35 +2569,36 @@ export default function MCUViewer() {
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             <div style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
               <div className="header-title-mcu" style={{ fontSize: 'clamp(44px, 9vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: '#fff', display: 'inline-block', padding: '0 12px', margin: '10px 0 40px', background: 'rgba(212,55,47,0.5)', borderRadius: 6 }}>MCU</div>
-              <div className="header-title-sub" style={{ fontSize: 'clamp(26px, 4.2vw, 35px)', letterSpacing: 'clamp(3px, 1.1vw, 9px)', color: 'var(--theme-accent-alt)', marginTop: 0 }}>VIEWING ORDER</div>
-              <div className="header-tagline" style={{ fontSize: '14px', color: 'var(--theme-warning)', letterSpacing: headerMinimized ? 0.8 : 1.5, fontFamily: 'var(--font-marvel-ui)', marginTop: 1, transition: 'all 0.2s ease' }}>
-                {`${activeItems.length} Items`}
-              </div>
+              <div className="header-title-sub" style={{ fontSize: 'clamp(26px, 4.2vw, 35px)', letterSpacing: 'clamp(3px, 1.1vw, 9px)', color: 'color-mix(in srgb, var(--theme-accent) 40%, var(--theme-accent-alt))', marginTop: 0 }}>VIEWING ORDER</div>
             </div>
           </div>
         </div>
       </header>
 
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ position: 'relative', height: isDesktopViewport ? 460 : 340, background: 'transparent', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 210 }}>
+      <div style={{ position: 'relative', height: isDesktopViewport ? 460 : 340, background: 'linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 210 }}>
         {heroPosters.length > 0 && (
           <div className="hero-rail"
             onWheel={(e) => {
               const rail = e.currentTarget;
               const delta = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
               rail.scrollLeft += delta;
+              setCarouselPulse(v => v + 1);
               e.preventDefault();
             }}
-            style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 14px', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: isDesktopViewport ? 'x proximity' : 'x mandatory', scrollPaddingInline: isDesktopViewport ? '14vw' : '8vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
-            {[...Array(isDesktopViewport ? 18 : 12)].map((_, idx) => {
-              const src = heroPosters[(heroIndex + idx) % heroPosters.length] || currentHeroSrc;
-              const isActive = src === (heroTransitioning && nextHeroSrc ? nextHeroSrc : currentHeroSrc);
+            style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 14px', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: isDesktopViewport ? 'x proximity' : 'x mandatory', scrollPaddingInline: isDesktopViewport ? '14vw' : '8vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', overscrollBehaviorX: 'contain', overscrollBehaviorY: 'contain', touchAction: isDesktopViewport ? 'pan-x' : 'pan-x pan-y' }}>
+            {heroPosters.map((src, idx) => {
+              const activeSrc = (heroTransitioning && nextHeroSrc ? nextHeroSrc : currentHeroSrc);
+              const isActive = src === activeSrc;
+              const heroItem = filtered.find(i => posterSrc(i) === src);
               return (
+                <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8, scrollSnapAlign:'center' }}>
                 <img
                   key={`hero-rail-${idx}`}
                   src={src}
                   alt="Featured poster"
-                  onClick={() => { const clicked = filtered.find(i => posterSrc(i) === src); if (clicked) setDetailItem(clicked); }}
+                  title={heroItem?.title || 'Featured MCU poster'}
+                  onClick={() => { if (heroItem) setDetailItem(heroItem); }}
                   onMouseMove={(e) => {
                     const card = e.currentTarget;
                     const rect = card.getBoundingClientRect();
@@ -2613,21 +2617,25 @@ export default function MCUViewer() {
                     objectFit: 'cover',
                     borderRadius: 16,
                     border: `1px solid ${isActive ? 'color-mix(in srgb, var(--theme-accent) 42%, white)' : 'rgba(255,255,255,0.16)'}`,
-                    boxShadow: isActive ? '0 20px 50px rgba(0,0,0,0.5)' : '0 10px 28px rgba(0,0,0,0.34)',
+                    boxShadow: isActive ? '0 8px 18px rgba(0,0,0,0.24)' : '0 6px 14px rgba(0,0,0,0.18)',
                     opacity: isActive ? 1 : 0.7,
-                    transform: `perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) ${isActive ? 'scale(1.05) translateY(-6px)' : 'scale(0.95)'}` ,
-                    transition: 'transform 260ms ease, opacity 360ms ease, box-shadow 360ms ease, border-color 360ms ease',
-                    animation: isActive ? 'heroPop 640ms ease' : 'none',
+                    transform: `perspective(1100px) translateZ(${isActive ? '20px' : '10px'}) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) ${isActive ? 'scale(1.06) translateY(-6px)' : 'scale(0.98)'}` ,
+                    transition: 'transform 180ms cubic-bezier(0.22,1,0.36,1), opacity 220ms ease, box-shadow 240ms ease, border-color 220ms ease, filter 220ms ease',
+                    animation: isActive ? 'heroPop 640ms ease' : `posterPop 240ms ease ${carouselPulse % 2 === 0 ? '' : ''}`,
                     flexShrink: 0,
-                    scrollSnapAlign: 'center',
                     cursor: 'pointer',
                   }}
                 />
+                <div style={{ fontSize: 12, color: 'var(--theme-text)', opacity: 0.9, maxWidth: isDesktopViewport ? 265 : 198, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center' }}>{heroItem?.title || 'Featured MCU poster'}</div>
+                </div>
               );
             })}
           </div>
         )}
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 16, background: 'linear-gradient(90deg, rgba(4,6,12,0.78) 0%, transparent 12%, transparent 88%, rgba(4,6,12,0.78) 100%)' }} />
+        <button onClick={() => setHeroIndex(i => Math.max(0, i - 1))} style={{ position:'absolute', left:8, top:'50%', transform:'translateY(-50%)', zIndex:220 }} className='fpill'>Prev</button>
+        <button onClick={() => setHeroIndex(i => i + 1)} style={{ position:'absolute', right:8, top:'50%', transform:'translateY(-50%)', zIndex:220 }} className='fpill'>Next</button>
+
       </div>
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 220, marginTop: 0 }}>
@@ -2657,7 +2665,7 @@ export default function MCUViewer() {
                 aria-label="Search titles"
                 style={{ width: '100%', background: 'transparent', border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '7px 12px 7px 30px', color: T.inputColor, fontSize: 14, letterSpacing: 0.3, boxShadow: spiderSense ? '0 0 0 2px rgba(220,20,60,0.45), 0 0 16px rgba(220,20,60,0.35)' : 'none', animation: spiderSense ? 'spiderPulse 0.85s ease-in-out infinite' : 'none' }} />
             </div>
-            <div className='filter-row-actions' style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end', minWidth: 0 }} />
+            <div className='filter-row-actions' style={{ marginLeft: 0, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-start', minWidth: 0 }} />
           </div>
         </div>
 
@@ -2720,7 +2728,7 @@ export default function MCUViewer() {
                     <div className={`sopt ${statusFilter === 'watching' ? 'picked' : ''}`} onClick={() => { setStatusFilter('watching'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Watching</div>
                     <div className={`sopt ${statusFilter === 'plan-to-watch' ? 'picked' : ''}`} onClick={() => { setStatusFilter('plan-to-watch'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Plan to Watch</div>
                     <div className={`sopt ${statusFilter === 'dropped' ? 'picked' : ''}`} onClick={() => { setStatusFilter('dropped'); setWatchedOnly(false); setAutoHideStatuses(false); setFilterStatusOpen(false); }}>Dropped</div>
-                    <div className={`sopt ${autoHideStatuses ? 'picked' : ''}`} onClick={() => { setAutoHideStatuses(v => !v); setStatusFilter(null); setWatchedOnly(false); setFilterStatusOpen(false); }}>{autoHideStatuses ? 'Hide watched/dropped: ON' : 'Hide watched/dropped: OFF'}</div>
+                    
                   </div>
                 )}
               </div>
@@ -2846,6 +2854,8 @@ export default function MCUViewer() {
               <section key={pid} className="section-up" data-phase={pid}
                 ref={el => { phaseRefs.current[pid] = el; }}
                 style={{ marginBottom: 36, scrollMarginTop: 'var(--sticky-offset)', position: 'relative' }}>
+                <div aria-hidden style={{ position: 'absolute', left: -12, top: 6, bottom: 8, width: 2, background: `linear-gradient(180deg, ${ph.color}99 0%, color-mix(in srgb, ${ph.color} 20%, transparent) 100%)`, borderRadius: 999, pointerEvents: 'none' }} />
+                <div aria-hidden style={{ position: 'absolute', left: -19, top: 8, width: 14, height: 14, borderRadius: '50%', border: `1px solid ${ph.color}99`, background: `color-mix(in srgb, ${ph.color} 30%, transparent)`, boxShadow: `0 0 10px ${ph.glow}` }} />
 
                 {isCelebrating && (
                   <div className="phase-flash" style={{ position: 'absolute', inset: 0, background: `linear-gradient(90deg, ${ph.color}40, ${ph.color}22)`, boxShadow: `0 0 10px ${ph.glow}`, borderRadius: 12, pointerEvents: 'none', zIndex: 5 }} />

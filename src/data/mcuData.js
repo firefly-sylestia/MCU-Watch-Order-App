@@ -161,7 +161,15 @@ export const RELEASE_INFO = Object.freeze(
   }, {})
 );
 
-export const RAW = [...ESSENTIAL_LIST, ...ADDITIONAL_LIST].map(d => ({
+
+
+export const UPCOMING_PLACEHOLDERS = [
+  { id: 200, order: 200, phase: 6, type: 'film', year: 2027, essential: false, episodes: null, title: 'Untitled MCU Feature A', prereq: 'TBA', desc: '', hidden: true },
+  { id: 201, order: 201, phase: 6, type: 'series', year: 2027, essential: false, episodes: null, title: 'Untitled MCU Series A', prereq: 'TBA', desc: '', hidden: true },
+  { id: 202, order: 202, phase: 5, type: 'film', year: 2027, essential: false, episodes: null, title: 'Untitled MCU Feature B', prereq: 'TBA', desc: '', hidden: true },
+];
+
+export const RAW = [...ESSENTIAL_LIST, ...ADDITIONAL_LIST, ...UPCOMING_PLACEHOLDERS].map(d => ({
   ...d,
   releaseStatus: d.releaseStatus,
   status: 'unwatched',
