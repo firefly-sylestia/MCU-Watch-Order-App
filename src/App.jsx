@@ -111,6 +111,7 @@ const UI_STATE_DEFAULTS = {
   densityMode: 'comfortable',
   timelineMode: 'sacred',
   autoHideStatuses: false,
+  performanceMode: false,
   scrollTop: 0,
 };
 
@@ -144,6 +145,7 @@ const readSavedUiState = () => {
       densityMode: VALID_DENSITY_MODES.has(saved.densityMode) ? saved.densityMode : UI_STATE_DEFAULTS.densityMode,
       timelineMode: VALID_TIMELINE_MODES.has(saved.timelineMode) ? saved.timelineMode : UI_STATE_DEFAULTS.timelineMode,
       autoHideStatuses: typeof saved.autoHideStatuses === 'boolean' ? saved.autoHideStatuses : UI_STATE_DEFAULTS.autoHideStatuses,
+      performanceMode: typeof saved.performanceMode === 'boolean' ? saved.performanceMode : UI_STATE_DEFAULTS.performanceMode,
       scrollTop: Number.isFinite(Number(saved.scrollTop)) ? Math.max(0, Number(saved.scrollTop)) : UI_STATE_DEFAULTS.scrollTop,
     };
   } catch {
@@ -152,6 +154,17 @@ const readSavedUiState = () => {
 };
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const isAgentsOfShieldCarouselDuplicate = (item) => /agents of shield/i.test(item?.title || '');
+
+const hashStringToUnit = (value) => {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 4294967295;
+};
 const runWhenIdle = (cb, timeout = 400) => {
   if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
     return window.requestIdleCallback(cb, { timeout });
@@ -545,6 +558,7 @@ export default function MCUViewer() {
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
+  const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
   const [genreFilter] = useState('all');
   const [myLikes,        setMyLikes]        = useState({});
   const [myRating,       setMyRating]       = useState({});
@@ -576,6 +590,9 @@ export default function MCUViewer() {
   const settingsRef= useRef(null);
   const sidebarRef = useRef(null);
   const heroIntervalRef = useRef(null);
+  const heroDragRef = useRef({ active: false, pointerId: null, startX: 0, startY: 0, startScrollLeft: 0, dragging: false, dragged: false });
+  const heroRandomSeedRef = useRef(() => Math.random().toString(36).slice(2));
+  if (typeof heroRandomSeedRef.current === 'function') heroRandomSeedRef.current = heroRandomSeedRef.current();
   const restoredUiStateRef = useRef(false);
   const metadataBuildRef = useRef({ paused: false, running: false });
 
@@ -1038,9 +1055,10 @@ export default function MCUViewer() {
       densityMode,
       timelineMode,
       autoHideStatuses,
+      performanceMode,
       scrollTop,
     }));
-  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, scrollCheckpoint], 300);
+  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, scrollCheckpoint], 300);
   const totalWatched = useMemo(() => activeItems.filter(i => i.status === 'watched').length, [activeItems]);
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
@@ -1092,16 +1110,23 @@ export default function MCUViewer() {
     return mapped.startsWith('/') ? mapped : `/posters/${mapped}`;
   };
   const posterSrc = (item) => localPosterSrc(item) || posterCache[item.id] || `https://placehold.co/220x330/1a1f33/f7c4de?text=${encodeURIComponent(item.title+'\n'+item.year)}`;
-  const heroPosters = useMemo(
-    () => filtered
-      .map(item => localPosterSrc(item))
-      .filter(Boolean),
-    [filtered, localPosterMap]
-  );
+  const heroPosterItems = useMemo(() => {
+    const seen = new Set();
+    return activeItems
+      .filter(item => !isAgentsOfShieldCarouselDuplicate(item))
+      .map(item => ({ item, src: localPosterSrc(item) }))
+      .filter(({ src, item }) => {
+        if (!src || seen.has(src)) return false;
+        seen.add(src);
+        return !seen.has(`title:${item.title.toLowerCase()}`) && seen.add(`title:${item.title.toLowerCase()}`);
+      })
+      .sort((a, b) => hashStringToUnit(`${a.src}|${heroRandomSeedRef.current}`) - hashStringToUnit(`${b.src}|${heroRandomSeedRef.current}`));
+  }, [activeItems, localPosterMap]);
+  const heroPosters = useMemo(() => heroPosterItems.map(({ src }) => src), [heroPosterItems]);
   const visibleHeroPosters = useMemo(() => {
-    if (!heroPosters.length) return [];
-    return Array.from({ length: Math.min(10, heroPosters.length) }, (_, offset) => heroPosters[(heroIndex + offset) % heroPosters.length]);
-  }, [heroPosters, heroIndex]);
+    if (!heroPosterItems.length) return [];
+    return Array.from({ length: Math.min(10, heroPosterItems.length) }, (_, offset) => heroPosterItems[(heroIndex + offset) % heroPosterItems.length]);
+  }, [heroPosterItems, heroIndex]);
   const activeHeroSrc = heroPosters.length ? (heroPosters[heroIndex % heroPosters.length] || heroPosters[0] || '') : '';
 
   useEffect(() => {
@@ -1159,6 +1184,54 @@ export default function MCUViewer() {
       stopHeroCycle();
     };
   }, [heroPosters.length]);
+
+  const handleHeroWheel = useCallback((e) => {
+    const rail = e.currentTarget;
+    const horizontalIntent = Math.abs(e.deltaX) > Math.abs(e.deltaY);
+    if (!horizontalIntent) return;
+    rail.scrollLeft += e.deltaX;
+    e.preventDefault();
+  }, []);
+
+  const handleHeroPointerDown = useCallback((e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    heroDragRef.current = {
+      active: true,
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      startScrollLeft: e.currentTarget.scrollLeft,
+      dragging: false,
+      dragged: false,
+    };
+  }, []);
+
+  const handleHeroPointerMove = useCallback((e) => {
+    const drag = heroDragRef.current;
+    if (!drag.active || drag.pointerId !== e.pointerId) return;
+    const dx = e.clientX - drag.startX;
+    const dy = e.clientY - drag.startY;
+    if (!drag.dragging) {
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+      if (Math.abs(dy) > Math.abs(dx)) {
+        drag.active = false;
+        return;
+      }
+      drag.dragging = true;
+      drag.dragged = true;
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+    }
+    e.currentTarget.scrollLeft = drag.startScrollLeft - dx;
+    e.preventDefault();
+  }, []);
+
+  const finishHeroPointer = useCallback((e) => {
+    const drag = heroDragRef.current;
+    if (drag.pointerId === e.pointerId) {
+      e.currentTarget.releasePointerCapture?.(e.pointerId);
+      drag.active = false;
+    }
+  }, []);
 
   const spoilerSafe = useMemo(() => spoilerSafeMode, [spoilerSafeMode]);
 
@@ -2195,10 +2268,10 @@ export default function MCUViewer() {
 
   const appThemeBg = 'var(--theme-app-bg)';
   return (
-    <div data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': desktopTextScale, width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: 'calc(16px * var(--text-scale))', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'none' }} className="theme-switch performance-mode">
+    <div data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': desktopTextScale, width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: 'calc(16px * var(--text-scale))', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}`}>
       <style>{`
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-        html,body{scroll-behavior:auto}
+        html,body{scroll-behavior:smooth}
         ::-webkit-scrollbar{width:5px}
         ::-webkit-scrollbar-track{background:${T.scrollTrack}}
         ::-webkit-scrollbar-thumb{background:${T.scrollThumb};border-radius:4px}
@@ -2291,7 +2364,7 @@ export default function MCUViewer() {
         .theme-btn:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText}}
 
         .poster-shell{width:52px;height:76px;border-radius:9px;overflow:hidden;background:linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.025));position:relative;flex-shrink:0;box-shadow:0 8px 18px rgba(0,0,0,0.3),0 0 0 1px color-mix(in srgb,var(--theme-accent) 14%, transparent)}.poster-shell::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));opacity:1;transition:opacity .12s;pointer-events:none}.poster-shell.is-loaded::before{opacity:0}.poster-shell picture,.poster-shell img{display:block;width:100%;height:100%}.poster{width:52px;height:76px;object-fit:cover;border-radius:9px;border:1px solid ${T.surfaceBorder};box-shadow:0 10px 24px rgba(0,0,0,0.35);opacity:1;transform:none;transition:opacity .24s ease-out,transform .24s ease-out,filter .24s ease-out}.poster-shell:not(.is-loaded) .poster{opacity:0.82;transform:translateY(4px)}.poster.is-loaded{opacity:1;transform:none}
-        .progress-gradient{background:${phaseGradient};background-size:200% 100%;animation:none}
+        .progress-gradient{background:${phaseGradient};background-size:200% 100%;animation:gradientPulse 3s ease-in-out infinite alternate}
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
         .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.62);backdrop-filter:blur(12px);z-index:240;display:grid;place-items:center;padding:20px}
         .detail-card{width:min(1080px,94vw);max-height:92vh;overflow:auto;background:linear-gradient(145deg, rgba(17,22,44,0.62), rgba(12,16,34,0.5));backdrop-filter:blur(18px) saturate(130%);-webkit-backdrop-filter:blur(18px) saturate(130%);border:1px solid rgba(255,255,255,0.14);border-radius:14px;padding:18px;box-shadow:${darkMode ? '0 22px 60px rgba(0,0,0,0.56)' : '0 18px 44px rgba(0,0,0,0.14)'}}
@@ -2308,7 +2381,9 @@ export default function MCUViewer() {
         .glass-panel{background-color:rgba(30,30,46,0.42);border:1px solid rgba(255,255,255,0.04);border-radius:16px}
         .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02))}
         .meta-muted{color:var(--theme-text-muted) !important}
-        *{scroll-behavior:smooth}.sweep::after,.phase-flash{animation:none !important}
+        .performance-mode *{animation:none !important;transition-duration:0ms !important}
+        .performance-mode .progress-gradient,.performance-mode .sweep::after,.performance-mode .phase-flash{animation:none !important}
+        *{scroll-behavior:smooth}
 
         /* Mobile */
         @media (max-width: 767px) {
@@ -2473,6 +2548,11 @@ export default function MCUViewer() {
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><EyeOff size={14} /> Spoiler Safe</span>
               <input type='checkbox' checked={spoilerSafeMode} onChange={() => setSpoilerSafeMode(v => !v)} style={{ width: 36, height: 20 }} />
             </label>
+            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Zap size={14} /> Performance Mode</span>
+              <input type='checkbox' checked={performanceMode} onChange={() => setPerformanceMode(v => !v)} style={{ width: 36, height: 20 }} />
+            </label>
+            <div style={{ fontSize: 11, color: T.textMuted, lineHeight: 1.35, marginTop: -4 }}>Leave off for full UI motion; turn on only if your device needs reduced effects.</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 6 }}>
               <button className='fpill' onClick={() => setDensityMode('comfortable')} style={{ borderColor: densityMode === 'comfortable' ? 'var(--theme-accent)' : 'var(--theme-border)', justifyContent: 'center' }}>Comfortable</button>
               <button className='fpill' onClick={() => setDensityMode('compact')} style={{ borderColor: densityMode === 'compact' ? 'var(--theme-accent)' : 'var(--theme-border)', justifyContent: 'center' }}>Compact</button>
@@ -2516,23 +2596,24 @@ export default function MCUViewer() {
       <div style={{ position: 'relative', height: isDesktopViewport ? 520 : 390, background: 'transparent', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 210 }}>
         {heroPosters.length > 0 && (
           <div className="hero-rail"
-            onWheel={(e) => {
-              const rail = e.currentTarget;
-              const delta = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-              rail.scrollLeft += delta;
-              e.preventDefault();
-            }}
-            style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 14px', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: isDesktopViewport ? 'x proximity' : 'x mandatory', scrollPaddingInline: isDesktopViewport ? '14vw' : '8vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', overscrollBehaviorX: 'contain', overscrollBehaviorY: 'contain', touchAction: isDesktopViewport ? 'pan-x' : 'pan-x pan-y' }}>
-            {visibleHeroPosters.map((src, idx) => {
+            onWheel={handleHeroWheel}
+            onPointerDown={handleHeroPointerDown}
+            onPointerMove={handleHeroPointerMove}
+            onPointerUp={finishHeroPointer}
+            onPointerCancel={finishHeroPointer}
+            onPointerLeave={finishHeroPointer}
+            style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 14px', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'x proximity', scrollPaddingInline: isDesktopViewport ? '14vw' : '8vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', overscrollBehaviorX: 'contain', overscrollBehaviorY: 'auto', touchAction: 'pan-y', cursor: 'grab', userSelect: 'none', WebkitUserSelect: 'none' }}>
+            {visibleHeroPosters.map(({ src, item: heroItem }, idx) => {
               const isActive = idx === 0;
-              const heroItem = filtered.find(i => posterSrc(i) === src);
               return (
                 <div key={`hero-rail-${src}`} style={{ position: 'relative', display:'flex', flexDirection:'column', alignItems:'center', scrollSnapAlign:'center', flexShrink: 0 }}>
                 <img
                   src={src}
                   alt="Featured poster"
                   title={heroItem?.title || 'Featured MCU poster'}
-                  onClick={() => { if (heroItem) setDetailItem(heroItem); }}
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
+                  onClick={() => { if (heroDragRef.current.dragged) { heroDragRef.current.dragged = false; return; } if (heroItem) setDetailItem(heroItem); }}
                   onMouseMove={(e) => {
                     const card = e.currentTarget;
                     const rect = card.getBoundingClientRect();
@@ -2555,7 +2636,10 @@ export default function MCUViewer() {
                     opacity: isActive ? 1 : 0.76,
                     transform: `perspective(1100px) translateZ(${isActive ? '20px' : '0'}) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) ${isActive ? 'scale(1.06) translateY(-6px)' : 'scale(0.96)'}`,
                     transition: 'transform 360ms cubic-bezier(0.22,1,0.36,1), opacity 220ms ease, filter 220ms ease',
-                    cursor: 'pointer',
+                    cursor: 'grab',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                    WebkitTouchCallout: 'none',
                   }}
                 />
                 <div style={{ position: 'absolute', left: 9, right: 9, bottom: 9, padding: '5px 7px', borderRadius: 8, background: 'linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.62))', color: '#fff', fontSize: 9, fontWeight: 700, lineHeight: 1.15, textShadow: '0 1px 4px rgba(0,0,0,0.9)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)', maxWidth: isDesktopViewport ? 274 : 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center', pointerEvents: 'none' }}>{heroItem?.title || 'Featured MCU poster'}</div>
@@ -2745,7 +2829,7 @@ export default function MCUViewer() {
           )}
 
           {viewMode === 'calendar' ? (
-            <section className='curvy-panel' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'var(--theme-surface)', borderRadius: 14, padding: 16 }}>
+            <section className='curvy-panel' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
               <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)' }}>Release Calendar</h3>
               <div style={{ marginBottom: 12, color: T.textMuted }}>Upcoming with real dates</div>
               {calendarItems.upcoming.length === 0 ? <div style={{ marginBottom: 12, color: T.textMuted }}>No dated upcoming entries in current filter.</div> : calendarItems.upcoming.map(({ item, rawDate, label, releaseStatus }) => (
@@ -2830,7 +2914,7 @@ export default function MCUViewer() {
                 )}
 
                 {/* Row table */}
-                <div style={{ background: T.surfaceBg, border: `1px solid ${T.surfaceBorder}`, borderRadius: 14, overflow: 'hidden', boxShadow: 'none' }}>
+                <div className="list-panel" style={{ background: 'transparent', border: `1px solid ${T.surfaceBorder}`, borderRadius: 14, overflow: 'hidden', boxShadow: 'none' }}>
                   <PhaseRows rows={rows} renderRow={(item, idx) => {
                     const itemReleaseStatus = releaseStatusFor(item);
                     const itemReleaseInfo = releaseInfoFor(item);
