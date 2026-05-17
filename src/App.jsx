@@ -264,22 +264,23 @@ const posterExportName = (item, ext = 'jpg') => posterFileName(item, ext);
 
 
 
-const loadedPosterSrcs = new Set();
-
 const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poster', eager = false }) {
-  const [loaded, setLoaded] = useState(() => loadedPosterSrcs.has(src));
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    setLoaded(loadedPosterSrcs.has(src));
+    setLoaded(false);
   }, [src]);
 
-  const handleLoad = () => {
-    loadedPosterSrcs.add(src);
+  const handleLoad = useCallback(() => {
     setLoaded(true);
-  };
+  }, []);
+
+  const handleError = useCallback(() => {
+    setLoaded(false);
+  }, []);
 
   return <div className={`poster-shell ${loaded ? 'is-loaded' : ''}`}>
-    <img className={`${className} ${loaded ? 'is-loaded' : ''}`} src={src} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding="async" fetchpriority={eager ? 'high' : 'auto'} onLoad={handleLoad} />
+    <img className={`${className} ${loaded ? 'is-loaded' : ''}`} src={src} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding="async" fetchpriority={eager ? 'high' : 'auto'} onLoad={handleLoad} onError={handleError} />
   </div>;
 });
 const TMDB_LOOKUP_OVERRIDES = {
@@ -1147,13 +1148,20 @@ export default function MCUViewer() {
     if (heroCarouselCache.signature === carouselSignature && heroCarouselCache.posters.length) {
       return heroCarouselCache.posters;
     }
-    return carouselPosterPool;
-  }, [carouselPosterPool, carouselSignature, heroCarouselCache]);
+    const poolToUse = carouselPosterPool.length ? carouselPosterPool : [];
+    return poolToUse;
+  }, [carouselPosterPool, carouselSignature, heroCarouselCache.posters, heroCarouselCache.signature]);
+
+  const activeHeroSrc = useMemo(() => {
+    if (!heroPosters.length) return '';
+    const safeIndex = heroPosters.length ? (heroIndex % heroPosters.length) : 0;
+    return heroPosters[safeIndex] || '';
+  }, [heroPosters, heroIndex]);
+
   const visibleHeroPosters = useMemo(() => {
     if (!heroPosters.length) return [];
     return Array.from({ length: Math.min(10, heroPosters.length) }, (_, offset) => heroPosters[(heroIndex + offset) % heroPosters.length]);
   }, [heroPosters, heroIndex]);
-  const activeHeroSrc = heroPosters.length ? (heroPosters[heroIndex % heroPosters.length] || heroPosters[0] || '') : '';
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1172,21 +1180,34 @@ export default function MCUViewer() {
       return;
     }
 
-    const normalizedIndex = heroIndex % heroPosters.length;
-    setCurrentHeroSrc(activeHeroSrc);
+    const timer = setTimeout(() => {
+      setCurrentHeroSrc(activeHeroSrc);
+    }, 50);
 
-    const nextSrcCandidate = heroPosters[(normalizedIndex + 10) % heroPosters.length];
-    if (nextSrcCandidate) {
-      const img = new Image();
-      img.src = nextSrcCandidate;
-    }
-  }, [heroPosters, heroIndex, activeHeroSrc]);
+    return () => clearTimeout(timer);
+  }, [activeHeroSrc]);
+
+  useEffect(() => {
+    if (!activeHeroSrc || heroPosters.length <= 1) return;
+
+    const timer = setTimeout(() => {
+      const normalizedIndex = (heroIndex % heroPosters.length);
+      const nextSrcCandidate = heroPosters[(normalizedIndex + 10) % heroPosters.length];
+      if (nextSrcCandidate && nextSrcCandidate !== activeHeroSrc) {
+        const img = new Image();
+        img.loading = 'lazy';
+        img.src = nextSrcCandidate;
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [activeHeroSrc, heroIndex, heroPosters]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
     if (heroPosters.length <= 1) return undefined;
 
-    const HERO_INTERVAL_MS = 5000;
+    const HERO_INTERVAL_MS = 8000;
     const startHeroCycle = () => {
       if (heroIntervalRef.current) return;
       heroIntervalRef.current = window.setInterval(() => {
@@ -2447,7 +2468,7 @@ export default function MCUViewer() {
       `}</style>
 
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        <div key={currentHeroSrc || activeHeroSrc || 'hero-bg'} className="hero-bg-slide" style={{ '--hero-bg-opacity': darkMode ? 0.46 : 0.32, position: 'absolute', inset: 0, backgroundImage: (currentHeroSrc || activeHeroSrc) ? `url(${currentHeroSrc || activeHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: darkMode ? 0.46 : 0.32, transition: 'opacity 0.9s ease-in-out', willChange: 'opacity' }} />
+        <div key={currentHeroSrc || activeHeroSrc || 'hero-bg'} className="hero-bg-slide" style={{ '--hero-bg-opacity': darkMode ? 0.46 : 0.32, position: 'absolute', inset: 0, backgroundImage: (currentHeroSrc || activeHeroSrc) ? `url(${currentHeroSrc || activeHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: darkMode ? 0.46 : 0.32, transition: 'opacity 0.4s ease-in-out', willChange: 'opacity' }} />
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.58 : 0.46, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${darkMode ? 'rgba(4,5,15,0.03)' : 'rgba(255,255,255,0.06)'} 0%, ${darkMode ? 'rgba(4,5,15,0.12)' : 'rgba(231,238,248,0.18)'} 45%, ${darkMode ? 'rgba(4,5,15,0.46)' : 'rgba(231,238,248,0.5)'} 70%, ${darkMode ? 'rgba(4,5,15,0.92)' : 'rgba(231,238,248,0.92)'} 100%)` }} />
       </div>
