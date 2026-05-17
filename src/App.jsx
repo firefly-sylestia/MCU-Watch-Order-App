@@ -2576,7 +2576,7 @@ export default function MCUViewer() {
       </header>
 
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ position: 'relative', height: isDesktopViewport ? 460 : 340, background: 'linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 210 }}>
+      <div style={{ position: 'relative', height: isDesktopViewport ? 520 : 390, background: 'transparent', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 210 }}>
         {heroPosters.length > 0 && (
           <div className="hero-rail"
             onWheel={(e) => {
@@ -2592,9 +2592,8 @@ export default function MCUViewer() {
               const isActive = src === activeSrc;
               const heroItem = filtered.find(i => posterSrc(i) === src);
               return (
-                <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8, scrollSnapAlign:'center' }}>
+                <div key={`hero-rail-${idx}`} style={{ position: 'relative', display:'flex', flexDirection:'column', alignItems:'center', scrollSnapAlign:'center', flexShrink: 0 }}>
                 <img
-                  key={`hero-rail-${idx}`}
                   src={src}
                   alt="Featured poster"
                   title={heroItem?.title || 'Featured MCU poster'}
@@ -2612,21 +2611,20 @@ export default function MCUViewer() {
                     e.currentTarget.style.setProperty('--ry', '0deg');
                   }}
                   style={{
-                    height: isDesktopViewport ? 400 : 290,
-                    width: isDesktopViewport ? 265 : 198,
+                    height: isDesktopViewport ? 440 : 320,
+                    width: isDesktopViewport ? 292 : 218,
                     objectFit: 'cover',
                     borderRadius: 16,
-                    border: `1px solid ${isActive ? 'color-mix(in srgb, var(--theme-accent) 42%, white)' : 'rgba(255,255,255,0.16)'}`,
-                    boxShadow: isActive ? '0 8px 18px rgba(0,0,0,0.24)' : '0 6px 14px rgba(0,0,0,0.18)',
+                    border: '0',
+                    boxShadow: 'none',
                     opacity: isActive ? 1 : 0.7,
                     transform: `perspective(1100px) translateZ(${isActive ? '20px' : '10px'}) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) ${isActive ? 'scale(1.06) translateY(-6px)' : 'scale(0.98)'}` ,
-                    transition: 'transform 180ms cubic-bezier(0.22,1,0.36,1), opacity 220ms ease, box-shadow 240ms ease, border-color 220ms ease, filter 220ms ease',
+                    transition: 'transform 180ms cubic-bezier(0.22,1,0.36,1), opacity 220ms ease, filter 220ms ease',
                     animation: isActive ? 'heroPop 640ms ease' : `posterPop 240ms ease ${carouselPulse % 2 === 0 ? '' : ''}`,
-                    flexShrink: 0,
                     cursor: 'pointer',
                   }}
                 />
-                <div style={{ fontSize: 12, color: 'var(--theme-text)', opacity: 0.9, maxWidth: isDesktopViewport ? 265 : 198, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center' }}>{heroItem?.title || 'Featured MCU poster'}</div>
+                <div style={{ position: 'absolute', left: 10, right: 10, bottom: 10, padding: '7px 9px', borderRadius: 10, background: 'linear-gradient(180deg, rgba(0,0,0,0.12), rgba(0,0,0,0.66))', color: '#fff', fontSize: 11, fontWeight: 700, lineHeight: 1.2, textShadow: '0 1px 4px rgba(0,0,0,0.9)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12)', maxWidth: isDesktopViewport ? 272 : 198, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center', pointerEvents: 'none' }}>{heroItem?.title || 'Featured MCU poster'}</div>
                 </div>
               );
             })}
