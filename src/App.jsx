@@ -112,6 +112,8 @@ const UI_STATE_DEFAULTS = {
   timelineMode: 'sacred',
   autoHideStatuses: false,
   performanceMode: true,
+  desktopTextScale: 1,
+  textScaleEnabled: false,
   scrollTop: 0,
 };
 
@@ -122,6 +124,7 @@ const VALID_TYPES = new Set([null, ...Object.keys(TYPE_META)]);
 const VALID_STATUSES = new Set([null, ...Object.keys(STATUS_META)]);
 const VALID_DENSITY_MODES = new Set(['comfortable', 'compact']);
 const VALID_TIMELINE_MODES = new Set(['sacred', 'studio', 'whatif']);
+const VALID_DESKTOP_TEXT_SCALES = new Set(DESKTOP_TEXT_SCALES);
 const AUTO_HIDDEN_STATUSES = HIDDEN_FILTER_STATUSES;
 
 const readSavedUiState = () => {
@@ -146,6 +149,8 @@ const readSavedUiState = () => {
       timelineMode: VALID_TIMELINE_MODES.has(saved.timelineMode) ? saved.timelineMode : UI_STATE_DEFAULTS.timelineMode,
       autoHideStatuses: typeof saved.autoHideStatuses === 'boolean' ? saved.autoHideStatuses : UI_STATE_DEFAULTS.autoHideStatuses,
       performanceMode: typeof saved.performanceMode === 'boolean' ? saved.performanceMode : UI_STATE_DEFAULTS.performanceMode,
+      desktopTextScale: VALID_DESKTOP_TEXT_SCALES.has(Number(saved.desktopTextScale)) ? Number(saved.desktopTextScale) : UI_STATE_DEFAULTS.desktopTextScale,
+      textScaleEnabled: typeof saved.textScaleEnabled === 'boolean' ? saved.textScaleEnabled : UI_STATE_DEFAULTS.textScaleEnabled,
       scrollTop: Number.isFinite(Number(saved.scrollTop)) ? Math.max(0, Number(saved.scrollTop)) : UI_STATE_DEFAULTS.scrollTop,
     };
   } catch {
@@ -157,6 +162,8 @@ const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const isAgentsOfShieldCarouselDuplicate = (item) => /agents of shield/i.test(item?.title || '');
 const HERO_ROTATION_MS = 10000;
+const HERO_VISIBLE_COUNT = 15;
+const HERO_CENTER_OFFSET = Math.floor(HERO_VISIBLE_COUNT / 2);
 const HERO_PRELOAD_AHEAD = 12;
 const loadedHeroPosterSrcs = new Set();
 const heroPosterLoadPromises = new Map();
@@ -607,7 +614,8 @@ export default function MCUViewer() {
   const [snapMode, setSnapMode] = useState(false);
   const [spiderSense, setSpiderSense] = useState(false);
   const [multiverseShuffle, setMultiverseShuffle] = useState(false);
-  const [desktopTextScale, setDesktopTextScale] = useState(1);
+  const [desktopTextScale, setDesktopTextScale] = useState(initialUiState.desktopTextScale);
+  const [textScaleEnabled, setTextScaleEnabled] = useState(initialUiState.textScaleEnabled);
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : false));
   const [lightningStrike, setLightningStrike] = useState(false);
   const [spiderDrop, setSpiderDrop] = useState(false);
@@ -620,6 +628,11 @@ export default function MCUViewer() {
   const settingsRef= useRef(null);
   const sidebarRef = useRef(null);
   const heroIntervalRef = useRef(null);
+  const heroRailRef = useRef(null);
+  const heroActiveCardRef = useRef(null);
+  const heroInteractionTimeoutRef = useRef(null);
+  const heroUserInteractingUntilRef = useRef(0);
+  const heroProgrammaticScrollRef = useRef(false);
   const heroRandomSeedRef = useRef(() => Math.random().toString(36).slice(2));
   if (typeof heroRandomSeedRef.current === 'function') heroRandomSeedRef.current = heroRandomSeedRef.current();
   const restoredUiStateRef = useRef(false);
@@ -1085,9 +1098,11 @@ export default function MCUViewer() {
       timelineMode,
       autoHideStatuses,
       performanceMode,
+      desktopTextScale,
+      textScaleEnabled,
       scrollTop,
     }));
-  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, scrollCheckpoint], 300);
+  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
   const totalWatched = useMemo(() => activeItems.filter(i => i.status === 'watched').length, [activeItems]);
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
@@ -1156,8 +1171,12 @@ export default function MCUViewer() {
   const heroPosters = useMemo(() => heroPosterItems.map(({ src }) => src), [heroPosterItems]);
   const visibleHeroPosters = useMemo(() => {
     if (!heroPosterItems.length) return [];
-    return heroPosterItems;
-  }, [heroPosterItems]);
+    const count = Math.min(HERO_VISIBLE_COUNT, heroPosterItems.length);
+    return Array.from({ length: count }, (_, offset) => {
+      const idx = (heroIndex - HERO_CENTER_OFFSET + offset + heroPosterItems.length) % heroPosterItems.length;
+      return heroPosterItems[idx];
+    });
+  }, [heroPosterItems, heroIndex]);
   const activeHeroSrc = heroPosters.length ? (heroPosters[heroIndex % heroPosters.length] || heroPosters[0] || '') : '';
 
   useEffect(() => {
@@ -1211,6 +1230,7 @@ export default function MCUViewer() {
     const startHeroCycle = () => {
       if (heroIntervalRef.current) return;
       heroIntervalRef.current = window.setInterval(() => {
+        if (Date.now() < heroUserInteractingUntilRef.current) return;
         setHeroIndex(i => (i + 1) % heroPosters.length);
       }, HERO_ROTATION_MS);
     };
@@ -1232,12 +1252,41 @@ export default function MCUViewer() {
     };
   }, [heroPosters.length]);
 
+  const pauseHeroAutoSlide = useCallback((duration = 2200) => {
+    heroUserInteractingUntilRef.current = Date.now() + duration;
+    if (heroInteractionTimeoutRef.current) window.clearTimeout(heroInteractionTimeoutRef.current);
+    heroInteractionTimeoutRef.current = window.setTimeout(() => {
+      heroUserInteractingUntilRef.current = 0;
+      heroInteractionTimeoutRef.current = null;
+    }, duration);
+  }, []);
+
+  useEffect(() => () => {
+    if (heroInteractionTimeoutRef.current) window.clearTimeout(heroInteractionTimeoutRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (!heroActiveCardRef.current || !heroRailRef.current) return undefined;
+    if (Date.now() < heroUserInteractingUntilRef.current) return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      heroProgrammaticScrollRef.current = true;
+      heroActiveCardRef.current?.scrollIntoView({
+        behavior: performanceMode ? 'auto' : 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      });
+      window.setTimeout(() => { heroProgrammaticScrollRef.current = false; }, performanceMode ? 120 : 520);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [heroIndex, activeHeroSrc, visibleHeroPosters, performanceMode]);
+
   const handleHeroWheel = useCallback((e) => {
     const horizontalDelta = Math.abs(e.deltaX) >= Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
     if (!horizontalDelta) return;
+    pauseHeroAutoSlide(2600);
     e.currentTarget.scrollBy({ left: horizontalDelta * 2.6, behavior: 'auto' });
     e.preventDefault();
-  }, []);
+  }, [pauseHeroAutoSlide]);
 
   const spoilerSafe = useMemo(() => spoilerSafeMode, [spoilerSafeMode]);
 
@@ -2233,6 +2282,9 @@ export default function MCUViewer() {
     '--theme-border': darkMode ? '#1b1b33' : '#ddd8cf',
     '--theme-text': darkMode ? '#d8e3f5' : '#1a2030',
     '--theme-text-muted': darkMode ? '#8fa1b8' : '#667182',
+    '--font-marvel-display': 'var(--font-display)',
+    '--font-marvel-ui': 'var(--font-ui)',
+    '--font-marvel-body': 'var(--font-body)',
     '--theme-success': '#3ec47a',
     '--theme-success-soft': darkMode ? 'rgba(62,196,122,0.16)' : 'rgba(62,196,122,0.12)',
     '--theme-warning': 'var(--theme-accent-alt)',
@@ -2276,7 +2328,7 @@ export default function MCUViewer() {
 
   const appThemeBg = 'var(--theme-app-bg)';
   return (
-    <div data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': desktopTextScale, width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: 'calc(16px * var(--text-scale))', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}`}>
+    <div data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': textScaleEnabled ? desktopTextScale : 1, width: textScaleEnabled ? `${100 / desktopTextScale}%` : '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: 'var(--ui-scale)', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}`}>
       <style>{`
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         html,body{scroll-behavior:smooth}
@@ -2459,14 +2511,14 @@ export default function MCUViewer() {
           <div
             key={`backdrop-exit-${previousHeroSrc}`}
             className="hero-backdrop-image is-exiting"
-            style={{ '--backdrop-opacity': 0.38, position: 'absolute', inset: 0, backgroundImage: `url(${previousHeroSrc})`, backgroundSize: 'cover', backgroundPosition: 'center 20%' }}
+            style={{ '--backdrop-opacity': 0.38, position: 'absolute', inset: 0, backgroundImage: `url(${previousHeroSrc})`, backgroundSize: isDesktopViewport ? 'auto 72%' : 'auto 64%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center 18%' }}
           />
         )}
         {currentHeroSrc && (
           <div
             key={`backdrop-${currentHeroSrc}`}
             className="hero-backdrop-image"
-            style={{ '--backdrop-opacity': 0.38, position: 'absolute', inset: 0, backgroundImage: `url(${currentHeroSrc})`, backgroundSize: 'cover', backgroundPosition: 'center 20%' }}
+            style={{ '--backdrop-opacity': 0.38, position: 'absolute', inset: 0, backgroundImage: `url(${currentHeroSrc})`, backgroundSize: isDesktopViewport ? 'auto 72%' : 'auto 64%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center 18%' }}
           />
         )}
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.74 : 0.64, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
@@ -2587,9 +2639,12 @@ export default function MCUViewer() {
               <button className='fpill' onClick={() => setDensityMode('comfortable')} style={{ borderColor: densityMode === 'comfortable' ? 'var(--theme-accent)' : 'var(--theme-border)', justifyContent: 'center' }}>Comfortable</button>
               <button className='fpill' onClick={() => setDensityMode('compact')} style={{ borderColor: densityMode === 'compact' ? 'var(--theme-accent)' : 'var(--theme-border)', justifyContent: 'center' }}>Compact</button>
             </div>
-            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase', marginTop: 2 }}>Desktop Text Size</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6 }}>
-              {DESKTOP_TEXT_SCALES.map(scale => <button key={scale} className='fpill' onClick={() => setDesktopTextScale(scale)} style={{ justifyContent: 'center', borderColor: desktopTextScale === scale ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{Math.round(scale * 100)}%</button>)}
+            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase', marginTop: 2 }}>UI Scale</div>
+            <button className='fpill' onClick={() => setTextScaleEnabled(v => !v)} style={{ justifyContent: 'center', borderColor: textScaleEnabled ? 'var(--theme-accent)' : 'var(--theme-border)', background: textScaleEnabled ? 'color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface))' : undefined }}>
+              {textScaleEnabled ? `Scale On · ${Math.round(desktopTextScale * 100)}%` : 'Scale Off'}
+            </button>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6, opacity: textScaleEnabled ? 1 : 0.55 }}>
+              {DESKTOP_TEXT_SCALES.map(scale => <button key={scale} className='fpill' disabled={!textScaleEnabled} onClick={() => setDesktopTextScale(scale)} style={{ justifyContent: 'center', borderColor: textScaleEnabled && desktopTextScale === scale ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{Math.round(scale * 100)}%</button>)}
             </div>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Data</div>
@@ -2626,12 +2681,16 @@ export default function MCUViewer() {
       <div style={{ position: 'relative', height: isDesktopViewport ? 520 : 390, background: 'transparent', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 210 }}>
         {heroPosters.length > 0 && (
           <div className="hero-rail"
+            ref={heroRailRef}
             onWheel={handleHeroWheel}
+            onScroll={() => { if (!heroProgrammaticScrollRef.current) pauseHeroAutoSlide(1800); }}
+            onPointerDown={() => pauseHeroAutoSlide(3200)}
+            onTouchStart={() => pauseHeroAutoSlide(3200)}
             style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 14px', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'none', scrollPaddingInline: isDesktopViewport ? '14vw' : '8vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', overscrollBehaviorX: 'contain', overscrollBehaviorY: 'auto', touchAction: 'pan-x', cursor: 'pointer', userSelect: 'none', WebkitUserSelect: 'none' }}>
             {visibleHeroPosters.map(({ src, item: heroItem }, idx) => {
               const isActive = src === activeHeroSrc;
               return (
-                <div key={`hero-rail-${src}`} style={{ position: 'relative', display:'flex', flexDirection:'column', alignItems:'center', scrollSnapAlign:'none', flexShrink: 0 }}>
+                <div key={`hero-rail-${src}`} ref={isActive ? heroActiveCardRef : null} style={{ position: 'relative', display:'flex', flexDirection:'column', alignItems:'center', scrollSnapAlign:'center', flexShrink: 0 }}>
                 <img
                   className="hero-poster-card"
                   src={src}
@@ -2657,6 +2716,7 @@ export default function MCUViewer() {
                     WebkitTouchCallout: 'none',
                   }}
                 />
+                <div style={{ position: 'absolute', left: 10, right: 10, bottom: 12, padding: '8px 9px 7px', borderRadius: 10, background: 'linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.76))', color: '#fff', fontFamily: 'var(--font-marvel-display)', fontSize: isDesktopViewport ? 18 : 15, fontWeight: 900, letterSpacing: 1.2, lineHeight: 1, textAlign: 'center', textTransform: 'uppercase', textShadow: '0 2px 9px rgba(0,0,0,0.95), 0 0 14px rgba(212,55,47,0.45)', boxShadow: 'inset 0 -18px 24px rgba(0,0,0,0.18)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', pointerEvents: 'none' }}>{heroItem?.title || 'Featured MCU poster'}</div>
                 </div>
               );
             })}
