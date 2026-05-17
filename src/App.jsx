@@ -115,6 +115,7 @@ const UI_STATE_DEFAULTS = {
   desktopTextScale: 1,
   textScaleEnabled: false,
   scrollTop: 0,
+  exportPrefs: { font: 'inter', textScale: 1.08, detailUseReviewStyle: true },
 };
 
 const VALID_LIST_MODES = new Set(LIST_MODES.map(mode => mode.id));
@@ -602,6 +603,9 @@ export default function MCUViewer() {
   const [reviews,        setReviews]        = useState({});
   const [bookmarks,      setBookmarks]      = useState({});
   const [reviewCardTheme, setReviewCardTheme] = useState('midnight');
+  const [exportFont, setExportFont] = useState('inter');
+  const [exportTextScale, setExportTextScale] = useState(1.08);
+  const [autoBackupStamp, setAutoBackupStamp] = useState('');
   const [reviewShareStatus, setReviewShareStatus] = useState({ type: '', message: '' });
   const [analyticsOpen,  setAnalyticsOpen]  = useState(false);
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
@@ -835,7 +839,13 @@ export default function MCUViewer() {
   };
 
   const exportProgress = async () => {
-    const payload = items.map(({ id, status, watchedDate, statusChangedAt }) => ({ id, status, watchedDate, statusChangedAt }));
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      items: items.map(({ id, status, watchedDate, statusChangedAt }) => ({ id, status, watchedDate, statusChangedAt })),
+      actions: { likes: myLikes, ratings: myRating, rewatch: rewatchCount, bookmarks, reviews },
+      profile,
+      exportPrefs: { font: exportFont, textScale: exportTextScale },
+    };
     const content = JSON.stringify(payload, null, 2);
     if (Capacitor.isNativePlatform()) {
       const fileName = `mcu-progress-${Date.now()}.json`;
@@ -931,12 +941,22 @@ export default function MCUViewer() {
     reader.onload = () => {
       try {
         const imported = JSON.parse(String(reader.result));
+        const importedItems = Array.isArray(imported) ? imported : (Array.isArray(imported.items) ? imported.items : []);
         setItems(prev => {
-          const map = new Map(imported.map(x => [x.id, x]));
+          const map = new Map(importedItems.map(x => [x.id, x]));
           const next = prev.map(i => map.has(i.id) ? { ...i, status: map.get(i.id).status || 'unwatched', watchedDate: map.get(i.id).watchedDate || null, statusChangedAt: map.get(i.id).statusChangedAt || map.get(i.id).watchedDate || null } : i);
           persist(next);
           return next;
         });
+        const actions = imported.actions || {};
+        if (actions.likes) setMyLikes(actions.likes);
+        if (actions.ratings) setMyRating(actions.ratings);
+        if (actions.rewatch) setRewatchCount(actions.rewatch);
+        if (actions.bookmarks) setBookmarks(actions.bookmarks);
+        if (actions.reviews) setReviews(actions.reviews);
+        if (imported.profile && typeof imported.profile === 'object') setProfile(prev => ({ ...prev, ...imported.profile }));
+        if (imported.exportPrefs?.font) setExportFont(imported.exportPrefs.font);
+        if (Number.isFinite(Number(imported.exportPrefs?.textScale))) setExportTextScale(Math.max(0.9, Math.min(1.5, Number(imported.exportPrefs.textScale))));
       } catch {}
     };
     reader.readAsText(file);
@@ -1297,6 +1317,8 @@ export default function MCUViewer() {
   useEffect(() => {
     if (!heroActiveCardRef.current || !heroRailRef.current) return undefined;
     if (Date.now() < heroUserInteractingUntilRef.current) return undefined;
+    const mainScrollTop = mainRef.current?.scrollTop || window.scrollY || 0;
+    if (mainScrollTop > 220) return undefined;
     const frame = window.requestAnimationFrame(() => {
       heroProgrammaticScrollRef.current = true;
       const rail = heroRailRef.current;
@@ -1625,20 +1647,24 @@ export default function MCUViewer() {
       const posterX = cardX + 60, posterY = cardY + 74, posterW = 450, posterH = 660;
       try { ctx.drawImage(img, posterX, posterY, posterW, posterH); } catch {}
       ctx.fillStyle = '#ffffff';
-      ctx.font = '800 60px Space Grotesk, sans-serif';
+      const fontMap = { inter: 'Inter, sans-serif', grotesk: 'Space Grotesk, sans-serif', manrope: 'Manrope, sans-serif', marvel: 'var(--font-marvel-display), sans-serif' };
+      const exportFontFamily = fontMap[exportFont] || fontMap.inter;
+      const scale = exportTextScale;
+      ctx.font = `${Math.round(60 * scale)}px ${exportFontFamily}`;
+      ctx.font = `800 ${Math.round(60 * scale)}px ${exportFontFamily}`;
       drawWrappedText(ctx, item.title, posterX + posterW + 52, posterY + 72, cardW - posterW - 150, 66, 3);
       drawPremiumStars(ctx, { x: posterX + posterW + 52, y: posterY + 150, size: 38, rating10: rating, active: '#ffd35c' });
-      ctx.font = '800 40px Manrope, sans-serif';
+      ctx.font = `800 ${Math.round(40 * scale)}px ${exportFontFamily}`;
       ctx.fillStyle = '#8bf8de';
       ctx.fillText(`${rating.toFixed(1)}/10`, posterX + posterW + 52, posterY + 220);
-      ctx.font = '700 30px Manrope, sans-serif';
+      ctx.font = `700 ${Math.round(30 * scale)}px ${exportFontFamily}`;
       ctx.fillStyle = theme.subtext;
       ctx.fillText(`${profile.name || 'Reviewer'} • ${item.year} • Phase ${item.phase}`, posterX + posterW + 52, posterY + 272);
       ctx.fillStyle = 'rgba(255,255,255,0.08)';
       ctx.beginPath();
       ctx.roundRect(cardX + 60, posterY + posterH + 60, cardW - 120, 490, 30);
       ctx.fill();
-      ctx.font = '700 34px Inter, sans-serif';
+      ctx.font = `700 ${Math.round(34 * scale)}px ${exportFontFamily}`;
       ctx.fillStyle = '#dce8ff';
       ctx.fillText('Review Notes', cardX + 94, posterY + posterH + 130);
       ctx.font = '500 42px Inter, sans-serif';
@@ -1692,12 +1718,7 @@ export default function MCUViewer() {
       });
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
       if (!blob) return;
-      const file = new File([blob], 'mcu-analysis-card.png', { type: 'image/png' });
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ title: 'MCU Analysis Card', files: [file] });
-      } else {
-        triggerDownload(blob, 'mcu-analysis-card.png');
-      }
+      await saveImageToDevice(blob, 'mcu-analysis-card.png');
     } catch (e) {
       console.error('Failed to share analysis card', e);
     }
@@ -1782,12 +1803,17 @@ export default function MCUViewer() {
       if (Array.isArray(avatars)) setUploadedAvatars(avatars);
       const t = localStorage.getItem('mcu-theme-mode-v1');
       if (t) setThemeMode(t);
+      const exportPrefsSaved = JSON.parse(localStorage.getItem('mcu-export-prefs-v1') || 'null');
+      if (exportPrefsSaved?.font) setExportFont(exportPrefsSaved.font);
+      if (Number.isFinite(Number(exportPrefsSaved?.textScale))) setExportTextScale(Math.max(0.9, Math.min(1.5, Number(exportPrefsSaved.textScale))));
+      setAutoBackupStamp(localStorage.getItem('mcu-auto-backup-ts-v1') || '');
     } catch {}
   }, []);
 
   useEffect(() => { scheduleStorageWrite('mcu-profile-v1', JSON.stringify(profile)); }, [profile]);
   useEffect(() => { scheduleStorageWrite('mcu-uploaded-avatars-v1', JSON.stringify(uploadedAvatars)); }, [uploadedAvatars]);
   useEffect(() => { scheduleStorageWrite('mcu-theme-mode-v1', themeMode); }, [themeMode]);
+  useEffect(() => { scheduleStorageWrite('mcu-export-prefs-v1', JSON.stringify({ font: exportFont, textScale: exportTextScale })); }, [exportFont, exportTextScale]);
 
   useEffect(() => {
     try {
@@ -1817,6 +1843,20 @@ export default function MCUViewer() {
       safeLocalStorageSetItem(CACHE_KEYS.userActionsReviews, JSON.stringify(reviews));
     }
   }, [myLikes, myRating, rewatchCount, bookmarks, reviews], 400);
+
+  useDebouncedEffect(() => {
+    const snapshot = {
+      exportedAt: new Date().toISOString(),
+      items: items.map(({ id, status, watchedDate, statusChangedAt }) => ({ id, status, watchedDate, statusChangedAt })),
+      actions: { likes: myLikes, ratings: myRating, rewatch: rewatchCount, bookmarks, reviews },
+      profile,
+      exportPrefs: { font: exportFont, textScale: exportTextScale },
+    };
+    scheduleStorageWrite('mcu-auto-backup-v1', JSON.stringify(snapshot));
+    const stamp = new Date().toISOString();
+    scheduleStorageWrite('mcu-auto-backup-ts-v1', stamp);
+    setAutoBackupStamp(stamp);
+  }, [items, myLikes, myRating, rewatchCount, bookmarks, reviews, profile, exportFont, exportTextScale], 800);
   useEffect(() => {
     const sequence = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
     let index = 0;
@@ -2556,7 +2596,7 @@ export default function MCUViewer() {
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <button className="theme-btn" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar menu" style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 10px)', left: 12, zIndex: 280, width: 44, height: 44, background: darkMode ? 'rgba(10,14,28,0.94)' : '#ffffff', borderColor: darkMode ? 'rgba(255,255,255,0.24)' : T.pillBorder, boxShadow: darkMode ? '0 8px 24px rgba(0,0,0,0.35)' : '0 6px 16px rgba(0,0,0,0.12)' }}><Menu size={17} /></button>
       {sidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(4,8,18,0.62)', zIndex: 900, pointerEvents: 'auto' }} />}
-      <aside ref={sidebarRef} style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 'min(320px,84vw)', padding: '86px 14px 20px', background: darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderRight: `1px solid ${T.surfaceBorder}`, transform: sidebarOpen ? 'translateX(0)' : 'translateX(-105%)', transition: 'transform 0.34s cubic-bezier(.22,.9,.24,1)', zIndex: 920, overflowY: 'auto', boxShadow: darkMode ? '0 22px 55px rgba(0,0,0,0.45)' : '0 18px 44px rgba(0,0,0,0.18)', borderRadius: 16 }}>
+      <aside ref={sidebarRef} style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 'min(320px,84vw)', padding: '86px 14px 20px', background: darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', backdropFilter: performanceMode ? 'none' : 'blur(8px)', WebkitBackdropFilter: performanceMode ? 'none' : 'blur(8px)', borderRight: `1px solid ${T.surfaceBorder}`, transform: sidebarOpen ? 'translateX(0)' : 'translateX(-105%)', transition: 'transform 0.22s cubic-bezier(.22,.9,.24,1)', zIndex: 920, overflowY: 'auto', boxShadow: darkMode ? '0 22px 55px rgba(0,0,0,0.45)' : '0 18px 44px rgba(0,0,0,0.18)', borderRadius: 16 }}>
         <div style={{ marginBottom: 8, fontSize: 11, letterSpacing: 1.8, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)', textTransform: 'uppercase' }}>Navigation Panel</div>
         <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -2627,7 +2667,7 @@ export default function MCUViewer() {
 
       <div ref={settingsRef} style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 16px)', right: 14, zIndex: 940 }}>
         {settingsOpen && (
-          <div className="fade-in settings-menu" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, marginTop: 8, minWidth: 320, borderRadius: 12, border: '1px solid color-mix(in srgb, var(--theme-accent) 35%, transparent)', background: darkMode ? 'rgba(14,21,40,0.84)' : 'rgba(249,252,255,0.88)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', boxShadow: 'none', padding: 10, display: 'grid', gap: 8, maxHeight: '80vh', overflow: 'auto', color: 'var(--theme-text)' }}>
+          <div className="fade-in settings-menu" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, marginTop: 8, minWidth: 320, borderRadius: 12, border: '1px solid color-mix(in srgb, var(--theme-accent) 35%, transparent)', background: darkMode ? 'rgba(14,21,40,0.84)' : 'rgba(249,252,255,0.88)', backdropFilter: performanceMode ? 'none' : 'blur(8px)', WebkitBackdropFilter: performanceMode ? 'none' : 'blur(8px)', boxShadow: 'none', padding: 10, display: 'grid', gap: 8, maxHeight: '80vh', overflow: 'auto', color: 'var(--theme-text)' }}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Profile</div>
             <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 6 }}>
@@ -2684,6 +2724,20 @@ export default function MCUViewer() {
             {posterExportState.message && <div style={{ fontSize: 11, color: T.textMuted }}>{posterExportState.message}</div>}
             <label className="fpill" style={{ cursor: 'pointer' }}><Upload size={14}/>Import Progress
               <input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} />
+            </label>
+            <button className="fpill" onClick={() => importProgress(new File([localStorage.getItem('mcu-auto-backup-v1') || '{}'], 'mcu-auto-backup.json', { type: 'application/json' }))} style={{ justifyContent: 'space-between' }}>
+              <span><Clock size={14}/>Load Auto Backup</span>
+              <span style={{ fontSize: 10, color: T.textMuted }}>{autoBackupStamp ? autoBackupStamp.slice(0, 10) : 'none'}</span>
+            </button>
+            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase', marginTop: 4 }}>Export Card Controls</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
+              {[{ id: 'inter', label: 'Inter' }, { id: 'grotesk', label: 'Grotesk' }, { id: 'manrope', label: 'Manrope' }, { id: 'marvel', label: 'Marvel' }].map(opt => (
+                <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: opt.id === 'marvel' ? 'var(--font-marvel-display)' : opt.label, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
+              ))}
+            </div>
+            <label style={{ display: 'grid', gap: 4, padding: '4px 0' }}>
+              <span style={{ fontSize: 11, color: T.textMuted }}>Export text scale: {Math.round(exportTextScale * 100)}%</span>
+              <input type='range' min={90} max={150} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
             </label>
             <div style={{ fontSize: 12, color: T.textMuted, lineHeight: 1.35, padding: '0 2px' }}>{metadataStatusText}</div>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
@@ -3171,18 +3225,30 @@ export default function MCUViewer() {
             <div style={{ display: 'grid', gap: 12, maxHeight: '58vh', overflow: 'auto', paddingRight: 4 }}>
               {historyItems.length === 0 && <div style={{ color: T.textMuted, padding: 16 }}>No watched history yet. Mark an item watched to start your analysis log.</div>}
               {historyItems.map(item => (
-                <div key={item.id} className="glass-panel" style={{ borderRadius: 16, padding: 14, display: 'grid', gap: 10, border: '1px solid color-mix(in srgb, var(--theme-accent) 35%, var(--theme-border))', background: 'linear-gradient(145deg, color-mix(in srgb, var(--theme-surface) 76%, #102445), color-mix(in srgb, var(--theme-surface) 95%, #04050a))', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline', flexWrap: 'wrap' }}>
-                    <strong style={{ fontSize: 16 }}>{item.title}</strong>
-                    <span style={{ color: T.textMuted, fontSize: 12 }}>{item.watchedDate || 'No watch date'} · ~{Math.round(estimateRuntimeHours(item) * 10) / 10}h</span>
+                <div key={item.id} className="glass-panel" style={{ borderRadius: 14, padding: '16px 16px 14px', display: 'grid', gap: 12, border: '1px solid color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'color-mix(in srgb, var(--theme-surface) 80%, transparent)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', transition: 'background-color 0.16s ease, border-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease', boxShadow: '0 8px 22px color-mix(in srgb, var(--theme-accent) 9%, transparent)' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--theme-accent) 42%, var(--theme-border))';
+                    e.currentTarget.style.background = 'var(--theme-surface-hover)';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                    e.currentTarget.style.boxShadow = '0 12px 28px color-mix(in srgb, var(--theme-accent) 16%, transparent)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))';
+                    e.currentTarget.style.background = 'color-mix(in srgb, var(--theme-surface) 80%, transparent)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 8px 22px color-mix(in srgb, var(--theme-accent) 9%, transparent)';
+                  }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'baseline', flexWrap: 'wrap' }}>
+                    <strong style={{ fontSize: 16, fontWeight: 700, fontFamily: 'inherit', lineHeight: 1.25 }}>{item.title}</strong>
+                    <span style={{ color: T.textMuted, fontSize: 12, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.4 }}>{item.watchedDate || 'No watch date'} · ~{Math.round(estimateRuntimeHours(item) * 10) / 10}h</span>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: 12, alignItems: 'start' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: 14, alignItems: 'start' }}>
                     <img src={posterSrc(item)} alt={item.title} style={{ width: 100, height: 145, borderRadius: 10, objectFit: 'cover', border: `1px solid ${T.surfaceBorder}` }} />
-                    <div style={{ display: 'grid', gap: 8 }}>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <button className="fpill" style={{ padding: '6px 9px', fontSize: 11 }} onClick={() => setRewatchCount(p => ({ ...p, [item.id]: (p[item.id] || 0) + 1 }))}><Clock size={12}/>Re-watch {rewatchCount[item.id] || 0}</button>
-                    <button className="fpill" style={{ padding: '6px 9px', fontSize: 11 }} onClick={() => setRewatchCount(p => ({ ...p, [item.id]: Math.max(0, (p[item.id] || 0) - 1) }))}>−</button>
-                    <span style={{ color: T.textMuted, fontSize: 12, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700 }}>Rating / 10</span>
+                    <div style={{ display: 'grid', gap: 10 }}>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <button className="fpill" style={{ padding: '7px 10px', fontSize: 11 }} onClick={() => setRewatchCount(p => ({ ...p, [item.id]: (p[item.id] || 0) + 1 }))}><Clock size={12}/>Re-watch {rewatchCount[item.id] || 0}</button>
+                    <button className="fpill" style={{ padding: '7px 10px', fontSize: 11 }} onClick={() => setRewatchCount(p => ({ ...p, [item.id]: Math.max(0, (p[item.id] || 0) - 1) }))}>−</button>
+                    <span style={{ color: T.textMuted, fontSize: 12, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.6, fontWeight: 700, textTransform: 'uppercase' }}>Rating / 10</span>
                     <input
                       type="number"
                       min={0}
@@ -3191,20 +3257,20 @@ export default function MCUViewer() {
                       value={myRating[item.id] ?? ''}
                       onChange={(e) => setReviewRating(item.id, Number(e.target.value))}
                       placeholder="4.5"
-                      style={{ width: 76, borderRadius: 9, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: '5px 8px', fontWeight: 700 }}
+                      style={{ width: 76, borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: '6px 9px', fontWeight: 700 }}
                     />
                     <div style={{ position: 'relative', display: 'inline-flex', fontSize: 18, letterSpacing: 2 }}>
                       <span style={{ color: 'rgba(255,255,255,0.25)' }}>★★★★★</span>
                       <span style={{ color: '#ffd35c', position: 'absolute', left: 0, top: 0, overflow: 'hidden', width: `${Math.max(0, Math.min(100, ((myRating[item.id] || 0) / 10) * 100))}%`, whiteSpace: 'nowrap' }}>★★★★★</span>
                     </div>
-                    <span style={{ fontSize: 12, fontWeight: 800, fontFamily: 'Manrope, sans-serif', color: '#7cffda' }}>{Number(myRating[item.id] || 0).toFixed(1)}/10</span>
+                    <span style={{ fontSize: 12, fontWeight: 800, fontFamily: 'inherit', color: 'var(--theme-success)' }}>{Number(myRating[item.id] || 0).toFixed(1)}/10</span>
                   </div>
                   <textarea
                     value={reviews[item.id] || ''}
                     onChange={(e) => setReviews(prev => ({ ...prev, [item.id]: e.target.value }))}
                     placeholder="Add a review or note…"
                     rows={2}
-                    style={{ width: '100%', resize: 'vertical', borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: 10, lineHeight: 1.4 }}
+                    style={{ width: '100%', resize: 'vertical', borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: 10, lineHeight: 1.45, fontFamily: 'inherit' }}
                   />
                   <button className="fpill" style={{ padding: '6px 10px', fontSize: 11, width: 'fit-content' }} onClick={() => shareReviewCard(item)}><Upload size={12}/>Share Review Card</button>
                     </div>
