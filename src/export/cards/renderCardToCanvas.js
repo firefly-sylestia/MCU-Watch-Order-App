@@ -24,19 +24,19 @@ export const renderCardToCanvas = async ({ type, data, settings }) => {
     const posterX = 148, posterY = 194, posterW = 450, posterH = 660;
     if (img) ctx.drawImage(img, posterX, posterY, posterW, posterH);
     ctx.fillStyle = '#fff';
-    ctx.font = `800 ${Math.round(72 * scale)}px ${fontFamily}`;
-    drawWrappedText(ctx, item.title, posterX + posterW + 52, posterY + 82, canvas.width - posterW - 300, Math.round(74 * scale), 3);
-    drawPremiumStars(ctx, { x: posterX + posterW + 52, y: posterY + 180, size: Math.round(42 * scale), rating10: clampTenPoint(data.rating), active: '#ffd35c', fontFamily });
-    ctx.font = `800 ${Math.round(40 * scale)}px ${fontFamily}`;
+    ctx.font = `800 ${Math.round(84 * scale)}px ${fontFamily}`;
+    drawWrappedText(ctx, item.title, posterX + posterW + 52, posterY + 82, canvas.width - posterW - 300, Math.round(84 * scale), 3);
+    drawPremiumStars(ctx, { x: posterX + posterW + 52, y: posterY + 180, size: Math.round(58 * scale), rating10: clampTenPoint(data.rating), active: '#ffd35c', fontFamily });
+    ctx.font = `800 ${Math.round(46 * scale)}px ${fontFamily}`;
     ctx.fillStyle = '#8bf8de';
     ctx.fillText(`${clampTenPoint(data.rating).toFixed(1)}/10`, posterX + posterW + 52, posterY + 258);
-    ctx.font = `700 ${Math.round(30 * scale)}px ${fontFamily}`;
+    ctx.font = `700 ${Math.round(40 * scale)}px ${fontFamily}`;
     ctx.fillStyle = '#c8d4e8';
     ctx.fillText(`${data.reviewer} • ${item.year} • Phase ${item.phase}`, posterX + posterW + 52, posterY + 314);
     drawRoundedPanel(ctx, { x: 148, y: posterY + posterH + 60, w: canvas.width - 296, h: 490, radius: 30, fill: 'rgba(255,255,255,0.08)' });
-    ctx.font = `700 ${Math.round(34 * scale)}px ${fontFamily}`; ctx.fillStyle = '#dce8ff'; ctx.fillText('Review Notes', 182, posterY + posterH + 130);
-    ctx.font = `500 ${Math.round(42 * scale)}px ${fontFamily}`; ctx.fillStyle = '#f6fbff';
-    drawWrappedText(ctx, data.reviewText || 'No review yet.', 182, posterY + posterH + 200, canvas.width - 364, Math.round(56 * scale), 7);
+    ctx.font = `700 ${Math.round(40 * scale)}px ${fontFamily}`; ctx.fillStyle = '#dce8ff'; ctx.fillText('Review Notes', 182, posterY + posterH + 130);
+    ctx.font = `500 ${Math.round(58 * scale)}px ${fontFamily}`; ctx.fillStyle = '#f6fbff';
+    drawWrappedText(ctx, data.reviewText || 'No review yet.', 182, posterY + posterH + 200, canvas.width - 364, Math.round(62 * scale), 7);
   } else if (type === 'analysis' || type === 'unified') {
     canvas.width = 1080; canvas.height = 1350;
     const ctx = canvas.getContext('2d');
@@ -63,23 +63,23 @@ export const renderCardToCanvas = async ({ type, data, settings }) => {
     const featuredRating = clampTenPoint(ratingMap[featured?.id] || data.rating || 0);
 
     ctx.fillStyle = 'rgba(255,255,255,0.94)';
-    ctx.font = `800 ${Math.round(48 * scale)}px ${fontFamily}`;
+    ctx.font = `800 ${Math.round(58 * scale)}px ${fontFamily}`;
     ctx.fillText(cardTitle, 128, 162);
     ctx.fillStyle = 'rgba(206,224,246,0.94)';
-    ctx.font = `600 ${Math.round(28 * scale)}px ${fontFamily}`;
+    ctx.font = `600 ${Math.round(34 * scale)}px ${fontFamily}`;
     ctx.fillText('Viewing recap', 128, 198);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = `800 ${Math.round(140 * scale)}px ${fontFamily}`;
+    ctx.font = `800 ${Math.round(162 * scale)}px ${fontFamily}`;
     ctx.fillText(`${Number(data.pct || 0)}%`, 136, 372);
     ctx.fillStyle = '#8bf8de';
-    ctx.font = `700 ${Math.round(38 * scale)}px ${fontFamily}`;
+    ctx.font = `700 ${Math.round(44 * scale)}px ${fontFamily}`;
     ctx.fillText(`${data.totalWatched || 0}/${data.totalItems || 0} completed`, 142, 436);
     ctx.fillStyle = '#c8d4e8';
-    ctx.font = `600 ${Math.round(30 * scale)}px ${fontFamily}`;
+    ctx.font = `600 ${Math.round(40 * scale)}px ${fontFamily}`;
     ctx.fillText(`Current Phase: ${data.currentPhase || '—'}`, 142, 488);
     ctx.fillStyle = '#dce8ff';
-    ctx.font = `700 ${Math.round(30 * scale)}px ${fontFamily}`;
+    ctx.font = `700 ${Math.round(40 * scale)}px ${fontFamily}`;
     ctx.fillText(`Featured Rating: ${featuredRating.toFixed(1)}★/10`, 142, 536);
 
     ctx.fillStyle = '#dce8ff';
@@ -89,13 +89,13 @@ export const renderCardToCanvas = async ({ type, data, settings }) => {
       const y = 736 + idx * 108;
       const rowRating = clampTenPoint(ratingMap[row.id] || row.rating || 0);
       ctx.fillStyle = 'rgba(255,255,255,0.96)';
-      ctx.font = `700 ${Math.round(34 * scale)}px ${fontFamily}`;
-      drawWrappedText(ctx, row.title.slice(0, 52), 142, y, 620, Math.round(42 * scale), 1);
+      ctx.font = `700 ${Math.round(40 * scale)}px ${fontFamily}`;
+      drawWrappedText(ctx, row.title.slice(0, 52), 142, y, 620, Math.round(58 * scale), 1);
       ctx.fillStyle = 'rgba(191,210,233,0.96)';
-      ctx.font = `600 ${Math.round(24 * scale)}px ${fontFamily}`;
+      ctx.font = `600 ${Math.round(28 * scale)}px ${fontFamily}`;
       ctx.fillText(`${row.year || '—'} • Phase ${row.phase || '—'}`, 142, y + 34);
       ctx.fillStyle = '#8bf8de';
-      ctx.font = `700 ${Math.round(30 * scale)}px ${fontFamily}`;
+      ctx.font = `700 ${Math.round(40 * scale)}px ${fontFamily}`;
       ctx.fillText(`${rowRating.toFixed(1)}★/10`, 808, y + 10);
     });
   } else {

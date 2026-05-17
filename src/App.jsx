@@ -606,7 +606,7 @@ export default function MCUViewer() {
   const [bookmarks,      setBookmarks]      = useState({});
   const [reviewCardTheme, setReviewCardTheme] = useState('midnight');
   const [exportFont, setExportFont] = useState('inter');
-  const [exportTextScale, setExportTextScale] = useState(1.08);
+  const [exportTextScale, setExportTextScale] = useState(1.2);
   const [analyticsTab, setAnalyticsTab] = useState('overview');
   const [exportComposerOpen, setExportComposerOpen] = useState(false);
   const [exportPreview, setExportPreview] = useState({ url: '', loading: false, error: '' });
@@ -897,7 +897,7 @@ export default function MCUViewer() {
         if (actions.reviews) setReviews(actions.reviews);
         if (imported.profile && typeof imported.profile === 'object') setProfile(prev => ({ ...prev, ...imported.profile }));
         if (imported.exportPrefs?.font) setExportFont(imported.exportPrefs.font);
-        if (Number.isFinite(Number(imported.exportPrefs?.textScale))) setExportTextScale(Math.max(0.9, Math.min(1.5, Number(imported.exportPrefs.textScale))));
+        if (Number.isFinite(Number(imported.exportPrefs?.textScale))) setExportTextScale(Math.max(0.9, Math.min(1.9, Number(imported.exportPrefs.textScale))));
       } catch {}
     };
     reader.readAsText(file);
@@ -1567,7 +1567,7 @@ export default function MCUViewer() {
           type: exportSettings.type,
           data: { item: historyItems[0] || activeItems[0], featured: historyItems[0] || activeItems[0], rows: historyItems, ratings: myRating, rating: myRating[historyItems[0]?.id] || 0, reviewText: reviews[historyItems[0]?.id] || '', reviewer: profile.name || 'Reviewer', pct, currentPhase: stickyPhaseProgress.label, totalWatched, totalItems: activeItems.length },
           settings: {
-            textScale: Math.max(0.9, exportTextScale * 0.8),
+            textScale: Math.max(0.9, exportTextScale),
             fontFamily: ({ inter: 'Inter, sans-serif', grotesk: 'Space Grotesk, sans-serif', manrope: 'Manrope, sans-serif', marvel: 'var(--font-marvel-display), sans-serif' }[exportFont] || 'Inter, sans-serif'),
             posterSrc,
           },
@@ -1662,7 +1662,7 @@ export default function MCUViewer() {
       if (t) setThemeMode(t);
       const exportPrefsSaved = JSON.parse(localStorage.getItem('mcu-export-prefs-v1') || 'null');
       if (exportPrefsSaved?.font) setExportFont(exportPrefsSaved.font);
-      if (Number.isFinite(Number(exportPrefsSaved?.textScale))) setExportTextScale(Math.max(0.9, Math.min(1.5, Number(exportPrefsSaved.textScale))));
+      if (Number.isFinite(Number(exportPrefsSaved?.textScale))) setExportTextScale(Math.max(0.9, Math.min(1.9, Number(exportPrefsSaved.textScale))));
       setAutoBackupStamp(localStorage.getItem('mcu-auto-backup-ts-v1') || '');
     } catch {}
   }, []);
@@ -2329,10 +2329,10 @@ export default function MCUViewer() {
         .hero-rail{scroll-behavior:smooth;contain:layout paint;mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);-webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
         .hero-rail::-webkit-scrollbar{height:0;width:0;display:none}
         .hero-poster-card{backface-visibility:hidden;transform:translateZ(0)}
-        .hero-backdrop-image{opacity:var(--backdrop-opacity,0.9);transform:scale(1);filter:saturate(1.14) contrast(1.06) brightness(1.03);border-radius:24px;box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 18%, transparent),0 24px 60px rgba(0,0,0,0.3);mask-image:radial-gradient(circle at center, #000 78%, rgba(0,0,0,0.85) 93%, transparent 100%);-webkit-mask-image:radial-gradient(circle at center, #000 78%, rgba(0,0,0,0.85) 93%, transparent 100%);transition:opacity 900ms cubic-bezier(0.22,1,0.36,1),transform 900ms cubic-bezier(0.22,1,0.36,1),filter 900ms cubic-bezier(0.22,1,0.36,1)}
+        .hero-backdrop-image{opacity:var(--backdrop-opacity,0.9);transform:scale(1);filter:blur(1.8px) saturate(1.14) contrast(1.06) brightness(1.03);border-radius:24px;box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 18%, transparent),0 24px 60px rgba(0,0,0,0.3);mask-image:radial-gradient(circle at center, #000 78%, rgba(0,0,0,0.85) 93%, transparent 100%);-webkit-mask-image:radial-gradient(circle at center, #000 78%, rgba(0,0,0,0.85) 93%, transparent 100%);transition:opacity 900ms cubic-bezier(0.22,1,0.36,1),transform 900ms cubic-bezier(0.22,1,0.36,1),filter 900ms cubic-bezier(0.22,1,0.36,1)}
         .hero-backdrop-blend{position:absolute;inset:8px;border-radius:24px;pointer-events:none;background:linear-gradient(180deg, rgba(4,6,12,0.14) 0%, rgba(4,6,12,0.04) 14%, rgba(4,6,12,0) 30%),linear-gradient(90deg, rgba(4,6,12,0.14) 0%, rgba(4,6,12,0.02) 10%, rgba(4,6,12,0.0) 20%, rgba(4,6,12,0.0) 80%, rgba(4,6,12,0.02) 90%, rgba(4,6,12,0.14) 100%);opacity:var(--backdrop-opacity,0.9)}
-        .hero-backdrop-image.is-exiting{opacity:0;transform:scale(1.004);filter:saturate(1.04) contrast(1.01) brightness(0.96)}
-        @starting-style{.hero-backdrop-image:not(.is-exiting){opacity:0;transform:scale(1.01);filter:saturate(1.02) contrast(1.01) brightness(0.95)}}
+        .hero-backdrop-image.is-exiting{opacity:0;transform:scale(1.004);filter:blur(1.2px) saturate(1.04) contrast(1.01) brightness(0.96)}
+        @starting-style{.hero-backdrop-image:not(.is-exiting){opacity:0;transform:scale(1.01);filter:blur(1.2px) saturate(1.02) contrast(1.01) brightness(0.95)}}
         .phase-rows-full{display:block;position:relative}
         .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 220ms var(--ease-out),border-color 220ms var(--ease-out),transform 220ms var(--ease-out),box-shadow 260ms var(--ease-out);display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid transparent;min-height:var(--row-min-h,86px);border-radius:12px;overflow:hidden;background:transparent;backdrop-filter:none}
         .rrow:last-child{border-bottom:none}
@@ -2600,7 +2600,11 @@ export default function MCUViewer() {
             </div>
             <label style={{ display: 'grid', gap: 4, padding: '4px 0' }}>
               <span style={{ fontSize: 11, color: T.textMuted }}>Export text scale: {Math.round(exportTextScale * 100)}%</span>
-              <input type='range' min={90} max={150} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
+              <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr) auto', gap: 8, alignItems: 'center' }}>
+                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.max(0.9, Number((v - 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>−</button>
+                <input type='range' min={90} max={190} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
+                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.min(1.9, Number((v + 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>+</button>
+              </div>
             </label>
             <div style={{ fontSize: 12, color: T.textMuted, lineHeight: 1.35, padding: '0 2px' }}>{metadataStatusText}</div>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
@@ -3059,7 +3063,11 @@ export default function MCUViewer() {
                   </div>
                   <label style={{ display: 'grid', gap: 4 }}>
                     <span style={{ fontSize: 11, color: T.textMuted }}>Export text size: {Math.round(exportTextScale * 100)}%</span>
-                    <input type='range' min={90} max={150} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
+                    <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr) auto', gap: 8, alignItems: 'center' }}>
+                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.max(0.9, Number((v - 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>−</button>
+                <input type='range' min={90} max={190} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
+                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.min(1.9, Number((v + 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>+</button>
+              </div>
                   </label>
                 </div>
                 <div style={{ fontSize: 14 }}><strong>Cast:</strong> {detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</div>
@@ -3107,7 +3115,11 @@ export default function MCUViewer() {
               </div>
               <label style={{ display: 'grid', gap: 4 }}>
                 <span style={{ fontSize: 11, color: T.textMuted }}>Export text size: {Math.round(exportTextScale * 100)}%</span>
-                <input type='range' min={90} max={150} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
+                <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr) auto', gap: 8, alignItems: 'center' }}>
+                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.max(0.9, Number((v - 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>−</button>
+                <input type='range' min={90} max={190} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
+                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.min(1.9, Number((v + 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>+</button>
+              </div>
               </label>
               <label style={{ display: 'grid', gap: 4 }}>
                 <span style={{ fontSize: 11, color: T.textMuted }}>BG opacity: {exportSettings.bgOpacity}%</span>
