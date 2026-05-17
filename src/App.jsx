@@ -3082,7 +3082,7 @@ export default function MCUViewer() {
               </div>
               <button className="fpill" onClick={() => setAnalyticsOpen(false)}>Close</button>
             </div>
-            <div style={{ position: 'sticky', top: 0, zIndex: 5, display: 'flex', gap: 8, marginBottom: 10, paddingBottom: 8, background: 'var(--theme-surface)' }}>
+            <div className="ui-btn-group" style={{ position: 'sticky', top: 0, zIndex: 5, marginBottom: 10, paddingBottom: 8, background: 'var(--theme-surface)' }}>
               {['overview', 'history', 'export'].map(tab => (
                 <button key={tab} className="fpill" onClick={() => setAnalyticsTab(tab)} style={{ borderColor: analyticsTab === tab ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{tab[0].toUpperCase() + tab.slice(1)}</button>
               ))}
@@ -3093,13 +3093,13 @@ export default function MCUViewer() {
               <div className="glass-panel" style={{ padding: 12, borderRadius: 12 }}><div style={{ color: T.textMuted, fontSize: 11 }}>RE-WATCHES</div><div style={{ fontSize: 24, fontWeight: 800 }}>{Object.values(rewatchCount).reduce((a, b) => a + (Number(b) || 0), 0)}</div></div>
             </div>}
             {analyticsTab === 'export' && <>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12, position: 'sticky', bottom: 0, zIndex: 4, background: 'var(--theme-surface)', padding: '8px 0' }}>
-              <button className="fpill" onClick={shareAnalysisCard}><Upload size={14}/>Share Analysis Card</button>
-              <button className="fpill" onClick={shareUnifiedCard}><Upload size={14}/>Create Unified Export Card</button>
-              <button className="fpill" onClick={() => setExportComposerOpen(v => !v)}><SlidersH size={14}/>{exportComposerOpen ? 'Hide' : 'Open'} Composer</button>
+            <div className="ui-btn-group ui-sticky-mobile-footer" style={{ marginBottom: 12, position: 'sticky', bottom: 0, zIndex: 4, background: 'var(--theme-surface)', padding: '8px 0' }}>
+              <button className="fpill ui-touch-btn" onClick={shareAnalysisCard}><Upload size={14}/>Share Analysis Card</button>
+              <button className="fpill ui-touch-btn" onClick={shareUnifiedCard}><Upload size={14}/>Create Unified Export Card</button>
+              <button className="fpill ui-touch-btn" onClick={() => setExportComposerOpen(v => !v)}><SlidersH size={14}/>{exportComposerOpen ? 'Hide' : 'Open'} Composer</button>
             </div>
-            <div className="glass-panel" style={{ marginBottom: 10, padding: 10, borderRadius: 10, display: 'grid', gap: 8 }}>
-              <div style={{ fontSize: 11, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase' }}>Export Card Settings</div>
+            <div className="glass-panel ui-panel ui-control-row" style={{ marginBottom: 10, padding: 10 }}>
+              <div className="ui-section-header">Export Card Settings</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
                 {[{ id: 'inter', label: 'Inter' }, { id: 'grotesk', label: 'Grotesk' }, { id: 'manrope', label: 'Manrope' }, { id: 'marvel', label: 'Marvel' }].map(opt => (
                   <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: opt.id === 'marvel' ? 'var(--font-marvel-display)' : opt.label, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
@@ -3120,8 +3120,8 @@ export default function MCUViewer() {
               </div>
             </div>}
             </>}
-            <div className="glass-panel" style={{ marginBottom: 10, padding: 10, borderRadius: 10, display: 'grid', gap: 8 }}>
-              <div style={{ fontSize: 11, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase' }}>Review Card Theme</div>
+            <div className="glass-panel ui-panel ui-control-row" style={{ marginBottom: 10, padding: 10 }}>
+              <div className="ui-section-header">Review Card Theme</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 6 }}>
                 {[{id:'midnight',label:'Midnight'},{id:'stark',label:'Stark'},{id:'vibranium',label:'Vibranium'}].map(opt => (
                   <button key={opt.id} className="fpill" onClick={() => setReviewCardTheme(opt.id)} style={{ justifyContent:'center', padding:'6px 8px', fontSize:11, borderColor: reviewCardTheme === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{opt.label}</button>

@@ -34,6 +34,19 @@
   --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.45);
   --shadow-glow: 0 8px 32px var(--accent-glow);
+  --ui-panel-1: color-mix(in srgb, var(--bg-card) 86%, transparent);
+  --ui-panel-2: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
+  --ui-border-soft: color-mix(in srgb, var(--border) 80%, transparent);
+  --ui-border-strong: color-mix(in srgb, var(--border-active) 70%, var(--border));
+  --ui-shadow-1: var(--shadow-sm);
+  --ui-shadow-2: var(--shadow-md);
+  --ui-space-1: 6px;
+  --ui-space-2: 10px;
+  --ui-space-3: 14px;
+  --ui-space-4: 18px;
+  --ui-radius-sm: 10px;
+  --ui-radius-md: 12px;
+  --ui-radius-lg: 16px;
   
   /* Motion Presets — Cinematic UI Rhythm */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -559,4 +572,15 @@ a:hover {
   bottom: -20vmax;
   background: radial-gradient(circle, var(--accent-glow-2), transparent 60%);
   animation-delay: -10s;
+}
+/* Export/analytics reusable utilities */
+.ui-panel { border: 1px solid var(--ui-border-soft); background: var(--ui-panel-1); border-radius: var(--ui-radius-md); box-shadow: var(--ui-shadow-1); }
+.ui-panel-strong { border: 1px solid var(--ui-border-strong); background: var(--ui-panel-2); border-radius: var(--ui-radius-lg); box-shadow: var(--ui-shadow-2); }
+.ui-section-header { font-size: 11px; letter-spacing: 1.4px; color: var(--theme-text-muted, var(--text-muted)); text-transform: uppercase; }
+.ui-control-row { display: grid; gap: var(--ui-space-2); }
+.ui-btn-group { display: flex; gap: var(--ui-space-2); flex-wrap: wrap; }
+.ui-touch-btn { min-height: 42px; min-width: 42px; padding: 8px 12px; }
+@media (max-width: 768px) {
+  .ui-touch-btn { min-height: 46px; }
+  .ui-sticky-mobile-footer { position: sticky; bottom: 0; z-index: 5; background: var(--theme-surface, var(--bg-elevated)); padding: 8px 0; }
 }
