@@ -1096,6 +1096,11 @@ export default function MCUViewer() {
       .filter(Boolean),
     [filtered, localPosterMap]
   );
+  const visibleHeroPosters = useMemo(() => {
+    if (!heroPosters.length) return [];
+    return Array.from({ length: Math.min(10, heroPosters.length) }, (_, offset) => heroPosters[(heroIndex + offset) % heroPosters.length]);
+  }, [heroPosters, heroIndex]);
+  const activeHeroSrc = heroPosters.length ? (heroPosters[heroIndex % heroPosters.length] || heroPosters[0] || '') : '';
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1109,21 +1114,20 @@ export default function MCUViewer() {
   }, [currentHeroSrc]);
 
   useEffect(() => {
-    if (!heroPosters.length) {
+    if (!activeHeroSrc) {
       setCurrentHeroSrc('');
       return;
     }
 
     const normalizedIndex = heroIndex % heroPosters.length;
-    const selectedHeroSrc = heroPosters[normalizedIndex] || heroPosters[0] || '';
-    setCurrentHeroSrc(selectedHeroSrc);
+    setCurrentHeroSrc(activeHeroSrc);
 
-    const nextSrcCandidate = heroPosters[(normalizedIndex + 1) % heroPosters.length];
+    const nextSrcCandidate = heroPosters[(normalizedIndex + 10) % heroPosters.length];
     if (nextSrcCandidate) {
       const img = new Image();
       img.src = nextSrcCandidate;
     }
-  }, [heroPosters, heroIndex]);
+  }, [heroPosters, heroIndex, activeHeroSrc]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
@@ -2357,8 +2361,8 @@ export default function MCUViewer() {
       `}</style>
 
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: currentHeroSrc ? `url(${currentHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: 0.24, transition: 'opacity 0.9s ease-in-out', willChange: 'opacity' }} />
-        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: 1, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: activeHeroSrc ? `url(${activeHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: 0.34, transition: 'opacity 0.9s ease-in-out', willChange: 'opacity' }} />
+        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.74 : 0.64, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${darkMode ? 'rgba(4,5,15,0.03)' : 'rgba(255,255,255,0.06)'} 0%, ${darkMode ? 'rgba(4,5,15,0.12)' : 'rgba(231,238,248,0.18)'} 45%, ${darkMode ? 'rgba(4,5,15,0.46)' : 'rgba(231,238,248,0.5)'} 70%, ${darkMode ? 'rgba(4,5,15,0.92)' : 'rgba(231,238,248,0.92)'} 100%)` }} />
       </div>
       {lightningStrike && <div style={{ position:'fixed', inset:0, pointerEvents:'none', background:'linear-gradient(180deg, rgba(180,220,255,0.95), rgba(255,255,255,0))', mixBlendMode:'screen', zIndex:9999, animation:'fadeInOut 0.7s ease' }} />}
@@ -2499,7 +2503,7 @@ export default function MCUViewer() {
         <div className="header-inner" style={{ width: '100%', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 24px) 30px 12px', transition: 'padding 0.2s ease' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             <div style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
-              <div className="header-title-mcu" style={{ fontSize: 'clamp(44px, 9vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: '#fff', display: 'inline-block', padding: '0 12px', margin: '10px 0 40px', background: 'rgba(212,55,47,0.5)', borderRadius: 6 }}>MCU</div>
+              <div className="header-title-mcu" style={{ fontSize: 'clamp(44px, 9vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: '#fff', display: 'inline-block', padding: '0 12px', margin: '10px 0 12px', background: 'rgba(212,55,47,0.5)', borderRadius: 6 }}>MCU</div>
               <div className="header-title-sub" style={{ fontSize: 'clamp(26px, 4.2vw, 35px)', letterSpacing: 'clamp(3px, 1.1vw, 9px)', color: 'color-mix(in srgb, var(--theme-accent) 40%, var(--theme-accent-alt))', marginTop: 0 }}>VIEWING ORDER</div>
             </div>
           </div>
@@ -2517,11 +2521,11 @@ export default function MCUViewer() {
               e.preventDefault();
             }}
             style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 14px', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: isDesktopViewport ? 'x proximity' : 'x mandatory', scrollPaddingInline: isDesktopViewport ? '14vw' : '8vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', overscrollBehaviorX: 'contain', overscrollBehaviorY: 'contain', touchAction: isDesktopViewport ? 'pan-x' : 'pan-x pan-y' }}>
-            {heroPosters.map((src, idx) => {
-              const isActive = src === currentHeroSrc;
+            {visibleHeroPosters.map((src, idx) => {
+              const isActive = idx === 0;
               const heroItem = filtered.find(i => posterSrc(i) === src);
               return (
-                <div key={`hero-rail-${idx}`} style={{ position: 'relative', display:'flex', flexDirection:'column', alignItems:'center', scrollSnapAlign:'center', flexShrink: 0 }}>
+                <div key={`hero-rail-${src}`} style={{ position: 'relative', display:'flex', flexDirection:'column', alignItems:'center', scrollSnapAlign:'center', flexShrink: 0 }}>
                 <img
                   src={src}
                   alt="Featured poster"
@@ -2546,9 +2550,9 @@ export default function MCUViewer() {
                     borderRadius: 16,
                     border: '0',
                     boxShadow: 'none',
-                    opacity: isActive ? 1 : 0.78,
-                    transform: 'perspective(1100px) translateZ(0) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(1)',
-                    transition: 'transform 180ms cubic-bezier(0.22,1,0.36,1), opacity 220ms ease, filter 220ms ease',
+                    opacity: isActive ? 1 : 0.76,
+                    transform: `perspective(1100px) translateZ(${isActive ? '20px' : '0'}) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) ${isActive ? 'scale(1.06) translateY(-6px)' : 'scale(0.96)'}`,
+                    transition: 'transform 360ms cubic-bezier(0.22,1,0.36,1), opacity 220ms ease, filter 220ms ease',
                     cursor: 'pointer',
                   }}
                 />
@@ -2558,9 +2562,8 @@ export default function MCUViewer() {
             })}
           </div>
         )}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 16, background: 'linear-gradient(90deg, rgba(4,6,12,0.78) 0%, transparent 12%, transparent 88%, rgba(4,6,12,0.78) 100%)' }} />
-        <button onClick={() => setHeroIndex(i => Math.max(0, i - 1))} style={{ position:'absolute', left:8, top:'50%', transform:'translateY(-50%)', zIndex:220 }} className='fpill'>Prev</button>
-        <button onClick={() => setHeroIndex(i => i + 1)} style={{ position:'absolute', right:8, top:'50%', transform:'translateY(-50%)', zIndex:220 }} className='fpill'>Next</button>
+        <button onClick={() => setHeroIndex(i => heroPosters.length ? (i - 1 + heroPosters.length) % heroPosters.length : 0)} style={{ position:'absolute', left:8, top:'50%', transform:'translateY(-50%)', zIndex:220 }} className='fpill'>Prev</button>
+        <button onClick={() => setHeroIndex(i => heroPosters.length ? (i + 1) % heroPosters.length : 0)} style={{ position:'absolute', right:8, top:'50%', transform:'translateY(-50%)', zIndex:220 }} className='fpill'>Next</button>
 
       </div>
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
@@ -2683,8 +2686,8 @@ export default function MCUViewer() {
           </div>
         )}
       </div>
-      <div style={{ position: 'fixed', right: isDesktopViewport ? 176 : 16, bottom: isDesktopViewport ? 20 : 74, zIndex: 230 }}>
-        <div style={{ display: 'flex', borderRadius: 999, overflow: 'hidden', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(10,14,28,0.93)' : 'rgba(255,255,255,0.95)', boxShadow: darkMode ? '0 10px 26px rgba(0,0,0,0.4)' : '0 8px 20px rgba(0,0,0,0.12)' }}>
+      <div style={{ position: 'fixed', right: 16, bottom: isDesktopViewport ? 76 : 134, zIndex: 230 }}>
+        <div style={{ display: 'flex', borderRadius: 999, overflow: 'hidden', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(10,14,28,0.93)' : 'rgba(255,255,255,0.95)', boxShadow: 'none' }}>
           {LIST_MODES.map(mode => {
             const active = listMode === mode.id;
             return (
