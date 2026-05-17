@@ -1541,7 +1541,30 @@ export default function MCUViewer() {
     .filter(i => i.watchedDate || rewatchCount[i.id] || myRating[i.id] || reviews[i.id])
     .sort((a, b) => (b.watchedDate || b.statusChangedAt || '').localeCompare(a.watchedDate || a.statusChangedAt || '')), [activeItems, myRating, reviews, rewatchCount]);
 
-  const setReviewRating = (id, rating) => setMyRating(prev => ({ ...prev, [id]: rating }));
+  const clampTenPoint = (value) => Math.max(0, Math.min(10, Number.isFinite(value) ? value : 0));
+  const setReviewRating = (id, rating) => setMyRating(prev => ({ ...prev, [id]: clampTenPoint(Number(rating)) }));
+
+  const drawPremiumStars = (ctx, { x, y, size = 38, gap = 12, rating10 = 0, active = '#ffd35c', inactive = 'rgba(255,255,255,0.22)' }) => {
+    const ratio = clampTenPoint(rating10) / 10;
+    const starValue = ratio * 5;
+    ctx.font = `700 ${size}px Inter, system-ui, sans-serif`;
+    for (let i = 0; i < 5; i += 1) {
+      const sx = x + i * (size + gap);
+      ctx.fillStyle = inactive;
+      ctx.fillText('★', sx, y);
+      const fill = Math.max(0, Math.min(1, starValue - i));
+      if (fill > 0) {
+        const w = size * fill;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(sx, y - size, w, size + 8);
+        ctx.clip();
+        ctx.fillStyle = active;
+        ctx.fillText('★', sx, y);
+        ctx.restore();
+      }
+    }
+  };
 
   const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight, maxLines = 3) => {
     const words = String(text || '').split(/\s+/).filter(Boolean);
@@ -1570,96 +1593,57 @@ export default function MCUViewer() {
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       const themes = {
-        midnight: { page: '#0b1020', card: '#0e162e', text: '#ffffff', subtext: '#a7b1c2' },
-        stark: { page: '#111111', card: '#1f1f1f', text: '#f5f5f5', subtext: '#c9c9c9' },
-        vibranium: { page: '#051a24', card: '#0a2d3a', text: '#ecfbff', subtext: '#9fd3de' },
+        midnight: { page: '#0b1020', card: 'rgba(10,18,35,0.76)', text: '#ffffff', subtext: '#c8d4e8' },
+        stark: { page: '#121212', card: 'rgba(28,28,28,0.74)', text: '#f5f5f5', subtext: '#d8d8d8' },
+        vibranium: { page: '#051a24', card: 'rgba(5,32,41,0.75)', text: '#ecfbff', subtext: '#b9e1ea' },
       };
       const theme = themes[reviewCardTheme] || themes.midnight;
       const padding = 88;
       const cardX = padding;
-      const cardY = 130;
+      const cardY = 120;
       const cardW = canvas.width - (padding * 2);
-      const posterW = 460;
-      const posterH = 690;
-      const posterX = cardX + 52;
-      const posterY = cardY + 120;
+      const cardH = canvas.height - 250;
       ctx.fillStyle = theme.page;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.src = posterSrc(item);
       await new Promise((res) => { img.onload = res; img.onerror = res; });
-      const rating = myRating[item.id] || 0;
+      const rating = clampTenPoint(myRating[item.id] || 0);
       const reviewText = (reviews[item.id] || '').trim();
-      const compact = reviewText.length < 90;
-      const topPanelH = compact ? 720 : 790;
-      const cutoutR = compact ? 62 : 74;
-      const cardBottom = cardY + topPanelH + (compact ? 290 : 380);
-      const panelTop = posterY - 36;
-      const panelBottom = panelTop + topPanelH;
-
-      ctx.fillStyle = 'rgba(124,255,218,0.18)';
+      try { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); } catch {}
+      ctx.fillStyle = 'rgba(4,8,18,0.64)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = theme.page;
       ctx.beginPath();
-      ctx.roundRect(posterX + posterW + 26, panelTop, cardW - posterW - 98, topPanelH, 30);
+      ctx.roundRect(cardX, cardY, cardW, cardH, 46);
       ctx.fill();
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.roundRect(cardX, cardY, cardW, cardBottom - cardY, 38);
-      ctx.clip();
-
       ctx.fillStyle = theme.card;
-      ctx.fillRect(cardX, cardY, cardW, cardBottom - cardY);
+      ctx.beginPath();
+      ctx.roundRect(cardX + 26, cardY + 26, cardW - 52, cardH - 52, 36);
+      ctx.fill();
+      const posterX = cardX + 60, posterY = cardY + 74, posterW = 450, posterH = 660;
       try { ctx.drawImage(img, posterX, posterY, posterW, posterH); } catch {}
-
       ctx.fillStyle = '#ffffff';
-      ctx.font = '700 56px Space Grotesk, sans-serif';
-      drawWrappedText(ctx, item.title, posterX + posterW + 54, posterY + 84, cardW - posterW - 150, 62, 3);
-
-      const ratingRatio = Math.max(0, Math.min(10, rating)) / 10;
-      const trackX = posterX + posterW + 54;
-      const trackY = posterY + 190;
-      const trackW = cardW - posterW - 170;
-      const trackH = compact ? 18 : 22;
-      ctx.fillStyle = 'rgba(255,255,255,0.15)';
-      ctx.beginPath();
-      ctx.roundRect(trackX, trackY, trackW, trackH, 30);
-      ctx.fill();
-      ctx.fillStyle = '#7cffda';
-      ctx.beginPath();
-      ctx.roundRect(trackX, trackY, trackW * ratingRatio, trackH, 30);
-      ctx.fill();
-
-      ctx.fillStyle = '#7cffda';
-      for (let i = 0; i < 5; i += 1) {
-        const x = trackX + (i * 48);
-        ctx.fillStyle = i < Math.round(rating / 2) ? '#7cffda' : 'rgba(124,255,218,0.28)';
-        ctx.font = '700 32px Inter, sans-serif';
-        ctx.fillText('★', x, trackY + 62);
-      }
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '700 36px Manrope, sans-serif';
-      ctx.fillText(`${profile.name || 'Reviewer'} · ${rating}/10`, trackX, posterY + 294);
+      ctx.font = '800 60px Space Grotesk, sans-serif';
+      drawWrappedText(ctx, item.title, posterX + posterW + 52, posterY + 72, cardW - posterW - 150, 66, 3);
+      drawPremiumStars(ctx, { x: posterX + posterW + 52, y: posterY + 150, size: 38, rating10: rating, active: '#ffd35c' });
+      ctx.font = '800 40px Manrope, sans-serif';
+      ctx.fillStyle = '#8bf8de';
+      ctx.fillText(`${rating.toFixed(1)}/10`, posterX + posterW + 52, posterY + 220);
+      ctx.font = '700 30px Manrope, sans-serif';
       ctx.fillStyle = theme.subtext;
-      ctx.font = '500 44px Inter, sans-serif';
-      drawWrappedText(ctx, reviewText || 'No review yet.', posterX, posterY + posterH + (compact ? 88 : 110), cardW - 110, 58, compact ? 5 : 7);
-      ctx.font = '600 28px Space Grotesk, sans-serif';
-      ctx.fillText('Review Card', cardX + 52, cardBottom - 34);
-      ctx.globalCompositeOperation = 'destination-out';
-      const notchR = Math.max(22, Math.round(cutoutR * 0.46));
-      [
-        [cardX + 10, cardY + 10],
-        [cardX + cardW - 10, cardY + 10],
-        [cardX + 10, cardBottom - 10],
-        [cardX + cardW - 10, cardBottom - 10],
-      ].forEach(([cx, cy]) => {
-        ctx.beginPath();
-        ctx.arc(cx, cy, notchR, 0, Math.PI * 2);
-        ctx.fill();
-      });
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.restore();
+      ctx.fillText(`${profile.name || 'Reviewer'} • ${item.year} • Phase ${item.phase}`, posterX + posterW + 52, posterY + 272);
+      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      ctx.beginPath();
+      ctx.roundRect(cardX + 60, posterY + posterH + 60, cardW - 120, 490, 30);
+      ctx.fill();
+      ctx.font = '700 34px Inter, sans-serif';
+      ctx.fillStyle = '#dce8ff';
+      ctx.fillText('Review Notes', cardX + 94, posterY + posterH + 130);
+      ctx.font = '500 42px Inter, sans-serif';
+      ctx.fillStyle = '#f6fbff';
+      drawWrappedText(ctx, reviewText || 'No review yet.', cardX + 94, posterY + posterH + 200, cardW - 188, 56, 7);
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
       if (!blob) return;
       const result = await saveImageToDevice(blob, `${slugifyPosterName(item.title)}-review-card.png`);
@@ -1902,13 +1886,13 @@ export default function MCUViewer() {
   // ─── Manual build: one title at a time; skips cached metadata ────────────
   const refreshPostersAndMetadata = async () => {
     if (posterFetchState.active) return;
-    const targets = filtered.filter(item => !hasCompleteMetadata(item));
+    const targets = filtered.filter(item => !hasCompleteMetadata(item) || (!localPosterSrc(item) && !posterCache[item.id]));
     if (!targets.length) {
       setPosterFetchState({ active: false, done: 0, total: 0, message: 'Metadata cache is already complete for this view.' });
       return;
     }
 
-    setPosterFetchState({ active: true, done: 0, total: targets.length, message: `Building metadata for ${targets.length} missing entries…` });
+    setPosterFetchState({ active: true, done: 0, total: targets.length, message: `Building metadata and missing posters for ${targets.length} entries…` });
     const batchSize = 3;
     let done = 0;
     for (let i = 0; i < targets.length; i += batchSize) {
@@ -1971,26 +1955,35 @@ export default function MCUViewer() {
       grd.addColorStop(1, '#111a31');
       ctx.fillStyle = grd;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const ratingNum = clampTenPoint(Number(detailData?.imdbRating || metaCache[item.id]?.rating || 0));
       if (src) {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.src = src;
         await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
-        ctx.drawImage(img, 70, 90, 320, 470);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'rgba(6,10,22,0.56)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 74, 90, 350, 510);
       }
+      ctx.fillStyle = 'rgba(8,14,30,0.74)';
+      ctx.beginPath();
+      ctx.roundRect(40, 40, 1320, 1920, 32);
+      ctx.fill();
       ctx.fillStyle = '#fff';
-      ctx.font = '700 58px system-ui';
+      ctx.font = '800 62px system-ui';
       ctx.fillText(item.title, 430, 145, 900);
-      ctx.font = '500 32px system-ui';
+      ctx.font = '600 34px system-ui';
       ctx.fillStyle = '#9dc6ff';
       ctx.fillText(`${item.year} • Phase ${item.phase} • ${TYPE_META[item.type]?.label || item.type}`, 430, 195, 900);
-      ctx.fillText(`★ ${detailData?.imdbRating && detailData.imdbRating !== 'N/A' ? detailData.imdbRating : (metaCache[item.id]?.rating || '—')}`, 430, 238, 900);
+      drawPremiumStars(ctx, { x: 430, y: 252, size: 34, rating10: ratingNum, active: '#ffd35c' });
+      ctx.fillText(`${ratingNum ? ratingNum.toFixed(1) : '—'}/10`, 430, 304, 900);
       ctx.fillStyle = '#d3ddf6';
       ctx.font = '600 30px system-ui';
-      ctx.fillText('Description', 70, 620);
-      drawWrappedText(ctx, description, 70, 665, 1260, 42, 8);
-      ctx.fillText(`Release: ${formatReleaseDate(info.date, item.year, info.label, status)}`, 70, 1080);
-      ctx.fillText(`Prerequisite: ${item.prereq}`, 70, 1130, 1260);
+      ctx.fillText('Description', 70, 660);
+      drawWrappedText(ctx, description, 70, 710, 1260, 44, 8);
+      ctx.fillText(`Release: ${formatReleaseDate(info.date, item.year, info.label, status)}`, 70, 1118);
+      ctx.fillText(`Prerequisite: ${item.prereq}`, 70, 1170, 1260);
       const cast = detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[item.title] || ['Cast data coming soon']).join(', ');
       ctx.fillText('Cast', 70, 1215);
       drawWrappedText(ctx, cast, 70, 1260, 1260, 38, 6);
@@ -2433,7 +2426,7 @@ export default function MCUViewer() {
         .curvy-panel::before{display:none}
 
         .section-up{content-visibility:visible;contain-intrinsic-size:auto}
-        .hero-rail{scroll-behavior:auto;contain:layout paint;mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);-webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%)}
+        .hero-rail{scroll-behavior:smooth;contain:layout paint;mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);-webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
         .hero-rail::-webkit-scrollbar{height:0;width:0;display:none}
         .hero-poster-card{backface-visibility:hidden;transform:translateZ(0)}
         .hero-backdrop-image{opacity:var(--backdrop-opacity,0.7);transform:scale(1);filter:saturate(1.08) contrast(1.03) brightness(1);border-radius:24px;box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 18%, transparent),0 24px 60px rgba(0,0,0,0.36);mask-image:radial-gradient(circle at center, #000 74%, rgba(0,0,0,0.78) 90%, transparent 100%);-webkit-mask-image:radial-gradient(circle at center, #000 74%, rgba(0,0,0,0.78) 90%, transparent 100%);transition:opacity 1400ms cubic-bezier(0.22,1,0.36,1),transform 1400ms cubic-bezier(0.22,1,0.36,1),filter 1400ms cubic-bezier(0.22,1,0.36,1)}
@@ -2477,7 +2470,7 @@ export default function MCUViewer() {
         .detail-fallback-poster{position:relative;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 20% 20%, rgba(232,184,75,0.22), transparent 48%),radial-gradient(circle at 80% 30%, rgba(74,158,222,0.24), transparent 44%),linear-gradient(145deg, rgba(14,20,44,0.9), rgba(9,14,34,0.95));overflow:hidden}
         .detail-fallback-poster::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,0.03)}
         .detail-fallback-poster span{position:relative;z-index:1;text-align:center;font-size:clamp(24px,5vw,40px);line-height:1.2;font-weight:700;color:rgba(242,247,255,0.95);text-shadow:0 2px 14px rgba(0,0,0,0.35)}
-        .glass-panel{background-color:rgba(30,30,46,0.42);border:1px solid rgba(255,255,255,0.04);border-radius:16px}
+        .glass-panel{background-color:rgba(30,30,46,0.34);border:1px solid rgba(255,255,255,0.05);border-radius:16px}
         .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02))}
         .meta-muted{color:var(--theme-text-muted) !important}
         .performance-mode *{animation:none !important}
@@ -2562,8 +2555,8 @@ export default function MCUViewer() {
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <button className="theme-btn" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar menu" style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 10px)', left: 12, zIndex: 280, width: 44, height: 44, background: darkMode ? 'rgba(10,14,28,0.94)' : '#ffffff', borderColor: darkMode ? 'rgba(255,255,255,0.24)' : T.pillBorder, boxShadow: darkMode ? '0 8px 24px rgba(0,0,0,0.35)' : '0 6px 16px rgba(0,0,0,0.12)' }}><Menu size={17} /></button>
-      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 255 }} />}
-      <aside ref={sidebarRef} style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 'min(320px,84vw)', padding: '86px 14px 20px', background: darkMode ? 'rgba(7,9,20,0.58)' : 'rgba(255,255,255,0.58)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRight: `1px solid ${T.surfaceBorder}`, transform: sidebarOpen ? 'translateX(0)' : 'translateX(-105%)', transition: 'transform 0.34s cubic-bezier(.22,.9,.24,1)', zIndex: 260, overflowY: 'auto', boxShadow: darkMode ? '0 22px 55px rgba(0,0,0,0.45)' : '0 18px 44px rgba(0,0,0,0.18)', borderRadius: 16 }}>
+      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(4,8,18,0.62)', zIndex: 900, pointerEvents: 'auto' }} />}
+      <aside ref={sidebarRef} style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 'min(320px,84vw)', padding: '86px 14px 20px', background: darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderRight: `1px solid ${T.surfaceBorder}`, transform: sidebarOpen ? 'translateX(0)' : 'translateX(-105%)', transition: 'transform 0.34s cubic-bezier(.22,.9,.24,1)', zIndex: 920, overflowY: 'auto', boxShadow: darkMode ? '0 22px 55px rgba(0,0,0,0.45)' : '0 18px 44px rgba(0,0,0,0.18)', borderRadius: 16 }}>
         <div style={{ marginBottom: 8, fontSize: 11, letterSpacing: 1.8, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)', textTransform: 'uppercase' }}>Navigation Panel</div>
         <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -2632,9 +2625,9 @@ export default function MCUViewer() {
         </div>
       </aside>
 
-      <div ref={settingsRef} style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 16px)', right: 14, zIndex: 260 }}>
+      <div ref={settingsRef} style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 16px)', right: 14, zIndex: 940 }}>
         {settingsOpen && (
-          <div className="fade-in settings-menu" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, marginTop: 8, minWidth: 320, borderRadius: 12, border: '1px solid color-mix(in srgb, var(--theme-accent) 35%, transparent)', background: darkMode ? 'rgba(13,19,35,0.66)' : 'rgba(255,255,255,0.62)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', boxShadow: 'none', padding: 10, display: 'grid', gap: 8, maxHeight: '80vh', overflow: 'auto', color: 'var(--theme-text)' }}>
+          <div className="fade-in settings-menu" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, marginTop: 8, minWidth: 320, borderRadius: 12, border: '1px solid color-mix(in srgb, var(--theme-accent) 35%, transparent)', background: darkMode ? 'rgba(14,21,40,0.84)' : 'rgba(249,252,255,0.88)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', boxShadow: 'none', padding: 10, display: 'grid', gap: 8, maxHeight: '80vh', overflow: 'auto', color: 'var(--theme-text)' }}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Profile</div>
             <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 6 }}>
@@ -2682,9 +2675,6 @@ export default function MCUViewer() {
             <div style={{ fontSize: 10, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase', marginTop: 2, display: 'inline-flex', alignItems: 'center', gap: 6 }}><Film size={12} /> Bg size</div>
             <input type='range' min={100} max={112} step={1} value={heroBackdropScale} onChange={(e) => setHeroBackdropScale(Number(e.target.value))} aria-label='Carousel background size' />
             <div style={{ fontSize: 10, color: T.textMuted }}>{heroBackdropScale}%</div>
-            <div style={{ fontSize: 10, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase', marginTop: 2, display: 'inline-flex', alignItems: 'center', gap: 6 }}><Eye size={12} /> Bg opacity</div>
-            <input type='range' min={0.12} max={0.75} step={0.01} value={heroBackdropOpacity} onChange={(e) => setHeroBackdropOpacity(Number(e.target.value))} aria-label='Carousel background opacity' />
-            <div style={{ fontSize: 10, color: T.textMuted }}>{Math.round(heroBackdropOpacity * 100)}%</div>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Data</div>
             <button className="fpill" onClick={exportProgress}><Download size={14}/>Export Progress</button>
@@ -2717,7 +2707,7 @@ export default function MCUViewer() {
       </header>
 
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ position: 'relative', height: isDesktopViewport ? 520 : 390, background: 'transparent', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 210 }}>
+      <div style={{ position: 'relative', height: isDesktopViewport ? 520 : 390, background: darkMode ? 'rgba(8,12,26,0.32)' : 'rgba(255,255,255,0.28)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 210 }}>
         {heroPosters.length > 0 && (
           <div className="hero-rail"
             ref={heroRailRef}
@@ -3021,7 +3011,7 @@ export default function MCUViewer() {
                 </div>
 
                 {summaryOpen && (
-                  <div className="fade-in curvy-panel" style={{ '--phase-color': ph.color, background: T.phaseSummaryBg, border: `1px solid ${T.phaseSummaryBorder}`, borderRadius: 12, padding: '12px 14px 12px 18px', marginBottom: 10, fontSize: 14, color: T.textMuted, lineHeight: 1.6, fontFamily: 'var(--font-marvel-display)', letterSpacing: 0.2 }}>
+                  <div className="fade-in curvy-panel" style={{ '--phase-color': ph.color, background: `color-mix(in srgb, ${T.phaseSummaryBg} 72%, transparent)`, border: `1px solid ${T.phaseSummaryBorder}`, borderRadius: 12, padding: '12px 14px 12px 18px', marginBottom: 10, fontSize: 14, color: T.textMuted, lineHeight: 1.6, fontFamily: 'var(--font-marvel-display)', letterSpacing: 0.2 }}>
                     {ph.summary}
                   </div>
                 )}
@@ -3192,11 +3182,22 @@ export default function MCUViewer() {
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                     <button className="fpill" style={{ padding: '6px 9px', fontSize: 11 }} onClick={() => setRewatchCount(p => ({ ...p, [item.id]: (p[item.id] || 0) + 1 }))}><Clock size={12}/>Re-watch {rewatchCount[item.id] || 0}</button>
                     <button className="fpill" style={{ padding: '6px 9px', fontSize: 11 }} onClick={() => setRewatchCount(p => ({ ...p, [item.id]: Math.max(0, (p[item.id] || 0) - 1) }))}>−</button>
-                    <span style={{ color: T.textMuted, fontSize: 12, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700 }}>Star Rating</span>
-                    {[1,2,3,4,5].map(n => (
-                      <button key={n} aria-label={`${n} stars for ${item.title}`} onClick={() => setReviewRating(item.id, n * 2)} style={{ border: 0, width: 26, height: 26, borderRadius: 8, background: (myRating[item.id] || 0) >= (n * 2) ? 'rgba(124,255,218,0.2)' : 'transparent', color: (myRating[item.id] || 0) >= (n * 2) ? '#ffd35c' : T.textFaint, display: 'grid', placeItems: 'center', cursor: 'pointer', fontSize: 16, fontWeight: 700 }}><span>★</span></button>
-                    ))}
-                    <span style={{ fontSize: 12, fontWeight: 800, fontFamily: 'Manrope, sans-serif', color: '#7cffda' }}>{myRating[item.id] || 0}/10</span>
+                    <span style={{ color: T.textMuted, fontSize: 12, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700 }}>Rating / 10</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={10}
+                      step={0.1}
+                      value={myRating[item.id] ?? ''}
+                      onChange={(e) => setReviewRating(item.id, Number(e.target.value))}
+                      placeholder="4.5"
+                      style={{ width: 76, borderRadius: 9, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: '5px 8px', fontWeight: 700 }}
+                    />
+                    <div style={{ position: 'relative', display: 'inline-flex', fontSize: 18, letterSpacing: 2 }}>
+                      <span style={{ color: 'rgba(255,255,255,0.25)' }}>★★★★★</span>
+                      <span style={{ color: '#ffd35c', position: 'absolute', left: 0, top: 0, overflow: 'hidden', width: `${Math.max(0, Math.min(100, ((myRating[item.id] || 0) / 10) * 100))}%`, whiteSpace: 'nowrap' }}>★★★★★</span>
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 800, fontFamily: 'Manrope, sans-serif', color: '#7cffda' }}>{Number(myRating[item.id] || 0).toFixed(1)}/10</span>
                   </div>
                   <textarea
                     value={reviews[item.id] || ''}
