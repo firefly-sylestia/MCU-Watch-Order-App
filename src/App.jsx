@@ -567,7 +567,7 @@ export default function MCUViewer() {
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : false));
   const [lightningStrike, setLightningStrike] = useState(false);
   const [spiderDrop, setSpiderDrop] = useState(false);
-  const headerMinimized = scrollCheckpoint > 56;
+  const headerMinimized = false;
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
   const phaseRef   = useRef(null);
@@ -2097,7 +2097,7 @@ export default function MCUViewer() {
     numFaint: '#4a5566', footerText: '#1e2a38',
     scrollTrack: '#07070f', scrollThumb: '#16162a', scrollThumbH: '#222238',
     hexDot: 'rgba(255,255,255,0.01)', switcherBg: '#080818', switcherBorder: '#13132a',
-    phaseSummaryBg: 'color-mix(in srgb, var(--theme-surface) 56%, transparent)', phaseSummaryBorder: '#13132a',
+    phaseSummaryBg: 'color-mix(in srgb, #ffffff 5%, transparent)', phaseSummaryBorder: '#13132a',
   } : {
     appBg: '#f2f0eb', headerBg: 'linear-gradient(180deg,#ffffff 0%,#f2f0eb 100%)',
     headerBorder: '#ddd8d0', navBg: '#ffffff', navBorder: '#e8e2d8',
@@ -2114,7 +2114,7 @@ export default function MCUViewer() {
     numFaint: '#a0a8b0', footerText: '#a0a8b0',
     scrollTrack: '#ece8e0', scrollThumb: '#ccc8c0', scrollThumbH: '#b8b4ac',
     hexDot: 'rgba(0,0,0,0.025)', switcherBg: '#f8f5f0', switcherBorder: '#e4ddd4',
-    phaseSummaryBg: 'transparent', phaseSummaryBorder: 'rgba(214,205,194,0.5)',
+    phaseSummaryBg: 'color-mix(in srgb, #ffffff 5%, transparent)', phaseSummaryBorder: 'rgba(214,205,194,0.5)',
   };
 
   const THEME_CHOICES = [
@@ -2575,7 +2575,7 @@ export default function MCUViewer() {
       </header>
 
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ position: 'relative', height: isDesktopViewport ? 460 : 340, background: 'transparent', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 210 }}>
+      <div style={{ position: 'relative', height: isDesktopViewport ? 460 : 340, background: 'linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 210 }}>
         {heroPosters.length > 0 && (
           <div className="hero-rail"
             onWheel={(e) => {
@@ -2589,13 +2589,15 @@ export default function MCUViewer() {
             {[...Array(isDesktopViewport ? 18 : 12)].map((_, idx) => {
               const src = heroPosters[(heroIndex + idx) % heroPosters.length] || currentHeroSrc;
               const isActive = src === (heroTransitioning && nextHeroSrc ? nextHeroSrc : currentHeroSrc);
+              const heroItem = filtered.find(i => posterSrc(i) === src);
               return (
+                <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8, scrollSnapAlign:'center' }}>
                 <img
                   key={`hero-rail-${idx}`}
                   src={src}
                   alt="Featured poster"
-                  title={filtered.find(i => posterSrc(i) === src)?.title || 'Featured MCU poster'}
-                  onClick={() => { const clicked = filtered.find(i => posterSrc(i) === src); if (clicked) setDetailItem(clicked); }}
+                  title={heroItem?.title || 'Featured MCU poster'}
+                  onClick={() => { if (heroItem) setDetailItem(heroItem); }}
                   onMouseMove={(e) => {
                     const card = e.currentTarget;
                     const rect = card.getBoundingClientRect();
@@ -2614,16 +2616,17 @@ export default function MCUViewer() {
                     objectFit: 'cover',
                     borderRadius: 16,
                     border: `1px solid ${isActive ? 'color-mix(in srgb, var(--theme-accent) 42%, white)' : 'rgba(255,255,255,0.16)'}`,
-                    boxShadow: isActive ? '0 26px 58px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.16)' : '0 12px 30px rgba(0,0,0,0.38), 0 0 0 1px rgba(255,255,255,0.12)',
+                    boxShadow: isActive ? '0 8px 18px rgba(0,0,0,0.24)' : '0 6px 14px rgba(0,0,0,0.18)',
                     opacity: isActive ? 1 : 0.7,
-                    transform: `perspective(1100px) translateZ(${isActive ? '24px' : '8px'}) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) ${isActive ? 'scale(1.08) translateY(-8px)' : 'scale(0.94)'}` ,
+                    transform: `perspective(1100px) translateZ(${isActive ? '20px' : '10px'}) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) ${isActive ? 'scale(1.06) translateY(-6px)' : 'scale(0.98)'}` ,
                     transition: 'transform 180ms cubic-bezier(0.22,1,0.36,1), opacity 220ms ease, box-shadow 240ms ease, border-color 220ms ease, filter 220ms ease',
                     animation: isActive ? 'heroPop 640ms ease' : `posterPop 240ms ease ${carouselPulse % 2 === 0 ? '' : ''}`,
                     flexShrink: 0,
-                    scrollSnapAlign: 'center',
                     cursor: 'pointer',
                   }}
                 />
+                <div style={{ fontSize: 12, color: 'var(--theme-text)', opacity: 0.9, maxWidth: isDesktopViewport ? 265 : 198, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center' }}>{heroItem?.title || 'Featured MCU poster'}</div>
+                </div>
               );
             })}
           </div>
@@ -2658,7 +2661,7 @@ export default function MCUViewer() {
                 aria-label="Search titles"
                 style={{ width: '100%', background: 'transparent', border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '7px 12px 7px 30px', color: T.inputColor, fontSize: 14, letterSpacing: 0.3, boxShadow: spiderSense ? '0 0 0 2px rgba(220,20,60,0.45), 0 0 16px rgba(220,20,60,0.35)' : 'none', animation: spiderSense ? 'spiderPulse 0.85s ease-in-out infinite' : 'none' }} />
             </div>
-            <div className='filter-row-actions' style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end', minWidth: 0 }} />
+            <div className='filter-row-actions' style={{ marginLeft: 0, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-start', minWidth: 0 }} />
           </div>
         </div>
 
@@ -2721,7 +2724,7 @@ export default function MCUViewer() {
                     <div className={`sopt ${statusFilter === 'watching' ? 'picked' : ''}`} onClick={() => { setStatusFilter('watching'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Watching</div>
                     <div className={`sopt ${statusFilter === 'plan-to-watch' ? 'picked' : ''}`} onClick={() => { setStatusFilter('plan-to-watch'); setWatchedOnly(false); setFilterStatusOpen(false); }}>Plan to Watch</div>
                     <div className={`sopt ${statusFilter === 'dropped' ? 'picked' : ''}`} onClick={() => { setStatusFilter('dropped'); setWatchedOnly(false); setAutoHideStatuses(false); setFilterStatusOpen(false); }}>Dropped</div>
-                    <div className={`sopt ${autoHideStatuses ? 'picked' : ''}`} onClick={() => { setAutoHideStatuses(v => !v); setStatusFilter(null); setWatchedOnly(false); setFilterStatusOpen(false); }}>{autoHideStatuses ? 'Hide watched/dropped: ON' : 'Hide watched/dropped: OFF'}</div>
+                    
                   </div>
                 )}
               </div>
@@ -2847,8 +2850,8 @@ export default function MCUViewer() {
               <section key={pid} className="section-up" data-phase={pid}
                 ref={el => { phaseRefs.current[pid] = el; }}
                 style={{ marginBottom: 36, scrollMarginTop: 'var(--sticky-offset)', position: 'relative' }}>
-                <div aria-hidden style={{ position: 'absolute', left: -14, top: -22, bottom: -22, width: 2, background: `linear-gradient(${ph.color}77, color-mix(in srgb, ${ph.color} 30%, transparent))`, borderRadius: 999, pointerEvents: 'none' }} />
-                <div aria-hidden style={{ position: 'absolute', left: -21, top: 4, width: 16, height: 16, borderRadius: '50%', border: `1px solid ${ph.color}99`, background: `color-mix(in srgb, ${ph.color} 30%, transparent)`, boxShadow: `0 0 10px ${ph.glow}` }} />
+                <div aria-hidden style={{ position: 'absolute', left: -12, top: 6, bottom: 8, width: 2, background: `linear-gradient(180deg, ${ph.color}99 0%, color-mix(in srgb, ${ph.color} 20%, transparent) 100%)`, borderRadius: 999, pointerEvents: 'none' }} />
+                <div aria-hidden style={{ position: 'absolute', left: -19, top: 8, width: 14, height: 14, borderRadius: '50%', border: `1px solid ${ph.color}99`, background: `color-mix(in srgb, ${ph.color} 30%, transparent)`, boxShadow: `0 0 10px ${ph.glow}` }} />
 
                 {isCelebrating && (
                   <div className="phase-flash" style={{ position: 'absolute', inset: 0, background: `linear-gradient(90deg, ${ph.color}40, ${ph.color}22)`, boxShadow: `0 0 10px ${ph.glow}`, borderRadius: 12, pointerEvents: 'none', zIndex: 5 }} />
