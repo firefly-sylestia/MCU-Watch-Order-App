@@ -2327,6 +2327,7 @@ export default function MCUViewer() {
         .curvy-panel::before{display:none}
 
         .section-up{content-visibility:visible;contain-intrinsic-size:auto}
+        .hero-rail::-webkit-scrollbar{height:0;width:0;display:none}
         .phase-rows-full{display:block}
         .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 0.14s ease,border-color 0.14s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:var(--row-min-h,86px);border-radius:12px;overflow:hidden;background:rgba(8,14,28,0.34);backdrop-filter:blur(7px)}
         .rrow:last-child{border-bottom:none}
@@ -2512,7 +2513,8 @@ export default function MCUViewer() {
                   <img src={src} alt={`Avatar ${idx + 1}`} style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: '50%', objectFit: 'cover' }} />
                 </button>
               ))}
-              <label title="Upload custom avatar" style={{ border: `1px dashed ${T.inputBorder}`, borderRadius: '999px', padding: 2, display: 'grid', placeItems: 'center', cursor: 'pointer', minHeight: 44, color: T.textMuted }}>
+              <label title="Upload custom avatar" style={{ border: `1px dashed ${T.inputBorder}`, borderRadius: '999px', padding: 2, display: 'grid', placeItems: 'center', cursor: 'pointer',
+                    willChange: 'transform', minHeight: 44, color: T.textMuted }}>
                 <div style={{ display: 'grid', placeItems: 'center', fontSize: 11, gap: 2 }}>
                   <Upload size={13} />
                   <span>Custom +</span>
@@ -2576,7 +2578,14 @@ export default function MCUViewer() {
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ position: 'relative', height: isDesktopViewport ? 460 : 340, background: 'transparent', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 210 }}>
         {heroPosters.length > 0 && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 14px', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'x mandatory' }}>
+          <div className="hero-rail"
+            onWheel={(e) => {
+              const rail = e.currentTarget;
+              const delta = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+              rail.scrollLeft += delta;
+              e.preventDefault();
+            }}
+            style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 14px', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: isDesktopViewport ? 'x proximity' : 'x mandatory', scrollPaddingInline: isDesktopViewport ? '14vw' : '8vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
             {[...Array(isDesktopViewport ? 18 : 12)].map((_, idx) => {
               const src = heroPosters[(heroIndex + idx) % heroPosters.length] || currentHeroSrc;
               const isActive = src === (heroTransitioning && nextHeroSrc ? nextHeroSrc : currentHeroSrc);
@@ -2586,6 +2595,18 @@ export default function MCUViewer() {
                   src={src}
                   alt="Featured poster"
                   onClick={() => { const clicked = filtered.find(i => posterSrc(i) === src); if (clicked) setDetailItem(clicked); }}
+                  onMouseMove={(e) => {
+                    const card = e.currentTarget;
+                    const rect = card.getBoundingClientRect();
+                    const px = (e.clientX - rect.left) / rect.width;
+                    const py = (e.clientY - rect.top) / rect.height;
+                    card.style.setProperty('--rx', `${(0.5 - py) * 4}deg`);
+                    card.style.setProperty('--ry', `${(px - 0.5) * 5}deg`);
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.setProperty('--rx', '0deg');
+                    e.currentTarget.style.setProperty('--ry', '0deg');
+                  }}
                   style={{
                     height: isDesktopViewport ? 400 : 290,
                     width: isDesktopViewport ? 265 : 198,
@@ -2594,8 +2615,8 @@ export default function MCUViewer() {
                     border: `1px solid ${isActive ? 'color-mix(in srgb, var(--theme-accent) 42%, white)' : 'rgba(255,255,255,0.16)'}`,
                     boxShadow: isActive ? '0 20px 50px rgba(0,0,0,0.5)' : '0 10px 28px rgba(0,0,0,0.34)',
                     opacity: isActive ? 1 : 0.7,
-                    transform: isActive ? 'scale(1.05) translateY(-6px)' : 'scale(0.95)',
-                    transition: 'transform 360ms ease, opacity 360ms ease, box-shadow 360ms ease, border-color 360ms ease',
+                    transform: `perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) ${isActive ? 'scale(1.05) translateY(-6px)' : 'scale(0.95)'}` ,
+                    transition: 'transform 260ms ease, opacity 360ms ease, box-shadow 360ms ease, border-color 360ms ease',
                     animation: isActive ? 'heroPop 640ms ease' : 'none',
                     flexShrink: 0,
                     scrollSnapAlign: 'center',
@@ -2728,7 +2749,7 @@ export default function MCUViewer() {
           </div>
         )}
       </div>
-      <div style={{ position: 'fixed', right: 16, bottom: isDesktopViewport ? 20 : 74, zIndex: 230 }}>
+      <div style={{ position: 'fixed', right: isDesktopViewport ? 176 : 16, bottom: isDesktopViewport ? 20 : 74, zIndex: 230 }}>
         <div style={{ display: 'flex', borderRadius: 999, overflow: 'hidden', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(10,14,28,0.93)' : 'rgba(255,255,255,0.95)', boxShadow: darkMode ? '0 10px 26px rgba(0,0,0,0.4)' : '0 8px 20px rgba(0,0,0,0.12)' }}>
           {LIST_MODES.map(mode => {
             const active = listMode === mode.id;
