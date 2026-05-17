@@ -607,6 +607,13 @@ export default function MCUViewer() {
   const [reviewCardTheme, setReviewCardTheme] = useState('midnight');
   const [exportFont, setExportFont] = useState('inter');
   const [exportTextScale, setExportTextScale] = useState(1.08);
+  const [analyticsTab, setAnalyticsTab] = useState('overview');
+  const [exportComposerOpen, setExportComposerOpen] = useState(false);
+  const [exportPreview, setExportPreview] = useState({ url: '', loading: false, error: '' });
+  const [exportSettings, setExportSettings] = useState(() => ({
+    type: 'unified', theme: 'midnight', bgOpacity: 50, fontWeight: 800, density: 'comfortable', posterMode: 'featured',
+    sections: { hours: true, history: true, rating: true, reviewSnippet: true, profileBadge: true }, aspect: '4:5',
+  }));
   const [autoBackupStamp, setAutoBackupStamp] = useState('');
   const [reviewShareStatus, setReviewShareStatus] = useState({ type: '', message: '' });
   const [analyticsOpen,  setAnalyticsOpen]  = useState(false);
@@ -1547,6 +1554,32 @@ export default function MCUViewer() {
   const shareAnalysisCard = async () => {
     await shareCardImage({ type: 'analysis', data: { featured: historyItems[0] || activeItems[0], rows: historyItems } });
   };
+  const shareUnifiedCard = async () => {
+    await shareCardImage({ type: 'unified', data: { featured: historyItems[0] || activeItems[0], rows: historyItems } });
+  };
+
+  useEffect(() => {
+    if (!exportComposerOpen) return;
+    const timer = window.setTimeout(async () => {
+      setExportPreview(prev => ({ ...prev, loading: true }));
+      try {
+        const { canvas } = await renderCardToCanvas({
+          type: exportSettings.type,
+          data: { item: historyItems[0] || activeItems[0], featured: historyItems[0] || activeItems[0], rows: historyItems, rating: myRating[historyItems[0]?.id] || 0, reviewText: reviews[historyItems[0]?.id] || '', reviewer: profile.name || 'Reviewer', pct, currentPhase: stickyPhaseProgress.label, totalWatched, totalItems: activeItems.length },
+          settings: {
+            textScale: Math.max(0.9, exportTextScale * 0.8),
+            fontFamily: ({ inter: 'Inter, sans-serif', grotesk: 'Space Grotesk, sans-serif', manrope: 'Manrope, sans-serif', marvel: 'var(--font-marvel-display), sans-serif' }[exportFont] || 'Inter, sans-serif'),
+            posterSrc,
+          },
+        });
+        const url = canvas.toDataURL('image/png', 0.8);
+        setExportPreview({ url, loading: false, error: '' });
+      } catch {
+        setExportPreview({ url: '', loading: false, error: 'Preview unavailable. Export still works.' });
+      }
+    }, 140);
+    return () => window.clearTimeout(timer);
+  }, [exportComposerOpen, exportSettings, exportFont, exportTextScale, historyItems, activeItems, myRating, reviews, profile.name, pct, stickyPhaseProgress.label, totalWatched, posterSrc]);
 
 
   // ─── Smoother phase gradient (multi-stop per phase for richer look) ──────
@@ -3049,12 +3082,22 @@ export default function MCUViewer() {
               </div>
               <button className="fpill" onClick={() => setAnalyticsOpen(false)}>Close</button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 10, marginBottom: 14 }}>
+            <div style={{ position: 'sticky', top: 0, zIndex: 5, display: 'flex', gap: 8, marginBottom: 10, paddingBottom: 8, background: 'var(--theme-surface)' }}>
+              {['overview', 'history', 'export'].map(tab => (
+                <button key={tab} className="fpill" onClick={() => setAnalyticsTab(tab)} style={{ borderColor: analyticsTab === tab ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{tab[0].toUpperCase() + tab.slice(1)}</button>
+              ))}
+            </div>
+            {analyticsTab === 'overview' && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 10, marginBottom: 14 }}>
               <div className="glass-panel" style={{ padding: 12, borderRadius: 12 }}><div style={{ color: T.textMuted, fontSize: 11 }}>TOTAL WATCHED</div><div style={{ fontSize: 24, fontWeight: 800 }}>{Math.round(totalWatchedHours * 10) / 10}h</div></div>
               <div className="glass-panel" style={{ padding: 12, borderRadius: 12 }}><div style={{ color: T.textMuted, fontSize: 11 }}>HISTORY ITEMS</div><div style={{ fontSize: 24, fontWeight: 800 }}>{historyItems.length}</div></div>
               <div className="glass-panel" style={{ padding: 12, borderRadius: 12 }}><div style={{ color: T.textMuted, fontSize: 11 }}>RE-WATCHES</div><div style={{ fontSize: 24, fontWeight: 800 }}>{Object.values(rewatchCount).reduce((a, b) => a + (Number(b) || 0), 0)}</div></div>
+            </div>}
+            {analyticsTab === 'export' && <>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12, position: 'sticky', bottom: 0, zIndex: 4, background: 'var(--theme-surface)', padding: '8px 0' }}>
+              <button className="fpill" onClick={shareAnalysisCard}><Upload size={14}/>Share Analysis Card</button>
+              <button className="fpill" onClick={shareUnifiedCard}><Upload size={14}/>Create Unified Export Card</button>
+              <button className="fpill" onClick={() => setExportComposerOpen(v => !v)}><SlidersH size={14}/>{exportComposerOpen ? 'Hide' : 'Open'} Composer</button>
             </div>
-            <button className="fpill" onClick={shareAnalysisCard} style={{ marginBottom: 12 }}><Upload size={14}/>Share Analysis Card</button>
             <div className="glass-panel" style={{ marginBottom: 10, padding: 10, borderRadius: 10, display: 'grid', gap: 8 }}>
               <div style={{ fontSize: 11, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase' }}>Export Card Settings</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
@@ -3066,7 +3109,17 @@ export default function MCUViewer() {
                 <span style={{ fontSize: 11, color: T.textMuted }}>Export text size: {Math.round(exportTextScale * 100)}%</span>
                 <input type='range' min={90} max={150} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
               </label>
+              <label style={{ display: 'grid', gap: 4 }}>
+                <span style={{ fontSize: 11, color: T.textMuted }}>BG opacity: {exportSettings.bgOpacity}%</span>
+                <input type='range' min={0} max={100} step={1} value={exportSettings.bgOpacity} onChange={(e) => setExportSettings(prev => ({ ...prev, bgOpacity: Number(e.target.value) }))} />
+              </label>
             </div>
+            {exportComposerOpen && <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'minmax(0,1fr)', maxHeight: '50vh', overflow: 'auto' }}>
+              <div className="glass-panel" style={{ padding: 10, borderRadius: 10 }}>
+                {exportPreview.loading ? <div style={{ color: T.textMuted }}>Generating preview…</div> : exportPreview.url ? <img src={exportPreview.url} alt="export preview" style={{ width: '100%', borderRadius: 10 }} /> : <div style={{ color: T.textMuted }}>{exportPreview.error || 'Preview unavailable'}</div>}
+              </div>
+            </div>}
+            </>}
             <div className="glass-panel" style={{ marginBottom: 10, padding: 10, borderRadius: 10, display: 'grid', gap: 8 }}>
               <div style={{ fontSize: 11, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase' }}>Review Card Theme</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 6 }}>
@@ -3076,7 +3129,7 @@ export default function MCUViewer() {
               </div>
               {reviewShareStatus.message && <div style={{ fontSize: 12, color: reviewShareStatus.type === 'error' ? 'var(--theme-danger)' : 'var(--theme-success)' }}>{reviewShareStatus.message}</div>}
             </div>
-            <div style={{ display: 'grid', gap: 12, maxHeight: '58vh', overflow: 'auto', paddingRight: 4 }}>
+            {analyticsTab === 'history' && <div style={{ display: 'grid', gap: 12, maxHeight: '58vh', overflow: 'auto', paddingRight: 4 }}>
               {historyItems.length === 0 && <div style={{ color: T.textMuted, padding: 16 }}>No watched history yet. Mark an item watched to start your analysis log.</div>}
               {historyItems.map(item => (
                 <div key={item.id} className="glass-panel" style={{ borderRadius: 14, padding: '16px 16px 14px', display: 'grid', gap: 12, border: '1px solid color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'color-mix(in srgb, var(--theme-surface) 80%, transparent)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
@@ -3111,7 +3164,7 @@ export default function MCUViewer() {
                   </div>
                 </div>
               ))}
-            </div>
+            </div>}
           </div>
         </div>
       )}
