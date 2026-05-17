@@ -5,6 +5,8 @@ import { Share } from '@capacitor/share';
 import { Media } from '@capacitor-community/media';
 import CropModal from './components/CropModal';
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import { renderCardToCanvas } from './export/cards/renderCardToCanvas';
+import { drawPremiumStars, drawWrappedText } from './export/cards/helpers';
 import {
   ESSENTIAL_LIST,
   NO_PREREQ,
@@ -863,76 +865,8 @@ export default function MCUViewer() {
   };
 
   const shareProgressCard = async () => {
-    try {
-      const recent = recentActivity.slice(0, 3);
-      const currentPhase = activePhase === 0 ? stickyPhaseProgress.label : (PHASES.find(p => p.id === activePhase)?.name || stickyPhaseProgress.label);
-      const canvas = document.createElement('canvas');
-      canvas.width = 1080;
-      canvas.height = 1350;
-      const ctx = canvas.getContext('2d');
-      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      gradient.addColorStop(0, '#120e2f');
-      gradient.addColorStop(1, '#2e143a');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#ff5ea8';
-      ctx.font = '700 60px sans-serif';
-      ctx.fillText('MCU VIEWING PROGRESS', 72, 110);
-      ctx.fillStyle = theme.text;
-      ctx.font = '700 180px sans-serif';
-      ctx.fillText(`${pct}%`, 72, 300);
-      ctx.font = '500 44px sans-serif';
-      ctx.fillText(`Current Phase: ${currentPhase}`, 72, 380);
-      ctx.fillText(`Completed: ${totalWatched}/${activeItems.length}`, 72, 445);
-      ctx.fillText(`Recent Completion`, 72, 530);
-
-      const drawPoster = async (item, idx) => {
-        const x = 72 + idx * 310;
-        const y = 570;
-        const w = 270;
-        const h = 405;
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.src = posterSrc(item);
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-        });
-        ctx.drawImage(img, x, y, w, h);
-        ctx.fillStyle = 'rgba(0,0,0,0.52)';
-        ctx.fillRect(x, y + h - 80, w, 80);
-        ctx.fillStyle = '#fff';
-        ctx.font = '600 22px sans-serif';
-        ctx.fillText(item.title.slice(0, 20), x + 10, y + h - 28);
-      };
-
-      await Promise.all(recent.map((item, idx) => drawPoster(item, idx).catch(() => null)));
-      ctx.fillStyle = '#dacfff';
-      ctx.font = '500 30px sans-serif';
-      ctx.fillText('Shared from MCU Viewing Order', 72, 1260);
-
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.95));
-      if (!blob) return;
-      const file = new File([blob], `mcu-progress-card-${Date.now()}.png`, { type: 'image/png' });
-      if (Capacitor.isNativePlatform()) {
-        const base64 = await new Promise(resolve => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(String(reader.result || '').split(',')[1] || '');
-          reader.readAsDataURL(file);
-        });
-        const res = await Filesystem.writeFile({ path: file.name, data: base64, directory: Directory.Cache });
-        await Share.share({ title: 'My MCU Progress', text: `${pct}% complete · ${currentPhase}`, url: res.uri });
-        return;
-      }
-      const url = URL.createObjectURL(file);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = file.name;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      console.error('Failed to share progress card', e);
-    }
+    const currentPhase = activePhase === 0 ? stickyPhaseProgress.label : (PHASES.find(p => p.id === activePhase)?.name || stickyPhaseProgress.label);
+    await shareCardImage({ type: 'progress', data: { pct, currentPhase, totalWatched, totalItems: activeItems.length } });
   };
 
   const importProgress = (file) => {
@@ -1564,206 +1498,54 @@ export default function MCUViewer() {
   const clampTenPoint = (value) => Math.max(0, Math.min(10, Number.isFinite(value) ? value : 0));
   const setReviewRating = (id, rating) => setMyRating(prev => ({ ...prev, [id]: clampTenPoint(Number(rating)) }));
 
-  const drawPremiumStars = (ctx, { x, y, size = 38, gap = 12, rating10 = 0, active = '#ffd35c', inactive = 'rgba(255,255,255,0.22)' }) => {
-    const ratio = clampTenPoint(rating10) / 10;
-    const starValue = ratio * 5;
-    ctx.font = `700 ${size}px Inter, system-ui, sans-serif`;
-    for (let i = 0; i < 5; i += 1) {
-      const sx = x + i * (size + gap);
-      ctx.fillStyle = inactive;
-      ctx.fillText('★', sx, y);
-      const fill = Math.max(0, Math.min(1, starValue - i));
-      if (fill > 0) {
-        const w = size * fill;
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(sx, y - size, w, size + 8);
-        ctx.clip();
-        ctx.fillStyle = active;
-        ctx.fillText('★', sx, y);
-        ctx.restore();
-      }
-    }
-  };
-
-  const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight, maxLines = 3) => {
-    const words = String(text || '').split(/\s+/).filter(Boolean);
-    let line = '';
-    let lineCount = 0;
-    for (let i = 0; i < words.length; i += 1) {
-      const testLine = line ? `${line} ${words[i]}` : words[i];
-      if (ctx.measureText(testLine).width > maxWidth && line) {
-        ctx.fillText(line, x, y + (lineCount * lineHeight));
-        line = words[i];
-        lineCount += 1;
-        if (lineCount >= maxLines - 1) break;
-      } else {
-        line = testLine;
-      }
-    }
-    const remaining = words.slice(words.findIndex(w => line.includes(w))).join(' ');
-    const finalLine = lineCount >= maxLines - 1 && ctx.measureText(line).width > maxWidth * 0.96 ? `${line.slice(0, Math.max(0, line.length - 1))}…` : line;
-    ctx.fillText(finalLine || remaining || '', x, y + (lineCount * lineHeight));
-  };
-
-  const shareReviewCard = async (item) => {
+  const shareCardImage = useCallback(async ({ type, data, statusHandlers = null }) => {
     try {
-      const canvas = document.createElement('canvas');
-      canvas.width = 1600; canvas.height = 2200;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      const themes = {
-        midnight: { page: '#0b1020', card: 'rgba(10,18,35,0.76)', text: '#ffffff', subtext: '#c8d4e8' },
-        stark: { page: '#121212', card: 'rgba(28,28,28,0.74)', text: '#f5f5f5', subtext: '#d8d8d8' },
-        vibranium: { page: '#051a24', card: 'rgba(5,32,41,0.75)', text: '#ecfbff', subtext: '#b9e1ea' },
-      };
-      const theme = themes[reviewCardTheme] || themes.midnight;
-      const padding = 88;
-      const cardX = padding;
-      const cardY = 120;
-      const cardW = canvas.width - (padding * 2);
-      const cardH = canvas.height - 250;
-      ctx.fillStyle = theme.page;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.src = posterSrc(item);
-      await new Promise((res) => { img.onload = res; img.onerror = res; });
-      const rating = clampTenPoint(myRating[item.id] || 0);
-      const reviewText = (reviews[item.id] || '').trim();
-      try { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); } catch {}
-      ctx.fillStyle = 'rgba(4,8,18,0.64)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = theme.page;
-      ctx.beginPath();
-      ctx.roundRect(cardX, cardY, cardW, cardH, 46);
-      ctx.fill();
-      ctx.fillStyle = theme.card;
-      ctx.beginPath();
-      ctx.roundRect(cardX + 26, cardY + 26, cardW - 52, cardH - 52, 36);
-      ctx.fill();
-      const posterX = cardX + 60, posterY = cardY + 74, posterW = 450, posterH = 660;
-      try { ctx.drawImage(img, posterX, posterY, posterW, posterH); } catch {}
-      ctx.fillStyle = '#ffffff';
       const fontMap = { inter: 'Inter, sans-serif', grotesk: 'Space Grotesk, sans-serif', manrope: 'Manrope, sans-serif', marvel: 'var(--font-marvel-display), sans-serif' };
       const exportFontFamily = fontMap[exportFont] || fontMap.inter;
-      const scale = exportTextScale;
-      ctx.font = `${Math.round(60 * scale)}px ${exportFontFamily}`;
-      ctx.font = `800 ${Math.round(60 * scale)}px ${exportFontFamily}`;
-      drawWrappedText(ctx, item.title, posterX + posterW + 52, posterY + 72, cardW - posterW - 150, 66, 3);
-      drawPremiumStars(ctx, { x: posterX + posterW + 52, y: posterY + 150, size: Math.round(38 * scale), rating10: rating, active: '#ffd35c' });
-      ctx.font = `800 ${Math.round(40 * scale)}px ${exportFontFamily}`;
-      ctx.fillStyle = '#8bf8de';
-      ctx.fillText(`${rating.toFixed(1)}/10`, posterX + posterW + 52, posterY + 220);
-      ctx.font = `700 ${Math.round(30 * scale)}px ${exportFontFamily}`;
-      ctx.fillStyle = theme.subtext;
-      ctx.fillText(`${profile.name || 'Reviewer'} • ${item.year} • Phase ${item.phase}`, posterX + posterW + 52, posterY + 272);
-      ctx.fillStyle = 'rgba(255,255,255,0.08)';
-      ctx.beginPath();
-      ctx.roundRect(cardX + 60, posterY + posterH + 60, cardW - 120, 490, 30);
-      ctx.fill();
-      ctx.font = `700 ${Math.round(34 * scale)}px ${exportFontFamily}`;
-      ctx.fillStyle = '#dce8ff';
-      ctx.fillText('Review Notes', cardX + 94, posterY + posterH + 130);
-      ctx.font = `500 ${Math.round(42 * scale)}px ${exportFontFamily}`;
-      ctx.fillStyle = '#f6fbff';
-      drawWrappedText(ctx, reviewText || 'No review yet.', cardX + 94, posterY + posterH + 200, cardW - 188, Math.round(56 * scale), 7);
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
+      const { blob, filename } = await renderCardToCanvas({
+        type,
+        data,
+        settings: {
+          textScale: exportTextScale,
+          fontFamily: exportFontFamily,
+          posterSrc,
+          namingStrategy: ({ type: cardType, data: cardData }) => {
+            if (cardType === 'progress') return `mcu-progress-card-${Date.now()}.png`;
+            if (cardType === 'analysis') return 'mcu-analysis-card.png';
+            if (cardType === 'review') return `${slugifyPosterName(cardData.item.title)}-review-card.png`;
+            return `mcu-${cardType}-card.png`;
+          },
+        },
+      });
       if (!blob) return;
-      const result = await saveImageToDevice(blob, `${slugifyPosterName(item.title)}-review-card.png`);
+      const result = await saveImageToDevice(blob, filename);
+      statusHandlers?.onSuccess?.(result);
+    } catch (e) {
+      console.error(`Failed to share ${type} card`, e);
+      statusHandlers?.onError?.(e);
+    }
+  }, [exportFont, exportTextScale, posterSrc, saveImageToDevice]);
+
+  const shareReviewCard = async (item) => {
+    await shareCardImage({
+      type: 'review',
+      data: { item, rating: clampTenPoint(myRating[item.id] || 0), reviewText: (reviews[item.id] || '').trim(), reviewer: profile.name || 'Reviewer' },
+      statusHandlers: {
+        onSuccess: (result) => {
       const methodLabel = result?.method === 'mediastore' ? 'Gallery saved' : result?.method === 'filesystem' ? 'Saved to Pictures folder' : 'Downloaded';
       setReviewShareStatus({ type: 'success', message: `Review card ready: ${methodLabel}.` });
       window.setTimeout(() => setReviewShareStatus({ type: '', message: '' }), 2800);
-    } catch (e) {
-      console.error('Failed review card', e);
-      setReviewShareStatus({ type: 'error', message: 'Review card save failed. Please retry.' });
-      window.setTimeout(() => setReviewShareStatus({ type: '', message: '' }), 3200);
-    }
+        },
+        onError: () => {
+          setReviewShareStatus({ type: 'error', message: 'Review card save failed. Please retry.' });
+          window.setTimeout(() => setReviewShareStatus({ type: '', message: '' }), 3200);
+        },
+      },
+    });
   };
 
   const shareAnalysisCard = async () => {
-    try {
-      const canvas = document.createElement('canvas');
-      canvas.width = 1080;
-      canvas.height = 1350;
-      const ctx = canvas.getContext('2d');
-      const featured = historyItems[0] || activeItems[0];
-      const bgImg = featured ? await new Promise(resolve => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => resolve(img);
-        img.onerror = () => resolve(null);
-        img.src = posterSrc(featured);
-      }) : null;
-      if (bgImg) {
-        try { ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height); } catch {}
-      }
-      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      gradient.addColorStop(0, 'rgba(5,10,22,0.58)');
-      gradient.addColorStop(0.52, 'rgba(10,18,38,0.78)');
-      gradient.addColorStop(1, 'rgba(6,10,20,0.92)');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.fillStyle = 'rgba(8,14,28,0.72)';
-      ctx.strokeStyle = 'rgba(160,214,255,0.24)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.roundRect(48, 54, 984, 1242, 34);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = 'rgba(255,255,255,0.94)';
-      ctx.font = '800 56px Inter, sans-serif';
-      ctx.fillText('MCU WATCH ANALYSIS', 94, 138);
-
-      ctx.fillStyle = 'rgba(14,24,45,0.8)';
-      ctx.strokeStyle = 'rgba(124,252,218,0.28)';
-      ctx.beginPath();
-      ctx.roundRect(84, 182, 912, 260, 28);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = '#7cffda';
-      ctx.font = '800 128px Inter, sans-serif';
-      ctx.fillText(`${Math.round(totalWatchedHours)}h`, 122, 330);
-      ctx.fillStyle = 'rgba(237,247,255,0.95)';
-      ctx.font = '700 38px Inter, sans-serif';
-      ctx.fillText(`${totalWatched}/${totalEntries} watched`, 128, 390);
-      ctx.fillText(`${Object.values(rewatchCount).reduce((a, b) => a + (Number(b) || 0), 0)} re-watches`, 522, 390);
-
-      ctx.fillStyle = 'rgba(14,24,45,0.8)';
-      ctx.strokeStyle = 'rgba(146,185,255,0.26)';
-      ctx.beginPath();
-      ctx.roundRect(84, 474, 912, 760, 28);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = 'rgba(229,241,255,0.95)';
-      ctx.font = '700 42px Inter, sans-serif';
-      ctx.fillText('Recent history', 122, 548);
-
-      historyItems.slice(0, 5).forEach((item, idx) => {
-        const rowY = 608 + idx * 126;
-        ctx.fillStyle = idx % 2 ? 'rgba(255,255,255,0.035)' : 'rgba(255,255,255,0.02)';
-        ctx.beginPath();
-        ctx.roundRect(114, rowY - 46, 852, 98, 16);
-        ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,0.94)';
-        ctx.font = '700 31px Inter, sans-serif';
-        ctx.fillText(item.title.slice(0, 42), 136, rowY);
-        const normalizedRating = Number(myRating[item.id] || 0);
-        const ratingText = normalizedRating > 0 ? `${normalizedRating.toFixed(1)}/10 ★` : 'Unrated';
-        ctx.fillStyle = 'rgba(209,224,244,0.86)';
-        ctx.font = '600 24px Inter, sans-serif';
-        ctx.fillText(`${item.watchedDate || 'No date'} • ${ratingText} • Re-watch ${rewatchCount[item.id] || 0}`, 136, rowY + 34);
-      });
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-      if (!blob) return;
-      await saveImageToDevice(blob, 'mcu-analysis-card.png');
-    } catch (e) {
-      console.error('Failed to share analysis card', e);
-    }
+    await shareCardImage({ type: 'analysis', data: { featured: historyItems[0] || activeItems[0], rows: historyItems } });
   };
 
 
