@@ -621,7 +621,7 @@ export default function MCUViewer() {
   const [textScaleEnabled, setTextScaleEnabled] = useState(initialUiState.textScaleEnabled);
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : false));
   const [heroBackdropScale, setHeroBackdropScale] = useState(104);
-  const [heroBackdropOpacity, setHeroBackdropOpacity] = useState(0.7);
+  const [heroBackdropOpacity, setHeroBackdropOpacity] = useState(0.9);
   const [lightningStrike, setLightningStrike] = useState(false);
   const [spiderDrop, setSpiderDrop] = useState(false);
   const headerMinimized = false;
@@ -1084,8 +1084,6 @@ export default function MCUViewer() {
       if (listMode === 'core' && !coreIds.has(i.id)) return false;
       if (showAllFiltersOverride) return true;
       if (listMode === 'core' && essentialOnly && !i.essential) return false;
-      const statusFilterIsAutoHidden = statusFilter && HIDDEN_FILTER_STATUSES.has(statusFilter);
-      if (autoHideStatuses && !watchedOnly && !statusFilterIsAutoHidden && AUTO_HIDDEN_STATUSES.has(i.status)) return false;
       if (watchedOnly && i.status !== 'watched') return false;
       if (statusFilter && i.status !== statusFilter) return false;
       if (typeFilter && i.type !== typeFilter) return false;
@@ -2513,10 +2511,10 @@ export default function MCUViewer() {
         .hero-rail{scroll-behavior:smooth;contain:layout paint;mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);-webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
         .hero-rail::-webkit-scrollbar{height:0;width:0;display:none}
         .hero-poster-card{backface-visibility:hidden;transform:translateZ(0)}
-        .hero-backdrop-image{opacity:var(--backdrop-opacity,0.7);transform:scale(1);filter:saturate(1.08) contrast(1.03) brightness(1);border-radius:24px;box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 18%, transparent),0 24px 60px rgba(0,0,0,0.36);mask-image:radial-gradient(circle at center, #000 74%, rgba(0,0,0,0.78) 90%, transparent 100%);-webkit-mask-image:radial-gradient(circle at center, #000 74%, rgba(0,0,0,0.78) 90%, transparent 100%);transition:opacity 1400ms cubic-bezier(0.22,1,0.36,1),transform 1400ms cubic-bezier(0.22,1,0.36,1),filter 1400ms cubic-bezier(0.22,1,0.36,1)}
-        .hero-backdrop-blend{position:absolute;inset:8px;border-radius:24px;pointer-events:none;background:linear-gradient(180deg, rgba(4,6,12,0.22) 0%, rgba(4,6,12,0.1) 14%, rgba(4,6,12,0) 30%),linear-gradient(90deg, rgba(4,6,12,0.24) 0%, rgba(4,6,12,0.04) 10%, rgba(4,6,12,0.0) 20%, rgba(4,6,12,0.0) 80%, rgba(4,6,12,0.04) 90%, rgba(4,6,12,0.24) 100%);backdrop-filter:blur(2.5px);-webkit-backdrop-filter:blur(2.5px);opacity:var(--backdrop-opacity,0.7)}
-        .hero-backdrop-image.is-exiting{opacity:0;transform:scale(1.006);filter:blur(8px) saturate(0.96) brightness(0.88)}
-        @starting-style{.hero-backdrop-image:not(.is-exiting){opacity:0;transform:scale(1.012);filter:blur(9px) saturate(0.9) brightness(0.86)}}
+        .hero-backdrop-image{opacity:var(--backdrop-opacity,0.9);transform:scale(1);filter:saturate(1.14) contrast(1.06) brightness(1.03);border-radius:24px;box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 18%, transparent),0 24px 60px rgba(0,0,0,0.3);mask-image:radial-gradient(circle at center, #000 78%, rgba(0,0,0,0.85) 93%, transparent 100%);-webkit-mask-image:radial-gradient(circle at center, #000 78%, rgba(0,0,0,0.85) 93%, transparent 100%);transition:opacity 900ms cubic-bezier(0.22,1,0.36,1),transform 900ms cubic-bezier(0.22,1,0.36,1),filter 900ms cubic-bezier(0.22,1,0.36,1)}
+        .hero-backdrop-blend{position:absolute;inset:8px;border-radius:24px;pointer-events:none;background:linear-gradient(180deg, rgba(4,6,12,0.14) 0%, rgba(4,6,12,0.04) 14%, rgba(4,6,12,0) 30%),linear-gradient(90deg, rgba(4,6,12,0.14) 0%, rgba(4,6,12,0.02) 10%, rgba(4,6,12,0.0) 20%, rgba(4,6,12,0.0) 80%, rgba(4,6,12,0.02) 90%, rgba(4,6,12,0.14) 100%);opacity:var(--backdrop-opacity,0.9)}
+        .hero-backdrop-image.is-exiting{opacity:0;transform:scale(1.004);filter:saturate(1.04) contrast(1.01) brightness(0.96)}
+        @starting-style{.hero-backdrop-image:not(.is-exiting){opacity:0;transform:scale(1.01);filter:saturate(1.02) contrast(1.01) brightness(0.95)}}
         .phase-rows-full{display:block;position:relative}
         .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 220ms var(--ease-out),border-color 220ms var(--ease-out),transform 220ms var(--ease-out),box-shadow 260ms var(--ease-out);display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid transparent;min-height:var(--row-min-h,86px);border-radius:12px;overflow:hidden;background:transparent;backdrop-filter:none}
         .rrow:last-child{border-bottom:none}
@@ -3257,6 +3255,18 @@ export default function MCUViewer() {
               <div className="glass-panel" style={{ padding: 12, borderRadius: 12 }}><div style={{ color: T.textMuted, fontSize: 11 }}>RE-WATCHES</div><div style={{ fontSize: 24, fontWeight: 800 }}>{Object.values(rewatchCount).reduce((a, b) => a + (Number(b) || 0), 0)}</div></div>
             </div>
             <button className="fpill" onClick={shareAnalysisCard} style={{ marginBottom: 12 }}><Upload size={14}/>Share Analysis Card</button>
+            <div className="glass-panel" style={{ marginBottom: 10, padding: 10, borderRadius: 10, display: 'grid', gap: 8 }}>
+              <div style={{ fontSize: 11, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase' }}>Export Card Settings</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
+                {[{ id: 'inter', label: 'Inter' }, { id: 'grotesk', label: 'Grotesk' }, { id: 'manrope', label: 'Manrope' }, { id: 'marvel', label: 'Marvel' }].map(opt => (
+                  <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: opt.id === 'marvel' ? 'var(--font-marvel-display)' : opt.label, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
+                ))}
+              </div>
+              <label style={{ display: 'grid', gap: 4 }}>
+                <span style={{ fontSize: 11, color: T.textMuted }}>Export text size: {Math.round(exportTextScale * 100)}%</span>
+                <input type='range' min={90} max={150} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
+              </label>
+            </div>
             <div className="glass-panel" style={{ marginBottom: 10, padding: 10, borderRadius: 10, display: 'grid', gap: 8 }}>
               <div style={{ fontSize: 11, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase' }}>Review Card Theme</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 6 }}>
