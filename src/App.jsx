@@ -2090,11 +2090,13 @@ export default function MCUViewer() {
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
     const dropW = 240, dropH = 280;
+    const gap = 10;
     let x = rect.left - dropW + rect.width;
-    let y = rect.top - dropH - 8;
-    if (x < 8) x = 8;
-    if (x + dropW > window.innerWidth - 8) x = window.innerWidth - dropW - 8;
-    if (y < 8) y = rect.bottom + 8;
+    let y = rect.top - dropH - gap;
+    if (x < gap) x = gap;
+    if (x + dropW > window.innerWidth - gap) x = window.innerWidth - dropW - gap;
+    if (y < gap) y = rect.bottom + gap;
+    if (y + dropH > window.innerHeight - gap) y = Math.max(gap, window.innerHeight - dropH - gap);
     setDropdownPos({ x, y });
     setStatusDropdown(itemId);
   };
@@ -2262,7 +2264,7 @@ export default function MCUViewer() {
         <ChevDown size={12} style={{ opacity: 0.6, transform: phaseOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
       </button>
       {phaseOpen && (
-        <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: 'none', minWidth: 200 }}>
+        <div className="dropdown-pop" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 780, boxShadow: 'none', minWidth: 200 }}>
           <div className={`sopt ${activePhase === 0 ? 'picked' : ''}`} onClick={() => { setActivePhase(0); setPhaseOpen(false); }}>Phase All</div>
           {PHASES.map((ph) => (
             <div key={ph.id} className={`sopt ${activePhase === ph.id ? 'picked' : ''}`} style={activePhase === ph.id ? { color: ph.color, fontWeight: 700 } : {}} onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); setPhaseOpen(false); }}>{ph.name}</div>
@@ -2301,6 +2303,9 @@ export default function MCUViewer() {
 
         @keyframes fadeIn{from{opacity:0;transform:scale(0.97) translateY(-4px)}to{opacity:1;transform:scale(1) translateY(0)}}
         .fade-in{animation:fadeIn 240ms var(--ease-out) both}
+        .dropdown-pop,.dropdown-pop-up{opacity:1;transform:translate3d(0,0,0) scale(1);filter:blur(0);transition:opacity 220ms cubic-bezier(.22,1,.36,1),transform 220ms cubic-bezier(.22,1,.36,1),filter 220ms cubic-bezier(.22,1,.36,1);backdrop-filter:blur(16px) saturate(160%);-webkit-backdrop-filter:blur(16px) saturate(160%)}
+        .dropdown-pop{transform-origin:top left}.dropdown-pop-up{transform-origin:bottom right}
+        @starting-style{.dropdown-pop{opacity:0;transform:translate3d(0,-8px,0) scale(0.96);filter:blur(3px)}.dropdown-pop-up{opacity:0;transform:translate3d(0,8px,0) scale(0.96);filter:blur(3px)}}
 
         @keyframes expandDown{from{opacity:0;max-height:0;padding-top:0;padding-bottom:0}to{opacity:1;max-height:600px;padding-top:10px;padding-bottom:10px}}
         .expand-row{animation:expandDown 0.28s cubic-bezier(0.34,1.56,0.64,1) both;overflow:hidden}
@@ -2349,10 +2354,9 @@ export default function MCUViewer() {
         .hero-rail{scroll-behavior:auto;contain:layout paint;mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);-webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%)}
         .hero-rail::-webkit-scrollbar{height:0;width:0;display:none}
         .hero-poster-card{backface-visibility:hidden;transform:translateZ(0)}
-        .hero-backdrop-image{opacity:var(--backdrop-opacity,0.38);animation:posterBackdropSlideIn 900ms cubic-bezier(0.22,1,0.36,1) both;filter:saturate(1.12) contrast(1.04)}
-        .hero-backdrop-image.is-exiting{opacity:0;animation:posterBackdropSlideOut 900ms cubic-bezier(0.22,1,0.36,1) both}
-        @keyframes posterBackdropSlideIn{0%{opacity:0;transform:translate3d(3%,0,0);filter:blur(6px) saturate(0.96)}100%{opacity:var(--backdrop-opacity,0.38);transform:translate3d(0,0,0);filter:blur(0) saturate(1.12) contrast(1.04)}}
-        @keyframes posterBackdropSlideOut{0%{opacity:var(--backdrop-opacity,0.38);transform:translate3d(0,0,0)}100%{opacity:0;transform:translate3d(-3%,0,0);filter:blur(6px) saturate(0.98)}}
+        .hero-backdrop-image{opacity:var(--backdrop-opacity,0.38);transform:scale(1);filter:blur(0) saturate(1.12) contrast(1.04) brightness(1);transition:opacity 1400ms cubic-bezier(0.22,1,0.36,1),transform 1400ms cubic-bezier(0.22,1,0.36,1),filter 1400ms cubic-bezier(0.22,1,0.36,1)}
+        .hero-backdrop-image.is-exiting{opacity:0;transform:scale(1.006);filter:blur(12px) saturate(0.96) brightness(0.88)}
+        @starting-style{.hero-backdrop-image:not(.is-exiting){opacity:0;transform:scale(1.012);filter:blur(14px) saturate(0.9) brightness(0.86)}}
         .phase-rows-full{display:block;position:relative}
         .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 220ms var(--ease-out),border-color 220ms var(--ease-out),transform 220ms var(--ease-out),box-shadow 260ms var(--ease-out);display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid transparent;min-height:var(--row-min-h,86px);border-radius:12px;overflow:hidden;background:transparent;backdrop-filter:none}
         .rrow:last-child{border-bottom:none}
@@ -2405,10 +2409,13 @@ export default function MCUViewer() {
           .rrow{grid-template-columns:24px 44px minmax(0,1fr) !important;gap:8px;padding:14px 10px 14px 8px;min-height:96px}
           .rrow .row-actions{grid-column:2 / -1;flex-direction:row !important;align-items:center !important;justify-content:space-between !important;min-width:0 !important;width:100%;gap:8px}
           .calendar-row{grid-template-columns:minmax(74px,84px) 44px minmax(0,1fr) !important}
-          .bottom-action-dock{left:12px !important;right:12px !important;bottom:max(12px, env(safe-area-inset-bottom)) !important}
-          .dock-btn{font-size:11px !important;padding:9px 10px !important;min-height:40px}
-          .bottom-action-bar{min-height:40px;padding:9px 10px !important}
-          main > div{padding-bottom:130px !important}
+          .floating-controls{left:12px !important;right:12px !important;bottom:max(12px, env(safe-area-inset-bottom)) !important;align-items:stretch !important}
+          .floating-mode-switch,.bottom-action-dock{width:100%;justify-content:center}
+          .floating-mode-switch{overflow-x:auto;justify-content:flex-start}
+          .dock-btn{font-size:11px !important;padding:9px 10px !important;min-height:40px;flex:1 1 auto}
+          .bottom-action-bar{min-height:40px;padding:9px 10px !important;width:100%;justify-content:center}
+          .dock-status-menu{flex:1 1 auto}
+          main > div{padding-bottom:154px !important}
           .poster{width:44px;height:64px}
           .detail-layout{grid-template-columns:minmax(0,1fr) !important;gap:14px !important}
           .detail-layout img,.detail-fallback-poster{max-width:280px;margin:0 auto;max-height:360px}
@@ -2437,9 +2444,9 @@ export default function MCUViewer() {
         .stat-card-label { font-size: clamp(11px, 1.8vw, 14px) !important; }
         .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; color:var(--theme-text-muted) !important }
 
-        .settings-menu{width:min(360px,calc(100vw - 28px));max-height:min(80vh,calc(100dvh - 92px));overscroll-behavior:contain}.settings-menu .fpill{min-width:0}.bottom-action-dock{position:fixed;right:16px;bottom:16px;z-index:120;display:flex;gap:8px;align-items:center}
+        .settings-menu{width:min(360px,calc(100vw - 28px));max-height:min(80vh,calc(100dvh - 92px));overscroll-behavior:contain}.settings-menu .fpill{min-width:0}.floating-controls{position:fixed;right:16px;bottom:max(16px, env(safe-area-inset-bottom));z-index:620;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}.floating-controls>*{pointer-events:auto}.floating-mode-switch{display:flex;border-radius:999px;overflow:hidden;border:1px solid ${T.surfaceBorder};background:${darkMode ? 'rgba(10,14,28,0.93)' : 'rgba(255,255,255,0.95)'};box-shadow:none}.bottom-action-dock{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
         .dock-btn{border-radius:999px;border:1px solid ${T.surfaceBorder};background:${darkMode ? 'rgba(20,25,46,0.9)' : 'rgba(255,255,255,0.92)'};color:${T.text};padding:10px 12px;font-family:var(--font-marvel-ui);letter-spacing:1.1px;font-size:12px;cursor:pointer;white-space:nowrap}
-        .bottom-action-bar{border-radius:999px;padding:10px 14px;white-space:nowrap}
+        .bottom-action-bar{border-radius:999px;padding:10px 14px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
         main,.rrow,.title-btn,.fpill,.wbtn,.sopt,.meta-muted,input,textarea,select,button,.header-tagline{font-size:calc(1em * var(--text-scale))}
         main::-webkit-scrollbar{width:4px}
         main::-webkit-scrollbar-track{background:transparent}
@@ -2702,7 +2709,7 @@ export default function MCUViewer() {
                   <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                 </button>
                 {sortOpen && (
-                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: 'none', minWidth: 200 }}>
+                  <div className="dropdown-pop" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 780, boxShadow: 'none', minWidth: 200 }}>
                     {Object.entries(SORT_LABELS).map(([k, v]) => (
                       <div key={k} className={`sopt ${sortBy === k ? 'picked' : ''}`} onClick={() => { setSortBy(k); setSortOpen(false); }}>{v}</div>
                     ))}
@@ -2742,7 +2749,7 @@ export default function MCUViewer() {
                   <Check size={10} />Status
                 </button>
                 {filterStatusOpen && (
-                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: 'none', minWidth: 180 }}
+                  <div className="dropdown-pop" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 780, boxShadow: 'none', minWidth: 180 }}
                     >
                     <div className={`sopt ${!statusFilter && !watchedOnly ? 'picked' : ''}`} onClick={() => { setStatusFilter(null); setWatchedOnly(false); setFilterStatusOpen(false); }}>Show all status</div>
                     <div className={`sopt ${watchedOnly ? 'picked' : ''}`} onClick={() => { setWatchedOnly(true); setStatusFilter(null); setFilterStatusOpen(false); }}>Watched only</div>
@@ -2778,8 +2785,8 @@ export default function MCUViewer() {
           </div>
         )}
       </div>
-      <div style={{ position: 'fixed', right: 16, bottom: isDesktopViewport ? 76 : 134, zIndex: 230 }}>
-        <div style={{ display: 'flex', borderRadius: 999, overflow: 'hidden', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(10,14,28,0.93)' : 'rgba(255,255,255,0.95)', boxShadow: 'none' }}>
+      <div className="floating-controls">
+        <div className="floating-mode-switch">
           {LIST_MODES.map(mode => {
             const active = listMode === mode.id;
             return (
@@ -2790,10 +2797,9 @@ export default function MCUViewer() {
             );
           })}
         </div>
-      </div>
 
-      {/* ━━ JUMP NEXT BUTTON ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div className="bottom-action-dock">
+        {/* ━━ JUMP NEXT BUTTON ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+        <div className="bottom-action-dock">
         <button type="button" onClick={handleMetadataBuildClick} className="dock-btn"
           style={{ borderColor: metadataBuild.status === 'running' ? 'var(--theme-warning)' : T.surfaceBorder }}>
           {metadataBuild.status === 'running' ? `Fetch ${metadataBuild.done}/${metadataBuild.total}` : 'Fetch'}
@@ -2814,7 +2820,7 @@ export default function MCUViewer() {
             Status Menu <ChevDown size={12} style={{ transform: dockStatusOpen ? 'rotate(180deg)' : 'none' }} />
           </button>
           {dockStatusOpen && (
-            <div className="fade-in" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, minWidth: 172, background: darkMode ? 'rgba(17,21,39,0.92)' : 'rgba(255,255,255,0.92)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 10, overflow: 'hidden', boxShadow: 'none', color: 'var(--theme-text)' }}>
+            <div className="dropdown-pop-up" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, minWidth: 172, zIndex: 640, background: darkMode ? 'rgba(17,21,39,0.92)' : 'rgba(255,255,255,0.92)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 10, overflow: 'hidden', boxShadow: 'none', color: 'var(--theme-text)' }}>
               <div className="sopt" onClick={() => { setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setDockStatusOpen(false); }}>All statuses</div>
               <div className="sopt" onClick={() => { setWatchedOnly(true); setStatusFilter(null); setAutoHideStatuses(false); setDockStatusOpen(false); }}>Watched</div>
               <div className="sopt" onClick={() => { setStatusFilter('watching'); setWatchedOnly(false); setDockStatusOpen(false); }}>Watching</div>
@@ -2824,6 +2830,7 @@ export default function MCUViewer() {
             </div>
           )}
         </div>
+      </div>
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
@@ -3128,9 +3135,9 @@ export default function MCUViewer() {
         const activeItem = items.find(i => i.id === statusDropdown);
         return (
           <>
-            <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={() => setStatusDropdown(null)} aria-hidden="true" />
-            <div className="fade-in" role="dialog" aria-label="Set watch status"
-              style={{ position: 'fixed', top: dropdownPos.y, left: dropdownPos.x, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 11, padding: '9px', zIndex: 999, boxShadow: 'none', minWidth: 235 }}>
+            <div style={{ position: 'fixed', inset: 0, zIndex: 9999 }} onClick={() => setStatusDropdown(null)} aria-hidden="true" />
+            <div className="dropdown-pop" role="dialog" aria-label="Set watch status"
+              style={{ position: 'fixed', top: dropdownPos.y, left: dropdownPos.x, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 11, padding: '9px', zIndex: 10000, boxShadow: 'none', minWidth: 235 }}>
               <div style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 10, letterSpacing: 2, color: T.textMuted, marginBottom: 7, paddingBottom: 7, borderBottom: `1px solid ${T.surfaceBorder}`, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 215 }}>
                 {activeItem?.title}
               </div>
