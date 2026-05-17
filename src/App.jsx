@@ -587,10 +587,6 @@ export default function MCUViewer() {
   }, []);
 
   useEffect(() => {
-    if (isDesktopViewport) setSidebarOpen(false);
-  }, [isDesktopViewport]);
-
-  useEffect(() => {
     const hasOverlay = sidebarOpen || settingsOpen || detailItem || analyticsOpen;
     if (!hasOverlay) return;
     window.history.pushState({ mcuOverlay: true }, '');
@@ -1121,19 +1117,13 @@ export default function MCUViewer() {
       setHeroTransitioning(false);
       return;
     }
-    const pickRandomIndex = (excludeIndex = -1) => {
+    const getNextIndex = (fromIndex) => {
       if (heroPosters.length <= 1) return 0;
-      let next = Math.floor(Math.random() * heroPosters.length);
-      if (next === excludeIndex) next = (next + 1 + Math.floor(Math.random() * (heroPosters.length - 1))) % heroPosters.length;
-      return next;
+      return (fromIndex + 1) % heroPosters.length;
     };
     const normalizedIndex = heroIndex % heroPosters.length;
-    heroPosters.slice(0, Math.min(6, heroPosters.length)).forEach((src) => {
-      const img = new Image();
-      img.src = src;
-    });
     const preloadNext = (fromIndex) => {
-      const nextSrcCandidate = heroPosters[pickRandomIndex(fromIndex)];
+      const nextSrcCandidate = heroPosters[getNextIndex(fromIndex)];
       if (!nextSrcCandidate) return;
       const img = new Image();
       img.src = nextSrcCandidate;
@@ -1156,7 +1146,7 @@ export default function MCUViewer() {
     heroIntervalRef.current = window.setInterval(() => {
       setHeroIndex((i) => {
         const currentIndex = i % heroPosters.length;
-        const upcomingIndex = pickRandomIndex(currentIndex);
+        const upcomingIndex = getNextIndex(currentIndex);
         const upcomingSrc = heroPosters[upcomingIndex];
         if (!upcomingSrc) return upcomingIndex;
         const img = new Image();
@@ -1190,7 +1180,7 @@ export default function MCUViewer() {
         heroIntervalRef.current = window.setInterval(() => {
           setHeroIndex((i) => {
             const currentIndex = i % heroPosters.length;
-            const upcomingIndex = pickRandomIndex(currentIndex);
+            const upcomingIndex = getNextIndex(currentIndex);
             const upcomingSrc = heroPosters[upcomingIndex];
         if (!upcomingSrc) return upcomingIndex;
             const img = new Image();
@@ -2093,8 +2083,8 @@ export default function MCUViewer() {
   const T = darkMode ? {
     appBg: '#06060f', headerBg: 'linear-gradient(180deg,#0d0d1e 0%,#06060f 100%)',
     headerBorder: '#13132a', navBg: '#08081a', navBorder: '#13132a',
-    filterBg: '#07071a', filterBorder: '#10101f',
-    surfaceBg: '#0b0b1c', surfaceBorder: '#12122a',
+    filterBg: 'transparent', filterBorder: '#10101f',
+    surfaceBg: 'transparent', surfaceBorder: '#12122a',
     rowHoverBg: 'rgba(255,255,255,0.04)', rowWatchedBg: 'rgba(62,196,122,0.22)',
     rowBorder: '#0e0e1e', expandBg: '#090916', expandBorder: '#14142a',
     pillBg: '#0d0d1e', pillBorder: '#1a1a2e', pillText: '#6a7a90',
@@ -2106,12 +2096,12 @@ export default function MCUViewer() {
     numFaint: '#4a5566', footerText: '#1e2a38',
     scrollTrack: '#07070f', scrollThumb: '#16162a', scrollThumbH: '#222238',
     hexDot: 'rgba(255,255,255,0.01)', switcherBg: '#080818', switcherBorder: '#13132a',
-    phaseSummaryBg: '#08081c', phaseSummaryBorder: '#13132a',
+    phaseSummaryBg: 'transparent', phaseSummaryBorder: '#13132a',
   } : {
     appBg: '#f2f0eb', headerBg: 'linear-gradient(180deg,#ffffff 0%,#f2f0eb 100%)',
     headerBorder: '#ddd8d0', navBg: '#ffffff', navBorder: '#e8e2d8',
-    filterBg: 'rgba(250,248,244,0.52)', filterBorder: 'rgba(214,205,194,0.58)',
-    surfaceBg: '#ffffff', surfaceBorder: '#e0dbd2',
+    filterBg: 'transparent', filterBorder: 'rgba(214,205,194,0.58)',
+    surfaceBg: 'transparent', surfaceBorder: '#e0dbd2',
     rowHoverBg: 'rgba(0,0,0,0.025)', rowWatchedBg: 'rgba(62,196,122,0.15)',
     rowBorder: '#ede8e0', expandBg: '#faf7f2', expandBorder: '#e4ddd4',
     pillBg: '#f0ece4', pillBorder: '#ddd8cf', pillText: '#6a7080',
@@ -2123,7 +2113,7 @@ export default function MCUViewer() {
     numFaint: '#a0a8b0', footerText: '#a0a8b0',
     scrollTrack: '#ece8e0', scrollThumb: '#ccc8c0', scrollThumbH: '#b8b4ac',
     hexDot: 'rgba(0,0,0,0.025)', switcherBg: '#f8f5f0', switcherBorder: '#e4ddd4',
-    phaseSummaryBg: 'rgba(245,242,236,0.58)', phaseSummaryBorder: 'rgba(214,205,194,0.5)',
+    phaseSummaryBg: 'transparent', phaseSummaryBorder: 'rgba(214,205,194,0.5)',
   };
 
   const THEME_CHOICES = [
@@ -2247,12 +2237,12 @@ export default function MCUViewer() {
   const renderPhaseSelector = () => (
     <div ref={phaseRef} style={{ position: 'relative', flex: '0 0 auto' }}>
       <button className="fpill" onClick={() => setPhaseOpen(o => !o)}
-        style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '5px 10px', color: activePhase === 0 ? T.textMuted : (PHASES.find(ph => ph.id === activePhase)?.color || T.text), background: T.filterBg, fontFamily: 'var(--font-marvel-ui)', fontSize: 12, letterSpacing: 1.4, whiteSpace: 'nowrap' }}>
+        style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '5px 10px', color: activePhase === 0 ? T.textMuted : (PHASES.find(ph => ph.id === activePhase)?.color || T.text), background: 'transparent', fontFamily: 'var(--font-marvel-ui)', fontSize: 12, letterSpacing: 1.4, whiteSpace: 'nowrap' }}>
         {activePhase === 0 ? 'Phase All' : (PHASES.find(ph => ph.id === activePhase)?.name || 'Phase All')}
         <ChevDown size={12} style={{ opacity: 0.6, transform: phaseOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
       </button>
       {phaseOpen && (
-        <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: 'none', minWidth: 200 }}>
+        <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: 'none', minWidth: 200 }}>
           <div className={`sopt ${activePhase === 0 ? 'picked' : ''}`} onClick={() => { setActivePhase(0); setPhaseOpen(false); }}>Phase All</div>
           {PHASES.map((ph) => (
             <div key={ph.id} className={`sopt ${activePhase === ph.id ? 'picked' : ''}`} style={activePhase === ph.id ? { color: ph.color, fontWeight: 700 } : {}} onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); setPhaseOpen(false); }}>{ph.name}</div>
@@ -2337,6 +2327,7 @@ export default function MCUViewer() {
         .curvy-panel::before{display:none}
 
         .section-up{content-visibility:visible;contain-intrinsic-size:auto}
+        .hero-rail::-webkit-scrollbar{height:0;width:0;display:none}
         .phase-rows-full{display:block}
         .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 0.14s ease,border-color 0.14s ease;display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:var(--row-min-h,86px);border-radius:12px;overflow:hidden;background:rgba(8,14,28,0.34);backdrop-filter:blur(7px)}
         .rrow:last-child{border-bottom:none}
@@ -2432,16 +2423,16 @@ export default function MCUViewer() {
       `}</style>
 
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: (heroTransitioning && nextHeroSrc) ? `url(${nextHeroSrc})` : (currentHeroSrc ? `url(${currentHeroSrc})` : 'none'), backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: 0.1, transition: 'opacity 0.55s ease-in-out' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: (heroTransitioning && nextHeroSrc) ? `url(${nextHeroSrc})` : (currentHeroSrc ? `url(${currentHeroSrc})` : 'none'), backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: 0.24, transition: 'opacity 0.9s ease-in-out', willChange: 'opacity' }} />
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: heroTransitioning ? 0.55 : 1, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
-        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${darkMode ? 'rgba(4,5,15,0.05)' : 'rgba(255,255,255,0.08)'} 0%, ${darkMode ? 'rgba(4,5,15,0.18)' : 'rgba(231,238,248,0.22)'} 45%, ${darkMode ? 'rgba(4,5,15,0.52)' : 'rgba(231,238,248,0.58)'} 70%, ${darkMode ? 'rgba(4,5,15,0.96)' : 'rgba(231,238,248,0.96)'} 100%)` }} />
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${darkMode ? 'rgba(4,5,15,0.03)' : 'rgba(255,255,255,0.06)'} 0%, ${darkMode ? 'rgba(4,5,15,0.12)' : 'rgba(231,238,248,0.18)'} 45%, ${darkMode ? 'rgba(4,5,15,0.46)' : 'rgba(231,238,248,0.5)'} 70%, ${darkMode ? 'rgba(4,5,15,0.92)' : 'rgba(231,238,248,0.92)'} 100%)` }} />
       </div>
       {lightningStrike && <div style={{ position:'fixed', inset:0, pointerEvents:'none', background:'linear-gradient(180deg, rgba(180,220,255,0.95), rgba(255,255,255,0))', mixBlendMode:'screen', zIndex:9999, animation:'fadeInOut 0.7s ease' }} />}
       {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {!isDesktopViewport && <button className="theme-btn" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar menu" style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 10px)', left: 12, zIndex: 280, width: 44, height: 44, background: darkMode ? 'rgba(10,14,28,0.94)' : '#ffffff', borderColor: darkMode ? 'rgba(255,255,255,0.24)' : T.pillBorder, boxShadow: darkMode ? '0 8px 24px rgba(0,0,0,0.35)' : '0 6px 16px rgba(0,0,0,0.12)' }}><Menu size={17} /></button>}
-      {!isDesktopViewport && sidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 255 }} />}
+      <button className="theme-btn" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar menu" style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 10px)', left: 12, zIndex: 280, width: 44, height: 44, background: darkMode ? 'rgba(10,14,28,0.94)' : '#ffffff', borderColor: darkMode ? 'rgba(255,255,255,0.24)' : T.pillBorder, boxShadow: darkMode ? '0 8px 24px rgba(0,0,0,0.35)' : '0 6px 16px rgba(0,0,0,0.12)' }}><Menu size={17} /></button>
+      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 255 }} />}
       <aside ref={sidebarRef} style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 'min(320px,84vw)', padding: '86px 14px 20px', background: darkMode ? 'rgba(7,9,20,0.58)' : 'rgba(255,255,255,0.58)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRight: `1px solid ${T.surfaceBorder}`, transform: sidebarOpen ? 'translateX(0)' : 'translateX(-105%)', transition: 'transform 0.34s cubic-bezier(.22,.9,.24,1)', zIndex: 260, overflowY: 'auto', boxShadow: darkMode ? '0 22px 55px rgba(0,0,0,0.45)' : '0 18px 44px rgba(0,0,0,0.18)', borderRadius: 16 }}>
         <div style={{ marginBottom: 8, fontSize: 11, letterSpacing: 1.8, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)', textTransform: 'uppercase' }}>Navigation Panel</div>
         <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
@@ -2522,7 +2513,8 @@ export default function MCUViewer() {
                   <img src={src} alt={`Avatar ${idx + 1}`} style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: '50%', objectFit: 'cover' }} />
                 </button>
               ))}
-              <label title="Upload custom avatar" style={{ border: `1px dashed ${T.inputBorder}`, borderRadius: '999px', padding: 2, display: 'grid', placeItems: 'center', cursor: 'pointer', minHeight: 44, color: T.textMuted }}>
+              <label title="Upload custom avatar" style={{ border: `1px dashed ${T.inputBorder}`, borderRadius: '999px', padding: 2, display: 'grid', placeItems: 'center', cursor: 'pointer',
+                    willChange: 'transform', minHeight: 44, color: T.textMuted }}>
                 <div style={{ display: 'grid', placeItems: 'center', fontSize: 11, gap: 2 }}>
                   <Upload size={13} />
                   <span>Custom +</span>
@@ -2584,29 +2576,51 @@ export default function MCUViewer() {
       </header>
 
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ position: 'relative', height: isDesktopViewport ? 380 : 280, background: 'transparent', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 210 }}>
+      <div style={{ position: 'relative', height: isDesktopViewport ? 460 : 340, background: 'transparent', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 210 }}>
         {heroPosters.length > 0 && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 14px', animation: 'scrollRail 24s linear infinite' }}>
-            {[...Array(isDesktopViewport ? 12 : 8)].map((_, idx) => {
+          <div className="hero-rail"
+            onWheel={(e) => {
+              const rail = e.currentTarget;
+              const delta = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+              rail.scrollLeft += delta;
+              e.preventDefault();
+            }}
+            style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 14px', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: isDesktopViewport ? 'x proximity' : 'x mandatory', scrollPaddingInline: isDesktopViewport ? '14vw' : '8vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+            {[...Array(isDesktopViewport ? 18 : 12)].map((_, idx) => {
               const src = heroPosters[(heroIndex + idx) % heroPosters.length] || currentHeroSrc;
               const isActive = src === (heroTransitioning && nextHeroSrc ? nextHeroSrc : currentHeroSrc);
               return (
                 <img
-                  key={`hero-rail-${idx}-${src}`}
+                  key={`hero-rail-${idx}`}
                   src={src}
                   alt="Featured poster"
+                  onClick={() => { const clicked = filtered.find(i => posterSrc(i) === src); if (clicked) setDetailItem(clicked); }}
+                  onMouseMove={(e) => {
+                    const card = e.currentTarget;
+                    const rect = card.getBoundingClientRect();
+                    const px = (e.clientX - rect.left) / rect.width;
+                    const py = (e.clientY - rect.top) / rect.height;
+                    card.style.setProperty('--rx', `${(0.5 - py) * 4}deg`);
+                    card.style.setProperty('--ry', `${(px - 0.5) * 5}deg`);
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.setProperty('--rx', '0deg');
+                    e.currentTarget.style.setProperty('--ry', '0deg');
+                  }}
                   style={{
-                    height: isDesktopViewport ? 330 : 236,
-                    width: isDesktopViewport ? 220 : 156,
+                    height: isDesktopViewport ? 400 : 290,
+                    width: isDesktopViewport ? 265 : 198,
                     objectFit: 'cover',
                     borderRadius: 16,
                     border: `1px solid ${isActive ? 'color-mix(in srgb, var(--theme-accent) 42%, white)' : 'rgba(255,255,255,0.16)'}`,
                     boxShadow: isActive ? '0 20px 50px rgba(0,0,0,0.5)' : '0 10px 28px rgba(0,0,0,0.34)',
                     opacity: isActive ? 1 : 0.7,
-                    transform: isActive ? 'scale(1.05) translateY(-6px)' : 'scale(0.95)',
-                    transition: 'transform 360ms ease, opacity 360ms ease, box-shadow 360ms ease, border-color 360ms ease',
+                    transform: `perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) ${isActive ? 'scale(1.05) translateY(-6px)' : 'scale(0.95)'}` ,
+                    transition: 'transform 260ms ease, opacity 360ms ease, box-shadow 360ms ease, border-color 360ms ease',
                     animation: isActive ? 'heroPop 640ms ease' : 'none',
                     flexShrink: 0,
+                    scrollSnapAlign: 'center',
+                    cursor: 'pointer',
                   }}
                 />
               );
@@ -2622,7 +2636,7 @@ export default function MCUViewer() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
             <button
               onClick={() => setFiltersOpen(v => !v)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: `1px solid ${filtersOpen ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: filtersOpen ? 'color-mix(in srgb, var(--theme-accent) 10%, var(--theme-surface))' : T.filterBg, color: filtersOpen ? 'var(--theme-accent)' : T.textMuted, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 2, transition: 'all 0.18s' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: `1px solid ${filtersOpen ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: filtersOpen ? 'var(--theme-accent)' : T.textMuted, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 2, transition: 'all 0.18s' }}
             >
               <SlidersH size={13} />
               Filters
@@ -2632,7 +2646,7 @@ export default function MCUViewer() {
               <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             {renderPhaseSelector()}
-            <button className="glass-grad" onClick={() => nextUnwatched && setDetailItem(nextUnwatched)} style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 360, background: T.filterBg, cursor: nextUnwatched ? 'pointer' : 'default' }}>
+            <button className="glass-grad" onClick={() => nextUnwatched && setDetailItem(nextUnwatched)} style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 360, background: 'transparent', cursor: nextUnwatched ? 'pointer' : 'default' }}>
               <span style={{ fontSize: 10, letterSpacing: 1.6, color: T.textMuted, textTransform: 'uppercase' }}>Continue</span>
               <span style={{ fontSize: 12, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</span>
             </button>
@@ -2659,7 +2673,7 @@ export default function MCUViewer() {
                   <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                 </button>
                 {sortOpen && (
-                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: 'none', minWidth: 200 }}>
+                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: 'none', minWidth: 200 }}>
                     {Object.entries(SORT_LABELS).map(([k, v]) => (
                       <div key={k} className={`sopt ${sortBy === k ? 'picked' : ''}`} onClick={() => { setSortBy(k); setSortOpen(false); }}>{v}</div>
                     ))}
@@ -2699,7 +2713,7 @@ export default function MCUViewer() {
                   <Check size={10} />Status
                 </button>
                 {filterStatusOpen && (
-                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: 'none', minWidth: 180 }}
+                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: 'none', minWidth: 180 }}
                     >
                     <div className={`sopt ${!statusFilter && !watchedOnly ? 'picked' : ''}`} onClick={() => { setStatusFilter(null); setWatchedOnly(false); setFilterStatusOpen(false); }}>Show all status</div>
                     <div className={`sopt ${watchedOnly ? 'picked' : ''}`} onClick={() => { setWatchedOnly(true); setStatusFilter(null); setFilterStatusOpen(false); }}>Watched only</div>
@@ -2735,7 +2749,7 @@ export default function MCUViewer() {
           </div>
         )}
       </div>
-      <div style={{ position: 'fixed', right: 16, bottom: isDesktopViewport ? 20 : 74, zIndex: 230 }}>
+      <div style={{ position: 'fixed', right: isDesktopViewport ? 176 : 16, bottom: isDesktopViewport ? 20 : 74, zIndex: 230 }}>
         <div style={{ display: 'flex', borderRadius: 999, overflow: 'hidden', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(10,14,28,0.93)' : 'rgba(255,255,255,0.95)', boxShadow: darkMode ? '0 10px 26px rgba(0,0,0,0.4)' : '0 8px 20px rgba(0,0,0,0.12)' }}>
           {LIST_MODES.map(mode => {
             const active = listMode === mode.id;
@@ -2838,7 +2852,7 @@ export default function MCUViewer() {
                 )}
 
                 {/* Phase divider */}
-                <div className="curvy-panel" style={{ '--phase-color': ph.color, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap', padding: '10px 10px 10px 12px', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? `linear-gradient(120deg, color-mix(in srgb, var(--theme-accent) 12%, color-mix(in srgb, ${ph.color} 20%, transparent)), rgba(22,20,38,0.38))` : `linear-gradient(120deg, color-mix(in srgb, var(--theme-accent) 6%, color-mix(in srgb, ${ph.color} 11%, #fff)), rgba(255,255,255,0.7))` }}>
+                <div className="curvy-panel" style={{ '--phase-color': ph.color, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap', padding: '10px 10px 10px 12px', border: `1px solid ${T.surfaceBorder}`, background: 'transparent' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: 'var(--font-marvel-display)', fontSize: 'clamp(23px, 3vw, 28px)', letterSpacing: 2.2, color: ph.color, lineHeight: 1, fontWeight: 700, textShadow: darkMode ? `0 0 18px ${ph.glow}` : 'none' }}>
                       {ph.name}
@@ -3088,7 +3102,7 @@ export default function MCUViewer() {
           <>
             <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={() => setStatusDropdown(null)} aria-hidden="true" />
             <div className="fade-in" role="dialog" aria-label="Set watch status"
-              style={{ position: 'fixed', top: dropdownPos.y, left: dropdownPos.x, background: 'var(--comp-dropdown-bg)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 11, padding: '9px', zIndex: 999, boxShadow: 'none', minWidth: 235 }}>
+              style={{ position: 'fixed', top: dropdownPos.y, left: dropdownPos.x, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 11, padding: '9px', zIndex: 999, boxShadow: 'none', minWidth: 235 }}>
               <div style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 10, letterSpacing: 2, color: T.textMuted, marginBottom: 7, paddingBottom: 7, borderBottom: `1px solid ${T.surfaceBorder}`, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 215 }}>
                 {activeItem?.title}
               </div>
