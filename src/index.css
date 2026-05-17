@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap');
 /* ═══════════════════════════════════════════════════════════════════════════
    MCU VIEWING TRACKER — Core Design Tokens
    Cinematic dark interface for timeline-driven viewing workflows
@@ -49,10 +49,13 @@
   --duration-cinematic: 600ms;
   
   /* Typography Roles */
-  --sans: "Inter", "Manrope", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Space Grotesk", "Manrope", "Inter", system-ui, sans-serif;
-  --font-ui: "Manrope", "Inter", system-ui, sans-serif;
-  --font-body: "Inter", "Manrope", system-ui, sans-serif;
+  --sans: "Outfit", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Bebas Neue", "Rajdhani", "Outfit", system-ui, sans-serif;
+  --font-ui: "Rajdhani", "Outfit", system-ui, sans-serif;
+  --font-body: "Outfit", "Rajdhani", system-ui, sans-serif;
+  --font-marvel-display: var(--font-display);
+  --font-marvel-ui: var(--font-ui);
+  --font-marvel-body: var(--font-body);
   --mono: "SF Mono", "Monaco", "Menlo", "Consolas", monospace;
   
   font: 16px/1.5 var(--sans);
@@ -522,12 +525,6 @@ a:hover {
 /* ── Performance Mode Overrides ─────────────────────────────────────────────── */
 .performance-mode * {
   animation: none !important;
-  transition-duration: 0ms !important;
-}
-
-.performance-mode .liquid-glass {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
 }
 
 /* ── Aurora Background Effect ───────────────────────────────────────────────── */

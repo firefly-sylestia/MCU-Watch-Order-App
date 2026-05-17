@@ -111,7 +111,9 @@ const UI_STATE_DEFAULTS = {
   densityMode: 'comfortable',
   timelineMode: 'sacred',
   autoHideStatuses: false,
-  performanceMode: false,
+  performanceMode: true,
+  desktopTextScale: 1,
+  textScaleEnabled: false,
   scrollTop: 0,
 };
 
@@ -122,6 +124,7 @@ const VALID_TYPES = new Set([null, ...Object.keys(TYPE_META)]);
 const VALID_STATUSES = new Set([null, ...Object.keys(STATUS_META)]);
 const VALID_DENSITY_MODES = new Set(['comfortable', 'compact']);
 const VALID_TIMELINE_MODES = new Set(['sacred', 'studio', 'whatif']);
+const VALID_DESKTOP_TEXT_SCALES = new Set(DESKTOP_TEXT_SCALES);
 const AUTO_HIDDEN_STATUSES = HIDDEN_FILTER_STATUSES;
 
 const readSavedUiState = () => {
@@ -146,6 +149,8 @@ const readSavedUiState = () => {
       timelineMode: VALID_TIMELINE_MODES.has(saved.timelineMode) ? saved.timelineMode : UI_STATE_DEFAULTS.timelineMode,
       autoHideStatuses: typeof saved.autoHideStatuses === 'boolean' ? saved.autoHideStatuses : UI_STATE_DEFAULTS.autoHideStatuses,
       performanceMode: typeof saved.performanceMode === 'boolean' ? saved.performanceMode : UI_STATE_DEFAULTS.performanceMode,
+      desktopTextScale: VALID_DESKTOP_TEXT_SCALES.has(Number(saved.desktopTextScale)) ? Number(saved.desktopTextScale) : UI_STATE_DEFAULTS.desktopTextScale,
+      textScaleEnabled: typeof saved.textScaleEnabled === 'boolean' ? saved.textScaleEnabled : UI_STATE_DEFAULTS.textScaleEnabled,
       scrollTop: Number.isFinite(Number(saved.scrollTop)) ? Math.max(0, Number(saved.scrollTop)) : UI_STATE_DEFAULTS.scrollTop,
     };
   } catch {
@@ -156,7 +161,8 @@ const readSavedUiState = () => {
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const isAgentsOfShieldCarouselDuplicate = (item) => /agents of shield/i.test(item?.title || '');
-const HERO_ROTATION_MS = 2600;
+const HERO_ROTATION_MS = 10000;
+const HERO_VISIBLE_COUNT = 15;
 const HERO_PRELOAD_AHEAD = 12;
 const loadedHeroPosterSrcs = new Set();
 const heroPosterLoadPromises = new Map();
@@ -520,13 +526,91 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
 });
 
 
-const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
+const useWindowVirtualRange = (rowCount, estimateSize = 96, overscan = 7) => {
+  const parentRef = useRef(null);
+  const [range, setRange] = useState({ start: 0, end: Math.min(rowCount - 1, 18) });
+
+  const updateRange = useCallback(() => {
+    const parent = parentRef.current;
+    if (!parent || rowCount <= 0 || typeof window === 'undefined') {
+      setRange({ start: 0, end: Math.min(rowCount - 1, 18) });
+      return;
+    }
+    const rect = parent.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 800;
+    const start = Math.max(0, Math.floor((-rect.top) / estimateSize) - overscan);
+    const end = Math.min(rowCount - 1, Math.ceil((viewportHeight - rect.top) / estimateSize) + overscan);
+    setRange(prev => (prev.start === start && prev.end === end ? prev : { start, end }));
+  }, [estimateSize, overscan, rowCount]);
+
+  useEffect(() => {
+    updateRange();
+    if (typeof window === 'undefined') return undefined;
+    window.addEventListener('scroll', updateRange, { passive: true });
+    window.addEventListener('resize', updateRange);
+    return () => {
+      window.removeEventListener('scroll', updateRange);
+      window.removeEventListener('resize', updateRange);
+    };
+  }, [updateRange]);
+
+  useEffect(() => {
+    updateRange();
+  }, [rowCount, estimateSize, updateRange]);
+
+  return { parentRef, range, totalSize: Math.max(0, rowCount * estimateSize) };
+};
+
+const PhaseRows = React.memo(function PhaseRows({ rows, renderRow, estimateHeight = 96 }) {
+  const { parentRef, range, totalSize } = useWindowVirtualRange(rows.length, estimateHeight, 8);
+  const visibleRows = rows.slice(range.start, range.end + 1);
+
   return (
-    <div className="phase-rows-full">
-      {rows.map((item, idx) => renderRow(item, idx))}
+    <div ref={parentRef} className="phase-rows-full virtual-phase-rows" style={{ height: totalSize, position: 'relative', contain: 'layout style paint' }}>
+      {visibleRows.map((item, offset) => {
+        const idx = range.start + offset;
+        return (
+          <div key={item.id} className="virtual-phase-row" style={{ position: 'absolute', left: 0, right: 0, top: idx * estimateHeight, minHeight: estimateHeight }}>
+            {renderRow(item, idx)}
+          </div>
+        );
+      })}
     </div>
   );
 });
+
+const useHeroCarouselEngine = ({ activeKey, performanceMode, onUserIntent }) => {
+  const viewportRef = useRef(null);
+  const activeSlideRef = useRef(null);
+  const programmaticScrollRef = useRef(false);
+
+  const scrollActiveToCenter = useCallback(() => {
+    if (!activeSlideRef.current || !viewportRef.current || typeof window === 'undefined') return;
+    const behavior = performanceMode ? 'auto' : 'smooth';
+    programmaticScrollRef.current = true;
+    activeSlideRef.current.scrollIntoView({ behavior, block: 'nearest', inline: 'center' });
+    window.setTimeout(() => { programmaticScrollRef.current = false; }, performanceMode ? 120 : 520);
+  }, [performanceMode]);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(scrollActiveToCenter);
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeKey, scrollActiveToCenter]);
+
+  const onScroll = useCallback(() => {
+    if (!programmaticScrollRef.current) onUserIntent?.(1800);
+  }, [onUserIntent]);
+
+  const bindViewport = useMemo(() => ({
+    ref: viewportRef,
+    onScroll,
+    onPointerDown: () => onUserIntent?.(3200),
+    onTouchStart: () => onUserIntent?.(3200),
+  }), [onScroll, onUserIntent]);
+
+  return { bindViewport, activeSlideRef, scrollActiveToCenter };
+};
+
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function MCUViewer() {
   const initialUiState = useMemo(() => readSavedUiState(), []);
@@ -607,7 +691,8 @@ export default function MCUViewer() {
   const [snapMode, setSnapMode] = useState(false);
   const [spiderSense, setSpiderSense] = useState(false);
   const [multiverseShuffle, setMultiverseShuffle] = useState(false);
-  const [desktopTextScale, setDesktopTextScale] = useState(1);
+  const [desktopTextScale, setDesktopTextScale] = useState(initialUiState.desktopTextScale);
+  const [textScaleEnabled, setTextScaleEnabled] = useState(initialUiState.textScaleEnabled);
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : false));
   const [lightningStrike, setLightningStrike] = useState(false);
   const [spiderDrop, setSpiderDrop] = useState(false);
@@ -620,7 +705,8 @@ export default function MCUViewer() {
   const settingsRef= useRef(null);
   const sidebarRef = useRef(null);
   const heroIntervalRef = useRef(null);
-  const heroDragRef = useRef({ active: false, pointerId: null, startX: 0, startY: 0, startScrollLeft: 0, dragging: false, dragged: false });
+  const heroInteractionTimeoutRef = useRef(null);
+  const heroUserInteractingUntilRef = useRef(0);
   const heroRandomSeedRef = useRef(() => Math.random().toString(36).slice(2));
   if (typeof heroRandomSeedRef.current === 'function') heroRandomSeedRef.current = heroRandomSeedRef.current();
   const restoredUiStateRef = useRef(false);
@@ -1086,9 +1172,11 @@ export default function MCUViewer() {
       timelineMode,
       autoHideStatuses,
       performanceMode,
+      desktopTextScale,
+      textScaleEnabled,
       scrollTop,
     }));
-  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, scrollCheckpoint], 300);
+  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
   const totalWatched = useMemo(() => activeItems.filter(i => i.status === 'watched').length, [activeItems]);
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
@@ -1157,7 +1245,13 @@ export default function MCUViewer() {
   const heroPosters = useMemo(() => heroPosterItems.map(({ src }) => src), [heroPosterItems]);
   const visibleHeroPosters = useMemo(() => {
     if (!heroPosterItems.length) return [];
-    return Array.from({ length: Math.min(10, heroPosterItems.length) }, (_, offset) => heroPosterItems[(heroIndex + offset) % heroPosterItems.length]);
+    const count = Math.min(HERO_VISIBLE_COUNT, heroPosterItems.length);
+    const centerOffset = Math.floor(count / 2);
+    return Array.from({ length: count }, (_, offset) => {
+      const rawIndex = heroIndex - centerOffset + offset;
+      const idx = ((rawIndex % heroPosterItems.length) + heroPosterItems.length) % heroPosterItems.length;
+      return heroPosterItems[idx];
+    }).filter(Boolean);
   }, [heroPosterItems, heroIndex]);
   const activeHeroSrc = heroPosters.length ? (heroPosters[heroIndex % heroPosters.length] || heroPosters[0] || '') : '';
 
@@ -1212,6 +1306,7 @@ export default function MCUViewer() {
     const startHeroCycle = () => {
       if (heroIntervalRef.current) return;
       heroIntervalRef.current = window.setInterval(() => {
+        if (Date.now() < heroUserInteractingUntilRef.current) return;
         setHeroIndex(i => (i + 1) % heroPosters.length);
       }, HERO_ROTATION_MS);
     };
@@ -1233,52 +1328,32 @@ export default function MCUViewer() {
     };
   }, [heroPosters.length]);
 
+  const pauseHeroAutoSlide = useCallback((duration = 2200) => {
+    heroUserInteractingUntilRef.current = Date.now() + duration;
+    if (heroInteractionTimeoutRef.current) window.clearTimeout(heroInteractionTimeoutRef.current);
+    heroInteractionTimeoutRef.current = window.setTimeout(() => {
+      heroUserInteractingUntilRef.current = 0;
+      heroInteractionTimeoutRef.current = null;
+    }, duration);
+  }, []);
+
+  useEffect(() => () => {
+    if (heroInteractionTimeoutRef.current) window.clearTimeout(heroInteractionTimeoutRef.current);
+  }, []);
+
+  const heroCarousel = useHeroCarouselEngine({
+    activeKey: activeHeroSrc,
+    performanceMode,
+    onUserIntent: pauseHeroAutoSlide,
+  });
+
   const handleHeroWheel = useCallback((e) => {
     const horizontalDelta = Math.abs(e.deltaX) >= Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
     if (!horizontalDelta) return;
-    e.currentTarget.scrollBy({ left: horizontalDelta * 1.85, behavior: 'smooth' });
+    pauseHeroAutoSlide(2600);
+    e.currentTarget.scrollBy({ left: horizontalDelta * 2.6, behavior: 'auto' });
     e.preventDefault();
-  }, []);
-
-  const handleHeroPointerDown = useCallback((e) => {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    heroDragRef.current = {
-      active: true,
-      pointerId: e.pointerId,
-      startX: e.clientX,
-      startY: e.clientY,
-      startScrollLeft: e.currentTarget.scrollLeft,
-      dragging: false,
-      dragged: false,
-    };
-  }, []);
-
-  const handleHeroPointerMove = useCallback((e) => {
-    const drag = heroDragRef.current;
-    if (!drag.active || drag.pointerId !== e.pointerId) return;
-    const dx = e.clientX - drag.startX;
-    const dy = e.clientY - drag.startY;
-    if (!drag.dragging) {
-      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-      if (Math.abs(dy) > Math.abs(dx)) {
-        drag.active = false;
-        return;
-      }
-      drag.dragging = true;
-      drag.dragged = true;
-      e.currentTarget.setPointerCapture?.(e.pointerId);
-    }
-    e.currentTarget.scrollLeft = drag.startScrollLeft - (dx * 1.18);
-    e.preventDefault();
-  }, []);
-
-  const finishHeroPointer = useCallback((e) => {
-    const drag = heroDragRef.current;
-    if (drag.pointerId === e.pointerId) {
-      e.currentTarget.releasePointerCapture?.(e.pointerId);
-      drag.active = false;
-    }
-  }, []);
+  }, [pauseHeroAutoSlide]);
 
   const spoilerSafe = useMemo(() => spoilerSafeMode, [spoilerSafeMode]);
 
@@ -2131,11 +2206,13 @@ export default function MCUViewer() {
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
     const dropW = 240, dropH = 280;
+    const gap = 10;
     let x = rect.left - dropW + rect.width;
-    let y = rect.top - dropH - 8;
-    if (x < 8) x = 8;
-    if (x + dropW > window.innerWidth - 8) x = window.innerWidth - dropW - 8;
-    if (y < 8) y = rect.bottom + 8;
+    let y = rect.top - dropH - gap;
+    if (x < gap) x = gap;
+    if (x + dropW > window.innerWidth - gap) x = window.innerWidth - dropW - gap;
+    if (y < gap) y = rect.bottom + gap;
+    if (y + dropH > window.innerHeight - gap) y = Math.max(gap, window.innerHeight - dropH - gap);
     setDropdownPos({ x, y });
     setStatusDropdown(itemId);
   };
@@ -2272,6 +2349,9 @@ export default function MCUViewer() {
     '--theme-border': darkMode ? '#1b1b33' : '#ddd8cf',
     '--theme-text': darkMode ? '#d8e3f5' : '#1a2030',
     '--theme-text-muted': darkMode ? '#8fa1b8' : '#667182',
+    '--font-marvel-display': 'var(--font-display)',
+    '--font-marvel-ui': 'var(--font-ui)',
+    '--font-marvel-body': 'var(--font-body)',
     '--theme-success': '#3ec47a',
     '--theme-success-soft': darkMode ? 'rgba(62,196,122,0.16)' : 'rgba(62,196,122,0.12)',
     '--theme-warning': 'var(--theme-accent-alt)',
@@ -2303,7 +2383,7 @@ export default function MCUViewer() {
         <ChevDown size={12} style={{ opacity: 0.6, transform: phaseOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
       </button>
       {phaseOpen && (
-        <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: 'none', minWidth: 200 }}>
+        <div className="motion-surface dropdown-pop" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 780, boxShadow: 'none', minWidth: 200 }}>
           <div className={`sopt ${activePhase === 0 ? 'picked' : ''}`} onClick={() => { setActivePhase(0); setPhaseOpen(false); }}>Phase All</div>
           {PHASES.map((ph) => (
             <div key={ph.id} className={`sopt ${activePhase === ph.id ? 'picked' : ''}`} style={activePhase === ph.id ? { color: ph.color, fontWeight: 700 } : {}} onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); setPhaseOpen(false); }}>{ph.name}</div>
@@ -2315,7 +2395,7 @@ export default function MCUViewer() {
 
   const appThemeBg = 'var(--theme-app-bg)';
   return (
-    <div data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': desktopTextScale, width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: 'calc(16px * var(--text-scale))', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}`}>
+    <div data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': textScaleEnabled ? desktopTextScale : 1, width: textScaleEnabled ? `${100 / desktopTextScale}%` : '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: 'var(--ui-scale)', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}`}>
       <style>{`
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         html,body{scroll-behavior:smooth}
@@ -2342,6 +2422,9 @@ export default function MCUViewer() {
 
         @keyframes fadeIn{from{opacity:0;transform:scale(0.97) translateY(-4px)}to{opacity:1;transform:scale(1) translateY(0)}}
         .fade-in{animation:fadeIn 240ms var(--ease-out) both}
+        .dropdown-pop,.dropdown-pop-up{opacity:1;transform:translate3d(0,0,0) scale(1);filter:blur(0);transition:opacity 220ms cubic-bezier(.22,1,.36,1),transform 220ms cubic-bezier(.22,1,.36,1),filter 220ms cubic-bezier(.22,1,.36,1);backdrop-filter:blur(16px) saturate(160%);-webkit-backdrop-filter:blur(16px) saturate(160%)}
+        .dropdown-pop{transform-origin:top left}.dropdown-pop-up{transform-origin:bottom right}
+        @starting-style{.dropdown-pop{opacity:0;transform:translate3d(0,-8px,0) scale(0.96);filter:blur(3px)}.dropdown-pop-up{opacity:0;transform:translate3d(0,8px,0) scale(0.96);filter:blur(3px)}}
 
         @keyframes expandDown{from{opacity:0;max-height:0;padding-top:0;padding-bottom:0}to{opacity:1;max-height:600px;padding-top:10px;padding-bottom:10px}}
         .expand-row{animation:expandDown 0.28s cubic-bezier(0.34,1.56,0.64,1) both;overflow:hidden}
@@ -2387,14 +2470,15 @@ export default function MCUViewer() {
         .curvy-panel::before{display:none}
 
         .section-up{content-visibility:visible;contain-intrinsic-size:auto}
-        .hero-rail{scroll-behavior:smooth;will-change:scroll-position;mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);-webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%)}
+        .hero-rail{scroll-behavior:auto;contain:layout paint;mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);-webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%)}
         .hero-rail::-webkit-scrollbar{height:0;width:0;display:none}
-        .hero-poster-card{will-change:transform,opacity;backface-visibility:hidden;transform-style:preserve-3d}
-        .hero-backdrop-image{animation:posterBackdropIn 1100ms cubic-bezier(0.22,1,0.36,1) both;filter:saturate(1.12) contrast(1.04)}
-        .hero-backdrop-image.is-exiting{animation:posterBackdropOut 1200ms cubic-bezier(0.22,1,0.36,1) both}
-        @keyframes posterBackdropIn{0%{opacity:0;transform:scale(1.055) translate3d(0,10px,0);filter:blur(10px) saturate(0.9)}100%{opacity:var(--backdrop-opacity,0.38);transform:scale(1) translate3d(0,0,0);filter:blur(0) saturate(1.12) contrast(1.04)}}
-        @keyframes posterBackdropOut{0%{opacity:var(--backdrop-opacity,0.38);transform:scale(1)}100%{opacity:0;transform:scale(1.035);filter:blur(8px) saturate(0.95)}}
+        .hero-poster-card{backface-visibility:hidden;transform:translateZ(0)}
+        .hero-backdrop-image{opacity:var(--backdrop-opacity,0.38);transform:scale(1);filter:blur(0) saturate(1.12) contrast(1.04) brightness(1);transition:opacity 1400ms cubic-bezier(0.22,1,0.36,1),transform 1400ms cubic-bezier(0.22,1,0.36,1),filter 1400ms cubic-bezier(0.22,1,0.36,1)}
+        .hero-backdrop-image.is-exiting{opacity:0;transform:scale(1.006);filter:blur(12px) saturate(0.96) brightness(0.88)}
+        @starting-style{.hero-backdrop-image:not(.is-exiting){opacity:0;transform:scale(1.012);filter:blur(14px) saturate(0.9) brightness(0.86)}}
         .phase-rows-full{display:block;position:relative}
+        .virtual-phase-row{contain:layout style paint}
+        .motion-surface{will-change:opacity,transform}
         .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 220ms var(--ease-out),border-color 220ms var(--ease-out),transform 220ms var(--ease-out),box-shadow 260ms var(--ease-out);display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid transparent;min-height:var(--row-min-h,86px);border-radius:12px;overflow:hidden;background:transparent;backdrop-filter:none}
         .rrow:last-child{border-bottom:none}
         .rrow > *{position:relative;z-index:1}
@@ -2434,9 +2518,7 @@ export default function MCUViewer() {
         .glass-panel{background-color:rgba(30,30,46,0.42);border:1px solid rgba(255,255,255,0.04);border-radius:16px}
         .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02))}
         .meta-muted{color:var(--theme-text-muted) !important}
-        .performance-mode *{animation:none !important;transition-duration:0ms !important}
-        .performance-mode .progress-gradient,.performance-mode .sweep::after,.performance-mode .phase-flash{animation:none !important}
-        *{scroll-behavior:smooth}
+        .performance-mode *{animation:none !important}
 
         /* Mobile */
         @media (max-width: 767px) {
@@ -2448,10 +2530,13 @@ export default function MCUViewer() {
           .rrow{grid-template-columns:24px 44px minmax(0,1fr) !important;gap:8px;padding:14px 10px 14px 8px;min-height:96px}
           .rrow .row-actions{grid-column:2 / -1;flex-direction:row !important;align-items:center !important;justify-content:space-between !important;min-width:0 !important;width:100%;gap:8px}
           .calendar-row{grid-template-columns:minmax(74px,84px) 44px minmax(0,1fr) !important}
-          .bottom-action-dock{left:12px !important;right:12px !important;bottom:max(12px, env(safe-area-inset-bottom)) !important}
-          .dock-btn{font-size:11px !important;padding:9px 10px !important;min-height:40px}
-          .bottom-action-bar{min-height:40px;padding:9px 10px !important}
-          main > div{padding-bottom:130px !important}
+          .floating-controls{left:12px !important;right:12px !important;bottom:max(12px, env(safe-area-inset-bottom)) !important;align-items:stretch !important}
+          .floating-mode-switch,.bottom-action-dock{width:100%;justify-content:center}
+          .floating-mode-switch{overflow-x:auto;justify-content:flex-start}
+          .dock-btn{font-size:11px !important;padding:9px 10px !important;min-height:40px;flex:1 1 auto}
+          .bottom-action-bar{min-height:40px;padding:9px 10px !important;width:100%;justify-content:center}
+          .dock-status-menu{flex:1 1 auto}
+          main > div{padding-bottom:154px !important}
           .poster{width:44px;height:64px}
           .detail-layout{grid-template-columns:minmax(0,1fr) !important;gap:14px !important}
           .detail-layout img,.detail-fallback-poster{max-width:280px;margin:0 auto;max-height:360px}
@@ -2480,9 +2565,9 @@ export default function MCUViewer() {
         .stat-card-label { font-size: clamp(11px, 1.8vw, 14px) !important; }
         .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; color:var(--theme-text-muted) !important }
 
-        .settings-menu{width:min(360px,calc(100vw - 28px));max-height:min(80vh,calc(100dvh - 92px));overscroll-behavior:contain}.settings-menu .fpill{min-width:0}.bottom-action-dock{position:fixed;right:16px;bottom:16px;z-index:120;display:flex;gap:8px;align-items:center}
+        .settings-menu{width:min(360px,calc(100vw - 28px));max-height:min(80vh,calc(100dvh - 92px));overscroll-behavior:contain}.settings-menu .fpill{min-width:0}.floating-controls{position:fixed;right:16px;bottom:max(16px, env(safe-area-inset-bottom));z-index:620;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}.floating-controls>*{pointer-events:auto}.floating-mode-switch{display:flex;border-radius:999px;overflow:hidden;border:1px solid ${T.surfaceBorder};background:${darkMode ? 'rgba(10,14,28,0.93)' : 'rgba(255,255,255,0.95)'};box-shadow:none}.bottom-action-dock{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
         .dock-btn{border-radius:999px;border:1px solid ${T.surfaceBorder};background:${darkMode ? 'rgba(20,25,46,0.9)' : 'rgba(255,255,255,0.92)'};color:${T.text};padding:10px 12px;font-family:var(--font-marvel-ui);letter-spacing:1.1px;font-size:12px;cursor:pointer;white-space:nowrap}
-        .bottom-action-bar{border-radius:999px;padding:10px 14px;white-space:nowrap}
+        .bottom-action-bar{border-radius:999px;padding:10px 14px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
         main,.rrow,.title-btn,.fpill,.wbtn,.sopt,.meta-muted,input,textarea,select,button,.header-tagline{font-size:calc(1em * var(--text-scale))}
         main::-webkit-scrollbar{width:4px}
         main::-webkit-scrollbar-track{background:transparent}
@@ -2495,14 +2580,14 @@ export default function MCUViewer() {
           <div
             key={`backdrop-exit-${previousHeroSrc}`}
             className="hero-backdrop-image is-exiting"
-            style={{ '--backdrop-opacity': 0.38, position: 'absolute', inset: '-2.5%', backgroundImage: `url(${previousHeroSrc})`, backgroundSize: 'cover', backgroundPosition: 'center 20%', willChange: 'opacity, transform, filter' }}
+            style={{ '--backdrop-opacity': 0.38, position: 'absolute', inset: 0, backgroundImage: `url(${previousHeroSrc})`, backgroundSize: isDesktopViewport ? 'auto 72%' : 'auto 64%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center 18%' }}
           />
         )}
         {currentHeroSrc && (
           <div
             key={`backdrop-${currentHeroSrc}`}
             className="hero-backdrop-image"
-            style={{ '--backdrop-opacity': 0.38, position: 'absolute', inset: '-2.5%', backgroundImage: `url(${currentHeroSrc})`, backgroundSize: 'cover', backgroundPosition: 'center 20%', willChange: 'opacity, transform, filter' }}
+            style={{ '--backdrop-opacity': 0.38, position: 'absolute', inset: 0, backgroundImage: `url(${currentHeroSrc})`, backgroundSize: isDesktopViewport ? 'auto 72%' : 'auto 64%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center 18%' }}
           />
         )}
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.74 : 0.64, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
@@ -2623,9 +2708,12 @@ export default function MCUViewer() {
               <button className='fpill' onClick={() => setDensityMode('comfortable')} style={{ borderColor: densityMode === 'comfortable' ? 'var(--theme-accent)' : 'var(--theme-border)', justifyContent: 'center' }}>Comfortable</button>
               <button className='fpill' onClick={() => setDensityMode('compact')} style={{ borderColor: densityMode === 'compact' ? 'var(--theme-accent)' : 'var(--theme-border)', justifyContent: 'center' }}>Compact</button>
             </div>
-            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase', marginTop: 2 }}>Desktop Text Size</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6 }}>
-              {DESKTOP_TEXT_SCALES.map(scale => <button key={scale} className='fpill' onClick={() => setDesktopTextScale(scale)} style={{ justifyContent: 'center', borderColor: desktopTextScale === scale ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{Math.round(scale * 100)}%</button>)}
+            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase', marginTop: 2 }}>UI Scale</div>
+            <button className='fpill' onClick={() => setTextScaleEnabled(v => !v)} style={{ justifyContent: 'center', borderColor: textScaleEnabled ? 'var(--theme-accent)' : 'var(--theme-border)', background: textScaleEnabled ? 'color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface))' : undefined }}>
+              {textScaleEnabled ? `Scale On · ${Math.round(desktopTextScale * 100)}%` : 'Scale Off'}
+            </button>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6, opacity: textScaleEnabled ? 1 : 0.55 }}>
+              {DESKTOP_TEXT_SCALES.map(scale => <button key={scale} className='fpill' disabled={!textScaleEnabled} onClick={() => setDesktopTextScale(scale)} style={{ justifyContent: 'center', borderColor: textScaleEnabled && desktopTextScale === scale ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{Math.round(scale * 100)}%</button>)}
             </div>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Data</div>
@@ -2662,37 +2750,22 @@ export default function MCUViewer() {
       <div style={{ position: 'relative', height: isDesktopViewport ? 520 : 390, background: 'transparent', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 210 }}>
         {heroPosters.length > 0 && (
           <div className="hero-rail"
+            {...heroCarousel.bindViewport}
             onWheel={handleHeroWheel}
-            onPointerDown={handleHeroPointerDown}
-            onPointerMove={handleHeroPointerMove}
-            onPointerUp={finishHeroPointer}
-            onPointerCancel={finishHeroPointer}
-            onPointerLeave={finishHeroPointer}
-            style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 14px', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'x proximity', scrollPaddingInline: isDesktopViewport ? '14vw' : '8vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', overscrollBehaviorX: 'contain', overscrollBehaviorY: 'auto', touchAction: 'pan-y', cursor: 'grab', userSelect: 'none', WebkitUserSelect: 'none' }}>
+            style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 14px', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'none', scrollPaddingInline: isDesktopViewport ? '14vw' : '8vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', overscrollBehaviorX: 'contain', overscrollBehaviorY: 'auto', touchAction: 'pan-x', cursor: 'pointer', userSelect: 'none', WebkitUserSelect: 'none' }}>
             {visibleHeroPosters.map(({ src, item: heroItem }, idx) => {
-              const isActive = idx === 0;
+              const isActive = src === activeHeroSrc;
               return (
-                <div key={`hero-rail-${src}`} style={{ position: 'relative', display:'flex', flexDirection:'column', alignItems:'center', scrollSnapAlign:'center', flexShrink: 0 }}>
+                <div key={`hero-rail-${src}`} ref={isActive ? heroCarousel.activeSlideRef : null} style={{ position: 'relative', display:'flex', flexDirection:'column', alignItems:'center', scrollSnapAlign:'center', flexShrink: 0 }}>
                 <img
                   className="hero-poster-card"
                   src={src}
                   alt="Featured poster"
-                  title={heroItem?.title || 'Featured MCU poster'}
                   draggable={false}
+                  loading={idx < 8 ? 'eager' : 'lazy'}
+                  decoding="async"
                   onDragStart={(e) => e.preventDefault()}
-                  onClick={() => { if (heroDragRef.current.dragged) { heroDragRef.current.dragged = false; return; } if (heroItem) setDetailItem(heroItem); }}
-                  onMouseMove={(e) => {
-                    const card = e.currentTarget;
-                    const rect = card.getBoundingClientRect();
-                    const px = (e.clientX - rect.left) / rect.width;
-                    const py = (e.clientY - rect.top) / rect.height;
-                    card.style.setProperty('--rx', `${(0.5 - py) * 4}deg`);
-                    card.style.setProperty('--ry', `${(px - 0.5) * 5}deg`);
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.setProperty('--rx', '0deg');
-                    e.currentTarget.style.setProperty('--ry', '0deg');
-                  }}
+                  onClick={() => { if (heroItem) setDetailItem(heroItem); }}
                   style={{
                     height: isDesktopViewport ? 440 : 320,
                     width: isDesktopViewport ? 292 : 218,
@@ -2701,21 +2774,21 @@ export default function MCUViewer() {
                     border: '0',
                     boxShadow: 'none',
                     opacity: isActive ? 1 : 0.76,
-                    transform: `perspective(1100px) translateZ(${isActive ? '20px' : '0'}) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) ${isActive ? 'scale(1.06) translateY(-6px)' : 'scale(0.96)'}`,
-                    transition: 'transform 360ms cubic-bezier(0.22,1,0.36,1), opacity 220ms ease, filter 220ms ease',
-                    cursor: 'grab',
+                    transform: isActive ? 'translate3d(0,-6px,0) scale(1.04)' : 'translate3d(0,0,0) scale(0.96)',
+                    transition: 'transform 260ms ease, opacity 180ms ease',
+                    cursor: 'pointer',
                     userSelect: 'none',
                     WebkitUserSelect: 'none',
                     WebkitTouchCallout: 'none',
                   }}
                 />
-                <div style={{ position: 'absolute', left: 9, right: 9, bottom: 9, padding: '5px 7px', borderRadius: 8, background: 'linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.62))', color: '#fff', fontSize: 9, fontWeight: 700, lineHeight: 1.15, textShadow: '0 1px 4px rgba(0,0,0,0.9)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)', maxWidth: isDesktopViewport ? 274 : 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center', pointerEvents: 'none' }}>{heroItem?.title || 'Featured MCU poster'}</div>
+                <div style={{ position: 'absolute', left: 10, right: 10, bottom: 12, padding: '8px 9px 7px', borderRadius: 10, background: 'linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.76))', color: '#fff', fontFamily: 'var(--font-marvel-display)', fontSize: isDesktopViewport ? 18 : 15, fontWeight: 900, letterSpacing: 1.2, lineHeight: 1, textAlign: 'center', textTransform: 'uppercase', textShadow: '0 2px 9px rgba(0,0,0,0.95), 0 0 14px rgba(212,55,47,0.45)', boxShadow: 'inset 0 -18px 24px rgba(0,0,0,0.18)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', pointerEvents: 'none' }}>{heroItem?.title || 'Featured MCU poster'}</div>
                 </div>
               );
             })}
           </div>
         )}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 16, background: 'linear-gradient(90deg, rgba(4,6,12,0.78) 0%, transparent 12%, transparent 88%, rgba(4,6,12,0.78) 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 16, background: 'linear-gradient(90deg, rgba(4,6,12,0.10) 0%, transparent 8%, transparent 92%, rgba(4,6,12,0.10) 100%)' }} />
        
       </div>
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
@@ -2762,7 +2835,7 @@ export default function MCUViewer() {
                   <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                 </button>
                 {sortOpen && (
-                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: 'none', minWidth: 200 }}>
+                  <div className="motion-surface dropdown-pop" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 780, boxShadow: 'none', minWidth: 200 }}>
                     {Object.entries(SORT_LABELS).map(([k, v]) => (
                       <div key={k} className={`sopt ${sortBy === k ? 'picked' : ''}`} onClick={() => { setSortBy(k); setSortOpen(false); }}>{v}</div>
                     ))}
@@ -2802,7 +2875,7 @@ export default function MCUViewer() {
                   <Check size={10} />Status
                 </button>
                 {filterStatusOpen && (
-                  <div className="fade-in" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 520, boxShadow: 'none', minWidth: 180 }}
+                  <div className="motion-surface dropdown-pop" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 780, boxShadow: 'none', minWidth: 180 }}
                     >
                     <div className={`sopt ${!statusFilter && !watchedOnly ? 'picked' : ''}`} onClick={() => { setStatusFilter(null); setWatchedOnly(false); setFilterStatusOpen(false); }}>Show all status</div>
                     <div className={`sopt ${watchedOnly ? 'picked' : ''}`} onClick={() => { setWatchedOnly(true); setStatusFilter(null); setFilterStatusOpen(false); }}>Watched only</div>
@@ -2838,8 +2911,8 @@ export default function MCUViewer() {
           </div>
         )}
       </div>
-      <div style={{ position: 'fixed', right: 16, bottom: isDesktopViewport ? 76 : 134, zIndex: 230 }}>
-        <div style={{ display: 'flex', borderRadius: 999, overflow: 'hidden', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(10,14,28,0.93)' : 'rgba(255,255,255,0.95)', boxShadow: 'none' }}>
+      <div className="floating-controls">
+        <div className="floating-mode-switch">
           {LIST_MODES.map(mode => {
             const active = listMode === mode.id;
             return (
@@ -2850,10 +2923,9 @@ export default function MCUViewer() {
             );
           })}
         </div>
-      </div>
 
-      {/* ━━ JUMP NEXT BUTTON ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div className="bottom-action-dock">
+        {/* ━━ JUMP NEXT BUTTON ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+        <div className="bottom-action-dock">
         <button type="button" onClick={handleMetadataBuildClick} className="dock-btn"
           style={{ borderColor: metadataBuild.status === 'running' ? 'var(--theme-warning)' : T.surfaceBorder }}>
           {metadataBuild.status === 'running' ? `Fetch ${metadataBuild.done}/${metadataBuild.total}` : 'Fetch'}
@@ -2874,7 +2946,7 @@ export default function MCUViewer() {
             Status Menu <ChevDown size={12} style={{ transform: dockStatusOpen ? 'rotate(180deg)' : 'none' }} />
           </button>
           {dockStatusOpen && (
-            <div className="fade-in" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, minWidth: 172, background: darkMode ? 'rgba(17,21,39,0.92)' : 'rgba(255,255,255,0.92)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 10, overflow: 'hidden', boxShadow: 'none', color: 'var(--theme-text)' }}>
+            <div className="motion-surface dropdown-pop-up" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, minWidth: 172, zIndex: 640, background: darkMode ? 'rgba(17,21,39,0.92)' : 'rgba(255,255,255,0.92)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 10, overflow: 'hidden', boxShadow: 'none', color: 'var(--theme-text)' }}>
               <div className="sopt" onClick={() => { setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setDockStatusOpen(false); }}>All statuses</div>
               <div className="sopt" onClick={() => { setWatchedOnly(true); setStatusFilter(null); setAutoHideStatuses(false); setDockStatusOpen(false); }}>Watched</div>
               <div className="sopt" onClick={() => { setStatusFilter('watching'); setWatchedOnly(false); setDockStatusOpen(false); }}>Watching</div>
@@ -2884,6 +2956,7 @@ export default function MCUViewer() {
             </div>
           )}
         </div>
+      </div>
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
@@ -2982,7 +3055,7 @@ export default function MCUViewer() {
 
                 {/* Row table */}
                 <div className="list-panel" style={{ background: 'transparent', border: `1px solid ${T.surfaceBorder}`, borderRadius: 14, overflow: 'hidden', boxShadow: 'none' }}>
-                  <PhaseRows rows={rows} renderRow={(item, idx) => {
+                  <PhaseRows rows={rows} estimateHeight={densityMode === 'compact' ? 76 : (isDesktopViewport ? 92 : 104)} renderRow={(item, idx) => {
                     const itemReleaseStatus = releaseStatusFor(item);
                     const itemReleaseInfo = releaseInfoFor(item);
                     return (
@@ -3033,7 +3106,7 @@ export default function MCUViewer() {
 
       {/* ━━ DETAIL MODAL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       {detailItem && (
-        <div className="detail-backdrop" onClick={() => setDetailItem(null)} role="dialog" aria-label="Movie details">
+        <div className="motion-surface detail-backdrop" onClick={() => setDetailItem(null)} role="dialog" aria-label="Movie details">
           <div className="detail-card glass-panel" onClick={(e) => e.stopPropagation()} style={{ background: 'color-mix(in srgb, var(--theme-surface) 68%, transparent)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border))' }}>
             <div className="detail-layout" style={{ display: 'grid', gridTemplateColumns: 'minmax(220px,34%) minmax(0,1fr)', gap: 18, alignItems: 'start', width: '100%' }}>
               {detailPosterFailed ? (
@@ -3108,7 +3181,7 @@ export default function MCUViewer() {
       )}
 
       {analyticsOpen && (
-        <div className="detail-backdrop" onClick={() => setAnalyticsOpen(false)} role="dialog" aria-label="Analysis history">
+        <div className="motion-surface detail-backdrop" onClick={() => setAnalyticsOpen(false)} role="dialog" aria-label="Analysis history">
           <div className="detail-card glass-panel" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 1080, border: '1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border))', boxShadow: '0 28px 80px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 14 }}>
               <div>
@@ -3188,9 +3261,9 @@ export default function MCUViewer() {
         const activeItem = items.find(i => i.id === statusDropdown);
         return (
           <>
-            <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={() => setStatusDropdown(null)} aria-hidden="true" />
-            <div className="fade-in" role="dialog" aria-label="Set watch status"
-              style={{ position: 'fixed', top: dropdownPos.y, left: dropdownPos.x, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 11, padding: '9px', zIndex: 999, boxShadow: 'none', minWidth: 235 }}>
+            <div style={{ position: 'fixed', inset: 0, zIndex: 9999 }} onClick={() => setStatusDropdown(null)} aria-hidden="true" />
+            <div className="motion-surface dropdown-pop" role="dialog" aria-label="Set watch status"
+              style={{ position: 'fixed', top: dropdownPos.y, left: dropdownPos.x, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 11, padding: '9px', zIndex: 10000, boxShadow: 'none', minWidth: 235 }}>
               <div style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 10, letterSpacing: 2, color: T.textMuted, marginBottom: 7, paddingBottom: 7, borderBottom: `1px solid ${T.surfaceBorder}`, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 215 }}>
                 {activeItem?.title}
               </div>
