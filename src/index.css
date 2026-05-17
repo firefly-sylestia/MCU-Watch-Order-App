@@ -504,8 +504,13 @@ a:hover {
 
 /* ── Selection Styling ──────────────────────────────────────────────────────── */
 ::selection {
-  background: rgba(124, 255, 218, 0.3);
-  color: var(--text-h);
+  background: transparent;
+  color: inherit;
+}
+
+::-moz-selection {
+  background: transparent;
+  color: inherit;
 }
 
 /* ── Focus States ───────────────────────────────────────────────────────────── */
