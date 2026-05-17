@@ -538,7 +538,10 @@ export default function MCUViewer() {
     const saved = Number(window.sessionStorage.getItem('mcu-hero-index-v1'));
     return Number.isFinite(saved) ? Math.max(0, saved) : 0;
   });
-  const [currentHeroSrc, setCurrentHeroSrc] = useState('');
+  const [currentHeroSrc, setCurrentHeroSrc] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return window.sessionStorage.getItem('mcu-hero-src-v1') || '';
+  });
   const [detailItem,     setDetailItem]     = useState(null);
   const [detailData,     setDetailData]     = useState(null);
   const [detailPlotState, setDetailPlotState] = useState({ active: 'primary', primary: '', secondary: '', loadingSecondary: false, secondaryProvider: 'OMDb' });
@@ -1121,8 +1124,9 @@ export default function MCUViewer() {
     return mapped.startsWith('/') ? mapped : `/posters/${mapped}`;
   };
   const posterSrc = (item) => localPosterSrc(item) || posterCache[item.id] || `https://placehold.co/220x330/1a1f33/f7c4de?text=${encodeURIComponent(item.title+'\n'+item.year)}`;
+  const heroPosterSrc = (item) => localPosterSrc(item) || posterCache[item.id] || '';
   const carouselPosterPool = useMemo(
-    () => activeItems.map(item => posterSrc(item)).filter(Boolean),
+    () => activeItems.map(item => heroPosterSrc(item)).filter(Boolean),
     [activeItems, localPosterMap, posterCache]
   );
   const carouselSignature = useMemo(() => carouselPosterPool.join('|'), [carouselPosterPool]);
@@ -2443,7 +2447,7 @@ export default function MCUViewer() {
       `}</style>
 
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        <div key={activeHeroSrc || currentHeroSrc || 'hero-bg'} className="hero-bg-slide" style={{ '--hero-bg-opacity': darkMode ? 0.46 : 0.32, position: 'absolute', inset: 0, backgroundImage: (activeHeroSrc || currentHeroSrc) ? `url(${activeHeroSrc || currentHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: darkMode ? 0.46 : 0.32, transition: 'opacity 0.9s ease-in-out', willChange: 'opacity' }} />
+        <div key={currentHeroSrc || activeHeroSrc || 'hero-bg'} className="hero-bg-slide" style={{ '--hero-bg-opacity': darkMode ? 0.46 : 0.32, position: 'absolute', inset: 0, backgroundImage: (currentHeroSrc || activeHeroSrc) ? `url(${currentHeroSrc || activeHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: darkMode ? 0.46 : 0.32, transition: 'opacity 0.9s ease-in-out', willChange: 'opacity' }} />
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.58 : 0.46, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${darkMode ? 'rgba(4,5,15,0.03)' : 'rgba(255,255,255,0.06)'} 0%, ${darkMode ? 'rgba(4,5,15,0.12)' : 'rgba(231,238,248,0.18)'} 45%, ${darkMode ? 'rgba(4,5,15,0.46)' : 'rgba(231,238,248,0.5)'} 70%, ${darkMode ? 'rgba(4,5,15,0.92)' : 'rgba(231,238,248,0.92)'} 100%)` }} />
       </div>
