@@ -616,6 +616,8 @@ export default function MCUViewer() {
   const [desktopTextScale, setDesktopTextScale] = useState(initialUiState.desktopTextScale);
   const [textScaleEnabled, setTextScaleEnabled] = useState(initialUiState.textScaleEnabled);
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : false));
+  const [heroBackdropScale, setHeroBackdropScale] = useState(104);
+  const [heroBackdropOpacity, setHeroBackdropOpacity] = useState(0.38);
   const [lightningStrike, setLightningStrike] = useState(false);
   const [spiderDrop, setSpiderDrop] = useState(false);
   const headerMinimized = false;
@@ -644,6 +646,23 @@ export default function MCUViewer() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+
+  useEffect(() => {
+    try {
+      const savedScale = Number(localStorage.getItem('mcu-hero-backdrop-scale-v1'));
+      const savedOpacity = Number(localStorage.getItem('mcu-hero-backdrop-opacity-v1'));
+      if (Number.isFinite(savedScale)) setHeroBackdropScale(Math.max(100, Math.min(112, savedScale)));
+      if (Number.isFinite(savedOpacity)) setHeroBackdropOpacity(Math.max(0.12, Math.min(0.75, savedOpacity)));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try { localStorage.setItem('mcu-hero-backdrop-scale-v1', String(heroBackdropScale)); } catch {}
+  }, [heroBackdropScale]);
+
+  useEffect(() => {
+    try { localStorage.setItem('mcu-hero-backdrop-opacity-v1', String(heroBackdropOpacity)); } catch {}
+  }, [heroBackdropOpacity]);
   useEffect(() => {
     const hasOverlay = sidebarOpen || settingsOpen || detailItem || analyticsOpen;
     if (!hasOverlay) return;
@@ -1271,11 +1290,12 @@ export default function MCUViewer() {
     if (Date.now() < heroUserInteractingUntilRef.current) return undefined;
     const frame = window.requestAnimationFrame(() => {
       heroProgrammaticScrollRef.current = true;
-      heroActiveCardRef.current?.scrollIntoView({
-        behavior: performanceMode ? 'auto' : 'smooth',
-        block: 'nearest',
-        inline: 'center',
-      });
+      const rail = heroRailRef.current;
+      const card = heroActiveCardRef.current;
+      if (rail && card) {
+        const targetLeft = card.offsetLeft - (rail.clientWidth - card.clientWidth) / 2;
+        rail.scrollTo({ left: Math.max(0, targetLeft), behavior: performanceMode ? 'auto' : 'smooth' });
+      }
       window.setTimeout(() => { heroProgrammaticScrollRef.current = false; }, performanceMode ? 120 : 520);
     });
     return () => window.cancelAnimationFrame(frame);
@@ -2407,7 +2427,7 @@ export default function MCUViewer() {
         .hero-rail{scroll-behavior:auto;contain:layout paint;mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);-webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%)}
         .hero-rail::-webkit-scrollbar{height:0;width:0;display:none}
         .hero-poster-card{backface-visibility:hidden;transform:translateZ(0)}
-        .hero-backdrop-image{opacity:var(--backdrop-opacity,0.38);transform:scale(1);filter:blur(0) saturate(1.12) contrast(1.04) brightness(1);transition:opacity 1400ms cubic-bezier(0.22,1,0.36,1),transform 1400ms cubic-bezier(0.22,1,0.36,1),filter 1400ms cubic-bezier(0.22,1,0.36,1)}
+        .hero-backdrop-image{opacity:var(--backdrop-opacity,0.38);transform:scale(1);filter:blur(0) saturate(1.12) contrast(1.04) brightness(1);border-radius:24px;box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 18%, transparent),0 24px 60px rgba(0,0,0,0.36);mask-image:radial-gradient(circle at center, #000 62%, rgba(0,0,0,0.35) 82%, transparent 100%);-webkit-mask-image:radial-gradient(circle at center, #000 62%, rgba(0,0,0,0.35) 82%, transparent 100%);transition:opacity 1400ms cubic-bezier(0.22,1,0.36,1),transform 1400ms cubic-bezier(0.22,1,0.36,1),filter 1400ms cubic-bezier(0.22,1,0.36,1)}
         .hero-backdrop-image.is-exiting{opacity:0;transform:scale(1.006);filter:blur(12px) saturate(0.96) brightness(0.88)}
         @starting-style{.hero-backdrop-image:not(.is-exiting){opacity:0;transform:scale(1.012);filter:blur(14px) saturate(0.9) brightness(0.86)}}
         .phase-rows-full{display:block;position:relative}
@@ -2512,14 +2532,14 @@ export default function MCUViewer() {
           <div
             key={`backdrop-exit-${previousHeroSrc}`}
             className="hero-backdrop-image is-exiting"
-            style={{ '--backdrop-opacity': 0.38, position: 'absolute', inset: 0, backgroundImage: `url(${previousHeroSrc})`, backgroundSize: isDesktopViewport ? 'auto 72%' : 'auto 64%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center 18%' }}
+            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${previousHeroSrc})`, backgroundSize: `auto ${heroBackdropScale}%`, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%' }}
           />
         )}
         {currentHeroSrc && (
           <div
             key={`backdrop-${currentHeroSrc}`}
             className="hero-backdrop-image"
-            style={{ '--backdrop-opacity': 0.38, position: 'absolute', inset: 0, backgroundImage: `url(${currentHeroSrc})`, backgroundSize: isDesktopViewport ? 'auto 72%' : 'auto 64%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center 18%' }}
+            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${currentHeroSrc})`, backgroundSize: `auto ${heroBackdropScale}%`, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%' }}
           />
         )}
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.74 : 0.64, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
@@ -2647,6 +2667,12 @@ export default function MCUViewer() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6, opacity: textScaleEnabled ? 1 : 0.55 }}>
               {DESKTOP_TEXT_SCALES.map(scale => <button key={scale} className='fpill' disabled={!textScaleEnabled} onClick={() => setDesktopTextScale(scale)} style={{ justifyContent: 'center', borderColor: textScaleEnabled && desktopTextScale === scale ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{Math.round(scale * 100)}%</button>)}
             </div>
+            <div style={{ fontSize: 10, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase', marginTop: 2, display: 'inline-flex', alignItems: 'center', gap: 6 }}><Film size={12} /> Bg size</div>
+            <input type='range' min={100} max={112} step={1} value={heroBackdropScale} onChange={(e) => setHeroBackdropScale(Number(e.target.value))} aria-label='Carousel background size' />
+            <div style={{ fontSize: 10, color: T.textMuted }}>{heroBackdropScale}%</div>
+            <div style={{ fontSize: 10, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase', marginTop: 2, display: 'inline-flex', alignItems: 'center', gap: 6 }}><Eye size={12} /> Bg opacity</div>
+            <input type='range' min={0.12} max={0.75} step={0.01} value={heroBackdropOpacity} onChange={(e) => setHeroBackdropOpacity(Number(e.target.value))} aria-label='Carousel background opacity' />
+            <div style={{ fontSize: 10, color: T.textMuted }}>{Math.round(heroBackdropOpacity * 100)}%</div>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Data</div>
             <button className="fpill" onClick={exportProgress}><Download size={14}/>Export Progress</button>
