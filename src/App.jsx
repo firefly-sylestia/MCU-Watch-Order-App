@@ -156,7 +156,7 @@ const readSavedUiState = () => {
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const isAgentsOfShieldCarouselDuplicate = (item) => /agents of shield/i.test(item?.title || '');
-const HERO_ROTATION_MS = 2600;
+const HERO_ROTATION_MS = 10000;
 const HERO_PRELOAD_AHEAD = 12;
 const loadedHeroPosterSrcs = new Set();
 const heroPosterLoadPromises = new Map();
@@ -1157,7 +1157,7 @@ export default function MCUViewer() {
   const heroPosters = useMemo(() => heroPosterItems.map(({ src }) => src), [heroPosterItems]);
   const visibleHeroPosters = useMemo(() => {
     if (!heroPosterItems.length) return [];
-    return Array.from({ length: Math.min(10, heroPosterItems.length) }, (_, offset) => heroPosterItems[(heroIndex + offset) % heroPosterItems.length]);
+    return Array.from({ length: Math.min(18, heroPosterItems.length) }, (_, offset) => heroPosterItems[(heroIndex + offset) % heroPosterItems.length]);
   }, [heroPosterItems, heroIndex]);
   const activeHeroSrc = heroPosters.length ? (heroPosters[heroIndex % heroPosters.length] || heroPosters[0] || '') : '';
 
@@ -1236,7 +1236,7 @@ export default function MCUViewer() {
   const handleHeroWheel = useCallback((e) => {
     const horizontalDelta = Math.abs(e.deltaX) >= Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
     if (!horizontalDelta) return;
-    e.currentTarget.scrollBy({ left: horizontalDelta * 1.85, behavior: 'smooth' });
+    e.currentTarget.scrollBy({ left: horizontalDelta * 2.6, behavior: 'auto' });
     e.preventDefault();
   }, []);
 
@@ -1268,7 +1268,7 @@ export default function MCUViewer() {
       drag.dragged = true;
       e.currentTarget.setPointerCapture?.(e.pointerId);
     }
-    e.currentTarget.scrollLeft = drag.startScrollLeft - (dx * 1.18);
+    e.currentTarget.scrollLeft = drag.startScrollLeft - (dx * 1.65);
     e.preventDefault();
   }, []);
 
@@ -2387,11 +2387,13 @@ export default function MCUViewer() {
         .curvy-panel::before{display:none}
 
         .section-up{content-visibility:visible;contain-intrinsic-size:auto}
-        .hero-rail{scroll-behavior:smooth;will-change:scroll-position;mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);-webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%)}
+        .hero-rail{scroll-behavior:auto;will-change:scroll-position;mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);-webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%)}
         .hero-rail::-webkit-scrollbar{height:0;width:0;display:none}
         .hero-poster-card{will-change:transform,opacity;backface-visibility:hidden;transform-style:preserve-3d}
-        .hero-backdrop-image{animation:posterBackdropIn 1100ms cubic-bezier(0.22,1,0.36,1) both;filter:saturate(1.12) contrast(1.04)}
-        .hero-backdrop-image.is-exiting{animation:posterBackdropOut 1200ms cubic-bezier(0.22,1,0.36,1) both}
+        .hero-backdrop-image{opacity:var(--backdrop-opacity,0.38);animation:posterBackdropIn 1100ms cubic-bezier(0.22,1,0.36,1) both;filter:saturate(1.12) contrast(1.04)}
+        .hero-backdrop-image.is-exiting{opacity:0;animation:posterBackdropOut 1200ms cubic-bezier(0.22,1,0.36,1) both}
+        .performance-mode .hero-backdrop-image{opacity:var(--backdrop-opacity,0.38) !important;animation:none !important;filter:saturate(1.06) contrast(1.02) !important}
+        .performance-mode .hero-backdrop-image.is-exiting{display:none !important}
         @keyframes posterBackdropIn{0%{opacity:0;transform:scale(1.055) translate3d(0,10px,0);filter:blur(10px) saturate(0.9)}100%{opacity:var(--backdrop-opacity,0.38);transform:scale(1) translate3d(0,0,0);filter:blur(0) saturate(1.12) contrast(1.04)}}
         @keyframes posterBackdropOut{0%{opacity:var(--backdrop-opacity,0.38);transform:scale(1)}100%{opacity:0;transform:scale(1.035);filter:blur(8px) saturate(0.95)}}
         .phase-rows-full{display:block;position:relative}
@@ -2495,14 +2497,14 @@ export default function MCUViewer() {
           <div
             key={`backdrop-exit-${previousHeroSrc}`}
             className="hero-backdrop-image is-exiting"
-            style={{ '--backdrop-opacity': 0.38, position: 'absolute', inset: '-2.5%', backgroundImage: `url(${previousHeroSrc})`, backgroundSize: 'cover', backgroundPosition: 'center 20%', willChange: 'opacity, transform, filter' }}
+            style={{ '--backdrop-opacity': 0.38, position: 'absolute', inset: '-4%', backgroundImage: `url(${previousHeroSrc})`, backgroundSize: 'cover', backgroundPosition: 'center 20%', willChange: performanceMode ? 'auto' : 'opacity, transform, filter' }}
           />
         )}
         {currentHeroSrc && (
           <div
             key={`backdrop-${currentHeroSrc}`}
             className="hero-backdrop-image"
-            style={{ '--backdrop-opacity': 0.38, position: 'absolute', inset: '-2.5%', backgroundImage: `url(${currentHeroSrc})`, backgroundSize: 'cover', backgroundPosition: 'center 20%', willChange: 'opacity, transform, filter' }}
+            style={{ '--backdrop-opacity': 0.38, position: 'absolute', inset: '-4%', backgroundImage: `url(${currentHeroSrc})`, backgroundSize: 'cover', backgroundPosition: 'center 20%', willChange: performanceMode ? 'auto' : 'opacity, transform, filter' }}
           />
         )}
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.74 : 0.64, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
@@ -2668,11 +2670,11 @@ export default function MCUViewer() {
             onPointerUp={finishHeroPointer}
             onPointerCancel={finishHeroPointer}
             onPointerLeave={finishHeroPointer}
-            style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 14px', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'x proximity', scrollPaddingInline: isDesktopViewport ? '14vw' : '8vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', overscrollBehaviorX: 'contain', overscrollBehaviorY: 'auto', touchAction: 'pan-y', cursor: 'grab', userSelect: 'none', WebkitUserSelect: 'none' }}>
+            style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 14px', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'none', scrollPaddingInline: isDesktopViewport ? '14vw' : '8vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', overscrollBehaviorX: 'contain', overscrollBehaviorY: 'auto', touchAction: 'pan-y', cursor: 'grab', userSelect: 'none', WebkitUserSelect: 'none' }}>
             {visibleHeroPosters.map(({ src, item: heroItem }, idx) => {
               const isActive = idx === 0;
               return (
-                <div key={`hero-rail-${src}`} style={{ position: 'relative', display:'flex', flexDirection:'column', alignItems:'center', scrollSnapAlign:'center', flexShrink: 0 }}>
+                <div key={`hero-rail-${src}`} style={{ position: 'relative', display:'flex', flexDirection:'column', alignItems:'center', scrollSnapAlign:'none', flexShrink: 0 }}>
                 <img
                   className="hero-poster-card"
                   src={src}
