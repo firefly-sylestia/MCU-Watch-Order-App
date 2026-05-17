@@ -678,6 +678,15 @@ export default function MCUViewer() {
   }, [sidebarOpen, settingsOpen, detailItem, analyticsOpen]);
 
   useEffect(() => {
+    if (!detailItem) return;
+    setDockStatusOpen(false);
+    setStatusDropdown(null);
+    setFilterStatusOpen(false);
+    setPhaseOpen(false);
+    setSortOpen(false);
+  }, [detailItem]);
+
+  useEffect(() => {
     const s = localStorage.getItem('mcu-v7');
     if (s) {
       try {
@@ -2427,10 +2436,10 @@ export default function MCUViewer() {
         .hero-rail{scroll-behavior:auto;contain:layout paint;mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);-webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%)}
         .hero-rail::-webkit-scrollbar{height:0;width:0;display:none}
         .hero-poster-card{backface-visibility:hidden;transform:translateZ(0)}
-        .hero-backdrop-image{opacity:var(--backdrop-opacity,0.7);transform:scale(1);filter:blur(0) saturate(1.12) contrast(1.04) brightness(1);border-radius:24px;box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 18%, transparent),0 24px 60px rgba(0,0,0,0.36);mask-image:radial-gradient(circle at center, #000 62%, rgba(0,0,0,0.35) 82%, transparent 100%);-webkit-mask-image:radial-gradient(circle at center, #000 62%, rgba(0,0,0,0.35) 82%, transparent 100%);transition:opacity 1400ms cubic-bezier(0.22,1,0.36,1),transform 1400ms cubic-bezier(0.22,1,0.36,1),filter 1400ms cubic-bezier(0.22,1,0.36,1)}
-        .hero-backdrop-blend{position:absolute;inset:8px;border-radius:24px;pointer-events:none;background:linear-gradient(180deg, rgba(4,6,12,0.34) 0%, rgba(4,6,12,0.16) 12%, rgba(4,6,12,0) 28%),linear-gradient(90deg, rgba(4,6,12,0.3) 0%, rgba(4,6,12,0) 12%, rgba(4,6,12,0) 88%, rgba(4,6,12,0.3) 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-        .hero-backdrop-image.is-exiting{opacity:0;transform:scale(1.006);filter:blur(12px) saturate(0.96) brightness(0.88)}
-        @starting-style{.hero-backdrop-image:not(.is-exiting){opacity:0;transform:scale(1.012);filter:blur(14px) saturate(0.9) brightness(0.86)}}
+        .hero-backdrop-image{opacity:var(--backdrop-opacity,0.7);transform:scale(1);filter:saturate(1.08) contrast(1.03) brightness(1);border-radius:24px;box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 18%, transparent),0 24px 60px rgba(0,0,0,0.36);mask-image:radial-gradient(circle at center, #000 74%, rgba(0,0,0,0.78) 90%, transparent 100%);-webkit-mask-image:radial-gradient(circle at center, #000 74%, rgba(0,0,0,0.78) 90%, transparent 100%);transition:opacity 1400ms cubic-bezier(0.22,1,0.36,1),transform 1400ms cubic-bezier(0.22,1,0.36,1),filter 1400ms cubic-bezier(0.22,1,0.36,1)}
+        .hero-backdrop-blend{position:absolute;inset:8px;border-radius:24px;pointer-events:none;background:linear-gradient(180deg, rgba(4,6,12,0.22) 0%, rgba(4,6,12,0.1) 14%, rgba(4,6,12,0) 30%),linear-gradient(90deg, rgba(4,6,12,0.24) 0%, rgba(4,6,12,0.04) 10%, rgba(4,6,12,0.0) 20%, rgba(4,6,12,0.0) 80%, rgba(4,6,12,0.04) 90%, rgba(4,6,12,0.24) 100%);backdrop-filter:blur(2.5px);-webkit-backdrop-filter:blur(2.5px);opacity:var(--backdrop-opacity,0.7)}
+        .hero-backdrop-image.is-exiting{opacity:0;transform:scale(1.006);filter:blur(8px) saturate(0.96) brightness(0.88)}
+        @starting-style{.hero-backdrop-image:not(.is-exiting){opacity:0;transform:scale(1.012);filter:blur(9px) saturate(0.9) brightness(0.86)}}
         .phase-rows-full{display:block;position:relative}
         .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 220ms var(--ease-out),border-color 220ms var(--ease-out),transform 220ms var(--ease-out),box-shadow 260ms var(--ease-out);display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid transparent;min-height:var(--row-min-h,86px);border-radius:12px;overflow:hidden;background:transparent;backdrop-filter:none}
         .rrow:last-child{border-bottom:none}
@@ -2456,7 +2465,7 @@ export default function MCUViewer() {
         .poster-shell{width:52px;height:76px;border-radius:9px;overflow:hidden;background:linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.025));position:relative;flex-shrink:0;box-shadow:0 8px 18px rgba(0,0,0,0.3),0 0 0 1px color-mix(in srgb,var(--theme-accent) 14%, transparent)}.poster-shell::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));opacity:1;transition:opacity .12s;pointer-events:none}.poster-shell.is-loaded::before{opacity:0}.poster-shell picture,.poster-shell img{display:block;width:100%;height:100%}.poster{width:52px;height:76px;object-fit:cover;border-radius:9px;border:1px solid ${T.surfaceBorder};box-shadow:0 10px 24px rgba(0,0,0,0.35);opacity:1;transform:none;transition:opacity .24s ease-out,transform .24s ease-out,filter .24s ease-out}.poster-shell:not(.is-loaded) .poster{opacity:0.82;transform:translateY(4px)}.poster.is-loaded{opacity:1;transform:none}
         .progress-gradient{background:${phaseGradient};background-size:200% 100%;animation:gradientPulse 3s ease-in-out infinite alternate}
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
-        .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.62);backdrop-filter:blur(12px);z-index:240;display:grid;place-items:center;padding:20px}
+        .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.52);backdrop-filter:blur(6px);z-index:240;display:grid;place-items:center;padding:20px}
         .detail-card{width:min(1080px,94vw);max-height:92vh;overflow:auto;background:linear-gradient(145deg, rgba(17,22,44,0.62), rgba(12,16,34,0.5));backdrop-filter:blur(18px) saturate(130%);-webkit-backdrop-filter:blur(18px) saturate(130%);border:1px solid rgba(255,255,255,0.14);border-radius:14px;padding:18px;box-shadow:${darkMode ? '0 22px 60px rgba(0,0,0,0.56)' : '0 18px 44px rgba(0,0,0,0.14)'}}
 
         .detail-layout{grid-template-columns:minmax(220px,34%) minmax(0,1fr)}
@@ -2875,7 +2884,7 @@ export default function MCUViewer() {
           </div>
         )}
       </div>
-      <div className="floating-controls">
+      <div className="floating-controls" style={detailItem || analyticsOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
         <div className="floating-mode-switch">
           {LIST_MODES.map(mode => {
             const active = listMode === mode.id;
@@ -2920,7 +2929,7 @@ export default function MCUViewer() {
             </div>
           )}
         </div>
-      </div>
+        </div>
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
