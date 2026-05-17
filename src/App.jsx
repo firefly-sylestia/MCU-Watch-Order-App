@@ -11,6 +11,7 @@ import {
   PHASES,
   RAW,
   RELEASE_INFO,
+  UPCOMING_PLACEHOLDERS,
 } from './data/mcuData';
 
 // ─── Icon primitives ────────────────────────────────────────────────────────
@@ -1002,7 +1003,7 @@ export default function MCUViewer() {
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap]);
 
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
@@ -2586,9 +2587,9 @@ export default function MCUViewer() {
               e.preventDefault();
             }}
             style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 14px', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: isDesktopViewport ? 'x proximity' : 'x mandatory', scrollPaddingInline: isDesktopViewport ? '14vw' : '8vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', overscrollBehaviorX: 'contain', overscrollBehaviorY: 'contain', touchAction: isDesktopViewport ? 'pan-x' : 'pan-x pan-y' }}>
-            {[...Array(isDesktopViewport ? 18 : 12)].map((_, idx) => {
-              const src = heroPosters[(heroIndex + idx) % heroPosters.length] || currentHeroSrc;
-              const isActive = src === (heroTransitioning && nextHeroSrc ? nextHeroSrc : currentHeroSrc);
+            {heroPosters.map((src, idx) => {
+              const activeSrc = (heroTransitioning && nextHeroSrc ? nextHeroSrc : currentHeroSrc);
+              const isActive = src === activeSrc;
               const heroItem = filtered.find(i => posterSrc(i) === src);
               return (
                 <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8, scrollSnapAlign:'center' }}>
@@ -2632,6 +2633,9 @@ export default function MCUViewer() {
           </div>
         )}
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 16, background: 'linear-gradient(90deg, rgba(4,6,12,0.78) 0%, transparent 12%, transparent 88%, rgba(4,6,12,0.78) 100%)' }} />
+        <button onClick={() => setHeroIndex(i => Math.max(0, i - 1))} style={{ position:'absolute', left:8, top:'50%', transform:'translateY(-50%)', zIndex:220 }} className='fpill'>Prev</button>
+        <button onClick={() => setHeroIndex(i => i + 1)} style={{ position:'absolute', right:8, top:'50%', transform:'translateY(-50%)', zIndex:220 }} className='fpill'>Next</button>
+
       </div>
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 220, marginTop: 0 }}>

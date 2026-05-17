@@ -1,0 +1,134 @@
+# MCU Title ID List
+
+This file is an editable ID/title reference for entries in `src/data/mcuData.js`.
+
+- Use `id` as unique key.
+- Keep `order` aligned with where item should appear.
+- Phase can be edited directly in data.
+
+## Current IDs
+
+- 1: Captain America: The First Avenger
+- 2: Iron Man
+- 3: The Incredible Hulk
+- 4: Iron Man 2
+- 5: Thor
+- 6: The Avengers
+- 7: Thor: The Dark World
+- 8: Guardians of the Galaxy
+- 9: Captain America: The Winter Soldier
+- 10: Iron Man 3
+- 11: Guardians of the Galaxy Vol. 2
+- 12: I Am Groot S1 & S2
+- 13: Avengers: Age of Ultron
+- 14: Doctor Strange
+- 15: Ant-Man
+- 16: Captain America: Civil War
+- 17: Black Widow
+- 18: Black Panther
+- 19: Spider-Man: Homecoming
+- 20: Ant-Man & the Wasp
+- 21: Thor: Ragnarok
+- 22: Avengers: Infinity War
+- 23: Captain Marvel
+- 24: Avengers: Endgame
+- 25: WandaVision S1
+- 26: The Falcon & the Winter Soldier S1
+- 27: Spider-Man: Far From Home
+- 28: Spider-Man: No Way Home
+- 29: Hawkeye S1
+- 30: Guardians Holiday Special
+- 31: Loki S1
+- 32: Ant-Man & the Wasp: Quantumania
+- 33: Loki S2
+- 34: What If...? S1
+- 35: What If...? S2
+- 36: What If...? S3
+- 37: Deadpool & Wolverine
+- 38: Thor: Love and Thunder
+- 39: Guardians of the Galaxy Vol. 3
+- 40: Black Panther: Wakanda Forever
+- 41: Moon Knight S1
+- 42: Shang-Chi & the Legend of the Ten Rings
+- 43: Doctor Strange: Multiverse of Madness
+- 44: Agatha All Along S1
+- 45: Eternals
+- 46: She-Hulk: Attorney at Law S1
+- 47: Ms. Marvel S1
+- 48: The Marvels
+- 49: Secret Invasion S1
+- 50: Echo S1
+- 51: Daredevil: Born Again S1
+- 52: Daredevil: Born Again S2
+- 53: Captain America: Brave New World
+- 54: Ironheart S1
+- 55: Thunderbolts*
+- 56: Fantastic Four: First Steps
+- 57: Wonder Man S1
+- 58: Werewolf by Night
+- 59: Eyes of Wakanda S1
+- 60: Marvel Zombies S1
+- 61: The Punisher: One Last Kill
+- 62: Spider-Man: Brand New Day
+- 63: VisionQuest
+- 64: Wonder Man S2
+- 65: Avengers: Doomsday
+- 66: Daredevil: Born Again S3
+- 67: Avengers: Secret Wars
+- 101: Agent Carter (One-Shot)
+- 102: Agent Carter S1 & S2
+- 103: A Funny Thing Happened on the Way to Thor's Hammer
+- 104: The Consultant
+- 105: Item 47
+- 106: Agents of SHIELD S1 Eps 1–7
+- 107: Agents of SHIELD S1 Eps 8–12
+- 108: All Hail the King
+- 109: Agents of SHIELD S1 Eps 13–15
+- 110: Agents of SHIELD S1 Ep 16
+- 111: Agents of SHIELD S1 Eps 17–22 & S2 Eps 1–2
+- 112: Agents of SHIELD S2 Ep 3
+- 113: Agents of SHIELD S2 Eps 4–5
+- 114: Daredevil S1
+- 115: Jessica Jones S1
+- 116: Agents of SHIELD S2 Eps 6–19
+- 117: Agents of SHIELD S2 Eps 20–22
+- 118: WHiH Newsfront S1
+- 119: Daredevil S2
+- 120: Luke Cage S1
+- 121: Agents of SHIELD S3 Eps 1–10
+- 122: Iron Fist S1
+- 123: Agents of SHIELD S3 Eps 11–14
+- 124: WHiH Newsfront S2 Ep 1
+- 125: Agents of SHIELD S3 Eps 15–16
+- 126: WHiH Newsfront S2 Ep 2
+- 127: Agents of SHIELD S3 Eps 17–18
+- 128: WHiH Newsfront S2 Eps 3–5
+- 129: The Defenders S1
+- 130: Agents of SHIELD S3 Ep 19
+- 131: Agents of SHIELD S3 Eps 20–22
+- 132: Inhumans S1
+- 133: The Punisher S1
+- 134: Cloak & Dagger S1
+- 135: Agents of SHIELD S4 Eps 1–8
+- 136: Agents of SHIELD: Slingshot S1
+- 137: Agents of SHIELD S4 Eps 9–22
+- 138: Jessica Jones S2
+- 139: Agents of SHIELD S5 Eps 1–10
+- 140: Luke Cage S2
+- 141: Iron Fist S2
+- 142: Daredevil S3
+- 143: Cloak & Dagger S2
+- 144: Agents of SHIELD S5 Eps 11–13
+- 145: Runaways S1 & S2 & S3 Eps 1–4
+- 146: The Punisher S2
+- 147: Jessica Jones S3
+- 148: Agents of SHIELD S5 Eps 14–18
+- 149: Agents of SHIELD S5 Eps 19–22
+- 150: Runaways S3 Eps 5–10
+- 151: Agents of SHIELD S6 & S7
+- 152: Helstrom S1
+- 153: The Daily Bugle S1 & S2
+- 154: Your Friendly Neighborhood Spider-Man S1
+- 1541: X-Men '97 S1
+- 155: X-Men '97 S2
+- 156: Your Friendly Neighborhood Spider-Man S2
