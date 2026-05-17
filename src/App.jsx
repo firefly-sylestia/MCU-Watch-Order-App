@@ -163,7 +163,6 @@ const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const isAgentsOfShieldCarouselDuplicate = (item) => /agents of shield/i.test(item?.title || '');
 const HERO_ROTATION_MS = 10000;
 const HERO_VISIBLE_COUNT = 15;
-const HERO_CENTER_OFFSET = Math.floor(HERO_VISIBLE_COUNT / 2);
 const HERO_PRELOAD_AHEAD = 12;
 const loadedHeroPosterSrcs = new Set();
 const heroPosterLoadPromises = new Map();
@@ -1172,10 +1171,12 @@ export default function MCUViewer() {
   const visibleHeroPosters = useMemo(() => {
     if (!heroPosterItems.length) return [];
     const count = Math.min(HERO_VISIBLE_COUNT, heroPosterItems.length);
+    const centerOffset = Math.floor(count / 2);
     return Array.from({ length: count }, (_, offset) => {
-      const idx = (heroIndex - HERO_CENTER_OFFSET + offset + heroPosterItems.length) % heroPosterItems.length;
+      const rawIndex = heroIndex - centerOffset + offset;
+      const idx = ((rawIndex % heroPosterItems.length) + heroPosterItems.length) % heroPosterItems.length;
       return heroPosterItems[idx];
-    });
+    }).filter(Boolean);
   }, [heroPosterItems, heroIndex]);
   const activeHeroSrc = heroPosters.length ? (heroPosters[heroIndex % heroPosters.length] || heroPosters[0] || '') : '';
 
@@ -2722,7 +2723,7 @@ export default function MCUViewer() {
             })}
           </div>
         )}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 16, background: 'linear-gradient(90deg, rgba(4,6,12,0.78) 0%, transparent 12%, transparent 88%, rgba(4,6,12,0.78) 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 16, background: 'linear-gradient(90deg, rgba(4,6,12,0.10) 0%, transparent 8%, transparent 92%, rgba(4,6,12,0.10) 100%)' }} />
        
       </div>
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
