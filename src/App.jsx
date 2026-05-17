@@ -111,7 +111,7 @@ const UI_STATE_DEFAULTS = {
   densityMode: 'comfortable',
   timelineMode: 'sacred',
   autoHideStatuses: false,
-  performanceMode: false,
+  performanceMode: true,
   scrollTop: 0,
 };
 
@@ -620,7 +620,6 @@ export default function MCUViewer() {
   const settingsRef= useRef(null);
   const sidebarRef = useRef(null);
   const heroIntervalRef = useRef(null);
-  const heroDragRef = useRef({ active: false, pointerId: null, startX: 0, startY: 0, startScrollLeft: 0, dragging: false, dragged: false });
   const heroRandomSeedRef = useRef(() => Math.random().toString(36).slice(2));
   if (typeof heroRandomSeedRef.current === 'function') heroRandomSeedRef.current = heroRandomSeedRef.current();
   const restoredUiStateRef = useRef(false);
@@ -1157,8 +1156,8 @@ export default function MCUViewer() {
   const heroPosters = useMemo(() => heroPosterItems.map(({ src }) => src), [heroPosterItems]);
   const visibleHeroPosters = useMemo(() => {
     if (!heroPosterItems.length) return [];
-    return Array.from({ length: Math.min(18, heroPosterItems.length) }, (_, offset) => heroPosterItems[(heroIndex + offset) % heroPosterItems.length]);
-  }, [heroPosterItems, heroIndex]);
+    return heroPosterItems;
+  }, [heroPosterItems]);
   const activeHeroSrc = heroPosters.length ? (heroPosters[heroIndex % heroPosters.length] || heroPosters[0] || '') : '';
 
   useEffect(() => {
@@ -1238,46 +1237,6 @@ export default function MCUViewer() {
     if (!horizontalDelta) return;
     e.currentTarget.scrollBy({ left: horizontalDelta * 2.6, behavior: 'auto' });
     e.preventDefault();
-  }, []);
-
-  const handleHeroPointerDown = useCallback((e) => {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    heroDragRef.current = {
-      active: true,
-      pointerId: e.pointerId,
-      startX: e.clientX,
-      startY: e.clientY,
-      startScrollLeft: e.currentTarget.scrollLeft,
-      dragging: false,
-      dragged: false,
-    };
-  }, []);
-
-  const handleHeroPointerMove = useCallback((e) => {
-    const drag = heroDragRef.current;
-    if (!drag.active || drag.pointerId !== e.pointerId) return;
-    const dx = e.clientX - drag.startX;
-    const dy = e.clientY - drag.startY;
-    if (!drag.dragging) {
-      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-      if (Math.abs(dy) > Math.abs(dx)) {
-        drag.active = false;
-        return;
-      }
-      drag.dragging = true;
-      drag.dragged = true;
-      e.currentTarget.setPointerCapture?.(e.pointerId);
-    }
-    e.currentTarget.scrollLeft = drag.startScrollLeft - (dx * 1.65);
-    e.preventDefault();
-  }, []);
-
-  const finishHeroPointer = useCallback((e) => {
-    const drag = heroDragRef.current;
-    if (drag.pointerId === e.pointerId) {
-      e.currentTarget.releasePointerCapture?.(e.pointerId);
-      drag.active = false;
-    }
   }, []);
 
   const spoilerSafe = useMemo(() => spoilerSafeMode, [spoilerSafeMode]);
@@ -2387,15 +2346,13 @@ export default function MCUViewer() {
         .curvy-panel::before{display:none}
 
         .section-up{content-visibility:visible;contain-intrinsic-size:auto}
-        .hero-rail{scroll-behavior:auto;will-change:scroll-position;mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);-webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%)}
+        .hero-rail{scroll-behavior:auto;contain:layout paint;mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);-webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%)}
         .hero-rail::-webkit-scrollbar{height:0;width:0;display:none}
-        .hero-poster-card{will-change:transform,opacity;backface-visibility:hidden;transform-style:preserve-3d}
-        .hero-backdrop-image{opacity:var(--backdrop-opacity,0.38);animation:posterBackdropIn 1100ms cubic-bezier(0.22,1,0.36,1) both;filter:saturate(1.12) contrast(1.04)}
-        .hero-backdrop-image.is-exiting{opacity:0;animation:posterBackdropOut 1200ms cubic-bezier(0.22,1,0.36,1) both}
-        .performance-mode .hero-backdrop-image{opacity:var(--backdrop-opacity,0.38) !important;animation:none !important;filter:saturate(1.06) contrast(1.02) !important}
-        .performance-mode .hero-backdrop-image.is-exiting{display:none !important}
-        @keyframes posterBackdropIn{0%{opacity:0;transform:scale(1.055) translate3d(0,10px,0);filter:blur(10px) saturate(0.9)}100%{opacity:var(--backdrop-opacity,0.38);transform:scale(1) translate3d(0,0,0);filter:blur(0) saturate(1.12) contrast(1.04)}}
-        @keyframes posterBackdropOut{0%{opacity:var(--backdrop-opacity,0.38);transform:scale(1)}100%{opacity:0;transform:scale(1.035);filter:blur(8px) saturate(0.95)}}
+        .hero-poster-card{backface-visibility:hidden;transform:translateZ(0)}
+        .hero-backdrop-image{opacity:var(--backdrop-opacity,0.38);animation:posterBackdropSlideIn 900ms cubic-bezier(0.22,1,0.36,1) both;filter:saturate(1.12) contrast(1.04)}
+        .hero-backdrop-image.is-exiting{opacity:0;animation:posterBackdropSlideOut 900ms cubic-bezier(0.22,1,0.36,1) both}
+        @keyframes posterBackdropSlideIn{0%{opacity:0;transform:translate3d(3%,0,0);filter:blur(6px) saturate(0.96)}100%{opacity:var(--backdrop-opacity,0.38);transform:translate3d(0,0,0);filter:blur(0) saturate(1.12) contrast(1.04)}}
+        @keyframes posterBackdropSlideOut{0%{opacity:var(--backdrop-opacity,0.38);transform:translate3d(0,0,0)}100%{opacity:0;transform:translate3d(-3%,0,0);filter:blur(6px) saturate(0.98)}}
         .phase-rows-full{display:block;position:relative}
         .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 220ms var(--ease-out),border-color 220ms var(--ease-out),transform 220ms var(--ease-out),box-shadow 260ms var(--ease-out);display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid transparent;min-height:var(--row-min-h,86px);border-radius:12px;overflow:hidden;background:transparent;backdrop-filter:none}
         .rrow:last-child{border-bottom:none}
@@ -2436,9 +2393,7 @@ export default function MCUViewer() {
         .glass-panel{background-color:rgba(30,30,46,0.42);border:1px solid rgba(255,255,255,0.04);border-radius:16px}
         .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02))}
         .meta-muted{color:var(--theme-text-muted) !important}
-        .performance-mode *{animation:none !important;transition-duration:0ms !important}
-        .performance-mode .progress-gradient,.performance-mode .sweep::after,.performance-mode .phase-flash{animation:none !important}
-        *{scroll-behavior:smooth}
+        .performance-mode *{animation:none !important}
 
         /* Mobile */
         @media (max-width: 767px) {
@@ -2497,14 +2452,14 @@ export default function MCUViewer() {
           <div
             key={`backdrop-exit-${previousHeroSrc}`}
             className="hero-backdrop-image is-exiting"
-            style={{ '--backdrop-opacity': 0.38, position: 'absolute', inset: '-4%', backgroundImage: `url(${previousHeroSrc})`, backgroundSize: 'cover', backgroundPosition: 'center 20%', willChange: performanceMode ? 'auto' : 'opacity, transform, filter' }}
+            style={{ '--backdrop-opacity': 0.38, position: 'absolute', inset: 0, backgroundImage: `url(${previousHeroSrc})`, backgroundSize: 'cover', backgroundPosition: 'center 20%' }}
           />
         )}
         {currentHeroSrc && (
           <div
             key={`backdrop-${currentHeroSrc}`}
             className="hero-backdrop-image"
-            style={{ '--backdrop-opacity': 0.38, position: 'absolute', inset: '-4%', backgroundImage: `url(${currentHeroSrc})`, backgroundSize: 'cover', backgroundPosition: 'center 20%', willChange: performanceMode ? 'auto' : 'opacity, transform, filter' }}
+            style={{ '--backdrop-opacity': 0.38, position: 'absolute', inset: 0, backgroundImage: `url(${currentHeroSrc})`, backgroundSize: 'cover', backgroundPosition: 'center 20%' }}
           />
         )}
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.74 : 0.64, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
@@ -2665,36 +2620,20 @@ export default function MCUViewer() {
         {heroPosters.length > 0 && (
           <div className="hero-rail"
             onWheel={handleHeroWheel}
-            onPointerDown={handleHeroPointerDown}
-            onPointerMove={handleHeroPointerMove}
-            onPointerUp={finishHeroPointer}
-            onPointerCancel={finishHeroPointer}
-            onPointerLeave={finishHeroPointer}
-            style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 14px', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'none', scrollPaddingInline: isDesktopViewport ? '14vw' : '8vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', overscrollBehaviorX: 'contain', overscrollBehaviorY: 'auto', touchAction: 'pan-y', cursor: 'grab', userSelect: 'none', WebkitUserSelect: 'none' }}>
+            style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 14px', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'none', scrollPaddingInline: isDesktopViewport ? '14vw' : '8vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', overscrollBehaviorX: 'contain', overscrollBehaviorY: 'auto', touchAction: 'pan-x', cursor: 'pointer', userSelect: 'none', WebkitUserSelect: 'none' }}>
             {visibleHeroPosters.map(({ src, item: heroItem }, idx) => {
-              const isActive = idx === 0;
+              const isActive = src === activeHeroSrc;
               return (
                 <div key={`hero-rail-${src}`} style={{ position: 'relative', display:'flex', flexDirection:'column', alignItems:'center', scrollSnapAlign:'none', flexShrink: 0 }}>
                 <img
                   className="hero-poster-card"
                   src={src}
                   alt="Featured poster"
-                  title={heroItem?.title || 'Featured MCU poster'}
                   draggable={false}
+                  loading={idx < 8 ? 'eager' : 'lazy'}
+                  decoding="async"
                   onDragStart={(e) => e.preventDefault()}
-                  onClick={() => { if (heroDragRef.current.dragged) { heroDragRef.current.dragged = false; return; } if (heroItem) setDetailItem(heroItem); }}
-                  onMouseMove={(e) => {
-                    const card = e.currentTarget;
-                    const rect = card.getBoundingClientRect();
-                    const px = (e.clientX - rect.left) / rect.width;
-                    const py = (e.clientY - rect.top) / rect.height;
-                    card.style.setProperty('--rx', `${(0.5 - py) * 4}deg`);
-                    card.style.setProperty('--ry', `${(px - 0.5) * 5}deg`);
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.setProperty('--rx', '0deg');
-                    e.currentTarget.style.setProperty('--ry', '0deg');
-                  }}
+                  onClick={() => { if (heroItem) setDetailItem(heroItem); }}
                   style={{
                     height: isDesktopViewport ? 440 : 320,
                     width: isDesktopViewport ? 292 : 218,
@@ -2703,15 +2642,14 @@ export default function MCUViewer() {
                     border: '0',
                     boxShadow: 'none',
                     opacity: isActive ? 1 : 0.76,
-                    transform: `perspective(1100px) translateZ(${isActive ? '20px' : '0'}) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) ${isActive ? 'scale(1.06) translateY(-6px)' : 'scale(0.96)'}`,
-                    transition: 'transform 360ms cubic-bezier(0.22,1,0.36,1), opacity 220ms ease, filter 220ms ease',
-                    cursor: 'grab',
+                    transform: isActive ? 'translate3d(0,-6px,0) scale(1.04)' : 'translate3d(0,0,0) scale(0.96)',
+                    transition: 'transform 260ms ease, opacity 180ms ease',
+                    cursor: 'pointer',
                     userSelect: 'none',
                     WebkitUserSelect: 'none',
                     WebkitTouchCallout: 'none',
                   }}
                 />
-                <div style={{ position: 'absolute', left: 9, right: 9, bottom: 9, padding: '5px 7px', borderRadius: 8, background: 'linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.62))', color: '#fff', fontSize: 9, fontWeight: 700, lineHeight: 1.15, textShadow: '0 1px 4px rgba(0,0,0,0.9)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)', maxWidth: isDesktopViewport ? 274 : 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center', pointerEvents: 'none' }}>{heroItem?.title || 'Featured MCU poster'}</div>
                 </div>
               );
             })}
