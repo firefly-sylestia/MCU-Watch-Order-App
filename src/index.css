@@ -202,8 +202,8 @@ a:hover {
 
 .wbtn:focus-visible,
 .sopt:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
+  outline: none;
+  box-shadow: none;
 }
 
 .status-pill {
@@ -504,25 +504,14 @@ a:hover {
 
 /* ── Selection Styling ──────────────────────────────────────────────────────── */
 ::selection {
-  background: rgba(124, 255, 218, 0.3);
-  color: var(--text-h);
+  background: transparent;
+  color: inherit;
 }
 
 /* ── Focus States ───────────────────────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* ── Performance Mode Overrides ─────────────────────────────────────────────── */
-.performance-mode * {
-  animation: none !important;
-  transition-duration: 0ms !important;
-}
-
-.performance-mode .liquid-glass {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+  outline: none;
+  box-shadow: none;
 }
 
 /* ── Aurora Background Effect ───────────────────────────────────────────────── */
