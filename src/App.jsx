@@ -587,10 +587,6 @@ export default function MCUViewer() {
   }, []);
 
   useEffect(() => {
-    if (isDesktopViewport) setSidebarOpen(false);
-  }, [isDesktopViewport]);
-
-  useEffect(() => {
     const hasOverlay = sidebarOpen || settingsOpen || detailItem || analyticsOpen;
     if (!hasOverlay) return;
     window.history.pushState({ mcuOverlay: true }, '');
@@ -1121,19 +1117,13 @@ export default function MCUViewer() {
       setHeroTransitioning(false);
       return;
     }
-    const pickRandomIndex = (excludeIndex = -1) => {
+    const getNextIndex = (fromIndex) => {
       if (heroPosters.length <= 1) return 0;
-      let next = Math.floor(Math.random() * heroPosters.length);
-      if (next === excludeIndex) next = (next + 1 + Math.floor(Math.random() * (heroPosters.length - 1))) % heroPosters.length;
-      return next;
+      return (fromIndex + 1) % heroPosters.length;
     };
     const normalizedIndex = heroIndex % heroPosters.length;
-    heroPosters.slice(0, Math.min(6, heroPosters.length)).forEach((src) => {
-      const img = new Image();
-      img.src = src;
-    });
     const preloadNext = (fromIndex) => {
-      const nextSrcCandidate = heroPosters[pickRandomIndex(fromIndex)];
+      const nextSrcCandidate = heroPosters[getNextIndex(fromIndex)];
       if (!nextSrcCandidate) return;
       const img = new Image();
       img.src = nextSrcCandidate;
@@ -1156,7 +1146,7 @@ export default function MCUViewer() {
     heroIntervalRef.current = window.setInterval(() => {
       setHeroIndex((i) => {
         const currentIndex = i % heroPosters.length;
-        const upcomingIndex = pickRandomIndex(currentIndex);
+        const upcomingIndex = getNextIndex(currentIndex);
         const upcomingSrc = heroPosters[upcomingIndex];
         if (!upcomingSrc) return upcomingIndex;
         const img = new Image();
@@ -1190,7 +1180,7 @@ export default function MCUViewer() {
         heroIntervalRef.current = window.setInterval(() => {
           setHeroIndex((i) => {
             const currentIndex = i % heroPosters.length;
-            const upcomingIndex = pickRandomIndex(currentIndex);
+            const upcomingIndex = getNextIndex(currentIndex);
             const upcomingSrc = heroPosters[upcomingIndex];
         if (!upcomingSrc) return upcomingIndex;
             const img = new Image();
@@ -2432,17 +2422,17 @@ export default function MCUViewer() {
       `}</style>
 
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: (heroTransitioning && nextHeroSrc) ? `url(${nextHeroSrc})` : (currentHeroSrc ? `url(${currentHeroSrc})` : 'none'), backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: 0.1, transition: 'opacity 0.55s ease-in-out' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: (heroTransitioning && nextHeroSrc) ? `url(${nextHeroSrc})` : (currentHeroSrc ? `url(${currentHeroSrc})` : 'none'), backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: 0.24, transition: 'opacity 0.9s ease-in-out', willChange: 'opacity' }} />
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: heroTransitioning ? 0.55 : 1, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
-        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${darkMode ? 'rgba(4,5,15,0.05)' : 'rgba(255,255,255,0.08)'} 0%, ${darkMode ? 'rgba(4,5,15,0.18)' : 'rgba(231,238,248,0.22)'} 45%, ${darkMode ? 'rgba(4,5,15,0.52)' : 'rgba(231,238,248,0.58)'} 70%, ${darkMode ? 'rgba(4,5,15,0.96)' : 'rgba(231,238,248,0.96)'} 100%)` }} />
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${darkMode ? 'rgba(4,5,15,0.03)' : 'rgba(255,255,255,0.06)'} 0%, ${darkMode ? 'rgba(4,5,15,0.12)' : 'rgba(231,238,248,0.18)'} 45%, ${darkMode ? 'rgba(4,5,15,0.46)' : 'rgba(231,238,248,0.5)'} 70%, ${darkMode ? 'rgba(4,5,15,0.92)' : 'rgba(231,238,248,0.92)'} 100%)` }} />
       </div>
       {lightningStrike && <div style={{ position:'fixed', inset:0, pointerEvents:'none', background:'linear-gradient(180deg, rgba(180,220,255,0.95), rgba(255,255,255,0))', mixBlendMode:'screen', zIndex:9999, animation:'fadeInOut 0.7s ease' }} />}
       {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {!isDesktopViewport && <button className="theme-btn" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar menu" style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 10px)', left: 12, zIndex: 280, width: 44, height: 44, background: darkMode ? 'rgba(10,14,28,0.94)' : '#ffffff', borderColor: darkMode ? 'rgba(255,255,255,0.24)' : T.pillBorder, boxShadow: darkMode ? '0 8px 24px rgba(0,0,0,0.35)' : '0 6px 16px rgba(0,0,0,0.12)' }}><Menu size={17} /></button>}
-      {!isDesktopViewport && sidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 255 }} />}
-      <aside ref={sidebarRef} style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 'min(320px,84vw)', padding: '86px 14px 20px', background: darkMode ? 'rgba(7,9,20,0.58)' : 'rgba(255,255,255,0.58)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRight: `1px solid ${T.surfaceBorder}`, transform: isDesktopViewport ? 'translateX(0)' : (sidebarOpen ? 'translateX(0)' : 'translateX(-105%)'), transition: 'transform 0.34s cubic-bezier(.22,.9,.24,1)', zIndex: 260, overflowY: 'auto', boxShadow: darkMode ? '0 22px 55px rgba(0,0,0,0.45)' : '0 18px 44px rgba(0,0,0,0.18)', borderRadius: 16 }}>
+      <button className="theme-btn" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar menu" style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 10px)', left: 12, zIndex: 280, width: 44, height: 44, background: darkMode ? 'rgba(10,14,28,0.94)' : '#ffffff', borderColor: darkMode ? 'rgba(255,255,255,0.24)' : T.pillBorder, boxShadow: darkMode ? '0 8px 24px rgba(0,0,0,0.35)' : '0 6px 16px rgba(0,0,0,0.12)' }}><Menu size={17} /></button>
+      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 255 }} />}
+      <aside ref={sidebarRef} style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 'min(320px,84vw)', padding: '86px 14px 20px', background: darkMode ? 'rgba(7,9,20,0.58)' : 'rgba(255,255,255,0.58)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRight: `1px solid ${T.surfaceBorder}`, transform: sidebarOpen ? 'translateX(0)' : 'translateX(-105%)', transition: 'transform 0.34s cubic-bezier(.22,.9,.24,1)', zIndex: 260, overflowY: 'auto', boxShadow: darkMode ? '0 22px 55px rgba(0,0,0,0.45)' : '0 18px 44px rgba(0,0,0,0.18)', borderRadius: 16 }}>
         <div style={{ marginBottom: 8, fontSize: 11, letterSpacing: 1.8, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)', textTransform: 'uppercase' }}>Navigation Panel</div>
         <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
