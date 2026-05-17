@@ -1689,32 +1689,76 @@ export default function MCUViewer() {
       canvas.width = 1080;
       canvas.height = 1350;
       const ctx = canvas.getContext('2d');
+      const featured = historyItems[0] || activeItems[0];
+      const bgImg = featured ? await new Promise(resolve => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = posterSrc(featured);
+      }) : null;
+      if (bgImg) {
+        try { ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height); } catch {}
+      }
       const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      gradient.addColorStop(0, '#07111f');
-      gradient.addColorStop(0.55, '#17254a');
-      gradient.addColorStop(1, '#3a1333');
+      gradient.addColorStop(0, 'rgba(5,10,22,0.58)');
+      gradient.addColorStop(0.52, 'rgba(10,18,38,0.78)');
+      gradient.addColorStop(1, 'rgba(6,10,20,0.92)');
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '800 58px Inter, sans-serif';
-      ctx.fillText('MCU WATCH ANALYSIS', 72, 120);
+
+      ctx.fillStyle = 'rgba(8,14,28,0.72)';
+      ctx.strokeStyle = 'rgba(160,214,255,0.24)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(48, 54, 984, 1242, 34);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(255,255,255,0.94)';
+      ctx.font = '800 56px Inter, sans-serif';
+      ctx.fillText('MCU WATCH ANALYSIS', 94, 138);
+
+      ctx.fillStyle = 'rgba(14,24,45,0.8)';
+      ctx.strokeStyle = 'rgba(124,252,218,0.28)';
+      ctx.beginPath();
+      ctx.roundRect(84, 182, 912, 260, 28);
+      ctx.fill();
+      ctx.stroke();
+
       ctx.fillStyle = '#7cffda';
-      ctx.font = '800 132px Inter, sans-serif';
-      ctx.fillText(`${Math.round(totalWatchedHours)}h`, 72, 285);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '600 42px Inter, sans-serif';
-      ctx.fillText(`${totalWatched}/${totalEntries} watched • ${Object.values(rewatchCount).reduce((a, b) => a + (Number(b) || 0), 0)} re-watches`, 72, 355);
-      ctx.fillStyle = 'rgba(255,255,255,0.72)';
-      ctx.font = '500 34px Inter, sans-serif';
-      ctx.fillText('Recent history', 72, 465);
+      ctx.font = '800 128px Inter, sans-serif';
+      ctx.fillText(`${Math.round(totalWatchedHours)}h`, 122, 330);
+      ctx.fillStyle = 'rgba(237,247,255,0.95)';
+      ctx.font = '700 38px Inter, sans-serif';
+      ctx.fillText(`${totalWatched}/${totalEntries} watched`, 128, 390);
+      ctx.fillText(`${Object.values(rewatchCount).reduce((a, b) => a + (Number(b) || 0), 0)} re-watches`, 522, 390);
+
+      ctx.fillStyle = 'rgba(14,24,45,0.8)';
+      ctx.strokeStyle = 'rgba(146,185,255,0.26)';
+      ctx.beginPath();
+      ctx.roundRect(84, 474, 912, 760, 28);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(229,241,255,0.95)';
+      ctx.font = '700 42px Inter, sans-serif';
+      ctx.fillText('Recent history', 122, 548);
+
       historyItems.slice(0, 5).forEach((item, idx) => {
-        const y = 540 + idx * 112;
-        ctx.fillStyle = 'rgba(255,255,255,0.92)';
-        ctx.font = '700 34px Inter, sans-serif';
-        ctx.fillText(item.title.slice(0, 36), 96, y);
-        ctx.fillStyle = 'rgba(255,255,255,0.58)';
-        ctx.font = '500 26px Inter, sans-serif';
-        ctx.fillText(`${item.watchedDate || 'No date'} • ${myRating[item.id] ? `${myRating[item.id]}★` : 'unrated'} • re-watch ${rewatchCount[item.id] || 0}`, 96, y + 38);
+        const rowY = 608 + idx * 126;
+        ctx.fillStyle = idx % 2 ? 'rgba(255,255,255,0.035)' : 'rgba(255,255,255,0.02)';
+        ctx.beginPath();
+        ctx.roundRect(114, rowY - 46, 852, 98, 16);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.94)';
+        ctx.font = '700 31px Inter, sans-serif';
+        ctx.fillText(item.title.slice(0, 42), 136, rowY);
+        const normalizedRating = Number(myRating[item.id] || 0);
+        const ratingText = normalizedRating > 0 ? `${normalizedRating.toFixed(1)}/10 ★` : 'Unrated';
+        ctx.fillStyle = 'rgba(209,224,244,0.86)';
+        ctx.font = '600 24px Inter, sans-serif';
+        ctx.fillText(`${item.watchedDate || 'No date'} • ${ratingText} • Re-watch ${rewatchCount[item.id] || 0}`, 136, rowY + 34);
       });
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
       if (!blob) return;
@@ -3225,54 +3269,34 @@ export default function MCUViewer() {
             <div style={{ display: 'grid', gap: 12, maxHeight: '58vh', overflow: 'auto', paddingRight: 4 }}>
               {historyItems.length === 0 && <div style={{ color: T.textMuted, padding: 16 }}>No watched history yet. Mark an item watched to start your analysis log.</div>}
               {historyItems.map(item => (
-                <div key={item.id} className="glass-panel" style={{ borderRadius: 14, padding: '16px 16px 14px', display: 'grid', gap: 12, border: '1px solid color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'color-mix(in srgb, var(--theme-surface) 80%, transparent)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', transition: 'background-color 0.16s ease, border-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease', boxShadow: '0 8px 22px color-mix(in srgb, var(--theme-accent) 9%, transparent)' }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--theme-accent) 42%, var(--theme-border))';
-                    e.currentTarget.style.background = 'var(--theme-surface-hover)';
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                    e.currentTarget.style.boxShadow = '0 12px 28px color-mix(in srgb, var(--theme-accent) 16%, transparent)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))';
-                    e.currentTarget.style.background = 'color-mix(in srgb, var(--theme-surface) 80%, transparent)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 8px 22px color-mix(in srgb, var(--theme-accent) 9%, transparent)';
-                  }}>
+                <div key={item.id} className="glass-panel" style={{ borderRadius: 14, padding: '16px 16px 14px', display: 'grid', gap: 12, border: '1px solid color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'color-mix(in srgb, var(--theme-surface) 80%, transparent)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'baseline', flexWrap: 'wrap' }}>
-                    <strong style={{ fontSize: 16, fontWeight: 700, fontFamily: 'inherit', lineHeight: 1.25 }}>{item.title}</strong>
-                    <span style={{ color: T.textMuted, fontSize: 12, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.4 }}>{item.watchedDate || 'No watch date'} · ~{Math.round(estimateRuntimeHours(item) * 10) / 10}h</span>
+                    <strong style={{ fontSize: 16, fontWeight: 700 }}>{item.title}</strong>
+                    <span style={{ color: T.textMuted, fontSize: 12, fontFamily: 'var(--font-marvel-ui)' }}>{item.watchedDate || 'No watch date'} · ~{Math.round(estimateRuntimeHours(item) * 10) / 10}h</span>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: 14, alignItems: 'start' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: 14, alignItems: 'start', borderBottom: `1px solid color-mix(in srgb, var(--theme-border) 82%, transparent)`, paddingBottom: 10 }}>
                     <img src={posterSrc(item)} alt={item.title} style={{ width: 100, height: 145, borderRadius: 10, objectFit: 'cover', border: `1px solid ${T.surfaceBorder}` }} />
                     <div style={{ display: 'grid', gap: 10 }}>
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <button className="fpill" style={{ padding: '7px 10px', fontSize: 11 }} onClick={() => setRewatchCount(p => ({ ...p, [item.id]: (p[item.id] || 0) + 1 }))}><Clock size={12}/>Re-watch {rewatchCount[item.id] || 0}</button>
-                    <button className="fpill" style={{ padding: '7px 10px', fontSize: 11 }} onClick={() => setRewatchCount(p => ({ ...p, [item.id]: Math.max(0, (p[item.id] || 0) - 1) }))}>−</button>
-                    <span style={{ color: T.textMuted, fontSize: 12, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.6, fontWeight: 700, textTransform: 'uppercase' }}>Rating / 10</span>
-                    <input
-                      type="number"
-                      min={0}
-                      max={10}
-                      step={0.1}
-                      value={myRating[item.id] ?? ''}
-                      onChange={(e) => setReviewRating(item.id, Number(e.target.value))}
-                      placeholder="4.5"
-                      style={{ width: 76, borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: '6px 9px', fontWeight: 700 }}
-                    />
-                    <div style={{ position: 'relative', display: 'inline-flex', fontSize: 18, letterSpacing: 2 }}>
-                      <span style={{ color: 'rgba(255,255,255,0.25)' }}>★★★★★</span>
-                      <span style={{ color: '#ffd35c', position: 'absolute', left: 0, top: 0, overflow: 'hidden', width: `${Math.max(0, Math.min(100, ((myRating[item.id] || 0) / 10) * 100))}%`, whiteSpace: 'nowrap' }}>★★★★★</span>
+                      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <button className="fpill" style={{ padding: '7px 10px', fontSize: 11 }} onClick={() => setRewatchCount(p => ({ ...p, [item.id]: (p[item.id] || 0) + 1 }))}><Clock size={12}/>Re-watch {rewatchCount[item.id] || 0}</button>
+                        <button className="fpill" style={{ padding: '7px 10px', fontSize: 11 }} onClick={() => setRewatchCount(p => ({ ...p, [item.id]: Math.max(0, (p[item.id] || 0) - 1) }))}>−</button>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '8px 10px', borderRadius: 12, border: '1px solid color-mix(in srgb, var(--theme-accent) 30%, var(--theme-border))', background: 'color-mix(in srgb, var(--theme-surface) 86%, transparent)' }}>
+                        <span style={{ color: T.textMuted, fontSize: 11, fontFamily: 'var(--font-marvel-ui)', textTransform: 'uppercase' }}>Rating</span>
+                        <input type="number" min={0} max={10} step={0.1} value={myRating[item.id] ?? ''} onChange={(e) => setReviewRating(item.id, Number(e.target.value))} placeholder="4.5" style={{ width: 82, borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: '7px 10px', fontWeight: 800, fontSize: 15, textAlign: 'center', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' }} />
+                        <span style={{ color: T.textMuted, fontSize: 12, fontWeight: 700 }}>/10</span>
+                        <div style={{ position: 'relative', display: 'inline-flex', fontSize: 17, letterSpacing: 1.6 }}>
+                          <span style={{ color: 'color-mix(in srgb, var(--theme-text-muted) 65%, transparent)' }}>★★★★★</span>
+                          <span style={{ color: 'color-mix(in srgb, var(--theme-accent) 70%, var(--theme-accent-alt))', position: 'absolute', left: 0, top: 0, overflow: 'hidden', width: `${Math.max(0, Math.min(100, ((myRating[item.id] || 0) / 10) * 100))}%`, whiteSpace: 'nowrap' }}>★★★★★</span>
+                        </div>
+                        <span style={{ fontSize: 12, fontWeight: 800, color: 'color-mix(in srgb, var(--theme-accent) 72%, var(--theme-accent-alt))' }}>{Number(myRating[item.id] || 0).toFixed(1)}/10</span>
+                      </div>
                     </div>
-                    <span style={{ fontSize: 12, fontWeight: 800, fontFamily: 'inherit', color: 'var(--theme-success)' }}>{Number(myRating[item.id] || 0).toFixed(1)}/10</span>
                   </div>
-                  <textarea
-                    value={reviews[item.id] || ''}
-                    onChange={(e) => setReviews(prev => ({ ...prev, [item.id]: e.target.value }))}
-                    placeholder="Add a review or note…"
-                    rows={2}
-                    style={{ width: '100%', resize: 'vertical', borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: 10, lineHeight: 1.45, fontFamily: 'inherit' }}
-                  />
-                  <button className="fpill" style={{ padding: '6px 10px', fontSize: 11, width: 'fit-content' }} onClick={() => shareReviewCard(item)}><Upload size={12}/>Share Review Card</button>
+                  <div style={{ display: 'grid', gap: 10, paddingTop: 10 }}>
+                    <textarea value={reviews[item.id] || ''} onChange={(e) => setReviews(prev => ({ ...prev, [item.id]: e.target.value }))} placeholder="Add a review or note…" rows={2} style={{ width: '100%', resize: 'vertical', borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: 10, lineHeight: 1.45 }} />
+                    <div style={{ paddingTop: 10, borderTop: `1px solid color-mix(in srgb, var(--theme-border) 82%, transparent)` }}>
+                      <button className="fpill" style={{ padding: '7px 12px', fontSize: 11, width: 'fit-content', minHeight: 36 }} onClick={() => shareReviewCard(item)}><Upload size={12}/>Share Review Card</button>
                     </div>
                   </div>
                 </div>
