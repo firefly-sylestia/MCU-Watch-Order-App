@@ -1651,7 +1651,7 @@ export default function MCUViewer() {
       ctx.font = `${Math.round(60 * scale)}px ${exportFontFamily}`;
       ctx.font = `800 ${Math.round(60 * scale)}px ${exportFontFamily}`;
       drawWrappedText(ctx, item.title, posterX + posterW + 52, posterY + 72, cardW - posterW - 150, 66, 3);
-      drawPremiumStars(ctx, { x: posterX + posterW + 52, y: posterY + 150, size: 38, rating10: rating, active: '#ffd35c' });
+      drawPremiumStars(ctx, { x: posterX + posterW + 52, y: posterY + 150, size: Math.round(38 * scale), rating10: rating, active: '#ffd35c' });
       ctx.font = `800 ${Math.round(40 * scale)}px ${exportFontFamily}`;
       ctx.fillStyle = '#8bf8de';
       ctx.fillText(`${rating.toFixed(1)}/10`, posterX + posterW + 52, posterY + 220);
@@ -1665,9 +1665,9 @@ export default function MCUViewer() {
       ctx.font = `700 ${Math.round(34 * scale)}px ${exportFontFamily}`;
       ctx.fillStyle = '#dce8ff';
       ctx.fillText('Review Notes', cardX + 94, posterY + posterH + 130);
-      ctx.font = '500 42px Inter, sans-serif';
+      ctx.font = `500 ${Math.round(42 * scale)}px ${exportFontFamily}`;
       ctx.fillStyle = '#f6fbff';
-      drawWrappedText(ctx, reviewText || 'No review yet.', cardX + 94, posterY + posterH + 200, cardW - 188, 56, 7);
+      drawWrappedText(ctx, reviewText || 'No review yet.', cardX + 94, posterY + posterH + 200, cardW - 188, Math.round(56 * scale), 7);
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
       if (!blob) return;
       const result = await saveImageToDevice(blob, `${slugifyPosterName(item.title)}-review-card.png`);
@@ -2052,23 +2052,26 @@ export default function MCUViewer() {
       ctx.beginPath();
       ctx.roundRect(40, 40, 1320, 1920, 32);
       ctx.fill();
+      const fontMap = { inter: 'Inter, sans-serif', grotesk: 'Space Grotesk, sans-serif', manrope: 'Manrope, sans-serif', marvel: 'var(--font-marvel-display), sans-serif' };
+      const exportFontFamily = fontMap[exportFont] || fontMap.inter;
+      const scale = exportTextScale;
       ctx.fillStyle = '#fff';
-      ctx.font = '800 62px system-ui';
+      ctx.font = `800 ${Math.round(62 * scale)}px ${exportFontFamily}`;
       ctx.fillText(item.title, 430, 145, 900);
-      ctx.font = '600 34px system-ui';
+      ctx.font = `600 ${Math.round(34 * scale)}px ${exportFontFamily}`;
       ctx.fillStyle = '#9dc6ff';
       ctx.fillText(`${item.year} • Phase ${item.phase} • ${TYPE_META[item.type]?.label || item.type}`, 430, 195, 900);
-      drawPremiumStars(ctx, { x: 430, y: 252, size: 34, rating10: ratingNum, active: '#ffd35c' });
+      drawPremiumStars(ctx, { x: 430, y: 252, size: Math.round(34 * scale), rating10: ratingNum, active: '#ffd35c' });
       ctx.fillText(`${ratingNum ? ratingNum.toFixed(1) : '—'}/10`, 430, 304, 900);
       ctx.fillStyle = '#d3ddf6';
-      ctx.font = '600 30px system-ui';
+      ctx.font = `600 ${Math.round(30 * scale)}px ${exportFontFamily}`;
       ctx.fillText('Description', 70, 660);
-      drawWrappedText(ctx, description, 70, 710, 1260, 44, 8);
+      drawWrappedText(ctx, description, 70, 710, 1260, Math.round(44 * scale), 8);
       ctx.fillText(`Release: ${formatReleaseDate(info.date, item.year, info.label, status)}`, 70, 1118);
       ctx.fillText(`Prerequisite: ${item.prereq}`, 70, 1170, 1260);
       const cast = detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[item.title] || ['Cast data coming soon']).join(', ');
       ctx.fillText('Cast', 70, 1215);
-      drawWrappedText(ctx, cast, 70, 1260, 1260, 38, 6);
+      drawWrappedText(ctx, cast, 70, 1260, 1260, Math.round(38 * scale), 6);
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
       if (Capacitor.isNativePlatform()) {
         const base64 = await blobToBase64(blob);
@@ -2629,8 +2632,8 @@ export default function MCUViewer() {
           />
         )}
         <div className="hero-backdrop-blend" />
-        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.74 : 0.64, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
-        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${darkMode ? 'rgba(4,5,15,0.03)' : 'rgba(255,255,255,0.06)'} 0%, ${darkMode ? 'rgba(4,5,15,0.12)' : 'rgba(231,238,248,0.18)'} 45%, ${darkMode ? 'rgba(4,5,15,0.46)' : 'rgba(231,238,248,0.5)'} 70%, ${darkMode ? 'rgba(4,5,15,0.92)' : 'rgba(231,238,248,0.92)'} 100%)` }} />
+        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 26%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 24%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '14%' : '8%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '11%' : '6%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.28 : 0.2, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${darkMode ? 'rgba(4,5,15,0.01)' : 'rgba(255,255,255,0.02)'} 0%, ${darkMode ? 'rgba(4,5,15,0.05)' : 'rgba(231,238,248,0.08)'} 45%, ${darkMode ? 'rgba(4,5,15,0.14)' : 'rgba(231,238,248,0.18)'} 70%, ${darkMode ? 'rgba(4,5,15,0.34)' : 'rgba(231,238,248,0.36)'} 100%)` }} />
       </div>
       {lightningStrike && <div style={{ position:'fixed', inset:0, pointerEvents:'none', background:'linear-gradient(180deg, rgba(180,220,255,0.95), rgba(255,255,255,0))', mixBlendMode:'screen', zIndex:9999, animation:'fadeInOut 0.7s ease' }} />}
       {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
@@ -2757,6 +2760,9 @@ export default function MCUViewer() {
             <div style={{ fontSize: 10, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase', marginTop: 2, display: 'inline-flex', alignItems: 'center', gap: 6 }}><Film size={12} /> Bg size</div>
             <input type='range' min={100} max={112} step={1} value={heroBackdropScale} onChange={(e) => setHeroBackdropScale(Number(e.target.value))} aria-label='Carousel background size' />
             <div style={{ fontSize: 10, color: T.textMuted }}>{heroBackdropScale}%</div>
+            <div style={{ fontSize: 10, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase', marginTop: 2 }}>Bg opacity</div>
+            <input type='range' min={75} max={100} step={1} value={Math.round(heroBackdropOpacity * 100)} onChange={(e) => setHeroBackdropOpacity(Number(e.target.value) / 100)} aria-label='Carousel background opacity' />
+            <div style={{ fontSize: 10, color: T.textMuted }}>{Math.round(heroBackdropOpacity * 100)}%</div>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Data</div>
             <button className="fpill" onClick={exportProgress}><Download size={14}/>Export Progress</button>
@@ -3228,6 +3234,18 @@ export default function MCUViewer() {
                     <Heart size={12}/> {myLikes[detailItem.id] ? 'Liked' : 'Like'}
                   </button>
                   <button className="fpill glass-panel detail-btn" style={{ fontSize: 14, fontWeight: 700 }} onClick={() => exportPosterForItem(detailItem)}><Download size={14}/> Export Details Card</button>
+                </div>
+                <div className="glass-panel" style={{ marginBottom: 10, padding: 10, borderRadius: 10, display: 'grid', gap: 8 }}>
+                  <div style={{ fontSize: 11, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase' }}>Export Card Settings</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
+                    {[{ id: 'inter', label: 'Inter' }, { id: 'grotesk', label: 'Grotesk' }, { id: 'manrope', label: 'Manrope' }, { id: 'marvel', label: 'Marvel' }].map(opt => (
+                      <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: opt.id === 'marvel' ? 'var(--font-marvel-display)' : opt.label, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
+                    ))}
+                  </div>
+                  <label style={{ display: 'grid', gap: 4 }}>
+                    <span style={{ fontSize: 11, color: T.textMuted }}>Export text size: {Math.round(exportTextScale * 100)}%</span>
+                    <input type='range' min={90} max={150} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
+                  </label>
                 </div>
                 <div style={{ fontSize: 14 }}><strong>Cast:</strong> {detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</div>
               </div>
