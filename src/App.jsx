@@ -587,7 +587,7 @@ export default function MCUViewer() {
   }, []);
 
   useEffect(() => {
-    if (isDesktopViewport) setSidebarOpen(true);
+    if (isDesktopViewport) setSidebarOpen(false);
   }, [isDesktopViewport]);
 
   useEffect(() => {
@@ -1128,6 +1128,10 @@ export default function MCUViewer() {
       return next;
     };
     const normalizedIndex = heroIndex % heroPosters.length;
+    heroPosters.slice(0, Math.min(6, heroPosters.length)).forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
     const preloadNext = (fromIndex) => {
       const nextSrcCandidate = heroPosters[pickRandomIndex(fromIndex)];
       if (!nextSrcCandidate) return;
@@ -2273,6 +2277,8 @@ export default function MCUViewer() {
         button:focus-visible{outline:2px solid var(--theme-accent);outline-offset:2px}
 
         @keyframes sweep{0%{transform:translateX(-120%)}100%{transform:translateX(220%)}}
+        @keyframes scrollRail{0%{transform:translateX(0)}100%{transform:translateX(-22%)}}
+        @keyframes heroPop{0%{transform:scale(0.86) translateY(10px);opacity:0.5}100%{transform:scale(1.05) translateY(-6px);opacity:1}}
         .sweep::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent);animation:sweep 3.2s ease-in-out infinite}
 
         @keyframes phaseFlash{0%{opacity:0}20%{opacity:0.22}80%{opacity:0.18}100%{opacity:0}}
@@ -2426,7 +2432,7 @@ export default function MCUViewer() {
       `}</style>
 
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: currentHeroSrc ? `url(${currentHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: 0.3, transition: 'opacity 0.95s ease-in-out' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: (heroTransitioning && nextHeroSrc) ? `url(${nextHeroSrc})` : (currentHeroSrc ? `url(${currentHeroSrc})` : 'none'), backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: 0.1, transition: 'opacity 0.55s ease-in-out' }} />
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: heroTransitioning ? 0.55 : 1, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${darkMode ? 'rgba(4,5,15,0.05)' : 'rgba(255,255,255,0.08)'} 0%, ${darkMode ? 'rgba(4,5,15,0.18)' : 'rgba(231,238,248,0.22)'} 45%, ${darkMode ? 'rgba(4,5,15,0.52)' : 'rgba(231,238,248,0.58)'} 70%, ${darkMode ? 'rgba(4,5,15,0.96)' : 'rgba(231,238,248,0.96)'} 100%)` }} />
       </div>
@@ -2436,7 +2442,8 @@ export default function MCUViewer() {
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       {!isDesktopViewport && <button className="theme-btn" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar menu" style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 10px)', left: 12, zIndex: 280, width: 44, height: 44, background: darkMode ? 'rgba(10,14,28,0.94)' : '#ffffff', borderColor: darkMode ? 'rgba(255,255,255,0.24)' : T.pillBorder, boxShadow: darkMode ? '0 8px 24px rgba(0,0,0,0.35)' : '0 6px 16px rgba(0,0,0,0.12)' }}><Menu size={17} /></button>}
       {!isDesktopViewport && sidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 255 }} />}
-      <aside ref={sidebarRef} style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 'min(320px,84vw)', padding: '86px 14px 20px', background: darkMode ? 'rgba(7,9,20,0.62)' : 'rgba(255,255,255,0.6)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRight: `1px solid ${T.surfaceBorder}`, transform: (isDesktopViewport || sidebarOpen) ? 'translateX(0)' : 'translateX(-105%)', transition: 'transform 0.34s cubic-bezier(.22,.9,.24,1)', zIndex: 260, overflowY: 'auto' }}>
+      <aside ref={sidebarRef} style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 'min(320px,84vw)', padding: '86px 14px 20px', background: darkMode ? 'rgba(7,9,20,0.58)' : 'rgba(255,255,255,0.58)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderRight: `1px solid ${T.surfaceBorder}`, transform: sidebarOpen ? 'translateX(0)' : 'translateX(-105%)', transition: 'transform 0.34s cubic-bezier(.22,.9,.24,1)', zIndex: 260, overflowY: 'auto', boxShadow: darkMode ? '0 22px 55px rgba(0,0,0,0.45)' : '0 18px 44px rgba(0,0,0,0.18)', borderRadius: 16 }}>
+        <div style={{ marginBottom: 8, fontSize: 11, letterSpacing: 1.8, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)', textTransform: 'uppercase' }}>Navigation Panel</div>
         <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {profile.pfp ? <img src={profile.pfp} alt="profile" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover' }} /> : <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(145deg,var(--theme-accent),var(--theme-accent-alt))', color: '#fff', display: 'grid', placeItems: 'center' }}><UserCircle size={18} /></div>}
@@ -2577,20 +2584,36 @@ export default function MCUViewer() {
       </header>
 
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ position: 'relative', height: isDesktopViewport ? 300 : 230, background: 'transparent', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 210 }}>
-        {/* Carousel posters */}
-        {currentHeroSrc && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src={currentHeroSrc} alt="Current poster" style={{ height: '100%', width: 'auto', objectFit: 'cover', maxWidth: '100%', opacity: 1, transition: 'opacity 0.6s ease-in-out', borderRadius: 8 }} />
+      <div style={{ position: 'relative', height: isDesktopViewport ? 380 : 280, background: 'transparent', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 210 }}>
+        {heroPosters.length > 0 && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 14px', animation: 'scrollRail 24s linear infinite' }}>
+            {[...Array(isDesktopViewport ? 12 : 8)].map((_, idx) => {
+              const src = heroPosters[(heroIndex + idx) % heroPosters.length] || currentHeroSrc;
+              const isActive = src === (heroTransitioning && nextHeroSrc ? nextHeroSrc : currentHeroSrc);
+              return (
+                <img
+                  key={`hero-rail-${idx}-${src}`}
+                  src={src}
+                  alt="Featured poster"
+                  style={{
+                    height: isDesktopViewport ? 330 : 236,
+                    width: isDesktopViewport ? 220 : 156,
+                    objectFit: 'cover',
+                    borderRadius: 16,
+                    border: `1px solid ${isActive ? 'color-mix(in srgb, var(--theme-accent) 42%, white)' : 'rgba(255,255,255,0.16)'}`,
+                    boxShadow: isActive ? '0 20px 50px rgba(0,0,0,0.5)' : '0 10px 28px rgba(0,0,0,0.34)',
+                    opacity: isActive ? 1 : 0.7,
+                    transform: isActive ? 'scale(1.05) translateY(-6px)' : 'scale(0.95)',
+                    transition: 'transform 360ms ease, opacity 360ms ease, box-shadow 360ms ease, border-color 360ms ease',
+                    animation: isActive ? 'heroPop 640ms ease' : 'none',
+                    flexShrink: 0,
+                  }}
+                />
+              );
+            })}
           </div>
         )}
-        {nextHeroSrc && heroTransitioning && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src={nextHeroSrc} alt="Next poster" style={{ height: '100%', width: 'auto', objectFit: 'cover', maxWidth: '100%', opacity: 1, transition: 'opacity 0.6s ease-in-out', borderRadius: 8 }} />
-          </div>
-        )}
-        {/* Blend border */}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 8, background: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.02) 20%, transparent 50%, rgba(0,0,0,0.02) 80%, transparent 100%), linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.04) 10%, transparent 50%, rgba(0,0,0,0.04) 90%, transparent 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 16, background: 'linear-gradient(90deg, rgba(4,6,12,0.78) 0%, transparent 12%, transparent 88%, rgba(4,6,12,0.78) 100%)' }} />
       </div>
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 220, marginTop: 0 }}>
