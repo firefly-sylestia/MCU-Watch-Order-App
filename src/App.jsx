@@ -499,6 +499,7 @@ export default function MCUViewer() {
   const [activePhase,    setActivePhase]    = useState(initialUiState.activePhase);
   const [sortOpen,       setSortOpen]       = useState(false);
   const [phaseOpen,      setPhaseOpen]      = useState(false);
+  const [carouselPulse,  setCarouselPulse]  = useState(0);
   const [statusDropdown, setStatusDropdown] = useState(null);
   const [filterStatusOpen, setFilterStatusOpen] = useState(false);
   const [dockStatusOpen, setDockStatusOpen] = useState(false);
@@ -2269,6 +2270,7 @@ export default function MCUViewer() {
         @keyframes sweep{0%{transform:translateX(-120%)}100%{transform:translateX(220%)}}
         @keyframes scrollRail{0%{transform:translateX(0)}100%{transform:translateX(-22%)}}
         @keyframes heroPop{0%{transform:scale(0.86) translateY(10px);opacity:0.5}100%{transform:scale(1.05) translateY(-6px);opacity:1}}
+        @keyframes posterPop{0%{transform:scale(1)}45%{transform:scale(1.06)}100%{transform:scale(1)}}
         .sweep::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent);animation:sweep 3.2s ease-in-out infinite}
 
         @keyframes phaseFlash{0%{opacity:0}20%{opacity:0.22}80%{opacity:0.18}100%{opacity:0}}
@@ -2328,8 +2330,8 @@ export default function MCUViewer() {
 
         .section-up{content-visibility:visible;contain-intrinsic-size:auto}
         .hero-rail::-webkit-scrollbar{height:0;width:0;display:none}
-        .phase-rows-full{display:block}
-        .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 220ms var(--ease-out),border-color 220ms var(--ease-out),transform 220ms var(--ease-out),box-shadow 260ms var(--ease-out);display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid ${T.rowBorder};min-height:var(--row-min-h,86px);border-radius:12px;overflow:hidden;background:rgba(8,14,28,0.34);backdrop-filter:blur(7px)}
+        .phase-rows-full{display:block;position:relative}
+        .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 220ms var(--ease-out),border-color 220ms var(--ease-out),transform 220ms var(--ease-out),box-shadow 260ms var(--ease-out);display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid transparent;min-height:var(--row-min-h,86px);border-radius:12px;overflow:hidden;background:transparent;backdrop-filter:none}
         .rrow:last-child{border-bottom:none}
         .rrow > *{position:relative;z-index:1}
         .rrow:hover{border-left-color:color-mix(in srgb,var(--theme-accent) 65%, var(--phase-color,#c0392b));transform:translateY(-1px)}
@@ -2415,7 +2417,7 @@ export default function MCUViewer() {
         .settings-menu{width:min(360px,calc(100vw - 28px));max-height:min(80vh,calc(100dvh - 92px));overscroll-behavior:contain}.settings-menu .fpill{min-width:0}.bottom-action-dock{position:fixed;right:16px;bottom:16px;z-index:120;display:flex;gap:8px;align-items:center}
         .dock-btn{border-radius:999px;border:1px solid ${T.surfaceBorder};background:${darkMode ? 'rgba(20,25,46,0.9)' : 'rgba(255,255,255,0.92)'};color:${T.text};padding:10px 12px;font-family:var(--font-marvel-ui);letter-spacing:1.1px;font-size:12px;cursor:pointer;white-space:nowrap}
         .bottom-action-bar{border-radius:999px;padding:10px 14px;white-space:nowrap}
-        .fpill,.wbtn,.sopt,.meta-muted,input,textarea,select,button{font-size:calc(1em * var(--text-scale))}
+        main,.rrow,.title-btn,.fpill,.wbtn,.sopt,.meta-muted,input,textarea,select,button,.header-tagline{font-size:calc(1em * var(--text-scale))}
         main::-webkit-scrollbar{width:4px}
         main::-webkit-scrollbar-track{background:transparent}
         main::-webkit-scrollbar-thumb{background:${T.scrollThumb};border-radius:4px}
@@ -2566,10 +2568,7 @@ export default function MCUViewer() {
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             <div style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
               <div className="header-title-mcu" style={{ fontSize: 'clamp(44px, 9vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: '#fff', display: 'inline-block', padding: '0 12px', margin: '10px 0 40px', background: 'rgba(212,55,47,0.5)', borderRadius: 6 }}>MCU</div>
-              <div className="header-title-sub" style={{ fontSize: 'clamp(26px, 4.2vw, 35px)', letterSpacing: 'clamp(3px, 1.1vw, 9px)', color: 'var(--theme-accent-alt)', marginTop: 0 }}>VIEWING ORDER</div>
-              <div className="header-tagline" style={{ fontSize: '14px', color: 'var(--theme-warning)', letterSpacing: headerMinimized ? 0.8 : 1.5, fontFamily: 'var(--font-marvel-ui)', marginTop: 1, transition: 'all 0.2s ease' }}>
-                {`${activeItems.length} Items`}
-              </div>
+              <div className="header-title-sub" style={{ fontSize: 'clamp(26px, 4.2vw, 35px)', letterSpacing: 'clamp(3px, 1.1vw, 9px)', color: 'color-mix(in srgb, var(--theme-accent) 40%, var(--theme-accent-alt))', marginTop: 0 }}>VIEWING ORDER</div>
             </div>
           </div>
         </div>
@@ -2583,6 +2582,7 @@ export default function MCUViewer() {
               const rail = e.currentTarget;
               const delta = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
               rail.scrollLeft += delta;
+              setCarouselPulse(v => v + 1);
               e.preventDefault();
             }}
             style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 14px', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: isDesktopViewport ? 'x proximity' : 'x mandatory', scrollPaddingInline: isDesktopViewport ? '14vw' : '8vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', overscrollBehaviorX: 'contain', overscrollBehaviorY: 'contain', touchAction: isDesktopViewport ? 'pan-x' : 'pan-x pan-y' }}>
@@ -2618,7 +2618,7 @@ export default function MCUViewer() {
                     opacity: isActive ? 1 : 0.7,
                     transform: `perspective(1100px) translateZ(${isActive ? '24px' : '8px'}) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) ${isActive ? 'scale(1.08) translateY(-8px)' : 'scale(0.94)'}` ,
                     transition: 'transform 180ms cubic-bezier(0.22,1,0.36,1), opacity 220ms ease, box-shadow 240ms ease, border-color 220ms ease, filter 220ms ease',
-                    animation: isActive ? 'heroPop 640ms ease' : 'none',
+                    animation: isActive ? 'heroPop 640ms ease' : `posterPop 240ms ease ${carouselPulse % 2 === 0 ? '' : ''}`,
                     flexShrink: 0,
                     scrollSnapAlign: 'center',
                     cursor: 'pointer',
@@ -2847,6 +2847,8 @@ export default function MCUViewer() {
               <section key={pid} className="section-up" data-phase={pid}
                 ref={el => { phaseRefs.current[pid] = el; }}
                 style={{ marginBottom: 36, scrollMarginTop: 'var(--sticky-offset)', position: 'relative' }}>
+                <div aria-hidden style={{ position: 'absolute', left: -14, top: -22, bottom: -22, width: 2, background: `linear-gradient(${ph.color}77, color-mix(in srgb, ${ph.color} 30%, transparent))`, borderRadius: 999, pointerEvents: 'none' }} />
+                <div aria-hidden style={{ position: 'absolute', left: -21, top: 4, width: 16, height: 16, borderRadius: '50%', border: `1px solid ${ph.color}99`, background: `color-mix(in srgb, ${ph.color} 30%, transparent)`, boxShadow: `0 0 10px ${ph.glow}` }} />
 
                 {isCelebrating && (
                   <div className="phase-flash" style={{ position: 'absolute', inset: 0, background: `linear-gradient(90deg, ${ph.color}40, ${ph.color}22)`, boxShadow: `0 0 10px ${ph.glow}`, borderRadius: 12, pointerEvents: 'none', zIndex: 5 }} />
