@@ -94,6 +94,7 @@ const CACHE_KEYS = {
   userActionsReviews: 'mcu-user-actions-reviews-v1',
   uiState: 'mcu-ui-state-v1',
   uiTransparency: 'mcu-ui-transparency-v1',
+  heroCarousel: 'mcu-hero-carousel-v1',
 };
 
 
@@ -537,10 +538,7 @@ export default function MCUViewer() {
     const saved = Number(window.sessionStorage.getItem('mcu-hero-index-v1'));
     return Number.isFinite(saved) ? Math.max(0, saved) : 0;
   });
-  const [currentHeroSrc, setCurrentHeroSrc] = useState(() => {
-    if (typeof window === 'undefined') return '';
-    return window.sessionStorage.getItem('mcu-hero-src-v1') || '';
-  });
+  const [currentHeroSrc, setCurrentHeroSrc] = useState('');
   const [detailItem,     setDetailItem]     = useState(null);
   const [detailData,     setDetailData]     = useState(null);
   const [detailPlotState, setDetailPlotState] = useState({ active: 'primary', primary: '', secondary: '', loadingSecondary: false, secondaryProvider: 'OMDb' });
@@ -575,6 +573,18 @@ export default function MCUViewer() {
   const [analyticsOpen,  setAnalyticsOpen]  = useState(false);
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [selectedIds,    setSelectedIds]    = useState(() => new Set());
+  const [heroCarouselCache, setHeroCarouselCache] = useState(() => {
+    if (typeof window === 'undefined') return { signature: '', posters: [] };
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(CACHE_KEYS.heroCarousel) || '{}');
+      return {
+        signature: typeof saved.signature === 'string' ? saved.signature : '',
+        posters: Array.isArray(saved.posters) ? saved.posters.filter(Boolean) : [],
+      };
+    } catch {
+      return { signature: '', posters: [] };
+    }
+  });
   const [scrollCheckpoint, setScrollCheckpoint] = useState(initialUiState.scrollTop);
   const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
   const [grootMode, setGrootMode] = useState(false);
@@ -1111,15 +1121,30 @@ export default function MCUViewer() {
     return mapped.startsWith('/') ? mapped : `/posters/${mapped}`;
   };
   const posterSrc = (item) => localPosterSrc(item) || posterCache[item.id] || `https://placehold.co/220x330/1a1f33/f7c4de?text=${encodeURIComponent(item.title+'\n'+item.year)}`;
-  const heroPosters = useMemo(() => {
-    const posters = activeItems
-      .map(item => localPosterSrc(item))
-      .filter(Boolean);
-    return posters
+  const carouselPosterPool = useMemo(
+    () => activeItems.map(item => posterSrc(item)).filter(Boolean),
+    [activeItems, localPosterMap, posterCache]
+  );
+  const carouselSignature = useMemo(() => carouselPosterPool.join('|'), [carouselPosterPool]);
+
+  useEffect(() => {
+    if (!carouselPosterPool.length) return;
+    if (heroCarouselCache.signature === carouselSignature && heroCarouselCache.posters.length) return;
+    const shuffled = carouselPosterPool
       .map(src => ({ src, order: Math.random() }))
       .sort((a, b) => a.order - b.order)
       .map(({ src }) => src);
-  }, [activeItems, localPosterMap]);
+    const next = { signature: carouselSignature, posters: shuffled };
+    setHeroCarouselCache(next);
+    scheduleStorageWrite(CACHE_KEYS.heroCarousel, JSON.stringify(next));
+  }, [carouselPosterPool, carouselSignature, heroCarouselCache.signature, heroCarouselCache.posters.length]);
+
+  const heroPosters = useMemo(() => {
+    if (heroCarouselCache.signature === carouselSignature && heroCarouselCache.posters.length) {
+      return heroCarouselCache.posters;
+    }
+    return carouselPosterPool;
+  }, [carouselPosterPool, carouselSignature, heroCarouselCache]);
   const visibleHeroPosters = useMemo(() => {
     if (!heroPosters.length) return [];
     return Array.from({ length: Math.min(10, heroPosters.length) }, (_, offset) => heroPosters[(heroIndex + offset) % heroPosters.length]);
@@ -2243,7 +2268,7 @@ export default function MCUViewer() {
         @keyframes sweep{0%{transform:translateX(-120%)}100%{transform:translateX(220%)}}
         @keyframes scrollRail{0%{transform:translateX(0)}100%{transform:translateX(-22%)}}
         @keyframes heroSlideIn{from{opacity:0;transform:translateX(34px) scale(0.97)}to{opacity:1;transform:translateX(0) scale(1)}}
-        @keyframes heroBgSlide{from{opacity:0;transform:translateX(22px) scale(1.03)}to{opacity:0.34;transform:translateX(0) scale(1)}}
+        @keyframes heroBgSlide{from{opacity:0;transform:translateX(22px) scale(1.03)}to{opacity:var(--hero-bg-opacity,0.42);transform:translateX(0) scale(1)}}
         .sweep::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent);animation:sweep 3.2s ease-in-out infinite}
         .hero-bg-slide{animation:heroBgSlide 720ms cubic-bezier(0.22,1,0.36,1) both;will-change:transform,opacity}
         .hero-poster-card{animation:heroSlideIn 460ms cubic-bezier(0.22,1,0.36,1) both;animation-delay:var(--poster-delay,0ms)}
@@ -2378,7 +2403,7 @@ export default function MCUViewer() {
           .bottom-action-dock{left:12px !important;right:12px !important;bottom:max(12px, env(safe-area-inset-bottom)) !important}
           .dock-btn{font-size:11px !important;padding:9px 10px !important;min-height:40px}
           .bottom-action-bar{min-height:40px;padding:9px 10px !important}
-          main > div{padding-bottom:130px !important}
+          main > div{padding-bottom:96px !important}
           .poster{width:44px;height:64px}
           .detail-layout{grid-template-columns:minmax(0,1fr) !important;gap:14px !important}
           .detail-layout img,.detail-fallback-poster{max-width:280px;margin:0 auto;max-height:360px}
@@ -2418,8 +2443,8 @@ export default function MCUViewer() {
       `}</style>
 
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        <div key={currentHeroSrc || activeHeroSrc || 'hero-bg'} className="hero-bg-slide" style={{ position: 'absolute', inset: 0, backgroundImage: (currentHeroSrc || activeHeroSrc) ? `url(${currentHeroSrc || activeHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: 0.34, transition: 'opacity 0.9s ease-in-out', willChange: 'opacity' }} />
-        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.74 : 0.64, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
+        <div key={activeHeroSrc || currentHeroSrc || 'hero-bg'} className="hero-bg-slide" style={{ '--hero-bg-opacity': darkMode ? 0.46 : 0.32, position: 'absolute', inset: 0, backgroundImage: (activeHeroSrc || currentHeroSrc) ? `url(${activeHeroSrc || currentHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: darkMode ? 0.46 : 0.32, transition: 'opacity 0.9s ease-in-out', willChange: 'opacity' }} />
+        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.58 : 0.46, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${darkMode ? 'rgba(4,5,15,0.03)' : 'rgba(255,255,255,0.06)'} 0%, ${darkMode ? 'rgba(4,5,15,0.12)' : 'rgba(231,238,248,0.18)'} 45%, ${darkMode ? 'rgba(4,5,15,0.46)' : 'rgba(231,238,248,0.5)'} 70%, ${darkMode ? 'rgba(4,5,15,0.92)' : 'rgba(231,238,248,0.92)'} 100%)` }} />
       </div>
       {lightningStrike && <div style={{ position:'fixed', inset:0, pointerEvents:'none', background:'linear-gradient(180deg, rgba(180,220,255,0.95), rgba(255,255,255,0))', mixBlendMode:'screen', zIndex:9999, animation:'fadeInOut 0.7s ease' }} />}
@@ -2760,7 +2785,7 @@ export default function MCUViewer() {
           </div>
         )}
       </div>
-      <div style={{ position: 'fixed', right: 16, bottom: isDesktopViewport ? 76 : 88, zIndex: 230 }}>
+      <div style={{ position: 'fixed', right: 16, bottom: isDesktopViewport ? 76 : 58, zIndex: 230 }}>
         <div style={{ display: 'flex', borderRadius: 999, overflow: 'hidden', border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(10,14,28,0.93)' : 'rgba(255,255,255,0.95)', boxShadow: 'none' }}>
           {LIST_MODES.map(mode => {
             const active = listMode === mode.id;
