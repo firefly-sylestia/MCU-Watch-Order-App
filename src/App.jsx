@@ -156,6 +156,33 @@ const readSavedUiState = () => {
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const isAgentsOfShieldCarouselDuplicate = (item) => /agents of shield/i.test(item?.title || '');
+const HERO_ROTATION_MS = 2600;
+const HERO_PRELOAD_AHEAD = 12;
+const loadedHeroPosterSrcs = new Set();
+const heroPosterLoadPromises = new Map();
+
+const preloadHeroPoster = (src) => {
+  if (!src || typeof window === 'undefined') return Promise.resolve(src || '');
+  if (loadedHeroPosterSrcs.has(src)) return Promise.resolve(src);
+  if (heroPosterLoadPromises.has(src)) return heroPosterLoadPromises.get(src);
+  const promise = new Promise((resolve, reject) => {
+    const img = new Image();
+    img.decoding = 'async';
+    img.onload = async () => {
+      try { await img.decode?.(); } catch {}
+      loadedHeroPosterSrcs.add(src);
+      heroPosterLoadPromises.delete(src);
+      resolve(src);
+    };
+    img.onerror = () => {
+      heroPosterLoadPromises.delete(src);
+      reject(new Error(`Unable to load hero poster: ${src}`));
+    };
+    img.src = src;
+  });
+  heroPosterLoadPromises.set(src, promise);
+  return promise;
+};
 
 const hashStringToUnit = (value) => {
   let hash = 2166136261;
@@ -533,8 +560,11 @@ export default function MCUViewer() {
   });
   const [currentHeroSrc, setCurrentHeroSrc] = useState(() => {
     if (typeof window === 'undefined') return '';
-    return window.sessionStorage.getItem('mcu-hero-src-v1') || '';
+    const saved = window.sessionStorage.getItem('mcu-hero-src-v1') || '';
+    if (saved) loadedHeroPosterSrcs.add(saved);
+    return saved;
   });
+  const [previousHeroSrc, setPreviousHeroSrc] = useState('');
   const [detailItem,     setDetailItem]     = useState(null);
   const [detailData,     setDetailData]     = useState(null);
   const [detailPlotState, setDetailPlotState] = useState({ active: 'primary', primary: '', secondary: '', loadingSecondary: false, secondaryProvider: 'OMDb' });
@@ -1104,12 +1134,14 @@ export default function MCUViewer() {
     return { method: 'download' };
   }, []);
 
-  const localPosterSrc = (item) => {
+  const localPosterSrc = useCallback((item) => {
     const mapped = POSTER_OVERRIDES[item.id] || localPosterMap[item.id] || localPosterMap[String(item.id)] || localPosterMap[slugifyPosterName(item.title)];
     if (!mapped) return '';
     return mapped.startsWith('/') ? mapped : `/posters/${mapped}`;
-  };
-  const posterSrc = (item) => localPosterSrc(item) || posterCache[item.id] || `https://placehold.co/220x330/1a1f33/f7c4de?text=${encodeURIComponent(item.title+'\n'+item.year)}`;
+  }, [localPosterMap]);
+  const posterSrc = useCallback((item) => (
+    localPosterSrc(item) || posterCache[item.id] || `https://placehold.co/220x330/1a1f33/f7c4de?text=${encodeURIComponent(item.title+'\n'+item.year)}`
+  ), [localPosterSrc, posterCache]);
   const heroPosterItems = useMemo(() => {
     const seen = new Set();
     return activeItems
@@ -1121,7 +1153,7 @@ export default function MCUViewer() {
         return !seen.has(`title:${item.title.toLowerCase()}`) && seen.add(`title:${item.title.toLowerCase()}`);
       })
       .sort((a, b) => hashStringToUnit(`${a.src}|${heroRandomSeedRef.current}`) - hashStringToUnit(`${b.src}|${heroRandomSeedRef.current}`));
-  }, [activeItems, localPosterMap]);
+  }, [activeItems, localPosterSrc]);
   const heroPosters = useMemo(() => heroPosterItems.map(({ src }) => src), [heroPosterItems]);
   const visibleHeroPosters = useMemo(() => {
     if (!heroPosterItems.length) return [];
@@ -1141,31 +1173,47 @@ export default function MCUViewer() {
   }, [currentHeroSrc]);
 
   useEffect(() => {
-    if (!activeHeroSrc) {
-      setCurrentHeroSrc('');
-      return;
-    }
+    if (!previousHeroSrc) return undefined;
+    const timer = window.setTimeout(() => setPreviousHeroSrc(''), 1200);
+    return () => window.clearTimeout(timer);
+  }, [previousHeroSrc]);
 
+  useEffect(() => {
+    if (!activeHeroSrc) return undefined;
+
+    let cancelled = false;
     const normalizedIndex = heroIndex % heroPosters.length;
-    setCurrentHeroSrc(activeHeroSrc);
 
-    const nextSrcCandidate = heroPosters[(normalizedIndex + 10) % heroPosters.length];
-    if (nextSrcCandidate) {
-      const img = new Image();
-      img.src = nextSrcCandidate;
+    preloadHeroPoster(activeHeroSrc)
+      .then((loadedSrc) => {
+        if (!cancelled && loadedSrc) {
+          setCurrentHeroSrc(prevSrc => {
+            if (prevSrc && prevSrc !== loadedSrc) setPreviousHeroSrc(prevSrc);
+            return loadedSrc;
+          });
+        }
+      })
+      .catch(() => {
+        // Keep the previous backdrop in place if the next poster fails.
+      });
+
+    for (let offset = 1; offset <= Math.min(HERO_PRELOAD_AHEAD, heroPosters.length - 1); offset += 1) {
+      const nextSrcCandidate = heroPosters[(normalizedIndex + offset) % heroPosters.length];
+      preloadHeroPoster(nextSrcCandidate).catch(() => {});
     }
+
+    return () => { cancelled = true; };
   }, [heroPosters, heroIndex, activeHeroSrc]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
     if (heroPosters.length <= 1) return undefined;
 
-    const HERO_INTERVAL_MS = 5000;
     const startHeroCycle = () => {
       if (heroIntervalRef.current) return;
       heroIntervalRef.current = window.setInterval(() => {
         setHeroIndex(i => (i + 1) % heroPosters.length);
-      }, HERO_INTERVAL_MS);
+      }, HERO_ROTATION_MS);
     };
     const stopHeroCycle = () => {
       if (!heroIntervalRef.current) return;
@@ -1186,10 +1234,9 @@ export default function MCUViewer() {
   }, [heroPosters.length]);
 
   const handleHeroWheel = useCallback((e) => {
-    const rail = e.currentTarget;
-    const horizontalIntent = Math.abs(e.deltaX) > Math.abs(e.deltaY);
-    if (!horizontalIntent) return;
-    rail.scrollLeft += e.deltaX;
+    const horizontalDelta = Math.abs(e.deltaX) >= Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (!horizontalDelta) return;
+    e.currentTarget.scrollBy({ left: horizontalDelta * 1.85, behavior: 'smooth' });
     e.preventDefault();
   }, []);
 
@@ -1221,7 +1268,7 @@ export default function MCUViewer() {
       drag.dragged = true;
       e.currentTarget.setPointerCapture?.(e.pointerId);
     }
-    e.currentTarget.scrollLeft = drag.startScrollLeft - dx;
+    e.currentTarget.scrollLeft = drag.startScrollLeft - (dx * 1.18);
     e.preventDefault();
   }, []);
 
@@ -2340,7 +2387,13 @@ export default function MCUViewer() {
         .curvy-panel::before{display:none}
 
         .section-up{content-visibility:visible;contain-intrinsic-size:auto}
+        .hero-rail{scroll-behavior:smooth;will-change:scroll-position;mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);-webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%)}
         .hero-rail::-webkit-scrollbar{height:0;width:0;display:none}
+        .hero-poster-card{will-change:transform,opacity;backface-visibility:hidden;transform-style:preserve-3d}
+        .hero-backdrop-image{animation:posterBackdropIn 1100ms cubic-bezier(0.22,1,0.36,1) both;filter:saturate(1.12) contrast(1.04)}
+        .hero-backdrop-image.is-exiting{animation:posterBackdropOut 1200ms cubic-bezier(0.22,1,0.36,1) both}
+        @keyframes posterBackdropIn{0%{opacity:0;transform:scale(1.055) translate3d(0,10px,0);filter:blur(10px) saturate(0.9)}100%{opacity:var(--backdrop-opacity,0.38);transform:scale(1) translate3d(0,0,0);filter:blur(0) saturate(1.12) contrast(1.04)}}
+        @keyframes posterBackdropOut{0%{opacity:var(--backdrop-opacity,0.38);transform:scale(1)}100%{opacity:0;transform:scale(1.035);filter:blur(8px) saturate(0.95)}}
         .phase-rows-full{display:block;position:relative}
         .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 220ms var(--ease-out),border-color 220ms var(--ease-out),transform 220ms var(--ease-out),box-shadow 260ms var(--ease-out);display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid transparent;min-height:var(--row-min-h,86px);border-radius:12px;overflow:hidden;background:transparent;backdrop-filter:none}
         .rrow:last-child{border-bottom:none}
@@ -2438,7 +2491,20 @@ export default function MCUViewer() {
       `}</style>
 
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: activeHeroSrc ? `url(${activeHeroSrc})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center 20%', opacity: 0.34, transition: 'opacity 0.9s ease-in-out', willChange: 'opacity' }} />
+        {previousHeroSrc && previousHeroSrc !== currentHeroSrc && (
+          <div
+            key={`backdrop-exit-${previousHeroSrc}`}
+            className="hero-backdrop-image is-exiting"
+            style={{ '--backdrop-opacity': 0.38, position: 'absolute', inset: '-2.5%', backgroundImage: `url(${previousHeroSrc})`, backgroundSize: 'cover', backgroundPosition: 'center 20%', willChange: 'opacity, transform, filter' }}
+          />
+        )}
+        {currentHeroSrc && (
+          <div
+            key={`backdrop-${currentHeroSrc}`}
+            className="hero-backdrop-image"
+            style={{ '--backdrop-opacity': 0.38, position: 'absolute', inset: '-2.5%', backgroundImage: `url(${currentHeroSrc})`, backgroundSize: 'cover', backgroundPosition: 'center 20%', willChange: 'opacity, transform, filter' }}
+          />
+        )}
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 30%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '24%' : '14%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '18%' : '10%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.74 : 0.64, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${darkMode ? 'rgba(4,5,15,0.03)' : 'rgba(255,255,255,0.06)'} 0%, ${darkMode ? 'rgba(4,5,15,0.12)' : 'rgba(231,238,248,0.18)'} 45%, ${darkMode ? 'rgba(4,5,15,0.46)' : 'rgba(231,238,248,0.5)'} 70%, ${darkMode ? 'rgba(4,5,15,0.92)' : 'rgba(231,238,248,0.92)'} 100%)` }} />
       </div>
@@ -2608,6 +2674,7 @@ export default function MCUViewer() {
               return (
                 <div key={`hero-rail-${src}`} style={{ position: 'relative', display:'flex', flexDirection:'column', alignItems:'center', scrollSnapAlign:'center', flexShrink: 0 }}>
                 <img
+                  className="hero-poster-card"
                   src={src}
                   alt="Featured poster"
                   title={heroItem?.title || 'Featured MCU poster'}
