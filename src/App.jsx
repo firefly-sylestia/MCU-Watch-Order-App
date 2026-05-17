@@ -611,7 +611,7 @@ export default function MCUViewer() {
   const [exportComposerOpen, setExportComposerOpen] = useState(false);
   const [exportPreview, setExportPreview] = useState({ url: '', loading: false, error: '' });
   const [exportSettings, setExportSettings] = useState(() => ({
-    type: 'unified', theme: 'midnight', bgOpacity: 50, fontWeight: 800, density: 'comfortable', posterMode: 'featured',
+    type: 'unified', theme: 'midnight', bgOpacity: 40, fontWeight: 800, density: 'comfortable', posterMode: 'featured',
     sections: { hours: true, history: true, rating: true, reviewSnippet: true, profileBadge: true }, aspect: '4:5',
   }));
   const [autoBackupStamp, setAutoBackupStamp] = useState('');
@@ -1552,10 +1552,10 @@ export default function MCUViewer() {
   };
 
   const shareAnalysisCard = async () => {
-    await shareCardImage({ type: 'analysis', data: { featured: historyItems[0] || activeItems[0], rows: historyItems } });
+    await shareCardImage({ type: 'analysis', data: { featured: historyItems[0] || activeItems[0], rows: historyItems, ratings: myRating, pct, currentPhase: stickyPhaseProgress.label, totalWatched, totalItems: activeItems.length } });
   };
   const shareUnifiedCard = async () => {
-    await shareCardImage({ type: 'unified', data: { featured: historyItems[0] || activeItems[0], rows: historyItems } });
+    await shareCardImage({ type: 'unified', data: { featured: historyItems[0] || activeItems[0], rows: historyItems, ratings: myRating, pct, currentPhase: stickyPhaseProgress.label, totalWatched, totalItems: activeItems.length } });
   };
 
   useEffect(() => {
@@ -1565,7 +1565,7 @@ export default function MCUViewer() {
       try {
         const { canvas } = await renderCardToCanvas({
           type: exportSettings.type,
-          data: { item: historyItems[0] || activeItems[0], featured: historyItems[0] || activeItems[0], rows: historyItems, rating: myRating[historyItems[0]?.id] || 0, reviewText: reviews[historyItems[0]?.id] || '', reviewer: profile.name || 'Reviewer', pct, currentPhase: stickyPhaseProgress.label, totalWatched, totalItems: activeItems.length },
+          data: { item: historyItems[0] || activeItems[0], featured: historyItems[0] || activeItems[0], rows: historyItems, ratings: myRating, rating: myRating[historyItems[0]?.id] || 0, reviewText: reviews[historyItems[0]?.id] || '', reviewer: profile.name || 'Reviewer', pct, currentPhase: stickyPhaseProgress.label, totalWatched, totalItems: activeItems.length },
           settings: {
             textScale: Math.max(0.9, exportTextScale * 0.8),
             fontFamily: ({ inter: 'Inter, sans-serif', grotesk: 'Space Grotesk, sans-serif', manrope: 'Manrope, sans-serif', marvel: 'var(--font-marvel-display), sans-serif' }[exportFont] || 'Inter, sans-serif'),
