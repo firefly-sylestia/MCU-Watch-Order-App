@@ -111,8 +111,8 @@
 }
 
 .counter:focus-visible {
-  outline: none;
-  box-shadow: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 /* ── Content Rail Section ─────────────────────────────────────────────────────── */
