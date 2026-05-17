@@ -93,6 +93,7 @@ const CACHE_KEYS = {
   userActionsBookmarks: 'mcu-user-actions-bookmarks-v1',
   userActionsReviews: 'mcu-user-actions-reviews-v1',
   uiState: 'mcu-ui-state-v1',
+  heroCarousel: 'mcu-hero-carousel-cache-v1',
 };
 
 
@@ -531,6 +532,7 @@ export default function MCUViewer() {
   const [posterCache,    setPosterCache]    = useState({});
   const [localPosterMap, setLocalPosterMap] = useState({});
   const [posterFetchState, setPosterFetchState] = useState({ active: false, done: 0, total: 0, message: '' });
+  const [heroCarouselCache, setHeroCarouselCache] = useState({ signature: '', posters: [] });
   const [posterExportState, setPosterExportState] = useState({ active: false, done: 0, total: 0, message: '' });
   const [posterExportFailures, setPosterExportFailures] = useState({});
   const [settingsOpen,   setSettingsOpen]   = useState(false);
