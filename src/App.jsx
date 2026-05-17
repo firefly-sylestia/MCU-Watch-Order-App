@@ -606,7 +606,7 @@ export default function MCUViewer() {
   const [bookmarks,      setBookmarks]      = useState({});
   const [reviewCardTheme, setReviewCardTheme] = useState('midnight');
   const [exportFont, setExportFont] = useState('inter');
-  const [exportTextScale, setExportTextScale] = useState(1.2);
+  const [exportTextScale, setExportTextScale] = useState(1.4);
   const [analyticsTab, setAnalyticsTab] = useState('overview');
   const [exportComposerOpen, setExportComposerOpen] = useState(false);
   const [exportPreview, setExportPreview] = useState({ url: '', loading: false, error: '' });
@@ -897,7 +897,7 @@ export default function MCUViewer() {
         if (actions.reviews) setReviews(actions.reviews);
         if (imported.profile && typeof imported.profile === 'object') setProfile(prev => ({ ...prev, ...imported.profile }));
         if (imported.exportPrefs?.font) setExportFont(imported.exportPrefs.font);
-        if (Number.isFinite(Number(imported.exportPrefs?.textScale))) setExportTextScale(Math.max(0.9, Math.min(1.9, Number(imported.exportPrefs.textScale))));
+        if (Number.isFinite(Number(imported.exportPrefs?.textScale))) setExportTextScale(Math.max(0.9, Math.min(2.4, Number(imported.exportPrefs.textScale))));
       } catch {}
     };
     reader.readAsText(file);
@@ -1093,6 +1093,11 @@ export default function MCUViewer() {
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
   const pct = activeItems.length ? Math.round((totalWatched / activeItems.length) * 100) : 0;
+  const phaseStats = useMemo(() => PHASES.map(ph => {
+    const phaseItems = activeItems.filter(i => i.phase === ph.id);
+    const watched = phaseItems.filter(i => i.status === 'watched').length;
+    return { phase: ph.id, watched, total: phaseItems.length };
+  }).filter(p => p.total > 0), [activeItems]);
 
   const stickyPhaseProgress = useMemo(() => {
     if (activePhase === 0) return { label: 'All Phases', done: totalWatched, total: activeItems.length, pct };
@@ -1552,7 +1557,7 @@ export default function MCUViewer() {
   };
 
   const shareAnalysisCard = async () => {
-    await shareCardImage({ type: 'analysis', data: { featured: historyItems[0] || activeItems[0], rows: historyItems, ratings: myRating, pct, currentPhase: stickyPhaseProgress.label, totalWatched, totalItems: activeItems.length } });
+    await shareCardImage({ type: 'analysis', data: { pct, currentPhase: stickyPhaseProgress.label, totalWatched, totalWatchedHours, streak: watchStreak, totalItems: activeItems.length, phaseStats } });
   };
   const shareUnifiedCard = async () => {
     await shareCardImage({ type: 'unified', data: { featured: historyItems[0] || activeItems[0], rows: historyItems, ratings: myRating, pct, currentPhase: stickyPhaseProgress.label, totalWatched, totalItems: activeItems.length } });
@@ -1662,7 +1667,7 @@ export default function MCUViewer() {
       if (t) setThemeMode(t);
       const exportPrefsSaved = JSON.parse(localStorage.getItem('mcu-export-prefs-v1') || 'null');
       if (exportPrefsSaved?.font) setExportFont(exportPrefsSaved.font);
-      if (Number.isFinite(Number(exportPrefsSaved?.textScale))) setExportTextScale(Math.max(0.9, Math.min(1.9, Number(exportPrefsSaved.textScale))));
+      if (Number.isFinite(Number(exportPrefsSaved?.textScale))) setExportTextScale(Math.max(0.9, Math.min(2.4, Number(exportPrefsSaved.textScale))));
       setAutoBackupStamp(localStorage.getItem('mcu-auto-backup-ts-v1') || '');
     } catch {}
   }, []);
@@ -2602,8 +2607,8 @@ export default function MCUViewer() {
               <span style={{ fontSize: 11, color: T.textMuted }}>Export text scale: {Math.round(exportTextScale * 100)}%</span>
               <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr) auto', gap: 8, alignItems: 'center' }}>
                 <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.max(0.9, Number((v - 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>−</button>
-                <input type='range' min={90} max={190} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
-                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.min(1.9, Number((v + 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>+</button>
+                <input type='range' min={90} max={240} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
+                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.min(2.4, Number((v + 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>+</button>
               </div>
             </label>
             <div style={{ fontSize: 12, color: T.textMuted, lineHeight: 1.35, padding: '0 2px' }}>{metadataStatusText}</div>
@@ -3065,8 +3070,8 @@ export default function MCUViewer() {
                     <span style={{ fontSize: 11, color: T.textMuted }}>Export text size: {Math.round(exportTextScale * 100)}%</span>
                     <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr) auto', gap: 8, alignItems: 'center' }}>
                 <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.max(0.9, Number((v - 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>−</button>
-                <input type='range' min={90} max={190} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
-                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.min(1.9, Number((v + 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>+</button>
+                <input type='range' min={90} max={240} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
+                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.min(2.4, Number((v + 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>+</button>
               </div>
                   </label>
                 </div>
@@ -3086,19 +3091,30 @@ export default function MCUViewer() {
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 14 }}>
               <div>
                 <h2 style={{ fontSize: 30, marginBottom: 4 }}>Analysis</h2>
-                <div style={{ color: T.textMuted, fontSize: 13 }}>Full history, dates, re-watch counts, modern 10-point ratings, and reviews.</div>
+                <div style={{ color: T.textMuted, fontSize: 13 }}>Concise progress insights: phase counts, watch percentage, and streak.</div>
               </div>
               <button className="fpill" onClick={() => setAnalyticsOpen(false)}>Close</button>
             </div>
             <div className="ui-btn-group" style={{ position: 'sticky', top: 0, zIndex: 5, marginBottom: 10, paddingBottom: 8, background: 'var(--theme-surface)' }}>
-              {['overview', 'history', 'export'].map(tab => (
+              {['overview', 'reviews', 'export'].map(tab => (
                 <button key={tab} className="fpill" onClick={() => setAnalyticsTab(tab)} style={{ borderColor: analyticsTab === tab ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{tab[0].toUpperCase() + tab.slice(1)}</button>
               ))}
             </div>
             {analyticsTab === 'overview' && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 10, marginBottom: 14 }}>
               <div className="glass-panel" style={{ padding: 12, borderRadius: 12 }}><div style={{ color: T.textMuted, fontSize: 11 }}>TOTAL WATCHED</div><div style={{ fontSize: 24, fontWeight: 800 }}>{Math.round(totalWatchedHours * 10) / 10}h</div></div>
-              <div className="glass-panel" style={{ padding: 12, borderRadius: 12 }}><div style={{ color: T.textMuted, fontSize: 11 }}>HISTORY ITEMS</div><div style={{ fontSize: 24, fontWeight: 800 }}>{historyItems.length}</div></div>
+              <div className="glass-panel" style={{ padding: 12, borderRadius: 12 }}><div style={{ color: T.textMuted, fontSize: 11 }}>WATCHED ITEMS</div><div style={{ fontSize: 24, fontWeight: 800 }}>{totalWatched}</div></div>
               <div className="glass-panel" style={{ padding: 12, borderRadius: 12 }}><div style={{ color: T.textMuted, fontSize: 11 }}>RE-WATCHES</div><div style={{ fontSize: 24, fontWeight: 800 }}>{Object.values(rewatchCount).reduce((a, b) => a + (Number(b) || 0), 0)}</div></div>
+            </div>}
+            {analyticsTab === 'overview' && <div className="glass-panel" style={{ marginBottom: 14, padding: 12, borderRadius: 12 }}>
+              <div style={{ color: T.textMuted, fontSize: 11, marginBottom: 8 }}>PHASE BREAKDOWN</div>
+              <div style={{ display: 'grid', gap: 8 }}>
+                {phaseStats.map(stat => (
+                  <div key={stat.phase} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 14 }}>
+                    <strong>Phase {stat.phase}</strong>
+                    <span style={{ color: T.textMuted }}>{stat.watched}/{stat.total}</span>
+                  </div>
+                ))}
+              </div>
             </div>}
             {analyticsTab === 'export' && <>
             <div className="ui-btn-group ui-sticky-mobile-footer" style={{ marginBottom: 12, position: 'sticky', bottom: 0, zIndex: 4, background: 'var(--theme-surface)', padding: '8px 0' }}>
@@ -3117,8 +3133,8 @@ export default function MCUViewer() {
                 <span style={{ fontSize: 11, color: T.textMuted }}>Export text size: {Math.round(exportTextScale * 100)}%</span>
                 <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr) auto', gap: 8, alignItems: 'center' }}>
                 <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.max(0.9, Number((v - 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>−</button>
-                <input type='range' min={90} max={190} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
-                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.min(1.9, Number((v + 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>+</button>
+                <input type='range' min={90} max={240} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
+                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.min(2.4, Number((v + 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>+</button>
               </div>
               </label>
               <label style={{ display: 'grid', gap: 4 }}>
@@ -3141,7 +3157,7 @@ export default function MCUViewer() {
               </div>
               {reviewShareStatus.message && <div style={{ fontSize: 12, color: reviewShareStatus.type === 'error' ? 'var(--theme-danger)' : 'var(--theme-success)' }}>{reviewShareStatus.message}</div>}
             </div>
-            {analyticsTab === 'history' && <div style={{ display: 'grid', gap: 12, maxHeight: '58vh', overflow: 'auto', paddingRight: 4 }}>
+            {analyticsTab === 'reviews' && <div style={{ display: 'grid', gap: 12, maxHeight: '58vh', overflow: 'auto', paddingRight: 4 }}>
               {historyItems.length === 0 && <div style={{ color: T.textMuted, padding: 16 }}>No watched history yet. Mark an item watched to start your analysis log.</div>}
               {historyItems.map(item => (
                 <div key={item.id} className="glass-panel" style={{ borderRadius: 14, padding: '16px 16px 14px', display: 'grid', gap: 12, border: '1px solid color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'color-mix(in srgb, var(--theme-surface) 80%, transparent)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
