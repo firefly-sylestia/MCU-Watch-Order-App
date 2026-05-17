@@ -2562,9 +2562,8 @@ export default function MCUViewer() {
             })}
           </div>
         )}
-        <button onClick={() => setHeroIndex(i => heroPosters.length ? (i - 1 + heroPosters.length) % heroPosters.length : 0)} style={{ position:'absolute', left:8, top:'50%', transform:'translateY(-50%)', zIndex:220 }} className='fpill'>Prev</button>
-        <button onClick={() => setHeroIndex(i => heroPosters.length ? (i + 1) % heroPosters.length : 0)} style={{ position:'absolute', right:8, top:'50%', transform:'translateY(-50%)', zIndex:220 }} className='fpill'>Next</button>
-
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 16, background: 'linear-gradient(90deg, rgba(4,6,12,0.78) 0%, transparent 12%, transparent 88%, rgba(4,6,12,0.78) 100%)' }} />
+       
       </div>
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 220, marginTop: 0 }}>
