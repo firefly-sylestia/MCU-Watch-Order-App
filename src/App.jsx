@@ -2618,7 +2618,7 @@ export default function MCUViewer() {
           .rrow{grid-template-columns:24px 44px minmax(0,1fr) !important;gap:8px;padding:14px 10px 14px 8px;min-height:96px}
           .rrow .row-actions{grid-column:2 / -1;flex-direction:row !important;align-items:center !important;justify-content:space-between !important;min-width:0 !important;width:100%;gap:8px}
           .calendar-row{grid-template-columns:minmax(74px,84px) 44px minmax(0,1fr) !important}
-          .floating-controls{display:flex !important;left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));align-items:stretch;gap:10px}.fab-primary{justify-content:center}
+          .floating-controls{display:flex !important;left:10px;right:10px;top:max(calc(env(safe-area-inset-top, 0px) + 72px), 10px);align-items:stretch;gap:10px}.fab-primary{justify-content:center}
           .bottom-action-dock{width:100%;justify-content:center}
                     .dock-btn{font-size:11px !important;padding:9px 10px !important;min-height:40px;flex:1 1 auto}
           .bottom-action-bar{min-height:40px;padding:9px 10px !important;width:100%;justify-content:center}
@@ -2651,7 +2651,7 @@ export default function MCUViewer() {
         .stat-card-label { font-size: clamp(11px, 1.8vw, 14px) !important; }
         .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; color:var(--theme-text-muted) !important }
 
-        .sidebar-toggle-btn{position:fixed;top:calc(env(safe-area-inset-top, 0px) + var(--space-4));left:var(--space-4);z-index:9997;width:50px;height:50px;pointer-events:auto;border-radius:16px;border:1px solid color-mix(in srgb,var(--theme-accent) 34%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 72%, transparent);backdrop-filter:blur(10px) saturate(150%);-webkit-backdrop-filter:blur(10px) saturate(150%)}
+        .sidebar-toggle-btn{position:fixed;top:calc(env(safe-area-inset-top, 0px) + var(--space-4));right:var(--space-4);z-index:9997;width:50px;height:50px;pointer-events:auto;border-radius:16px;border:1px solid color-mix(in srgb,var(--theme-accent) 34%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 72%, transparent);backdrop-filter:blur(10px) saturate(150%);-webkit-backdrop-filter:blur(10px) saturate(150%)}
         .sidebar-backdrop{position:fixed;inset:0;background:radial-gradient(circle at 20% 20%, rgba(79,70,229,0.26), transparent 42%),rgba(2,6,18,0.74);z-index:9995;pointer-events:auto;backdrop-filter:blur(6px)}
         .sidebar-menu{position:fixed;top:0;left:0;bottom:0;width:min(344px,86vw);padding:90px 16px 24px;background:linear-gradient(170deg, color-mix(in srgb,var(--theme-surface) 82%, transparent), color-mix(in srgb,var(--theme-bg) 86%, transparent));backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%);border-right:1px solid color-mix(in srgb,var(--theme-accent) 24%, var(--theme-border));transform:var(--sidebar-transform);transition:transform 0.24s cubic-bezier(.22,.9,.24,1);z-index:9996;overflow-y:auto;box-shadow:0 24px 56px rgba(0,0,0,.45);border-radius:22px}
         .settings-menu-anchor{position:fixed;top:calc(env(safe-area-inset-top, 0px) + 16px);right:14px;z-index:940}
@@ -2660,13 +2660,13 @@ export default function MCUViewer() {
         .overlay-open .hero-backdrop-image{filter:saturate(1.04) contrast(1.01) brightness(.98);opacity:calc(var(--backdrop-opacity,0.9) * .55);transition-duration:180ms}
         .overlay-open .hero-backdrop-blend{opacity:.34}
         .overlay-open .dropdown-pop,.overlay-open .dropdown-pop-up{backdrop-filter:none;-webkit-backdrop-filter:none}
-        .floating-controls{position:fixed;right:max(var(--space-4), env(safe-area-inset-right));bottom:max(var(--space-4), env(safe-area-inset-bottom));z-index:9994;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}
+        .floating-controls{position:fixed;right:max(var(--space-4), env(safe-area-inset-right));top:max(calc(env(safe-area-inset-top, 0px) + 72px), var(--space-4));z-index:9994;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}
         .floating-controls>*{pointer-events:auto}
                 .bottom-action-dock{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:8px 10px;border-radius:20px;border:1px solid color-mix(in srgb,var(--theme-accent-alt) 20%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 80%, transparent);backdrop-filter:blur(10px) saturate(145%)}
         .header-brand{display:grid;gap:8px;padding:16px 20px 14px;border-radius:20px;background:linear-gradient(155deg,rgba(13,16,40,.84),rgba(14,35,62,.58) 50%,rgba(52,20,80,.56));border:1px solid color-mix(in srgb,var(--theme-accent) 34%, rgba(255,255,255,0.16));box-shadow:0 22px 56px rgba(0,0,0,.33), inset 0 1px 0 rgba(255,255,255,.11);max-width:max-content;backdrop-filter:blur(12px) saturate(140%)}
         .header-brand.compact{padding:8px 12px}
         .filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-        @media (min-width:1024px){.sidebar-menu{top:16px;left:16px;bottom:16px;width:300px;border-radius:var(--radius-lg)}.sidebar-toggle-btn{top:20px;left:20px}}
+        @media (min-width:1024px){.sidebar-menu{top:16px;left:16px;bottom:16px;width:300px;border-radius:var(--radius-lg)}.sidebar-toggle-btn{top:20px;right:20px}}
         .header-title-mcu{font-size:clamp(34px,6vw,58px);letter-spacing:0.18em;line-height:1;padding:4px 10px;color:#f8fafc;background:linear-gradient(180deg,#b91c1c,#7f1d1d);border:1px solid rgba(255,255,255,0.2);border-radius:8px;display:inline-block;width:max-content}
         .header-title-sub{font-size:clamp(17px,2.4vw,28px);letter-spacing:0.3em;line-height:1.05;color:var(--theme-text-muted);text-transform:uppercase}        .dock-btn{border-radius:999px;border:1px solid color-mix(in srgb,var(--theme-accent) 24%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 88%, transparent);color:${T.text};padding:10px 14px;font-family:var(--font-marvel-ui);letter-spacing:1.2px;font-size:12px;cursor:pointer;white-space:nowrap}
         .status-block{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid color-mix(in srgb,var(--theme-border) 72%, transparent);background:color-mix(in srgb,var(--theme-surface) 78%, transparent);font-size:12px;line-height:1.35}.status-block.success{color:#bbf7d0}.status-block.error{color:#fecaca}.status-block.loading{color:#bfdbfe}
@@ -2685,14 +2685,14 @@ export default function MCUViewer() {
           <div
             key={`backdrop-exit-${previousHeroSrc}`}
             className="hero-backdrop-image is-exiting"
-            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${previousHeroSrc})`, backgroundSize: `auto ${heroBackdropScale}%`, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%' }}
+            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${previousHeroSrc})`, backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%' }}
           />
         )}
         {currentHeroSrc && (
           <div
             key={`backdrop-${currentHeroSrc}`}
             className="hero-backdrop-image"
-            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${currentHeroSrc})`, backgroundSize: `auto ${heroBackdropScale}%`, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%' }}
+            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${currentHeroSrc})`, backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%' }}
           />
         )}
         <div className="hero-backdrop-blend" />
