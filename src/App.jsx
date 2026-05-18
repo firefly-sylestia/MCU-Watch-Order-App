@@ -548,7 +548,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   const hideWatchToggle = releaseStatus === 'upcoming';
   return (
     <div>
-      <div className={`rrow row-in type-${item.type} ${isExpanded ? 'curvy-selected' : ''}`} onPointerDown={() => { if (item.title.toLowerCase().includes('thor')) { window.__thorPress = setTimeout(() => onThorLongPress?.(item), 650); } }} onPointerUp={() => clearTimeout(window.__thorPress)} onPointerLeave={() => clearTimeout(window.__thorPress)} style={{ background: isWatched ? 'var(--theme-watched-bg)' : 'var(--theme-surface)', opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow, borderColor: multiverseShuffle ? `hsl(${(item.id * 47) % 360} 90% 60% / 0.7)` : undefined }}>
+      <div className={`rrow row-in type-${item.type} ${isExpanded ? 'curvy-selected' : ''}`} onPointerDown={() => { if (item.title.toLowerCase().includes('thor')) { window.__thorPress = setTimeout(() => onThorLongPress?.(item), 650); } }} onPointerUp={() => clearTimeout(window.__thorPress)} onPointerLeave={() => clearTimeout(window.__thorPress)} style={{ opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow, borderColor: multiverseShuffle ? `hsl(${(item.id * 47) % 360} 90% 60% / 0.7)` : undefined, ...(isWatched ? { background: 'color-mix(in srgb, var(--theme-watched-bg) 62%, transparent)' } : {}) }}>
         <div style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 15, color: isWatched ? '#f1bfd3' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
           {bulkSelectMode ? (
             <input
@@ -1412,10 +1412,12 @@ export default function MCUViewer() {
   }, [heroIndex, activeHeroSrc, visibleHeroPosters, performanceMode]);
 
   const handleHeroWheel = useCallback((e) => {
-    const horizontalDelta = Math.abs(e.deltaX) >= Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    const horizontalIntent = e.shiftKey || (Math.abs(e.deltaX) > 2 && Math.abs(e.deltaX) > Math.abs(e.deltaY) * 1.2);
+    if (!horizontalIntent) return;
+    const horizontalDelta = Math.abs(e.deltaX) > 0 ? e.deltaX : e.deltaY;
     if (!horizontalDelta) return;
     pauseHeroAutoSlide(2600);
-    e.currentTarget.scrollBy({ left: horizontalDelta * 2.6, behavior: 'auto' });
+    e.currentTarget.scrollBy({ left: horizontalDelta * 2.4, behavior: 'auto' });
     e.preventDefault();
   }, [pauseHeroAutoSlide]);
 
@@ -2746,7 +2748,7 @@ export default function MCUViewer() {
             onScroll={() => { if (!heroProgrammaticScrollRef.current) pauseHeroAutoSlide(1800); }}
             onPointerDown={() => pauseHeroAutoSlide(3200)}
             onTouchStart={() => pauseHeroAutoSlide(3200)}
-            style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: 16, padding: '0 14px', overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'none', scrollPaddingInline: isDesktopViewport ? '14vw' : '8vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', overscrollBehaviorX: 'contain', overscrollBehaviorY: 'auto', touchAction: 'pan-x', cursor: 'pointer', userSelect: 'none', WebkitUserSelect: 'none' }}>
+            style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: isDesktopViewport ? 16 : 12, overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'none', scrollPaddingInline: isDesktopViewport ? '12vw' : '7vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', overscrollBehaviorX: 'contain', overscrollBehaviorY: 'auto', touchAction: 'pan-x', cursor: 'pointer', userSelect: 'none', WebkitUserSelect: 'none' }}>
             {visibleHeroPosters.map(({ src, item: heroItem }, idx) => {
               const isActive = src === activeHeroSrc;
               return (
@@ -2764,8 +2766,8 @@ export default function MCUViewer() {
                     height: isDesktopViewport ? 440 : 320,
                     width: isDesktopViewport ? 292 : 218,
                     objectFit: 'cover',
-                    borderRadius: 16,
-                    border: '0',
+                    borderRadius: isDesktopViewport ? 14 : 12,
+                    border: '1px solid color-mix(in srgb, var(--theme-border) 86%, transparent)',
                     boxShadow: 'none',
                     opacity: isActive ? 1 : 0.76,
                     transform: isActive ? 'translate3d(0,-6px,0) scale(1.04)' : 'translate3d(0,0,0) scale(0.96)',
