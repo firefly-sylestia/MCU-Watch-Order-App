@@ -222,6 +222,50 @@ const EXPORT_THEME_OPTIONS = [
   { id: 'multiverseGlitch', label: 'Multiverse Glitch', desc: 'variant shards' },
   { id: 'heroDossier', label: 'Hero Dossier', desc: 'mission file' },
 ];
+
+const WATERMARK_POSITION_PRESETS = {
+  hero: { position: 'bottom-end', mobile: { x: 14, y: 14 }, tablet: { x: 20, y: 18 }, desktop: { x: 28, y: 22 } },
+  card: { position: 'top-end', mobile: { x: 10, y: 10 }, tablet: { x: 12, y: 12 }, desktop: { x: 14, y: 14 } },
+};
+
+const WATERMARK_THEME_TOKENS = {
+  light: { opacity: 0.26, blendMode: 'multiply' },
+  dark: { opacity: 0.18, blendMode: 'screen' },
+  cinematic: { opacity: 0.2, blendMode: 'soft-light' },
+};
+
+const WatermarkOverlay = ({ label = 'MCU', surface = 'card', theme = 'dark', viewport = 'desktop', avoid = [] }) => {
+  const preset = WATERMARK_POSITION_PRESETS[surface] || WATERMARK_POSITION_PRESETS.card;
+  const tokens = WATERMARK_THEME_TOKENS[theme] || WATERMARK_THEME_TOKENS.dark;
+  const offsets = preset[viewport] || preset.desktop;
+  const avoidSet = new Set(avoid);
+  const shouldFlipToBottom = preset.position.startsWith('top') && (avoidSet.has('title') || avoidSet.has('cta'));
+  const shouldFlipToStart = preset.position.endsWith('end') && avoidSet.has('progress');
+  const resolvedPosition = `${shouldFlipToBottom ? 'bottom' : preset.position.split('-')[0]}-${shouldFlipToStart ? 'start' : preset.position.split('-')[1]}`;
+  const style = {
+    position: 'absolute',
+    pointerEvents: 'none',
+    opacity: tokens.opacity,
+    mixBlendMode: tokens.blendMode,
+    letterSpacing: '0.32em',
+    fontFamily: 'var(--font-marvel-display)',
+    fontSize: surface === 'hero' ? 12 : 10,
+    fontWeight: 800,
+    color: 'var(--theme-text)',
+    textTransform: 'uppercase',
+    zIndex: 3,
+  };
+  if (resolvedPosition.includes('top')) style.top = offsets.y;
+  if (resolvedPosition.includes('bottom')) style.bottom = offsets.y;
+  if (resolvedPosition.includes('start')) style.left = offsets.x;
+  if (resolvedPosition.includes('end')) style.right = offsets.x;
+  if (resolvedPosition === 'center') {
+    style.top = '50%';
+    style.left = '50%';
+    style.transform = 'translate(-50%, -50%)';
+  }
+  return <div style={style}>{label}</div>;
+};
 const waitForExportFont = async (fontFamily) => {
   if (typeof document === 'undefined' || !document.fonts) return;
   try {
@@ -2436,20 +2480,29 @@ export default function MCUViewer() {
   const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
 
   const renderPhaseSelector = () => (
-    <div ref={phaseRef} style={{ position: 'relative', flex: '0 0 auto' }}>
-      <button className="fpill" onClick={() => setPhaseOpen(o => !o)}
-        style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '5px 10px', color: activePhase === 0 ? T.textMuted : (PHASES.find(ph => ph.id === activePhase)?.color || T.text), background: 'transparent', fontFamily: 'var(--font-marvel-ui)', fontSize: 12, letterSpacing: 1.4, whiteSpace: 'nowrap' }}>
-        {activePhase === 0 ? 'Phase All' : (PHASES.find(ph => ph.id === activePhase)?.name || 'Phase All')}
-        <ChevDown size={12} style={{ opacity: 0.6, transform: phaseOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-      </button>
-      {phaseOpen && (
-        <div className="dropdown-pop" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 1400, boxShadow: 'none', minWidth: 200 }}>
-          <div className={`sopt ${activePhase === 0 ? 'picked' : ''}`} onClick={() => { setActivePhase(0); setPhaseOpen(false); }}>Phase All</div>
-          {PHASES.map((ph) => (
-            <div key={ph.id} className={`sopt ${activePhase === ph.id ? 'picked' : ''}`} style={activePhase === ph.id ? { color: ph.color, fontWeight: 700 } : {}} onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); setPhaseOpen(false); }}>{ph.name}</div>
-          ))}
-        </div>
-      )}
+    <div ref={phaseRef} style={{ display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto', paddingBottom: 2, maxWidth: '100%' }}>
+      <button className="fpill" onClick={() => setActivePhase(0)} style={{ borderRadius: 999, borderColor: activePhase === 0 ? 'var(--theme-accent)' : T.filterBorder, color: activePhase === 0 ? 'var(--theme-accent)' : T.textMuted }}>All</button>
+      {PHASES.map((ph) => {
+        const stat = phaseStats.find(s => s.phase === ph.id);
+        const total = stat?.total || 0;
+        const watched = stat?.watched || 0;
+        const percent = total ? Math.round((watched / total) * 100) : 0;
+        const isActive = activePhase === ph.id;
+        return (
+          <button
+            key={ph.id}
+            onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); }}
+            style={{
+              display: 'grid', gridTemplateColumns: '30px auto auto', alignItems: 'center', gap: 8, borderRadius: 999, padding: '6px 10px 6px 7px',
+              border: `1px solid ${isActive ? ph.color : T.filterBorder}`, background: isActive ? `color-mix(in srgb, ${ph.color} 16%, transparent)` : 'transparent',
+              boxShadow: isActive ? `0 0 0 1px ${ph.color}44, 0 0 18px ${ph.glow}` : 'none', transform: isActive ? 'scale(1.02)' : 'scale(1)', cursor: 'pointer'
+            }}>
+            <span style={{ width: 26, height: 26, borderRadius: 999, display: 'grid', placeItems: 'center', color: ph.color, fontSize: 10, fontWeight: 800, background: `conic-gradient(${ph.color} ${percent * 3.6}deg, color-mix(in srgb, ${ph.color} 14%, transparent) 0)`, border: `1px solid ${ph.color}66` }}>{ph.id}</span>
+            <span style={{ fontSize: 11, letterSpacing: 1.1, color: isActive ? ph.color : T.text, whiteSpace: 'nowrap' }}>{ph.name}</span>
+            <span style={{ fontSize: 10, color: T.textMuted }}>{watched}/{total}</span>
+          </button>
+        );
+      })}
     </div>
   );
 
@@ -2710,6 +2763,7 @@ export default function MCUViewer() {
           </div>
         )}
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 16, background: 'linear-gradient(90deg, rgba(4,6,12,0.10) 0%, transparent 8%, transparent 92%, rgba(4,6,12,0.10) 100%)' }} />
+        {!detailItem && !analyticsOpen && !settingsOpen && <WatermarkOverlay surface="hero" theme={darkMode ? 'cinematic' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['cta', 'title']} />}
        
       </div>
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
@@ -2940,7 +2994,8 @@ export default function MCUViewer() {
                 )}
 
                 {/* Phase divider */}
-                <div className="curvy-panel" style={{ '--phase-color': ph.color, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap', padding: '10px 10px 10px 12px', border: `1px solid ${T.surfaceBorder}`, background: 'transparent' }}>
+                <div className="curvy-panel" style={{ '--phase-color': ph.color, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap', padding: '10px 10px 10px 12px', border: `1px solid ${T.surfaceBorder}`, background: 'transparent', position: 'relative' }}>
+                  <WatermarkOverlay surface="card" theme={darkMode ? 'dark' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['title', 'progress']} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: 'var(--font-marvel-display)', fontSize: 'clamp(23px, 3vw, 28px)', letterSpacing: 2.2, color: ph.color, lineHeight: 1, fontWeight: 700, textShadow: darkMode ? `0 0 18px ${ph.glow}` : 'none' }}>
                       {ph.name}
@@ -2981,7 +3036,7 @@ export default function MCUViewer() {
                 )}
 
                 {/* Row table */}
-                <div className="list-panel" style={{ background: 'transparent', border: `1px solid ${T.surfaceBorder}`, borderRadius: 14, overflow: 'hidden', boxShadow: 'none' }}>
+                <div className="list-panel" style={{ background: 'transparent', border: 'none', borderRadius: 14, overflow: 'hidden', boxShadow: 'none' }}>
                   <PhaseRows rows={rows} renderRow={(item, idx) => {
                     const itemReleaseStatus = releaseStatusFor(item);
                     const itemReleaseInfo = releaseInfoFor(item);
