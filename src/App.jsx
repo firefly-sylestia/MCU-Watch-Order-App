@@ -176,6 +176,13 @@ const EXPORT_FONT_PREVIEW_FAMILY = {
   manrope: 'Manrope, Outfit, sans-serif',
   marvel: 'Bebas Neue, Rajdhani, Outfit, sans-serif',
 };
+const EXPORT_THEME_OPTIONS = [
+  { id: 'sacredTimeline', label: 'Sacred Timeline', desc: 'canon progress' },
+  { id: 'timelinePortal', label: 'Timeline Portal', desc: 'portal arcs' },
+  { id: 'watchParty', label: 'Watch Party', desc: 'fan energy' },
+  { id: 'multiverseGlitch', label: 'Multiverse Glitch', desc: 'variant shards' },
+  { id: 'heroDossier', label: 'Hero Dossier', desc: 'mission file' },
+];
 const waitForExportFont = async (fontFamily) => {
   if (typeof document === 'undefined' || !document.fonts) return;
   try {
@@ -628,14 +635,14 @@ export default function MCUViewer() {
   const [rewatchCount,   setRewatchCount]   = useState({});
   const [reviews,        setReviews]        = useState({});
   const [bookmarks,      setBookmarks]      = useState({});
-  const [reviewCardTheme, setReviewCardTheme] = useState('midnight');
+  const [reviewCardTheme, setReviewCardTheme] = useState('sacredTimeline');
   const [exportFont, setExportFont] = useState('inter');
   const [exportTextScale, setExportTextScale] = useState(DEFAULT_EXPORT_TEXT_SCALE);
   const [analyticsTab, setAnalyticsTab] = useState('overview');
   const [exportComposerOpen, setExportComposerOpen] = useState(false);
   const [exportPreview, setExportPreview] = useState({ url: '', loading: false, error: '' });
   const [exportSettings, setExportSettings] = useState(() => ({
-    type: 'unified', theme: 'midnight', bgOpacity: 52, fontWeight: 800, density: 'comfortable', posterMode: 'featured',
+    type: 'unified', theme: 'sacredTimeline', bgOpacity: 52, fontWeight: 800, density: 'comfortable', posterMode: 'featured',
     sections: { completion: true, hours: true, streak: true, phaseBreakdown: true, recentMomentum: true, topRated: true, history: true, rating: true, reviewSnippet: true, profileBadge: true }, aspect: '4:5',
   }));
   const [autoBackupStamp, setAutoBackupStamp] = useState('');
@@ -3224,6 +3231,7 @@ export default function MCUViewer() {
               <div className="ui-btn-group ui-sticky-mobile-footer" style={{ marginBottom: 0, position: 'sticky', bottom: 0, zIndex: 4, background: 'var(--theme-surface)', padding: '8px 0' }}>
                 <button className="fpill ui-touch-btn" onClick={shareAnalysisCard}><Upload size={14}/>Share Analysis Card</button>
                 <button className="fpill ui-touch-btn" onClick={shareUnifiedCard}><Upload size={14}/>Share Recap Card</button>
+                <span style={{ color: T.textMuted, fontSize: 12, alignSelf: 'center' }}>Progress + recent watched history in one share image.</span>
                 <button className="fpill ui-touch-btn" onClick={() => { setAnalyticsTab('advanced-export'); setExportComposerOpen(true); }}><SlidersH size={14}/>Open Advanced Export</button>
               </div>
             </div>
@@ -3251,7 +3259,7 @@ export default function MCUViewer() {
               <div style={{ display: 'grid', gap: 6 }}>
                 <div style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.4, textTransform: 'uppercase' }}>Theme identity</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 8 }}>
-                  {[{ id: 'midnight', label: 'Midnight', desc: 'cosmic blue' }, { id: 'stark', label: 'Stark', desc: 'red gold' }, { id: 'vibranium', label: 'Vibranium', desc: 'purple tech' }].map(opt => (
+                  {EXPORT_THEME_OPTIONS.map(opt => (
                     <button key={opt.id} className="fpill" onClick={() => setExportSettings(prev => ({ ...prev, theme: opt.id }))} style={{ justifyContent: 'center', flexDirection: 'column', gap: 2, minHeight: 50, borderColor: exportSettings.theme === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>
                       <strong style={{ fontSize: 12 }}>{opt.label}</strong>
                       <span style={{ fontSize: 10, color: T.textMuted }}>{opt.desc}</span>
@@ -3297,8 +3305,8 @@ export default function MCUViewer() {
             <div className="glass-panel ui-panel ui-control-row" style={{ marginBottom: 10, padding: 10 }}>
               <div className="ui-section-header">Review Card Theme</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 6 }}>
-                {[{id:'midnight',label:'Midnight'},{id:'stark',label:'Stark'},{id:'vibranium',label:'Vibranium'}].map(opt => (
-                  <button key={opt.id} className="fpill" onClick={() => setReviewCardTheme(opt.id)} style={{ justifyContent:'center', padding:'6px 8px', fontSize:11, borderColor: reviewCardTheme === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{opt.label}</button>
+                {EXPORT_THEME_OPTIONS.map(opt => (
+                  <button key={opt.id} className="fpill" onClick={() => setReviewCardTheme(opt.id)} style={{ justifyContent:'center', flexDirection: 'column', gap: 2, padding:'6px 8px', fontSize:11, borderColor: reviewCardTheme === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}><span>{opt.label}</span><span style={{ fontSize: 9, color: T.textMuted }}>{opt.desc}</span></button>
                 ))}
               </div>
               {reviewShareStatus.message && <div style={{ fontSize: 12, color: reviewShareStatus.type === 'error' ? 'var(--theme-danger)' : 'var(--theme-success)' }}>{reviewShareStatus.message}</div>}

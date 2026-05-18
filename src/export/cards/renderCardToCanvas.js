@@ -13,13 +13,22 @@ const withAlpha = (hex, alpha) => {
   return `rgba(${(value >> 16) & 255},${(value >> 8) & 255},${value & 255},${alpha})`;
 };
 
-const THEMES = {
-  midnight: { bg: ['#070b1b', '#121a36', '#25113f'], accent: '#7dd3fc', accent2: '#f472b6', gold: '#ffd35c', panel: 'rgba(7,12,28,0.76)' },
-  stark: { bg: ['#130608', '#321016', '#f4b944'], accent: '#f43f5e', accent2: '#fbbf24', gold: '#fde68a', panel: 'rgba(24,8,12,0.78)' },
-  vibranium: { bg: ['#080815', '#171044', '#3b1d72'], accent: '#a78bfa', accent2: '#22d3ee', gold: '#e9d5ff', panel: 'rgba(13,10,34,0.78)' },
+const THEME_PRESETS = {
+  sacredTimeline: { label: 'Sacred Timeline', titleLabel: 'SACRED TIMELINE', stamp: 'Canon Progress Log', accentIcon: '⌛', backgroundMotif: 'timeline', bg: ['#071018', '#10243d', '#182b54'], accent: '#7dd3fc', accent2: '#34d399', gold: '#facc15', panel: 'rgba(7,16,31,0.78)' },
+  timelinePortal: { label: 'Timeline Portal', titleLabel: 'TIMELINE PORTAL', stamp: 'Portal Watch Route', accentIcon: '◎', backgroundMotif: 'portal', bg: ['#07111f', '#102b4c', '#32164f'], accent: '#38bdf8', accent2: '#c084fc', gold: '#fde68a', panel: 'rgba(8,15,34,0.78)' },
+  watchParty: { label: 'Watch Party', titleLabel: 'WATCH PARTY', stamp: 'Fan Night Recap', accentIcon: '★', backgroundMotif: 'halftone', bg: ['#150712', '#351225', '#5a2a11'], accent: '#fb7185', accent2: '#f59e0b', gold: '#fde68a', panel: 'rgba(28,10,20,0.78)' },
+  multiverseGlitch: { label: 'Multiverse Glitch', titleLabel: 'MULTIVERSE GLITCH', stamp: 'Variant Signal', accentIcon: '◆', backgroundMotif: 'shards', bg: ['#080815', '#161044', '#073044'], accent: '#a78bfa', accent2: '#22d3ee', gold: '#e9d5ff', panel: 'rgba(13,10,34,0.78)' },
+  heroDossier: { label: 'Hero Dossier', titleLabel: 'HERO DOSSIER', stamp: 'Mission File', accentIcon: '▣', backgroundMotif: 'grid', bg: ['#090d14', '#151d2b', '#302111'], accent: '#fbbf24', accent2: '#60a5fa', gold: '#fde68a', panel: 'rgba(14,18,27,0.8)' },
 };
 
-const getTheme = (settings) => THEMES[settings?.theme] || THEMES.midnight;
+const THEMES = {
+  ...THEME_PRESETS,
+  midnight: THEME_PRESETS.sacredTimeline,
+  stark: THEME_PRESETS.watchParty,
+  vibranium: THEME_PRESETS.multiverseGlitch,
+};
+
+const getTheme = (settings) => THEMES[settings?.theme] || THEME_PRESETS.sacredTimeline;
 
 const fitTitleText = (ctx, { text, x, y, maxWidth, preferredSize, minSize, fontFamily, weight = 800, lineHeightFactor = 1.12, maxLines = 2, color = '#fff' }) => {
   let size = preferredSize;
@@ -59,11 +68,71 @@ const drawGlowOrb = (ctx, x, y, r, color) => {
   ctx.fill();
 };
 
+const drawThemeMotif = (ctx, canvas, theme) => {
+  ctx.save();
+  ctx.strokeStyle = withAlpha(theme.accent, 0.16);
+  ctx.fillStyle = withAlpha(theme.accent2, 0.12);
+  ctx.lineWidth = Math.max(2, canvas.width * 0.003);
+  if (theme.backgroundMotif === 'portal') {
+    for (let i = 0; i < 5; i += 1) {
+      ctx.beginPath();
+      ctx.ellipse(canvas.width * 0.82, canvas.height * 0.2, 120 + i * 46, 74 + i * 28, -0.35, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  } else if (theme.backgroundMotif === 'halftone') {
+    for (let y = 120; y < canvas.height * 0.52; y += 42) {
+      for (let x = canvas.width * 0.62; x < canvas.width - 40; x += 42) {
+        ctx.globalAlpha = 0.18 + ((x + y) % 84) / 600;
+        ctx.beginPath();
+        ctx.arc(x, y, 5 + ((x + y) % 18), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  } else if (theme.backgroundMotif === 'shards') {
+    for (let i = 0; i < 10; i += 1) {
+      const x = canvas.width * (0.08 + i * 0.095);
+      const y = canvas.height * (0.14 + (i % 4) * 0.08);
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + 48, y + 22);
+      ctx.lineTo(x + 18, y + 92);
+      ctx.closePath();
+      ctx.stroke();
+    }
+  } else if (theme.backgroundMotif === 'grid') {
+    for (let x = 80; x < canvas.width; x += 80) {
+      ctx.beginPath(); ctx.moveTo(x, 90); ctx.lineTo(x, canvas.height - 90); ctx.stroke();
+    }
+    for (let y = 90; y < canvas.height; y += 80) {
+      ctx.beginPath(); ctx.moveTo(80, y); ctx.lineTo(canvas.width - 80, y); ctx.stroke();
+    }
+  } else {
+    for (let i = 0; i < 4; i += 1) {
+      ctx.beginPath();
+      ctx.arc(canvas.width * 0.18, canvas.height * 0.82, 180 + i * 58, -0.9, 0.35);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+};
+
+const drawThemeStamp = (ctx, { x, y, theme, fontFamily, scale = 1 }) => {
+  const label = `${theme.accentIcon || '★'} ${theme.stamp || theme.label || 'MCU Viewing Order'}`;
+  ctx.save();
+  ctx.font = `900 ${Math.round(18 * scale)}px ${fontFamily}`;
+  const w = Math.min(520, Math.max(220, ctx.measureText(label).width + 44));
+  drawRoundedPanel(ctx, { x, y, w, h: 42, radius: 21, fill: withAlpha(theme.accent, 0.14), stroke: withAlpha(theme.accent, 0.34) });
+  ctx.fillStyle = 'rgba(245,250,255,0.82)';
+  ctx.fillText(label.toUpperCase(), x + 22, y + 27);
+  ctx.restore();
+};
+
 const drawCardBackdrop = (ctx, canvas, theme, bgImg, bgOpacity = 46) => {
   fillGradientBackground(ctx, canvas, [[0, theme.bg[0]], [0.55, theme.bg[1]], [1, theme.bg[2]]]);
   drawGlowOrb(ctx, canvas.width * 0.18, canvas.height * 0.12, canvas.width * 0.52, theme.accent);
   drawGlowOrb(ctx, canvas.width * 0.9, canvas.height * 0.25, canvas.width * 0.46, theme.accent2);
   drawGlowOrb(ctx, canvas.width * 0.45, canvas.height * 1.02, canvas.width * 0.64, theme.gold);
+  drawThemeMotif(ctx, canvas, theme);
   if (bgImg) {
     ctx.save();
     ctx.globalAlpha = Math.max(0, Math.min(0.82, bgOpacity / 100));
@@ -139,6 +208,7 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
     drawCardBackdrop(ctx, { width: 1600, height: 2200 }, theme, img, Math.max(bgOpacity, 54));
     drawRoundedPanel(ctx, { x: 72, y: 78, w: 1456, h: 2044, radius: 64, fill: theme.panel, stroke: 'rgba(255,255,255,0.24)', lineWidth: 3 });
     drawRoundedPanel(ctx, { x: 108, y: 114, w: 1384, h: 1972, radius: 48, fill: 'rgba(255,255,255,0.045)', stroke: withAlpha(theme.accent, 0.24) });
+    drawThemeStamp(ctx, { x: 148, y: 1764, theme, fontFamily, scale });
 
     const posterX = 148, posterY = 182, posterW = 486, posterH = 720;
     drawRoundedPanel(ctx, { x: posterX - 12, y: posterY - 12, w: posterW + 24, h: posterH + 24, radius: 40, fill: 'rgba(255,255,255,0.14)', stroke: withAlpha(theme.gold, 0.36), lineWidth: 3 });
@@ -158,12 +228,12 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
     drawBadge(ctx, { x: posterX + posterW + 248, y: posterY + 540, label: 'Year', value: String(item.year || '—'), color: theme.accent2, fontFamily, scale, w: 190 });
     drawBadge(ctx, { x: posterX + posterW + 468, y: posterY + 540, label: 'Fan', value: data.reviewer || 'Reviewer', color: theme.gold, fontFamily, scale, w: 300 });
 
-    drawRoundedPanel(ctx, { x: 148, y: 980, w: 1304, h: 760, radius: 44, fill: 'rgba(255,255,255,0.09)', stroke: 'rgba(255,255,255,0.18)' });
+    drawRoundedPanel(ctx, { x: 148, y: 940, w: 1304, h: 820, radius: 44, fill: 'rgba(255,255,255,0.09)', stroke: 'rgba(255,255,255,0.18)' });
     ctx.fillStyle = withAlpha(theme.accent, 0.92);
     ctx.font = `900 ${Math.round(34 * scale)}px ${fontFamily}`;
-    ctx.fillText('REVIEW NOTES', 196, 1064);
+    ctx.fillText('REVIEW NOTES', 196, 1024);
     ctx.font = `650 ${Math.round(62 * scale)}px ${fontFamily}`; ctx.fillStyle = '#f8fbff';
-    drawWrappedText(ctx, data.reviewText || 'No review yet — but the multiverse is ready for your hot take.', 196, 1160, 1210, Math.round(74 * scale), 7);
+    drawWrappedText(ctx, data.reviewText || 'No review yet — but the multiverse is ready for your hot take.', 196, 1104, 1210, Math.round(62 * scale), 10);
     drawWatermark(ctx, { width: 1600, height: 2200 }, fontFamily, theme);
   } else if (type === 'analysis') {
     canvas.width = 1080; canvas.height = 1350;
@@ -172,6 +242,7 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
     const scale = (settings?.textScale || 1) * fontScale;
     drawCardBackdrop(ctx, { width: 1080, height: 1350 }, theme, null, bgOpacity);
     drawRoundedPanel(ctx, { x: 46, y: 48, w: 988, h: 1254, radius: 48, fill: theme.panel, stroke: 'rgba(255,255,255,0.24)', lineWidth: 3 });
+    drawThemeStamp(ctx, { x: 640, y: 96, theme, fontFamily, scale });
 
     ctx.fillStyle = withAlpha(theme.accent, 0.95);
     ctx.font = `900 ${Math.round(26 * scale)}px ${fontFamily}`;
@@ -230,12 +301,13 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
     drawCardBackdrop(ctx, { width: 1080, height: 1350 }, theme, bgImg, bgOpacity);
     drawRoundedPanel(ctx, { x: 42, y: 42, w: 996, h: 1266, radius: 52, fill: theme.panel, stroke: 'rgba(255,255,255,0.25)', lineWidth: 3 });
     drawRoundedPanel(ctx, { x: 72, y: 76, w: 936, h: 1200, radius: 38, fill: 'rgba(255,255,255,0.05)', stroke: withAlpha(theme.accent, 0.2) });
+    drawThemeStamp(ctx, { x: 104, y: 1196, theme, fontFamily, scale });
 
     const ratingMap = data.ratings || {};
     const topRows = (data.rows || []).slice(0, settings?.density === 'compact' ? 6 : 5);
     const featuredRating = clampTenPoint(ratingMap[featured?.id] || data.rating || 0);
     ctx.fillStyle = withAlpha(theme.accent, 0.96); ctx.font = `900 ${Math.round(24 * scale)}px ${fontFamily}`;
-    ctx.fillText('MULTIVERSE RECAP', 104, 138);
+    ctx.fillText(`${theme.titleLabel || 'WATCH'} RECAP`, 104, 138);
     if (featured?.title) fitTitleText(ctx, { text: featured.title, x: 104, y: 216, maxWidth: 820, preferredSize: 54 * scale, minSize: 28 * scale, fontFamily, maxLines: 2, color: '#fff', weight: 900 });
 
     ctx.fillStyle = '#ffffff'; ctx.font = `950 ${Math.round(164 * scale)}px ${fontFamily}`; ctx.fillText(`${Number(data.pct || 0)}%`, 104, 410);
