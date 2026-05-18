@@ -2393,13 +2393,18 @@ export default function MCUViewer() {
     { id: 'god-of-thunder', label: 'Thor',           swatch: '#3ca6ff' },
     { id: 'scarlet-witch',  label: 'Scarlet Witch',  swatch: '#c61b59' },
     { id: 'winter-soldier', label: 'Winter Soldier', swatch: '#8fa0b8' },
+    { id: 'captain-america', label: 'Captain America', swatch: '#3b5fa4' },
+    { id: 'daredevil', label: 'Daredevil', swatch: '#bf0615' },
+    { id: 'panther-tech', label: 'Panther Tech', swatch: '#6bb0bf' },
+    { id: 'marvel-red', label: 'Marvel Red', swatch: '#e23636' },
+    { id: 'hela', label: 'Hela', swatch: '#49a561' },
   ];
 
   // ─── Per-theme accent + distinctive surface tints ─────────────────────────
   const themeVarsByMode = {
     classic: {
-      '--theme-accent': '#d4372f',
-      '--theme-accent-alt': '#f5c04a',
+      '--theme-accent': '#A63232',
+      '--theme-accent-alt': '#F2AE30',
       '--theme-accent-glow': darkMode ? 'rgba(212,55,47,0.42)' : 'rgba(212,55,47,0.26)',
       '--theme-surface': darkMode ? 'rgba(28,10,9,0.90)' : 'rgba(255,246,244,0.96)',
       '--theme-surface-hover': darkMode ? 'rgba(44,14,12,0.94)' : 'rgba(255,236,232,0.97)',
@@ -2469,7 +2474,48 @@ export default function MCUViewer() {
       '--theme-surface-hover': darkMode ? 'rgba(10,14,22,0.94)' : 'rgba(230,237,248,0.97)',
       '--comp-card-bg': darkMode ? 'rgba(6,9,15,0.88)' : 'rgba(246,249,254,0.95)',
     },
+    'captain-america': {
+      '--theme-accent': '#3b5fa4',
+      '--theme-accent-alt': '#9b3430',
+      '--theme-accent-glow': darkMode ? 'rgba(59,95,164,0.44)' : 'rgba(59,95,164,0.24)',
+      '--theme-surface': darkMode ? 'rgba(23,27,49,0.92)' : 'rgba(254,254,254,0.96)',
+      '--theme-surface-hover': darkMode ? 'rgba(31,38,64,0.94)' : 'rgba(174,183,194,0.34)',
+      '--comp-card-bg': darkMode ? 'rgba(23,27,49,0.88)' : 'rgba(254,254,254,0.95)',
+    },
+    daredevil: {
+      '--theme-accent': '#BF0615',
+      '--theme-accent-alt': '#A61731',
+      '--theme-accent-glow': darkMode ? 'rgba(191,6,21,0.44)' : 'rgba(191,6,21,0.24)',
+      '--theme-surface': darkMode ? 'rgba(64,1,1,0.92)' : 'rgba(255,242,243,0.96)',
+      '--theme-surface-hover': darkMode ? 'rgba(78,4,4,0.94)' : 'rgba(255,228,230,0.98)',
+      '--comp-card-bg': darkMode ? 'rgba(64,1,1,0.88)' : 'rgba(255,246,247,0.95)',
+    },
+    'panther-tech': {
+      '--theme-accent': '#6BB0BF',
+      '--theme-accent-alt': '#3B3F8C',
+      '--theme-accent-glow': darkMode ? 'rgba(107,176,191,0.42)' : 'rgba(107,176,191,0.25)',
+      '--theme-surface': darkMode ? 'rgba(26,27,27,0.92)' : 'rgba(243,244,248,0.96)',
+      '--theme-surface-hover': darkMode ? 'rgba(38,40,49,0.94)' : 'rgba(232,234,242,0.97)',
+      '--comp-card-bg': darkMode ? 'rgba(26,27,27,0.88)' : 'rgba(246,247,252,0.95)',
+    },
+    'marvel-red': {
+      '--theme-accent': '#e23636',
+      '--theme-accent-alt': '#f78f3f',
+      '--theme-accent-glow': darkMode ? 'rgba(226,54,54,0.44)' : 'rgba(226,54,54,0.24)',
+      '--theme-surface': darkMode ? 'rgba(0,0,0,0.92)' : 'rgba(255,245,245,0.96)',
+      '--theme-surface-hover': darkMode ? 'rgba(18,18,18,0.94)' : 'rgba(255,233,233,0.97)',
+      '--comp-card-bg': darkMode ? 'rgba(14,14,14,0.88)' : 'rgba(255,248,248,0.95)',
+    },
+    hela: {
+      '--theme-accent': '#49a561',
+      '--theme-accent-alt': '#d0d500',
+      '--theme-accent-glow': darkMode ? 'rgba(73,165,97,0.42)' : 'rgba(73,165,97,0.24)',
+      '--theme-surface': darkMode ? 'rgba(3,11,9,0.92)' : 'rgba(242,248,244,0.96)',
+      '--theme-surface-hover': darkMode ? 'rgba(20,45,39,0.94)' : 'rgba(231,243,235,0.97)',
+      '--comp-card-bg': darkMode ? 'rgba(13,34,28,0.88)' : 'rgba(246,251,247,0.95)',
+    },
   };
+
 
   const activeThemeVars = themeVarsByMode[themeMode] || themeVarsByMode.classic;
 
@@ -2488,9 +2534,13 @@ export default function MCUViewer() {
     '--theme-danger': '#d16a6a',
     '--theme-danger-soft': darkMode ? 'rgba(209,106,106,0.16)' : 'rgba(209,106,106,0.12)',
     '--theme-text-primary': darkMode ? '#e6edf8' : '#1a2030',
-    '--theme-text-secondary': darkMode ? '#c3d1e4' : '#334155',
-    '--theme-overlay-surface': darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.06)',
-    '--theme-overlay-border': darkMode ? 'rgba(255,255,255,0.16)' : 'rgba(15,23,42,0.16)',
+    '--theme-text-secondary': darkMode ? `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 28%, #d9e3f1)` : `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 42%, #334155)`,
+    '--theme-overlay-surface': darkMode
+      ? `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 14%, rgba(255,255,255,0.06))`
+      : `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 10%, rgba(15,23,42,0.04))`,
+    '--theme-overlay-border': darkMode
+      ? `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 32%, rgba(255,255,255,0.14))`
+      : `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 26%, rgba(15,23,42,0.14))`,
     '--app-bg-base': darkMode ? '#06060f' : '#f2f0eb',
     '--app-bg-vignette': darkMode ? 'rgba(2,6,23,0.42)' : 'rgba(2,6,23,0.08)',
     '--app-bg-noise-opacity': darkMode ? '0.06' : '0.03',
@@ -3420,3 +3470,4 @@ export default function MCUViewer() {
     </div>
   );
 }
+
