@@ -2,14 +2,17 @@ import { useEffect, useState } from 'react';
 
 export function useHeroBackdrop() {
   const [heroBackdropScale, setHeroBackdropScale] = useState(104);
-  const [heroBackdropOpacity, setHeroBackdropOpacity] = useState(0.9);
+  const [heroBackdropOpacity, setHeroBackdropOpacity] = useState(0.67);
 
   useEffect(() => {
     try {
       const savedScale = Number(localStorage.getItem('mcu-hero-backdrop-scale-v1'));
       const savedOpacity = Number(localStorage.getItem('mcu-hero-backdrop-opacity-v1'));
       if (Number.isFinite(savedScale)) setHeroBackdropScale(Math.max(100, Math.min(112, savedScale)));
-      if (Number.isFinite(savedOpacity)) setHeroBackdropOpacity(Math.max(0.12, Math.min(0.75, savedOpacity)));
+      if (Number.isFinite(savedOpacity)) {
+        const clampedOpacity = Math.max(0.12, Math.min(1, savedOpacity));
+        setHeroBackdropOpacity(clampedOpacity > 0.75 ? 0.67 : clampedOpacity);
+      }
     } catch {}
   }, []);
 
