@@ -2660,7 +2660,8 @@ export default function MCUViewer() {
         .overlay-open .hero-backdrop-image{filter:saturate(1.04) contrast(1.01) brightness(.98);opacity:calc(var(--backdrop-opacity,0.9) * .55);transition-duration:180ms}
         .overlay-open .hero-backdrop-blend{opacity:.34}
         .overlay-open .dropdown-pop,.overlay-open .dropdown-pop-up{backdrop-filter:none;-webkit-backdrop-filter:none}
-         .floating-controls{position:fixed;right:max(var(--space-4), env(safe-area-inset-right));bottom:max(var(--space-4), env(safe-area-inset-bottom));z-index:9994;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}        .floating-controls>*{pointer-events:auto}
+         .floating-controls{position:fixed;right:max(var(--space-4), env(safe-area-inset-right));bottom:max(var(--space-4), env(safe-area-inset-bottom));z-index:9994;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}
+         .floating-controls>*{pointer-events:auto}
                 .bottom-action-dock{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:8px 10px;border-radius:20px;border:1px solid color-mix(in srgb,var(--theme-accent-alt) 20%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 80%, transparent);backdrop-filter:blur(10px) saturate(145%)}
         .header-brand{display:grid;gap:8px;padding:16px 20px 14px;border-radius:20px;background:linear-gradient(155deg,rgba(13,16,40,.84),rgba(14,35,62,.58) 50%,rgba(52,20,80,.56));border:1px solid color-mix(in srgb,var(--theme-accent) 34%, rgba(255,255,255,0.16));box-shadow:0 22px 56px rgba(0,0,0,.33), inset 0 1px 0 rgba(255,255,255,.11);max-width:max-content;backdrop-filter:blur(12px) saturate(140%)}
         .header-brand.compact{padding:8px 12px}
