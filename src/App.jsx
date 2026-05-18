@@ -2618,8 +2618,7 @@ export default function MCUViewer() {
           .rrow{grid-template-columns:24px 44px minmax(0,1fr) !important;gap:8px;padding:14px 10px 14px 8px;min-height:96px}
           .rrow .row-actions{grid-column:2 / -1;flex-direction:row !important;align-items:center !important;justify-content:space-between !important;min-width:0 !important;width:100%;gap:8px}
           .calendar-row{grid-template-columns:minmax(74px,84px) 44px minmax(0,1fr) !important}
-          .floating-controls{display:flex !important;left:10px;right:10px;top:max(calc(env(safe-area-inset-top, 0px) + 72px), 10px);align-items:stretch;gap:10px}.fab-primary{justify-content:center}
-          .bottom-action-dock{width:100%;justify-content:center}
+          .floating-controls{display:flex !important;left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));align-items:stretch;gap:10px}.fab-primary{justify-content:center}          .bottom-action-dock{width:100%;justify-content:center}
                     .dock-btn{font-size:11px !important;padding:9px 10px !important;min-height:40px;flex:1 1 auto}
           .bottom-action-bar{min-height:40px;padding:9px 10px !important;width:100%;justify-content:center}
           .dock-status-menu{flex:1 1 auto}
