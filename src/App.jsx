@@ -2563,10 +2563,10 @@ export default function MCUViewer() {
         .hero-backdrop-image.is-exiting{opacity:0;transform:scale(1.004);filter:blur(1.2px) saturate(1.04) contrast(1.01) brightness(0.96)}
         @starting-style{.hero-backdrop-image:not(.is-exiting){opacity:0;transform:scale(1.01);filter:blur(1.2px) saturate(1.02) contrast(1.01) brightness(0.95)}}
         .phase-rows-full{display:block;position:relative}
-        .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 220ms var(--ease-out),border-color 220ms var(--ease-out),transform 220ms var(--ease-out),box-shadow 260ms var(--ease-out);display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(116px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid transparent;min-height:var(--row-min-h,96px);border-radius:var(--radius-md);overflow:hidden;background:transparent;backdrop-filter:none}
+        .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 220ms var(--ease-out),border-color 220ms var(--ease-out),transform 220ms var(--ease-out),box-shadow 260ms var(--ease-out);display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(116px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border:1px solid color-mix(in srgb,var(--theme-border) 90%, transparent);min-height:var(--row-min-h,96px);border-radius:var(--radius-lg);overflow:hidden;background:color-mix(in srgb,var(--theme-surface) 86%, transparent);backdrop-filter:none;box-shadow:var(--elevation-surface-1)}
         .rrow:last-child{border-bottom:none}
         .rrow > *{position:relative;z-index:1}
-        .rrow:hover{border-left-color:color-mix(in srgb,var(--theme-accent) 65%, var(--phase-color,#c0392b));transform:translateY(-1px)}
+        .rrow:hover{border-left-color:color-mix(in srgb,var(--theme-accent) 65%, var(--phase-color,#c0392b));border-color:color-mix(in srgb,var(--theme-accent) 26%, var(--theme-border));transform:translateY(-2px)}
         .rrow.curvy-selected{border-left-color:var(--theme-accent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--theme-accent) 40%, transparent)}
         .rrow.type-film:hover{background:linear-gradient(90deg, rgba(224,82,82,0.18), ${T.rowHoverBg}) !important}
         .rrow.type-series:hover{background:linear-gradient(90deg, rgba(74,158,222,0.18), ${T.rowHoverBg}) !important}
@@ -2574,7 +2574,7 @@ export default function MCUViewer() {
 
         .title-btn{background:none;border:none;cursor:pointer;text-align:left;padding:6px 0;color:var(--theme-text);font-family:inherit;display:block;width:100%;min-height:44px;text-shadow:0 1px 4px rgba(0,0,0,0.35);overflow:hidden}.title-btn .title-main{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
         .title-btn:focus-visible{outline:2px solid var(--theme-accent);outline-offset:2px;border-radius:3px}
-        .meta-chip{display:inline-flex;align-items:center;gap:4px;color:var(--theme-text-muted);background:var(--theme-surface);border:1px solid var(--theme-border);border-radius:var(--radius-sm);padding:2px 6px;letter-spacing:1px;font-family:var(--font-marvel-ui);flex-shrink:0;max-width:100%}
+        .meta-chip{display:inline-flex;align-items:center;gap:4px;color:var(--theme-text-muted);background:color-mix(in srgb,var(--theme-bg) 54%, transparent);border:1px solid color-mix(in srgb,var(--theme-border) 90%, transparent);border-radius:999px;padding:3px 8px;letter-spacing:1px;font-family:var(--font-marvel-ui);flex-shrink:0;max-width:100%}
         .row-meta-line{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
         .hexbg{background-image:radial-gradient(circle,${T.hexDot} 1px,transparent 1px);background-size:28px 28px}
@@ -2648,14 +2648,12 @@ export default function MCUViewer() {
           .rrow{font-size:17px}
           .header-inner{max-width:1240px;margin:0 auto}
         }
-        .header-title-mcu { font-size: clamp(42px, 7vw, 82px) !important; letter-spacing: clamp(1.5px, 0.7vw, 5px) !important; margin: 0 !important; }
-        .header-title-sub { font-size: clamp(24px, 3.6vw, 46px) !important; letter-spacing: clamp(2px, 0.9vw, 7px) !important; margin-top: 0px !important; }
-        .header-tagline { font-size: clamp(11px, 1.9vw, 13px) !important; margin-top: 1px !important; }
+        
         .stat-card-num { font-size: clamp(28px, 4.5vw, 48px) !important; }
         .stat-card-label { font-size: clamp(11px, 1.8vw, 14px) !important; }
         .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; color:var(--theme-text-muted) !important }
 
-        .sidebar-toggle-btn{position:fixed;top:calc(env(safe-area-inset-top, 0px) + var(--space-4));left:var(--space-4);z-index:calc(var(--z-fab) + 6);width:46px;height:46px;pointer-events:auto}
+        .sidebar-toggle-btn{position:fixed;top:calc(env(safe-area-inset-top, 0px) + var(--space-4));left:var(--space-4);z-index:calc(var(--z-modal) + 2);width:46px;height:46px;pointer-events:auto}
         .sidebar-backdrop{position:fixed;inset:0;background:rgba(4,8,18,0.62);z-index:calc(var(--z-sidebar) + 1);pointer-events:auto}
         .sidebar-menu{position:fixed;top:0;left:0;bottom:0;width:min(320px,84vw);padding:86px 14px 20px;background:var(--sidebar-bg);backdrop-filter:var(--sidebar-blur);-webkit-backdrop-filter:var(--sidebar-blur);border-right:1px solid var(--sidebar-border);transform:var(--sidebar-transform);transition:transform 0.22s cubic-bezier(.22,.9,.24,1);z-index:calc(var(--z-sidebar) + 2);overflow-y:auto;box-shadow:var(--sidebar-shadow);border-radius:16px}
         .settings-menu-anchor{position:fixed;top:calc(env(safe-area-inset-top, 0px) + 16px);right:14px;z-index:940}
@@ -2668,10 +2666,12 @@ export default function MCUViewer() {
         .floating-controls>*{pointer-events:auto}
         .floating-mode-switch{display:flex;border-radius:999px;overflow:hidden;border:1px solid ${T.surfaceBorder};background:${darkMode ? 'rgba(10,14,28,0.93)' : 'rgba(255,255,255,0.95)'};box-shadow:none}
         .bottom-action-dock{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
-        .header-brand{display:grid;gap:var(--space-2);padding:var(--space-4) var(--space-5);border-radius:var(--radius-lg);background:linear-gradient(180deg,rgba(5,8,18,.74),rgba(5,8,18,.42));border:1px solid color-mix(in srgb,var(--theme-accent) 22%, rgba(255,255,255,0.12));box-shadow:var(--elevation-surface-1)}
-        .header-brand.compact{padding:4px 10px}
+        .header-brand{display:grid;gap:6px;padding:12px 16px 10px;border-radius:var(--radius-md);background:linear-gradient(180deg,rgba(8,10,20,.92),rgba(8,10,20,.72));border:1px solid color-mix(in srgb,var(--theme-border) 90%, rgba(255,255,255,0.12));box-shadow:var(--elevation-surface-1);max-width:max-content}
+        .header-brand.compact{padding:8px 12px}
         .filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
         @media (min-width:1024px){.sidebar-menu{top:16px;left:16px;bottom:16px;width:300px;border-radius:var(--radius-lg)}.sidebar-toggle-btn{top:20px;left:20px}}
+        .header-title-mcu{font-size:clamp(34px,6vw,58px);letter-spacing:0.18em;line-height:1;padding:4px 10px;color:#f8fafc;background:linear-gradient(180deg,#b91c1c,#7f1d1d);border:1px solid rgba(255,255,255,0.2);border-radius:8px;display:inline-block;width:max-content}
+        .header-title-sub{font-size:clamp(17px,2.4vw,28px);letter-spacing:0.3em;line-height:1.05;color:var(--theme-text-muted);text-transform:uppercase}
         .dock-btn{border-radius:999px;border:1px solid ${T.surfaceBorder};background:${darkMode ? 'rgba(20,25,46,0.9)' : 'rgba(255,255,255,0.92)'};color:${T.text};padding:10px 12px;font-family:var(--font-marvel-ui);letter-spacing:1.1px;font-size:12px;cursor:pointer;white-space:nowrap}
         .status-block{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid color-mix(in srgb,var(--theme-border) 72%, transparent);background:color-mix(in srgb,var(--theme-surface) 78%, transparent);font-size:12px;line-height:1.35}.status-block.success{color:#bbf7d0}.status-block.error{color:#fecaca}.status-block.loading{color:#bfdbfe}
         .fab-primary{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:10px 14px;border:1px solid color-mix(in srgb,var(--theme-accent) 35%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 84%, transparent);color:var(--theme-text);font-family:var(--font-marvel-ui);letter-spacing:1px;font-size:12px}
@@ -2869,15 +2869,15 @@ export default function MCUViewer() {
         <div className="header-inner" style={{ width: '100%', maxWidth: 1240, margin: '0 auto', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 26px) 30px 16px', transition: 'padding 0.2s ease' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
-              <div className="header-title-mcu" style={{ fontSize: 'clamp(42px, 8vw, 62px)', letterSpacing: 'clamp(1px, 0.5vw, 4px)', color: '#f8fafc', display: 'inline-block', padding: '2px 14px', margin: '2px 0 8px', background: 'linear-gradient(180deg, rgba(185,28,28,0.62), rgba(127,29,29,0.46))', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 10 }}>MCU</div>
-              <div className="header-title-sub" style={{ fontSize: 'clamp(23px, 3.8vw, 34px)', letterSpacing: 'clamp(2px, 0.7vw, 5px)', color: '#e2e8f0', marginTop: 0 }}>VIEWING ORDER</div>
+              <div className="header-title-mcu">MCU</div>
+              <div className="header-title-sub">Viewing Order</div>
             </div>
           </div>
         </div>
       </header>
 
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ position: 'relative', height: isDesktopViewport ? 560 : 410, maxWidth: 1240, margin: '0 auto', width: '100%', background: darkMode ? 'rgba(8,12,26,0.28)' : 'rgba(255,255,255,0.22)', border: `1px solid ${T.surfaceBorder}`, borderRadius: 18, flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 210 }}>
+      <div style={{ position: 'relative', height: isDesktopViewport ? 590 : 430, maxWidth: 1240, margin: '0 auto', width: '100%', background: 'linear-gradient(160deg, color-mix(in srgb,var(--theme-surface) 82%, transparent), color-mix(in srgb,var(--theme-bg) 72%, transparent))', border: `1px solid ${T.surfaceBorder}`, borderRadius: 22, flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 140, boxShadow: 'var(--elevation-surface-2)' }}>
         {heroPosters.length > 0 && (
           <div className="hero-rail"
             ref={heroRailRef}
@@ -3096,7 +3096,7 @@ export default function MCUViewer() {
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={snapMode ? 'snap-blip' : ''} style={{ overflow: 'visible', flex: '0 0 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
-        <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '24px 16px 80px 16px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
+        <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
