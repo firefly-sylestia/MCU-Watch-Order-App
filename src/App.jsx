@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, useReducer } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
@@ -8,6 +8,12 @@ import { readStorageJSON, readStorageValue, removeStorageValue, safeLocalStorage
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { renderCardToCanvas } from './export/cards/renderCardToCanvas';
 import { drawPremiumStars, drawRoundedPanel, drawWrappedText } from './export/cards/helpers';
+import { useHeroBackdrop } from './hooks/useHeroBackdrop';
+import { usePosterCache } from './hooks/usePosterCache';
+import { useOverlayNavigation } from './hooks/useOverlayNavigation';
+import { useResponsiveLayout } from './hooks/useResponsiveLayout';
+import { HeaderShell, HeroBackdrop, HeroCarousel, FloatingQuickControls, FilterBar, PhaseList, SettingsPanel, DetailModal } from './components/sections/AppSections';
+
 import {
   ESSENTIAL_LIST,
   NO_PREREQ,
@@ -619,13 +625,15 @@ export default function MCUViewer() {
   const [statusFilter,   setStatusFilter]   = useState(initialUiState.statusFilter);
   const [typeFilter,     setTypeFilter]     = useState(initialUiState.typeFilter);
   const [activePhase,    setActivePhase]    = useState(initialUiState.activePhase);
-  const [sortOpen,       setSortOpen]       = useState(false);
-  const [phaseOpen,      setPhaseOpen]      = useState(false);
+  const [uiModeState, dispatchUiMode] = useReducer((state, action) => ({ ...state, ...action }), { sortOpen: false, phaseOpen: false, filterStatusOpen: false, dockStatusOpen: false, filtersOpen: initialUiState.filtersOpen });
+  const { sortOpen, phaseOpen, filterStatusOpen, dockStatusOpen, filtersOpen } = uiModeState;
+  const setSortOpen = (next) => dispatchUiMode({ sortOpen: typeof next === 'function' ? next(uiModeState.sortOpen) : next });
+  const setPhaseOpen = (next) => dispatchUiMode({ phaseOpen: typeof next === 'function' ? next(uiModeState.phaseOpen) : next });
   const [statusDropdown, setStatusDropdown] = useState(null);
-  const [filterStatusOpen, setFilterStatusOpen] = useState(false);
-  const [dockStatusOpen, setDockStatusOpen] = useState(false);
   const [fabMenuOpen, setFabMenuOpen] = useState(true);
-  const [filtersOpen,    setFiltersOpen]    = useState(initialUiState.filtersOpen);
+  const setFilterStatusOpen = (next) => dispatchUiMode({ filterStatusOpen: typeof next === 'function' ? next(uiModeState.filterStatusOpen) : next });
+  const setDockStatusOpen = (next) => dispatchUiMode({ dockStatusOpen: typeof next === 'function' ? next(uiModeState.dockStatusOpen) : next });
+  const setFiltersOpen = (next) => dispatchUiMode({ filtersOpen: typeof next === 'function' ? next(uiModeState.filtersOpen) : next });
   const [dropdownPos,    setDropdownPos]    = useState({ x: 0, y: 0 });
   const [darkMode,       setDarkMode]       = useState(true);
   const [expandedItem,   setExpandedItem]   = useState(null);
@@ -652,8 +660,7 @@ export default function MCUViewer() {
   const [metaCache,      setMetaCache]      = useState({});
   const [detailLoading,  setDetailLoading]  = useState(false);
   const [detailPosterFailed, setDetailPosterFailed] = useState(false);
-  const [posterCache,    setPosterCache]    = useState({});
-  const [localPosterMap, setLocalPosterMap] = useState({});
+  const { posterCache, setPosterCache, localPosterMap, setLocalPosterMap } = usePosterCache();
   const [posterFetchState, setPosterFetchState] = useState({ active: false, done: 0, total: 0, message: '' });
   const [heroCarouselCache, setHeroCarouselCache] = useState({ signature: '', posters: [] });
   const [posterExportState, setPosterExportState] = useState({ active: false, done: 0, total: 0, message: '' });
@@ -700,9 +707,8 @@ export default function MCUViewer() {
   const [multiverseShuffle, setMultiverseShuffle] = useState(false);
   const [desktopTextScale, setDesktopTextScale] = useState(initialUiState.desktopTextScale);
   const [textScaleEnabled, setTextScaleEnabled] = useState(initialUiState.textScaleEnabled);
-  const [isDesktopViewport, setIsDesktopViewport] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : false));
-  const [heroBackdropScale, setHeroBackdropScale] = useState(104);
-  const [heroBackdropOpacity, setHeroBackdropOpacity] = useState(0.9);
+  const { isDesktopViewport } = useResponsiveLayout();
+  const { heroBackdropScale, setHeroBackdropScale, heroBackdropOpacity, setHeroBackdropOpacity } = useHeroBackdrop();
   const [lightningStrike, setLightningStrike] = useState(false);
   const [spiderDrop, setSpiderDrop] = useState(false);
   const headerMinimized = false;
@@ -725,43 +731,9 @@ export default function MCUViewer() {
   const metadataBuildRef = useRef({ paused: false, running: false });
   const detailRequestRef = useRef(0);
 
-  useEffect(() => {
-    const onResize = () => setIsDesktopViewport(window.innerWidth >= 1024);
-    onResize();
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
 
 
-  useEffect(() => {
-    try {
-      const savedScale = Number(localStorage.getItem('mcu-hero-backdrop-scale-v1'));
-      const savedOpacity = Number(localStorage.getItem('mcu-hero-backdrop-opacity-v1'));
-      if (Number.isFinite(savedScale)) setHeroBackdropScale(Math.max(100, Math.min(112, savedScale)));
-      if (Number.isFinite(savedOpacity)) setHeroBackdropOpacity(Math.max(0.12, Math.min(0.75, savedOpacity)));
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    try { localStorage.setItem('mcu-hero-backdrop-scale-v1', String(heroBackdropScale)); } catch {}
-  }, [heroBackdropScale]);
-
-  useEffect(() => {
-    try { localStorage.setItem('mcu-hero-backdrop-opacity-v1', String(heroBackdropOpacity)); } catch {}
-  }, [heroBackdropOpacity]);
-  useEffect(() => {
-    const hasOverlay = sidebarOpen || settingsOpen || detailItem || analyticsOpen;
-    if (!hasOverlay) return;
-    window.history.pushState({ mcuOverlay: true }, '');
-    const onBack = () => {
-      if (detailItem) setDetailItem(null);
-      else if (analyticsOpen) setAnalyticsOpen(false);
-      else if (settingsOpen) setSettingsOpen(false);
-      else if (sidebarOpen) setSidebarOpen(false);
-    };
-    window.addEventListener('popstate', onBack);
-    return () => window.removeEventListener('popstate', onBack);
-  }, [sidebarOpen, settingsOpen, detailItem, analyticsOpen]);
+  useOverlayNavigation({ sidebarOpen, settingsOpen, detailItem, analyticsOpen, onCloseDetail: () => setDetailItem(null), onCloseAnalytics: () => setAnalyticsOpen(false), onCloseSettings: () => setSettingsOpen(false), onCloseSidebar: () => setSidebarOpen(false) });
 
   useEffect(() => {
     if (!sidebarOpen || !sidebarRef.current) return;
@@ -2478,9 +2450,22 @@ export default function MCUViewer() {
     </div>
   );
 
+  const sectionScaffold = (
+    <>
+      <HeaderShell />
+      <HeroBackdrop />
+      <HeroCarousel />
+      <FloatingQuickControls />
+      <FilterBar />
+      <PhaseList />
+      <SettingsPanel />
+      <DetailModal />
+    </>
+  );
+
   const appThemeBg = 'var(--theme-app-bg)';
   return (
-    <div data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': textScaleEnabled ? desktopTextScale : 1, width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: 'var(--ui-scale)', transformOrigin: 'top left', left: textScaleEnabled ? '0' : 'auto', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}${sidebarOpen || settingsOpen ? ' overlay-open' : ''}`}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': textScaleEnabled ? desktopTextScale : 1, width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: 'var(--ui-scale)', transformOrigin: 'top left', left: textScaleEnabled ? '0' : 'auto', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}${sidebarOpen || settingsOpen ? ' overlay-open' : ''}`}>
       <style>{`
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         html,body{scroll-behavior:smooth}
