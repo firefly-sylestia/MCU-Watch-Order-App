@@ -127,12 +127,13 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
   const fontFamily = settings?.fontFamily || 'Inter, sans-serif';
   const theme = getTheme(settings);
   const bgOpacity = Number.isFinite(settings?.bgOpacity) ? settings.bgOpacity : 46;
+  const fontScale = settings?.fontKey === 'marvel' ? 1.18 : 1;
 
   if (type === 'review') {
     canvas.width = 1600; canvas.height = 2200;
     applyPreviewScale(canvas, settings);
     const ctx = canvas.getContext('2d');
-    const scale = settings?.textScale || 1;
+    const scale = (settings?.textScale || 1) * fontScale;
     const item = data.item;
     const img = await loadPosterWithFallback({ primarySrc: settings.posterSrc(item), fallbackText: item.title });
     drawCardBackdrop(ctx, { width: 1600, height: 2200 }, theme, img, Math.max(bgOpacity, 54));
@@ -168,7 +169,7 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
     canvas.width = 1080; canvas.height = 1350;
     applyPreviewScale(canvas, settings);
     const ctx = canvas.getContext('2d');
-    const scale = settings?.textScale || 1;
+    const scale = (settings?.textScale || 1) * fontScale;
     drawCardBackdrop(ctx, { width: 1080, height: 1350 }, theme, null, bgOpacity);
     drawRoundedPanel(ctx, { x: 46, y: 48, w: 988, h: 1254, radius: 48, fill: theme.panel, stroke: 'rgba(255,255,255,0.24)', lineWidth: 3 });
 
@@ -176,18 +177,26 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
     ctx.font = `900 ${Math.round(26 * scale)}px ${fontFamily}`;
     ctx.fillText('MCU WATCH DOSSIER', 92, 126);
     fitTitleText(ctx, { text: 'Progress worth sharing', x: 92, y: 204, maxWidth: 820, preferredSize: 64 * scale, minSize: 34 * scale, fontFamily, maxLines: 1, color: '#fff' });
+    const sections = { completion: true, hours: true, streak: true, phaseBreakdown: true, recentMomentum: true, topRated: true, ...(settings?.sections || {}) };
     ctx.fillStyle = '#ffffff'; ctx.font = `950 ${Math.round(172 * scale)}px ${fontFamily}`;
-    ctx.fillText(`${Number(data.pct || 0)}%`, 92, 392);
-    drawProgressBar(ctx, { x: 98, y: 430, w: 884, h: 28, pct: data.pct, accent: theme.accent, accent2: theme.accent2 });
+    ctx.fillText(sections.completion === false ? 'MCU' : `${Number(data.pct || 0)}%`, 92, 392);
+    if (sections.completion !== false) drawProgressBar(ctx, { x: 98, y: 430, w: 884, h: 28, pct: data.pct, accent: theme.accent, accent2: theme.accent2 });
 
-    drawBadge(ctx, { x: 96, y: 498, label: 'Completed', value: `${data.totalWatched || 0}/${data.totalItems || 0}`, color: theme.accent, fontFamily, scale, w: 260 });
-    drawBadge(ctx, { x: 386, y: 498, label: 'Hours', value: `${Math.round(data.totalWatchedHours || 0)}h`, color: theme.gold, fontFamily, scale, w: 220 });
-    drawBadge(ctx, { x: 636, y: 498, label: 'Streak', value: `${data.streak || 0} days`, color: theme.accent2, fontFamily, scale, w: 300 });
+    const badgeRows = [
+      { enabled: sections.completion !== false, label: 'Completed', value: `${data.totalWatched || 0}/${data.totalItems || 0}`, color: theme.accent, w: 260 },
+      { enabled: sections.hours !== false, label: 'Hours', value: `${Math.round(data.totalWatchedHours || 0)}h`, color: theme.gold, w: 220 },
+      { enabled: sections.streak !== false, label: 'Streak', value: `${data.streak || 0} days`, color: theme.accent2, w: 300 },
+    ].filter(row => row.enabled);
+    let badgeX = 96;
+    badgeRows.forEach(row => {
+      drawBadge(ctx, { x: badgeX, y: 498, label: row.label, value: row.value, color: row.color, fontFamily, scale, w: row.w });
+      badgeX += row.w + 28;
+    });
 
     ctx.fillStyle = '#dce8ff'; ctx.font = `850 ${Math.round(34 * scale)}px ${fontFamily}`;
     ctx.fillText(`Current mission: ${data.currentPhase || '—'}`, 100, 666);
-    const rows = Array.isArray(data.phaseStats) ? data.phaseStats : [];
-    rows.slice(0, 9).forEach((row, idx) => {
+    const rows = sections.phaseBreakdown === false ? [] : (Array.isArray(data.phaseStats) ? data.phaseStats : []);
+    rows.slice(0, sections.topRated === false ? 9 : 7).forEach((row, idx) => {
       const y = 738 + idx * 56;
       const rowPct = row.total ? (row.watched / row.total) * 100 : 0;
       ctx.fillStyle = 'rgba(255,255,255,0.94)'; ctx.font = `800 ${Math.round(28 * scale)}px ${fontFamily}`;
@@ -196,12 +205,26 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
       ctx.fillStyle = 'rgba(220,232,255,0.84)'; ctx.font = `800 ${Math.round(26 * scale)}px ${fontFamily}`;
       ctx.fillText(`${row.watched}/${row.total}`, 854, y);
     });
+    if (sections.recentMomentum !== false) {
+      drawBadge(ctx, { x: 96, y: 1164, label: 'Recent momentum', value: `${data.recentCount || 0} logs`, color: theme.accent2, fontFamily, scale, w: 300 });
+    }
+    if (sections.topRated !== false && Array.isArray(data.topRatedItems) && data.topRatedItems.length) {
+      ctx.fillStyle = '#eaf2ff'; ctx.font = `900 ${Math.round(28 * scale)}px ${fontFamily}`;
+      ctx.fillText('Top rated', 430, 1196);
+      data.topRatedItems.slice(0, 3).forEach((item, idx) => {
+        const rating = clampTenPoint(data.ratings?.[item.id] || item.rating || 0);
+        ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.font = `800 ${Math.round(23 * scale)}px ${fontFamily}`;
+        ctx.fillText(`${idx + 1}. ${item.title}`.slice(0, 44), 430, 1232 + idx * 34);
+        ctx.fillStyle = theme.gold;
+        ctx.fillText(`${rating.toFixed(1)}★`, 870, 1232 + idx * 34);
+      });
+    }
     drawWatermark(ctx, { width: 1080, height: 1350 }, fontFamily, theme);
   } else if (type === 'unified') {
     canvas.width = 1080; canvas.height = 1350;
     applyPreviewScale(canvas, settings);
     const ctx = canvas.getContext('2d');
-    const scale = settings?.textScale || 1;
+    const scale = (settings?.textScale || 1) * fontScale;
     const featured = data.featured;
     const bgImg = featured ? await loadPosterWithFallback({ primarySrc: settings.posterSrc(featured), fallbackText: featured.title }) : null;
     drawCardBackdrop(ctx, { width: 1080, height: 1350 }, theme, bgImg, bgOpacity);

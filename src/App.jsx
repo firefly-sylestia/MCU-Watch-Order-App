@@ -636,7 +636,7 @@ export default function MCUViewer() {
   const [exportPreview, setExportPreview] = useState({ url: '', loading: false, error: '' });
   const [exportSettings, setExportSettings] = useState(() => ({
     type: 'unified', theme: 'midnight', bgOpacity: 52, fontWeight: 800, density: 'comfortable', posterMode: 'featured',
-    sections: { hours: true, history: true, rating: true, reviewSnippet: true, profileBadge: true }, aspect: '4:5',
+    sections: { completion: true, hours: true, streak: true, phaseBreakdown: true, recentMomentum: true, topRated: true, history: true, rating: true, reviewSnippet: true, profileBadge: true }, aspect: '4:5',
   }));
   const [autoBackupStamp, setAutoBackupStamp] = useState('');
   const [reviewShareStatus, setReviewShareStatus] = useState({ type: '', message: '' });
@@ -1544,10 +1544,12 @@ export default function MCUViewer() {
         settings: {
           textScale: exportTextScale,
           fontFamily: exportFontFamily,
+          fontKey: exportFont,
           posterSrc,
           theme: type === 'review' ? reviewCardTheme : exportSettings.theme,
           bgOpacity: exportSettings.bgOpacity,
           density: exportSettings.density,
+          sections: exportSettings.sections,
           namingStrategy: ({ type: cardType, data: cardData }) => {
             if (cardType === 'progress') return `mcu-progress-card-${Date.now()}.png`;
             if (cardType === 'analysis') return 'mcu-analysis-card.png';
@@ -1563,7 +1565,7 @@ export default function MCUViewer() {
       console.error(`Failed to share ${type} card`, e);
       statusHandlers?.onError?.(e);
     }
-  }, [exportFont, exportTextScale, posterSrc, saveImageToDevice, reviewCardTheme, exportSettings.theme, exportSettings.bgOpacity, exportSettings.density]);
+  }, [exportFont, exportTextScale, posterSrc, saveImageToDevice, reviewCardTheme, exportSettings.theme, exportSettings.bgOpacity, exportSettings.density, exportSettings.sections]);
 
   const shareReviewCard = async (item) => {
     await shareCardImage({
@@ -1592,9 +1594,23 @@ export default function MCUViewer() {
 
   const exportPreviewRows = useMemo(() => historyItems.slice(0, 6), [historyItems]);
   const exportPreviewFeatured = exportPreviewRows[0] || activeItems[0];
+  const topRatedItems = useMemo(() => historyItems
+    .filter(item => Number.isFinite(Number(myRating[item.id])) && Number(myRating[item.id]) > 0)
+    .sort((a, b) => Number(myRating[b.id] || 0) - Number(myRating[a.id] || 0))
+    .slice(0, 3), [historyItems, myRating]);
+  const buildExportCardData = useCallback((cardType = exportSettings.type) => {
+    const featured = exportPreviewFeatured;
+    if (cardType === 'analysis') return { pct, currentPhase: stickyPhaseProgress.label, totalWatched, totalWatchedHours, streak: watchStreak, totalItems: activeItems.length, phaseStats, topRatedItems, ratings: myRating, recentCount: exportPreviewRows.length };
+    if (cardType === 'review') return { item: featured, rating: clampTenPoint(myRating[featured?.id] || 0), reviewText: (reviews[featured?.id] || '').trim(), reviewer: profile.name || 'Reviewer' };
+    return { featured, rows: historyItems, ratings: myRating, pct, currentPhase: stickyPhaseProgress.label, totalWatched, totalItems: activeItems.length };
+  }, [exportSettings.type, exportPreviewFeatured, pct, stickyPhaseProgress.label, totalWatched, totalWatchedHours, watchStreak, activeItems.length, phaseStats, topRatedItems, exportPreviewRows.length, myRating, reviews, profile.name, historyItems]);
+  const shareAdvancedExportCard = async () => {
+    const cardType = exportSettings.type === 'review' && !exportPreviewFeatured ? 'analysis' : exportSettings.type;
+    await shareCardImage({ type: cardType, data: buildExportCardData(cardType) });
+  };
 
   useEffect(() => {
-    if (!exportComposerOpen || !exportPreviewFeatured) return undefined;
+    if (!(exportComposerOpen || analyticsTab === 'advanced-export') || !exportPreviewFeatured) return undefined;
     let cancelled = false;
     let objectUrl = '';
     const timer = window.setTimeout(async () => {
@@ -1603,14 +1619,16 @@ export default function MCUViewer() {
         await waitForExportFont(EXPORT_FONT_FAMILIES[exportFont] || EXPORT_FONT_FAMILIES.inter);
         const { blob } = await renderCardToCanvas({
           type: exportSettings.type,
-          data: { item: exportPreviewFeatured, featured: exportPreviewFeatured, rows: exportPreviewRows, ratings: myRating, rating: myRating[exportPreviewFeatured?.id] || 0, reviewText: reviews[exportPreviewFeatured?.id] || '', reviewer: profile.name || 'Reviewer', pct, currentPhase: stickyPhaseProgress.label, totalWatched, totalItems: activeItems.length },
+          data: buildExportCardData(exportSettings.type),
           settings: {
             textScale: Math.max(0.9, Math.min(1.35, exportTextScale)),
             fontFamily: EXPORT_FONT_FAMILIES[exportFont] || EXPORT_FONT_FAMILIES.inter,
+            fontKey: exportFont,
             posterSrc,
             theme: exportSettings.theme,
             bgOpacity: exportSettings.bgOpacity,
             density: exportSettings.density,
+            sections: exportSettings.sections,
             previewScale: 0.42,
           },
         });
@@ -1632,7 +1650,7 @@ export default function MCUViewer() {
       window.clearTimeout(timer);
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [exportComposerOpen, exportSettings.type, exportSettings.theme, exportSettings.bgOpacity, exportSettings.density, exportFont, exportTextScale, exportPreviewFeatured, exportPreviewRows, myRating, reviews, profile.name, pct, stickyPhaseProgress.label, totalWatched, activeItems.length, posterSrc]);
+  }, [exportComposerOpen, analyticsTab, exportSettings.type, exportSettings.theme, exportSettings.bgOpacity, exportSettings.density, exportSettings.sections, exportFont, exportTextScale, exportPreviewFeatured, buildExportCardData, posterSrc]);
 
 
   // ─── Smoother phase gradient (multi-stop per phase for richer look) ──────
@@ -1927,7 +1945,7 @@ export default function MCUViewer() {
       drawRoundedPanel(ctx, { x: 82, y: 88, w: 1236, h: 1824, radius: 42, fill: 'rgba(255,255,255,0.045)', stroke: 'rgba(255,255,255,0.14)' });
       const exportFontFamily = EXPORT_FONT_FAMILIES[exportFont] || EXPORT_FONT_FAMILIES.inter;
       await waitForExportFont(exportFontFamily);
-      const scale = Math.min(exportTextScale, 1.75);
+      const scale = Math.min(exportTextScale * (exportFont === 'marvel' ? 1.18 : 1), 1.9);
       if (img) {
         drawRoundedPanel(ctx, { x: 112, y: 130, w: 394, h: 574, radius: 34, fill: 'rgba(255,255,255,0.13)', stroke: 'rgba(255,211,92,0.36)', lineWidth: 3 });
         ctx.save();
@@ -3177,8 +3195,8 @@ export default function MCUViewer() {
               <button className="fpill" onClick={() => setAnalyticsOpen(false)}>Close</button>
             </div>
             <div className="ui-btn-group" style={{ position: 'sticky', top: 0, zIndex: 5, marginBottom: 10, paddingBottom: 8, background: 'var(--theme-surface)' }}>
-              {['overview', 'reviews', 'export'].map(tab => (
-                <button key={tab} className="fpill" onClick={() => setAnalyticsTab(tab)} style={{ borderColor: analyticsTab === tab ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{tab[0].toUpperCase() + tab.slice(1)}</button>
+              {[{ id: 'overview', label: 'Overview' }, { id: 'reviews', label: 'Reviews' }, { id: 'export', label: 'Quick Export' }, { id: 'advanced-export', label: 'Advanced Export' }].map(tab => (
+                <button key={tab.id} className="fpill" onClick={() => setAnalyticsTab(tab.id)} style={{ borderColor: analyticsTab === tab.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{tab.label}</button>
               ))}
             </div>
             {analyticsTab === 'overview' && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 10, marginBottom: 14 }}>
@@ -3198,50 +3216,83 @@ export default function MCUViewer() {
               </div>
             </div>}
             {analyticsTab === 'export' && <>
-            <div className="ui-btn-group ui-sticky-mobile-footer" style={{ marginBottom: 12, position: 'sticky', bottom: 0, zIndex: 4, background: 'var(--theme-surface)', padding: '8px 0' }}>
-              <button className="fpill ui-touch-btn" onClick={shareAnalysisCard}><Upload size={14}/>Share Analysis Card</button>
-              <button className="fpill ui-touch-btn" onClick={shareUnifiedCard}><Upload size={14}/>Create Unified Export Card</button>
-              <button className="fpill ui-touch-btn" onClick={() => setExportComposerOpen(v => !v)}><SlidersH size={14}/>{exportComposerOpen ? 'Hide' : 'Open'} Composer</button>
+            <div className="glass-panel ui-panel" style={{ marginBottom: 12, padding: 14, borderRadius: 14, display: 'grid', gap: 12 }}>
+              <div>
+                <div className="ui-section-header" style={{ marginBottom: 4 }}>Quick Export</div>
+                <div style={{ color: T.textMuted, fontSize: 12 }}>One-tap share cards. Open Advanced Export for card type, themes, preview, and analysis sections.</div>
+              </div>
+              <div className="ui-btn-group ui-sticky-mobile-footer" style={{ marginBottom: 0, position: 'sticky', bottom: 0, zIndex: 4, background: 'var(--theme-surface)', padding: '8px 0' }}>
+                <button className="fpill ui-touch-btn" onClick={shareAnalysisCard}><Upload size={14}/>Share Analysis Card</button>
+                <button className="fpill ui-touch-btn" onClick={shareUnifiedCard}><Upload size={14}/>Share Recap Card</button>
+                <button className="fpill ui-touch-btn" onClick={() => { setAnalyticsTab('advanced-export'); setExportComposerOpen(true); }}><SlidersH size={14}/>Open Advanced Export</button>
+              </div>
             </div>
+            </>}
+            {analyticsTab === 'advanced-export' && <>
             <div className="glass-panel ui-panel ui-control-row export-card-studio" style={{ marginBottom: 10, padding: 14 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                 <div>
-                  <div className="ui-section-header" style={{ marginBottom: 2 }}>Export Card Studio</div>
-                  <div style={{ color: T.textMuted, fontSize: 12 }}>Make a polished share image with bold MCU-inspired color, progress, and history.</div>
+                  <div className="ui-section-header" style={{ marginBottom: 2 }}>Advanced Export Studio</div>
+                  <div style={{ color: T.textMuted, fontSize: 12 }}>Focused composer for card type, theme identity, typography, analysis sections, and live preview.</div>
                 </div>
-                <span style={{ border: '1px solid color-mix(in srgb, var(--theme-accent) 34%, var(--theme-border))', borderRadius: 999, padding: '6px 10px', fontSize: 11, color: 'var(--theme-accent)', fontWeight: 800 }}>Pro Share</span>
+                <button className="fpill ui-touch-btn" onClick={shareAdvancedExportCard}><Upload size={14}/>Share Selected Card</button>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 8 }}>
-                {[{ id: 'midnight', label: 'Midnight', desc: 'cosmic blue' }, { id: 'stark', label: 'Stark', desc: 'red gold' }, { id: 'vibranium', label: 'Vibranium', desc: 'purple tech' }].map(opt => (
-                  <button key={opt.id} className="fpill" onClick={() => setExportSettings(prev => ({ ...prev, theme: opt.id }))} style={{ justifyContent: 'center', flexDirection: 'column', gap: 2, minHeight: 50, borderColor: exportSettings.theme === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>
-                    <strong style={{ fontSize: 12 }}>{opt.label}</strong>
-                    <span style={{ fontSize: 10, color: T.textMuted }}>{opt.desc}</span>
-                  </button>
-                ))}
+              <div style={{ display: 'grid', gap: 6 }}>
+                <div style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.4, textTransform: 'uppercase' }}>Card type</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 8 }}>
+                  {[{ id: 'analysis', label: 'Analysis', desc: 'Stats + phases' }, { id: 'review', label: 'Detail', desc: 'Featured title' }, { id: 'unified', label: 'Recap', desc: 'Progress + history' }].map(opt => (
+                    <button key={opt.id} className="fpill" onClick={() => setExportSettings(prev => ({ ...prev, type: opt.id }))} style={{ justifyContent: 'center', flexDirection: 'column', gap: 2, minHeight: 54, borderColor: exportSettings.type === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>
+                      <strong style={{ fontSize: 12 }}>{opt.label}</strong>
+                      <span style={{ fontSize: 10, color: T.textMuted }}>{opt.desc}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
-                {[{ id: 'inter', label: 'Inter' }, { id: 'grotesk', label: 'Grotesk' }, { id: 'manrope', label: 'Manrope' }, { id: 'marvel', label: 'Marvel' }].map(opt => (
-                  <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: EXPORT_FONT_PREVIEW_FAMILY[opt.id] || EXPORT_FONT_PREVIEW_FAMILY.inter, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
-                ))}
+              <div style={{ display: 'grid', gap: 6 }}>
+                <div style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.4, textTransform: 'uppercase' }}>Theme identity</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 8 }}>
+                  {[{ id: 'midnight', label: 'Midnight', desc: 'cosmic blue' }, { id: 'stark', label: 'Stark', desc: 'red gold' }, { id: 'vibranium', label: 'Vibranium', desc: 'purple tech' }].map(opt => (
+                    <button key={opt.id} className="fpill" onClick={() => setExportSettings(prev => ({ ...prev, theme: opt.id }))} style={{ justifyContent: 'center', flexDirection: 'column', gap: 2, minHeight: 50, borderColor: exportSettings.theme === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>
+                      <strong style={{ fontSize: 12 }}>{opt.label}</strong>
+                      <span style={{ fontSize: 10, color: T.textMuted }}>{opt.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: 'grid', gap: 6 }}>
+                <div style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.4, textTransform: 'uppercase' }}>Font</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
+                  {[{ id: 'inter', label: 'Inter' }, { id: 'grotesk', label: 'Grotesk' }, { id: 'manrope', label: 'Manrope' }, { id: 'marvel', label: 'Marvel' }].map(opt => (
+                    <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: EXPORT_FONT_PREVIEW_FAMILY[opt.id] || EXPORT_FONT_PREVIEW_FAMILY.inter, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
+                  ))}
+                </div>
               </div>
               <label style={{ display: 'grid', gap: 4 }}>
-                <span style={{ fontSize: 11, color: T.textMuted }}>Export text size: {Math.round(exportTextScale * 100)}%</span>
+                <span style={{ fontSize: 11, color: T.textMuted }}>Text size: {Math.round(exportTextScale * 100)}%</span>
                 <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr) auto', gap: 8, alignItems: 'center' }}>
-                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.max(0.9, Number((v - 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>−</button>
-                <input type='range' min={90} max={200} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
-                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.min(2, Number((v + 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>+</button>
-              </div>
+                  <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.max(0.9, Number((v - 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>−</button>
+                  <input type='range' min={90} max={200} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
+                  <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.min(2, Number((v + 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>+</button>
+                </div>
               </label>
               <label style={{ display: 'grid', gap: 4 }}>
                 <span style={{ fontSize: 11, color: T.textMuted }}>Poster atmosphere: {exportSettings.bgOpacity}%</span>
                 <input type='range' min={12} max={82} step={1} value={exportSettings.bgOpacity} onChange={(e) => setExportSettings(prev => ({ ...prev, bgOpacity: Number(e.target.value) }))} />
               </label>
+              <div style={{ display: 'grid', gap: 6 }}>
+                <div style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.4, textTransform: 'uppercase' }}>Included analysis sections</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 6 }}>
+                  {[{ id: 'completion', label: 'Completion %' }, { id: 'phaseBreakdown', label: 'Phase breakdown' }, { id: 'streak', label: 'Streak' }, { id: 'hours', label: 'Total hours' }, { id: 'recentMomentum', label: 'Recent momentum' }, { id: 'topRated', label: 'Top rated' }].map(opt => (
+                    <button key={opt.id} className="fpill" onClick={() => setExportSettings(prev => ({ ...prev, sections: { ...prev.sections, [opt.id]: !prev.sections?.[opt.id] } }))} style={{ justifyContent: 'center', borderColor: exportSettings.sections?.[opt.id] !== false ? 'var(--theme-accent)' : 'var(--theme-border)', opacity: exportSettings.type === 'analysis' ? 1 : 0.58 }}>{exportSettings.sections?.[opt.id] !== false ? '✓ ' : ''}{opt.label}</button>
+                  ))}
+                </div>
+              </div>
             </div>
-            {exportComposerOpen && <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'minmax(0,1fr)', maxHeight: '50vh', overflow: 'auto' }}>
+            <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'minmax(0,1fr)', maxHeight: '55vh', overflow: 'auto' }}>
               <div className="glass-panel" style={{ padding: 10, borderRadius: 10 }}>
                 {exportPreview.loading ? <div style={{ color: T.textMuted }}>Generating preview…</div> : exportPreview.url ? <img src={exportPreview.url} alt="export preview" style={{ width: '100%', borderRadius: 10 }} /> : <div style={{ color: T.textMuted }}>{exportPreview.error || 'Preview unavailable'}</div>}
               </div>
-            </div>}
+            </div>
             </>}
             <div className="glass-panel ui-panel ui-control-row" style={{ marginBottom: 10, padding: 10 }}>
               <div className="ui-section-header">Review Card Theme</div>
