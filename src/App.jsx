@@ -229,9 +229,9 @@ const WATERMARK_POSITION_PRESETS = {
 };
 
 const WATERMARK_THEME_TOKENS = {
-  light: { opacity: 0.26, blendMode: 'multiply' },
-  dark: { opacity: 0.18, blendMode: 'screen' },
-  cinematic: { opacity: 0.2, blendMode: 'soft-light' },
+  light: { opacity: 0.14, blendMode: 'multiply' },
+  dark: { opacity: 0.11, blendMode: 'screen' },
+  cinematic: { opacity: 0.12, blendMode: 'soft-light' },
 };
 
 const WatermarkOverlay = ({ label = 'MCU', surface = 'card', theme = 'dark', viewport = 'desktop', avoid = [] }) => {
@@ -250,8 +250,8 @@ const WatermarkOverlay = ({ label = 'MCU', surface = 'card', theme = 'dark', vie
     letterSpacing: '0.32em',
     fontFamily: 'var(--font-marvel-display)',
     fontSize: surface === 'hero' ? 12 : 10,
-    fontWeight: 800,
-    color: 'var(--theme-text)',
+    fontWeight: 650,
+    color: 'var(--theme-text-muted)',
     textTransform: 'uppercase',
     zIndex: 3,
   };
@@ -623,11 +623,15 @@ const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
   surfaceBorder,
   onToggle,
   onClose,
+  onOpenSettings,
   children,
 }, ref) {
   return (
     <>
+      <div className="sidebar-control-cluster">
       <button className="theme-btn sidebar-toggle-btn" onClick={onToggle} aria-label="Toggle sidebar menu" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: darkMode ? 'var(--elevation-surface-2)' : 'var(--elevation-surface-1)' }}><Menu size={18} /></button>
+      <button className="theme-btn sidebar-toggle-btn settings-toggle-btn" onClick={onOpenSettings} aria-label="Open settings and profile" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: darkMode ? 'var(--elevation-surface-2)' : 'var(--elevation-surface-1)' }}><Settings size={18} /></button>
+      </div>
       {open && <div className="sidebar-backdrop" onClick={onClose} />}
       <aside ref={ref} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
         {children}
@@ -741,10 +745,11 @@ export default function MCUViewer() {
   const [exportComposerOpen, setExportComposerOpen] = useState(false);
   const [exportPreview, setExportPreview] = useState({ url: '', loading: false, error: '' });
   const [exportSettings, setExportSettings] = useState(() => ({
-    type: 'unified', theme: 'sacredTimeline', bgOpacity: 52, fontWeight: 800, density: 'comfortable', posterMode: 'featured',
+    type: 'unified', theme: 'sacredTimeline', bgOpacity: 60, fontWeight: 800, density: 'comfortable', posterMode: 'featured',
     sections: { completion: true, hours: true, streak: true, phaseBreakdown: true, recentMomentum: true, topRated: true, history: true, rating: true, reviewSnippet: true, profileBadge: true }, aspect: '4:5',
   }));
   const [autoBackupStamp, setAutoBackupStamp] = useState('');
+  const [autoBackups, setAutoBackups] = useState([]);
   const [reviewShareStatus, setReviewShareStatus] = useState({ type: '', message: '' });
   const [analyticsOpen,  setAnalyticsOpen]  = useState(false);
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
@@ -972,13 +977,12 @@ export default function MCUViewer() {
   };
 
   const exportProgress = async () => {
-    const payload = {
-      exportedAt: new Date().toISOString(),
-      items: items.map(({ id, status, watchedDate, statusChangedAt }) => ({ id, status, watchedDate, statusChangedAt })),
+    const payload = createProgressPayload({
+      items,
       actions: { likes: myLikes, ratings: myRating, rewatch: rewatchCount, bookmarks, reviews },
       profile,
       exportPrefs: { font: exportFont, textScale: exportTextScale },
-    };
+    });
     const content = JSON.stringify(payload, null, 2);
     if (Capacitor.isNativePlatform()) {
       const fileName = `mcu-progress-${Date.now()}.json`;
@@ -1852,7 +1856,12 @@ export default function MCUViewer() {
       const exportPrefsSaved = readStorageJSON('mcu-export-prefs-v1', null);
       if (exportPrefsSaved?.font) setExportFont(exportPrefsSaved.font);
       if (Number.isFinite(Number(exportPrefsSaved?.textScale))) setExportTextScale(Math.max(0.9, Math.min(2.4, Number(exportPrefsSaved.textScale))));
-      setAutoBackupStamp(readStorageValue('mcu-auto-backup-ts-v1', '') || '');
+      const snapshots = parseBackupSnapshots(readStorageValue(AUTO_BACKUP_KEY, '[]'));
+      const legacy = readStorageValue(LEGACY_AUTO_BACKUP_KEY, '');
+      const migrated = snapshots.length ? snapshots : (legacy ? appendSnapshot([], safeJsonParse(legacy, null)).filter(Boolean) : []);
+      setAutoBackups(migrated);
+      if (!snapshots.length && migrated.length) scheduleStorageWrite(AUTO_BACKUP_KEY, JSON.stringify(migrated));
+      setAutoBackupStamp((migrated[0]?.exportedAt || readStorageValue(LEGACY_AUTO_BACKUP_TS_KEY, '') || ''));
     } catch {}
   }, []);
 
@@ -1933,10 +1942,10 @@ export default function MCUViewer() {
       profile,
       exportPrefs: { font: exportFont, textScale: exportTextScale },
     };
-    scheduleStorageWrite('mcu-auto-backup-v1', JSON.stringify(snapshot));
-    const stamp = new Date().toISOString();
-    scheduleStorageWrite('mcu-auto-backup-ts-v1', stamp);
-    setAutoBackupStamp(stamp);
+    const nextSnapshots = appendSnapshot(autoBackups, snapshot);
+    scheduleStorageWrite(AUTO_BACKUP_KEY, JSON.stringify(nextSnapshots));
+    setAutoBackups(nextSnapshots);
+    setAutoBackupStamp(snapshot.exportedAt);
   }, [items, myLikes, myRating, rewatchCount, bookmarks, reviews, profile, exportFont, exportTextScale], 800);
   useEffect(() => {
     const sequence = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
@@ -2384,13 +2393,18 @@ export default function MCUViewer() {
     { id: 'god-of-thunder', label: 'Thor',           swatch: '#3ca6ff' },
     { id: 'scarlet-witch',  label: 'Scarlet Witch',  swatch: '#c61b59' },
     { id: 'winter-soldier', label: 'Winter Soldier', swatch: '#8fa0b8' },
+    { id: 'captain-america', label: 'Captain America', swatch: '#3b5fa4' },
+    { id: 'daredevil', label: 'Daredevil', swatch: '#bf0615' },
+    { id: 'panther-tech', label: 'Panther Tech', swatch: '#6bb0bf' },
+    { id: 'marvel-red', label: 'Marvel Red', swatch: '#e23636' },
+    { id: 'hela', label: 'Hela', swatch: '#49a561' },
   ];
 
   // ─── Per-theme accent + distinctive surface tints ─────────────────────────
   const themeVarsByMode = {
     classic: {
-      '--theme-accent': '#d4372f',
-      '--theme-accent-alt': '#f5c04a',
+      '--theme-accent': '#A63232',
+      '--theme-accent-alt': '#F2AE30',
       '--theme-accent-glow': darkMode ? 'rgba(212,55,47,0.42)' : 'rgba(212,55,47,0.26)',
       '--theme-surface': darkMode ? 'rgba(28,10,9,0.90)' : 'rgba(255,246,244,0.96)',
       '--theme-surface-hover': darkMode ? 'rgba(44,14,12,0.94)' : 'rgba(255,236,232,0.97)',
@@ -2460,7 +2474,48 @@ export default function MCUViewer() {
       '--theme-surface-hover': darkMode ? 'rgba(10,14,22,0.94)' : 'rgba(230,237,248,0.97)',
       '--comp-card-bg': darkMode ? 'rgba(6,9,15,0.88)' : 'rgba(246,249,254,0.95)',
     },
+    'captain-america': {
+      '--theme-accent': '#3b5fa4',
+      '--theme-accent-alt': '#9b3430',
+      '--theme-accent-glow': darkMode ? 'rgba(59,95,164,0.44)' : 'rgba(59,95,164,0.24)',
+      '--theme-surface': darkMode ? 'rgba(23,27,49,0.92)' : 'rgba(254,254,254,0.96)',
+      '--theme-surface-hover': darkMode ? 'rgba(31,38,64,0.94)' : 'rgba(174,183,194,0.34)',
+      '--comp-card-bg': darkMode ? 'rgba(23,27,49,0.88)' : 'rgba(254,254,254,0.95)',
+    },
+    daredevil: {
+      '--theme-accent': '#BF0615',
+      '--theme-accent-alt': '#A61731',
+      '--theme-accent-glow': darkMode ? 'rgba(191,6,21,0.44)' : 'rgba(191,6,21,0.24)',
+      '--theme-surface': darkMode ? 'rgba(64,1,1,0.92)' : 'rgba(255,242,243,0.96)',
+      '--theme-surface-hover': darkMode ? 'rgba(78,4,4,0.94)' : 'rgba(255,228,230,0.98)',
+      '--comp-card-bg': darkMode ? 'rgba(64,1,1,0.88)' : 'rgba(255,246,247,0.95)',
+    },
+    'panther-tech': {
+      '--theme-accent': '#6BB0BF',
+      '--theme-accent-alt': '#3B3F8C',
+      '--theme-accent-glow': darkMode ? 'rgba(107,176,191,0.42)' : 'rgba(107,176,191,0.25)',
+      '--theme-surface': darkMode ? 'rgba(26,27,27,0.92)' : 'rgba(243,244,248,0.96)',
+      '--theme-surface-hover': darkMode ? 'rgba(38,40,49,0.94)' : 'rgba(232,234,242,0.97)',
+      '--comp-card-bg': darkMode ? 'rgba(26,27,27,0.88)' : 'rgba(246,247,252,0.95)',
+    },
+    'marvel-red': {
+      '--theme-accent': '#e23636',
+      '--theme-accent-alt': '#f78f3f',
+      '--theme-accent-glow': darkMode ? 'rgba(226,54,54,0.44)' : 'rgba(226,54,54,0.24)',
+      '--theme-surface': darkMode ? 'rgba(0,0,0,0.92)' : 'rgba(255,245,245,0.96)',
+      '--theme-surface-hover': darkMode ? 'rgba(18,18,18,0.94)' : 'rgba(255,233,233,0.97)',
+      '--comp-card-bg': darkMode ? 'rgba(14,14,14,0.88)' : 'rgba(255,248,248,0.95)',
+    },
+    hela: {
+      '--theme-accent': '#49a561',
+      '--theme-accent-alt': '#d0d500',
+      '--theme-accent-glow': darkMode ? 'rgba(73,165,97,0.42)' : 'rgba(73,165,97,0.24)',
+      '--theme-surface': darkMode ? 'rgba(3,11,9,0.92)' : 'rgba(242,248,244,0.96)',
+      '--theme-surface-hover': darkMode ? 'rgba(20,45,39,0.94)' : 'rgba(231,243,235,0.97)',
+      '--comp-card-bg': darkMode ? 'rgba(13,34,28,0.88)' : 'rgba(246,251,247,0.95)',
+    },
   };
+
 
   const activeThemeVars = themeVarsByMode[themeMode] || themeVarsByMode.classic;
 
@@ -2479,9 +2534,13 @@ export default function MCUViewer() {
     '--theme-danger': '#d16a6a',
     '--theme-danger-soft': darkMode ? 'rgba(209,106,106,0.16)' : 'rgba(209,106,106,0.12)',
     '--theme-text-primary': darkMode ? '#e6edf8' : '#1a2030',
-    '--theme-text-secondary': darkMode ? '#c3d1e4' : '#334155',
-    '--theme-overlay-surface': darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.06)',
-    '--theme-overlay-border': darkMode ? 'rgba(255,255,255,0.16)' : 'rgba(15,23,42,0.16)',
+    '--theme-text-secondary': darkMode ? `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 28%, #d9e3f1)` : `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 42%, #334155)`,
+    '--theme-overlay-surface': darkMode
+      ? `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 14%, rgba(255,255,255,0.06))`
+      : `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 10%, rgba(15,23,42,0.04))`,
+    '--theme-overlay-border': darkMode
+      ? `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 32%, rgba(255,255,255,0.14))`
+      : `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 26%, rgba(15,23,42,0.14))`,
     '--app-bg-base': darkMode ? '#06060f' : '#f2f0eb',
     '--app-bg-vignette': darkMode ? 'rgba(2,6,23,0.42)' : 'rgba(2,6,23,0.08)',
     '--app-bg-noise-opacity': darkMode ? '0.06' : '0.03',
@@ -2575,7 +2634,7 @@ export default function MCUViewer() {
       {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <SidebarMenu ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={() => setSidebarOpen(v => !v)} onClose={() => setSidebarOpen(false)}>
+      <SidebarMenu ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={() => setSidebarOpen(v => !v)} onClose={() => setSidebarOpen(false)} onOpenSettings={() => setSettingsOpen(true)}>
         <div style={{ marginBottom: 8, fontSize: 11, letterSpacing: 1.8, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)', textTransform: 'uppercase' }}>Navigation Panel</div>
         <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -2586,8 +2645,7 @@ export default function MCUViewer() {
             <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', color: darkMode ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Moon size={12} />Dark</button>
             <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', color: !darkMode ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Sun size={12} />Light</button>
           </div>
-          <button className="fpill" onClick={() => { setSettingsOpen(true); setSidebarOpen(false); }} style={{ width: '100%', justifyContent: 'center' }}><Settings size={13}/>Settings & Profile</button>
-        </div>
+                  </div>
                 <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Quick Phases</div>
         <button className="fpill" onClick={() => { setSidebarOpen(false); setAnalyticsOpen(true); }} style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}>Analytics</button>
@@ -2696,19 +2754,16 @@ export default function MCUViewer() {
             <input type='range' min={75} max={100} step={1} value={Math.round(heroBackdropOpacity * 100)} onChange={(e) => setHeroBackdropOpacity(Number(e.target.value) / 100)} aria-label='Carousel background opacity' />
             <div style={{ fontSize: 10, color: T.textMuted }}>{Math.round(heroBackdropOpacity * 100)}%</div>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
-            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Data</div>
-            <button className="fpill" onClick={exportProgress}><Download size={14}/>Export Progress</button>
-            <button className="fpill" onClick={shareProgressCard}><Upload size={14}/>Share Progress Card</button>
+            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Backup & Restore</div>
+            <button className="fpill" onClick={exportProgress}><Download size={14}/>Export Backup JSON</button>
+            <label className="fpill" style={{ cursor: 'pointer' }}><Upload size={14}/>Import Backup JSON
+              <input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} />
+            </label>
+            <div style={{ display: 'grid', gap: 6 }}><div style={{ fontSize: 11, color: T.textMuted }}>Auto snapshots (latest 5)</div>{autoBackups.slice(0,5).map((shot, idx) => { const preview = buildBackupPreview(shot); return <button key={`${shot.exportedAt}-${idx}`} className="fpill" onClick={() => importProgress(new File([JSON.stringify(shot)], 'mcu-auto-backup.json', { type: 'application/json' }))} style={{ justifyContent: 'space-between' }}><span><Clock size={14}/>Restore {new Date(preview.exportedAt).toLocaleDateString()}</span><span style={{ fontSize: 10, color: T.textMuted }}>{preview.watched}/{preview.total}</span></button>; })}</div>
             <button className="fpill" onClick={() => exportFetchedPosters('all')} disabled={posterExportState.active} style={{ opacity: posterExportState.active ? 0.75 : 1 }}><Download size={14}/>{posterExportState.active ? `Exporting ${posterExportState.done}/${posterExportState.total}` : 'Export All Posters'}</button>
             <button className="fpill" onClick={() => exportFetchedPosters('failed')} disabled={posterExportState.active || !Object.keys(posterExportFailures).length} style={{ opacity: posterExportState.active || !Object.keys(posterExportFailures).length ? 0.55 : 1 }}><Download size={14}/>Export Failed Posters ({Object.keys(posterExportFailures).length})</button>
             {posterExportState.message && <div style={{ fontSize: 11, color: T.textMuted }}>{posterExportState.message}</div>}
-            <label className="fpill" style={{ cursor: 'pointer' }}><Upload size={14}/>Import Progress
-              <input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} />
-            </label>
-            <button className="fpill" onClick={() => importProgress(new File([readStorageValue('mcu-auto-backup-v1', '{}') || '{}'], 'mcu-auto-backup.json', { type: 'application/json' }))} style={{ justifyContent: 'space-between' }}>
-              <span><Clock size={14}/>Load Auto Backup</span>
-              <span style={{ fontSize: 10, color: T.textMuted }}>{autoBackupStamp ? autoBackupStamp.slice(0, 10) : 'none'}</span>
-            </button>
+            
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase', marginTop: 4 }}>Export Card Controls</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
               {[{ id: 'inter', label: 'Inter' }, { id: 'grotesk', label: 'Grotesk' }, { id: 'manrope', label: 'Manrope' }, { id: 'marvel', label: 'Marvel' }].map(opt => (
@@ -2913,7 +2968,7 @@ export default function MCUViewer() {
           </div>
         )}
       </div>
-      <div className="floating-controls" style={detailItem || analyticsOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
+      <div className="floating-controls" style={detailItem || analyticsOpen || settingsOpen || sidebarOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
         <button
           type="button"
           className="fab-primary"
@@ -3289,7 +3344,7 @@ export default function MCUViewer() {
               </label>
               <label style={{ display: 'grid', gap: 4 }}>
                 <span style={{ fontSize: 11, color: T.textMuted }}>Poster atmosphere: {exportSettings.bgOpacity}%</span>
-                <input type='range' min={12} max={82} step={1} value={exportSettings.bgOpacity} onChange={(e) => setExportSettings(prev => ({ ...prev, bgOpacity: Number(e.target.value) }))} />
+                <input type='range' min={60} max={82} step={1} value={exportSettings.bgOpacity} onChange={(e) => setExportSettings(prev => ({ ...prev, bgOpacity: Number(e.target.value) }))} />
               </label>
               <div style={{ display: 'grid', gap: 6 }}>
                 <div style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.4, textTransform: 'uppercase' }}>Included analysis sections</div>
@@ -3415,3 +3470,4 @@ export default function MCUViewer() {
     </div>
   );
 }
+
