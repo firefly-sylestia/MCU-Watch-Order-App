@@ -163,6 +163,35 @@ const readSavedUiState = () => {
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+const calculateWatchStreak = (items) => {
+  const dayKey = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  const daySet = new Set(
+    items
+      .filter(item => item.status === 'watched' && item.watchedDate)
+      .map(item => String(item.watchedDate).slice(0, 10))
+      .filter(Boolean)
+  );
+  if (!daySet.size) return 0;
+  const cursor = new Date();
+  cursor.setHours(0, 0, 0, 0);
+  const todayKey = dayKey(cursor);
+  if (!daySet.has(todayKey)) {
+    cursor.setDate(cursor.getDate() - 1);
+    if (!daySet.has(dayKey(cursor))) return 0;
+  }
+  let streak = 0;
+  while (daySet.has(dayKey(cursor))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+};
+
 const DEFAULT_EXPORT_TEXT_SCALE = 1.22;
 const EXPORT_FONT_FAMILIES = {
   inter: 'Inter, Outfit, sans-serif',
@@ -682,6 +711,7 @@ export default function MCUViewer() {
   if (typeof heroRandomSeedRef.current === 'function') heroRandomSeedRef.current = heroRandomSeedRef.current();
   const restoredUiStateRef = useRef(false);
   const metadataBuildRef = useRef({ paused: false, running: false });
+  const detailRequestRef = useRef(0);
 
   useEffect(() => {
     const onResize = () => setIsDesktopViewport(window.innerWidth >= 1024);
@@ -1001,7 +1031,13 @@ export default function MCUViewer() {
 
   const STATUS_SORT_ORDER = { watching: 0, 'plan-to-watch': 1, unwatched: 2, watched: 3, 'on-hold': 4, dropped: 5 };
   const coreIds = useMemo(() => new Set(ESSENTIAL_LIST.map(i => i.id)), []);
-  const openDetail = useCallback((item) => setDetailItem(item), []);
+  const openDetail = useCallback((item) => {
+    detailRequestRef.current += 1;
+    setDetailData(null);
+    setDetailPosterFailed(false);
+    setDetailPlotState({ active: 'primary', primary: item?.desc || '', secondary: '', loadingSecondary: false, secondaryProvider: 'OMDb' });
+    setDetailItem(item);
+  }, []);
   const toggleBookmark = useCallback((id) => setBookmarks(p => ({ ...p, [id]: p[id] ? 0 : 1 })), []);
   const toggleSelected = useCallback((id, checked) => {
     setSelectedIds(prev => {
@@ -1493,6 +1529,7 @@ export default function MCUViewer() {
     .filter(i => i.status === 'watched' && i.watchedDate)
     .sort((a, b) => (b.watchedDate || b.statusChangedAt || '').localeCompare(a.watchedDate || a.statusChangedAt || ''))
     .slice(0, 4), [activeItems]);
+  const watchStreak = useMemo(() => calculateWatchStreak(activeItems), [activeItems]);
   const totalEntries = activeItems.length;
   const seriesCount = activeItems.filter(i => i.type === 'series').length;
   const filmCount = activeItems.filter(i => i.type === 'film').length;
@@ -2115,8 +2152,11 @@ export default function MCUViewer() {
   useEffect(() => {
     const fetchDetail = async () => {
       if (!detailItem) return;
+      const requestId = detailRequestRef.current + 1;
+      detailRequestRef.current = requestId;
       setDetailLoading(true);
       setDetailData(null);
+      setDetailPosterFailed(false);
       setDetailPlotState({ active: 'primary', primary: detailItem.desc, secondary: '', loadingSecondary: false, secondaryProvider: 'OMDb' });
       const fallback = { Plot: metaCache[detailItem.id]?.plot || detailItem.desc, Year: String(detailItem.year), Released: metaCache[detailItem.id]?.released || '', Actors: metaCache[detailItem.id]?.cast || '', imdbRating: metaCache[detailItem.id]?.rating || 'N/A' };
 
@@ -2125,6 +2165,8 @@ export default function MCUViewer() {
           fetchTmdbPoster(detailItem),
           fetchTmdbDetail(detailItem),
         ]);
+
+        if (detailRequestRef.current !== requestId) return;
 
         if (tmdbPoster) {
           setPosterCache(prev => ({ ...prev, [detailItem.id]: tmdbPoster }));
@@ -2145,9 +2187,10 @@ export default function MCUViewer() {
           }
         }));
       } catch {
+        if (detailRequestRef.current !== requestId) return;
         setDetailData(normalizeDetailData({ item: detailItem, fallback }));
       } finally {
-        setDetailLoading(false);
+        if (detailRequestRef.current === requestId) setDetailLoading(false);
       }
     };
     fetchDetail();
@@ -2471,6 +2514,8 @@ export default function MCUViewer() {
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
         .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.52);backdrop-filter:blur(6px);z-index:240;display:grid;place-items:center;padding:20px}
         .detail-card{width:min(1080px,94vw);max-height:92vh;overflow:auto;background:linear-gradient(145deg, rgba(17,22,44,0.62), rgba(12,16,34,0.5));backdrop-filter:blur(18px) saturate(130%);-webkit-backdrop-filter:blur(18px) saturate(130%);border:1px solid rgba(255,255,255,0.14);border-radius:14px;padding:18px;box-shadow:${darkMode ? '0 22px 60px rgba(0,0,0,0.56)' : '0 18px 44px rgba(0,0,0,0.14)'}}
+        .detail-export-shell{width:min(920px,94vw);padding:18px;background:radial-gradient(circle at 18% 16%, rgba(125,211,252,0.18), transparent 30%),radial-gradient(circle at 88% 8%, rgba(240,171,252,0.16), transparent 34%),linear-gradient(145deg, rgba(6,17,31,0.92), rgba(17,26,56,0.88) 54%, rgba(53,16,59,0.86)) !important;box-shadow:0 28px 80px rgba(0,0,0,0.52), inset 0 1px 0 rgba(255,255,255,0.08)}
+        .detail-export-grid{display:grid;grid-template-columns:minmax(176px,260px) minmax(0,1fr);gap:18px;align-items:start}.detail-poster-frame{border-radius:22px;overflow:hidden;min-height:388px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);box-shadow:0 22px 42px rgba(0,0,0,0.38)}.detail-poster-frame img{display:block;width:100%;height:100%;min-height:388px;max-height:420px;object-fit:cover}.detail-export-content{display:grid;gap:10px;min-width:0}.detail-export-kicker{font-family:var(--font-marvel-ui);font-size:12px;letter-spacing:2px;font-weight:900;color:#7dd3fc}.detail-export-title{font-size:clamp(28px,4vw,44px);line-height:.98;margin:0;color:#fff;text-wrap:balance}.detail-export-meta{display:flex;gap:7px;flex-wrap:wrap}.detail-export-meta span{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:5px 8px;border-radius:999px;background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.15);color:#dbeafe}.detail-export-loading{font-size:12px;color:var(--theme-text-muted)}.detail-export-panel{border-radius:18px;padding:13px 14px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);box-shadow:inset 0 1px 0 rgba(255,255,255,0.06)}.detail-export-panel-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;font-family:var(--font-marvel-ui);font-size:12px;letter-spacing:1.8px;font-weight:900;color:#7dd3fc}.detail-export-panel p{font-size:14px;line-height:1.48;margin:0;color:#edf6ff;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}.detail-intel-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}.detail-intel-list div{display:grid;gap:2px;min-width:0}.detail-intel-list strong{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:#f0abfc}.detail-intel-list span{font-size:12px;line-height:1.35;color:#d3ddf6;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.detail-intel-list div:last-child{grid-column:1 / -1}.detail-export-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}.detail-export-actions .fpill{padding:8px 11px !important;font-size:12px !important;background:rgba(255,255,255,0.07) !important;border-color:rgba(255,255,255,0.15) !important}
 
         .detail-layout{grid-template-columns:minmax(220px,34%) minmax(0,1fr)}
         .detail-pill{background:rgba(255,255,255,0.08) !important;border-color:rgba(255,255,255,0.18) !important;transform:none !important;box-shadow:none !important}
@@ -2506,6 +2551,7 @@ export default function MCUViewer() {
           main > div{padding-bottom:154px !important}
           .poster{width:44px;height:64px}
           .detail-layout{grid-template-columns:minmax(0,1fr) !important;gap:14px !important}
+          .detail-export-grid{grid-template-columns:minmax(0,1fr) !important}.detail-export-shell{padding:12px !important}.detail-poster-frame{min-height:auto;max-width:230px;margin:0 auto}.detail-poster-frame img{min-height:auto;max-height:330px}.detail-intel-list{grid-template-columns:minmax(0,1fr) !important}.detail-export-actions{justify-content:stretch}.detail-export-actions .fpill{flex:1 1 auto;justify-content:center}
           .detail-layout img,.detail-fallback-poster{max-width:280px;margin:0 auto;max-height:360px}
           .detail-layout > div:last-child{width:100%}
           .filter-row-actions{margin-left:0 !important;flex-wrap:wrap;justify-content:flex-end;gap:6px !important}
@@ -2760,7 +2806,7 @@ export default function MCUViewer() {
                   loading={idx < 8 ? 'eager' : 'lazy'}
                   decoding="async"
                   onDragStart={(e) => e.preventDefault()}
-                  onClick={() => { if (heroItem) setDetailItem(heroItem); }}
+                  onClick={() => { if (heroItem) openDetail(heroItem); }}
                   style={{
                     height: isDesktopViewport ? 440 : 320,
                     width: isDesktopViewport ? 292 : 218,
@@ -2803,7 +2849,7 @@ export default function MCUViewer() {
               <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             {renderPhaseSelector()}
-            <button className="glass-grad" onClick={() => nextUnwatched && setDetailItem(nextUnwatched)} style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 360, background: 'transparent', cursor: nextUnwatched ? 'pointer' : 'default' }}>
+            <button className="glass-grad" onClick={() => nextUnwatched && openDetail(nextUnwatched)} style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 360, background: 'transparent', cursor: nextUnwatched ? 'pointer' : 'default' }}>
               <span style={{ fontSize: 10, letterSpacing: 1.6, color: T.textMuted, textTransform: 'uppercase' }}>Continue</span>
               <span style={{ fontSize: 12, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</span>
             </button>
@@ -2971,7 +3017,7 @@ export default function MCUViewer() {
                 <div key={'up-'+item.id} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
                   <div style={{ fontSize: 11, color: 'var(--theme-warning)' }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
                   <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
-                  <button className='title-btn' onClick={() => setDetailItem(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
+                  <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
                 </div>
               ))}
               <div style={{ margin: '16px 0 12px', color: T.textMuted }}>TBA / release window only</div>
@@ -2979,7 +3025,7 @@ export default function MCUViewer() {
                 <div key={'tba-'+item.id} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
                   <div style={{ fontSize: 11, color: T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
                   <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
-                  <button className='title-btn' onClick={() => setDetailItem(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
+                  <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
                 </div>
               ))}
               <div style={{ margin: '16px 0 12px', color: T.textMuted }}>Already Released</div>
@@ -2987,7 +3033,7 @@ export default function MCUViewer() {
                 <div key={'old-'+item.id} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
                   <div style={{ fontSize: 11, color: T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
                   <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
-                  <button className='title-btn' onClick={() => setDetailItem(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
+                  <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
                 </div>
               ))}
             </section>
@@ -3102,90 +3148,80 @@ export default function MCUViewer() {
       {/* ━━ DETAIL MODAL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       {detailItem && (
         <div className="detail-backdrop" onClick={() => setDetailItem(null)} role="dialog" aria-label="Movie details">
-          <div className="detail-card glass-panel" onClick={(e) => e.stopPropagation()} style={{ background: 'color-mix(in srgb, var(--theme-surface) 68%, transparent)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border))' }}>
-            <div className="detail-layout" style={{ display: 'grid', gridTemplateColumns: 'minmax(220px,34%) minmax(0,1fr)', gap: 18, alignItems: 'start', width: '100%' }}>
-              {detailPosterFailed ? (
-                <div className="detail-fallback-poster" style={{ width: '100%', minHeight: 340, borderRadius: 10, border: `1px solid ${T.surfaceBorder}` }}>
-                  <span>{detailItem.title}</span>
-                </div>
-              ) : (
-                <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : posterSrc(detailItem)} onError={() => setDetailPosterFailed(true)} alt={`${detailItem.title} poster`} style={{ width: '100%', borderRadius: 10, border: `1px solid ${T.surfaceBorder}`, maxHeight: 520, objectFit: 'cover' }} />
-              )}
-              <div>
-                <h2 style={{ fontSize: 32, marginBottom: 8 }}>{detailItem.title}</h2>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-                  <span className="fpill detail-pill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>{detailData?.Year || detailItem.year}</span>
-                  <span className="fpill detail-pill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>{TYPE_META[detailItem.type]?.label}</span>
-                  <span className="fpill detail-pill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>Phase {detailItem.phase}</span>
-                  {(detailData?.imdbRating && detailData.imdbRating !== 'N/A') && <span className="fpill detail-pill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>★ {detailData.imdbRating}</span>}
-                </div>
-                {detailLoading && <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 8 }}>Loading metadata…</div>}
-                {!detailLoading && !detailData && <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Showing local data.</div>}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <span style={{ fontSize: 11, color: T.textMuted }}>Description</span>
-                  <button
-                    className="fpill glass-panel detail-btn"
-                    style={{ padding: '4px 10px', fontSize: 10, borderRadius: 999 }}
-                    onClick={async () => {
-                      if (detailPlotState.active === 'primary') {
-                        if (!detailPlotState.secondary) await fetchSecondaryPlotForDetail();
-                        setDetailPlotState(prev => ({ ...prev, active: 'secondary' }));
-                      } else {
-                        setDetailPlotState(prev => ({ ...prev, active: 'primary' }));
-                      }
-                    }}
-                  >
-                    <SwitchIcon size={11} /> {detailPlotState.active === 'primary' ? 'TMDB' : (detailPlotState.loadingSecondary ? 'Loading…' : 'OMDb')}
-                  </button>
-                </div>
-                <p style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 12, filter: spoilerSafe ? 'blur(5px)' : 'none', transition: 'filter 0.18s ease' }}>
-                  {detailPlotState.active === 'secondary'
-                    ? (detailPlotState.secondary || detailItem.desc)
-                    : (detailPlotState.primary || detailData?.Plot || detailItem.desc)}
-                </p>
-                <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Prerequisite:</strong> {detailItem.prereq}</div>
-                <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Release:</strong> {formatReleaseDate(releaseInfoFor(detailItem).date, detailItem.year, releaseInfoFor(detailItem).label, releaseStatusFor(detailItem))}</div>
-                <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Status:</strong> {STATUS_META[detailItem.status]?.label}</div>
-                <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Director:</strong> {detailData?.Director && detailData.Director !== 'N/A' ? detailData.Director : 'Director data coming soon'}</div>
+          <div className="detail-card glass-panel detail-export-shell" onClick={(e) => e.stopPropagation()} style={{ border: '1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border))' }}>
+            <div className="detail-export-grid">
+              <div className="detail-poster-frame">
+                {detailPosterFailed ? (
+                  <div className="detail-fallback-poster" style={{ width: '100%', height: '100%' }}>
+                    <span>{detailItem.title}</span>
+                  </div>
+                ) : (
+                  <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : posterSrc(detailItem)} onError={() => setDetailPosterFailed(true)} alt={`${detailItem.title} poster`} />
+                )}
+              </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <span style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.1, fontFamily: 'var(--font-marvel-ui)' }}>SPOILER SAFE</span>
-                  <button className="fpill glass-panel" onClick={() => setSpoilerSafeMode(v => !v)}
-                    style={{ padding: '6px 10px', fontSize: 11, background: spoilerSafe ? 'rgba(232,184,75,0.18)' : 'rgba(255,255,255,0.06)', borderColor: spoilerSafe ? 'rgba(232,184,75,0.45)' : 'rgba(255,255,255,0.16)' }}>
-                    {spoilerSafe ? 'On · Tap to reveal' : 'Off · Tap to hide'}
-                  </button>
+              <div className="detail-export-content">
+                <div className="detail-export-kicker">MCU DETAILS CARD</div>
+                <h2 className="detail-export-title">{detailItem.title}</h2>
+                <div className="detail-export-meta">
+                  <span>{detailData?.Year || detailItem.year}</span>
+                  <span>Phase {detailItem.phase}</span>
+                  <span>{TYPE_META[detailItem.type]?.label}</span>
+                  {(detailData?.imdbRating && detailData.imdbRating !== 'N/A') && <span>★ {detailData.imdbRating}/10</span>}
                 </div>
+                {detailLoading && <div className="detail-export-loading">Loading metadata…</div>}
+                {!detailLoading && !detailData && <div className="detail-export-loading">Showing local data.</div>}
 
-                <div className="detail-btn-group">
+                <section className="detail-export-panel story">
+                  <div className="detail-export-panel-head">
+                    <span>STORY BRIEF</span>
+                    <button
+                      className="fpill glass-panel detail-btn"
+                      style={{ padding: '4px 10px', fontSize: 10, borderRadius: 999 }}
+                      onClick={async () => {
+                        if (detailPlotState.active === 'primary') {
+                          if (!detailPlotState.secondary) await fetchSecondaryPlotForDetail();
+                          setDetailPlotState(prev => ({ ...prev, active: 'secondary' }));
+                        } else {
+                          setDetailPlotState(prev => ({ ...prev, active: 'primary' }));
+                        }
+                      }}
+                    >
+                      <SwitchIcon size={11} /> {detailPlotState.active === 'primary' ? 'TMDB' : (detailPlotState.loadingSecondary ? 'Loading…' : 'OMDb')}
+                    </button>
+                  </div>
+                  <p style={{ filter: spoilerSafe ? 'blur(5px)' : 'none', transition: 'filter 0.18s ease' }}>
+                    {detailPlotState.active === 'secondary'
+                      ? (detailPlotState.secondary || detailItem.desc)
+                      : (detailPlotState.primary || detailData?.Plot || detailItem.desc)}
+                  </p>
+                </section>
+
+                <section className="detail-export-panel intel">
+                  <div className="detail-export-panel-head"><span>WATCH INTEL</span></div>
+                  <div className="detail-intel-list">
+                    <div><strong>Release</strong><span>{formatReleaseDate(releaseInfoFor(detailItem).date, detailItem.year, releaseInfoFor(detailItem).label, releaseStatusFor(detailItem))}</span></div>
+                    <div><strong>Prerequisite</strong><span>{detailItem.prereq}</span></div>
+                    <div><strong>Status</strong><span>{STATUS_META[detailItem.status]?.label}</span></div>
+                    <div><strong>Director</strong><span>{detailData?.Director && detailData.Director !== 'N/A' ? detailData.Director : 'Director data coming soon'}</span></div>
+                    <div><strong>Cast</strong><span>{detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</span></div>
+                  </div>
+                </section>
+
+                <div className="detail-export-actions">
+                  <button className="fpill glass-panel" onClick={() => setSpoilerSafeMode(v => !v)} style={{ background: spoilerSafe ? 'rgba(232,184,75,0.18)' : 'rgba(255,255,255,0.06)', borderColor: spoilerSafe ? 'rgba(232,184,75,0.45)' : 'rgba(255,255,255,0.16)' }}>
+                    Spoiler Safe: {spoilerSafe ? 'On' : 'Off'}
+                  </button>
                   <button
-                    className={`fpill glass-panel detail-btn ${myLikes[detailItem.id] ? 'is-active' : ''}`}
+                    className={`fpill glass-panel ${myLikes[detailItem.id] ? 'is-active' : ''}`}
                     onClick={() => setMyLikes(prev => ({ ...prev, [detailItem.id]: !prev[detailItem.id] }))}
                   >
                     <Heart size={12}/> {myLikes[detailItem.id] ? 'Liked' : 'Like'}
                   </button>
-                  <button className="fpill glass-panel detail-btn" style={{ fontSize: 14, fontWeight: 700 }} onClick={() => exportPosterForItem(detailItem)}><Download size={14}/> Export Details Card</button>
+                  <button className="fpill glass-panel" onClick={() => exportPosterForItem(detailItem)}><Download size={14}/> Export Details Card</button>
+                  <button className="fpill glass-panel" onClick={() => setDetailItem(null)}>Close</button>
                 </div>
-                <div className="glass-panel" style={{ marginBottom: 10, padding: 10, borderRadius: 10, display: 'grid', gap: 8 }}>
-                  <div style={{ fontSize: 11, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase' }}>Export Card Settings</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
-                    {[{ id: 'inter', label: 'Inter' }, { id: 'grotesk', label: 'Grotesk' }, { id: 'manrope', label: 'Manrope' }, { id: 'marvel', label: 'Marvel' }].map(opt => (
-                      <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: EXPORT_FONT_PREVIEW_FAMILY[opt.id] || EXPORT_FONT_PREVIEW_FAMILY.inter, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
-                    ))}
-                  </div>
-                  <label style={{ display: 'grid', gap: 4 }}>
-                    <span style={{ fontSize: 11, color: T.textMuted }}>Export text size: {Math.round(exportTextScale * 100)}%</span>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr) auto', gap: 8, alignItems: 'center' }}>
-                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.max(0.9, Number((v - 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>−</button>
-                <input type='range' min={90} max={240} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
-                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.min(2.4, Number((v + 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>+</button>
               </div>
-                  </label>
-                </div>
-                <div style={{ fontSize: 14 }}><strong>Cast:</strong> {detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</div>
-              </div>
-            </div>
-            <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end' }}>
-              <button className="fpill" onClick={() => setDetailItem(null)}>Close</button>
             </div>
           </div>
         </div>
