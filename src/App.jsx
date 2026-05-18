@@ -163,6 +163,30 @@ const readSavedUiState = () => {
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+const DEFAULT_EXPORT_TEXT_SCALE = 1.22;
+const EXPORT_FONT_FAMILIES = {
+  inter: 'Inter, Outfit, sans-serif',
+  grotesk: 'Outfit, Inter, sans-serif',
+  manrope: 'Manrope, Outfit, sans-serif',
+  marvel: 'Bebas Neue, Rajdhani, Outfit, sans-serif',
+};
+const EXPORT_FONT_PREVIEW_FAMILY = {
+  inter: 'Inter, Outfit, sans-serif',
+  grotesk: 'Outfit, Inter, sans-serif',
+  manrope: 'Manrope, Outfit, sans-serif',
+  marvel: 'Bebas Neue, Rajdhani, Outfit, sans-serif',
+};
+const waitForExportFont = async (fontFamily) => {
+  if (typeof document === 'undefined' || !document.fonts) return;
+  try {
+    await Promise.all([
+      document.fonts.ready,
+      document.fonts.load(`700 32px ${fontFamily}`),
+      document.fonts.load(`900 64px ${fontFamily}`),
+    ]);
+  } catch {}
+};
+
 const isAgentsOfShieldCarouselDuplicate = (item) => /agents of shield/i.test(item?.title || '');
 const HERO_ROTATION_MS = 10000;
 const HERO_VISIBLE_COUNT = 15;
@@ -606,7 +630,7 @@ export default function MCUViewer() {
   const [bookmarks,      setBookmarks]      = useState({});
   const [reviewCardTheme, setReviewCardTheme] = useState('midnight');
   const [exportFont, setExportFont] = useState('inter');
-  const [exportTextScale, setExportTextScale] = useState(1.4);
+  const [exportTextScale, setExportTextScale] = useState(DEFAULT_EXPORT_TEXT_SCALE);
   const [analyticsTab, setAnalyticsTab] = useState('overview');
   const [exportComposerOpen, setExportComposerOpen] = useState(false);
   const [exportPreview, setExportPreview] = useState({ url: '', loading: false, error: '' });
@@ -1512,8 +1536,8 @@ export default function MCUViewer() {
 
   const shareCardImage = useCallback(async ({ type, data, statusHandlers = null }) => {
     try {
-      const fontMap = { inter: 'Inter, sans-serif', grotesk: 'Space Grotesk, sans-serif', manrope: 'Manrope, sans-serif', marvel: 'var(--font-marvel-display), sans-serif' };
-      const exportFontFamily = fontMap[exportFont] || fontMap.inter;
+      const exportFontFamily = EXPORT_FONT_FAMILIES[exportFont] || EXPORT_FONT_FAMILIES.inter;
+      await waitForExportFont(exportFontFamily);
       const { blob, filename } = await renderCardToCanvas({
         type,
         data,
@@ -1576,12 +1600,13 @@ export default function MCUViewer() {
     const timer = window.setTimeout(async () => {
       setExportPreview(prev => ({ ...prev, loading: true, error: '' }));
       try {
+        await waitForExportFont(EXPORT_FONT_FAMILIES[exportFont] || EXPORT_FONT_FAMILIES.inter);
         const { blob } = await renderCardToCanvas({
           type: exportSettings.type,
           data: { item: exportPreviewFeatured, featured: exportPreviewFeatured, rows: exportPreviewRows, ratings: myRating, rating: myRating[exportPreviewFeatured?.id] || 0, reviewText: reviews[exportPreviewFeatured?.id] || '', reviewer: profile.name || 'Reviewer', pct, currentPhase: stickyPhaseProgress.label, totalWatched, totalItems: activeItems.length },
           settings: {
             textScale: Math.max(0.9, Math.min(1.35, exportTextScale)),
-            fontFamily: ({ inter: 'Inter, sans-serif', grotesk: 'Space Grotesk, sans-serif', manrope: 'Manrope, sans-serif', marvel: 'var(--font-marvel-display), sans-serif' }[exportFont] || 'Inter, sans-serif'),
+            fontFamily: EXPORT_FONT_FAMILIES[exportFont] || EXPORT_FONT_FAMILIES.inter,
             posterSrc,
             theme: exportSettings.theme,
             bgOpacity: exportSettings.bgOpacity,
@@ -1900,8 +1925,8 @@ export default function MCUViewer() {
       }
       drawRoundedPanel(ctx, { x: 44, y: 48, w: 1312, h: 1904, radius: 58, fill: 'rgba(7,13,31,0.78)', stroke: 'rgba(125,211,252,0.28)', lineWidth: 4 });
       drawRoundedPanel(ctx, { x: 82, y: 88, w: 1236, h: 1824, radius: 42, fill: 'rgba(255,255,255,0.045)', stroke: 'rgba(255,255,255,0.14)' });
-      const fontMap = { inter: 'Inter, sans-serif', grotesk: 'Space Grotesk, sans-serif', manrope: 'Manrope, sans-serif', marvel: 'var(--font-marvel-display), sans-serif' };
-      const exportFontFamily = fontMap[exportFont] || fontMap.inter;
+      const exportFontFamily = EXPORT_FONT_FAMILIES[exportFont] || EXPORT_FONT_FAMILIES.inter;
+      await waitForExportFont(exportFontFamily);
       const scale = Math.min(exportTextScale, 1.75);
       if (img) {
         drawRoundedPanel(ctx, { x: 112, y: 130, w: 394, h: 574, radius: 34, fill: 'rgba(255,255,255,0.13)', stroke: 'rgba(255,211,92,0.36)', lineWidth: 3 });
@@ -2656,7 +2681,7 @@ export default function MCUViewer() {
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase', marginTop: 4 }}>Export Card Controls</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
               {[{ id: 'inter', label: 'Inter' }, { id: 'grotesk', label: 'Grotesk' }, { id: 'manrope', label: 'Manrope' }, { id: 'marvel', label: 'Marvel' }].map(opt => (
-                <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: opt.id === 'marvel' ? 'var(--font-marvel-display)' : opt.label, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
+                <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: EXPORT_FONT_PREVIEW_FAMILY[opt.id] || EXPORT_FONT_PREVIEW_FAMILY.inter, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
               ))}
             </div>
             <label style={{ display: 'grid', gap: 4, padding: '4px 0' }}>
@@ -3119,7 +3144,7 @@ export default function MCUViewer() {
                   <div style={{ fontSize: 11, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase' }}>Export Card Settings</div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
                     {[{ id: 'inter', label: 'Inter' }, { id: 'grotesk', label: 'Grotesk' }, { id: 'manrope', label: 'Manrope' }, { id: 'marvel', label: 'Marvel' }].map(opt => (
-                      <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: opt.id === 'marvel' ? 'var(--font-marvel-display)' : opt.label, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
+                      <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: EXPORT_FONT_PREVIEW_FAMILY[opt.id] || EXPORT_FONT_PREVIEW_FAMILY.inter, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
                     ))}
                   </div>
                   <label style={{ display: 'grid', gap: 4 }}>
@@ -3196,7 +3221,7 @@ export default function MCUViewer() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
                 {[{ id: 'inter', label: 'Inter' }, { id: 'grotesk', label: 'Grotesk' }, { id: 'manrope', label: 'Manrope' }, { id: 'marvel', label: 'Marvel' }].map(opt => (
-                  <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: opt.id === 'marvel' ? 'var(--font-marvel-display)' : opt.label, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
+                  <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: EXPORT_FONT_PREVIEW_FAMILY[opt.id] || EXPORT_FONT_PREVIEW_FAMILY.inter, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
                 ))}
               </div>
               <label style={{ display: 'grid', gap: 4 }}>
