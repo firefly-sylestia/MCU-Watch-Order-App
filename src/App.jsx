@@ -6,7 +6,7 @@ import { Media } from '@capacitor-community/media';
 import CropModal from './components/CropModal';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { renderCardToCanvas } from './export/cards/renderCardToCanvas';
-import { drawPremiumStars, drawWrappedText } from './export/cards/helpers';
+import { drawPremiumStars, drawRoundedPanel, drawWrappedText } from './export/cards/helpers';
 import {
   ESSENTIAL_LIST,
   NO_PREREQ,
@@ -162,6 +162,66 @@ const readSavedUiState = () => {
 };
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const calculateWatchStreak = (items) => {
+  const dayKey = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  const daySet = new Set(
+    items
+      .filter(item => item.status === 'watched' && item.watchedDate)
+      .map(item => String(item.watchedDate).slice(0, 10))
+      .filter(Boolean)
+  );
+  if (!daySet.size) return 0;
+  const cursor = new Date();
+  cursor.setHours(0, 0, 0, 0);
+  const todayKey = dayKey(cursor);
+  if (!daySet.has(todayKey)) {
+    cursor.setDate(cursor.getDate() - 1);
+    if (!daySet.has(dayKey(cursor))) return 0;
+  }
+  let streak = 0;
+  while (daySet.has(dayKey(cursor))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+};
+
+const DEFAULT_EXPORT_TEXT_SCALE = 1.22;
+const EXPORT_FONT_FAMILIES = {
+  inter: 'Inter, Outfit, sans-serif',
+  grotesk: 'Outfit, Inter, sans-serif',
+  manrope: 'Manrope, Outfit, sans-serif',
+  marvel: 'Bebas Neue, Rajdhani, Outfit, sans-serif',
+};
+const EXPORT_FONT_PREVIEW_FAMILY = {
+  inter: 'Inter, Outfit, sans-serif',
+  grotesk: 'Outfit, Inter, sans-serif',
+  manrope: 'Manrope, Outfit, sans-serif',
+  marvel: 'Bebas Neue, Rajdhani, Outfit, sans-serif',
+};
+const EXPORT_THEME_OPTIONS = [
+  { id: 'sacredTimeline', label: 'Sacred Timeline', desc: 'canon progress' },
+  { id: 'timelinePortal', label: 'Timeline Portal', desc: 'portal arcs' },
+  { id: 'watchParty', label: 'Watch Party', desc: 'fan energy' },
+  { id: 'multiverseGlitch', label: 'Multiverse Glitch', desc: 'variant shards' },
+  { id: 'heroDossier', label: 'Hero Dossier', desc: 'mission file' },
+];
+const waitForExportFont = async (fontFamily) => {
+  if (typeof document === 'undefined' || !document.fonts) return;
+  try {
+    await Promise.all([
+      document.fonts.ready,
+      document.fonts.load(`700 32px ${fontFamily}`),
+      document.fonts.load(`900 64px ${fontFamily}`),
+    ]);
+  } catch {}
+};
 
 const isAgentsOfShieldCarouselDuplicate = (item) => /agents of shield/i.test(item?.title || '');
 const HERO_ROTATION_MS = 10000;
@@ -604,15 +664,15 @@ export default function MCUViewer() {
   const [rewatchCount,   setRewatchCount]   = useState({});
   const [reviews,        setReviews]        = useState({});
   const [bookmarks,      setBookmarks]      = useState({});
-  const [reviewCardTheme, setReviewCardTheme] = useState('midnight');
+  const [reviewCardTheme, setReviewCardTheme] = useState('sacredTimeline');
   const [exportFont, setExportFont] = useState('inter');
-  const [exportTextScale, setExportTextScale] = useState(1.4);
+  const [exportTextScale, setExportTextScale] = useState(DEFAULT_EXPORT_TEXT_SCALE);
   const [analyticsTab, setAnalyticsTab] = useState('overview');
   const [exportComposerOpen, setExportComposerOpen] = useState(false);
   const [exportPreview, setExportPreview] = useState({ url: '', loading: false, error: '' });
   const [exportSettings, setExportSettings] = useState(() => ({
-    type: 'unified', theme: 'midnight', bgOpacity: 40, fontWeight: 800, density: 'comfortable', posterMode: 'featured',
-    sections: { hours: true, history: true, rating: true, reviewSnippet: true, profileBadge: true }, aspect: '4:5',
+    type: 'unified', theme: 'sacredTimeline', bgOpacity: 52, fontWeight: 800, density: 'comfortable', posterMode: 'featured',
+    sections: { completion: true, hours: true, streak: true, phaseBreakdown: true, recentMomentum: true, topRated: true, history: true, rating: true, reviewSnippet: true, profileBadge: true }, aspect: '4:5',
   }));
   const [autoBackupStamp, setAutoBackupStamp] = useState('');
   const [reviewShareStatus, setReviewShareStatus] = useState({ type: '', message: '' });
@@ -651,6 +711,7 @@ export default function MCUViewer() {
   if (typeof heroRandomSeedRef.current === 'function') heroRandomSeedRef.current = heroRandomSeedRef.current();
   const restoredUiStateRef = useRef(false);
   const metadataBuildRef = useRef({ paused: false, running: false });
+  const detailRequestRef = useRef(0);
 
   useEffect(() => {
     const onResize = () => setIsDesktopViewport(window.innerWidth >= 1024);
@@ -970,7 +1031,13 @@ export default function MCUViewer() {
 
   const STATUS_SORT_ORDER = { watching: 0, 'plan-to-watch': 1, unwatched: 2, watched: 3, 'on-hold': 4, dropped: 5 };
   const coreIds = useMemo(() => new Set(ESSENTIAL_LIST.map(i => i.id)), []);
-  const openDetail = useCallback((item) => setDetailItem(item), []);
+  const openDetail = useCallback((item) => {
+    detailRequestRef.current += 1;
+    setDetailData(null);
+    setDetailPosterFailed(false);
+    setDetailPlotState({ active: 'primary', primary: item?.desc || '', secondary: '', loadingSecondary: false, secondaryProvider: 'OMDb' });
+    setDetailItem(item);
+  }, []);
   const toggleBookmark = useCallback((id) => setBookmarks(p => ({ ...p, [id]: p[id] ? 0 : 1 })), []);
   const toggleSelected = useCallback((id, checked) => {
     setSelectedIds(prev => {
@@ -1462,6 +1529,7 @@ export default function MCUViewer() {
     .filter(i => i.status === 'watched' && i.watchedDate)
     .sort((a, b) => (b.watchedDate || b.statusChangedAt || '').localeCompare(a.watchedDate || a.statusChangedAt || ''))
     .slice(0, 4), [activeItems]);
+  const watchStreak = useMemo(() => calculateWatchStreak(activeItems), [activeItems]);
   const totalEntries = activeItems.length;
   const seriesCount = activeItems.filter(i => i.type === 'series').length;
   const filmCount = activeItems.filter(i => i.type === 'film').length;
@@ -1512,15 +1580,20 @@ export default function MCUViewer() {
 
   const shareCardImage = useCallback(async ({ type, data, statusHandlers = null }) => {
     try {
-      const fontMap = { inter: 'Inter, sans-serif', grotesk: 'Space Grotesk, sans-serif', manrope: 'Manrope, sans-serif', marvel: 'var(--font-marvel-display), sans-serif' };
-      const exportFontFamily = fontMap[exportFont] || fontMap.inter;
+      const exportFontFamily = EXPORT_FONT_FAMILIES[exportFont] || EXPORT_FONT_FAMILIES.inter;
+      await waitForExportFont(exportFontFamily);
       const { blob, filename } = await renderCardToCanvas({
         type,
         data,
         settings: {
           textScale: exportTextScale,
           fontFamily: exportFontFamily,
+          fontKey: exportFont,
           posterSrc,
+          theme: type === 'review' ? reviewCardTheme : exportSettings.theme,
+          bgOpacity: exportSettings.bgOpacity,
+          density: exportSettings.density,
+          sections: exportSettings.sections,
           namingStrategy: ({ type: cardType, data: cardData }) => {
             if (cardType === 'progress') return `mcu-progress-card-${Date.now()}.png`;
             if (cardType === 'analysis') return 'mcu-analysis-card.png';
@@ -1536,7 +1609,7 @@ export default function MCUViewer() {
       console.error(`Failed to share ${type} card`, e);
       statusHandlers?.onError?.(e);
     }
-  }, [exportFont, exportTextScale, posterSrc, saveImageToDevice]);
+  }, [exportFont, exportTextScale, posterSrc, saveImageToDevice, reviewCardTheme, exportSettings.theme, exportSettings.bgOpacity, exportSettings.density, exportSettings.sections]);
 
   const shareReviewCard = async (item) => {
     await shareCardImage({
@@ -1563,28 +1636,65 @@ export default function MCUViewer() {
     await shareCardImage({ type: 'unified', data: { featured: historyItems[0] || activeItems[0], rows: historyItems, ratings: myRating, pct, currentPhase: stickyPhaseProgress.label, totalWatched, totalItems: activeItems.length } });
   };
 
+  const exportPreviewRows = useMemo(() => historyItems.slice(0, 6), [historyItems]);
+  const exportPreviewFeatured = exportPreviewRows[0] || activeItems[0];
+  const topRatedItems = useMemo(() => historyItems
+    .filter(item => Number.isFinite(Number(myRating[item.id])) && Number(myRating[item.id]) > 0)
+    .sort((a, b) => Number(myRating[b.id] || 0) - Number(myRating[a.id] || 0))
+    .slice(0, 3), [historyItems, myRating]);
+  const buildExportCardData = useCallback((cardType = exportSettings.type) => {
+    const featured = exportPreviewFeatured;
+    if (cardType === 'analysis') return { pct, currentPhase: stickyPhaseProgress.label, totalWatched, totalWatchedHours, streak: watchStreak, totalItems: activeItems.length, phaseStats, topRatedItems, ratings: myRating, recentCount: exportPreviewRows.length };
+    if (cardType === 'review') return { item: featured, rating: clampTenPoint(myRating[featured?.id] || 0), reviewText: (reviews[featured?.id] || '').trim(), reviewer: profile.name || 'Reviewer' };
+    return { featured, rows: historyItems, ratings: myRating, pct, currentPhase: stickyPhaseProgress.label, totalWatched, totalItems: activeItems.length };
+  }, [exportSettings.type, exportPreviewFeatured, pct, stickyPhaseProgress.label, totalWatched, totalWatchedHours, watchStreak, activeItems.length, phaseStats, topRatedItems, exportPreviewRows.length, myRating, reviews, profile.name, historyItems]);
+  const shareAdvancedExportCard = async () => {
+    const cardType = exportSettings.type === 'review' && !exportPreviewFeatured ? 'analysis' : exportSettings.type;
+    await shareCardImage({ type: cardType, data: buildExportCardData(cardType) });
+  };
+
   useEffect(() => {
-    if (!exportComposerOpen) return;
+    if (!(exportComposerOpen || analyticsTab === 'advanced-export') || !exportPreviewFeatured) return undefined;
+    let cancelled = false;
+    let objectUrl = '';
     const timer = window.setTimeout(async () => {
-      setExportPreview(prev => ({ ...prev, loading: true }));
+      setExportPreview(prev => ({ ...prev, loading: true, error: '' }));
       try {
-        const { canvas } = await renderCardToCanvas({
+        await waitForExportFont(EXPORT_FONT_FAMILIES[exportFont] || EXPORT_FONT_FAMILIES.inter);
+        const { blob } = await renderCardToCanvas({
           type: exportSettings.type,
-          data: { item: historyItems[0] || activeItems[0], featured: historyItems[0] || activeItems[0], rows: historyItems, ratings: myRating, rating: myRating[historyItems[0]?.id] || 0, reviewText: reviews[historyItems[0]?.id] || '', reviewer: profile.name || 'Reviewer', pct, currentPhase: stickyPhaseProgress.label, totalWatched, totalItems: activeItems.length },
+          data: buildExportCardData(exportSettings.type),
           settings: {
-            textScale: Math.max(0.9, exportTextScale),
-            fontFamily: ({ inter: 'Inter, sans-serif', grotesk: 'Space Grotesk, sans-serif', manrope: 'Manrope, sans-serif', marvel: 'var(--font-marvel-display), sans-serif' }[exportFont] || 'Inter, sans-serif'),
+            textScale: Math.max(0.9, Math.min(1.35, exportTextScale)),
+            fontFamily: EXPORT_FONT_FAMILIES[exportFont] || EXPORT_FONT_FAMILIES.inter,
+            fontKey: exportFont,
             posterSrc,
+            theme: exportSettings.theme,
+            bgOpacity: exportSettings.bgOpacity,
+            density: exportSettings.density,
+            sections: exportSettings.sections,
+            previewScale: 0.42,
           },
         });
-        const url = canvas.toDataURL('image/png', 0.8);
-        setExportPreview({ url, loading: false, error: '' });
+        objectUrl = URL.createObjectURL(blob);
+        if (!cancelled) {
+          setExportPreview(prev => {
+            if (prev.url?.startsWith('blob:')) URL.revokeObjectURL(prev.url);
+            return { url: objectUrl, loading: false, error: '' };
+          });
+        } else {
+          URL.revokeObjectURL(objectUrl);
+        }
       } catch {
-        setExportPreview({ url: '', loading: false, error: 'Preview unavailable. Export still works.' });
+        if (!cancelled) setExportPreview({ url: '', loading: false, error: 'Preview unavailable. Export still works.' });
       }
-    }, 140);
-    return () => window.clearTimeout(timer);
-  }, [exportComposerOpen, exportSettings, exportFont, exportTextScale, historyItems, activeItems, myRating, reviews, profile.name, pct, stickyPhaseProgress.label, totalWatched, posterSrc]);
+    }, 360);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [exportComposerOpen, analyticsTab, exportSettings.type, exportSettings.theme, exportSettings.bgOpacity, exportSettings.density, exportSettings.sections, exportFont, exportTextScale, exportPreviewFeatured, buildExportCardData, posterSrc]);
 
 
   // ─── Smoother phase gradient (multi-stop per phase for richer look) ──────
@@ -1852,46 +1962,79 @@ export default function MCUViewer() {
       canvas.width = 1400;
       canvas.height = 2000;
       const ctx = canvas.getContext('2d');
-      const grd = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      grd.addColorStop(0, '#090f20');
-      grd.addColorStop(1, '#111a31');
+      const grd = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      grd.addColorStop(0, '#06111f');
+      grd.addColorStop(0.52, '#111a38');
+      grd.addColorStop(1, '#35103b');
       ctx.fillStyle = grd;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       const ratingNum = clampTenPoint(Number(detailData?.imdbRating || metaCache[item.id]?.rating || 0));
+      let img = null;
       if (src) {
-        const img = new Image();
+        img = new Image();
         img.crossOrigin = 'anonymous';
         img.src = src;
         await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
+        ctx.globalAlpha = 0.5;
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = 'rgba(6,10,22,0.56)';
+        ctx.globalAlpha = 1;
+        const veil = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        veil.addColorStop(0, 'rgba(3,7,18,0.42)');
+        veil.addColorStop(0.5, 'rgba(3,7,18,0.72)');
+        veil.addColorStop(1, 'rgba(3,7,18,0.92)');
+        ctx.fillStyle = veil;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 74, 90, 350, 510);
       }
-      ctx.fillStyle = 'rgba(8,14,30,0.74)';
-      ctx.beginPath();
-      ctx.roundRect(40, 40, 1320, 1920, 32);
-      ctx.fill();
-      const fontMap = { inter: 'Inter, sans-serif', grotesk: 'Space Grotesk, sans-serif', manrope: 'Manrope, sans-serif', marvel: 'var(--font-marvel-display), sans-serif' };
-      const exportFontFamily = fontMap[exportFont] || fontMap.inter;
-      const scale = exportTextScale;
+      drawRoundedPanel(ctx, { x: 44, y: 48, w: 1312, h: 1904, radius: 58, fill: 'rgba(7,13,31,0.78)', stroke: 'rgba(125,211,252,0.28)', lineWidth: 4 });
+      drawRoundedPanel(ctx, { x: 82, y: 88, w: 1236, h: 1824, radius: 42, fill: 'rgba(255,255,255,0.045)', stroke: 'rgba(255,255,255,0.14)' });
+      const exportFontFamily = EXPORT_FONT_FAMILIES[exportFont] || EXPORT_FONT_FAMILIES.inter;
+      await waitForExportFont(exportFontFamily);
+      const scale = Math.min(exportTextScale * (exportFont === 'marvel' ? 1.18 : 1), 1.9);
+      if (img) {
+        drawRoundedPanel(ctx, { x: 112, y: 130, w: 394, h: 574, radius: 34, fill: 'rgba(255,255,255,0.13)', stroke: 'rgba(255,211,92,0.36)', lineWidth: 3 });
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(126, 144, 366, 546, 26);
+        ctx.clip();
+        ctx.drawImage(img, 126, 144, 366, 546);
+        ctx.restore();
+      }
+      ctx.fillStyle = '#7dd3fc';
+      ctx.font = `900 ${Math.round(28 * scale)}px ${exportFontFamily}`;
+      ctx.fillText('MCU DETAILS CARD', 550, 164);
       ctx.fillStyle = '#fff';
-      ctx.font = `800 ${Math.round(62 * scale)}px ${exportFontFamily}`;
-      ctx.fillText(item.title, 430, 145, 900);
-      ctx.font = `600 ${Math.round(34 * scale)}px ${exportFontFamily}`;
-      ctx.fillStyle = '#9dc6ff';
-      ctx.fillText(`${item.year} • Phase ${item.phase} • ${TYPE_META[item.type]?.label || item.type}`, 430, 195, 900);
-      drawPremiumStars(ctx, { x: 430, y: 252, size: Math.round(34 * scale), rating10: ratingNum, active: '#ffd35c' });
-      ctx.fillText(`${ratingNum ? ratingNum.toFixed(1) : '—'}/10`, 430, 304, 900);
+      ctx.font = `900 ${Math.round(60 * scale)}px ${exportFontFamily}`;
+      drawWrappedText(ctx, item.title, 550, 244, 700, Math.round(68 * scale), 3);
+      ctx.font = `750 ${Math.round(30 * scale)}px ${exportFontFamily}`;
+      ctx.fillStyle = '#bfdbfe';
+      ctx.fillText(`${item.year} • Phase ${item.phase} • ${TYPE_META[item.type]?.label || item.type}`, 550, 468, 700);
+      drawPremiumStars(ctx, { x: 550, y: 550, size: Math.round(42 * scale), rating10: ratingNum, active: '#ffd35c', fontFamily: exportFontFamily });
+      ctx.fillStyle = '#ffd35c';
+      ctx.font = `900 ${Math.round(42 * scale)}px ${exportFontFamily}`;
+      ctx.fillText(`${ratingNum ? ratingNum.toFixed(1) : '—'}/10`, 550, 626, 700);
+      drawRoundedPanel(ctx, { x: 112, y: 778, w: 1176, h: 530, radius: 36, fill: 'rgba(255,255,255,0.085)', stroke: 'rgba(255,255,255,0.16)' });
+      ctx.fillStyle = '#7dd3fc';
+      ctx.font = `900 ${Math.round(28 * scale)}px ${exportFontFamily}`;
+      ctx.fillText('STORY BRIEF', 150, 858);
+      ctx.fillStyle = '#edf6ff';
+      ctx.font = `650 ${Math.round(34 * scale)}px ${exportFontFamily}`;
+      drawWrappedText(ctx, description, 150, 924, 1100, Math.round(48 * scale), 7);
+      drawRoundedPanel(ctx, { x: 112, y: 1350, w: 1176, h: 374, radius: 36, fill: 'rgba(255,255,255,0.07)', stroke: 'rgba(255,255,255,0.14)' });
+      ctx.fillStyle = '#f0abfc';
+      ctx.font = `900 ${Math.round(26 * scale)}px ${exportFontFamily}`;
+      ctx.fillText('WATCH INTEL', 150, 1424);
       ctx.fillStyle = '#d3ddf6';
-      ctx.font = `600 ${Math.round(30 * scale)}px ${exportFontFamily}`;
-      ctx.fillText('Description', 70, 660);
-      drawWrappedText(ctx, description, 70, 710, 1260, Math.round(44 * scale), 8);
-      ctx.fillText(`Release: ${formatReleaseDate(info.date, item.year, info.label, status)}`, 70, 1118);
-      ctx.fillText(`Prerequisite: ${item.prereq}`, 70, 1170, 1260);
+      ctx.font = `700 ${Math.round(28 * scale)}px ${exportFontFamily}`;
+      ctx.fillText(`Release: ${formatReleaseDate(info.date, item.year, info.label, status)}`, 150, 1494, 1080);
+      drawWrappedText(ctx, `Prerequisite: ${item.prereq}`, 150, 1552, 1080, Math.round(40 * scale), 2);
       const cast = detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[item.title] || ['Cast data coming soon']).join(', ');
-      ctx.fillText('Cast', 70, 1215);
-      drawWrappedText(ctx, cast, 70, 1260, 1260, Math.round(38 * scale), 6);
+      ctx.fillStyle = '#7dd3fc';
+      ctx.fillText('Cast', 150, 1658);
+      ctx.fillStyle = '#d3ddf6';
+      drawWrappedText(ctx, cast, 250, 1658, 980, Math.round(38 * scale), 3);
+      ctx.fillStyle = 'rgba(255,255,255,0.48)';
+      ctx.font = `800 24px ${exportFontFamily}`;
+      ctx.fillText('Made with MCU Viewing Order', 112, 1858);
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
       if (Capacitor.isNativePlatform()) {
         const base64 = await blobToBase64(blob);
@@ -2009,8 +2152,11 @@ export default function MCUViewer() {
   useEffect(() => {
     const fetchDetail = async () => {
       if (!detailItem) return;
+      const requestId = detailRequestRef.current + 1;
+      detailRequestRef.current = requestId;
       setDetailLoading(true);
       setDetailData(null);
+      setDetailPosterFailed(false);
       setDetailPlotState({ active: 'primary', primary: detailItem.desc, secondary: '', loadingSecondary: false, secondaryProvider: 'OMDb' });
       const fallback = { Plot: metaCache[detailItem.id]?.plot || detailItem.desc, Year: String(detailItem.year), Released: metaCache[detailItem.id]?.released || '', Actors: metaCache[detailItem.id]?.cast || '', imdbRating: metaCache[detailItem.id]?.rating || 'N/A' };
 
@@ -2019,6 +2165,8 @@ export default function MCUViewer() {
           fetchTmdbPoster(detailItem),
           fetchTmdbDetail(detailItem),
         ]);
+
+        if (detailRequestRef.current !== requestId) return;
 
         if (tmdbPoster) {
           setPosterCache(prev => ({ ...prev, [detailItem.id]: tmdbPoster }));
@@ -2039,9 +2187,10 @@ export default function MCUViewer() {
           }
         }));
       } catch {
+        if (detailRequestRef.current !== requestId) return;
         setDetailData(normalizeDetailData({ item: detailItem, fallback }));
       } finally {
-        setDetailLoading(false);
+        if (detailRequestRef.current === requestId) setDetailLoading(false);
       }
     };
     fetchDetail();
@@ -2365,6 +2514,8 @@ export default function MCUViewer() {
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
         .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.52);backdrop-filter:blur(6px);z-index:240;display:grid;place-items:center;padding:20px}
         .detail-card{width:min(1080px,94vw);max-height:92vh;overflow:auto;background:linear-gradient(145deg, rgba(17,22,44,0.62), rgba(12,16,34,0.5));backdrop-filter:blur(18px) saturate(130%);-webkit-backdrop-filter:blur(18px) saturate(130%);border:1px solid rgba(255,255,255,0.14);border-radius:14px;padding:18px;box-shadow:${darkMode ? '0 22px 60px rgba(0,0,0,0.56)' : '0 18px 44px rgba(0,0,0,0.14)'}}
+        .detail-export-shell{width:min(920px,94vw);padding:18px;background:radial-gradient(circle at 18% 16%, rgba(125,211,252,0.18), transparent 30%),radial-gradient(circle at 88% 8%, rgba(240,171,252,0.16), transparent 34%),linear-gradient(145deg, rgba(6,17,31,0.92), rgba(17,26,56,0.88) 54%, rgba(53,16,59,0.86)) !important;box-shadow:0 28px 80px rgba(0,0,0,0.52), inset 0 1px 0 rgba(255,255,255,0.08)}
+        .detail-export-grid{display:grid;grid-template-columns:minmax(176px,260px) minmax(0,1fr);gap:18px;align-items:start}.detail-poster-frame{border-radius:22px;overflow:hidden;min-height:388px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);box-shadow:0 22px 42px rgba(0,0,0,0.38)}.detail-poster-frame img{display:block;width:100%;height:100%;min-height:388px;max-height:420px;object-fit:cover}.detail-export-content{display:grid;gap:10px;min-width:0}.detail-export-kicker{font-family:var(--font-marvel-ui);font-size:12px;letter-spacing:2px;font-weight:900;color:#7dd3fc}.detail-export-title{font-size:clamp(28px,4vw,44px);line-height:.98;margin:0;color:#fff;text-wrap:balance}.detail-export-meta{display:flex;gap:7px;flex-wrap:wrap}.detail-export-meta span{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:5px 8px;border-radius:999px;background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.15);color:#dbeafe}.detail-export-loading{font-size:12px;color:var(--theme-text-muted)}.detail-export-panel{border-radius:18px;padding:13px 14px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);box-shadow:inset 0 1px 0 rgba(255,255,255,0.06)}.detail-export-panel-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;font-family:var(--font-marvel-ui);font-size:12px;letter-spacing:1.8px;font-weight:900;color:#7dd3fc}.detail-export-panel p{font-size:14px;line-height:1.48;margin:0;color:#edf6ff;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}.detail-intel-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}.detail-intel-list div{display:grid;gap:2px;min-width:0}.detail-intel-list strong{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:#f0abfc}.detail-intel-list span{font-size:12px;line-height:1.35;color:#d3ddf6;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.detail-intel-list div:last-child{grid-column:1 / -1}.detail-export-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}.detail-export-actions .fpill{padding:8px 11px !important;font-size:12px !important;background:rgba(255,255,255,0.07) !important;border-color:rgba(255,255,255,0.15) !important}
 
         .detail-layout{grid-template-columns:minmax(220px,34%) minmax(0,1fr)}
         .detail-pill{background:rgba(255,255,255,0.08) !important;border-color:rgba(255,255,255,0.18) !important;transform:none !important;box-shadow:none !important}
@@ -2400,6 +2551,7 @@ export default function MCUViewer() {
           main > div{padding-bottom:154px !important}
           .poster{width:44px;height:64px}
           .detail-layout{grid-template-columns:minmax(0,1fr) !important;gap:14px !important}
+          .detail-export-grid{grid-template-columns:minmax(0,1fr) !important}.detail-export-shell{padding:12px !important}.detail-poster-frame{min-height:auto;max-width:230px;margin:0 auto}.detail-poster-frame img{min-height:auto;max-height:330px}.detail-intel-list{grid-template-columns:minmax(0,1fr) !important}.detail-export-actions{justify-content:stretch}.detail-export-actions .fpill{flex:1 1 auto;justify-content:center}
           .detail-layout img,.detail-fallback-poster{max-width:280px;margin:0 auto;max-height:360px}
           .detail-layout > div:last-child{width:100%}
           .filter-row-actions{margin-left:0 !important;flex-wrap:wrap;justify-content:flex-end;gap:6px !important}
@@ -2600,7 +2752,7 @@ export default function MCUViewer() {
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase', marginTop: 4 }}>Export Card Controls</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
               {[{ id: 'inter', label: 'Inter' }, { id: 'grotesk', label: 'Grotesk' }, { id: 'manrope', label: 'Manrope' }, { id: 'marvel', label: 'Marvel' }].map(opt => (
-                <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: opt.id === 'marvel' ? 'var(--font-marvel-display)' : opt.label, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
+                <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: EXPORT_FONT_PREVIEW_FAMILY[opt.id] || EXPORT_FONT_PREVIEW_FAMILY.inter, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
               ))}
             </div>
             <label style={{ display: 'grid', gap: 4, padding: '4px 0' }}>
@@ -2654,7 +2806,7 @@ export default function MCUViewer() {
                   loading={idx < 8 ? 'eager' : 'lazy'}
                   decoding="async"
                   onDragStart={(e) => e.preventDefault()}
-                  onClick={() => { if (heroItem) setDetailItem(heroItem); }}
+                  onClick={() => { if (heroItem) openDetail(heroItem); }}
                   style={{
                     height: isDesktopViewport ? 440 : 320,
                     width: isDesktopViewport ? 292 : 218,
@@ -2697,7 +2849,7 @@ export default function MCUViewer() {
               <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             {renderPhaseSelector()}
-            <button className="glass-grad" onClick={() => nextUnwatched && setDetailItem(nextUnwatched)} style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 360, background: 'transparent', cursor: nextUnwatched ? 'pointer' : 'default' }}>
+            <button className="glass-grad" onClick={() => nextUnwatched && openDetail(nextUnwatched)} style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 360, background: 'transparent', cursor: nextUnwatched ? 'pointer' : 'default' }}>
               <span style={{ fontSize: 10, letterSpacing: 1.6, color: T.textMuted, textTransform: 'uppercase' }}>Continue</span>
               <span style={{ fontSize: 12, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</span>
             </button>
@@ -2865,7 +3017,7 @@ export default function MCUViewer() {
                 <div key={'up-'+item.id} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
                   <div style={{ fontSize: 11, color: 'var(--theme-warning)' }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
                   <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
-                  <button className='title-btn' onClick={() => setDetailItem(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
+                  <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
                 </div>
               ))}
               <div style={{ margin: '16px 0 12px', color: T.textMuted }}>TBA / release window only</div>
@@ -2873,7 +3025,7 @@ export default function MCUViewer() {
                 <div key={'tba-'+item.id} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
                   <div style={{ fontSize: 11, color: T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
                   <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
-                  <button className='title-btn' onClick={() => setDetailItem(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
+                  <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
                 </div>
               ))}
               <div style={{ margin: '16px 0 12px', color: T.textMuted }}>Already Released</div>
@@ -2881,7 +3033,7 @@ export default function MCUViewer() {
                 <div key={'old-'+item.id} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
                   <div style={{ fontSize: 11, color: T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
                   <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
-                  <button className='title-btn' onClick={() => setDetailItem(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
+                  <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
                 </div>
               ))}
             </section>
@@ -2996,90 +3148,80 @@ export default function MCUViewer() {
       {/* ━━ DETAIL MODAL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       {detailItem && (
         <div className="detail-backdrop" onClick={() => setDetailItem(null)} role="dialog" aria-label="Movie details">
-          <div className="detail-card glass-panel" onClick={(e) => e.stopPropagation()} style={{ background: 'color-mix(in srgb, var(--theme-surface) 68%, transparent)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border))' }}>
-            <div className="detail-layout" style={{ display: 'grid', gridTemplateColumns: 'minmax(220px,34%) minmax(0,1fr)', gap: 18, alignItems: 'start', width: '100%' }}>
-              {detailPosterFailed ? (
-                <div className="detail-fallback-poster" style={{ width: '100%', minHeight: 340, borderRadius: 10, border: `1px solid ${T.surfaceBorder}` }}>
-                  <span>{detailItem.title}</span>
-                </div>
-              ) : (
-                <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : posterSrc(detailItem)} onError={() => setDetailPosterFailed(true)} alt={`${detailItem.title} poster`} style={{ width: '100%', borderRadius: 10, border: `1px solid ${T.surfaceBorder}`, maxHeight: 520, objectFit: 'cover' }} />
-              )}
-              <div>
-                <h2 style={{ fontSize: 32, marginBottom: 8 }}>{detailItem.title}</h2>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-                  <span className="fpill detail-pill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>{detailData?.Year || detailItem.year}</span>
-                  <span className="fpill detail-pill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>{TYPE_META[detailItem.type]?.label}</span>
-                  <span className="fpill detail-pill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>Phase {detailItem.phase}</span>
-                  {(detailData?.imdbRating && detailData.imdbRating !== 'N/A') && <span className="fpill detail-pill" style={{ padding: '3px 8px', fontSize: 11, pointerEvents: 'none' }}>★ {detailData.imdbRating}</span>}
-                </div>
-                {detailLoading && <div style={{ fontSize: 13, color: T.textMuted, marginBottom: 8 }}>Loading metadata…</div>}
-                {!detailLoading && !detailData && <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 8 }}>Showing local data.</div>}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <span style={{ fontSize: 11, color: T.textMuted }}>Description</span>
-                  <button
-                    className="fpill glass-panel detail-btn"
-                    style={{ padding: '4px 10px', fontSize: 10, borderRadius: 999 }}
-                    onClick={async () => {
-                      if (detailPlotState.active === 'primary') {
-                        if (!detailPlotState.secondary) await fetchSecondaryPlotForDetail();
-                        setDetailPlotState(prev => ({ ...prev, active: 'secondary' }));
-                      } else {
-                        setDetailPlotState(prev => ({ ...prev, active: 'primary' }));
-                      }
-                    }}
-                  >
-                    <SwitchIcon size={11} /> {detailPlotState.active === 'primary' ? 'TMDB' : (detailPlotState.loadingSecondary ? 'Loading…' : 'OMDb')}
-                  </button>
-                </div>
-                <p style={{ fontSize: 15, lineHeight: 1.7, marginBottom: 12, filter: spoilerSafe ? 'blur(5px)' : 'none', transition: 'filter 0.18s ease' }}>
-                  {detailPlotState.active === 'secondary'
-                    ? (detailPlotState.secondary || detailItem.desc)
-                    : (detailPlotState.primary || detailData?.Plot || detailItem.desc)}
-                </p>
-                <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Prerequisite:</strong> {detailItem.prereq}</div>
-                <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Release:</strong> {formatReleaseDate(releaseInfoFor(detailItem).date, detailItem.year, releaseInfoFor(detailItem).label, releaseStatusFor(detailItem))}</div>
-                <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Status:</strong> {STATUS_META[detailItem.status]?.label}</div>
-                <div style={{ fontSize: 14, marginBottom: 8 }}><strong>Director:</strong> {detailData?.Director && detailData.Director !== 'N/A' ? detailData.Director : 'Director data coming soon'}</div>
+          <div className="detail-card glass-panel detail-export-shell" onClick={(e) => e.stopPropagation()} style={{ border: '1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border))' }}>
+            <div className="detail-export-grid">
+              <div className="detail-poster-frame">
+                {detailPosterFailed ? (
+                  <div className="detail-fallback-poster" style={{ width: '100%', height: '100%' }}>
+                    <span>{detailItem.title}</span>
+                  </div>
+                ) : (
+                  <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : posterSrc(detailItem)} onError={() => setDetailPosterFailed(true)} alt={`${detailItem.title} poster`} />
+                )}
+              </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <span style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.1, fontFamily: 'var(--font-marvel-ui)' }}>SPOILER SAFE</span>
-                  <button className="fpill glass-panel" onClick={() => setSpoilerSafeMode(v => !v)}
-                    style={{ padding: '6px 10px', fontSize: 11, background: spoilerSafe ? 'rgba(232,184,75,0.18)' : 'rgba(255,255,255,0.06)', borderColor: spoilerSafe ? 'rgba(232,184,75,0.45)' : 'rgba(255,255,255,0.16)' }}>
-                    {spoilerSafe ? 'On · Tap to reveal' : 'Off · Tap to hide'}
-                  </button>
+              <div className="detail-export-content">
+                <div className="detail-export-kicker">MCU DETAILS CARD</div>
+                <h2 className="detail-export-title">{detailItem.title}</h2>
+                <div className="detail-export-meta">
+                  <span>{detailData?.Year || detailItem.year}</span>
+                  <span>Phase {detailItem.phase}</span>
+                  <span>{TYPE_META[detailItem.type]?.label}</span>
+                  {(detailData?.imdbRating && detailData.imdbRating !== 'N/A') && <span>★ {detailData.imdbRating}/10</span>}
                 </div>
+                {detailLoading && <div className="detail-export-loading">Loading metadata…</div>}
+                {!detailLoading && !detailData && <div className="detail-export-loading">Showing local data.</div>}
 
-                <div className="detail-btn-group">
+                <section className="detail-export-panel story">
+                  <div className="detail-export-panel-head">
+                    <span>STORY BRIEF</span>
+                    <button
+                      className="fpill glass-panel detail-btn"
+                      style={{ padding: '4px 10px', fontSize: 10, borderRadius: 999 }}
+                      onClick={async () => {
+                        if (detailPlotState.active === 'primary') {
+                          if (!detailPlotState.secondary) await fetchSecondaryPlotForDetail();
+                          setDetailPlotState(prev => ({ ...prev, active: 'secondary' }));
+                        } else {
+                          setDetailPlotState(prev => ({ ...prev, active: 'primary' }));
+                        }
+                      }}
+                    >
+                      <SwitchIcon size={11} /> {detailPlotState.active === 'primary' ? 'TMDB' : (detailPlotState.loadingSecondary ? 'Loading…' : 'OMDb')}
+                    </button>
+                  </div>
+                  <p style={{ filter: spoilerSafe ? 'blur(5px)' : 'none', transition: 'filter 0.18s ease' }}>
+                    {detailPlotState.active === 'secondary'
+                      ? (detailPlotState.secondary || detailItem.desc)
+                      : (detailPlotState.primary || detailData?.Plot || detailItem.desc)}
+                  </p>
+                </section>
+
+                <section className="detail-export-panel intel">
+                  <div className="detail-export-panel-head"><span>WATCH INTEL</span></div>
+                  <div className="detail-intel-list">
+                    <div><strong>Release</strong><span>{formatReleaseDate(releaseInfoFor(detailItem).date, detailItem.year, releaseInfoFor(detailItem).label, releaseStatusFor(detailItem))}</span></div>
+                    <div><strong>Prerequisite</strong><span>{detailItem.prereq}</span></div>
+                    <div><strong>Status</strong><span>{STATUS_META[detailItem.status]?.label}</span></div>
+                    <div><strong>Director</strong><span>{detailData?.Director && detailData.Director !== 'N/A' ? detailData.Director : 'Director data coming soon'}</span></div>
+                    <div><strong>Cast</strong><span>{detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</span></div>
+                  </div>
+                </section>
+
+                <div className="detail-export-actions">
+                  <button className="fpill glass-panel" onClick={() => setSpoilerSafeMode(v => !v)} style={{ background: spoilerSafe ? 'rgba(232,184,75,0.18)' : 'rgba(255,255,255,0.06)', borderColor: spoilerSafe ? 'rgba(232,184,75,0.45)' : 'rgba(255,255,255,0.16)' }}>
+                    Spoiler Safe: {spoilerSafe ? 'On' : 'Off'}
+                  </button>
                   <button
-                    className={`fpill glass-panel detail-btn ${myLikes[detailItem.id] ? 'is-active' : ''}`}
+                    className={`fpill glass-panel ${myLikes[detailItem.id] ? 'is-active' : ''}`}
                     onClick={() => setMyLikes(prev => ({ ...prev, [detailItem.id]: !prev[detailItem.id] }))}
                   >
                     <Heart size={12}/> {myLikes[detailItem.id] ? 'Liked' : 'Like'}
                   </button>
-                  <button className="fpill glass-panel detail-btn" style={{ fontSize: 14, fontWeight: 700 }} onClick={() => exportPosterForItem(detailItem)}><Download size={14}/> Export Details Card</button>
+                  <button className="fpill glass-panel" onClick={() => exportPosterForItem(detailItem)}><Download size={14}/> Export Details Card</button>
+                  <button className="fpill glass-panel" onClick={() => setDetailItem(null)}>Close</button>
                 </div>
-                <div className="glass-panel" style={{ marginBottom: 10, padding: 10, borderRadius: 10, display: 'grid', gap: 8 }}>
-                  <div style={{ fontSize: 11, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase' }}>Export Card Settings</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
-                    {[{ id: 'inter', label: 'Inter' }, { id: 'grotesk', label: 'Grotesk' }, { id: 'manrope', label: 'Manrope' }, { id: 'marvel', label: 'Marvel' }].map(opt => (
-                      <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: opt.id === 'marvel' ? 'var(--font-marvel-display)' : opt.label, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
-                    ))}
-                  </div>
-                  <label style={{ display: 'grid', gap: 4 }}>
-                    <span style={{ fontSize: 11, color: T.textMuted }}>Export text size: {Math.round(exportTextScale * 100)}%</span>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr) auto', gap: 8, alignItems: 'center' }}>
-                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.max(0.9, Number((v - 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>−</button>
-                <input type='range' min={90} max={240} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
-                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.min(2.4, Number((v + 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>+</button>
               </div>
-                  </label>
-                </div>
-                <div style={{ fontSize: 14 }}><strong>Cast:</strong> {detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</div>
-              </div>
-            </div>
-            <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end' }}>
-              <button className="fpill" onClick={() => setDetailItem(null)}>Close</button>
             </div>
           </div>
         </div>
@@ -3096,8 +3238,8 @@ export default function MCUViewer() {
               <button className="fpill" onClick={() => setAnalyticsOpen(false)}>Close</button>
             </div>
             <div className="ui-btn-group" style={{ position: 'sticky', top: 0, zIndex: 5, marginBottom: 10, paddingBottom: 8, background: 'var(--theme-surface)' }}>
-              {['overview', 'reviews', 'export'].map(tab => (
-                <button key={tab} className="fpill" onClick={() => setAnalyticsTab(tab)} style={{ borderColor: analyticsTab === tab ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{tab[0].toUpperCase() + tab.slice(1)}</button>
+              {[{ id: 'overview', label: 'Overview' }, { id: 'reviews', label: 'Reviews' }, { id: 'export', label: 'Quick Export' }, { id: 'advanced-export', label: 'Advanced Export' }].map(tab => (
+                <button key={tab.id} className="fpill" onClick={() => setAnalyticsTab(tab.id)} style={{ borderColor: analyticsTab === tab.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{tab.label}</button>
               ))}
             </div>
             {analyticsTab === 'overview' && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 10, marginBottom: 14 }}>
@@ -3117,42 +3259,90 @@ export default function MCUViewer() {
               </div>
             </div>}
             {analyticsTab === 'export' && <>
-            <div className="ui-btn-group ui-sticky-mobile-footer" style={{ marginBottom: 12, position: 'sticky', bottom: 0, zIndex: 4, background: 'var(--theme-surface)', padding: '8px 0' }}>
-              <button className="fpill ui-touch-btn" onClick={shareAnalysisCard}><Upload size={14}/>Share Analysis Card</button>
-              <button className="fpill ui-touch-btn" onClick={shareUnifiedCard}><Upload size={14}/>Create Unified Export Card</button>
-              <button className="fpill ui-touch-btn" onClick={() => setExportComposerOpen(v => !v)}><SlidersH size={14}/>{exportComposerOpen ? 'Hide' : 'Open'} Composer</button>
+            <div className="glass-panel ui-panel" style={{ marginBottom: 12, padding: 14, borderRadius: 14, display: 'grid', gap: 12 }}>
+              <div>
+                <div className="ui-section-header" style={{ marginBottom: 4 }}>Quick Export</div>
+                <div style={{ color: T.textMuted, fontSize: 12 }}>One-tap share cards. Open Advanced Export for card type, themes, preview, and analysis sections.</div>
+              </div>
+              <div className="ui-btn-group ui-sticky-mobile-footer" style={{ marginBottom: 0, position: 'sticky', bottom: 0, zIndex: 4, background: 'var(--theme-surface)', padding: '8px 0' }}>
+                <button className="fpill ui-touch-btn" onClick={shareAnalysisCard}><Upload size={14}/>Share Analysis Card</button>
+                <button className="fpill ui-touch-btn" onClick={shareUnifiedCard}><Upload size={14}/>Share Recap Card</button>
+                <span style={{ color: T.textMuted, fontSize: 12, alignSelf: 'center' }}>Progress + recent watched history in one share image.</span>
+                <button className="fpill ui-touch-btn" onClick={() => { setAnalyticsTab('advanced-export'); setExportComposerOpen(true); }}><SlidersH size={14}/>Open Advanced Export</button>
+              </div>
             </div>
-            <div className="glass-panel ui-panel ui-control-row" style={{ marginBottom: 10, padding: 10 }}>
-              <div className="ui-section-header">Export Card Settings</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
-                {[{ id: 'inter', label: 'Inter' }, { id: 'grotesk', label: 'Grotesk' }, { id: 'manrope', label: 'Manrope' }, { id: 'marvel', label: 'Marvel' }].map(opt => (
-                  <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: opt.id === 'marvel' ? 'var(--font-marvel-display)' : opt.label, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
-                ))}
+            </>}
+            {analyticsTab === 'advanced-export' && <>
+            <div className="glass-panel ui-panel ui-control-row export-card-studio" style={{ marginBottom: 10, padding: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                <div>
+                  <div className="ui-section-header" style={{ marginBottom: 2 }}>Advanced Export Studio</div>
+                  <div style={{ color: T.textMuted, fontSize: 12 }}>Focused composer for card type, theme identity, typography, analysis sections, and live preview.</div>
+                </div>
+                <button className="fpill ui-touch-btn" onClick={shareAdvancedExportCard}><Upload size={14}/>Share Selected Card</button>
+              </div>
+              <div style={{ display: 'grid', gap: 6 }}>
+                <div style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.4, textTransform: 'uppercase' }}>Card type</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 8 }}>
+                  {[{ id: 'analysis', label: 'Analysis', desc: 'Stats + phases' }, { id: 'review', label: 'Detail', desc: 'Featured title' }, { id: 'unified', label: 'Recap', desc: 'Progress + history' }].map(opt => (
+                    <button key={opt.id} className="fpill" onClick={() => setExportSettings(prev => ({ ...prev, type: opt.id }))} style={{ justifyContent: 'center', flexDirection: 'column', gap: 2, minHeight: 54, borderColor: exportSettings.type === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>
+                      <strong style={{ fontSize: 12 }}>{opt.label}</strong>
+                      <span style={{ fontSize: 10, color: T.textMuted }}>{opt.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: 'grid', gap: 6 }}>
+                <div style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.4, textTransform: 'uppercase' }}>Theme identity</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 8 }}>
+                  {EXPORT_THEME_OPTIONS.map(opt => (
+                    <button key={opt.id} className="fpill" onClick={() => setExportSettings(prev => ({ ...prev, theme: opt.id }))} style={{ justifyContent: 'center', flexDirection: 'column', gap: 2, minHeight: 50, borderColor: exportSettings.theme === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>
+                      <strong style={{ fontSize: 12 }}>{opt.label}</strong>
+                      <span style={{ fontSize: 10, color: T.textMuted }}>{opt.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: 'grid', gap: 6 }}>
+                <div style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.4, textTransform: 'uppercase' }}>Font</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
+                  {[{ id: 'inter', label: 'Inter' }, { id: 'grotesk', label: 'Grotesk' }, { id: 'manrope', label: 'Manrope' }, { id: 'marvel', label: 'Marvel' }].map(opt => (
+                    <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: EXPORT_FONT_PREVIEW_FAMILY[opt.id] || EXPORT_FONT_PREVIEW_FAMILY.inter, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
+                  ))}
+                </div>
               </div>
               <label style={{ display: 'grid', gap: 4 }}>
-                <span style={{ fontSize: 11, color: T.textMuted }}>Export text size: {Math.round(exportTextScale * 100)}%</span>
+                <span style={{ fontSize: 11, color: T.textMuted }}>Text size: {Math.round(exportTextScale * 100)}%</span>
                 <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr) auto', gap: 8, alignItems: 'center' }}>
-                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.max(0.9, Number((v - 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>−</button>
-                <input type='range' min={90} max={240} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
-                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.min(2.4, Number((v + 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>+</button>
-              </div>
+                  <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.max(0.9, Number((v - 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>−</button>
+                  <input type='range' min={90} max={200} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
+                  <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.min(2, Number((v + 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>+</button>
+                </div>
               </label>
               <label style={{ display: 'grid', gap: 4 }}>
-                <span style={{ fontSize: 11, color: T.textMuted }}>BG opacity: {exportSettings.bgOpacity}%</span>
-                <input type='range' min={0} max={100} step={1} value={exportSettings.bgOpacity} onChange={(e) => setExportSettings(prev => ({ ...prev, bgOpacity: Number(e.target.value) }))} />
+                <span style={{ fontSize: 11, color: T.textMuted }}>Poster atmosphere: {exportSettings.bgOpacity}%</span>
+                <input type='range' min={12} max={82} step={1} value={exportSettings.bgOpacity} onChange={(e) => setExportSettings(prev => ({ ...prev, bgOpacity: Number(e.target.value) }))} />
               </label>
+              <div style={{ display: 'grid', gap: 6 }}>
+                <div style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.4, textTransform: 'uppercase' }}>Included analysis sections</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 6 }}>
+                  {[{ id: 'completion', label: 'Completion %' }, { id: 'phaseBreakdown', label: 'Phase breakdown' }, { id: 'streak', label: 'Streak' }, { id: 'hours', label: 'Total hours' }, { id: 'recentMomentum', label: 'Recent momentum' }, { id: 'topRated', label: 'Top rated' }].map(opt => (
+                    <button key={opt.id} className="fpill" onClick={() => setExportSettings(prev => ({ ...prev, sections: { ...prev.sections, [opt.id]: !prev.sections?.[opt.id] } }))} style={{ justifyContent: 'center', borderColor: exportSettings.sections?.[opt.id] !== false ? 'var(--theme-accent)' : 'var(--theme-border)', opacity: exportSettings.type === 'analysis' ? 1 : 0.58 }}>{exportSettings.sections?.[opt.id] !== false ? '✓ ' : ''}{opt.label}</button>
+                  ))}
+                </div>
+              </div>
             </div>
-            {exportComposerOpen && <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'minmax(0,1fr)', maxHeight: '50vh', overflow: 'auto' }}>
+            <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'minmax(0,1fr)', maxHeight: '55vh', overflow: 'auto' }}>
               <div className="glass-panel" style={{ padding: 10, borderRadius: 10 }}>
                 {exportPreview.loading ? <div style={{ color: T.textMuted }}>Generating preview…</div> : exportPreview.url ? <img src={exportPreview.url} alt="export preview" style={{ width: '100%', borderRadius: 10 }} /> : <div style={{ color: T.textMuted }}>{exportPreview.error || 'Preview unavailable'}</div>}
               </div>
-            </div>}
+            </div>
             </>}
             <div className="glass-panel ui-panel ui-control-row" style={{ marginBottom: 10, padding: 10 }}>
               <div className="ui-section-header">Review Card Theme</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 6 }}>
-                {[{id:'midnight',label:'Midnight'},{id:'stark',label:'Stark'},{id:'vibranium',label:'Vibranium'}].map(opt => (
-                  <button key={opt.id} className="fpill" onClick={() => setReviewCardTheme(opt.id)} style={{ justifyContent:'center', padding:'6px 8px', fontSize:11, borderColor: reviewCardTheme === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{opt.label}</button>
+                {EXPORT_THEME_OPTIONS.map(opt => (
+                  <button key={opt.id} className="fpill" onClick={() => setReviewCardTheme(opt.id)} style={{ justifyContent:'center', flexDirection: 'column', gap: 2, padding:'6px 8px', fontSize:11, borderColor: reviewCardTheme === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}><span>{opt.label}</span><span style={{ fontSize: 9, color: T.textMuted }}>{opt.desc}</span></button>
                 ))}
               </div>
               {reviewShareStatus.message && <div style={{ fontSize: 12, color: reviewShareStatus.type === 'error' ? 'var(--theme-danger)' : 'var(--theme-success)' }}>{reviewShareStatus.message}</div>}
