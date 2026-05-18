@@ -1359,10 +1359,12 @@ export default function MCUViewer() {
   }, [heroIndex, activeHeroSrc, visibleHeroPosters, performanceMode]);
 
   const handleHeroWheel = useCallback((e) => {
-    const horizontalDelta = Math.abs(e.deltaX) >= Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    const horizontalIntent = Math.abs(e.deltaX) > Math.abs(e.deltaY) || e.shiftKey;
+    if (!horizontalIntent) return;
+    const horizontalDelta = Math.abs(e.deltaX) > 0 ? e.deltaX : e.deltaY;
     if (!horizontalDelta) return;
     pauseHeroAutoSlide(2600);
-    e.currentTarget.scrollBy({ left: horizontalDelta * 2.6, behavior: 'auto' });
+    e.currentTarget.scrollBy({ left: horizontalDelta * 2.4, behavior: 'auto' });
     e.preventDefault();
   }, [pauseHeroAutoSlide]);
 
@@ -2691,8 +2693,8 @@ export default function MCUViewer() {
                     height: isDesktopViewport ? 440 : 320,
                     width: isDesktopViewport ? 292 : 218,
                     objectFit: 'cover',
-                    borderRadius: 16,
-                    border: '0',
+                    borderRadius: isDesktopViewport ? 14 : 12,
+                    border: '1px solid color-mix(in srgb, var(--theme-border) 86%, transparent)',
                     boxShadow: 'none',
                     opacity: isActive ? 1 : 0.76,
                     transform: isActive ? 'translate3d(0,-6px,0) scale(1.04)' : 'translate3d(0,0,0) scale(0.96)',
