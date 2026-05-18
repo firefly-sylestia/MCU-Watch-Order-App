@@ -2563,7 +2563,7 @@ export default function MCUViewer() {
         .hero-backdrop-image.is-exiting{opacity:0;transform:scale(1.004);filter:blur(1.2px) saturate(1.04) contrast(1.01) brightness(0.96)}
         @starting-style{.hero-backdrop-image:not(.is-exiting){opacity:0;transform:scale(1.01);filter:blur(1.2px) saturate(1.02) contrast(1.01) brightness(0.95)}}
         .phase-rows-full{display:block;position:relative}
-        .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 220ms var(--ease-out),border-color 220ms var(--ease-out),transform 220ms var(--ease-out),box-shadow 260ms var(--ease-out);display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(116px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:4px solid transparent;border:1px solid color-mix(in srgb,var(--theme-border) 82%, transparent);min-height:var(--row-min-h,96px);border-radius:20px;overflow:hidden;background:linear-gradient(135deg,color-mix(in srgb,var(--theme-surface) 92%, transparent),color-mix(in srgb,var(--theme-bg) 74%, transparent));backdrop-filter:none;box-shadow:0 10px 26px rgba(0,0,0,.22)}
+        .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 240ms var(--ease-out),border-color 240ms var(--ease-out),transform 240ms var(--ease-out),box-shadow 300ms var(--ease-out);display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(116px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:3px solid transparent;border:1px solid color-mix(in srgb,var(--theme-accent) 14%, var(--theme-border));min-height:var(--row-min-h,96px);border-radius:24px;overflow:hidden;background:linear-gradient(136deg,color-mix(in srgb,var(--theme-surface) 72%, transparent),color-mix(in srgb,var(--theme-bg) 78%, transparent));backdrop-filter:blur(7px) saturate(136%);-webkit-backdrop-filter:blur(7px) saturate(136%);box-shadow:0 18px 40px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.05)}
         .rrow:last-child{border-bottom:none}
         .rrow > *{position:relative;z-index:1}
         .rrow:hover{border-left-color:color-mix(in srgb,var(--theme-accent) 65%, var(--phase-color,#c0392b));border-color:color-mix(in srgb,var(--theme-accent) 26%, var(--theme-border));transform:translateY(-2px)}
@@ -2618,7 +2618,7 @@ export default function MCUViewer() {
           .rrow{grid-template-columns:24px 44px minmax(0,1fr) !important;gap:8px;padding:14px 10px 14px 8px;min-height:96px}
           .rrow .row-actions{grid-column:2 / -1;flex-direction:row !important;align-items:center !important;justify-content:space-between !important;min-width:0 !important;width:100%;gap:8px}
           .calendar-row{grid-template-columns:minmax(74px,84px) 44px minmax(0,1fr) !important}
-          .floating-controls{display:none !important}.fab-primary{justify-content:center}
+          .floating-controls{display:flex !important;left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));align-items:stretch;gap:10px}.fab-primary{justify-content:center}
           .floating-mode-switch,.bottom-action-dock{width:100%;justify-content:center}
           .floating-mode-switch{overflow-x:auto;justify-content:flex-start}
           .floating-mode-switch button{padding:8px 10px !important;font-size:11px !important;letter-spacing:1px !important;white-space:nowrap;flex:0 0 auto}
@@ -2653,26 +2653,26 @@ export default function MCUViewer() {
         .stat-card-label { font-size: clamp(11px, 1.8vw, 14px) !important; }
         .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; color:var(--theme-text-muted) !important }
 
-        .sidebar-toggle-btn{position:fixed;top:calc(env(safe-area-inset-top, 0px) + var(--space-4));left:var(--space-4);z-index:calc(var(--z-modal) + 2);width:46px;height:46px;pointer-events:auto}
-        .sidebar-backdrop{position:fixed;inset:0;background:rgba(4,8,18,0.62);z-index:calc(var(--z-sidebar) + 1);pointer-events:auto}
-        .sidebar-menu{position:fixed;top:0;left:0;bottom:0;width:min(320px,84vw);padding:86px 14px 20px;background:var(--sidebar-bg);backdrop-filter:var(--sidebar-blur);-webkit-backdrop-filter:var(--sidebar-blur);border-right:1px solid var(--sidebar-border);transform:var(--sidebar-transform);transition:transform 0.22s cubic-bezier(.22,.9,.24,1);z-index:calc(var(--z-sidebar) + 2);overflow-y:auto;box-shadow:var(--sidebar-shadow);border-radius:16px}
+        .sidebar-toggle-btn{position:fixed;top:calc(env(safe-area-inset-top, 0px) + var(--space-4));left:var(--space-4);z-index:9997;width:50px;height:50px;pointer-events:auto;border-radius:16px;border:1px solid color-mix(in srgb,var(--theme-accent) 34%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 72%, transparent);backdrop-filter:blur(10px) saturate(150%);-webkit-backdrop-filter:blur(10px) saturate(150%)}
+        .sidebar-backdrop{position:fixed;inset:0;background:radial-gradient(circle at 20% 20%, rgba(79,70,229,0.26), transparent 42%),rgba(2,6,18,0.74);z-index:9995;pointer-events:auto;backdrop-filter:blur(6px)}
+        .sidebar-menu{position:fixed;top:0;left:0;bottom:0;width:min(344px,86vw);padding:90px 16px 24px;background:linear-gradient(170deg, color-mix(in srgb,var(--theme-surface) 82%, transparent), color-mix(in srgb,var(--theme-bg) 86%, transparent));backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%);border-right:1px solid color-mix(in srgb,var(--theme-accent) 24%, var(--theme-border));transform:var(--sidebar-transform);transition:transform 0.24s cubic-bezier(.22,.9,.24,1);z-index:9996;overflow-y:auto;box-shadow:0 24px 56px rgba(0,0,0,.45);border-radius:22px}
         .settings-menu-anchor{position:fixed;top:calc(env(safe-area-inset-top, 0px) + 16px);right:14px;z-index:940}
         .settings-menu{position:absolute;top:100%;right:0;z-index:50;margin-top:8px;min-width:320px;width:min(360px,calc(100vw - 28px));max-height:min(80vh,calc(100dvh - 92px));border-radius:var(--radius-md);border:1px solid color-mix(in srgb, var(--theme-accent) 35%, transparent);background:var(--settings-bg);backdrop-filter:var(--settings-blur);-webkit-backdrop-filter:var(--settings-blur);box-shadow:none;padding:10px;display:grid;gap:8px;overflow:auto;color:var(--theme-text);overscroll-behavior:contain}
         .settings-menu .fpill{min-width:0}
         .overlay-open .hero-backdrop-image{filter:saturate(1.04) contrast(1.01) brightness(.98);opacity:calc(var(--backdrop-opacity,0.9) * .55);transition-duration:180ms}
         .overlay-open .hero-backdrop-blend{opacity:.34}
         .overlay-open .dropdown-pop,.overlay-open .dropdown-pop-up{backdrop-filter:none;-webkit-backdrop-filter:none}
-        .floating-controls{position:fixed;right:max(var(--space-4), env(safe-area-inset-right));bottom:max(var(--space-4), env(safe-area-inset-bottom));z-index:var(--z-fab);display:flex;flex-direction:column;gap:var(--space-3);align-items:flex-end;pointer-events:none}
+        .floating-controls{position:fixed;right:max(var(--space-4), env(safe-area-inset-right));bottom:max(var(--space-4), env(safe-area-inset-bottom));z-index:9994;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}
         .floating-controls>*{pointer-events:auto}
-        .floating-mode-switch{display:flex;border-radius:999px;overflow:hidden;border:1px solid ${T.surfaceBorder};background:${darkMode ? 'rgba(10,14,28,0.93)' : 'rgba(255,255,255,0.95)'};box-shadow:none}
-        .bottom-action-dock{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+        .floating-mode-switch{display:flex;border-radius:20px;overflow:hidden;border:1px solid color-mix(in srgb,var(--theme-accent) 22%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 78%, transparent);backdrop-filter:blur(10px) saturate(145%);-webkit-backdrop-filter:blur(10px) saturate(145%);box-shadow:0 14px 38px rgba(0,0,0,.32)}
+        .bottom-action-dock{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:8px 10px;border-radius:20px;border:1px solid color-mix(in srgb,var(--theme-accent-alt) 20%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 80%, transparent);backdrop-filter:blur(10px) saturate(145%)}
         .header-brand{display:grid;gap:6px;padding:12px 16px 10px;border-radius:var(--radius-md);background:linear-gradient(180deg,rgba(8,10,20,.92),rgba(8,10,20,.72));border:1px solid color-mix(in srgb,var(--theme-border) 90%, rgba(255,255,255,0.12));box-shadow:var(--elevation-surface-1);max-width:max-content}
         .header-brand.compact{padding:8px 12px}
         .filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
         @media (min-width:1024px){.sidebar-menu{top:16px;left:16px;bottom:16px;width:300px;border-radius:var(--radius-lg)}.sidebar-toggle-btn{top:20px;left:20px}}
         .header-title-mcu{font-size:clamp(34px,6vw,58px);letter-spacing:0.18em;line-height:1;padding:4px 10px;color:#f8fafc;background:linear-gradient(180deg,#b91c1c,#7f1d1d);border:1px solid rgba(255,255,255,0.2);border-radius:8px;display:inline-block;width:max-content}
         .header-title-sub{font-size:clamp(17px,2.4vw,28px);letter-spacing:0.3em;line-height:1.05;color:var(--theme-text-muted);text-transform:uppercase}
-        .dock-btn{border-radius:999px;border:1px solid ${T.surfaceBorder};background:${darkMode ? 'rgba(20,25,46,0.9)' : 'rgba(255,255,255,0.92)'};color:${T.text};padding:10px 12px;font-family:var(--font-marvel-ui);letter-spacing:1.1px;font-size:12px;cursor:pointer;white-space:nowrap}
+        .dock-btn{border-radius:999px;border:1px solid color-mix(in srgb,var(--theme-accent) 24%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 88%, transparent);color:${T.text};padding:10px 14px;font-family:var(--font-marvel-ui);letter-spacing:1.2px;font-size:12px;cursor:pointer;white-space:nowrap}
         .status-block{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid color-mix(in srgb,var(--theme-border) 72%, transparent);background:color-mix(in srgb,var(--theme-surface) 78%, transparent);font-size:12px;line-height:1.35}.status-block.success{color:#bbf7d0}.status-block.error{color:#fecaca}.status-block.loading{color:#bfdbfe}
         .fab-primary{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:10px 14px;border:1px solid color-mix(in srgb,var(--theme-accent) 35%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 84%, transparent);color:var(--theme-text);font-family:var(--font-marvel-ui);letter-spacing:1px;font-size:12px}
         .fab-primary:hover{border-color:var(--theme-accent);color:var(--theme-accent)}
@@ -3045,9 +3045,20 @@ export default function MCUViewer() {
         )}
       </div>
       <div className="floating-controls" style={detailItem || analyticsOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
-        {/* quick actions trigger removed for premium dock */}
-        
-        <div className="floating-mode-switch" style={{ display: 'flex' }}>
+        <button
+          type="button"
+          className="fab-primary"
+          onClick={() => setFabMenuOpen(v => !v)}
+          style={{
+            borderColor: fabMenuOpen ? 'var(--theme-accent)' : 'color-mix(in srgb,var(--theme-accent) 28%, var(--theme-border))',
+            background: fabMenuOpen ? 'color-mix(in srgb,var(--theme-accent) 16%, var(--theme-surface))' : 'color-mix(in srgb,var(--theme-surface) 86%, transparent)',
+            boxShadow: '0 16px 34px rgba(0,0,0,.30)',
+          }}
+        >
+          <Zap size={14} /> Quick Actions <ChevDown size={12} style={{ transform: fabMenuOpen ? 'rotate(180deg)' : 'none' }} />
+        </button>
+
+        <div className="floating-mode-switch" style={{ display: fabMenuOpen ? 'flex' : 'none' }}>
           {LIST_MODES.map(mode => {
             const active = listMode === mode.id;
             return (
@@ -3060,7 +3071,7 @@ export default function MCUViewer() {
         </div>
 
         {/* ━━ JUMP NEXT BUTTON ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-        <div className="bottom-action-dock" style={{ display: 'flex' }}>
+        <div className="bottom-action-dock" style={{ display: fabMenuOpen ? 'flex' : 'none' }}>
         <button type="button" onClick={handleMetadataBuildClick} className="dock-btn"
           style={{ borderColor: metadataBuild.status === 'running' ? 'var(--theme-warning)' : T.surfaceBorder }}>
           {metadataBuild.status === 'running' ? `Fetch ${metadataBuild.done}/${metadataBuild.total}` : 'Fetch'}
