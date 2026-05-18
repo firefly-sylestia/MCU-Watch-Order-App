@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, useReducer } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
@@ -8,6 +8,15 @@ import { readStorageJSON, readStorageValue, removeStorageValue, safeLocalStorage
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { renderCardToCanvas } from './export/cards/renderCardToCanvas';
 import { drawPremiumStars, drawRoundedPanel, drawWrappedText } from './export/cards/helpers';
+import { useHeroBackdrop } from './hooks/useHeroBackdrop';
+import { usePosterCache } from './hooks/usePosterCache';
+import { useOverlayNavigation } from './hooks/useOverlayNavigation';
+import { useResponsiveLayout } from './hooks/useResponsiveLayout';
+import { HeaderShell, HeroBackdrop, HeroCarousel, FloatingQuickControls, FilterBar, PhaseList, SettingsPanel, DetailModal } from './components/sections/AppSections';
+import './App.layout.css';
+import './App.components.css';
+import './App.motion.css';
+
 import {
   ESSENTIAL_LIST,
   NO_PREREQ,
@@ -619,13 +628,15 @@ export default function MCUViewer() {
   const [statusFilter,   setStatusFilter]   = useState(initialUiState.statusFilter);
   const [typeFilter,     setTypeFilter]     = useState(initialUiState.typeFilter);
   const [activePhase,    setActivePhase]    = useState(initialUiState.activePhase);
-  const [sortOpen,       setSortOpen]       = useState(false);
-  const [phaseOpen,      setPhaseOpen]      = useState(false);
+  const [uiModeState, dispatchUiMode] = useReducer((state, action) => ({ ...state, ...action }), { sortOpen: false, phaseOpen: false, filterStatusOpen: false, dockStatusOpen: false, filtersOpen: initialUiState.filtersOpen });
+  const { sortOpen, phaseOpen, filterStatusOpen, dockStatusOpen, filtersOpen } = uiModeState;
+  const setSortOpen = (next) => dispatchUiMode({ sortOpen: typeof next === 'function' ? next(uiModeState.sortOpen) : next });
+  const setPhaseOpen = (next) => dispatchUiMode({ phaseOpen: typeof next === 'function' ? next(uiModeState.phaseOpen) : next });
   const [statusDropdown, setStatusDropdown] = useState(null);
-  const [filterStatusOpen, setFilterStatusOpen] = useState(false);
-  const [dockStatusOpen, setDockStatusOpen] = useState(false);
   const [fabMenuOpen, setFabMenuOpen] = useState(true);
-  const [filtersOpen,    setFiltersOpen]    = useState(initialUiState.filtersOpen);
+  const setFilterStatusOpen = (next) => dispatchUiMode({ filterStatusOpen: typeof next === 'function' ? next(uiModeState.filterStatusOpen) : next });
+  const setDockStatusOpen = (next) => dispatchUiMode({ dockStatusOpen: typeof next === 'function' ? next(uiModeState.dockStatusOpen) : next });
+  const setFiltersOpen = (next) => dispatchUiMode({ filtersOpen: typeof next === 'function' ? next(uiModeState.filtersOpen) : next });
   const [dropdownPos,    setDropdownPos]    = useState({ x: 0, y: 0 });
   const [darkMode,       setDarkMode]       = useState(true);
   const [expandedItem,   setExpandedItem]   = useState(null);
@@ -652,8 +663,7 @@ export default function MCUViewer() {
   const [metaCache,      setMetaCache]      = useState({});
   const [detailLoading,  setDetailLoading]  = useState(false);
   const [detailPosterFailed, setDetailPosterFailed] = useState(false);
-  const [posterCache,    setPosterCache]    = useState({});
-  const [localPosterMap, setLocalPosterMap] = useState({});
+  const { posterCache, setPosterCache, localPosterMap, setLocalPosterMap } = usePosterCache();
   const [posterFetchState, setPosterFetchState] = useState({ active: false, done: 0, total: 0, message: '' });
   const [heroCarouselCache, setHeroCarouselCache] = useState({ signature: '', posters: [] });
   const [posterExportState, setPosterExportState] = useState({ active: false, done: 0, total: 0, message: '' });
@@ -700,9 +710,8 @@ export default function MCUViewer() {
   const [multiverseShuffle, setMultiverseShuffle] = useState(false);
   const [desktopTextScale, setDesktopTextScale] = useState(initialUiState.desktopTextScale);
   const [textScaleEnabled, setTextScaleEnabled] = useState(initialUiState.textScaleEnabled);
-  const [isDesktopViewport, setIsDesktopViewport] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : false));
-  const [heroBackdropScale, setHeroBackdropScale] = useState(104);
-  const [heroBackdropOpacity, setHeroBackdropOpacity] = useState(0.9);
+  const { isDesktopViewport } = useResponsiveLayout();
+  const { heroBackdropScale, setHeroBackdropScale, heroBackdropOpacity, setHeroBackdropOpacity } = useHeroBackdrop();
   const [lightningStrike, setLightningStrike] = useState(false);
   const [spiderDrop, setSpiderDrop] = useState(false);
   const headerMinimized = false;
@@ -725,43 +734,9 @@ export default function MCUViewer() {
   const metadataBuildRef = useRef({ paused: false, running: false });
   const detailRequestRef = useRef(0);
 
-  useEffect(() => {
-    const onResize = () => setIsDesktopViewport(window.innerWidth >= 1024);
-    onResize();
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
 
 
-  useEffect(() => {
-    try {
-      const savedScale = Number(localStorage.getItem('mcu-hero-backdrop-scale-v1'));
-      const savedOpacity = Number(localStorage.getItem('mcu-hero-backdrop-opacity-v1'));
-      if (Number.isFinite(savedScale)) setHeroBackdropScale(Math.max(100, Math.min(112, savedScale)));
-      if (Number.isFinite(savedOpacity)) setHeroBackdropOpacity(Math.max(0.12, Math.min(0.75, savedOpacity)));
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    try { localStorage.setItem('mcu-hero-backdrop-scale-v1', String(heroBackdropScale)); } catch {}
-  }, [heroBackdropScale]);
-
-  useEffect(() => {
-    try { localStorage.setItem('mcu-hero-backdrop-opacity-v1', String(heroBackdropOpacity)); } catch {}
-  }, [heroBackdropOpacity]);
-  useEffect(() => {
-    const hasOverlay = sidebarOpen || settingsOpen || detailItem || analyticsOpen;
-    if (!hasOverlay) return;
-    window.history.pushState({ mcuOverlay: true }, '');
-    const onBack = () => {
-      if (detailItem) setDetailItem(null);
-      else if (analyticsOpen) setAnalyticsOpen(false);
-      else if (settingsOpen) setSettingsOpen(false);
-      else if (sidebarOpen) setSidebarOpen(false);
-    };
-    window.addEventListener('popstate', onBack);
-    return () => window.removeEventListener('popstate', onBack);
-  }, [sidebarOpen, settingsOpen, detailItem, analyticsOpen]);
+  useOverlayNavigation({ sidebarOpen, settingsOpen, detailItem, analyticsOpen, onCloseDetail: () => setDetailItem(null), onCloseAnalytics: () => setAnalyticsOpen(false), onCloseSettings: () => setSettingsOpen(false), onCloseSidebar: () => setSidebarOpen(false) });
 
   useEffect(() => {
     if (!sidebarOpen || !sidebarRef.current) return;
@@ -2478,206 +2453,24 @@ export default function MCUViewer() {
     </div>
   );
 
+  const sectionScaffold = (
+    <>
+      <HeaderShell />
+      <HeroBackdrop />
+      <HeroCarousel />
+      <FloatingQuickControls />
+      <FilterBar />
+      <PhaseList />
+      <SettingsPanel />
+      <DetailModal />
+    </>
+  );
+
   const appThemeBg = 'var(--theme-app-bg)';
   return (
-    <div data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': textScaleEnabled ? desktopTextScale : 1, width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: 'var(--ui-scale)', transformOrigin: 'top left', left: textScaleEnabled ? '0' : 'auto', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}${sidebarOpen || settingsOpen ? ' overlay-open' : ''}`}>
-      <style>{`
-        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-        html,body{scroll-behavior:smooth}
-        ::-webkit-scrollbar{width:5px}
-        ::-webkit-scrollbar-track{background:${T.scrollTrack}}
-        ::-webkit-scrollbar-thumb{background:${T.scrollThumb};border-radius:4px}
-        ::-webkit-scrollbar-thumb:hover{background:${T.scrollThumbH}}
-        input,button,select{font-family:inherit;border-radius:var(--radius-md)}
-        input:focus{outline:none}
-        button:focus-visible{outline:2px solid var(--theme-accent);outline-offset:2px}
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': textScaleEnabled ? desktopTextScale : 1, width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: 'var(--ui-scale)', transformOrigin: 'top left', left: textScaleEnabled ? '0' : 'auto', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}${sidebarOpen || settingsOpen ? ' overlay-open' : ''}`}>
+      
 
-        @keyframes sweep{0%{transform:translateX(-120%)}100%{transform:translateX(220%)}}
-        @keyframes scrollRail{0%{transform:translateX(0)}100%{transform:translateX(-22%)}}
-        .sweep::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent);animation:sweep 3.2s ease-in-out infinite}
-
-        @keyframes phaseFlash{0%{opacity:0}20%{opacity:0.22}80%{opacity:0.18}100%{opacity:0}}
-        .phase-flash{animation:phaseFlash 2.4s ease both}
-
-        @keyframes rowIn{from{opacity:1;transform:none}to{opacity:1;transform:none}}
-        .row-in{animation:rowIn 320ms var(--ease-out) both}
-
-        @keyframes sectionUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-        .section-up{animation:sectionUp 360ms var(--ease-out) both}
-
-        @keyframes fadeIn{from{opacity:0;transform:scale(0.97) translateY(-4px)}to{opacity:1;transform:scale(1) translateY(0)}}
-        .fade-in{animation:fadeIn 240ms var(--ease-out) both}
-        .dropdown-pop,.dropdown-pop-up{opacity:1;transform:translate3d(0,0,0) scale(1);filter:blur(0);transition:opacity 220ms cubic-bezier(.22,1,.36,1),transform 220ms cubic-bezier(.22,1,.36,1),filter 220ms cubic-bezier(.22,1,.36,1);backdrop-filter:blur(16px) saturate(160%);-webkit-backdrop-filter:blur(16px) saturate(160%)}
-        .dropdown-pop{transform-origin:top left}.dropdown-pop-up{transform-origin:bottom right}
-        @starting-style{.dropdown-pop{opacity:0;transform:translate3d(0,-8px,0) scale(0.96);filter:blur(3px)}.dropdown-pop-up{opacity:0;transform:translate3d(0,8px,0) scale(0.96);filter:blur(3px)}}
-
-        @keyframes expandDown{from{opacity:0;max-height:0;padding-top:0;padding-bottom:0}to{opacity:1;max-height:600px;padding-top:10px;padding-bottom:10px}}
-        .expand-row{animation:expandDown 0.28s cubic-bezier(0.34,1.56,0.64,1) both;overflow:hidden}
-
-        @keyframes filtersSlide{from{opacity:0;max-height:0}to{opacity:1;max-height:220px}}
-        .filters-open{animation:filtersSlide 220ms var(--ease-out) both;overflow:visible}
-
-        @keyframes themeFadeSwitch{from{opacity:0.7}to{opacity:1}}
-        .theme-switch{animation:themeFadeSwitch 260ms var(--ease-out) both}
-
-        @keyframes listModeSlide{from{opacity:0.8;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
-        .list-mode-switch{animation:listModeSlide 220ms var(--ease-out) both}
-
-        @keyframes buttonPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--theme-accent) 45%, transparent)}70%{box-shadow:0 0 0 6px transparent}100%{box-shadow:0 0 0 0 transparent}}
-        @keyframes spiderPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
-        @keyframes snapFade{0%{filter:grayscale(0)}40%{filter:grayscale(1) brightness(1.2)}100%{filter:grayscale(0)}}
-        @keyframes fadeInOut{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
-        @keyframes spiderDrop{0%{transform:translate(-50%,-120px)}35%{transform:translate(-50%,18vh)}70%{transform:translate(-50%,35vh)}100%{transform:translate(-50%,45vh);opacity:0}}
-        .snap-blip{animation:snapFade 1.6s ease}
-        .button-click{animation:buttonPulse 420ms ease-out}
-
-        .wbtn{position:relative;width:30px;height:30px;border-radius:50%;border:1.5px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background var(--motion-fast) ease,border-color var(--motion-fast) ease,color var(--motion-fast) ease;flex-shrink:0;box-shadow:none}
-        .wbtn:hover{border-color:rgba(255,255,255,0.28)!important;background:rgba(255,255,255,0.1)!important}
-        .wbtn:active{opacity:0.82}
-        .status-pill{text-transform:uppercase;font-weight:800;line-height:1;border-radius:999px}
-        .status-toggle::after{content:'';position:absolute;inset:-2px;border-radius:inherit;background:currentColor;opacity:0;transition:opacity 0.12s ease;z-index:-1}
-        .status-toggle:hover::after{opacity:0.16}
-
-        .ntab{position:relative;font-family:var(--font-marvel-ui);font-size:clamp(16px,2.4vw,22px);letter-spacing:3px;padding:14px 20px;border:none;background:transparent;cursor:pointer;transition:color 0.2s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
-        .ntab::after{content:'';position:absolute;bottom:0;left:12px;right:12px;height:2px;border-radius:2px 2px 0 0;background:currentColor;transform:scaleX(0);transform-origin:center;transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1)}
-        .ntab.on::after{transform:scaleX(1)}
-
-        .fpill{display:flex;align-items:center;gap:6px;padding:7px 26px;border-radius:var(--radius-md);border:1px solid var(--theme-border);background:var(--theme-surface);cursor:pointer;font-size:clamp(14px,2.2vw,16px);font-weight:600;letter-spacing:0.03em;color:var(--theme-text);transition:background-color 0.14s ease,color 0.14s ease,opacity 0.14s ease,border-color 0.14s ease;white-space:nowrap;box-shadow:none;overflow:visible}
-        .fpill:hover{border-color:var(--theme-accent);color:var(--theme-accent);background:var(--theme-surface-hover);opacity:0.96}
-        .fpill:active{opacity:0.82}
-        .fpill:focus-visible,.theme-btn:focus-visible,.lmode-btn:focus-visible{outline:2px solid var(--theme-accent);outline-offset:2px}
-
-        .sopt{padding:13px 20px;font-family:var(--font-marvel-ui);font-size:clamp(15px,2.2vw,18px);letter-spacing:2.5px;cursor:pointer;color:${T.pillText};transition:background-color 0.14s ease,color 0.14s ease}
-        .sopt:hover{background:${T.sortHoverBg};color:${T.text}}
-        .sopt.picked,.dropdown-item.active{background:var(--theme-surface-hover);border-radius:var(--radius-md);color:var(--theme-accent);font-weight:700}
-        .curvy-indicator{height:4px;border-radius:99px;background:var(--theme-accent);border:none}
-        .curvy-panel{position:relative;overflow:hidden;border-radius:14px}
-        .curvy-panel::before{display:none}
-
-        .section-up{content-visibility:visible;contain-intrinsic-size:auto}
-        .hero-rail{scroll-behavior:smooth;contain:layout paint;mask-image:linear-gradient(90deg, transparent 0%, #000 6%, #000 94%, transparent 100%);-webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 6%, #000 94%, transparent 100%);user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;padding-inline:clamp(14px,3vw,42px)!important}
-        .hero-rail::-webkit-scrollbar{height:0;width:0;display:none}
-        .hero-poster-card{backface-visibility:hidden;transform:translateZ(0)}
-        .hero-backdrop-image{opacity:var(--backdrop-opacity,0.9);transform:scale(1);filter:blur(1.4px) saturate(1.08) contrast(1.04) brightness(1.01);border-radius:var(--radius-xl);box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 18%, transparent),var(--elevation-surface-2);mask-image:radial-gradient(circle at center, #000 78%, rgba(0,0,0,0.85) 93%, transparent 100%);-webkit-mask-image:radial-gradient(circle at center, #000 78%, rgba(0,0,0,0.85) 93%, transparent 100%);transition:opacity 900ms cubic-bezier(0.22,1,0.36,1),transform 900ms cubic-bezier(0.22,1,0.36,1),filter 900ms cubic-bezier(0.22,1,0.36,1)}
-        .hero-backdrop-blend{position:absolute;inset:8px;border-radius:var(--radius-xl);pointer-events:none;background:linear-gradient(180deg, rgba(3,4,9,0.36) 0%, rgba(3,4,9,0.12) 18%, rgba(3,4,9,0.02) 36%),linear-gradient(90deg, rgba(3,4,9,0.26) 0%, rgba(3,4,9,0.06) 12%, rgba(3,4,9,0.0) 22%, rgba(3,4,9,0.0) 78%, rgba(3,4,9,0.06) 88%, rgba(3,4,9,0.26) 100%);opacity:var(--backdrop-opacity,0.9)}
-        .hero-backdrop-image.is-exiting{opacity:0;transform:scale(1.004);filter:blur(1.2px) saturate(1.04) contrast(1.01) brightness(0.96)}
-        @starting-style{.hero-backdrop-image:not(.is-exiting){opacity:0;transform:scale(1.01);filter:blur(1.2px) saturate(1.02) contrast(1.01) brightness(0.95)}}
-        .phase-rows-full{display:block;position:relative}
-        .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 240ms var(--ease-out),border-color 240ms var(--ease-out),transform 240ms var(--ease-out),box-shadow 300ms var(--ease-out);display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(116px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:3px solid transparent;border:1px solid color-mix(in srgb,var(--theme-accent) 14%, var(--theme-border));min-height:var(--row-min-h,96px);border-radius:24px;overflow:hidden;background:linear-gradient(136deg,color-mix(in srgb,var(--theme-surface) 72%, transparent),color-mix(in srgb,var(--theme-bg) 78%, transparent));backdrop-filter:blur(7px) saturate(136%);-webkit-backdrop-filter:blur(7px) saturate(136%);box-shadow:0 18px 40px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.05)}
-        .rrow:last-child{border-bottom:none}
-        .rrow > *{position:relative;z-index:1}
-        .rrow:hover{border-left-color:color-mix(in srgb,var(--theme-accent) 78%, var(--phase-color,#c0392b));border-color:color-mix(in srgb,var(--theme-accent) 45%, var(--theme-border));transform:translateY(-4px) scale(1.003);box-shadow:0 24px 46px rgba(0,0,0,.34),0 0 0 1px color-mix(in srgb,var(--theme-accent) 28%, transparent)}
-        .rrow.curvy-selected{border-left-color:var(--theme-accent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--theme-accent) 40%, transparent)}
-        .rrow.type-film:hover{background:linear-gradient(90deg, rgba(224,82,82,0.18), ${T.rowHoverBg}) !important}
-        .rrow.type-series:hover{background:linear-gradient(90deg, rgba(74,158,222,0.18), ${T.rowHoverBg}) !important}
-        .rrow.type-short:hover{background:linear-gradient(90deg, rgba(160,108,213,0.18), ${T.rowHoverBg}) !important}
-
-        .title-btn{background:none;border:none;cursor:pointer;text-align:left;padding:6px 0;color:var(--theme-text);font-family:inherit;display:block;width:100%;min-height:44px;text-shadow:0 1px 4px rgba(0,0,0,0.35);overflow:hidden}.title-btn .title-main{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
-        .title-btn:focus-visible{outline:2px solid var(--theme-accent);outline-offset:2px;border-radius:3px}
-        .meta-chip{display:inline-flex;align-items:center;gap:4px;color:var(--theme-text-muted);background:color-mix(in srgb,var(--theme-bg) 54%, transparent);border:1px solid color-mix(in srgb,var(--theme-border) 90%, transparent);border-radius:999px;padding:3px 8px;letter-spacing:1px;font-family:var(--font-marvel-ui);flex-shrink:0;max-width:100%}
-        .row-meta-line{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-        .hexbg{background-image:radial-gradient(circle,${T.hexDot} 1px,transparent 1px);background-size:28px 28px}
-
-        .lmode-btn{display:flex;flex-direction:column;padding:14px 24px 12px;border:none;background:transparent;cursor:pointer;text-align:left;transition:all 0.2s;border-bottom:2px solid transparent}
-        .lmode-btn.active{border-bottom-color:var(--mc)}
-        .lmode-btn:hover:not(.active){background:${T.rowHoverBg}}
-
-        .theme-btn{width:32px;height:32px;border-radius:50%;border:1px solid ${T.pillBorder};background:${T.pillBg};color:${T.pillText};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0}
-        .theme-btn:hover{border-color:${T.pillHoverBorder};color:${T.pillHoverText}}
-
-        .poster-shell{width:52px;height:76px;border-radius:9px;overflow:hidden;background:linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.025));position:relative;flex-shrink:0;box-shadow:0 8px 18px rgba(0,0,0,0.3),0 0 0 1px color-mix(in srgb,var(--theme-accent) 14%, transparent)}.poster-shell::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));opacity:1;transition:opacity .12s;pointer-events:none}.poster-shell.is-loaded::before{opacity:0}.poster-shell picture,.poster-shell img{display:block;width:100%;height:100%}.poster{width:52px;height:76px;object-fit:cover;border-radius:9px;border:1px solid ${T.surfaceBorder};box-shadow:0 10px 24px rgba(0,0,0,0.35);opacity:1;transform:none;transition:opacity .24s ease-out,transform .24s ease-out,filter .24s ease-out}.poster-shell:not(.is-loaded) .poster{opacity:0.82;transform:translateY(4px)}.poster.is-loaded{opacity:1;transform:none}
-        .progress-gradient{background:${phaseGradient};background-size:200% 100%;animation:gradientPulse 3s ease-in-out infinite alternate}
-        @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
-        .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.52);backdrop-filter:blur(6px);z-index:240;display:grid;place-items:center;padding:20px}
-        .detail-card{width:min(1080px,94vw);max-height:92vh;overflow:auto;background:linear-gradient(150deg, color-mix(in srgb,var(--theme-surface) 92%, #000), color-mix(in srgb,var(--theme-bg) 84%, #000));backdrop-filter:blur(18px) saturate(120%);-webkit-backdrop-filter:blur(18px) saturate(120%);border:1px solid color-mix(in srgb,var(--theme-accent) 28%, var(--theme-border));border-radius:18px;padding:20px;box-shadow:var(--elevation-surface-3)}
-        .detail-export-shell{width:min(920px,94vw);padding:var(--space-5);background:radial-gradient(circle at 18% 16%, rgba(125,211,252,0.18), transparent 30%),radial-gradient(circle at 88% 8%, rgba(240,171,252,0.16), transparent 34%),linear-gradient(145deg, rgba(6,17,31,0.92), rgba(17,26,56,0.88) 54%, rgba(53,16,59,0.86)) !important;box-shadow:var(--elevation-surface-3), inset 0 1px 0 rgba(255,255,255,0.08)}
-        .detail-export-grid{display:grid;grid-template-columns:minmax(176px,260px) minmax(0,1fr);gap:18px;align-items:start}.detail-poster-frame{border-radius:22px;overflow:hidden;min-height:388px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);box-shadow:0 22px 42px rgba(0,0,0,0.38)}.detail-poster-frame img{display:block;width:100%;height:100%;min-height:388px;max-height:420px;object-fit:cover}.detail-export-content{display:grid;gap:var(--space-3);min-width:0}.detail-export-kicker{font-family:var(--font-marvel-ui);font-size:11px;letter-spacing:2.2px;font-weight:800;color:#bfdbfe}.detail-export-title{font-size:clamp(28px,4vw,44px);line-height:.98;margin:0;color:#fff;text-wrap:balance}.detail-export-meta{display:flex;gap:7px;flex-wrap:wrap;align-items:baseline}.detail-export-meta span{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:5px 8px;border-radius:999px;background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.15);color:#dbeafe;max-width:100%;overflow-wrap:anywhere}.detail-export-loading{font-size:12px;color:var(--theme-text-muted)}.detail-export-panel{border-radius:var(--radius-lg);padding:var(--space-4);background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),var(--elevation-surface-1)}.detail-export-panel-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;font-family:var(--font-marvel-ui);font-size:12px;letter-spacing:1.8px;font-weight:900;color:#bfdbfe}.detail-export-panel p{font-size:14px;line-height:1.48;margin:0;color:#edf6ff;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}.detail-intel-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}.detail-intel-list div{display:grid;gap:2px;min-width:0}.detail-intel-list strong{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:#c4b5fd}.detail-intel-list span{font-size:12px;line-height:1.35;color:#d3ddf6;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}.detail-intel-list div:last-child{grid-column:1 / -1}.detail-export-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}.detail-export-actions .fpill{padding:8px 11px !important;font-size:12px !important;background:rgba(255,255,255,0.07) !important;border-color:rgba(255,255,255,0.15) !important}
-
-        .detail-layout{grid-template-columns:minmax(220px,34%) minmax(0,1fr)}
-        .detail-pill{background:rgba(255,255,255,0.08) !important;border-color:rgba(255,255,255,0.18) !important;transform:none !important;box-shadow:none !important}
-        .detail-btn{padding:8px 11px !important;font-size:12px !important;line-height:1.2;justify-content:center;border-radius:10px !important;background:rgba(255,255,255,0.06) !important;border-color:rgba(255,255,255,0.14) !important}
-        .detail-btn:hover{background:rgba(255,255,255,0.11) !important;border-color:rgba(255,255,255,0.25) !important;color:var(--theme-text) !important}
-        .detail-btn.is-active{background:color-mix(in srgb, var(--theme-danger) 20%, rgba(255,255,255,0.08)) !important;border-color:color-mix(in srgb, var(--theme-danger) 55%, rgba(255,255,255,0.2)) !important;color:var(--theme-danger) !important}
-        .detail-btn-group{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px;align-items:center}
-        .detail-fallback-poster{position:relative;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 20% 20%, rgba(232,184,75,0.22), transparent 48%),radial-gradient(circle at 80% 30%, rgba(74,158,222,0.24), transparent 44%),linear-gradient(145deg, rgba(14,20,44,0.9), rgba(9,14,34,0.95));overflow:hidden}
-        .detail-fallback-poster::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,0.03)}
-        .detail-fallback-poster span{position:relative;z-index:1;text-align:center;font-size:clamp(24px,5vw,40px);line-height:1.2;font-weight:700;color:rgba(242,247,255,0.95);text-shadow:0 2px 14px rgba(0,0,0,0.35)}
-        .glass-panel{background-color:rgba(30,30,46,0.34);border:1px solid rgba(255,255,255,0.05);border-radius:16px}
-        .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02))}
-        .meta-muted{color:var(--theme-text-muted) !important}
-        .performance-mode *{animation:none !important}
-
-        /* Mobile */
-        @media (max-width: 767px) {
-          .header-inner { padding: 10px 10px 8px !important; }
-          .header-title-mcu { font-size: clamp(34px, 7.2vw, 48px) !important; letter-spacing: clamp(1px, 0.5vw, 3px) !important; }
-          .header-title-sub { font-size: clamp(18px, 4.2vw, 28px) !important; letter-spacing: clamp(1px, 0.7vw, 4px) !important; }
-          .header-tagline { font-size: 11px !important; letter-spacing: 1px !important; margin-top: 0 !important; }
-          .fpill{padding:10px 16px !important;font-size:15px !important;min-height:44px}
-          .rrow{grid-template-columns:24px 44px minmax(0,1fr) !important;gap:8px;padding:14px 10px 14px 8px;min-height:96px}
-          .rrow .row-actions{grid-column:2 / -1;flex-direction:row !important;align-items:center !important;justify-content:space-between !important;min-width:0 !important;width:100%;gap:8px}
-          .calendar-row{grid-template-columns:minmax(74px,84px) 44px minmax(0,1fr) !important}
-          .floating-controls{display:flex !important;left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));align-items:stretch;gap:10px}.fab-primary{justify-content:center}
-          .bottom-action-dock{width:100%;justify-content:center}
-                    .dock-btn{font-size:11px !important;padding:9px 10px !important;min-height:40px;flex:1 1 auto}
-          .bottom-action-bar{min-height:40px;padding:9px 10px !important;width:100%;justify-content:center}
-          .dock-status-menu{flex:1 1 auto}
-          main > div{padding-bottom:154px !important}
-          .poster{width:44px;height:64px}
-          .detail-layout{grid-template-columns:minmax(0,1fr) !important;gap:14px !important}
-          .detail-export-grid{grid-template-columns:minmax(0,1fr) !important}.detail-export-shell{padding:12px !important}.detail-poster-frame{min-height:auto;max-width:230px;margin:0 auto}.detail-poster-frame img{min-height:auto;max-height:330px}.detail-intel-list{grid-template-columns:minmax(0,1fr) !important}.detail-export-actions{justify-content:stretch}.detail-export-actions .fpill{flex:1 1 auto;justify-content:center}
-          .detail-layout img,.detail-fallback-poster{max-width:280px;margin:0 auto;max-height:360px}
-          .detail-layout > div:last-child{width:100%}
-          .filter-row-actions{margin-left:0 !important;flex-wrap:wrap;justify-content:flex-end;gap:6px !important}
-          .filter-row-actions .fpill{padding:8px 10px !important;font-size:13px !important}
-          .filters-open{padding:0 12px 12px !important}
-          .settings-menu{position:fixed !important;top:88px !important;right:10px !important;left:10px !important;width:auto !important;min-width:0 !important;max-height:calc(100dvh - 112px) !important;padding:12px !important}
-          .settings-menu .fpill{padding:9px 10px !important;font-size:13px !important;white-space:normal !important}
-        }
-        @media (min-width: 1024px) {
-          .header-inner{max-width:1400px;margin:0 auto}
-          .header-title-sub{margin-top:2px !important}
-          .lmode-btn{padding:12px 20px 10px}
-          .rrow{grid-template-columns:34px 56px minmax(0,1fr) minmax(120px,auto);padding:14px 14px 14px 10px;min-height:84px}
-        }
-        @media (min-width: 1600px) {
-          main{--content-max:1200px !important}
-          .rrow{font-size:17px}
-          .header-inner{max-width:1240px;margin:0 auto}
-        }
-        
-        .stat-card-num { font-size: clamp(28px, 4.5vw, 48px) !important; }
-        .stat-card-label { font-size: clamp(11px, 1.8vw, 14px) !important; }
-        .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; color:var(--theme-text-muted) !important }
-
-               .sidebar-toggle-btn{position:fixed;top:calc(env(safe-area-inset-top, 0px) + var(--space-4));right:var(--space-4);z-index:9997;width:50px;height:50px;pointer-events:auto;border-radius:16px;border:1px solid color-mix(in srgb,var(--theme-accent) 34%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 72%, transparent);backdrop-filter:blur(10px) saturate(150%);-webkit-backdrop-filter:blur(10px) saturate(150%)}        .sidebar-backdrop{position:fixed;inset:0;background:radial-gradient(circle at 20% 20%, rgba(79,70,229,0.26), transparent 42%),rgba(2,6,18,0.74);z-index:9995;pointer-events:auto;backdrop-filter:blur(6px)}
-        .sidebar-menu{position:fixed;top:0;left:0;bottom:0;width:min(344px,86vw);padding:90px 16px 24px;background:linear-gradient(170deg, color-mix(in srgb,var(--theme-surface) 82%, transparent), color-mix(in srgb,var(--theme-bg) 86%, transparent));backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%);border-right:1px solid color-mix(in srgb,var(--theme-accent) 24%, var(--theme-border));transform:var(--sidebar-transform);transition:transform 0.24s cubic-bezier(.22,.9,.24,1);z-index:9996;overflow-y:auto;box-shadow:0 24px 56px rgba(0,0,0,.45);border-radius:22px}
-        .settings-menu-anchor{position:fixed;top:calc(env(safe-area-inset-top, 0px) + 16px);right:14px;z-index:940}
-        .settings-menu{position:absolute;top:100%;right:0;z-index:50;margin-top:8px;min-width:320px;width:min(360px,calc(100vw - 28px));max-height:min(80vh,calc(100dvh - 92px));border-radius:var(--radius-md);border:1px solid color-mix(in srgb, var(--theme-accent) 35%, transparent);background:var(--settings-bg);backdrop-filter:var(--settings-blur);-webkit-backdrop-filter:var(--settings-blur);box-shadow:none;padding:10px;display:grid;gap:8px;overflow:auto;color:var(--theme-text);overscroll-behavior:contain}
-        .settings-menu .fpill{min-width:0}
-        .overlay-open .hero-backdrop-image{filter:saturate(1.04) contrast(1.01) brightness(.98);opacity:calc(var(--backdrop-opacity,0.9) * .55);transition-duration:180ms}
-        .overlay-open .hero-backdrop-blend{opacity:.34}
-        .overlay-open .dropdown-pop,.overlay-open .dropdown-pop-up{backdrop-filter:none;-webkit-backdrop-filter:none}
-        .floating-controls{position:fixed;right:max(var(--space-4), env(safe-area-inset-right));bottom:max(var(--space-4), env(safe-area-inset-bottom));z-index:9994;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}
-        .floating-controls>*{pointer-events:auto}
-                .bottom-action-dock{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:8px 10px;border-radius:20px;border:1px solid color-mix(in srgb,var(--theme-accent-alt) 20%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 80%, transparent);backdrop-filter:blur(10px) saturate(145%)}
-        .header-brand{display:grid;gap:8px;padding:16px 20px 14px;border-radius:20px;background:linear-gradient(155deg,rgba(13,16,40,.84),rgba(14,35,62,.58) 50%,rgba(52,20,80,.56));border:1px solid color-mix(in srgb,var(--theme-accent) 34%, rgba(255,255,255,0.16));box-shadow:0 22px 56px rgba(0,0,0,.33), inset 0 1px 0 rgba(255,255,255,.11);max-width:max-content;backdrop-filter:blur(12px) saturate(140%)}
-        .header-brand.compact{padding:8px 12px}
-        .filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-        @media (min-width:1024px){.sidebar-menu{top:16px;left:16px;bottom:16px;width:300px;border-radius:var(--radius-lg)}.sidebar-toggle-btn{top:20px;right:20px}}
-        .header-title-mcu{font-size:clamp(34px,6vw,58px);letter-spacing:0.18em;line-height:1;padding:4px 10px;color:#f8fafc;background:linear-gradient(180deg,#b91c1c,#7f1d1d);border:1px solid rgba(255,255,255,0.2);border-radius:8px;display:inline-block;width:max-content}
-        .header-title-sub{font-size:clamp(17px,2.4vw,28px);letter-spacing:0.3em;line-height:1.05;color:var(--theme-text-muted);text-transform:uppercase}        .dock-btn{border-radius:999px;border:1px solid color-mix(in srgb,var(--theme-accent) 24%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 88%, transparent);color:${T.text};padding:10px 14px;font-family:var(--font-marvel-ui);letter-spacing:1.2px;font-size:12px;cursor:pointer;white-space:nowrap}
-        .status-block{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid color-mix(in srgb,var(--theme-border) 72%, transparent);background:color-mix(in srgb,var(--theme-surface) 78%, transparent);font-size:12px;line-height:1.35}.status-block.success{color:#bbf7d0}.status-block.error{color:#fecaca}.status-block.loading{color:#bfdbfe}
-        .fab-primary{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:10px 14px;border:1px solid color-mix(in srgb,var(--theme-accent) 35%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 84%, transparent);color:var(--theme-text);font-family:var(--font-marvel-ui);letter-spacing:1px;font-size:12px}
-        .fab-primary:hover{border-color:var(--theme-accent);color:var(--theme-accent)}
-        .bottom-action-bar{border-radius:999px;padding:10px 14px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
-        main,.rrow,.title-btn,.fpill,.wbtn,.sopt,.meta-muted,input,textarea,select,button,.header-tagline{font-size:calc(1em * var(--text-scale))}
-        main::-webkit-scrollbar{width:4px}
-        main::-webkit-scrollbar-track{background:transparent}
-        main::-webkit-scrollbar-thumb{background:${T.scrollThumb};border-radius:4px}
-        main::-webkit-scrollbar-thumb:hover{background:${T.scrollThumbH}}
-      `}</style>
 
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
         {previousHeroSrc && previousHeroSrc !== currentHeroSrc && (
@@ -2860,7 +2653,7 @@ export default function MCUViewer() {
       </SettingsMenu>
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <header className="hexbg" style={{ position: 'relative', zIndex: 120, background: 'transparent', borderBottom: 'none', flexShrink: 0 }}>
+      <header className="hexbg" style={{ position: 'relative', zIndex: 'var(--overlay-z-base)', background: 'transparent', borderBottom: 'none', flexShrink: 0 }}>
         <div className="header-inner" style={{ width: '100%', maxWidth: 1240, margin: '0 auto', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 26px) 30px 16px', transition: 'padding 0.2s ease' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
@@ -2872,7 +2665,7 @@ export default function MCUViewer() {
       </header>
 
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ position: 'relative', height: isDesktopViewport ? 590 : 430, maxWidth: 1240, margin: '0 auto', width: '100%', background: 'linear-gradient(160deg, color-mix(in srgb,var(--theme-surface) 82%, transparent), color-mix(in srgb,var(--theme-bg) 72%, transparent))', border: `1px solid ${T.surfaceBorder}`, borderRadius: 22, flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 140, boxShadow: 'var(--elevation-surface-2)' }}>
+      <div style={{ position: 'relative', height: isDesktopViewport ? 590 : 430, maxWidth: 1240, margin: '0 auto', width: '100%', background: 'linear-gradient(160deg, color-mix(in srgb,var(--theme-surface) 82%, transparent), color-mix(in srgb,var(--theme-bg) 72%, transparent))', border: `1px solid ${T.surfaceBorder}`, borderRadius: 'var(--hero-backdrop-radius)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 'var(--overlay-z-floating)', boxShadow: 'var(--elevation-surface-2)' }}>
         {heroPosters.length > 0 && (
           <div className="hero-rail"
             ref={heroRailRef}
