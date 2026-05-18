@@ -4,6 +4,7 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { Media } from '@capacitor-community/media';
 import CropModal from './components/CropModal';
+import { readStorageJSON, readStorageValue, removeStorageValue, safeLocalStorageSetItem, scheduleStorageWrite, pruneObject } from './utils/cacheStorage';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { renderCardToCanvas } from './export/cards/renderCardToCanvas';
 import { drawPremiumStars, drawRoundedPanel, drawWrappedText } from './export/cards/helpers';
@@ -267,35 +268,6 @@ const runWhenIdle = (cb, timeout = 400) => {
   }
   return setTimeout(() => cb({ timeRemaining: () => 0, didTimeout: true }), 32);
 };
-
-const safeLocalStorageSetItem = (key, value) => {
-  try {
-    localStorage.setItem(key, value);
-    return true;
-  } catch (err) {
-    if (err?.name === 'QuotaExceededError') {
-      console.warn(`Storage quota exceeded while writing ${key}.`, err);
-      return false;
-    }
-    throw err;
-  }
-};
-
-const scheduleStorageWrite = (() => {
-  const queue = new Map();
-  let scheduled = false;
-  const flush = () => {
-    scheduled = false;
-    for (const [key, value] of queue) safeLocalStorageSetItem(key, value);
-    queue.clear();
-  };
-  return (key, value) => {
-    queue.set(key, value);
-    if (scheduled) return;
-    scheduled = true;
-    runWhenIdle(flush, 1200);
-  };
-})();
 
 const createManagedCache = (entries = {}, options = {}) => {
   const {
@@ -588,6 +560,45 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   );
 });
 
+
+
+const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
+  open,
+  darkMode,
+  performanceMode,
+  pillBorder,
+  surfaceBorder,
+  onToggle,
+  onClose,
+  children,
+}, ref) {
+  return (
+    <>
+      <button className="theme-btn sidebar-toggle-btn" onClick={onToggle} aria-label="Toggle sidebar menu" style={{ background: darkMode ? 'rgba(10,14,28,0.94)' : '#ffffff', borderColor: darkMode ? 'rgba(255,255,255,0.24)' : pillBorder, boxShadow: darkMode ? '0 8px 24px rgba(0,0,0,0.35)' : '0 6px 16px rgba(0,0,0,0.12)' }}><Menu size={17} /></button>
+      {open && <div className="sidebar-backdrop" onClick={onClose} />}
+      <aside ref={ref} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? '0 22px 55px rgba(0,0,0,0.45)' : '0 18px 44px rgba(0,0,0,0.18)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
+        {children}
+      </aside>
+    </>
+  );
+}));
+
+const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
+  open,
+  darkMode,
+  performanceMode,
+  children,
+}, ref) {
+  return (
+    <div ref={ref} className="settings-menu-anchor">
+      {open && (
+        <div className="fade-in settings-menu" style={{ '--settings-bg': darkMode ? 'rgba(14,21,40,0.84)' : 'rgba(249,252,255,0.88)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}));
 
 const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
   return (
@@ -1721,11 +1732,11 @@ export default function MCUViewer() {
 
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem(CACHE_KEYS.poster) || '{}');
+      const saved = readStorageJSON(CACHE_KEYS.poster, {});
       setPosterCache(extractCacheValues(createManagedCache(saved, { maxItems: 220, maxSerializedSize: 450_000, eviction: 'lru' })));
-      const metaSaved = JSON.parse(localStorage.getItem(CACHE_KEYS.meta) || '{}');
+      const metaSaved = readStorageJSON(CACHE_KEYS.meta, {});
       setMetaCache(extractCacheValues(createManagedCache(metaSaved, { maxItems: 260, maxSerializedSize: 500_000, eviction: 'timestamp' })));
-      setPosterExportFailures(JSON.parse(localStorage.getItem(CACHE_KEYS.posterExportFailures) || '{}'));
+      setPosterExportFailures(readStorageJSON(CACHE_KEYS.posterExportFailures, {}));
     } catch {}
   }, []);
 
@@ -1769,16 +1780,16 @@ export default function MCUViewer() {
 
   useEffect(() => {
     try {
-      const p = JSON.parse(localStorage.getItem('mcu-profile-v1') || '{}');
+      const p = readStorageJSON('mcu-profile-v1', {});
       if (p?.pfp || p?.name) setProfile(prev => ({ ...prev, ...p }));
-      const avatars = JSON.parse(localStorage.getItem('mcu-uploaded-avatars-v1') || '[]');
+      const avatars = readStorageJSON('mcu-uploaded-avatars-v1', []);
       if (Array.isArray(avatars)) setUploadedAvatars(avatars);
-      const t = localStorage.getItem('mcu-theme-mode-v1');
+      const t = readStorageValue('mcu-theme-mode-v1', '');
       if (t) setThemeMode(t);
-      const exportPrefsSaved = JSON.parse(localStorage.getItem('mcu-export-prefs-v1') || 'null');
+      const exportPrefsSaved = readStorageJSON('mcu-export-prefs-v1', null);
       if (exportPrefsSaved?.font) setExportFont(exportPrefsSaved.font);
       if (Number.isFinite(Number(exportPrefsSaved?.textScale))) setExportTextScale(Math.max(0.9, Math.min(2.4, Number(exportPrefsSaved.textScale))));
-      setAutoBackupStamp(localStorage.getItem('mcu-auto-backup-ts-v1') || '');
+      setAutoBackupStamp(readStorageValue('mcu-auto-backup-ts-v1', '') || '');
     } catch {}
   }, []);
 
@@ -1789,12 +1800,12 @@ export default function MCUViewer() {
 
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem(CACHE_KEYS.userActions) || '{}');
-      const likesSaved = JSON.parse(localStorage.getItem(CACHE_KEYS.userActionsLikes) || 'null');
-      const ratingsSaved = JSON.parse(localStorage.getItem(CACHE_KEYS.userActionsRatings) || 'null');
-      const rewatchSaved = JSON.parse(localStorage.getItem(CACHE_KEYS.userActionsRewatch) || 'null');
-      const bookmarksSaved = JSON.parse(localStorage.getItem(CACHE_KEYS.userActionsBookmarks) || 'null');
-      const reviewsSaved = JSON.parse(localStorage.getItem(CACHE_KEYS.userActionsReviews) || 'null');
+      const saved = readStorageJSON(CACHE_KEYS.userActions, {});
+      const likesSaved = readStorageJSON(CACHE_KEYS.userActionsLikes, null);
+      const ratingsSaved = readStorageJSON(CACHE_KEYS.userActionsRatings, null);
+      const rewatchSaved = readStorageJSON(CACHE_KEYS.userActionsRewatch, null);
+      const bookmarksSaved = readStorageJSON(CACHE_KEYS.userActionsBookmarks, null);
+      const reviewsSaved = readStorageJSON(CACHE_KEYS.userActionsReviews, null);
       setMyLikes(likesSaved || saved.likes || {});
       setMyRating(ratingsSaved || saved.ratings || {});
       setRewatchCount(rewatchSaved || saved.rewatch || {});
@@ -1804,17 +1815,52 @@ export default function MCUViewer() {
   }, []);
 
   useDebouncedEffect(() => {
-    const payload = { likes: myLikes, ratings: myRating, rewatch: rewatchCount, bookmarks, reviews };
+    const payload = {
+      likes: pruneObject(myLikes, Boolean),
+      ratings: pruneObject(myRating, value => Number(value) > 0),
+      rewatch: pruneObject(rewatchCount, value => Number(value) > 0),
+      bookmarks: pruneObject(bookmarks, Boolean),
+      reviews: pruneObject(reviews, value => String(value || '').trim().length > 0),
+    };
     const serialized = JSON.stringify(payload);
     const ok = safeLocalStorageSetItem(CACHE_KEYS.userActions, serialized);
     if (!ok || serialized.length > 200_000) {
-      safeLocalStorageSetItem(CACHE_KEYS.userActionsLikes, JSON.stringify(myLikes));
-      safeLocalStorageSetItem(CACHE_KEYS.userActionsRatings, JSON.stringify(myRating));
-      safeLocalStorageSetItem(CACHE_KEYS.userActionsRewatch, JSON.stringify(rewatchCount));
-      safeLocalStorageSetItem(CACHE_KEYS.userActionsBookmarks, JSON.stringify(bookmarks));
-      safeLocalStorageSetItem(CACHE_KEYS.userActionsReviews, JSON.stringify(reviews));
+      safeLocalStorageSetItem(CACHE_KEYS.userActionsLikes, JSON.stringify(payload.likes));
+      safeLocalStorageSetItem(CACHE_KEYS.userActionsRatings, JSON.stringify(payload.ratings));
+      safeLocalStorageSetItem(CACHE_KEYS.userActionsRewatch, JSON.stringify(payload.rewatch));
+      safeLocalStorageSetItem(CACHE_KEYS.userActionsBookmarks, JSON.stringify(payload.bookmarks));
+      safeLocalStorageSetItem(CACHE_KEYS.userActionsReviews, JSON.stringify(payload.reviews));
     }
   }, [myLikes, myRating, rewatchCount, bookmarks, reviews], 400);
+
+  const clearPosterMetaCache = useCallback(() => {
+    [CACHE_KEYS.poster, CACHE_KEYS.meta, CACHE_KEYS.posterExportFailures].forEach(removeStorageValue);
+    setPosterCache({});
+    setMetaCache({});
+    setPosterExportFailures({});
+    setPosterFetchState({ active: false, done: 0, total: 0, message: 'Poster and metadata cache cleared.' });
+  }, []);
+
+  const clearAvatarActionCache = useCallback(() => {
+    [
+      CACHE_KEYS.userActions,
+      CACHE_KEYS.userActionsLikes,
+      CACHE_KEYS.userActionsRatings,
+      CACHE_KEYS.userActionsRewatch,
+      CACHE_KEYS.userActionsBookmarks,
+      CACHE_KEYS.userActionsReviews,
+      'mcu-profile-v1',
+      'mcu-uploaded-avatars-v1',
+    ].forEach(removeStorageValue);
+    setProfile({ name: '', pfp: '' });
+    setUploadedAvatars([]);
+    setMyLikes({});
+    setMyRating({});
+    setRewatchCount({});
+    setBookmarks({});
+    setReviews({});
+    setPosterFetchState({ active: false, done: 0, total: 0, message: 'Profile, avatar, and action cache cleared.' });
+  }, []);
 
   useDebouncedEffect(() => {
     const snapshot = {
@@ -2405,7 +2451,7 @@ export default function MCUViewer() {
 
   const appThemeBg = 'var(--theme-app-bg)';
   return (
-    <div data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': textScaleEnabled ? desktopTextScale : 1, width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: 'var(--ui-scale)', transformOrigin: 'top left', left: textScaleEnabled ? '0' : 'auto', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}`}>
+    <div data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': textScaleEnabled ? desktopTextScale : 1, width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: 'var(--ui-scale)', transformOrigin: 'top left', left: textScaleEnabled ? '0' : 'auto', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}${sidebarOpen || settingsOpen ? ' overlay-open' : ''}`}>
       <style>{`
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         html,body{scroll-behavior:smooth}
@@ -2578,7 +2624,7 @@ export default function MCUViewer() {
         .stat-card-label { font-size: clamp(11px, 1.8vw, 14px) !important; }
         .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; color:var(--theme-text-muted) !important }
 
-        .settings-menu{width:min(360px,calc(100vw - 28px));max-height:min(80vh,calc(100dvh - 92px));overscroll-behavior:contain}.settings-menu .fpill{min-width:0}.floating-controls{position:fixed;right:16px;bottom:max(16px, env(safe-area-inset-bottom));z-index:620;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}.floating-controls>*{pointer-events:auto}.floating-mode-switch{display:flex;border-radius:999px;overflow:hidden;border:1px solid ${T.surfaceBorder};background:${darkMode ? 'rgba(10,14,28,0.93)' : 'rgba(255,255,255,0.95)'};box-shadow:none}.bottom-action-dock{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+        .sidebar-toggle-btn{position:fixed;top:calc(env(safe-area-inset-top, 0px) + 10px);left:12px;z-index:280;width:44px;height:44px}.sidebar-backdrop{position:fixed;inset:0;background:rgba(4,8,18,0.62);z-index:900;pointer-events:auto}.sidebar-menu{position:fixed;top:0;left:0;bottom:0;width:min(320px,84vw);padding:86px 14px 20px;background:var(--sidebar-bg);backdrop-filter:var(--sidebar-blur);-webkit-backdrop-filter:var(--sidebar-blur);border-right:1px solid var(--sidebar-border);transform:var(--sidebar-transform);transition:transform 0.22s cubic-bezier(.22,.9,.24,1);z-index:920;overflow-y:auto;box-shadow:var(--sidebar-shadow);border-radius:16px}.settings-menu-anchor{position:fixed;top:calc(env(safe-area-inset-top, 0px) + 16px);right:14px;z-index:940}.settings-menu{position:absolute;top:100%;right:0;z-index:50;margin-top:8px;min-width:320px;width:min(360px,calc(100vw - 28px));max-height:min(80vh,calc(100dvh - 92px));border-radius:12px;border:1px solid color-mix(in srgb, var(--theme-accent) 35%, transparent);background:var(--settings-bg);backdrop-filter:var(--settings-blur);-webkit-backdrop-filter:var(--settings-blur);box-shadow:none;padding:10px;display:grid;gap:8px;overflow:auto;color:var(--theme-text);overscroll-behavior:contain}.settings-menu .fpill{min-width:0}.overlay-open .hero-backdrop-image{filter:saturate(1.04) contrast(1.01) brightness(.98);opacity:calc(var(--backdrop-opacity,0.9) * .55);transition-duration:180ms}.overlay-open .hero-backdrop-blend{opacity:.34}.overlay-open .dropdown-pop,.overlay-open .dropdown-pop-up{backdrop-filter:none;-webkit-backdrop-filter:none}.floating-controls{position:fixed;right:16px;bottom:max(16px, env(safe-area-inset-bottom));z-index:620;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}.floating-controls>*{pointer-events:auto}.floating-mode-switch{display:flex;border-radius:999px;overflow:hidden;border:1px solid ${T.surfaceBorder};background:${darkMode ? 'rgba(10,14,28,0.93)' : 'rgba(255,255,255,0.95)'};box-shadow:none}.bottom-action-dock{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
         .dock-btn{border-radius:999px;border:1px solid ${T.surfaceBorder};background:${darkMode ? 'rgba(20,25,46,0.9)' : 'rgba(255,255,255,0.92)'};color:${T.text};padding:10px 12px;font-family:var(--font-marvel-ui);letter-spacing:1.1px;font-size:12px;cursor:pointer;white-space:nowrap}
         .bottom-action-bar{border-radius:999px;padding:10px 14px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
         main,.rrow,.title-btn,.fpill,.wbtn,.sopt,.meta-muted,input,textarea,select,button,.header-tagline{font-size:calc(1em * var(--text-scale))}
@@ -2611,9 +2657,7 @@ export default function MCUViewer() {
       {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <button className="theme-btn" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar menu" style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 10px)', left: 12, zIndex: 280, width: 44, height: 44, background: darkMode ? 'rgba(10,14,28,0.94)' : '#ffffff', borderColor: darkMode ? 'rgba(255,255,255,0.24)' : T.pillBorder, boxShadow: darkMode ? '0 8px 24px rgba(0,0,0,0.35)' : '0 6px 16px rgba(0,0,0,0.12)' }}><Menu size={17} /></button>
-      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(4,8,18,0.62)', zIndex: 900, pointerEvents: 'auto' }} />}
-      <aside ref={sidebarRef} style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 'min(320px,84vw)', padding: '86px 14px 20px', background: darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', backdropFilter: performanceMode ? 'none' : 'blur(8px)', WebkitBackdropFilter: performanceMode ? 'none' : 'blur(8px)', borderRight: `1px solid ${T.surfaceBorder}`, transform: sidebarOpen ? 'translateX(0)' : 'translateX(-105%)', transition: 'transform 0.22s cubic-bezier(.22,.9,.24,1)', zIndex: 920, overflowY: 'auto', boxShadow: darkMode ? '0 22px 55px rgba(0,0,0,0.45)' : '0 18px 44px rgba(0,0,0,0.18)', borderRadius: 16 }}>
+      <SidebarMenu ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={() => setSidebarOpen(v => !v)} onClose={() => setSidebarOpen(false)}>
         <div style={{ marginBottom: 8, fontSize: 11, letterSpacing: 1.8, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)', textTransform: 'uppercase' }}>Navigation Panel</div>
         <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -2680,11 +2724,9 @@ export default function MCUViewer() {
         <div style={{ textAlign: 'center', marginTop: 16, fontFamily: 'var(--font-marvel-ui)', fontSize: 9, color: T.footerText, letterSpacing: 2.5 }}>
           Made with ♥ by Marvel Fan
         </div>
-      </aside>
+      </SidebarMenu>
 
-      <div ref={settingsRef} style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 16px)', right: 14, zIndex: 940 }}>
-        {settingsOpen && (
-          <div className="fade-in settings-menu" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, marginTop: 8, minWidth: 320, borderRadius: 12, border: '1px solid color-mix(in srgb, var(--theme-accent) 35%, transparent)', background: darkMode ? 'rgba(14,21,40,0.84)' : 'rgba(249,252,255,0.88)', backdropFilter: performanceMode ? 'none' : 'blur(8px)', WebkitBackdropFilter: performanceMode ? 'none' : 'blur(8px)', boxShadow: 'none', padding: 10, display: 'grid', gap: 8, maxHeight: '80vh', overflow: 'auto', color: 'var(--theme-text)' }}>
+      <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} performanceMode={performanceMode}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Profile</div>
             <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 6 }}>
@@ -2745,7 +2787,7 @@ export default function MCUViewer() {
             <label className="fpill" style={{ cursor: 'pointer' }}><Upload size={14}/>Import Progress
               <input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} />
             </label>
-            <button className="fpill" onClick={() => importProgress(new File([localStorage.getItem('mcu-auto-backup-v1') || '{}'], 'mcu-auto-backup.json', { type: 'application/json' }))} style={{ justifyContent: 'space-between' }}>
+            <button className="fpill" onClick={() => importProgress(new File([readStorageValue('mcu-auto-backup-v1', '{}') || '{}'], 'mcu-auto-backup.json', { type: 'application/json' }))} style={{ justifyContent: 'space-between' }}>
               <span><Clock size={14}/>Load Auto Backup</span>
               <span style={{ fontSize: 10, color: T.textMuted }}>{autoBackupStamp ? autoBackupStamp.slice(0, 10) : 'none'}</span>
             </button>
@@ -2768,9 +2810,9 @@ export default function MCUViewer() {
             <div style={{ fontSize: 11, letterSpacing: 2, color: 'var(--theme-danger)', textTransform: 'uppercase' }}>Danger Zone</div>
             {posterFetchState.message && <div style={{ fontSize: 11, color: T.textMuted }}>{posterFetchState.message}</div>}
             <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setShowCompleted(false); setActivePhase(0); }}><Trash2 size={14}/>Reset Filters</button>
-          </div>
-        )}
-      </div>
+            <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={clearPosterMetaCache}><Trash2 size={14}/>Clear Poster/Meta Cache</button>
+            <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={clearAvatarActionCache}><Trash2 size={14}/>Clear Avatar/Actions Cache</button>
+      </SettingsMenu>
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <header className="hexbg" style={{ position: 'relative', zIndex: 120, background: 'transparent', borderBottom: 'none', flexShrink: 0 }}>
