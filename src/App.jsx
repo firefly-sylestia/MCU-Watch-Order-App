@@ -6,7 +6,7 @@ import { Media } from '@capacitor-community/media';
 import CropModal from './components/CropModal';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { renderCardToCanvas } from './export/cards/renderCardToCanvas';
-import { drawPremiumStars, drawWrappedText } from './export/cards/helpers';
+import { drawPremiumStars, drawRoundedPanel, drawWrappedText } from './export/cards/helpers';
 import {
   ESSENTIAL_LIST,
   NO_PREREQ,
@@ -611,7 +611,7 @@ export default function MCUViewer() {
   const [exportComposerOpen, setExportComposerOpen] = useState(false);
   const [exportPreview, setExportPreview] = useState({ url: '', loading: false, error: '' });
   const [exportSettings, setExportSettings] = useState(() => ({
-    type: 'unified', theme: 'midnight', bgOpacity: 40, fontWeight: 800, density: 'comfortable', posterMode: 'featured',
+    type: 'unified', theme: 'midnight', bgOpacity: 52, fontWeight: 800, density: 'comfortable', posterMode: 'featured',
     sections: { hours: true, history: true, rating: true, reviewSnippet: true, profileBadge: true }, aspect: '4:5',
   }));
   const [autoBackupStamp, setAutoBackupStamp] = useState('');
@@ -1521,6 +1521,9 @@ export default function MCUViewer() {
           textScale: exportTextScale,
           fontFamily: exportFontFamily,
           posterSrc,
+          theme: type === 'review' ? reviewCardTheme : exportSettings.theme,
+          bgOpacity: exportSettings.bgOpacity,
+          density: exportSettings.density,
           namingStrategy: ({ type: cardType, data: cardData }) => {
             if (cardType === 'progress') return `mcu-progress-card-${Date.now()}.png`;
             if (cardType === 'analysis') return 'mcu-analysis-card.png';
@@ -1536,7 +1539,7 @@ export default function MCUViewer() {
       console.error(`Failed to share ${type} card`, e);
       statusHandlers?.onError?.(e);
     }
-  }, [exportFont, exportTextScale, posterSrc, saveImageToDevice]);
+  }, [exportFont, exportTextScale, posterSrc, saveImageToDevice, reviewCardTheme, exportSettings.theme, exportSettings.bgOpacity, exportSettings.density]);
 
   const shareReviewCard = async (item) => {
     await shareCardImage({
@@ -1563,28 +1566,48 @@ export default function MCUViewer() {
     await shareCardImage({ type: 'unified', data: { featured: historyItems[0] || activeItems[0], rows: historyItems, ratings: myRating, pct, currentPhase: stickyPhaseProgress.label, totalWatched, totalItems: activeItems.length } });
   };
 
+  const exportPreviewRows = useMemo(() => historyItems.slice(0, 6), [historyItems]);
+  const exportPreviewFeatured = exportPreviewRows[0] || activeItems[0];
+
   useEffect(() => {
-    if (!exportComposerOpen) return;
+    if (!exportComposerOpen || !exportPreviewFeatured) return undefined;
+    let cancelled = false;
+    let objectUrl = '';
     const timer = window.setTimeout(async () => {
-      setExportPreview(prev => ({ ...prev, loading: true }));
+      setExportPreview(prev => ({ ...prev, loading: true, error: '' }));
       try {
-        const { canvas } = await renderCardToCanvas({
+        const { blob } = await renderCardToCanvas({
           type: exportSettings.type,
-          data: { item: historyItems[0] || activeItems[0], featured: historyItems[0] || activeItems[0], rows: historyItems, ratings: myRating, rating: myRating[historyItems[0]?.id] || 0, reviewText: reviews[historyItems[0]?.id] || '', reviewer: profile.name || 'Reviewer', pct, currentPhase: stickyPhaseProgress.label, totalWatched, totalItems: activeItems.length },
+          data: { item: exportPreviewFeatured, featured: exportPreviewFeatured, rows: exportPreviewRows, ratings: myRating, rating: myRating[exportPreviewFeatured?.id] || 0, reviewText: reviews[exportPreviewFeatured?.id] || '', reviewer: profile.name || 'Reviewer', pct, currentPhase: stickyPhaseProgress.label, totalWatched, totalItems: activeItems.length },
           settings: {
-            textScale: Math.max(0.9, exportTextScale),
+            textScale: Math.max(0.9, Math.min(1.35, exportTextScale)),
             fontFamily: ({ inter: 'Inter, sans-serif', grotesk: 'Space Grotesk, sans-serif', manrope: 'Manrope, sans-serif', marvel: 'var(--font-marvel-display), sans-serif' }[exportFont] || 'Inter, sans-serif'),
             posterSrc,
+            theme: exportSettings.theme,
+            bgOpacity: exportSettings.bgOpacity,
+            density: exportSettings.density,
+            previewScale: 0.42,
           },
         });
-        const url = canvas.toDataURL('image/png', 0.8);
-        setExportPreview({ url, loading: false, error: '' });
+        objectUrl = URL.createObjectURL(blob);
+        if (!cancelled) {
+          setExportPreview(prev => {
+            if (prev.url?.startsWith('blob:')) URL.revokeObjectURL(prev.url);
+            return { url: objectUrl, loading: false, error: '' };
+          });
+        } else {
+          URL.revokeObjectURL(objectUrl);
+        }
       } catch {
-        setExportPreview({ url: '', loading: false, error: 'Preview unavailable. Export still works.' });
+        if (!cancelled) setExportPreview({ url: '', loading: false, error: 'Preview unavailable. Export still works.' });
       }
-    }, 140);
-    return () => window.clearTimeout(timer);
-  }, [exportComposerOpen, exportSettings, exportFont, exportTextScale, historyItems, activeItems, myRating, reviews, profile.name, pct, stickyPhaseProgress.label, totalWatched, posterSrc]);
+    }, 360);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [exportComposerOpen, exportSettings.type, exportSettings.theme, exportSettings.bgOpacity, exportSettings.density, exportFont, exportTextScale, exportPreviewFeatured, exportPreviewRows, myRating, reviews, profile.name, pct, stickyPhaseProgress.label, totalWatched, activeItems.length, posterSrc]);
 
 
   // ─── Smoother phase gradient (multi-stop per phase for richer look) ──────
@@ -1852,46 +1875,79 @@ export default function MCUViewer() {
       canvas.width = 1400;
       canvas.height = 2000;
       const ctx = canvas.getContext('2d');
-      const grd = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      grd.addColorStop(0, '#090f20');
-      grd.addColorStop(1, '#111a31');
+      const grd = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      grd.addColorStop(0, '#06111f');
+      grd.addColorStop(0.52, '#111a38');
+      grd.addColorStop(1, '#35103b');
       ctx.fillStyle = grd;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       const ratingNum = clampTenPoint(Number(detailData?.imdbRating || metaCache[item.id]?.rating || 0));
+      let img = null;
       if (src) {
-        const img = new Image();
+        img = new Image();
         img.crossOrigin = 'anonymous';
         img.src = src;
         await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
+        ctx.globalAlpha = 0.5;
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = 'rgba(6,10,22,0.56)';
+        ctx.globalAlpha = 1;
+        const veil = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        veil.addColorStop(0, 'rgba(3,7,18,0.42)');
+        veil.addColorStop(0.5, 'rgba(3,7,18,0.72)');
+        veil.addColorStop(1, 'rgba(3,7,18,0.92)');
+        ctx.fillStyle = veil;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 74, 90, 350, 510);
       }
-      ctx.fillStyle = 'rgba(8,14,30,0.74)';
-      ctx.beginPath();
-      ctx.roundRect(40, 40, 1320, 1920, 32);
-      ctx.fill();
+      drawRoundedPanel(ctx, { x: 44, y: 48, w: 1312, h: 1904, radius: 58, fill: 'rgba(7,13,31,0.78)', stroke: 'rgba(125,211,252,0.28)', lineWidth: 4 });
+      drawRoundedPanel(ctx, { x: 82, y: 88, w: 1236, h: 1824, radius: 42, fill: 'rgba(255,255,255,0.045)', stroke: 'rgba(255,255,255,0.14)' });
       const fontMap = { inter: 'Inter, sans-serif', grotesk: 'Space Grotesk, sans-serif', manrope: 'Manrope, sans-serif', marvel: 'var(--font-marvel-display), sans-serif' };
       const exportFontFamily = fontMap[exportFont] || fontMap.inter;
-      const scale = exportTextScale;
+      const scale = Math.min(exportTextScale, 1.75);
+      if (img) {
+        drawRoundedPanel(ctx, { x: 112, y: 130, w: 394, h: 574, radius: 34, fill: 'rgba(255,255,255,0.13)', stroke: 'rgba(255,211,92,0.36)', lineWidth: 3 });
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(126, 144, 366, 546, 26);
+        ctx.clip();
+        ctx.drawImage(img, 126, 144, 366, 546);
+        ctx.restore();
+      }
+      ctx.fillStyle = '#7dd3fc';
+      ctx.font = `900 ${Math.round(28 * scale)}px ${exportFontFamily}`;
+      ctx.fillText('MCU DETAILS CARD', 550, 164);
       ctx.fillStyle = '#fff';
-      ctx.font = `800 ${Math.round(62 * scale)}px ${exportFontFamily}`;
-      ctx.fillText(item.title, 430, 145, 900);
-      ctx.font = `600 ${Math.round(34 * scale)}px ${exportFontFamily}`;
-      ctx.fillStyle = '#9dc6ff';
-      ctx.fillText(`${item.year} • Phase ${item.phase} • ${TYPE_META[item.type]?.label || item.type}`, 430, 195, 900);
-      drawPremiumStars(ctx, { x: 430, y: 252, size: Math.round(34 * scale), rating10: ratingNum, active: '#ffd35c' });
-      ctx.fillText(`${ratingNum ? ratingNum.toFixed(1) : '—'}/10`, 430, 304, 900);
+      ctx.font = `900 ${Math.round(60 * scale)}px ${exportFontFamily}`;
+      drawWrappedText(ctx, item.title, 550, 244, 700, Math.round(68 * scale), 3);
+      ctx.font = `750 ${Math.round(30 * scale)}px ${exportFontFamily}`;
+      ctx.fillStyle = '#bfdbfe';
+      ctx.fillText(`${item.year} • Phase ${item.phase} • ${TYPE_META[item.type]?.label || item.type}`, 550, 468, 700);
+      drawPremiumStars(ctx, { x: 550, y: 550, size: Math.round(42 * scale), rating10: ratingNum, active: '#ffd35c', fontFamily: exportFontFamily });
+      ctx.fillStyle = '#ffd35c';
+      ctx.font = `900 ${Math.round(42 * scale)}px ${exportFontFamily}`;
+      ctx.fillText(`${ratingNum ? ratingNum.toFixed(1) : '—'}/10`, 550, 626, 700);
+      drawRoundedPanel(ctx, { x: 112, y: 778, w: 1176, h: 530, radius: 36, fill: 'rgba(255,255,255,0.085)', stroke: 'rgba(255,255,255,0.16)' });
+      ctx.fillStyle = '#7dd3fc';
+      ctx.font = `900 ${Math.round(28 * scale)}px ${exportFontFamily}`;
+      ctx.fillText('STORY BRIEF', 150, 858);
+      ctx.fillStyle = '#edf6ff';
+      ctx.font = `650 ${Math.round(34 * scale)}px ${exportFontFamily}`;
+      drawWrappedText(ctx, description, 150, 924, 1100, Math.round(48 * scale), 7);
+      drawRoundedPanel(ctx, { x: 112, y: 1350, w: 1176, h: 374, radius: 36, fill: 'rgba(255,255,255,0.07)', stroke: 'rgba(255,255,255,0.14)' });
+      ctx.fillStyle = '#f0abfc';
+      ctx.font = `900 ${Math.round(26 * scale)}px ${exportFontFamily}`;
+      ctx.fillText('WATCH INTEL', 150, 1424);
       ctx.fillStyle = '#d3ddf6';
-      ctx.font = `600 ${Math.round(30 * scale)}px ${exportFontFamily}`;
-      ctx.fillText('Description', 70, 660);
-      drawWrappedText(ctx, description, 70, 710, 1260, Math.round(44 * scale), 8);
-      ctx.fillText(`Release: ${formatReleaseDate(info.date, item.year, info.label, status)}`, 70, 1118);
-      ctx.fillText(`Prerequisite: ${item.prereq}`, 70, 1170, 1260);
+      ctx.font = `700 ${Math.round(28 * scale)}px ${exportFontFamily}`;
+      ctx.fillText(`Release: ${formatReleaseDate(info.date, item.year, info.label, status)}`, 150, 1494, 1080);
+      drawWrappedText(ctx, `Prerequisite: ${item.prereq}`, 150, 1552, 1080, Math.round(40 * scale), 2);
       const cast = detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[item.title] || ['Cast data coming soon']).join(', ');
-      ctx.fillText('Cast', 70, 1215);
-      drawWrappedText(ctx, cast, 70, 1260, 1260, Math.round(38 * scale), 6);
+      ctx.fillStyle = '#7dd3fc';
+      ctx.fillText('Cast', 150, 1658);
+      ctx.fillStyle = '#d3ddf6';
+      drawWrappedText(ctx, cast, 250, 1658, 980, Math.round(38 * scale), 3);
+      ctx.fillStyle = 'rgba(255,255,255,0.48)';
+      ctx.font = `800 24px ${exportFontFamily}`;
+      ctx.fillText('Made with MCU Viewing Order', 112, 1858);
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
       if (Capacitor.isNativePlatform()) {
         const base64 = await blobToBase64(blob);
@@ -3122,8 +3178,22 @@ export default function MCUViewer() {
               <button className="fpill ui-touch-btn" onClick={shareUnifiedCard}><Upload size={14}/>Create Unified Export Card</button>
               <button className="fpill ui-touch-btn" onClick={() => setExportComposerOpen(v => !v)}><SlidersH size={14}/>{exportComposerOpen ? 'Hide' : 'Open'} Composer</button>
             </div>
-            <div className="glass-panel ui-panel ui-control-row" style={{ marginBottom: 10, padding: 10 }}>
-              <div className="ui-section-header">Export Card Settings</div>
+            <div className="glass-panel ui-panel ui-control-row export-card-studio" style={{ marginBottom: 10, padding: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                <div>
+                  <div className="ui-section-header" style={{ marginBottom: 2 }}>Export Card Studio</div>
+                  <div style={{ color: T.textMuted, fontSize: 12 }}>Make a polished share image with bold MCU-inspired color, progress, and history.</div>
+                </div>
+                <span style={{ border: '1px solid color-mix(in srgb, var(--theme-accent) 34%, var(--theme-border))', borderRadius: 999, padding: '6px 10px', fontSize: 11, color: 'var(--theme-accent)', fontWeight: 800 }}>Pro Share</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 8 }}>
+                {[{ id: 'midnight', label: 'Midnight', desc: 'cosmic blue' }, { id: 'stark', label: 'Stark', desc: 'red gold' }, { id: 'vibranium', label: 'Vibranium', desc: 'purple tech' }].map(opt => (
+                  <button key={opt.id} className="fpill" onClick={() => setExportSettings(prev => ({ ...prev, theme: opt.id }))} style={{ justifyContent: 'center', flexDirection: 'column', gap: 2, minHeight: 50, borderColor: exportSettings.theme === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>
+                    <strong style={{ fontSize: 12 }}>{opt.label}</strong>
+                    <span style={{ fontSize: 10, color: T.textMuted }}>{opt.desc}</span>
+                  </button>
+                ))}
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
                 {[{ id: 'inter', label: 'Inter' }, { id: 'grotesk', label: 'Grotesk' }, { id: 'manrope', label: 'Manrope' }, { id: 'marvel', label: 'Marvel' }].map(opt => (
                   <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: opt.id === 'marvel' ? 'var(--font-marvel-display)' : opt.label, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
@@ -3133,13 +3203,13 @@ export default function MCUViewer() {
                 <span style={{ fontSize: 11, color: T.textMuted }}>Export text size: {Math.round(exportTextScale * 100)}%</span>
                 <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr) auto', gap: 8, alignItems: 'center' }}>
                 <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.max(0.9, Number((v - 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>−</button>
-                <input type='range' min={90} max={240} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
-                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.min(2.4, Number((v + 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>+</button>
+                <input type='range' min={90} max={200} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
+                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.min(2, Number((v + 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>+</button>
               </div>
               </label>
               <label style={{ display: 'grid', gap: 4 }}>
-                <span style={{ fontSize: 11, color: T.textMuted }}>BG opacity: {exportSettings.bgOpacity}%</span>
-                <input type='range' min={0} max={100} step={1} value={exportSettings.bgOpacity} onChange={(e) => setExportSettings(prev => ({ ...prev, bgOpacity: Number(e.target.value) }))} />
+                <span style={{ fontSize: 11, color: T.textMuted }}>Poster atmosphere: {exportSettings.bgOpacity}%</span>
+                <input type='range' min={12} max={82} step={1} value={exportSettings.bgOpacity} onChange={(e) => setExportSettings(prev => ({ ...prev, bgOpacity: Number(e.target.value) }))} />
               </label>
             </div>
             {exportComposerOpen && <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'minmax(0,1fr)', maxHeight: '50vh', overflow: 'auto' }}>
