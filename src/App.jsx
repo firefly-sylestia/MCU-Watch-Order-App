@@ -640,16 +640,20 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
   open,
   darkMode,
   performanceMode,
+  onClose,
   children,
 }, ref) {
   return (
-    <div ref={ref} className="settings-menu-anchor">
+    <>
+      {open && <button className="settings-backdrop" aria-label="Close settings menu" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose?.(); }} />}
+      <div ref={ref} className="settings-menu-anchor">
       {open && (
         <div className="fade-in settings-menu" style={{ '--settings-bg': darkMode ? 'rgba(14,21,40,0.84)' : 'rgba(249,252,255,0.88)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
           {children}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }));
 
@@ -947,8 +951,8 @@ export default function MCUViewer() {
   }, []);
   useEffect(() => {
     const fn = e => { if (settingsRef.current && !settingsRef.current.contains(e.target)) setSettingsOpen(false); };
-    document.addEventListener('mousedown', fn);
-    return () => document.removeEventListener('mousedown', fn);
+    document.addEventListener('pointerdown', fn, true);
+    return () => document.removeEventListener('pointerdown', fn, true);
   }, []);
 
   const scrollTo = id => {
@@ -2159,9 +2163,10 @@ export default function MCUViewer() {
       const failed = new Set(metadataBuild.failedIds);
       return activeItems.filter(item => failed.has(item.id));
     }
-    return activeItems.filter(item => {
+    const scopeItems = listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items;
+    return scopeItems.filter(item => {
       if (refreshAll) return true;
-      const hasPoster = Boolean(posterCache[item.id]);
+      const hasPoster = Boolean(localPosterSrc(item) || posterCache[item.id]);
       const meta = metaCache[item.id] || {};
       const hasMetadata = Boolean(meta.rating || meta.released);
       return !hasPoster || !hasMetadata;
@@ -2639,7 +2644,7 @@ export default function MCUViewer() {
         </div>
       </SidebarMenu>
 
-      <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} performanceMode={performanceMode}>
+      <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} performanceMode={performanceMode} onClose={() => setSettingsOpen(false)}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Profile</div>
             <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 6 }}>
@@ -2784,7 +2789,7 @@ export default function MCUViewer() {
             })}
           </div>
         )}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 16, background: 'linear-gradient(90deg, rgba(4,6,12,0.10) 0%, transparent 8%, transparent 92%, rgba(4,6,12,0.10) 100%)' }} />
+        <div style={{ position: 'absolute', top: 0, bottom: 0, left: isDesktopViewport ? 2 : 6, right: isDesktopViewport ? 2 : 6, pointerEvents: 'none', borderRadius: isDesktopViewport ? 14 : 12, background: 'linear-gradient(90deg, rgba(4,6,12,0.18) 0%, transparent 12%, transparent 88%, rgba(4,6,12,0.18) 100%)' }} />
         {!detailItem && !analyticsOpen && !settingsOpen && <WatermarkOverlay surface="hero" theme={darkMode ? 'cinematic' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['cta', 'title']} />}
        
       </div>
@@ -3019,14 +3024,14 @@ export default function MCUViewer() {
                 <div className="curvy-panel" style={{ '--phase-color': ph.color, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap', padding: '10px 10px 10px 12px', border: `1px solid ${T.surfaceBorder}`, background: 'transparent', position: 'relative' }}>
                   <WatermarkOverlay surface="card" theme={darkMode ? 'dark' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['title', 'progress']} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: 'var(--font-marvel-display)', fontSize: 'clamp(23px, 3vw, 28px)', letterSpacing: 2.2, color: ph.color, lineHeight: 1, fontWeight: 700, textShadow: darkMode ? `0 0 18px ${ph.glow}` : 'none' }}>
+                    <div style={{ fontFamily: 'var(--font-marvel-display)', fontSize: 'clamp(23px, 3vw, 28px)', letterSpacing: 2.2, color: ph.color, lineHeight: 1, fontWeight: 700 }}>
                       {ph.name}
                     </div>
                     <div style={{ fontSize: 'clamp(12px, 1.4vw, 14px)', color: T.textMuted, letterSpacing: 1.4, fontFamily: 'var(--font-marvel-ui)', marginTop: 1, textTransform: 'uppercase', maxWidth: 360, lineHeight: 1.15 }}>
                       {ph.tagline === 'Assembling the Avengers' ? <>ASSEMBLING<br />THE AVENGERS</> : ph.tagline}
                     </div>
                   </div>
-                  <span style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 11, letterSpacing: 1, color: phasePct === 100 ? ph.color : T.textMuted, flexShrink: 0, minWidth: 38, textAlign: 'right' }}>
+                  <span style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 11, letterSpacing: 1, color: phasePct === 100 ? ph.color : T.textMuted, flexShrink: 0, minWidth: 38, textAlign: 'right', background: 'color-mix(in srgb, var(--theme-surface) 92%, transparent)', border: `1px solid ${T.surfaceBorder}`, borderRadius: 999, padding: '3px 8px' }}>
                     {done}/{rows.length}
                   </span>
                   <button onClick={() => setExpandedPhase(summaryOpen ? null : pid)}
