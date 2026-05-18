@@ -222,6 +222,50 @@ const EXPORT_THEME_OPTIONS = [
   { id: 'multiverseGlitch', label: 'Multiverse Glitch', desc: 'variant shards' },
   { id: 'heroDossier', label: 'Hero Dossier', desc: 'mission file' },
 ];
+
+const WATERMARK_POSITION_PRESETS = {
+  hero: { position: 'bottom-end', mobile: { x: 14, y: 14 }, tablet: { x: 20, y: 18 }, desktop: { x: 28, y: 22 } },
+  card: { position: 'top-end', mobile: { x: 10, y: 10 }, tablet: { x: 12, y: 12 }, desktop: { x: 14, y: 14 } },
+};
+
+const WATERMARK_THEME_TOKENS = {
+  light: { opacity: 0.26, blendMode: 'multiply' },
+  dark: { opacity: 0.18, blendMode: 'screen' },
+  cinematic: { opacity: 0.2, blendMode: 'soft-light' },
+};
+
+const WatermarkOverlay = ({ label = 'MCU', surface = 'card', theme = 'dark', viewport = 'desktop', avoid = [] }) => {
+  const preset = WATERMARK_POSITION_PRESETS[surface] || WATERMARK_POSITION_PRESETS.card;
+  const tokens = WATERMARK_THEME_TOKENS[theme] || WATERMARK_THEME_TOKENS.dark;
+  const offsets = preset[viewport] || preset.desktop;
+  const avoidSet = new Set(avoid);
+  const shouldFlipToBottom = preset.position.startsWith('top') && (avoidSet.has('title') || avoidSet.has('cta'));
+  const shouldFlipToStart = preset.position.endsWith('end') && avoidSet.has('progress');
+  const resolvedPosition = `${shouldFlipToBottom ? 'bottom' : preset.position.split('-')[0]}-${shouldFlipToStart ? 'start' : preset.position.split('-')[1]}`;
+  const style = {
+    position: 'absolute',
+    pointerEvents: 'none',
+    opacity: tokens.opacity,
+    mixBlendMode: tokens.blendMode,
+    letterSpacing: '0.32em',
+    fontFamily: 'var(--font-marvel-display)',
+    fontSize: surface === 'hero' ? 12 : 10,
+    fontWeight: 800,
+    color: 'var(--theme-text)',
+    textTransform: 'uppercase',
+    zIndex: 3,
+  };
+  if (resolvedPosition.includes('top')) style.top = offsets.y;
+  if (resolvedPosition.includes('bottom')) style.bottom = offsets.y;
+  if (resolvedPosition.includes('start')) style.left = offsets.x;
+  if (resolvedPosition.includes('end')) style.right = offsets.x;
+  if (resolvedPosition === 'center') {
+    style.top = '50%';
+    style.left = '50%';
+    style.transform = 'translate(-50%, -50%)';
+  }
+  return <div style={style}>{label}</div>;
+};
 const waitForExportFont = async (fontFamily) => {
   if (typeof document === 'undefined' || !document.fonts) return;
   try {
@@ -1301,31 +1345,40 @@ export default function MCUViewer() {
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
     if (heroPosters.length <= 1) return undefined;
+    const overlayBlockingCycle = Boolean(settingsOpen || analyticsOpen || detailItem || sidebarOpen);
+    const telemetry = (state, reason) => {
+      if (typeof window === 'undefined') return;
+      window.dispatchEvent(new CustomEvent(`backdrop_cycle_${state}_reason`, { detail: { reason } }));
+    };
 
     const startHeroCycle = () => {
+      if (overlayBlockingCycle) return;
       if (heroIntervalRef.current) return;
       heroIntervalRef.current = window.setInterval(() => {
         if (Date.now() < heroUserInteractingUntilRef.current) return;
         setHeroIndex(i => (i + 1) % heroPosters.length);
       }, HERO_ROTATION_MS);
+      telemetry('resumed', 'home-active');
     };
     const stopHeroCycle = () => {
       if (!heroIntervalRef.current) return;
       window.clearInterval(heroIntervalRef.current);
       heroIntervalRef.current = null;
+      telemetry('paused', overlayBlockingCycle ? 'overlay-open' : 'document-hidden');
     };
     const onVisibility = () => {
       if (document.visibilityState === 'visible') startHeroCycle();
       else stopHeroCycle();
     };
 
-    onVisibility();
+    const debounce = window.setTimeout(onVisibility, 120);
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
+      window.clearTimeout(debounce);
       document.removeEventListener('visibilitychange', onVisibility);
       stopHeroCycle();
     };
-  }, [heroPosters.length]);
+  }, [heroPosters.length, settingsOpen, analyticsOpen, detailItem, sidebarOpen]);
 
   const pauseHeroAutoSlide = useCallback((duration = 2200) => {
     heroUserInteractingUntilRef.current = Date.now() + duration;
@@ -2420,6 +2473,13 @@ export default function MCUViewer() {
     '--theme-warning-soft': darkMode ? 'rgba(232,184,75,0.16)' : 'rgba(232,184,75,0.12)',
     '--theme-danger': '#d16a6a',
     '--theme-danger-soft': darkMode ? 'rgba(209,106,106,0.16)' : 'rgba(209,106,106,0.12)',
+    '--theme-text-primary': darkMode ? '#e6edf8' : '#1a2030',
+    '--theme-text-secondary': darkMode ? '#c3d1e4' : '#334155',
+    '--theme-overlay-surface': darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.06)',
+    '--theme-overlay-border': darkMode ? 'rgba(255,255,255,0.16)' : 'rgba(15,23,42,0.16)',
+    '--app-bg-base': darkMode ? '#06060f' : '#f2f0eb',
+    '--app-bg-vignette': darkMode ? 'rgba(2,6,23,0.42)' : 'rgba(2,6,23,0.08)',
+    '--app-bg-noise-opacity': darkMode ? '0.06' : '0.03',
     '--theme-app-bg': darkMode
       ? `radial-gradient(circle at 8% 2%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 40%, transparent), transparent 34%), radial-gradient(circle at 90% 8%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 36%, transparent), transparent 40%), radial-gradient(circle at 50% 120%, rgba(14,165,233,0.22), transparent 52%), linear-gradient(138deg, #02030a 0%, #09071a 30%, #0f1031 58%, #1a1038 100%)`
       : `radial-gradient(circle at 8% 4%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 24%, #ffffff), transparent 34%), radial-gradient(circle at 88% 14%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 22%, #ffffff), transparent 40%), linear-gradient(140deg, #f6fbff 0%, #eef3ff 40%, #f2edff 100%)`,
@@ -2433,25 +2493,35 @@ export default function MCUViewer() {
       : `linear-gradient(100deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 14%, #ffffff), color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 8%, #f7f5ef))`,
     ...activeThemeVars,
   };
+  const routeMode = analyticsOpen || settingsOpen ? 'utility' : 'home';
 
   // Count active filters for the collapsed bar badge
   const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
 
   const renderPhaseSelector = () => (
-    <div ref={phaseRef} style={{ position: 'relative', flex: '0 0 auto' }}>
-      <button className="fpill" onClick={() => setPhaseOpen(o => !o)}
-        style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '5px 10px', color: activePhase === 0 ? T.textMuted : (PHASES.find(ph => ph.id === activePhase)?.color || T.text), background: 'transparent', fontFamily: 'var(--font-marvel-ui)', fontSize: 12, letterSpacing: 1.4, whiteSpace: 'nowrap' }}>
-        {activePhase === 0 ? 'Phase All' : (PHASES.find(ph => ph.id === activePhase)?.name || 'Phase All')}
-        <ChevDown size={12} style={{ opacity: 0.6, transform: phaseOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-      </button>
-      {phaseOpen && (
-        <div className="dropdown-pop" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 1400, boxShadow: 'none', minWidth: 200 }}>
-          <div className={`sopt ${activePhase === 0 ? 'picked' : ''}`} onClick={() => { setActivePhase(0); setPhaseOpen(false); }}>Phase All</div>
-          {PHASES.map((ph) => (
-            <div key={ph.id} className={`sopt ${activePhase === ph.id ? 'picked' : ''}`} style={activePhase === ph.id ? { color: ph.color, fontWeight: 700 } : {}} onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); setPhaseOpen(false); }}>{ph.name}</div>
-          ))}
-        </div>
-      )}
+    <div ref={phaseRef} style={{ display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto', paddingBottom: 2, maxWidth: '100%' }}>
+      <button className="fpill" onClick={() => setActivePhase(0)} style={{ borderRadius: 999, borderColor: activePhase === 0 ? 'var(--theme-accent)' : T.filterBorder, color: activePhase === 0 ? 'var(--theme-accent)' : T.textMuted }}>All</button>
+      {PHASES.map((ph) => {
+        const stat = phaseStats.find(s => s.phase === ph.id);
+        const total = stat?.total || 0;
+        const watched = stat?.watched || 0;
+        const percent = total ? Math.round((watched / total) * 100) : 0;
+        const isActive = activePhase === ph.id;
+        return (
+          <button
+            key={ph.id}
+            onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); }}
+            style={{
+              display: 'grid', gridTemplateColumns: '30px auto auto', alignItems: 'center', gap: 8, borderRadius: 999, padding: '6px 10px 6px 7px',
+              border: `1px solid ${isActive ? ph.color : T.filterBorder}`, background: isActive ? `color-mix(in srgb, ${ph.color} 16%, transparent)` : 'transparent',
+              boxShadow: isActive ? `0 0 0 1px ${ph.color}44, 0 0 18px ${ph.glow}` : 'none', transform: isActive ? 'scale(1.02)' : 'scale(1)', cursor: 'pointer'
+            }}>
+            <span style={{ width: 26, height: 26, borderRadius: 999, display: 'grid', placeItems: 'center', color: ph.color, fontSize: 10, fontWeight: 800, background: `conic-gradient(${ph.color} ${percent * 3.6}deg, color-mix(in srgb, ${ph.color} 14%, transparent) 0)`, border: `1px solid ${ph.color}66` }}>{ph.id}</span>
+            <span style={{ fontSize: 11, letterSpacing: 1.1, color: isActive ? ph.color : T.text, whiteSpace: 'nowrap' }}>{ph.name}</span>
+            <span style={{ fontSize: 10, color: T.textMuted }}>{watched}/{total}</span>
+          </button>
+        );
+      })}
     </div>
   );
 
@@ -2468,9 +2538,12 @@ export default function MCUViewer() {
     </>
   );
 
-  const appThemeBg = 'var(--theme-app-bg)';
+  const appThemeBg = routeMode === 'utility'
+    ? `linear-gradient(180deg, color-mix(in srgb, var(--theme-surface) 36%, var(--app-bg-base)), var(--app-bg-base))`
+    : `radial-gradient(circle at 50% 0%, var(--app-bg-vignette), transparent 58%), var(--theme-app-bg)`;
+  const appTexture = performanceMode ? 'none' : `radial-gradient(circle, rgba(255,255,255,var(--app-bg-noise-opacity)) 0.7px, transparent 0.8px)`;
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': textScaleEnabled ? desktopTextScale : 1, width: '100%', minHeight: '100dvh', background: appThemeBg, color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: 'var(--ui-scale)', transformOrigin: 'top left', left: textScaleEnabled ? '0' : 'auto', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}${sidebarOpen || settingsOpen ? ' overlay-open' : ''}`}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': textScaleEnabled ? desktopTextScale : 1, width: '100%', minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: 'var(--ui-scale)', transformOrigin: 'top left', left: textScaleEnabled ? '0' : 'auto', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}${sidebarOpen || settingsOpen ? ' overlay-open' : ''}`}>
       
 
 
@@ -2712,6 +2785,7 @@ export default function MCUViewer() {
           </div>
         )}
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 16, background: 'linear-gradient(90deg, rgba(4,6,12,0.10) 0%, transparent 8%, transparent 92%, rgba(4,6,12,0.10) 100%)' }} />
+        {!detailItem && !analyticsOpen && !settingsOpen && <WatermarkOverlay surface="hero" theme={darkMode ? 'cinematic' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['cta', 'title']} />}
        
       </div>
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
@@ -2942,7 +3016,8 @@ export default function MCUViewer() {
                 )}
 
                 {/* Phase divider */}
-                <div className="curvy-panel" style={{ '--phase-color': ph.color, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap', padding: '10px 10px 10px 12px', border: `1px solid ${T.surfaceBorder}`, background: 'transparent' }}>
+                <div className="curvy-panel" style={{ '--phase-color': ph.color, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap', padding: '10px 10px 10px 12px', border: `1px solid ${T.surfaceBorder}`, background: 'transparent', position: 'relative' }}>
+                  <WatermarkOverlay surface="card" theme={darkMode ? 'dark' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['title', 'progress']} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: 'var(--font-marvel-display)', fontSize: 'clamp(23px, 3vw, 28px)', letterSpacing: 2.2, color: ph.color, lineHeight: 1, fontWeight: 700, textShadow: darkMode ? `0 0 18px ${ph.glow}` : 'none' }}>
                       {ph.name}
@@ -2983,7 +3058,7 @@ export default function MCUViewer() {
                 )}
 
                 {/* Row table */}
-                <div className="list-panel" style={{ background: 'transparent', border: `1px solid ${T.surfaceBorder}`, borderRadius: 14, overflow: 'hidden', boxShadow: 'none' }}>
+                <div className="list-panel" style={{ background: 'transparent', border: 'none', borderRadius: 14, overflow: 'hidden', boxShadow: 'none' }}>
                   <PhaseRows rows={rows} renderRow={(item, idx) => {
                     const itemReleaseStatus = releaseStatusFor(item);
                     const itemReleaseInfo = releaseInfoFor(item);
@@ -3130,18 +3205,18 @@ export default function MCUViewer() {
                 <button key={tab.id} className="fpill" onClick={() => setAnalyticsTab(tab.id)} style={{ borderColor: analyticsTab === tab.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{tab.label}</button>
               ))}
             </div>
-            {analyticsTab === 'overview' && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 10, marginBottom: 14 }}>
-              <div className="glass-panel" style={{ padding: 12, borderRadius: 12 }}><div style={{ color: T.textMuted, fontSize: 11 }}>TOTAL WATCHED</div><div style={{ fontSize: 24, fontWeight: 800 }}>{Math.round(totalWatchedHours * 10) / 10}h</div></div>
-              <div className="glass-panel" style={{ padding: 12, borderRadius: 12 }}><div style={{ color: T.textMuted, fontSize: 11 }}>WATCHED ITEMS</div><div style={{ fontSize: 24, fontWeight: 800 }}>{totalWatched}</div></div>
-              <div className="glass-panel" style={{ padding: 12, borderRadius: 12 }}><div style={{ color: T.textMuted, fontSize: 11 }}>RE-WATCHES</div><div style={{ fontSize: 24, fontWeight: 800 }}>{Object.values(rewatchCount).reduce((a, b) => a + (Number(b) || 0), 0)}</div></div>
+            {analyticsTab === 'overview' && <div style={{ display: 'grid', gridTemplateColumns: isDesktopViewport ? 'repeat(3,minmax(0,1fr))' : 'repeat(2,minmax(0,1fr))', gap: 14, marginBottom: 16 }}>
+              <div className="glass-panel" style={{ padding: '14px 14px 16px', borderRadius: 12, border: '1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border))' }}><div style={{ color: T.textMuted, fontSize: 11, letterSpacing: 1.2 }}>PRIMARY · TOTAL WATCHED</div><div style={{ fontSize: 28, fontWeight: 800, marginTop: 4 }}>{Math.round(totalWatchedHours * 10) / 10}h</div></div>
+              <div style={{ padding: '8px 0', borderBottom: `1px solid ${T.surfaceBorder}` }}><div style={{ color: T.textMuted, fontSize: 11, letterSpacing: 1.2 }}>SUPPORTING · WATCHED ITEMS</div><div style={{ fontSize: 22, fontWeight: 700, marginTop: 2 }}>{totalWatched}</div></div>
+              {isDesktopViewport && <div style={{ padding: '8px 0', borderBottom: `1px solid ${T.surfaceBorder}` }}><div style={{ color: T.textMuted, fontSize: 11, letterSpacing: 1.2 }}>OPTIONAL · RE-WATCHES</div><div style={{ fontSize: 22, fontWeight: 700, marginTop: 2 }}>{Object.values(rewatchCount).reduce((a, b) => a + (Number(b) || 0), 0)}</div></div>}
             </div>}
-            {analyticsTab === 'overview' && <div className="glass-panel" style={{ marginBottom: 14, padding: 12, borderRadius: 12 }}>
-              <div style={{ color: T.textMuted, fontSize: 11, marginBottom: 8 }}>PHASE BREAKDOWN</div>
-              <div style={{ display: 'grid', gap: 8 }}>
+            {analyticsTab === 'overview' && <div style={{ marginBottom: 14, padding: '8px 2px' }}>
+              <div style={{ color: T.textMuted, fontSize: 11, marginBottom: 10, letterSpacing: 1.3 }}>PHASE BREAKDOWN</div>
+              <div style={{ display: 'grid', gap: 10 }}>
                 {phaseStats.map(stat => (
-                  <div key={stat.phase} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 14 }}>
-                    <strong>Phase {stat.phase}</strong>
-                    <span style={{ color: T.textMuted }}>{stat.watched}/{stat.total}</span>
+                  <div key={stat.phase} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 14, paddingBottom: 8, borderBottom: `1px solid color-mix(in srgb, var(--theme-border) 72%, transparent)` }}>
+                    <strong style={{ fontWeight: 700 }}>Phase {stat.phase}</strong>
+                    <span style={{ color: T.textMuted }}>{stat.watched}/{stat.total} <span style={{ marginLeft: 8, padding: '2px 7px', borderRadius: 999, border: `1px solid ${T.surfaceBorder}`, fontSize: 11 }}>{stat.total ? Math.round((stat.watched / stat.total) * 100) : 0}%</span></span>
                   </div>
                 ))}
               </div>
