@@ -2655,7 +2655,7 @@ export default function MCUViewer() {
         .stat-card-label { font-size: clamp(11px, 1.8vw, 14px) !important; }
         .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; color:var(--theme-text-muted) !important }
 
-        .sidebar-toggle-btn{position:fixed;top:calc(env(safe-area-inset-top, 0px) + var(--space-4));left:var(--space-4);z-index:var(--z-sidebar);width:46px;height:46px}
+        .sidebar-toggle-btn{position:fixed;top:calc(env(safe-area-inset-top, 0px) + var(--space-4));left:var(--space-4);z-index:calc(var(--z-fab) + 6);width:46px;height:46px;pointer-events:auto}
         .sidebar-backdrop{position:fixed;inset:0;background:rgba(4,8,18,0.62);z-index:calc(var(--z-sidebar) + 1);pointer-events:auto}
         .sidebar-menu{position:fixed;top:0;left:0;bottom:0;width:min(320px,84vw);padding:86px 14px 20px;background:var(--sidebar-bg);backdrop-filter:var(--sidebar-blur);-webkit-backdrop-filter:var(--sidebar-blur);border-right:1px solid var(--sidebar-border);transform:var(--sidebar-transform);transition:transform 0.22s cubic-bezier(.22,.9,.24,1);z-index:calc(var(--z-sidebar) + 2);overflow-y:auto;box-shadow:var(--sidebar-shadow);border-radius:16px}
         .settings-menu-anchor{position:fixed;top:calc(env(safe-area-inset-top, 0px) + 16px);right:14px;z-index:940}
