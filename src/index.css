@@ -6,6 +6,50 @@
 
 /* ── CSS Variables — MCU Mission Control Theme ──────────────────────────────────────── */
 :root {
+  /* Premium foundational scales */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --elevation-surface-1: 0 8px 24px rgba(0, 0, 0, 0.20);
+  --elevation-surface-2: 0 18px 40px rgba(0, 0, 0, 0.28);
+  --elevation-surface-3: 0 28px 72px rgba(0, 0, 0, 0.40);
+
+  /* Premium semantic roles */
+  --color-bg-base: #050812;
+  --color-bg-elevated: rgba(12, 18, 35, 0.92);
+  --color-text-primary: #f5fffd;
+  --color-text-secondary: rgba(245, 255, 253, 0.66);
+  --color-accent: #7cffda;
+  --color-border-subtle: rgba(124, 255, 218, 0.12);
+
+  /* Typography scale */
+  --type-display: clamp(2.625rem, 7vw, 5.125rem);
+  --type-h1: clamp(1.75rem, 5vw, 2.5rem);
+  --type-h2: clamp(1.25rem, 3.5vw, 1.75rem);
+  --type-body: 1rem;
+  --type-caption: 0.75rem;
+
+  /* Motion scale */
+  --motion-fast: 150ms;
+  --motion-base: 200ms;
+  --motion-slow: 240ms;
+
+  /* Layer map */
+  --z-backdrop: 0;
+  --z-content: 10;
+  --z-header: 80;
+  --z-sidebar: 120;
+  --z-fab: 140;
+  --z-modal: 240;
+
   /* Primary MCU Accent Palette */
   --accent: #7cffda;
   --accent-2: #9a86ff;
@@ -56,9 +100,9 @@
   --ease-cinematic: cubic-bezier(0.4, 0, 0, 1);
   
   /* Animation Durations */
-  --duration-fast: 180ms;
-  --duration-normal: 280ms;
-  --duration-slow: 420ms;
+  --duration-fast: var(--motion-fast);
+  --duration-normal: var(--motion-base);
+  --duration-slow: var(--motion-slow);
   --duration-cinematic: 600ms;
   
   /* Typography Roles */
@@ -80,6 +124,20 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Text safety utilities */
+.line-clamp-1,
+.line-clamp-2,
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+}
+.line-clamp-1 { -webkit-line-clamp: 1; }
+.line-clamp-2 { -webkit-line-clamp: 2; }
+.line-clamp-3 { -webkit-line-clamp: 3; }
+.overflow-wrap-anywhere { overflow-wrap: anywhere; word-break: break-word; }
+.truncate-single-line { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ── Global Resets ──────────────────────────────────────────────────────────── */
 *, *::before, *::after {
