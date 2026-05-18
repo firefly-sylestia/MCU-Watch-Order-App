@@ -2558,10 +2558,12 @@ export default function MCUViewer() {
         .hero-rail{scroll-behavior:smooth;contain:layout paint;mask-image:linear-gradient(90deg, transparent 0%, #000 6%, #000 94%, transparent 100%);-webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 6%, #000 94%, transparent 100%);user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;padding-inline:clamp(14px,3vw,42px)!important}
         .hero-rail::-webkit-scrollbar{height:0;width:0;display:none}
         .hero-poster-card{backface-visibility:hidden;transform:translateZ(0)}
-        .hero-backdrop-image{opacity:var(--backdrop-opacity,0.9);transform:scale(1);filter:blur(1.4px) saturate(1.08) contrast(1.04) brightness(1.01);border-radius:var(--radius-xl);box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 18%, transparent),var(--elevation-surface-2);mask-image:radial-gradient(circle at center, #000 78%, rgba(0,0,0,0.85) 93%, transparent 100%);-webkit-mask-image:radial-gradient(circle at center, #000 78%, rgba(0,0,0,0.85) 93%, transparent 100%);transition:opacity 900ms cubic-bezier(0.22,1,0.36,1),transform 900ms cubic-bezier(0.22,1,0.36,1),filter 900ms cubic-bezier(0.22,1,0.36,1)}
-        .hero-backdrop-blend{position:absolute;inset:8px;border-radius:var(--radius-xl);pointer-events:none;background:linear-gradient(180deg, rgba(3,4,9,0.36) 0%, rgba(3,4,9,0.12) 18%, rgba(3,4,9,0.02) 36%),linear-gradient(90deg, rgba(3,4,9,0.26) 0%, rgba(3,4,9,0.06) 12%, rgba(3,4,9,0.0) 22%, rgba(3,4,9,0.0) 78%, rgba(3,4,9,0.06) 88%, rgba(3,4,9,0.26) 100%);opacity:var(--backdrop-opacity,0.9)}
-        .hero-backdrop-image.is-exiting{opacity:0;transform:scale(1.004);filter:blur(1.2px) saturate(1.04) contrast(1.01) brightness(0.96)}
-        @starting-style{.hero-backdrop-image:not(.is-exiting){opacity:0;transform:scale(1.01);filter:blur(1.2px) saturate(1.02) contrast(1.01) brightness(0.95)}}
+        .hero-backdrop-image{opacity:var(--backdrop-opacity,0.9);transform:scale(1);border-radius:var(--radius-xl);box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 18%, transparent),var(--elevation-surface-2);mask-image:radial-gradient(circle at center, #000 78%, rgba(0,0,0,0.85) 93%, transparent 100%);-webkit-mask-image:radial-gradient(circle at center, #000 78%, rgba(0,0,0,0.85) 93%, transparent 100%);transition:opacity 900ms cubic-bezier(0.22,1,0.36,1),transform 900ms cubic-bezier(0.22,1,0.36,1),filter 900ms cubic-bezier(0.22,1,0.36,1)}
+        .hero-backdrop-layer-a{filter:blur(26px) saturate(1.2) contrast(1.06) brightness(0.9);background-size:cover !important;background-position:center 18% !important;transform:scale(1.08)}
+        .hero-backdrop-layer-b{filter:drop-shadow(0 22px 44px rgba(0,0,0,0.5)) saturate(1.1) contrast(1.04) brightness(1.03);background-size:auto var(--hero-poster-size,104%) !important;background-repeat:no-repeat !important;background-position:center 7% !important}
+        .hero-backdrop-blend{position:absolute;inset:8px;border-radius:var(--radius-xl);pointer-events:none;background:linear-gradient(180deg, rgba(3,4,9,0.4) 0%, rgba(3,4,9,0.14) 18%, rgba(3,4,9,0.03) 36%),linear-gradient(90deg, var(--hero-vignette-edge) 0%, color-mix(in srgb, var(--hero-vignette-edge) 52%, transparent) 10%, transparent 24%, transparent 76%, color-mix(in srgb, var(--hero-vignette-edge) 52%, transparent) 90%, var(--hero-vignette-edge) 100%);opacity:calc(var(--backdrop-opacity,0.9) * 0.96)}
+        .hero-backdrop-image.is-exiting{opacity:0;transform:scale(1.01)}
+        @starting-style{.hero-backdrop-image:not(.is-exiting){opacity:0;transform:scale(1.012)}}
         .phase-rows-full{display:block;position:relative}
         .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 240ms var(--ease-out),border-color 240ms var(--ease-out),transform 240ms var(--ease-out),box-shadow 300ms var(--ease-out);display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(116px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:3px solid transparent;border:1px solid color-mix(in srgb,var(--theme-accent) 14%, var(--theme-border));min-height:var(--row-min-h,96px);border-radius:24px;overflow:hidden;background:linear-gradient(136deg,color-mix(in srgb,var(--theme-surface) 72%, transparent),color-mix(in srgb,var(--theme-bg) 78%, transparent));backdrop-filter:blur(7px) saturate(136%);-webkit-backdrop-filter:blur(7px) saturate(136%);box-shadow:0 18px 40px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.05)}
         .rrow:last-child{border-bottom:none}
@@ -2681,20 +2683,34 @@ export default function MCUViewer() {
 
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
         {previousHeroSrc && previousHeroSrc !== currentHeroSrc && (
-          <div
-            key={`backdrop-exit-${previousHeroSrc}`}
-            className="hero-backdrop-image is-exiting"
-            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${previousHeroSrc})`, backgroundSize: `auto ${heroBackdropScale}%`, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%' }}
-          />
+          <>
+            <div
+              key={`backdrop-exit-fill-${previousHeroSrc}`}
+              className="hero-backdrop-image hero-backdrop-layer-a is-exiting"
+              style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${previousHeroSrc})` }}
+            />
+            <div
+              key={`backdrop-exit-focus-${previousHeroSrc}`}
+              className="hero-backdrop-image hero-backdrop-layer-b is-exiting"
+              style={{ '--backdrop-opacity': heroBackdropOpacity, '--hero-poster-size': `${heroBackdropScale}%`, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${previousHeroSrc})` }}
+            />
+          </>
         )}
         {currentHeroSrc && (
-          <div
-            key={`backdrop-${currentHeroSrc}`}
-            className="hero-backdrop-image"
-            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${currentHeroSrc})`, backgroundSize: `auto ${heroBackdropScale}%`, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%' }}
-          />
+          <>
+            <div
+              key={`backdrop-fill-${currentHeroSrc}`}
+              className="hero-backdrop-image hero-backdrop-layer-a"
+              style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${currentHeroSrc})` }}
+            />
+            <div
+              key={`backdrop-focus-${currentHeroSrc}`}
+              className="hero-backdrop-image hero-backdrop-layer-b"
+              style={{ '--backdrop-opacity': heroBackdropOpacity, '--hero-poster-size': `${heroBackdropScale}%`, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${currentHeroSrc})` }}
+            />
+          </>
         )}
-        <div className="hero-backdrop-blend" />
+        <div className="hero-backdrop-blend" style={{ '--hero-vignette-edge': darkMode ? 'rgba(2,4,11,0.72)' : 'rgba(21,31,52,0.32)' }} />
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 26%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 24%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '14%' : '8%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '11%' : '6%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.28 : 0.2, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${darkMode ? 'rgba(4,5,15,0.01)' : 'rgba(255,255,255,0.02)'} 0%, ${darkMode ? 'rgba(4,5,15,0.05)' : 'rgba(231,238,248,0.08)'} 45%, ${darkMode ? 'rgba(4,5,15,0.14)' : 'rgba(231,238,248,0.18)'} 70%, ${darkMode ? 'rgba(4,5,15,0.34)' : 'rgba(231,238,248,0.36)'} 100%)` }} />
       </div>
