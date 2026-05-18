@@ -2444,8 +2444,8 @@ export default function MCUViewer() {
     '--theme-danger': '#d16a6a',
     '--theme-danger-soft': darkMode ? 'rgba(209,106,106,0.16)' : 'rgba(209,106,106,0.12)',
     '--theme-app-bg': darkMode
-      ? `radial-gradient(ellipse at 15% 10%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 22%, transparent), transparent 40%), radial-gradient(ellipse at 85% 18%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 18%, transparent), transparent 44%), linear-gradient(155deg, #05050e 0%, #090d1e 42%, #07101c 100%)`
-      : `radial-gradient(ellipse at 15% 10%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 16%, #ffffff), transparent 38%), radial-gradient(ellipse at 85% 18%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 12%, #ffffff), transparent 42%), linear-gradient(155deg, #fbfaf7 0%, #f5f2eb 45%, #f0ece5 100%)`,
+      ? `radial-gradient(circle at 8% 2%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 40%, transparent), transparent 34%), radial-gradient(circle at 90% 8%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 36%, transparent), transparent 40%), radial-gradient(circle at 50% 120%, rgba(14,165,233,0.22), transparent 52%), linear-gradient(138deg, #02030a 0%, #09071a 30%, #0f1031 58%, #1a1038 100%)`
+      : `radial-gradient(circle at 8% 4%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 24%, #ffffff), transparent 34%), radial-gradient(circle at 88% 14%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 22%, #ffffff), transparent 40%), linear-gradient(140deg, #f6fbff 0%, #eef3ff 40%, #f2edff 100%)`,
     '--comp-overlay-bg': darkMode ? 'rgba(12,16,34,0.88)' : 'rgba(255,255,255,0.95)',
     '--comp-dropdown-bg': darkMode ? 'rgba(13,18,34,0.72)' : 'rgba(255,255,255,0.75)',
     '--theme-header-bg': darkMode
@@ -2566,7 +2566,7 @@ export default function MCUViewer() {
         .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 240ms var(--ease-out),border-color 240ms var(--ease-out),transform 240ms var(--ease-out),box-shadow 300ms var(--ease-out);display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(116px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:3px solid transparent;border:1px solid color-mix(in srgb,var(--theme-accent) 14%, var(--theme-border));min-height:var(--row-min-h,96px);border-radius:24px;overflow:hidden;background:linear-gradient(136deg,color-mix(in srgb,var(--theme-surface) 72%, transparent),color-mix(in srgb,var(--theme-bg) 78%, transparent));backdrop-filter:blur(7px) saturate(136%);-webkit-backdrop-filter:blur(7px) saturate(136%);box-shadow:0 18px 40px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.05)}
         .rrow:last-child{border-bottom:none}
         .rrow > *{position:relative;z-index:1}
-        .rrow:hover{border-left-color:color-mix(in srgb,var(--theme-accent) 65%, var(--phase-color,#c0392b));border-color:color-mix(in srgb,var(--theme-accent) 26%, var(--theme-border));transform:translateY(-2px)}
+        .rrow:hover{border-left-color:color-mix(in srgb,var(--theme-accent) 78%, var(--phase-color,#c0392b));border-color:color-mix(in srgb,var(--theme-accent) 45%, var(--theme-border));transform:translateY(-4px) scale(1.003);box-shadow:0 24px 46px rgba(0,0,0,.34),0 0 0 1px color-mix(in srgb,var(--theme-accent) 28%, transparent)}
         .rrow.curvy-selected{border-left-color:var(--theme-accent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--theme-accent) 40%, transparent)}
         .rrow.type-film:hover{background:linear-gradient(90deg, rgba(224,82,82,0.18), ${T.rowHoverBg}) !important}
         .rrow.type-series:hover{background:linear-gradient(90deg, rgba(74,158,222,0.18), ${T.rowHoverBg}) !important}
@@ -2619,10 +2619,8 @@ export default function MCUViewer() {
           .rrow .row-actions{grid-column:2 / -1;flex-direction:row !important;align-items:center !important;justify-content:space-between !important;min-width:0 !important;width:100%;gap:8px}
           .calendar-row{grid-template-columns:minmax(74px,84px) 44px minmax(0,1fr) !important}
           .floating-controls{display:flex !important;left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));align-items:stretch;gap:10px}.fab-primary{justify-content:center}
-          .floating-mode-switch,.bottom-action-dock{width:100%;justify-content:center}
-          .floating-mode-switch{overflow-x:auto;justify-content:flex-start}
-          .floating-mode-switch button{padding:8px 10px !important;font-size:11px !important;letter-spacing:1px !important;white-space:nowrap;flex:0 0 auto}
-          .dock-btn{font-size:11px !important;padding:9px 10px !important;min-height:40px;flex:1 1 auto}
+          .bottom-action-dock{width:100%;justify-content:center}
+                    .dock-btn{font-size:11px !important;padding:9px 10px !important;min-height:40px;flex:1 1 auto}
           .bottom-action-bar{min-height:40px;padding:9px 10px !important;width:100%;justify-content:center}
           .dock-status-menu{flex:1 1 auto}
           main > div{padding-bottom:154px !important}
@@ -2664,14 +2662,13 @@ export default function MCUViewer() {
         .overlay-open .dropdown-pop,.overlay-open .dropdown-pop-up{backdrop-filter:none;-webkit-backdrop-filter:none}
         .floating-controls{position:fixed;right:max(var(--space-4), env(safe-area-inset-right));bottom:max(var(--space-4), env(safe-area-inset-bottom));z-index:9994;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}
         .floating-controls>*{pointer-events:auto}
-        .floating-mode-switch{display:flex;border-radius:20px;overflow:hidden;border:1px solid color-mix(in srgb,var(--theme-accent) 22%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 78%, transparent);backdrop-filter:blur(10px) saturate(145%);-webkit-backdrop-filter:blur(10px) saturate(145%);box-shadow:0 14px 38px rgba(0,0,0,.32)}
-        .bottom-action-dock{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:8px 10px;border-radius:20px;border:1px solid color-mix(in srgb,var(--theme-accent-alt) 20%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 80%, transparent);backdrop-filter:blur(10px) saturate(145%)}
-        .header-brand{display:grid;gap:6px;padding:12px 16px 10px;border-radius:var(--radius-md);background:linear-gradient(180deg,rgba(8,10,20,.92),rgba(8,10,20,.72));border:1px solid color-mix(in srgb,var(--theme-border) 90%, rgba(255,255,255,0.12));box-shadow:var(--elevation-surface-1);max-width:max-content}
+                .bottom-action-dock{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:8px 10px;border-radius:20px;border:1px solid color-mix(in srgb,var(--theme-accent-alt) 20%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 80%, transparent);backdrop-filter:blur(10px) saturate(145%)}
+        .header-brand{display:grid;gap:8px;padding:16px 20px 14px;border-radius:20px;background:linear-gradient(155deg,rgba(13,16,40,.84),rgba(14,35,62,.58) 50%,rgba(52,20,80,.56));border:1px solid color-mix(in srgb,var(--theme-accent) 34%, rgba(255,255,255,0.16));box-shadow:0 22px 56px rgba(0,0,0,.33), inset 0 1px 0 rgba(255,255,255,.11);max-width:max-content;backdrop-filter:blur(12px) saturate(140%)}
         .header-brand.compact{padding:8px 12px}
         .filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
         @media (min-width:1024px){.sidebar-menu{top:16px;left:16px;bottom:16px;width:300px;border-radius:var(--radius-lg)}.sidebar-toggle-btn{top:20px;left:20px}}
-        .header-title-mcu{font-size:clamp(34px,6vw,58px);letter-spacing:0.18em;line-height:1;padding:4px 10px;color:#f8fafc;background:linear-gradient(180deg,#b91c1c,#7f1d1d);border:1px solid rgba(255,255,255,0.2);border-radius:8px;display:inline-block;width:max-content}
-        .header-title-sub{font-size:clamp(17px,2.4vw,28px);letter-spacing:0.3em;line-height:1.05;color:var(--theme-text-muted);text-transform:uppercase}
+        .header-title-mcu{font-size:clamp(36px,7vw,66px);letter-spacing:0.22em;line-height:1;padding:8px 14px;color:#f8fafc;background:linear-gradient(92deg,#fb7185 0%,#a78bfa 48%,#22d3ee 100%);-webkit-background-clip:text;background-clip:text;color:transparent;border:1px solid rgba(255,255,255,0.18);border-radius:12px;display:inline-block;width:max-content;text-shadow:0 6px 30px rgba(124,58,237,0.25)}
+        .header-title-sub{font-size:clamp(16px,2.4vw,29px);letter-spacing:0.4em;line-height:1.05;color:color-mix(in srgb,var(--theme-accent-alt) 58%, var(--theme-text-muted));text-transform:uppercase}
         .dock-btn{border-radius:999px;border:1px solid color-mix(in srgb,var(--theme-accent) 24%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 88%, transparent);color:${T.text};padding:10px 14px;font-family:var(--font-marvel-ui);letter-spacing:1.2px;font-size:12px;cursor:pointer;white-space:nowrap}
         .status-block{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid color-mix(in srgb,var(--theme-border) 72%, transparent);background:color-mix(in srgb,var(--theme-surface) 78%, transparent);font-size:12px;line-height:1.35}.status-block.success{color:#bbf7d0}.status-block.error{color:#fecaca}.status-block.loading{color:#bfdbfe}
         .fab-primary{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:10px 14px;border:1px solid color-mix(in srgb,var(--theme-accent) 35%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 84%, transparent);color:var(--theme-text);font-family:var(--font-marvel-ui);letter-spacing:1px;font-size:12px}
@@ -3058,18 +3055,6 @@ export default function MCUViewer() {
           <Zap size={14} /> Quick Actions <ChevDown size={12} style={{ transform: fabMenuOpen ? 'rotate(180deg)' : 'none' }} />
         </button>
 
-        <div className="floating-mode-switch" style={{ display: fabMenuOpen ? 'flex' : 'none' }}>
-          {LIST_MODES.map(mode => {
-            const active = listMode === mode.id;
-            return (
-              <button key={`float-${mode.id}`} onClick={() => { setListMode(mode.id); setExpandedItem(null); setExpandedPhase(null); }}
-                style={{ border: 0, padding: '8px 12px', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1.4, fontSize: 12, cursor: 'pointer', background: active ? `${mode.color}22` : 'transparent', color: active ? mode.color : T.textMuted }}>
-                {mode.label}
-              </button>
-            );
-          })}
-        </div>
-
         {/* ━━ JUMP NEXT BUTTON ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <div className="bottom-action-dock" style={{ display: fabMenuOpen ? 'flex' : 'none' }}>
         <button type="button" onClick={handleMetadataBuildClick} className="dock-btn"
@@ -3078,8 +3063,13 @@ export default function MCUViewer() {
         </button>
         <button type="button" className="dock-btn"
           onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
-          style={{ background: viewMode === 'calendar' ? 'color-mix(in srgb, var(--theme-accent) 16%, rgba(20,25,46,0.82))' : undefined }}>
-          {viewMode === 'calendar' ? 'List' : 'Calendar'}
+          style={{ background: 'color-mix(in srgb, var(--theme-accent) 16%, rgba(20,25,46,0.82))' }}>
+          View: {viewMode === 'list' ? 'List' : 'Calendar'}
+        </button>
+        <button type="button" className="dock-btn"
+          onClick={() => { const next = listMode === 'core' ? 'extended' : 'core'; setListMode(next); setExpandedItem(null); setExpandedPhase(null); }}
+          style={{ background: 'color-mix(in srgb, var(--theme-accent-alt) 16%, rgba(20,25,46,0.82))' }}>
+          Mode: {listMode === 'core' ? 'MCU' : 'Extended'}
         </button>
         <div className="dock-status-menu" style={{ position: 'relative' }}>
           <button
