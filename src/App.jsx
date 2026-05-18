@@ -2885,22 +2885,15 @@ export default function MCUViewer() {
               const isActive = src === activeHeroSrc;
               return (
                 <div key={`hero-rail-${src}`} ref={isActive ? heroActiveCardRef : null} style={{ position: 'relative', display:'flex', flexDirection:'column', alignItems:'center', scrollSnapAlign:'center', flexShrink: 0 }}>
-                <img
+                <div
                   className="hero-poster-card"
-                  src={src}
-                  alt="Featured poster"
-                  draggable={false}
-                  loading={idx < 8 ? 'eager' : 'lazy'}
-                  decoding="async"
-                  onDragStart={(e) => e.preventDefault()}
                   onClick={() => { if (heroItem) openDetail(heroItem); }}
                   style={{
+                    position: 'relative',
                     height: isDesktopViewport ? 440 : 320,
                     width: isDesktopViewport ? 292 : 218,
-                    objectFit: 'cover',
                     borderRadius: 16,
-                    border: '0',
-                    boxShadow: 'none',
+                    overflow: 'hidden',
                     opacity: isActive ? 1 : 0.76,
                     transform: isActive ? 'translate3d(0,-6px,0) scale(1.04)' : 'translate3d(0,0,0) scale(0.96)',
                     transition: 'transform 260ms ease, opacity 180ms ease',
@@ -2908,8 +2901,46 @@ export default function MCUViewer() {
                     userSelect: 'none',
                     WebkitUserSelect: 'none',
                     WebkitTouchCallout: 'none',
+                    background: 'rgba(8,11,24,0.72)',
+                    boxShadow: '0 20px 36px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.08)',
                   }}
-                />
+                >
+                  <img
+                    src={src}
+                    alt=""
+                    aria-hidden="true"
+                    draggable={false}
+                    loading={idx < 8 ? 'eager' : 'lazy'}
+                    decoding="async"
+                    onDragStart={(e) => e.preventDefault()}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      transform: 'scale(1.12)',
+                      filter: 'blur(24px) saturate(112%) brightness(0.72)',
+                    }}
+                  />
+                  <img
+                    src={src}
+                    alt="Featured poster"
+                    draggable={false}
+                    loading={idx < 8 ? 'eager' : 'lazy'}
+                    decoding="async"
+                    onDragStart={(e) => e.preventDefault()}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      filter: 'drop-shadow(0 12px 20px rgba(0,0,0,0.5))',
+                    }}
+                  />
+                  <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(90deg, color-mix(in srgb, var(--theme-bg) 52%, transparent) 0%, transparent 16%, transparent 84%, color-mix(in srgb, var(--theme-bg) 52%, transparent) 100%)' }} />
+                </div>
                 <div style={{ position: 'absolute', left: 10, right: 10, bottom: 12, padding: '8px 9px 7px', borderRadius: 10, background: 'linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.76))', color: '#fff', fontFamily: 'var(--font-marvel-display)', fontSize: isDesktopViewport ? 18 : 15, fontWeight: 900, letterSpacing: 1.2, lineHeight: 1, textAlign: 'center', textTransform: 'uppercase', textShadow: '0 2px 9px rgba(0,0,0,0.95), 0 0 14px rgba(212,55,47,0.45)', boxShadow: 'inset 0 -18px 24px rgba(0,0,0,0.18)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', pointerEvents: 'none' }}>{heroItem?.title || 'Featured MCU poster'}</div>
                 </div>
               );
