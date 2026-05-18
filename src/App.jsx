@@ -512,19 +512,19 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
 
         <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
           <div style={TITLE_ROW_STATIC.titleLine}>
-            <span style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: 700, lineHeight: 1.5, color: isWatched ? '#9df1c2' : 'var(--theme-text)', opacity: 1, transition: 'color 0.26s', fontFamily: 'var(--font-marvel-display)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: '100%' }}>{item.title}</span>
-            {item.episodes && <span style={{ fontSize: 9, color: T.textMuted, background: T.expandBg, border: `1px solid ${T.expandBorder}`, borderRadius: 3, padding: '1px 5px', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1, flexShrink: 0 }}>{item.episodes} EP</span>}
-            <span style={{ fontSize: 14, color: typeMeta.color, opacity: 0.82, fontWeight: 700, letterSpacing: 0.6, display: 'flex', alignItems: 'center', gap: 2, fontFamily: 'var(--font-marvel-ui)', flexShrink: 0 }}><TypeIcon size={8} />{typeMeta.label}</span>
-            <span style={{ fontSize: 8.5, color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}`, borderRadius: 3, padding: '1px 4px', letterSpacing: 1, fontFamily: 'var(--font-marvel-ui)', flexShrink: 0 }}>{releaseStatusText}</span>
-            {!item.essential && <span style={{ fontSize: 8.5, color: T.textMuted, background: T.expandBg, border: `1px solid ${T.expandBorder}`, borderRadius: 3, padding: '1px 4px', letterSpacing: 1, fontFamily: 'var(--font-marvel-ui)', flexShrink: 0 }}>OPT</span>}
+            <span className="title-main" style={{ fontSize: 'clamp(18px, 2.4vw, 20px)', fontWeight: 700, lineHeight: 1.3, color: isWatched ? '#9df1c2' : 'var(--theme-text)', opacity: 1, transition: 'color 0.26s', fontFamily: 'var(--font-marvel-display)', maxWidth: '100%' }}>{item.title}</span>
+            {item.episodes && <span className="meta-chip truncate-single-line" style={{ fontSize: 9 }}>{item.episodes} EP</span>}
+            <span className="meta-chip truncate-single-line" style={{ fontSize: 11, color: typeMeta.color, fontWeight: 700 }}><TypeIcon size={8} />{typeMeta.label}</span>
+            <span className="meta-chip truncate-single-line" style={{ fontSize: 8.5, color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
+            {!item.essential && <span className="meta-chip truncate-single-line" style={{ fontSize: 8.5 }}>OPT</span>}
             <ChevRight size={10} style={{ color: T.textFaint, transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
           </div>
-          <div className="meta-muted" style={TITLE_ROW_STATIC.genreMeta}>GENRES: {genres.join(' • ').toUpperCase()}</div>
+          <div className="meta-muted line-clamp-2 overflow-wrap-anywhere" style={TITLE_ROW_STATIC.genreMeta}>GENRES: {genres.join(' • ').toUpperCase()}</div>
         </button>
 
-        <div className="row-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: 104, flexShrink: 0 }}>
-          <div style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: '12px', letterSpacing: 1.1, color: T.text, textAlign: 'right', fontWeight: 600, whiteSpace: 'nowrap' }}>{item.year || releaseLabel}</div>
-          <div style={{ fontSize: 11, color: 'var(--theme-warning)', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.6, whiteSpace: 'nowrap' }}>★ {rating || '—'}</div>
+        <div className="row-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: 120, flexShrink: 0 }}>
+          <div className="row-meta-line truncate-single-line" style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: '12px', letterSpacing: 1.1, color: T.text, textAlign: 'right', fontWeight: 600 }}>{item.year || releaseLabel}</div>
+          <div className="row-meta-line truncate-single-line" style={{ fontSize: 11, color: 'var(--theme-warning)', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.6 }}>★ {rating || '—'}</div>
           <button
             className="wbtn status-pill"
             aria-label={`Open status menu for ${item.title}`}
@@ -574,9 +574,9 @@ const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
 }, ref) {
   return (
     <>
-      <button className="theme-btn sidebar-toggle-btn" onClick={onToggle} aria-label="Toggle sidebar menu" style={{ background: darkMode ? 'rgba(10,14,28,0.94)' : '#ffffff', borderColor: darkMode ? 'rgba(255,255,255,0.24)' : pillBorder, boxShadow: darkMode ? '0 8px 24px rgba(0,0,0,0.35)' : '0 6px 16px rgba(0,0,0,0.12)' }}><Menu size={17} /></button>
+      <button className="theme-btn sidebar-toggle-btn" onClick={onToggle} aria-label="Toggle sidebar menu" style={{ background: darkMode ? 'color-mix(in srgb, var(--color-bg-elevated) 88%, transparent)' : '#ffffff', borderColor: darkMode ? 'rgba(255,255,255,0.24)' : pillBorder, boxShadow: darkMode ? 'var(--elevation-surface-2)' : 'var(--elevation-surface-1)' }}><Menu size={17} /></button>
       {open && <div className="sidebar-backdrop" onClick={onClose} />}
-      <aside ref={ref} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? '0 22px 55px rgba(0,0,0,0.45)' : '0 18px 44px rgba(0,0,0,0.18)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
+      <aside ref={ref} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
         {children}
       </aside>
     </>
@@ -761,6 +761,31 @@ export default function MCUViewer() {
     window.addEventListener('popstate', onBack);
     return () => window.removeEventListener('popstate', onBack);
   }, [sidebarOpen, settingsOpen, detailItem, analyticsOpen]);
+
+  useEffect(() => {
+    if (!sidebarOpen || !sidebarRef.current) return;
+    const panel = sidebarRef.current;
+    const focusable = panel.querySelectorAll('button,[href],[tabindex]:not([tabindex="-1"])');
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    first?.focus?.();
+    const trap = (e) => {
+      if (e.key === 'Escape') {
+        setSidebarOpen(false);
+        return;
+      }
+      if (e.key !== 'Tab' || !first || !last) return;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    panel.addEventListener('keydown', trap);
+    return () => panel.removeEventListener('keydown', trap);
+  }, [sidebarOpen]);
 
   useEffect(() => {
     if (!detailItem) return;
@@ -2459,7 +2484,7 @@ export default function MCUViewer() {
         ::-webkit-scrollbar-track{background:${T.scrollTrack}}
         ::-webkit-scrollbar-thumb{background:${T.scrollThumb};border-radius:4px}
         ::-webkit-scrollbar-thumb:hover{background:${T.scrollThumbH}}
-        input,button,select{font-family:inherit;border-radius:12px}
+        input,button,select{font-family:inherit;border-radius:var(--radius-md)}
         input:focus{outline:none}
         button:focus-visible{outline:2px solid var(--theme-accent);outline-offset:2px}
 
@@ -2502,7 +2527,7 @@ export default function MCUViewer() {
         .snap-blip{animation:snapFade 1.6s ease}
         .button-click{animation:buttonPulse 420ms ease-out}
 
-        .wbtn{position:relative;width:30px;height:30px;border-radius:50%;border:1.5px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background 0.14s ease,border-color 0.14s ease,color 0.14s ease;flex-shrink:0;box-shadow:none}
+        .wbtn{position:relative;width:30px;height:30px;border-radius:50%;border:1.5px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background var(--motion-fast) ease,border-color var(--motion-fast) ease,color var(--motion-fast) ease;flex-shrink:0;box-shadow:none}
         .wbtn:hover{border-color:rgba(255,255,255,0.28)!important;background:rgba(255,255,255,0.1)!important}
         .wbtn:active{opacity:0.82}
         .status-pill{text-transform:uppercase;font-weight:800;line-height:1;border-radius:999px}
@@ -2513,14 +2538,14 @@ export default function MCUViewer() {
         .ntab::after{content:'';position:absolute;bottom:0;left:12px;right:12px;height:2px;border-radius:2px 2px 0 0;background:currentColor;transform:scaleX(0);transform-origin:center;transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1)}
         .ntab.on::after{transform:scaleX(1)}
 
-        .fpill{display:flex;align-items:center;gap:6px;padding:7px 26px;border-radius:12px;border:1px solid var(--theme-border);background:var(--theme-surface);cursor:pointer;font-size:clamp(14px,2.2vw,16px);font-weight:600;letter-spacing:0.03em;color:var(--theme-text);transition:background-color 0.14s ease,color 0.14s ease,opacity 0.14s ease,border-color 0.14s ease;white-space:nowrap;box-shadow:none;overflow:visible}
+        .fpill{display:flex;align-items:center;gap:6px;padding:7px 26px;border-radius:var(--radius-md);border:1px solid var(--theme-border);background:var(--theme-surface);cursor:pointer;font-size:clamp(14px,2.2vw,16px);font-weight:600;letter-spacing:0.03em;color:var(--theme-text);transition:background-color 0.14s ease,color 0.14s ease,opacity 0.14s ease,border-color 0.14s ease;white-space:nowrap;box-shadow:none;overflow:visible}
         .fpill:hover{border-color:var(--theme-accent);color:var(--theme-accent);background:var(--theme-surface-hover);opacity:0.96}
         .fpill:active{opacity:0.82}
         .fpill:focus-visible,.theme-btn:focus-visible,.lmode-btn:focus-visible{outline:2px solid var(--theme-accent);outline-offset:2px}
 
         .sopt{padding:13px 20px;font-family:var(--font-marvel-ui);font-size:clamp(15px,2.2vw,18px);letter-spacing:2.5px;cursor:pointer;color:${T.pillText};transition:background-color 0.14s ease,color 0.14s ease}
         .sopt:hover{background:${T.sortHoverBg};color:${T.text}}
-        .sopt.picked,.dropdown-item.active{background:var(--theme-surface-hover);border-radius:12px;color:var(--theme-accent);font-weight:700}
+        .sopt.picked,.dropdown-item.active{background:var(--theme-surface-hover);border-radius:var(--radius-md);color:var(--theme-accent);font-weight:700}
         .curvy-indicator{height:4px;border-radius:99px;background:var(--theme-accent);border:none}
         .curvy-panel{position:relative;overflow:hidden;border-radius:14px}
         .curvy-panel::before{display:none}
@@ -2529,12 +2554,12 @@ export default function MCUViewer() {
         .hero-rail{scroll-behavior:smooth;contain:layout paint;mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);-webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
         .hero-rail::-webkit-scrollbar{height:0;width:0;display:none}
         .hero-poster-card{backface-visibility:hidden;transform:translateZ(0)}
-        .hero-backdrop-image{opacity:var(--backdrop-opacity,0.9);transform:scale(1);filter:blur(1.8px) saturate(1.14) contrast(1.06) brightness(1.03);border-radius:24px;box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 18%, transparent),0 24px 60px rgba(0,0,0,0.3);mask-image:radial-gradient(circle at center, #000 78%, rgba(0,0,0,0.85) 93%, transparent 100%);-webkit-mask-image:radial-gradient(circle at center, #000 78%, rgba(0,0,0,0.85) 93%, transparent 100%);transition:opacity 900ms cubic-bezier(0.22,1,0.36,1),transform 900ms cubic-bezier(0.22,1,0.36,1),filter 900ms cubic-bezier(0.22,1,0.36,1)}
-        .hero-backdrop-blend{position:absolute;inset:8px;border-radius:24px;pointer-events:none;background:linear-gradient(180deg, rgba(4,6,12,0.14) 0%, rgba(4,6,12,0.04) 14%, rgba(4,6,12,0) 30%),linear-gradient(90deg, rgba(4,6,12,0.14) 0%, rgba(4,6,12,0.02) 10%, rgba(4,6,12,0.0) 20%, rgba(4,6,12,0.0) 80%, rgba(4,6,12,0.02) 90%, rgba(4,6,12,0.14) 100%);opacity:var(--backdrop-opacity,0.9)}
+        .hero-backdrop-image{opacity:var(--backdrop-opacity,0.9);transform:scale(1);filter:blur(1.4px) saturate(1.08) contrast(1.04) brightness(1.01);border-radius:var(--radius-xl);box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 18%, transparent),var(--elevation-surface-2);mask-image:radial-gradient(circle at center, #000 78%, rgba(0,0,0,0.85) 93%, transparent 100%);-webkit-mask-image:radial-gradient(circle at center, #000 78%, rgba(0,0,0,0.85) 93%, transparent 100%);transition:opacity 900ms cubic-bezier(0.22,1,0.36,1),transform 900ms cubic-bezier(0.22,1,0.36,1),filter 900ms cubic-bezier(0.22,1,0.36,1)}
+        .hero-backdrop-blend{position:absolute;inset:8px;border-radius:var(--radius-xl);pointer-events:none;background:linear-gradient(180deg, rgba(3,4,9,0.36) 0%, rgba(3,4,9,0.12) 18%, rgba(3,4,9,0.02) 36%),linear-gradient(90deg, rgba(3,4,9,0.26) 0%, rgba(3,4,9,0.06) 12%, rgba(3,4,9,0.0) 22%, rgba(3,4,9,0.0) 78%, rgba(3,4,9,0.06) 88%, rgba(3,4,9,0.26) 100%);opacity:var(--backdrop-opacity,0.9)}
         .hero-backdrop-image.is-exiting{opacity:0;transform:scale(1.004);filter:blur(1.2px) saturate(1.04) contrast(1.01) brightness(0.96)}
         @starting-style{.hero-backdrop-image:not(.is-exiting){opacity:0;transform:scale(1.01);filter:blur(1.2px) saturate(1.02) contrast(1.01) brightness(0.95)}}
         .phase-rows-full{display:block;position:relative}
-        .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 220ms var(--ease-out),border-color 220ms var(--ease-out),transform 220ms var(--ease-out),box-shadow 260ms var(--ease-out);display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(96px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid transparent;min-height:var(--row-min-h,86px);border-radius:12px;overflow:hidden;background:transparent;backdrop-filter:none}
+        .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 220ms var(--ease-out),border-color 220ms var(--ease-out),transform 220ms var(--ease-out),box-shadow 260ms var(--ease-out);display:grid;align-items:center;grid-template-columns:32px 52px minmax(0,1fr) minmax(116px,auto);gap:var(--row-gap,12px);padding:var(--row-pad,16px 16px 16px 12px);border-left:2px solid transparent;border-bottom:1px solid transparent;min-height:var(--row-min-h,96px);border-radius:var(--radius-md);overflow:hidden;background:transparent;backdrop-filter:none}
         .rrow:last-child{border-bottom:none}
         .rrow > *{position:relative;z-index:1}
         .rrow:hover{border-left-color:color-mix(in srgb,var(--theme-accent) 65%, var(--phase-color,#c0392b));transform:translateY(-1px)}
@@ -2543,8 +2568,10 @@ export default function MCUViewer() {
         .rrow.type-series:hover{background:linear-gradient(90deg, rgba(74,158,222,0.18), ${T.rowHoverBg}) !important}
         .rrow.type-short:hover{background:linear-gradient(90deg, rgba(160,108,213,0.18), ${T.rowHoverBg}) !important}
 
-        .title-btn{background:none;border:none;cursor:pointer;text-align:left;padding:6px 0;color:var(--theme-text);font-family:inherit;display:block;width:100%;min-height:44px;text-shadow:0 1px 4px rgba(0,0,0,0.35)}
+        .title-btn{background:none;border:none;cursor:pointer;text-align:left;padding:6px 0;color:var(--theme-text);font-family:inherit;display:block;width:100%;min-height:44px;text-shadow:0 1px 4px rgba(0,0,0,0.35);overflow:hidden}.title-btn .title-main{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
         .title-btn:focus-visible{outline:2px solid var(--theme-accent);outline-offset:2px;border-radius:3px}
+        .meta-chip{display:inline-flex;align-items:center;gap:4px;color:var(--theme-text-muted);background:var(--theme-surface);border:1px solid var(--theme-border);border-radius:var(--radius-sm);padding:2px 6px;letter-spacing:1px;font-family:var(--font-marvel-ui);flex-shrink:0;max-width:100%}
+        .row-meta-line{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
         .hexbg{background-image:radial-gradient(circle,${T.hexDot} 1px,transparent 1px);background-size:28px 28px}
 
@@ -2561,7 +2588,7 @@ export default function MCUViewer() {
         .detail-backdrop{position:fixed;inset:0;background:rgba(4,6,12,0.52);backdrop-filter:blur(6px);z-index:240;display:grid;place-items:center;padding:20px}
         .detail-card{width:min(1080px,94vw);max-height:92vh;overflow:auto;background:linear-gradient(145deg, rgba(17,22,44,0.62), rgba(12,16,34,0.5));backdrop-filter:blur(18px) saturate(130%);-webkit-backdrop-filter:blur(18px) saturate(130%);border:1px solid rgba(255,255,255,0.14);border-radius:14px;padding:18px;box-shadow:${darkMode ? '0 22px 60px rgba(0,0,0,0.56)' : '0 18px 44px rgba(0,0,0,0.14)'}}
         .detail-export-shell{width:min(920px,94vw);padding:18px;background:radial-gradient(circle at 18% 16%, rgba(125,211,252,0.18), transparent 30%),radial-gradient(circle at 88% 8%, rgba(240,171,252,0.16), transparent 34%),linear-gradient(145deg, rgba(6,17,31,0.92), rgba(17,26,56,0.88) 54%, rgba(53,16,59,0.86)) !important;box-shadow:0 28px 80px rgba(0,0,0,0.52), inset 0 1px 0 rgba(255,255,255,0.08)}
-        .detail-export-grid{display:grid;grid-template-columns:minmax(176px,260px) minmax(0,1fr);gap:18px;align-items:start}.detail-poster-frame{border-radius:22px;overflow:hidden;min-height:388px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);box-shadow:0 22px 42px rgba(0,0,0,0.38)}.detail-poster-frame img{display:block;width:100%;height:100%;min-height:388px;max-height:420px;object-fit:cover}.detail-export-content{display:grid;gap:10px;min-width:0}.detail-export-kicker{font-family:var(--font-marvel-ui);font-size:12px;letter-spacing:2px;font-weight:900;color:#7dd3fc}.detail-export-title{font-size:clamp(28px,4vw,44px);line-height:.98;margin:0;color:#fff;text-wrap:balance}.detail-export-meta{display:flex;gap:7px;flex-wrap:wrap}.detail-export-meta span{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:5px 8px;border-radius:999px;background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.15);color:#dbeafe}.detail-export-loading{font-size:12px;color:var(--theme-text-muted)}.detail-export-panel{border-radius:18px;padding:13px 14px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);box-shadow:inset 0 1px 0 rgba(255,255,255,0.06)}.detail-export-panel-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;font-family:var(--font-marvel-ui);font-size:12px;letter-spacing:1.8px;font-weight:900;color:#7dd3fc}.detail-export-panel p{font-size:14px;line-height:1.48;margin:0;color:#edf6ff;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}.detail-intel-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}.detail-intel-list div{display:grid;gap:2px;min-width:0}.detail-intel-list strong{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:#f0abfc}.detail-intel-list span{font-size:12px;line-height:1.35;color:#d3ddf6;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.detail-intel-list div:last-child{grid-column:1 / -1}.detail-export-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}.detail-export-actions .fpill{padding:8px 11px !important;font-size:12px !important;background:rgba(255,255,255,0.07) !important;border-color:rgba(255,255,255,0.15) !important}
+        .detail-export-grid{display:grid;grid-template-columns:minmax(176px,260px) minmax(0,1fr);gap:18px;align-items:start}.detail-poster-frame{border-radius:22px;overflow:hidden;min-height:388px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);box-shadow:0 22px 42px rgba(0,0,0,0.38)}.detail-poster-frame img{display:block;width:100%;height:100%;min-height:388px;max-height:420px;object-fit:cover}.detail-export-content{display:grid;gap:10px;min-width:0}.detail-export-kicker{font-family:var(--font-marvel-ui);font-size:12px;letter-spacing:2px;font-weight:900;color:#7dd3fc}.detail-export-title{font-size:clamp(28px,4vw,44px);line-height:.98;margin:0;color:#fff;text-wrap:balance}.detail-export-meta{display:flex;gap:7px;flex-wrap:wrap}.detail-export-meta span{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:5px 8px;border-radius:999px;background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.15);color:#dbeafe}.detail-export-loading{font-size:12px;color:var(--theme-text-muted)}.detail-export-panel{border-radius:var(--radius-lg);padding:var(--space-4);background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);box-shadow:inset 0 1px 0 rgba(255,255,255,0.06),var(--elevation-surface-1)}.detail-export-panel-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;font-family:var(--font-marvel-ui);font-size:12px;letter-spacing:1.8px;font-weight:900;color:#7dd3fc}.detail-export-panel p{font-size:14px;line-height:1.48;margin:0;color:#edf6ff;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}.detail-intel-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}.detail-intel-list div{display:grid;gap:2px;min-width:0}.detail-intel-list strong{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:#f0abfc}.detail-intel-list span{font-size:12px;line-height:1.35;color:#d3ddf6;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}.detail-intel-list div:last-child{grid-column:1 / -1}.detail-export-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}.detail-export-actions .fpill{padding:8px 11px !important;font-size:12px !important;background:rgba(255,255,255,0.07) !important;border-color:rgba(255,255,255,0.15) !important}
 
         .detail-layout{grid-template-columns:minmax(220px,34%) minmax(0,1fr)}
         .detail-pill{background:rgba(255,255,255,0.08) !important;border-color:rgba(255,255,255,0.18) !important;transform:none !important;box-shadow:none !important}
@@ -2624,7 +2651,11 @@ export default function MCUViewer() {
         .stat-card-label { font-size: clamp(11px, 1.8vw, 14px) !important; }
         .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; color:var(--theme-text-muted) !important }
 
-        .sidebar-toggle-btn{position:fixed;top:calc(env(safe-area-inset-top, 0px) + 10px);left:12px;z-index:280;width:44px;height:44px}.sidebar-backdrop{position:fixed;inset:0;background:rgba(4,8,18,0.62);z-index:900;pointer-events:auto}.sidebar-menu{position:fixed;top:0;left:0;bottom:0;width:min(320px,84vw);padding:86px 14px 20px;background:var(--sidebar-bg);backdrop-filter:var(--sidebar-blur);-webkit-backdrop-filter:var(--sidebar-blur);border-right:1px solid var(--sidebar-border);transform:var(--sidebar-transform);transition:transform 0.22s cubic-bezier(.22,.9,.24,1);z-index:920;overflow-y:auto;box-shadow:var(--sidebar-shadow);border-radius:16px}.settings-menu-anchor{position:fixed;top:calc(env(safe-area-inset-top, 0px) + 16px);right:14px;z-index:940}.settings-menu{position:absolute;top:100%;right:0;z-index:50;margin-top:8px;min-width:320px;width:min(360px,calc(100vw - 28px));max-height:min(80vh,calc(100dvh - 92px));border-radius:12px;border:1px solid color-mix(in srgb, var(--theme-accent) 35%, transparent);background:var(--settings-bg);backdrop-filter:var(--settings-blur);-webkit-backdrop-filter:var(--settings-blur);box-shadow:none;padding:10px;display:grid;gap:8px;overflow:auto;color:var(--theme-text);overscroll-behavior:contain}.settings-menu .fpill{min-width:0}.overlay-open .hero-backdrop-image{filter:saturate(1.04) contrast(1.01) brightness(.98);opacity:calc(var(--backdrop-opacity,0.9) * .55);transition-duration:180ms}.overlay-open .hero-backdrop-blend{opacity:.34}.overlay-open .dropdown-pop,.overlay-open .dropdown-pop-up{backdrop-filter:none;-webkit-backdrop-filter:none}.floating-controls{position:fixed;right:16px;bottom:max(16px, env(safe-area-inset-bottom));z-index:620;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}.floating-controls>*{pointer-events:auto}.floating-mode-switch{display:flex;border-radius:999px;overflow:hidden;border:1px solid ${T.surfaceBorder};background:${darkMode ? 'rgba(10,14,28,0.93)' : 'rgba(255,255,255,0.95)'};box-shadow:none}.bottom-action-dock{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+        .sidebar-toggle-btn{position:fixed;top:calc(env(safe-area-inset-top, 0px) + var(--space-4));left:var(--space-4);z-index:var(--z-sidebar);width:44px;height:44px}.sidebar-backdrop{position:fixed;inset:0;background:rgba(4,8,18,0.62);z-index:calc(var(--z-sidebar) + 1);pointer-events:auto}.sidebar-menu{position:fixed;top:0;left:0;bottom:0;width:min(320px,84vw);padding:86px 14px 20px;background:var(--sidebar-bg);backdrop-filter:var(--sidebar-blur);-webkit-backdrop-filter:var(--sidebar-blur);border-right:1px solid var(--sidebar-border);transform:var(--sidebar-transform);transition:transform 0.22s cubic-bezier(.22,.9,.24,1);z-index:calc(var(--z-sidebar) + 2);overflow-y:auto;box-shadow:var(--sidebar-shadow);border-radius:16px}.settings-menu-anchor{position:fixed;top:calc(env(safe-area-inset-top, 0px) + 16px);right:14px;z-index:940}.settings-menu{position:absolute;top:100%;right:0;z-index:50;margin-top:8px;min-width:320px;width:min(360px,calc(100vw - 28px));max-height:min(80vh,calc(100dvh - 92px));border-radius:var(--radius-md);border:1px solid color-mix(in srgb, var(--theme-accent) 35%, transparent);background:var(--settings-bg);backdrop-filter:var(--settings-blur);-webkit-backdrop-filter:var(--settings-blur);box-shadow:none;padding:10px;display:grid;gap:8px;overflow:auto;color:var(--theme-text);overscroll-behavior:contain}.settings-menu .fpill{min-width:0}.overlay-open .hero-backdrop-image{filter:saturate(1.04) contrast(1.01) brightness(.98);opacity:calc(var(--backdrop-opacity,0.9) * .55);transition-duration:180ms}.overlay-open .hero-backdrop-blend{opacity:.34}.overlay-open .dropdown-pop,.overlay-open .dropdown-pop-up{backdrop-filter:none;-webkit-backdrop-filter:none}.floating-controls{position:fixed;right:var(--space-4);bottom:max(var(--space-4), env(safe-area-inset-bottom));z-index:var(--z-fab);display:flex;flex-direction:column;gap:var(--space-3);align-items:flex-end;pointer-events:none}.floating-controls>*{pointer-events:auto}.floating-mode-switch{display:flex;border-radius:999px;overflow:hidden;border:1px solid ${T.surfaceBorder};background:${darkMode ? 'rgba(10,14,28,0.93)' : 'rgba(255,255,255,0.95)'};box-shadow:none}.bottom-action-dock{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+        .header-brand{display:grid;gap:var(--space-2);padding:var(--space-2) var(--space-3);border-radius:var(--radius-md);background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,.08));border:1px solid color-mix(in srgb,var(--theme-accent) 24%, transparent)}
+        .header-brand.compact{padding:4px 10px}
+        .filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+        @media (min-width:1024px){.sidebar-menu{top:16px;left:16px;bottom:16px;transform:translateX(0);width:280px;border-radius:var(--radius-lg)}.sidebar-backdrop{display:none}.sidebar-toggle-btn{top:20px;left:308px}}
         .dock-btn{border-radius:999px;border:1px solid ${T.surfaceBorder};background:${darkMode ? 'rgba(20,25,46,0.9)' : 'rgba(255,255,255,0.92)'};color:${T.text};padding:10px 12px;font-family:var(--font-marvel-ui);letter-spacing:1.1px;font-size:12px;cursor:pointer;white-space:nowrap}
         .bottom-action-bar{border-radius:999px;padding:10px 14px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
         main,.rrow,.title-btn,.fpill,.wbtn,.sopt,.meta-muted,input,textarea,select,button,.header-tagline{font-size:calc(1em * var(--text-scale))}
@@ -2818,8 +2849,8 @@ export default function MCUViewer() {
       <header className="hexbg" style={{ position: 'relative', zIndex: 120, background: 'transparent', borderBottom: 'none', flexShrink: 0 }}>
         <div className="header-inner" style={{ width: '100%', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 24px) 30px 12px', transition: 'padding 0.2s ease' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
-            <div style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
-              <div className="header-title-mcu" style={{ fontSize: 'clamp(44px, 9vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: '#fff', display: 'inline-block', padding: '0 12px', margin: '10px 0 12px', background: 'rgba(212,55,47,0.5)', borderRadius: 6 }}>MCU</div>
+            <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
+              <div className="header-title-mcu" style={{ fontSize: 'clamp(44px, 9vw, 64px)', letterSpacing: 'clamp(2px, 0.8vw, 7px)', color: '#fff', display: 'inline-block', padding: '0 12px', margin: '4px 0 8px', background: 'rgba(212,55,47,0.35)', borderRadius: 6 }}>MCU</div>
               <div className="header-title-sub" style={{ fontSize: 'clamp(26px, 4.2vw, 35px)', letterSpacing: 'clamp(3px, 1.1vw, 9px)', color: 'color-mix(in srgb, var(--theme-accent) 40%, var(--theme-accent-alt))', marginTop: 0 }}>VIEWING ORDER</div>
             </div>
           </div>
