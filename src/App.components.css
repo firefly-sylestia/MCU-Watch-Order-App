@@ -125,3 +125,8 @@
 [data-color-mode="light"] .settings-menu .fpill{background:color-mix(in srgb,var(--theme-surface) 95%, #ffffff);color:var(--theme-text-primary);border-color:color-mix(in srgb,var(--theme-border) 82%, #ffffff);box-shadow:0 6px 14px rgba(15,23,42,0.10)}
 [data-color-mode="light"] .settings-menu .fpill:hover{background:var(--theme-surface-hover);color:var(--theme-text-primary);border-color:color-mix(in srgb,var(--theme-accent) 42%, var(--theme-border))}
 [data-color-mode="light"] .settings-menu .fpill:disabled{background:color-mix(in srgb,var(--theme-surface) 85%, #e5e7eb);color:var(--theme-text-disabled);border-color:color-mix(in srgb,var(--theme-border) 60%, #e5e7eb);box-shadow:none}
+
+
+[data-color-mode="light"] .analytics-shell .fpill{background:color-mix(in srgb,var(--theme-surface) 96%, #ffffff);color:var(--theme-text-primary);border-color:color-mix(in srgb,var(--theme-border) 80%, #ffffff);box-shadow:0 6px 14px rgba(15,23,42,0.10)}
+[data-color-mode="light"] .analytics-shell .fpill:hover{background:var(--theme-surface-hover);color:var(--theme-text-primary);border-color:color-mix(in srgb,var(--theme-accent) 42%, var(--theme-border))}
+[data-color-mode="light"] .analytics-shell .fpill[disabled]{background:color-mix(in srgb,var(--theme-surface) 86%, #e5e7eb);color:var(--theme-text-disabled);border-color:color-mix(in srgb,var(--theme-border) 60%, #e5e7eb);box-shadow:none}
