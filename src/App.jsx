@@ -672,6 +672,32 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
     </div>
   );
 });
+
+const CinematicRail = React.memo(function CinematicRail({ title, subtitle, items, onOpenDetail, posterSrc, onViewAll }) {
+  if (!items.length) return null;
+  return (
+    <section className="cinematic-rail-shell">
+      <div className="cinematic-rail-head">
+        <div>
+          <div className="cinematic-rail-title">{title}</div>
+          <div className="cinematic-rail-subtitle">{subtitle}</div>
+        </div>
+        {onViewAll && <button className="fpill cinematic-rail-viewall" type="button" onClick={onViewAll}>View all</button>}
+      </div>
+      <div className="cinematic-rail-track">
+        {items.map(item => (
+          <button key={`${title}-${item.id}`} className="cinematic-card" type="button" onClick={() => onOpenDetail(item)}>
+            <div className="cinematic-card-poster"><LazyPoster className="poster" src={posterSrc(item)} alt={item.title} /></div>
+            <div className="cinematic-card-copy">
+              <div className="cinematic-card-title">{item.title}</div>
+              <div className="cinematic-card-meta">Phase {item.phase} · {TYPE_META[item.type]?.label} · {item.year}</div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+});
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function MCUViewer() {
   const initialUiState = useMemo(() => readSavedUiState(), []);
@@ -1650,6 +1676,12 @@ export default function MCUViewer() {
   const nextUnwatched = useMemo(() => filtered.find(i => i.status !== 'watched') || null, [filtered]);
   const allWatched = useMemo(() => activeItems.length > 0 && activeItems.every(i => i.status === 'watched'), [activeItems]);
   const recentActivity = useMemo(() => [...activeItems].filter(i => i.watchedDate).sort((a,b) => (b.watchedDate||'').localeCompare(a.watchedDate||'')).slice(0,5), [activeItems]);
+  const continueWatchingItems = useMemo(() => activeItems.filter(i => i.status === 'watching' || i.status === 'plan-to-watch').slice(0, 10), [activeItems]);
+  const sacredTimelineItems = useMemo(() => [...activeItems].sort((a, b) => a.order - b.order).slice(0, 14), [activeItems]);
+  const characterJourneyItems = useMemo(() => activeItems.filter(i => /(Iron Man|Captain America|Thor|Spider-Man|Loki|Wanda|Doctor Strange)/i.test(i.title)).slice(0, 12), [activeItems]);
+  const emotionalOrderItems = useMemo(() => [...activeItems].sort((a, b) => (myRating[b.id] || 0) - (myRating[a.id] || 0)).filter(i => myRating[i.id]).slice(0, 10), [activeItems, myRating]);
+  const postCreditItems = useMemo(() => activeItems.filter(i => /(Guardians|Ant-Man|Thor|Avengers|Spider-Man|Doctor Strange)/i.test(i.title)).slice(0, 12), [activeItems]);
+  const multiverseItems = useMemo(() => activeItems.filter(i => /(Loki|What If|Multiverse|No Way Home|Deadpool|Wolverine|Doctor Strange)/i.test(i.title)).slice(0, 12), [activeItems]);
   const recentlyWatchedItems = useMemo(() => [...activeItems]
     .filter(i => i.status === 'watched' && i.watchedDate)
     .sort((a, b) => (b.watchedDate || b.statusChangedAt || '').localeCompare(a.watchedDate || a.statusChangedAt || ''))
@@ -2982,6 +3014,25 @@ export default function MCUViewer() {
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={snapMode ? 'snap-blip' : ''} style={{ overflow: 'visible', flex: '0 0 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
+          {viewMode === 'list' && (
+            <section className="cinematic-home-shell">
+              <div className="cinematic-hero-panel">
+                <div className="cinematic-hero-kicker">Hero Section</div>
+                <h2 className="cinematic-hero-title">The Sacred Timeline Needs a Watcher</h2>
+                <p className="cinematic-hero-sub">Start where you left off, then explore timeline branches and character journeys in cinematic rails.</p>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button className="fpill" type="button" onClick={() => nextUnwatched && openDetail(nextUnwatched)}>{nextUnwatched ? `Continue: ${nextUnwatched.title}` : 'All caught up'}</button>
+                  <button className="fpill" type="button" onClick={() => setFiltersOpen(v => !v)}>Refine Timeline</button>
+                </div>
+              </div>
+              <CinematicRail title="Continue Watching" subtitle="Resume your current mission." items={continueWatchingItems} onOpenDetail={openDetail} posterSrc={posterSrc} />
+              <CinematicRail title="Sacred Timeline" subtitle="Chronological core path." items={sacredTimelineItems} onOpenDetail={openDetail} posterSrc={posterSrc} onViewAll={() => { setTimelineMode('sacred'); setActivePhase(0); }} />
+              <CinematicRail title="Character Journeys" subtitle="Follow hero-centric arcs." items={characterJourneyItems} onOpenDetail={openDetail} posterSrc={posterSrc} />
+              <CinematicRail title="Emotional Order" subtitle="Your highest-rated impact stories." items={emotionalOrderItems} onOpenDetail={openDetail} posterSrc={posterSrc} />
+              <CinematicRail title="Post-Credit Connections" subtitle="Stories with strong crossover setups." items={postCreditItems} onOpenDetail={openDetail} posterSrc={posterSrc} />
+              <CinematicRail title="Multiverse Branches" subtitle="Variants, branches, and temporal chaos." items={multiverseItems} onOpenDetail={openDetail} posterSrc={posterSrc} />
+            </section>
+          )}
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
