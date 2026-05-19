@@ -2523,7 +2523,8 @@ export default function MCUViewer() {
     '--theme-bg': darkMode ? '#06060f' : '#f2f0eb',
     '--theme-border': darkMode ? '#1b1b33' : '#ddd8cf',
     '--theme-text': darkMode ? '#d8e3f5' : '#1a2030',
-    '--theme-text-muted': darkMode ? '#8fa1b8' : '#667182',
+    '--theme-text-muted': darkMode ? '#a9b6cb' : '#4f5c70',
+    '--theme-text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
     '--font-marvel-display': 'var(--font-display)',
     '--font-marvel-ui': 'var(--font-ui)',
     '--font-marvel-body': 'var(--font-body)',
@@ -2533,7 +2534,11 @@ export default function MCUViewer() {
     '--theme-warning-soft': darkMode ? 'rgba(232,184,75,0.16)' : 'rgba(232,184,75,0.12)',
     '--theme-danger': '#d16a6a',
     '--theme-danger-soft': darkMode ? 'rgba(209,106,106,0.16)' : 'rgba(209,106,106,0.12)',
-    '--theme-text-primary': darkMode ? '#e6edf8' : '#1a2030',
+    '--theme-text-primary': darkMode ? '#f4f8ff' : '#121a2a',
+    '--text-primary': darkMode ? '#f4f8ff' : '#121a2a',
+    '--text-secondary': darkMode ? '#d6deed' : '#243248',
+    '--text-muted': darkMode ? '#a9b6cb' : '#4f5c70',
+    '--text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
     '--theme-text-secondary': darkMode ? `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 28%, #d9e3f1)` : `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 42%, #334155)`,
     '--theme-overlay-surface': darkMode
       ? `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 14%, rgba(255,255,255,0.06))`
@@ -2541,6 +2546,9 @@ export default function MCUViewer() {
     '--theme-overlay-border': darkMode
       ? `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 32%, rgba(255,255,255,0.14))`
       : `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 26%, rgba(15,23,42,0.14))`,
+    '--overlay-soft': darkMode ? 'rgba(2,6,18,0.46)' : 'rgba(15,23,42,0.12)',
+    '--overlay-dark': darkMode ? 'rgba(2,6,18,0.7)' : 'rgba(15,23,42,0.2)',
+    '--overlay-strong': darkMode ? 'rgba(2,6,18,0.82)' : 'rgba(15,23,42,0.3)',
     '--app-bg-base': darkMode ? '#06060f' : '#f2f0eb',
     '--app-bg-vignette': darkMode ? 'rgba(2,6,23,0.42)' : 'rgba(2,6,23,0.08)',
     '--app-bg-noise-opacity': darkMode ? '0.06' : '0.03',
@@ -2564,25 +2572,27 @@ export default function MCUViewer() {
 
   const renderPhaseSelector = () => (
     <div ref={phaseRef} style={{ display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto', paddingBottom: 2, maxWidth: '100%' }}>
-      <button className="fpill" onClick={() => setActivePhase(0)} style={{ borderRadius: 999, borderColor: activePhase === 0 ? 'var(--theme-accent)' : T.filterBorder, color: activePhase === 0 ? 'var(--theme-accent)' : T.textMuted }}>All</button>
+      <button className="fpill" onClick={() => setActivePhase(0)} style={{ borderRadius: 999, borderColor: activePhase === 0 ? 'var(--theme-accent)' : T.filterBorder, color: activePhase === 0 ? 'var(--theme-accent)' : 'var(--text-secondary)' }}>All</button>
       {PHASES.map((ph) => {
         const stat = phaseStats.find(s => s.phase === ph.id);
         const total = stat?.total || 0;
         const watched = stat?.watched || 0;
-        const percent = total ? Math.round((watched / total) * 100) : 0;
         const isActive = activePhase === ph.id;
         return (
           <button
             key={ph.id}
             onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); }}
+            className="fpill"
             style={{
-              display: 'grid', gridTemplateColumns: '30px auto auto', alignItems: 'center', gap: 8, borderRadius: 999, padding: '6px 10px 6px 7px',
-              border: `1px solid ${isActive ? ph.color : T.filterBorder}`, background: isActive ? `color-mix(in srgb, ${ph.color} 16%, transparent)` : 'transparent',
-              boxShadow: isActive ? `0 0 0 1px ${ph.color}44, 0 0 18px ${ph.glow}` : 'none', transform: isActive ? 'scale(1.02)' : 'scale(1)', cursor: 'pointer'
+              borderRadius: 999,
+              borderColor: isActive ? 'var(--theme-accent)' : T.filterBorder,
+              background: isActive ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--chip-bg)',
+              color: isActive ? 'var(--theme-accent)' : 'var(--text-secondary)',
+              fontWeight: 700,
+              padding: '0 14px'
             }}>
-            <span style={{ width: 26, height: 26, borderRadius: 999, display: 'grid', placeItems: 'center', color: ph.color, fontSize: 10, fontWeight: 800, background: `conic-gradient(${ph.color} ${percent * 3.6}deg, color-mix(in srgb, ${ph.color} 14%, transparent) 0)`, border: `1px solid ${ph.color}66` }}>{ph.id}</span>
-            <span style={{ fontSize: 11, letterSpacing: 1.1, color: isActive ? ph.color : T.text, whiteSpace: 'nowrap' }}>{ph.name}</span>
-            <span style={{ fontSize: 10, color: T.textMuted }}>{watched}/{total}</span>
+            <span style={{ fontSize: 12, letterSpacing: 1.2, whiteSpace: 'nowrap' }}>{ph.name}</span>
+            <span style={{ fontSize: 11, color: isActive ? 'var(--theme-accent)' : 'var(--text-muted)', fontWeight: 600 }}>{watched}/{total}</span>
           </button>
         );
       })}
@@ -3470,4 +3480,3 @@ export default function MCUViewer() {
     </div>
   );
 }
-
