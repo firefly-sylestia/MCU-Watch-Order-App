@@ -2709,13 +2709,14 @@ export default function MCUViewer() {
             <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
               <div className="header-title-mcu">MARVEL</div>
               <div className="header-title-sub">Spectrum</div>
+              <div className="header-tagline">Made with ♥ by Marvel Fan</div>
             </div>
           </div>
         </div>
       </header>
 
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ position: 'relative', height: isDesktopViewport ? 590 : 430, maxWidth: 1240, margin: '0 auto', width: '100%', background: 'linear-gradient(160deg, color-mix(in srgb,var(--theme-surface) 82%, transparent), color-mix(in srgb,var(--theme-bg) 72%, transparent))', border: `1px solid ${T.surfaceBorder}`, borderRadius: 'var(--hero-backdrop-radius)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 'var(--overlay-z-floating)', boxShadow: 'var(--elevation-surface-2)' }}>
+      <div style={{ position: 'relative', height: isDesktopViewport ? 530 : 390, maxWidth: 1240, margin: '0 auto', width: 'min(1240px, calc(100% - 24px))', background: 'linear-gradient(160deg, color-mix(in srgb,var(--theme-surface) 82%, transparent), color-mix(in srgb,var(--theme-bg) 72%, transparent))', border: `1px solid ${T.surfaceBorder}`, borderRadius: 'var(--hero-backdrop-radius)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 'var(--overlay-z-floating)', boxShadow: 'var(--elevation-surface-2)' }}>
         {heroPosters.length > 0 && (
           <div className="hero-rail"
             ref={heroRailRef}
@@ -3077,7 +3078,7 @@ export default function MCUViewer() {
             );
           })}
 
-          <div style={{ textAlign: 'center', marginTop: 44, fontFamily: 'var(--font-marvel-ui)', fontSize: 9, color: T.footerText, letterSpacing: 3.5 }}>
+          <div style={{ textAlign: 'center', marginTop: 44, fontFamily: 'var(--font-marvel-ui)', fontSize: 11, color: 'var(--theme-text-muted)', letterSpacing: 2.2, fontWeight: 700 }}>
             Made with ♥️ by Marvel Fan
           </div>
         </div>

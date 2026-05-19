@@ -92,7 +92,9 @@
         .header-brand.compact{padding:8px 12px}
         @media (min-width:1024px){.sidebar-menu{top:16px;left:16px;bottom:16px;width:300px;border-radius:var(--radius-lg)}.sidebar-toggle-btn{top:20px;right:20px}}
         .header-title-mcu{font-size:clamp(34px,6vw,58px);letter-spacing:0.18em;line-height:1;padding:4px 10px;color:#f8fafc;background:linear-gradient(180deg,#b91c1c,#7f1d1d);border:1px solid rgba(255,255,255,0.2);border-radius:8px;display:inline-block;width:max-content}
-        .header-title-sub{font-size:clamp(17px,2.4vw,28px);letter-spacing:0.3em;line-height:1.05;color:var(--theme-text-muted);text-transform:uppercase}        .dock-btn{border-radius:999px;border:1px solid var(--chip-border);background:var(--chip-bg);color:var(--chip-text);padding:9px 14px;font-family:var(--font-marvel-ui);letter-spacing:.4px;font-size:12px;cursor:pointer;white-space:nowrap;min-height:38px;box-shadow:var(--chip-shadow)}
+        .header-title-sub{font-size:clamp(17px,2.4vw,28px);letter-spacing:0.18em;line-height:1.05;color:var(--theme-text-muted);text-transform:uppercase;margin-left:2px}
+        .header-tagline{font-family:var(--font-marvel-ui);font-size:11px;letter-spacing:1.4px;color:var(--theme-text-secondary);text-transform:uppercase;margin-left:2px}
+        .dock-btn{border-radius:999px;border:1px solid var(--chip-border);background:var(--chip-bg);color:var(--chip-text);padding:9px 14px;font-family:var(--font-marvel-ui);letter-spacing:.4px;font-size:12px;cursor:pointer;white-space:nowrap;min-height:38px;box-shadow:var(--chip-shadow)}
         .status-block{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid color-mix(in srgb,var(--theme-border) 72%, transparent);background:color-mix(in srgb,var(--theme-surface) 78%, transparent);font-size:12px;line-height:1.35}.status-block.success{color:#bbf7d0}.status-block.error{color:#fecaca}.status-block.loading{color:var(--theme-text-secondary)}
         main,.rrow,.title-btn,.fpill,.wbtn,.sopt,.meta-muted,input,textarea,select,button,.header-tagline{font-size:calc(1em * var(--text-scale))}
 
