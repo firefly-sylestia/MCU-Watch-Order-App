@@ -2707,8 +2707,8 @@ export default function MCUViewer() {
         <div className="header-inner" style={{ width: '100%', maxWidth: 1240, margin: '0 auto', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 26px) 30px 16px', transition: 'padding 0.2s ease' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
-              <div className="header-title-mcu">MCU</div>
-              <div className="header-title-sub">Viewing Order</div>
+              <div className="header-title-mcu">MARVEL</div>
+              <div className="header-title-sub">Spectrum</div>
             </div>
           </div>
         </div>
