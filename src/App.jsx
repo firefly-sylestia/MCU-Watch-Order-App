@@ -2549,6 +2549,13 @@ export default function MCUViewer() {
     '--overlay-soft': darkMode ? 'rgba(2,6,18,0.46)' : 'rgba(15,23,42,0.12)',
     '--overlay-dark': darkMode ? 'rgba(2,6,18,0.7)' : 'rgba(15,23,42,0.2)',
     '--overlay-strong': darkMode ? 'rgba(2,6,18,0.82)' : 'rgba(15,23,42,0.3)',
+    '--control-solid-bg': darkMode ? 'rgba(20,25,46,0.84)' : 'rgba(255,255,255,0.96)',
+    '--detail-shell-bg': darkMode
+      ? 'linear-gradient(145deg, color-mix(in srgb,var(--theme-bg) 92%, #000), color-mix(in srgb,var(--theme-surface) 88%, #000) 54%, color-mix(in srgb,var(--theme-bg-alt) 88%, #000))'
+      : 'linear-gradient(145deg, color-mix(in srgb,var(--theme-surface) 88%, #ffffff), color-mix(in srgb,var(--theme-bg) 82%, #ffffff) 56%, color-mix(in srgb,var(--theme-surface) 78%, #ffffff))',
+    '--detail-panel-bg': darkMode
+      ? 'color-mix(in srgb,var(--theme-surface) 74%, rgba(8,12,26,0.82))'
+      : 'color-mix(in srgb,var(--theme-surface) 66%, #ffffff)',
     '--app-bg-base': darkMode ? '#06060f' : '#f2f0eb',
     '--app-bg-vignette': darkMode ? 'rgba(2,6,23,0.42)' : 'rgba(2,6,23,0.08)',
     '--app-bg-noise-opacity': darkMode ? '0.06' : '0.03',
@@ -3000,12 +3007,12 @@ export default function MCUViewer() {
         </button>
         <button type="button" className="dock-btn"
           onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
-          style={{ background: 'color-mix(in srgb, var(--theme-accent) 16%, rgba(20,25,46,0.82))' }}>
+          style={{ background: 'color-mix(in srgb, var(--theme-accent) 16%, var(--control-solid-bg))' }}>
           View: {viewMode === 'list' ? 'List' : 'Calendar'}
         </button>
         <button type="button" className="dock-btn"
           onClick={() => { const next = listMode === 'core' ? 'extended' : 'core'; setListMode(next); setExpandedItem(null); setExpandedPhase(null); }}
-          style={{ background: 'color-mix(in srgb, var(--theme-accent-alt) 16%, rgba(20,25,46,0.82))' }}>
+          style={{ background: 'color-mix(in srgb, var(--theme-accent-alt) 16%, var(--control-solid-bg))' }}>
           Mode: {listMode === 'core' ? 'MCU' : 'Extended'}
         </button>
         <div className="dock-status-menu" style={{ position: 'relative' }}>
@@ -3014,7 +3021,7 @@ export default function MCUViewer() {
             onClick={() => setDockStatusOpen(v => !v)}
             aria-label="Open quick status filters"
             className="bottom-action-bar"
-            style={{ border: `1px solid ${T.surfaceBorder}`, background: darkMode ? 'rgba(20,25,46,0.84)' : 'rgba(255,255,255,0.86)', color: 'var(--theme-text)', boxShadow: 'none', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1.2, fontSize: 12, fontWeight: 700 }}
+            style={{ border: `1px solid ${T.surfaceBorder}`, background: 'var(--control-solid-bg)', color: 'var(--theme-text)', boxShadow: 'none', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1.2, fontSize: 12, fontWeight: 700 }}
           >
             Status Menu <ChevDown size={12} style={{ transform: dockStatusOpen ? 'rotate(180deg)' : 'none' }} />
           </button>
@@ -3270,7 +3277,7 @@ export default function MCUViewer() {
               </div>
               <button className="fpill" onClick={() => setAnalyticsOpen(false)}>Close</button>
             </div>
-            <div className="ui-btn-group" style={{ position: 'sticky', top: 0, zIndex: 5, marginBottom: 10, paddingBottom: 8, background: 'var(--theme-surface)' }}>
+            <div className="ui-btn-group" style={{ position: 'sticky', top: 0, zIndex: 5, marginBottom: 10, paddingBottom: 8, background: 'var(--surface-overlay)', borderRadius: 14, border: '1px solid var(--border-soft)' }}>
               {[{ id: 'overview', label: 'Overview' }, { id: 'reviews', label: 'Reviews' }, { id: 'export', label: 'Quick Export' }, { id: 'advanced-export', label: 'Advanced Export' }].map(tab => (
                 <button key={tab.id} className="fpill" onClick={() => setAnalyticsTab(tab.id)} style={{ borderColor: analyticsTab === tab.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{tab.label}</button>
               ))}
@@ -3297,7 +3304,7 @@ export default function MCUViewer() {
                 <div className="ui-section-header" style={{ marginBottom: 4 }}>Quick Export</div>
                 <div style={{ color: T.textMuted, fontSize: 12 }}>One-tap share cards. Open Advanced Export for card type, themes, preview, and analysis sections.</div>
               </div>
-              <div className="ui-btn-group ui-sticky-mobile-footer" style={{ marginBottom: 0, position: 'sticky', bottom: 0, zIndex: 4, background: 'var(--theme-surface)', padding: '8px 0' }}>
+              <div className="ui-btn-group ui-sticky-mobile-footer" style={{ marginBottom: 0, position: 'sticky', bottom: 0, zIndex: 4, background: 'var(--surface-overlay)', borderRadius: 14, border: '1px solid var(--border-soft)', padding: '8px 0' }}>
                 <button className="fpill ui-touch-btn" onClick={shareAnalysisCard}><Upload size={14}/>Share Analysis Card</button>
                 <button className="fpill ui-touch-btn" onClick={shareUnifiedCard}><Upload size={14}/>Share Recap Card</button>
                 <span style={{ color: T.textMuted, fontSize: 12, alignSelf: 'center' }}>Progress + recent watched history in one share image.</span>
