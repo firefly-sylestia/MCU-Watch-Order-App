@@ -111,3 +111,12 @@
 [data-color-mode="light"] .filter-row-actions .fpill:hover,[data-color-mode="light"] .filter-bar .fpill:hover{background:var(--theme-surface-hover)}
 .review-theme-pill{min-height:58px !important;white-space:normal !important;line-height:1.15;text-align:center}
 .review-theme-pill span:last-child{line-height:1.1}
+
+
+[data-color-mode="light"] .filters-open .fpill{background:color-mix(in srgb,var(--theme-surface) 95%, #ffffff);color:var(--theme-text);border-color:color-mix(in srgb,var(--theme-border) 84%, #ffffff)}
+[data-color-mode="light"] .filters-open .fpill:hover{background:var(--theme-surface-hover);color:var(--theme-text)}
+[data-color-mode="light"] .filters-open .dropdown-pop{background:color-mix(in srgb,var(--theme-surface) 97%, #ffffff) !important;border-color:color-mix(in srgb,var(--theme-border) 74%, #ffffff) !important;box-shadow:0 12px 26px rgba(15,23,42,0.14)}
+[data-color-mode="light"] .analytics-backdrop{background:rgba(239,244,252,0.7)}
+[data-color-mode="light"] .analytics-shell{background:linear-gradient(165deg,color-mix(in srgb,var(--theme-surface) 95%, #ffffff),color-mix(in srgb,var(--theme-bg) 7%, #ffffff));box-shadow:0 18px 44px rgba(15,23,42,0.14), inset 0 1px 0 rgba(255,255,255,0.86)}
+[data-color-mode="light"] .analytics-shell .ui-btn-group{background:color-mix(in srgb,var(--theme-surface) 95%, #ffffff) !important;border-color:color-mix(in srgb,var(--theme-border) 78%, #ffffff) !important}
+[data-color-mode="light"] .analytics-shell .ui-panel,[data-color-mode="light"] .analytics-shell .glass-panel{background:color-mix(in srgb,var(--theme-surface) 94%, #ffffff);border-color:color-mix(in srgb,var(--theme-border) 78%, #ffffff)}
