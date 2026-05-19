@@ -653,7 +653,7 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
       {open && <button className="settings-backdrop" aria-label="Close settings menu" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose?.(); }} />}
       <div ref={ref} className="settings-menu-anchor">
       {open && (
-        <div className="fade-in settings-menu" style={{ '--settings-bg': darkMode ? 'rgba(14,21,40,0.84)' : 'rgba(249,252,255,0.88)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
+        <div className="fade-in settings-menu" style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
           {children}
         </div>
       )}
@@ -2609,7 +2609,7 @@ export default function MCUViewer() {
 
   const renderPhaseSelector = () => (
     <div ref={phaseRef} style={{ display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto', paddingBottom: 2, maxWidth: '100%' }}>
-      <button className="fpill" onClick={() => setActivePhase(0)} style={{ borderRadius: 999, borderColor: activePhase === 0 ? 'var(--theme-accent)' : T.filterBorder, color: activePhase === 0 ? 'var(--theme-accent)' : 'var(--text-secondary)' }}>All</button>
+      <button className="fpill" onClick={() => setActivePhase(0)} style={{ borderRadius: 999, borderColor: activePhase === 0 ? 'var(--theme-accent)' : T.filterBorder, background: activePhase === 0 ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--chip-bg)', color: activePhase === 0 ? 'var(--theme-accent)' : 'var(--text-secondary)' }}>All</button>
       {PHASES.map((ph) => {
         const stat = phaseStats.find(s => s.phase === ph.id);
         const total = stat?.total || 0;
@@ -3279,17 +3279,17 @@ export default function MCUViewer() {
                 </section>
 
                 <div className="detail-export-actions">
-                  <button className="fpill glass-panel" onClick={() => setSpoilerSafeMode(v => !v)} style={{ background: spoilerSafe ? 'rgba(232,184,75,0.18)' : 'rgba(255,255,255,0.06)', borderColor: spoilerSafe ? 'rgba(232,184,75,0.45)' : 'rgba(255,255,255,0.16)' }}>
+                  <button className="fpill glass-panel detail-btn" onClick={() => setSpoilerSafeMode(v => !v)} style={{ background: spoilerSafe ? 'var(--theme-warning-soft)' : undefined, borderColor: spoilerSafe ? 'var(--theme-warning)' : undefined }}>
                     Spoiler Safe: {spoilerSafe ? 'On' : 'Off'}
                   </button>
                   <button
-                    className={`fpill glass-panel ${myLikes[detailItem.id] ? 'is-active' : ''}`}
+                    className={`fpill glass-panel detail-btn ${myLikes[detailItem.id] ? 'is-active' : ''}`}
                     onClick={() => setMyLikes(prev => ({ ...prev, [detailItem.id]: !prev[detailItem.id] }))}
                   >
                     <Heart size={12}/> {myLikes[detailItem.id] ? 'Liked' : 'Like'}
                   </button>
-                  <button className="fpill glass-panel" onClick={() => exportPosterForItem(detailItem)}><Download size={14}/> Export Details Card</button>
-                  <button className="fpill glass-panel" onClick={() => setDetailItem(null)}>Close</button>
+                  <button className="fpill glass-panel detail-btn" onClick={() => exportPosterForItem(detailItem)}><Download size={14}/> Export Details Card</button>
+                  <button className="fpill glass-panel detail-btn" onClick={() => setDetailItem(null)}>Close</button>
                 </div>
               </div>
             </div>
@@ -3412,7 +3412,7 @@ export default function MCUViewer() {
               <div className="ui-section-header">Review Card Theme</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 6 }}>
                 {EXPORT_THEME_OPTIONS.map(opt => (
-                  <button key={opt.id} className="fpill" onClick={() => setReviewCardTheme(opt.id)} style={{ justifyContent:'center', flexDirection: 'column', gap: 2, padding:'6px 8px', fontSize:11, borderColor: reviewCardTheme === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}><span>{opt.label}</span><span style={{ fontSize: 9, color: T.textMuted }}>{opt.desc}</span></button>
+                  <button key={opt.id} className="fpill review-theme-pill" onClick={() => setReviewCardTheme(opt.id)} style={{ justifyContent:'center', flexDirection: 'column', gap: 2, padding:'6px 8px', fontSize:11, borderColor: reviewCardTheme === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}><span>{opt.label}</span><span style={{ fontSize: 9, color: T.textMuted }}>{opt.desc}</span></button>
                 ))}
               </div>
               {reviewShareStatus.message && <div style={{ fontSize: 12, color: reviewShareStatus.type === 'error' ? 'var(--theme-danger)' : 'var(--theme-success)' }}>{reviewShareStatus.message}</div>}
