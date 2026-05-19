@@ -758,6 +758,35 @@ export default function MCUViewer() {
   const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
   const [grootMode, setGrootMode] = useState(false);
   const [worthyIds, setWorthyIds] = useState({});
+
+  const closeSettings = useCallback(() => setSettingsOpen(false), []);
+  const closeSidebar = useCallback(() => setSidebarOpen(false), []);
+  const closeAnalytics = useCallback(() => setAnalyticsOpen(false), []);
+  const toggleSidebarPanel = useCallback(() => {
+    setSidebarOpen(prev => {
+      const next = !prev;
+      if (next) {
+        setSettingsOpen(false);
+        setAnalyticsOpen(false);
+      }
+      return next;
+    });
+  }, []);
+  const toggleSettingsPanel = useCallback(() => {
+    setSettingsOpen(prev => {
+      const next = !prev;
+      if (next) {
+        setSidebarOpen(false);
+        setAnalyticsOpen(false);
+      }
+      return next;
+    });
+  }, []);
+  const openAnalyticsPanel = useCallback(() => {
+    setSidebarOpen(false);
+    setSettingsOpen(false);
+    setAnalyticsOpen(true);
+  }, []);
   const [snapMode, setSnapMode] = useState(false);
   const [spiderSense, setSpiderSense] = useState(false);
   const [multiverseShuffle, setMultiverseShuffle] = useState(false);
@@ -2651,7 +2680,7 @@ export default function MCUViewer() {
       {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <SidebarMenu ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={() => setSidebarOpen(v => !v)} onClose={() => setSidebarOpen(false)} onOpenSettings={() => setSettingsOpen(true)}>
+      <SidebarMenu ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
         <div style={{ marginBottom: 8, fontSize: 11, letterSpacing: 1.8, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)', textTransform: 'uppercase' }}>Navigation Panel</div>
         <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -2665,7 +2694,7 @@ export default function MCUViewer() {
                   </div>
                 <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Quick Phases</div>
-        <button className="fpill" onClick={() => { setSidebarOpen(false); setAnalyticsOpen(true); }} style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}>Analytics</button>
+        <button className="fpill" onClick={openAnalyticsPanel} style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}>Analytics</button>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Viewing List</div>
         <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
           {LIST_MODES.map(mode => {
@@ -2719,7 +2748,7 @@ export default function MCUViewer() {
         </div>
       </SidebarMenu>
 
-      <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} performanceMode={performanceMode} onClose={() => setSettingsOpen(false)}>
+      <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} performanceMode={performanceMode} onClose={closeSettings}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Profile</div>
             <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 6 }}>
@@ -3268,14 +3297,14 @@ export default function MCUViewer() {
       )}
 
       {analyticsOpen && (
-        <div className="detail-backdrop" onClick={() => setAnalyticsOpen(false)} role="dialog" aria-label="Analysis history">
+        <div className="detail-backdrop" onClick={closeAnalytics} role="dialog" aria-label="Analysis history">
           <div className="detail-card glass-panel" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 1080, border: '1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border))', boxShadow: '0 28px 80px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 14 }}>
               <div>
                 <h2 style={{ fontSize: 30, marginBottom: 4 }}>Analysis</h2>
                 <div style={{ color: T.textMuted, fontSize: 13 }}>Concise progress insights: phase counts, watch percentage, and streak.</div>
               </div>
-              <button className="fpill" onClick={() => setAnalyticsOpen(false)}>Close</button>
+              <button className="fpill" onClick={closeAnalytics}>Close</button>
             </div>
             <div className="ui-btn-group" style={{ position: 'sticky', top: 0, zIndex: 5, marginBottom: 10, paddingBottom: 8, background: 'var(--surface-overlay)', borderRadius: 14, border: '1px solid var(--border-soft)' }}>
               {[{ id: 'overview', label: 'Overview' }, { id: 'reviews', label: 'Reviews' }, { id: 'export', label: 'Quick Export' }, { id: 'advanced-export', label: 'Advanced Export' }].map(tab => (
