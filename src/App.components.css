@@ -129,6 +129,14 @@
 .cinematic-rail-title{font-size:18px;font-weight:800;letter-spacing:.4px}
 .cinematic-rail-subtitle{font-size:12px;color:var(--theme-text-muted)}
 .cinematic-rail-track{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,260px);overflow-x:auto;gap:10px;scroll-snap-type:x mandatory;padding-bottom:4px}
+.wardrobe-modal-backdrop{position:fixed;inset:0;z-index:10030;background:rgba(3,6,14,0.72);backdrop-filter:blur(6px);display:grid;place-items:center;padding:18px}
+.wardrobe-modal-shell{width:min(1200px,96vw);max-height:88dvh;overflow:auto;border-radius:18px;border:1px solid var(--border-strong);background:linear-gradient(170deg,color-mix(in srgb,var(--theme-surface) 92%, transparent),color-mix(in srgb,var(--theme-bg) 84%, transparent));padding:14px;box-shadow:var(--shadow-elevated)}
+.wardrobe-modal-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.wardrobe-tab-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.wardrobe-modal-shell .cinematic-rail-track{perspective:1200px;transform-style:preserve-3d;padding:12px 8px 12px 12px;gap:14px}
+.wardrobe-modal-shell .cinematic-card{border-radius:16px;transform:rotateY(-11deg);transform-origin:center left}
+.wardrobe-modal-shell .cinematic-card:nth-child(even){transform:rotateY(11deg)}
+.wardrobe-modal-shell .cinematic-card:hover{transform:rotateY(0deg) translateY(-2px)}
 .cinematic-card{--card-overlay:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.01));display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px;align-items:center;border:1px solid var(--border-soft);border-radius:14px;padding:8px;background:var(--card-overlay),color-mix(in srgb,var(--theme-surface) 92%, transparent);text-align:left;cursor:pointer;scroll-snap-align:start;box-shadow:var(--shadow-soft)}
 .cinematic-card-safezone{min-height:58px;display:grid;align-content:center}
 .ui-actionable{transition:transform 140ms var(--interactive-ease), border-color var(--interactive-duration) var(--interactive-ease), background-color var(--interactive-duration) var(--interactive-ease), box-shadow var(--interactive-duration) var(--interactive-ease)}

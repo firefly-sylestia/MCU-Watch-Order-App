@@ -762,6 +762,8 @@ export default function MCUViewer() {
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
   const [performanceMode, setPerformanceMode] = useState(true);
+  const [wardrobeOpen, setWardrobeOpen] = useState(false);
+  const [wardrobeRail, setWardrobeRail] = useState('continue');
   const [showTvaIntro, setShowTvaIntro] = useState(false);
   const [allowTvaMotion, setAllowTvaMotion] = useState(false);
   const [genreFilter] = useState('all');
@@ -1679,6 +1681,15 @@ export default function MCUViewer() {
   const emotionalOrderItems = useMemo(() => [...activeItems].sort((a, b) => (myRating[b.id] || 0) - (myRating[a.id] || 0)).filter(i => myRating[i.id]).slice(0, 10), [activeItems, myRating]);
   const postCreditItems = useMemo(() => activeItems.filter(i => /(Guardians|Ant-Man|Thor|Avengers|Spider-Man|Doctor Strange)/i.test(i.title)).slice(0, 12), [activeItems]);
   const multiverseItems = useMemo(() => activeItems.filter(i => /(Loki|What If|Multiverse|No Way Home|Deadpool|Wolverine|Doctor Strange)/i.test(i.title)).slice(0, 12), [activeItems]);
+  const wardrobeSections = useMemo(() => ([
+    { id: 'continue', title: 'Continue Watching', subtitle: 'Resume your current mission.', items: continueWatchingItems },
+    { id: 'sacred', title: 'Sacred Timeline', subtitle: 'Chronological core path.', items: sacredTimelineItems },
+    { id: 'journeys', title: 'Character Journeys', subtitle: 'Follow hero-centric arcs.', items: characterJourneyItems },
+    { id: 'emotional', title: 'Emotional Order', subtitle: 'Your highest-rated impact stories.', items: emotionalOrderItems },
+    { id: 'postcredit', title: 'Post-Credit Connections', subtitle: 'Stories with strong crossover setups.', items: postCreditItems },
+    { id: 'multiverse', title: 'Multiverse Branches', subtitle: 'Variants, branches, and temporal chaos.', items: multiverseItems },
+  ]), [continueWatchingItems, sacredTimelineItems, characterJourneyItems, emotionalOrderItems, postCreditItems, multiverseItems]);
+  const activeWardrobeSection = wardrobeSections.find(s => s.id === wardrobeRail) || wardrobeSections[0];
   const recentlyWatchedItems = useMemo(() => [...activeItems]
     .filter(i => i.status === 'watched' && i.watchedDate)
     .sort((a, b) => (b.watchedDate || b.statusChangedAt || '').localeCompare(a.watchedDate || a.statusChangedAt || ''))
@@ -3005,6 +3016,27 @@ export default function MCUViewer() {
         </div>
         </div>
       </div>
+      {wardrobeOpen && (
+        <div className="wardrobe-modal-backdrop" role="dialog" aria-modal="true">
+          <div className="wardrobe-modal-shell motion-fade-up">
+            <div className="wardrobe-modal-head">
+              <div>
+                <div className="cinematic-hero-kicker">Expanded Carousel</div>
+                <div className="cinematic-rail-title">3D Wardrobe Timeline</div>
+              </div>
+              <button className="fpill" type="button" onClick={() => setWardrobeOpen(false)}>Close</button>
+            </div>
+            <div className="wardrobe-tab-row">
+              {wardrobeSections.map(section => (
+                <button key={section.id} className={`fpill ui-actionable${wardrobeRail === section.id ? ' is-active' : ''}`} type="button" onClick={() => setWardrobeRail(section.id)}>
+                  {section.title}
+                </button>
+              ))}
+            </div>
+            <CinematicRail title={activeWardrobeSection.title} subtitle={activeWardrobeSection.subtitle} items={activeWardrobeSection.items} onOpenDetail={openDetail} posterSrc={posterSrc} onViewAll={activeWardrobeSection.id === 'sacred' ? () => { setTimelineMode('sacred'); setActivePhase(0); } : undefined} />
+          </div>
+        </div>
+      )}
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={snapMode ? 'snap-blip' : ''} style={{ overflow: 'visible', flex: '0 0 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
@@ -3018,14 +3050,9 @@ export default function MCUViewer() {
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   <button className="fpill" type="button" onClick={() => nextUnwatched && openDetail(nextUnwatched)}>{nextUnwatched ? `Continue: ${nextUnwatched.title}` : 'All caught up'}</button>
                   <button className="fpill" type="button" onClick={() => setFiltersOpen(v => !v)}>Refine Timeline</button>
+                  <button className="fpill" type="button" onClick={() => setWardrobeOpen(true)}>Open 3D Wardrobe</button>
                 </div>
               </div>
-              <CinematicRail title="Continue Watching" subtitle="Resume your current mission." items={continueWatchingItems} onOpenDetail={openDetail} posterSrc={posterSrc} />
-              <CinematicRail title="Sacred Timeline" subtitle="Chronological core path." items={sacredTimelineItems} onOpenDetail={openDetail} posterSrc={posterSrc} onViewAll={() => { setTimelineMode('sacred'); setActivePhase(0); }} />
-              <CinematicRail title="Character Journeys" subtitle="Follow hero-centric arcs." items={characterJourneyItems} onOpenDetail={openDetail} posterSrc={posterSrc} />
-              <CinematicRail title="Emotional Order" subtitle="Your highest-rated impact stories." items={emotionalOrderItems} onOpenDetail={openDetail} posterSrc={posterSrc} />
-              <CinematicRail title="Post-Credit Connections" subtitle="Stories with strong crossover setups." items={postCreditItems} onOpenDetail={openDetail} posterSrc={posterSrc} />
-              <CinematicRail title="Multiverse Branches" subtitle="Variants, branches, and temporal chaos." items={multiverseItems} onOpenDetail={openDetail} posterSrc={posterSrc} />
             </section>
           )}
           {phaseKeys.length === 0 && (
