@@ -64,7 +64,7 @@
 
 
 
-        .glass-panel{background-color:rgba(30,30,46,0.34);border:1px solid rgba(255,255,255,0.05);border-radius:16px}
+        .glass-panel{background:var(--surface-overlay);border:1px solid var(--border-soft);border-radius:16px;box-shadow:var(--shadow-soft)}
         .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02))}
         .meta-muted{color:var(--theme-text-muted) !important}
 
@@ -102,3 +102,5 @@
         main::-webkit-scrollbar-thumb{background:var(--theme-scroll-thumb, rgba(255,255,255,0.25));border-radius:4px}
         main::-webkit-scrollbar-thumb:hover{background:var(--theme-scroll-thumb-hover, rgba(255,255,255,0.4))}
       
+
+[data-color-mode="light"] .glass-panel{background:color-mix(in srgb,var(--theme-surface) 88%, #ffffff);border-color:color-mix(in srgb,var(--theme-border) 72%, #ffffff);box-shadow:0 10px 26px rgba(15,23,42,0.12)}
