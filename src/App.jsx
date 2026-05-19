@@ -124,7 +124,7 @@ const UI_STATE_DEFAULTS = {
   densityMode: 'comfortable',
   timelineMode: 'sacred',
   autoHideStatuses: false,
-  performanceMode: false,
+  performanceMode: true,
   desktopTextScale: 1,
   textScaleEnabled: false,
   scrollTop: 0,
@@ -676,7 +676,7 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
 const CinematicRail = React.memo(function CinematicRail({ title, subtitle, items, onOpenDetail, posterSrc, onViewAll }) {
   if (!items.length) return null;
   return (
-    <section className="cinematic-rail-shell">
+    <section className="cinematic-rail-shell motion-fade-up">
       <div className="cinematic-rail-head">
         <div>
           <div className="cinematic-rail-title">{title}</div>
@@ -686,9 +686,9 @@ const CinematicRail = React.memo(function CinematicRail({ title, subtitle, items
       </div>
       <div className="cinematic-rail-track">
         {items.map(item => (
-          <button key={`${title}-${item.id}`} className="cinematic-card" type="button" onClick={() => onOpenDetail(item)}>
-            <div className="cinematic-card-poster"><LazyPoster className="poster" src={posterSrc(item)} alt={item.title} /></div>
-            <div className="cinematic-card-copy">
+          <button key={`${title}-${item.id}`} className="cinematic-card ui-actionable motion-scale-soft" type="button" onClick={() => onOpenDetail(item)}>
+            <div className="cinematic-card-poster motion-crossfade"><LazyPoster className="poster" src={posterSrc(item)} alt={item.title} /></div>
+            <div className="cinematic-card-copy cinematic-card-safezone">
               <div className="cinematic-card-title">{item.title}</div>
               <div className="cinematic-card-meta">Phase {item.phase} · {TYPE_META[item.type]?.label} · {item.year}</div>
             </div>
@@ -761,10 +761,7 @@ export default function MCUViewer() {
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
-  const [performanceMode, setPerformanceMode] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
-  });
+  const [performanceMode, setPerformanceMode] = useState(true);
   const [showTvaIntro, setShowTvaIntro] = useState(false);
   const [allowTvaMotion, setAllowTvaMotion] = useState(false);
   const [genreFilter] = useState('all');
@@ -859,11 +856,11 @@ export default function MCUViewer() {
     if (typeof window === 'undefined') return undefined;
     const mq = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     const reducedMotion = Boolean(mq?.matches);
-    setAllowTvaMotion(!reducedMotion && !performanceMode);
+    setAllowTvaMotion(!reducedMotion);
     setShowTvaIntro(true);
     const timer = window.setTimeout(() => setShowTvaIntro(false), TVA_INTRO_DURATION_MS);
     return () => window.clearTimeout(timer);
-  }, [performanceMode]);
+  }, []);
 
   useEffect(() => {
     if (!sidebarOpen || !sidebarRef.current) return;
@@ -2708,19 +2705,17 @@ export default function MCUViewer() {
             </label>
             <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Zap size={14} /> Performance Mode</span>
-              <button className='fpill settings-toggle-pill' type='button' onClick={() => setPerformanceMode(v => !v)} style={{ minWidth: 72, justifyContent: 'center', borderColor: performanceMode ? 'var(--theme-accent)' : 'var(--theme-border)', background: performanceMode ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}>{performanceMode ? 'On' : 'Off'}</button>
+              <button className='fpill settings-toggle-pill' type='button' disabled style={{ minWidth: 72, justifyContent: 'center', borderColor: 'var(--theme-accent)', background: 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))', opacity: 0.92 }}>On</button>
             </label>
-            <div style={{ fontSize: 11, color: T.textMuted, lineHeight: 1.35, marginTop: -4 }}>Performance Mode now follows new session rules and is not saved. On = reduced effects, Off = full motion.</div>
+            <div style={{ fontSize: 11, color: T.textMuted, lineHeight: 1.35, marginTop: -4 }}>Performance Mode is locked On for stable performance behavior.</div>
             <button
               className='fpill'
               type='button'
               onClick={() => {
-                if (performanceMode) return;
                 setShowTvaIntro(true);
                 window.setTimeout(() => setShowTvaIntro(false), TVA_INTRO_DURATION_MS);
               }}
-              disabled={performanceMode}
-              style={{ justifyContent: 'center', opacity: performanceMode ? 0.55 : 1 }}
+              style={{ justifyContent: 'center' }}
             >
               Replay TVA Opening
             </button>
@@ -3016,7 +3011,7 @@ export default function MCUViewer() {
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {viewMode === 'list' && (
             <section className="cinematic-home-shell">
-              <div className="cinematic-hero-panel">
+              <div className="cinematic-hero-panel motion-ambient-float">
                 <div className="cinematic-hero-kicker">Hero Section</div>
                 <h2 className="cinematic-hero-title">The Sacred Timeline Needs a Watcher</h2>
                 <p className="cinematic-hero-sub">Start where you left off, then explore timeline branches and character journeys in cinematic rails.</p>

@@ -129,8 +129,13 @@
 .cinematic-rail-title{font-size:18px;font-weight:800;letter-spacing:.4px}
 .cinematic-rail-subtitle{font-size:12px;color:var(--theme-text-muted)}
 .cinematic-rail-track{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,260px);overflow-x:auto;gap:10px;scroll-snap-type:x mandatory;padding-bottom:4px}
-.cinematic-card{display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px;align-items:center;border:1px solid var(--border-soft);border-radius:14px;padding:8px;background:color-mix(in srgb,var(--theme-surface) 90%, transparent);text-align:left;cursor:pointer;scroll-snap-align:start}
-.cinematic-card:hover{border-color:color-mix(in srgb,var(--theme-accent) 40%, var(--theme-border));background:var(--theme-surface-hover)}
+.cinematic-card{--card-overlay:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.01));display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px;align-items:center;border:1px solid var(--border-soft);border-radius:14px;padding:8px;background:var(--card-overlay),color-mix(in srgb,var(--theme-surface) 92%, transparent);text-align:left;cursor:pointer;scroll-snap-align:start;box-shadow:var(--shadow-soft)}
+.cinematic-card-safezone{min-height:58px;display:grid;align-content:center}
+.ui-actionable{transition:transform 140ms var(--interactive-ease), border-color var(--interactive-duration) var(--interactive-ease), background-color var(--interactive-duration) var(--interactive-ease), box-shadow var(--interactive-duration) var(--interactive-ease)}
+.ui-actionable:hover{border-color:color-mix(in srgb,var(--theme-accent) 40%, var(--theme-border));background:var(--theme-surface-hover);transform:translateY(-1px)}
+.ui-actionable:active{transform:translateY(0) scale(.988)}
+.ui-actionable[aria-pressed="true"],.ui-actionable.is-active{border-color:var(--chip-border-active);box-shadow:var(--chip-shadow-active)}
+.ui-actionable:focus-visible{outline:2px solid var(--theme-accent);outline-offset:2px}
 .cinematic-card-poster .poster{width:56px;height:82px}
 .cinematic-card-title{font-size:13px;font-weight:700;line-height:1.25}
 .cinematic-card-meta{font-size:11px;color:var(--theme-text-muted);margin-top:3px}

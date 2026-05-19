@@ -30,7 +30,7 @@
         .progress-gradient{background:var(--phase-gradient, linear-gradient(90deg,var(--theme-accent), var(--theme-accent-alt)));background-size:200% 100%;animation:gradientPulse 3s ease-in-out infinite alternate}
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
         .performance-mode *{animation:none !important}
-        .tva-intro-overlay{position:fixed;inset:0;z-index:1200;pointer-events:none;display:grid;place-items:center;background:radial-gradient(circle at center, rgba(232,184,75,0.24) 0%, rgba(8,13,26,0.95) 40%, rgba(5,7,12,0.99) 100%);backdrop-filter:blur(2px);animation:tvaIntroFade 4.2s ease forwards}
+        .tva-intro-overlay{position:fixed;inset:0;z-index:1200;pointer-events:none;display:grid;place-items:center;background:radial-gradient(circle at center, rgba(232,184,75,0.24) 0%, rgba(8,13,26,0.95) 40%, rgba(5,7,12,0.99) 100%);backdrop-filter:blur(2px);animation:tvaPortalOpen 4.2s cubic-bezier(.22,.9,.24,1) forwards}
         .tva-intro-time-rings{position:absolute;inset:8%;border-radius:50%;border:1px solid rgba(232,184,75,0.3);box-shadow:0 0 0 16px rgba(232,184,75,0.1),0 0 0 52px rgba(232,184,75,0.06),0 0 60px rgba(232,184,75,0.3) inset;animation:tvaRingSpin 4.2s linear forwards}
         .tva-intro-center{display:grid;gap:8px;text-align:center;padding:20px}
         .tva-intro-kicker{font-size:11px;letter-spacing:3px;color:rgba(242,219,161,0.86);font-family:var(--font-marvel-ui)}
@@ -39,3 +39,12 @@
         .tva-intro-overlay.static,.tva-intro-overlay.static *{animation:none !important}
         @keyframes tvaIntroFade{0%{opacity:0}8%{opacity:1}88%{opacity:1}100%{opacity:0}}
         @keyframes tvaRingSpin{0%{transform:scale(0.78) rotate(0deg);opacity:.08}24%{opacity:.9}72%{opacity:.88}100%{transform:scale(1.12) rotate(210deg);opacity:0}}
+        @keyframes tvaPortalOpen{0%{opacity:0;clip-path:circle(0% at 50% 50%)}12%{opacity:1;clip-path:circle(45% at 50% 50%)}82%{opacity:1;clip-path:circle(55% at 50% 50%)}100%{opacity:0;clip-path:circle(180% at 50% 50%)}}
+        .motion-fade-up{animation:fadeUp 380ms var(--ease-out) both}
+        .motion-crossfade{animation:crossfade 280ms var(--ease-out) both}
+        .motion-scale-soft{animation:scaleSoft 220ms var(--ease-out) both}
+        .motion-ambient-float{animation:ambientFloat 7.2s ease-in-out infinite}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes crossfade{from{opacity:.6}to{opacity:1}}
+        @keyframes scaleSoft{from{transform:scale(.985)}to{transform:scale(1)}}
+        @keyframes ambientFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
