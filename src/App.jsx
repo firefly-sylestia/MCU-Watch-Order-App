@@ -124,12 +124,14 @@ const UI_STATE_DEFAULTS = {
   densityMode: 'comfortable',
   timelineMode: 'sacred',
   autoHideStatuses: false,
-  performanceMode: true,
+  performanceMode: false,
   desktopTextScale: 1,
   textScaleEnabled: false,
   scrollTop: 0,
   exportPrefs: { font: 'inter', textScale: 1.08, detailUseReviewStyle: true },
 };
+
+const TVA_INTRO_DURATION_MS = 2800;
 
 const VALID_LIST_MODES = new Set(LIST_MODES.map(mode => mode.id));
 const VALID_VIEW_MODES = new Set(['list', 'calendar']);
@@ -735,6 +737,8 @@ export default function MCUViewer() {
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
   const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
+  const [showTvaIntro, setShowTvaIntro] = useState(false);
+  const [allowTvaMotion, setAllowTvaMotion] = useState(false);
   const [genreFilter] = useState('all');
   const [myLikes,        setMyLikes]        = useState({});
   const [myRating,       setMyRating]       = useState({});
@@ -822,6 +826,19 @@ export default function MCUViewer() {
 
 
   useOverlayNavigation({ sidebarOpen, settingsOpen, detailItem, analyticsOpen, onCloseDetail: () => setDetailItem(null), onCloseAnalytics: () => setAnalyticsOpen(false), onCloseSettings: () => setSettingsOpen(false), onCloseSidebar: () => setSidebarOpen(false) });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const mq = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    const reducedMotion = Boolean(mq?.matches);
+    setAllowTvaMotion(!reducedMotion && !performanceMode);
+    const hasPlayed = window.sessionStorage.getItem('mcu-tva-intro-played-v1') === '1';
+    if (hasPlayed || reducedMotion || performanceMode) return undefined;
+    setShowTvaIntro(true);
+    window.sessionStorage.setItem('mcu-tva-intro-played-v1', '1');
+    const timer = window.setTimeout(() => setShowTvaIntro(false), TVA_INTRO_DURATION_MS);
+    return () => window.clearTimeout(timer);
+  }, [performanceMode]);
 
   useEffect(() => {
     if (!sidebarOpen || !sidebarRef.current) return;
@@ -2527,6 +2544,16 @@ export default function MCUViewer() {
   const appTexture = performanceMode ? 'none' : `radial-gradient(circle, rgba(255,255,255,var(--app-bg-noise-opacity)) 0.7px, transparent 0.8px)`;
   return (
     <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': textScaleEnabled ? desktopTextScale : 1, width: '100%', minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: 'var(--ui-scale)', transformOrigin: 'top left', left: textScaleEnabled ? '0' : 'auto', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}${sidebarOpen || settingsOpen ? ' overlay-open' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+      {showTvaIntro && (
+        <div className={`tva-intro-overlay${allowTvaMotion ? '' : ' static'}`} role="presentation" aria-hidden="true">
+          <div className="tva-intro-time-rings" />
+          <div className="tva-intro-center">
+            <div className="tva-intro-kicker">TIME VARIANCE AUTHORITY</div>
+            <div className="tva-intro-title">MARVEL SPECTRUM</div>
+            <div className="tva-intro-subtitle">Sacred Timeline Access</div>
+          </div>
+        </div>
+      )}
       
 
 
@@ -2654,6 +2681,19 @@ export default function MCUViewer() {
               <button className='fpill settings-toggle-pill' type='button' onClick={() => setPerformanceMode(v => !v)} style={{ minWidth: 72, justifyContent: 'center', borderColor: performanceMode ? 'var(--theme-accent)' : 'var(--theme-border)', background: performanceMode ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}>{performanceMode ? 'On' : 'Off'}</button>
             </label>
             <div style={{ fontSize: 11, color: T.textMuted, lineHeight: 1.35, marginTop: -4 }}>Leave off for full UI motion; turn on only if your device needs reduced effects.</div>
+            <button
+              className='fpill'
+              type='button'
+              onClick={() => {
+                if (performanceMode) return;
+                setShowTvaIntro(true);
+                window.setTimeout(() => setShowTvaIntro(false), TVA_INTRO_DURATION_MS);
+              }}
+              disabled={performanceMode}
+              style={{ justifyContent: 'center', opacity: performanceMode ? 0.55 : 1 }}
+            >
+              Replay TVA Opening
+            </button>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 6 }}>
               <button className='fpill' onClick={() => setDensityMode('comfortable')} style={{ borderColor: densityMode === 'comfortable' ? 'var(--theme-accent)' : 'var(--theme-border)', justifyContent: 'center' }}>Comfortable</button>
               <button className='fpill' onClick={() => setDensityMode('compact')} style={{ borderColor: densityMode === 'compact' ? 'var(--theme-accent)' : 'var(--theme-border)', justifyContent: 'center' }}>Compact</button>
