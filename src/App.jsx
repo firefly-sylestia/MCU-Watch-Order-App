@@ -692,7 +692,7 @@ export default function MCUViewer() {
   const setDockStatusOpen = (next) => dispatchUiMode({ dockStatusOpen: typeof next === 'function' ? next(uiModeState.dockStatusOpen) : next });
   const setFiltersOpen = (next) => dispatchUiMode({ filtersOpen: typeof next === 'function' ? next(uiModeState.filtersOpen) : next });
   const [dropdownPos,    setDropdownPos]    = useState({ x: 0, y: 0 });
-  const [darkMode,       setDarkMode]       = useState(true);
+  const [darkMode,       setDarkMode]       = useState(false);
   const [expandedItem,   setExpandedItem]   = useState(null);
   const [expandedPhase,  setExpandedPhase]  = useState(null);
   const [celebPhase,     setCelebPhase]     = useState(null);
@@ -727,7 +727,7 @@ export default function MCUViewer() {
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
-  const [themeMode,      setThemeMode]      = useState('classic');
+  const [themeMode,      setThemeMode]      = useState('panther-tech');
   const [spoilerSafeMode, setSpoilerSafeMode] = useState(true);
   const [autoHideStatuses, setAutoHideStatuses] = useState(initialUiState.autoHideStatuses);
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
@@ -1884,6 +1884,8 @@ export default function MCUViewer() {
       if (Array.isArray(avatars)) setUploadedAvatars(avatars);
       const t = readStorageValue('mcu-theme-mode-v1', '');
       if (t) setThemeMode(t);
+      const darkModeSaved = readStorageValue('mcu-dark-mode-v1', '');
+      if (darkModeSaved === '1' || darkModeSaved === '0') setDarkMode(darkModeSaved === '1');
       const exportPrefsSaved = readStorageJSON('mcu-export-prefs-v1', null);
       if (exportPrefsSaved?.font) setExportFont(exportPrefsSaved.font);
       if (Number.isFinite(Number(exportPrefsSaved?.textScale))) setExportTextScale(Math.max(0.9, Math.min(2.4, Number(exportPrefsSaved.textScale))));
@@ -1899,6 +1901,7 @@ export default function MCUViewer() {
   useEffect(() => { scheduleStorageWrite('mcu-profile-v1', JSON.stringify(profile)); }, [profile]);
   useEffect(() => { scheduleStorageWrite('mcu-uploaded-avatars-v1', JSON.stringify(uploadedAvatars)); }, [uploadedAvatars]);
   useEffect(() => { scheduleStorageWrite('mcu-theme-mode-v1', themeMode); }, [themeMode]);
+  useEffect(() => { scheduleStorageWrite('mcu-dark-mode-v1', darkMode ? '1' : '0'); }, [darkMode]);
   useEffect(() => { scheduleStorageWrite('mcu-export-prefs-v1', JSON.stringify({ font: exportFont, textScale: exportTextScale })); }, [exportFont, exportTextScale]);
 
   useEffect(() => {
@@ -2640,15 +2643,15 @@ export default function MCUViewer() {
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Preferences</div>
             <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Moon size={14} /> Dark Theme</span>
-              <input type="checkbox" checked={darkMode} onChange={() => setDarkMode(d => !d)} style={{ width: 36, height: 20 }} />
+              <button className='fpill settings-toggle-pill' type='button' onClick={() => setDarkMode(d => !d)} style={{ minWidth: 72, justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', background: darkMode ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}>{darkMode ? 'On' : 'Off'}</button>
             </label>
             <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><EyeOff size={14} /> Spoiler Safe</span>
-              <input type='checkbox' checked={spoilerSafeMode} onChange={() => setSpoilerSafeMode(v => !v)} style={{ width: 36, height: 20 }} />
+              <button className='fpill settings-toggle-pill' type='button' onClick={() => setSpoilerSafeMode(v => !v)} style={{ minWidth: 72, justifyContent: 'center', borderColor: spoilerSafeMode ? 'var(--theme-accent)' : 'var(--theme-border)', background: spoilerSafeMode ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}>{spoilerSafeMode ? 'On' : 'Off'}</button>
             </label>
             <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Zap size={14} /> Performance Mode</span>
-              <input type='checkbox' checked={performanceMode} onChange={() => setPerformanceMode(v => !v)} style={{ width: 36, height: 20 }} />
+              <button className='fpill settings-toggle-pill' type='button' onClick={() => setPerformanceMode(v => !v)} style={{ minWidth: 72, justifyContent: 'center', borderColor: performanceMode ? 'var(--theme-accent)' : 'var(--theme-border)', background: performanceMode ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}>{performanceMode ? 'On' : 'Off'}</button>
             </label>
             <div style={{ fontSize: 11, color: T.textMuted, lineHeight: 1.35, marginTop: -4 }}>Leave off for full UI motion; turn on only if your device needs reduced effects.</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 6 }}>
@@ -2671,7 +2674,7 @@ export default function MCUViewer() {
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Backup & Restore</div>
             <button className="fpill" onClick={exportProgress}><Download size={14}/>Export Backup JSON</button>
-            <label className="fpill" style={{ cursor: 'pointer' }}><Upload size={14}/>Import Backup JSON
+            <label className="fpill import-backup-pill" style={{ cursor: 'pointer', WebkitTapHighlightColor: 'transparent', outline: 'none' }}><Upload size={14}/>Import Backup JSON
               <input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} />
             </label>
             <div style={{ display: 'grid', gap: 6 }}><div style={{ fontSize: 11, color: T.textMuted }}>Auto snapshots (latest 5)</div>{autoBackups.slice(0,5).map((shot, idx) => { const preview = buildBackupPreview(shot); return <button key={`${shot.exportedAt}-${idx}`} className="fpill" onClick={() => importProgress(new File([JSON.stringify(shot)], 'mcu-auto-backup.json', { type: 'application/json' }))} style={{ justifyContent: 'space-between' }}><span><Clock size={14}/>Restore {new Date(preview.exportedAt).toLocaleDateString()}</span><span style={{ fontSize: 10, color: T.textMuted }}>{preview.watched}/{preview.total}</span></button>; })}</div>

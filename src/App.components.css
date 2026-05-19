@@ -85,6 +85,8 @@
         .settings-backdrop{position:fixed;inset:0;background:transparent;border:none;z-index:9990}
         .settings-menu{position:absolute;top:100%;right:0;z-index:10001;margin-top:8px;min-width:320px;width:min(360px,calc(100vw - 28px));max-height:min(80vh,calc(100dvh - 92px));border-radius:var(--radius-surface);border:1px solid var(--border-strong);background:var(--settings-bg,var(--surface-elevated));backdrop-filter:var(--settings-blur);-webkit-backdrop-filter:var(--settings-blur);box-shadow:var(--shadow-elevated);padding:10px;display:grid;gap:8px;overflow:auto;color:var(--theme-text);overscroll-behavior:contain}
         .settings-menu .fpill{min-width:0}
+        .settings-toggle-pill{font-weight:700;letter-spacing:.8px}
+        .import-backup-pill:focus-within,.import-backup-pill:focus-visible{outline:none !important;box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 42%, transparent)}
         .overlay-open .hero-backdrop-image{filter:saturate(1.05) contrast(1.01) brightness(.99);opacity:calc(var(--backdrop-opacity,0.67) * .86);transition-duration:180ms}
         .overlay-open .hero-backdrop-blend{opacity:.14}
         .overlay-open .dropdown-pop,.overlay-open .dropdown-pop-up{backdrop-filter:none;-webkit-backdrop-filter:none}
