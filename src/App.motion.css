@@ -30,12 +30,12 @@
         .progress-gradient{background:var(--phase-gradient, linear-gradient(90deg,var(--theme-accent), var(--theme-accent-alt)));background-size:200% 100%;animation:gradientPulse 3s ease-in-out infinite alternate}
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
         .performance-mode *{animation:none !important}
-        .tva-intro-overlay{position:fixed;inset:0;z-index:1200;pointer-events:none;display:grid;place-items:center;background:radial-gradient(circle at center, rgba(232,184,75,0.18) 0%, rgba(8,13,26,0.94) 45%, rgba(5,7,12,0.98) 100%);backdrop-filter:blur(2px);animation:tvaIntroFade 2.8s ease forwards}
-        .tva-intro-time-rings{position:absolute;inset:10%;border-radius:50%;border:1px solid rgba(232,184,75,0.25);box-shadow:0 0 0 16px rgba(232,184,75,0.08),0 0 0 44px rgba(232,184,75,0.04);animation:tvaRingSpin 2.8s linear forwards}
+        .tva-intro-overlay{position:fixed;inset:0;z-index:1200;pointer-events:none;display:grid;place-items:center;background:radial-gradient(circle at center, rgba(232,184,75,0.24) 0%, rgba(8,13,26,0.95) 40%, rgba(5,7,12,0.99) 100%);backdrop-filter:blur(2px);animation:tvaIntroFade 4.2s ease forwards}
+        .tva-intro-time-rings{position:absolute;inset:8%;border-radius:50%;border:1px solid rgba(232,184,75,0.3);box-shadow:0 0 0 16px rgba(232,184,75,0.1),0 0 0 52px rgba(232,184,75,0.06),0 0 60px rgba(232,184,75,0.3) inset;animation:tvaRingSpin 4.2s linear forwards}
         .tva-intro-center{display:grid;gap:8px;text-align:center;padding:20px}
         .tva-intro-kicker{font-size:11px;letter-spacing:3px;color:rgba(242,219,161,0.86);font-family:var(--font-marvel-ui)}
         .tva-intro-title{font-size:clamp(30px,6vw,64px);font-weight:900;letter-spacing:2px;color:#f6deb0;text-shadow:0 8px 30px rgba(0,0,0,0.45)}
         .tva-intro-subtitle{font-size:13px;letter-spacing:2px;color:rgba(255,255,255,0.8)}
         .tva-intro-overlay.static,.tva-intro-overlay.static *{animation:none !important}
-        @keyframes tvaIntroFade{0%{opacity:0}10%{opacity:1}82%{opacity:1}100%{opacity:0}}
-        @keyframes tvaRingSpin{0%{transform:scale(0.82) rotate(0deg);opacity:.1}35%{opacity:.9}100%{transform:scale(1.08) rotate(125deg);opacity:0}}
+        @keyframes tvaIntroFade{0%{opacity:0}8%{opacity:1}88%{opacity:1}100%{opacity:0}}
+        @keyframes tvaRingSpin{0%{transform:scale(0.78) rotate(0deg);opacity:.08}24%{opacity:.9}72%{opacity:.88}100%{transform:scale(1.12) rotate(210deg);opacity:0}}

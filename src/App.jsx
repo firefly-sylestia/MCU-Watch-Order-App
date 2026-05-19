@@ -131,7 +131,7 @@ const UI_STATE_DEFAULTS = {
   exportPrefs: { font: 'inter', textScale: 1.08, detailUseReviewStyle: true },
 };
 
-const TVA_INTRO_DURATION_MS = 2800;
+const TVA_INTRO_DURATION_MS = 4200;
 
 const VALID_LIST_MODES = new Set(LIST_MODES.map(mode => mode.id));
 const VALID_VIEW_MODES = new Set(['list', 'calendar']);
@@ -164,7 +164,6 @@ const readSavedUiState = () => {
       densityMode: VALID_DENSITY_MODES.has(saved.densityMode) ? saved.densityMode : UI_STATE_DEFAULTS.densityMode,
       timelineMode: VALID_TIMELINE_MODES.has(saved.timelineMode) ? saved.timelineMode : UI_STATE_DEFAULTS.timelineMode,
       autoHideStatuses: typeof saved.autoHideStatuses === 'boolean' ? saved.autoHideStatuses : UI_STATE_DEFAULTS.autoHideStatuses,
-      performanceMode: typeof saved.performanceMode === 'boolean' ? saved.performanceMode : UI_STATE_DEFAULTS.performanceMode,
       desktopTextScale: VALID_DESKTOP_TEXT_SCALES.has(Number(saved.desktopTextScale)) ? Number(saved.desktopTextScale) : UI_STATE_DEFAULTS.desktopTextScale,
       textScaleEnabled: typeof saved.textScaleEnabled === 'boolean' ? saved.textScaleEnabled : UI_STATE_DEFAULTS.textScaleEnabled,
       scrollTop: Number.isFinite(Number(saved.scrollTop)) ? Math.max(0, Number(saved.scrollTop)) : UI_STATE_DEFAULTS.scrollTop,
@@ -736,7 +735,10 @@ export default function MCUViewer() {
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
-  const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
+  const [performanceMode, setPerformanceMode] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+  });
   const [showTvaIntro, setShowTvaIntro] = useState(false);
   const [allowTvaMotion, setAllowTvaMotion] = useState(false);
   const [genreFilter] = useState('all');
@@ -832,10 +834,7 @@ export default function MCUViewer() {
     const mq = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     const reducedMotion = Boolean(mq?.matches);
     setAllowTvaMotion(!reducedMotion && !performanceMode);
-    const hasPlayed = window.sessionStorage.getItem('mcu-tva-intro-played-v1') === '1';
-    if (hasPlayed || reducedMotion || performanceMode) return undefined;
     setShowTvaIntro(true);
-    window.sessionStorage.setItem('mcu-tva-intro-played-v1', '1');
     const timer = window.setTimeout(() => setShowTvaIntro(false), TVA_INTRO_DURATION_MS);
     return () => window.clearTimeout(timer);
   }, [performanceMode]);
@@ -1266,12 +1265,11 @@ export default function MCUViewer() {
       densityMode,
       timelineMode,
       autoHideStatuses,
-      performanceMode,
       desktopTextScale,
       textScaleEnabled,
       scrollTop,
     }));
-  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
+  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
   const totalWatched = useMemo(() => activeItems.filter(i => i.status === 'watched').length, [activeItems]);
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
@@ -2680,7 +2678,7 @@ export default function MCUViewer() {
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Zap size={14} /> Performance Mode</span>
               <button className='fpill settings-toggle-pill' type='button' onClick={() => setPerformanceMode(v => !v)} style={{ minWidth: 72, justifyContent: 'center', borderColor: performanceMode ? 'var(--theme-accent)' : 'var(--theme-border)', background: performanceMode ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}>{performanceMode ? 'On' : 'Off'}</button>
             </label>
-            <div style={{ fontSize: 11, color: T.textMuted, lineHeight: 1.35, marginTop: -4 }}>Leave off for full UI motion; turn on only if your device needs reduced effects.</div>
+            <div style={{ fontSize: 11, color: T.textMuted, lineHeight: 1.35, marginTop: -4 }}>Performance Mode now follows new session rules and is not saved. On = reduced effects, Off = full motion.</div>
             <button
               className='fpill'
               type='button'
