@@ -13,6 +13,7 @@ import { usePosterCache } from './hooks/usePosterCache';
 import { useOverlayNavigation } from './hooks/useOverlayNavigation';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { HeaderShell, HeroBackdrop, HeroCarousel, FloatingQuickControls, FilterBar, PhaseList, SettingsPanel, DetailModal } from './components/sections/AppSections';
+import { THEME_CHOICES, getActiveThemeVars } from './constants/themeSettings';
 import './App.layout.css';
 import './App.components.css';
 import './App.motion.css';
@@ -2413,141 +2414,8 @@ export default function MCUViewer() {
     phaseSummaryBg: 'color-mix(in srgb, #ffffff 5%, transparent)', phaseSummaryBorder: 'rgba(214,205,194,0.5)',
   };
 
-  const THEME_CHOICES = [
-    { id: 'classic',        label: 'Iron Man',       swatch: '#d4372f' },
-    { id: 'cosmic',         label: 'Capt. Marvel',   swatch: '#4d7bff' },
-    { id: 'vibranium',      label: 'Black Panther',  swatch: '#7e5dff' },
-    { id: 'quantum',        label: 'Ant-Man',        swatch: '#ff5da8' },
-    { id: 'mystic',         label: 'Dr. Strange',    swatch: '#9f66ff' },
-    { id: 'web-slinger',    label: 'Spider-Man',     swatch: '#df3f4c' },
-    { id: 'god-of-thunder', label: 'Thor',           swatch: '#3ca6ff' },
-    { id: 'scarlet-witch',  label: 'Scarlet Witch',  swatch: '#c61b59' },
-    { id: 'winter-soldier', label: 'Winter Soldier', swatch: '#8fa0b8' },
-    { id: 'captain-america', label: 'Captain America', swatch: '#3b5fa4' },
-    { id: 'daredevil', label: 'Daredevil', swatch: '#bf0615' },
-    { id: 'panther-tech', label: 'Panther Tech', swatch: '#6bb0bf' },
-    { id: 'marvel-red', label: 'Marvel Red', swatch: '#e23636' },
-    { id: 'hela', label: 'Hela', swatch: '#49a561' },
-  ];
-
   // ─── Per-theme accent + distinctive surface tints ─────────────────────────
-  const themeVarsByMode = {
-    classic: {
-      '--theme-accent': '#A63232',
-      '--theme-accent-alt': '#F2AE30',
-      '--theme-accent-glow': darkMode ? 'rgba(212,55,47,0.42)' : 'rgba(212,55,47,0.26)',
-      '--theme-surface': darkMode ? 'rgba(28,10,9,0.90)' : 'rgba(255,246,244,0.96)',
-      '--theme-surface-hover': darkMode ? 'rgba(44,14,12,0.94)' : 'rgba(255,236,232,0.97)',
-      '--comp-card-bg': darkMode ? 'rgba(26,9,8,0.88)' : 'rgba(255,248,246,0.95)',
-    },
-    cosmic: {
-      '--theme-accent': '#4d7bff',
-      '--theme-accent-alt': '#ffb94a',
-      '--theme-accent-glow': darkMode ? 'rgba(77,123,255,0.45)' : 'rgba(77,123,255,0.24)',
-      '--theme-surface': darkMode ? 'rgba(7,12,32,0.90)' : 'rgba(243,247,255,0.96)',
-      '--theme-surface-hover': darkMode ? 'rgba(10,16,44,0.94)' : 'rgba(232,240,255,0.97)',
-      '--comp-card-bg': darkMode ? 'rgba(6,11,30,0.88)' : 'rgba(245,249,255,0.95)',
-    },
-    vibranium: {
-      '--theme-accent': '#7e5dff',
-      '--theme-accent-alt': '#31c0f4',
-      '--theme-accent-glow': darkMode ? 'rgba(126,93,255,0.42)' : 'rgba(126,93,255,0.25)',
-      '--theme-surface': darkMode ? 'rgba(13,7,28,0.90)' : 'rgba(248,244,255,0.96)',
-      '--theme-surface-hover': darkMode ? 'rgba(20,10,42,0.94)' : 'rgba(238,230,255,0.97)',
-      '--comp-card-bg': darkMode ? 'rgba(12,6,26,0.88)' : 'rgba(250,246,255,0.95)',
-    },
-    quantum: {
-      '--theme-accent': '#ff5da8',
-      '--theme-accent-alt': '#67f2ff',
-      '--theme-accent-glow': darkMode ? 'rgba(255,93,168,0.44)' : 'rgba(255,93,168,0.25)',
-      '--theme-surface': darkMode ? 'rgba(26,7,18,0.90)' : 'rgba(255,243,251,0.96)',
-      '--theme-surface-hover': darkMode ? 'rgba(38,9,26,0.94)' : 'rgba(255,230,246,0.97)',
-      '--comp-card-bg': darkMode ? 'rgba(24,6,17,0.88)' : 'rgba(255,246,253,0.95)',
-    },
-    mystic: {
-      '--theme-accent': '#9f66ff',
-      '--theme-accent-alt': '#ff7b39',
-      '--theme-accent-glow': darkMode ? 'rgba(159,102,255,0.42)' : 'rgba(159,102,255,0.24)',
-      '--theme-surface': darkMode ? 'rgba(15,7,28,0.90)' : 'rgba(250,244,255,0.96)',
-      '--theme-surface-hover': darkMode ? 'rgba(22,10,40,0.94)' : 'rgba(240,230,255,0.97)',
-      '--comp-card-bg': darkMode ? 'rgba(14,6,26,0.88)' : 'rgba(252,247,255,0.95)',
-    },
-    'web-slinger': {
-      '--theme-accent': '#df3f4c',
-      '--theme-accent-alt': '#2b7bdf',
-      '--theme-accent-glow': darkMode ? 'rgba(223,63,76,0.42)' : 'rgba(223,63,76,0.24)',
-      '--theme-surface': darkMode ? 'rgba(24,7,9,0.90)' : 'rgba(255,244,245,0.96)',
-      '--theme-surface-hover': darkMode ? 'rgba(36,9,12,0.94)' : 'rgba(255,232,234,0.97)',
-      '--comp-card-bg': darkMode ? 'rgba(22,6,8,0.88)' : 'rgba(255,247,248,0.95)',
-    },
-    'god-of-thunder': {
-      '--theme-accent': '#3ca6ff',
-      '--theme-accent-alt': '#f0f6ff',
-      '--theme-accent-glow': darkMode ? 'rgba(60,166,255,0.46)' : 'rgba(60,166,255,0.26)',
-      '--theme-surface': darkMode ? 'rgba(5,12,26,0.90)' : 'rgba(243,250,255,0.96)',
-      '--theme-surface-hover': darkMode ? 'rgba(7,17,36,0.94)' : 'rgba(226,244,255,0.97)',
-      '--comp-card-bg': darkMode ? 'rgba(4,10,24,0.88)' : 'rgba(245,252,255,0.95)',
-    },
-    'scarlet-witch': {
-      '--theme-accent': '#c61b59',
-      '--theme-accent-alt': '#ff7cb5',
-      '--theme-accent-glow': darkMode ? 'rgba(198,27,89,0.45)' : 'rgba(198,27,89,0.25)',
-      '--theme-surface': darkMode ? 'rgba(24,5,12,0.90)' : 'rgba(255,242,247,0.96)',
-      '--theme-surface-hover': darkMode ? 'rgba(36,6,18,0.94)' : 'rgba(255,228,238,0.97)',
-      '--comp-card-bg': darkMode ? 'rgba(22,4,11,0.88)' : 'rgba(255,245,250,0.95)',
-    },
-    'winter-soldier': {
-      '--theme-accent': '#8fa0b8',
-      '--theme-accent-alt': '#4b596f',
-      '--theme-accent-glow': darkMode ? 'rgba(143,160,184,0.40)' : 'rgba(143,160,184,0.24)',
-      '--theme-surface': darkMode ? 'rgba(7,10,16,0.90)' : 'rgba(244,247,252,0.96)',
-      '--theme-surface-hover': darkMode ? 'rgba(10,14,22,0.94)' : 'rgba(230,237,248,0.97)',
-      '--comp-card-bg': darkMode ? 'rgba(6,9,15,0.88)' : 'rgba(246,249,254,0.95)',
-    },
-    'captain-america': {
-      '--theme-accent': '#3b5fa4',
-      '--theme-accent-alt': '#9b3430',
-      '--theme-accent-glow': darkMode ? 'rgba(59,95,164,0.44)' : 'rgba(59,95,164,0.24)',
-      '--theme-surface': darkMode ? 'rgba(23,27,49,0.92)' : 'rgba(254,254,254,0.96)',
-      '--theme-surface-hover': darkMode ? 'rgba(31,38,64,0.94)' : 'rgba(174,183,194,0.34)',
-      '--comp-card-bg': darkMode ? 'rgba(23,27,49,0.88)' : 'rgba(254,254,254,0.95)',
-    },
-    daredevil: {
-      '--theme-accent': '#BF0615',
-      '--theme-accent-alt': '#A61731',
-      '--theme-accent-glow': darkMode ? 'rgba(191,6,21,0.44)' : 'rgba(191,6,21,0.24)',
-      '--theme-surface': darkMode ? 'rgba(64,1,1,0.92)' : 'rgba(255,242,243,0.96)',
-      '--theme-surface-hover': darkMode ? 'rgba(78,4,4,0.94)' : 'rgba(255,228,230,0.98)',
-      '--comp-card-bg': darkMode ? 'rgba(64,1,1,0.88)' : 'rgba(255,246,247,0.95)',
-    },
-    'panther-tech': {
-      '--theme-accent': '#6BB0BF',
-      '--theme-accent-alt': '#3B3F8C',
-      '--theme-accent-glow': darkMode ? 'rgba(107,176,191,0.42)' : 'rgba(107,176,191,0.25)',
-      '--theme-surface': darkMode ? 'rgba(26,27,27,0.92)' : 'rgba(243,244,248,0.96)',
-      '--theme-surface-hover': darkMode ? 'rgba(38,40,49,0.94)' : 'rgba(232,234,242,0.97)',
-      '--comp-card-bg': darkMode ? 'rgba(26,27,27,0.88)' : 'rgba(246,247,252,0.95)',
-    },
-    'marvel-red': {
-      '--theme-accent': '#e23636',
-      '--theme-accent-alt': '#f78f3f',
-      '--theme-accent-glow': darkMode ? 'rgba(226,54,54,0.44)' : 'rgba(226,54,54,0.24)',
-      '--theme-surface': darkMode ? 'rgba(0,0,0,0.92)' : 'rgba(255,245,245,0.96)',
-      '--theme-surface-hover': darkMode ? 'rgba(18,18,18,0.94)' : 'rgba(255,233,233,0.97)',
-      '--comp-card-bg': darkMode ? 'rgba(14,14,14,0.88)' : 'rgba(255,248,248,0.95)',
-    },
-    hela: {
-      '--theme-accent': '#49a561',
-      '--theme-accent-alt': '#d0d500',
-      '--theme-accent-glow': darkMode ? 'rgba(73,165,97,0.42)' : 'rgba(73,165,97,0.24)',
-      '--theme-surface': darkMode ? 'rgba(3,11,9,0.92)' : 'rgba(242,248,244,0.96)',
-      '--theme-surface-hover': darkMode ? 'rgba(20,45,39,0.94)' : 'rgba(231,243,235,0.97)',
-      '--comp-card-bg': darkMode ? 'rgba(13,34,28,0.88)' : 'rgba(246,251,247,0.95)',
-    },
-  };
-
-
-  const activeThemeVars = themeVarsByMode[themeMode] || themeVarsByMode.classic;
+  const activeThemeVars = getActiveThemeVars(themeMode, darkMode);
 
   const cssThemeVars = {
     '--theme-bg': darkMode ? '#06060f' : '#f2f0eb',
@@ -2681,7 +2549,7 @@ export default function MCUViewer() {
       {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
+      <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
         <div style={{ marginBottom: 8, fontSize: 11, letterSpacing: 1.8, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)', textTransform: 'uppercase' }}>Navigation Panel</div>
         <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
