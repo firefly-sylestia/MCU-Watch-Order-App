@@ -1,14 +1,29 @@
 /* Layout tokens and structural styles */
 
 :root {
+  --bg-primary: var(--app-bg-base, #06060f);
+  --bg-secondary: color-mix(in srgb, var(--theme-bg, #06060f) 90%, #0b1220);
+  --surface-primary: color-mix(in srgb, var(--theme-surface, rgba(16,22,38,0.84)) 88%, transparent);
+  --surface-elevated: color-mix(in srgb, var(--theme-surface, rgba(16,22,38,0.84)) 96%, rgba(255,255,255,0.04));
+  --surface-overlay: var(--theme-overlay-surface, rgba(15,23,42,0.7));
+  --border-soft: color-mix(in srgb, var(--theme-border, #2a3346) 84%, rgba(255,255,255,0.22));
+  --border-strong: color-mix(in srgb, var(--theme-border, #2a3346) 66%, rgba(255,255,255,0.38));
+  --accent-primary: var(--theme-accent);
+  --accent-secondary: var(--theme-accent-alt);
+  --shadow-soft: 0 8px 20px rgba(2, 8, 23, 0.2);
+  --shadow-elevated: 0 16px 34px rgba(2, 8, 23, 0.28);
+  --interactive-duration: 180ms;
+  --interactive-ease: cubic-bezier(.22,.9,.24,1);
+  --radius-control: 12px;
+  --radius-surface: 18px;
   --chip-bg: color-mix(in srgb,var(--theme-surface) 78%, transparent);
   --chip-bg-hover: color-mix(in srgb,var(--theme-surface-hover) 72%, var(--theme-surface));
-  --chip-border: color-mix(in srgb,var(--theme-border) 86%, transparent);
+  --chip-border: var(--border-soft);
   --chip-border-active: color-mix(in srgb,var(--theme-accent) 52%, var(--theme-border));
   --chip-text: var(--theme-text);
   --chip-text-active: var(--theme-accent);
-  --chip-shadow: 0 1px 2px rgba(0,0,0,0.16);
-  --chip-shadow-active: 0 4px 10px rgba(0,0,0,0.22);
+  --chip-shadow: var(--shadow-soft);
+  --chip-shadow-active: var(--shadow-elevated);
   --control-offset-top: calc(env(safe-area-inset-top, 0px) + 16px);
   --control-offset-inline: clamp(10px, 2vw, 22px);
   --hero-backdrop-radius: 22px;
