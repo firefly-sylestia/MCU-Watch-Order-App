@@ -2440,16 +2440,16 @@ export default function MCUViewer() {
     '--text-secondary': darkMode ? '#d6deed' : '#243248',
     '--text-muted': darkMode ? '#a9b6cb' : '#4f5c70',
     '--text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
-    '--theme-text-secondary': darkMode ? `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 28%, #d9e3f1)` : `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 42%, #334155)`,
+    '--theme-text-secondary': darkMode ? `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 40%, #e9f1ff)` : `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 52%, #1f2f46)`,
     '--theme-overlay-surface': darkMode
       ? `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 14%, rgba(255,255,255,0.06))`
       : `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 10%, rgba(15,23,42,0.04))`,
     '--theme-overlay-border': darkMode
       ? `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 32%, rgba(255,255,255,0.14))`
       : `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 26%, rgba(15,23,42,0.14))`,
-    '--overlay-soft': darkMode ? 'rgba(2,6,18,0.46)' : 'rgba(15,23,42,0.12)',
-    '--overlay-dark': darkMode ? 'rgba(2,6,18,0.7)' : 'rgba(15,23,42,0.2)',
-    '--overlay-strong': darkMode ? 'rgba(2,6,18,0.82)' : 'rgba(15,23,42,0.3)',
+    '--overlay-soft': darkMode ? 'rgba(2,6,18,0.3)' : 'rgba(15,23,42,0.09)',
+    '--overlay-dark': darkMode ? 'rgba(2,6,18,0.46)' : 'rgba(15,23,42,0.15)',
+    '--overlay-strong': darkMode ? 'rgba(2,6,18,0.58)' : 'rgba(15,23,42,0.24)',
     '--control-solid-bg': darkMode ? 'rgba(20,25,46,0.84)' : 'rgba(255,255,255,0.96)',
     '--detail-shell-bg': darkMode
       ? 'linear-gradient(145deg, color-mix(in srgb,var(--theme-bg) 92%, #000), color-mix(in srgb,var(--theme-surface) 88%, #000) 54%, color-mix(in srgb,var(--theme-bg-alt) 88%, #000))'
@@ -2545,8 +2545,7 @@ export default function MCUViewer() {
           />
         )}
         <div className="hero-backdrop-blend" />
-        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 26%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 24%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '14%' : '8%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '11%' : '6%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.28 : 0.2, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
-        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${darkMode ? 'rgba(4,5,15,0.01)' : 'rgba(255,255,255,0.02)'} 0%, ${darkMode ? 'rgba(4,5,15,0.05)' : 'rgba(231,238,248,0.08)'} 45%, ${darkMode ? 'rgba(4,5,15,0.14)' : 'rgba(231,238,248,0.18)'} 70%, ${darkMode ? 'rgba(4,5,15,0.34)' : 'rgba(231,238,248,0.36)'} 100%)` }} />
+        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '8%' : '5%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '7%' : '4%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.16 : 0.11, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
       </div>
       {lightningStrike && <div style={{ position:'fixed', inset:0, pointerEvents:'none', background:'linear-gradient(180deg, rgba(180,220,255,0.95), rgba(255,255,255,0))', mixBlendMode:'screen', zIndex:9999, animation:'fadeInOut 0.7s ease' }} />}
       {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
