@@ -629,7 +629,7 @@ const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
 }, ref) {
   return (
     <>
-      <div className="sidebar-control-cluster" style={controlsHidden ? { opacity: 0, pointerEvents: 'none' } : undefined}>
+      <div className="sidebar-control-cluster" style={controlsHidden ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
       <button className="theme-btn sidebar-toggle-btn" onClick={onToggle} aria-label="Toggle sidebar menu" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: darkMode ? 'var(--elevation-surface-2)' : 'var(--elevation-surface-1)' }}><Menu size={18} /></button>
       <button className="theme-btn sidebar-toggle-btn settings-toggle-btn" onClick={onOpenSettings} aria-label="Open settings and profile" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: darkMode ? 'var(--elevation-surface-2)' : 'var(--elevation-surface-1)' }}><Settings size={18} /></button>
       </div>
@@ -2681,7 +2681,7 @@ export default function MCUViewer() {
       {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <SidebarMenu controlsHidden={analyticsOpen || detailItem || settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
+      <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
         <div style={{ marginBottom: 8, fontSize: 11, letterSpacing: 1.8, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)', textTransform: 'uppercase' }}>Navigation Panel</div>
         <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
