@@ -8,42 +8,39 @@
  */
 
 export const THEME_CHOICES = [
-  { id: 'classic', label: 'Iron Man', swatch: '#d4372f' },
-  { id: 'cosmic', label: 'Capt. Marvel', swatch: '#4d7bff' },
-  { id: 'vibranium', label: 'Black Panther', swatch: '#7e5dff' },
-  { id: 'quantum', label: 'Ant-Man', swatch: '#ff5da8' },
-  { id: 'mystic', label: 'Dr. Strange', swatch: '#9f66ff' },
-  { id: 'web-slinger', label: 'Spider-Man', swatch: '#df3f4c' },
-  { id: 'god-of-thunder', label: 'Thor', swatch: '#3ca6ff' },
-  { id: 'scarlet-witch', label: 'Scarlet Witch', swatch: '#c61b59' },
-  { id: 'winter-soldier', label: 'Winter Soldier', swatch: '#8fa0b8' },
-  { id: 'captain-america', label: 'Captain America', swatch: '#3b5fa4' },
-  { id: 'daredevil', label: 'Daredevil', swatch: '#bf0615' },
-  { id: 'panther-tech', label: 'Panther Tech', swatch: '#6bb0bf' },
-  { id: 'marvel-red', label: 'Marvel Red', swatch: '#e23636' },
-  { id: 'hela', label: 'Hela', swatch: '#49a561' },
+  { id: 'sacred-timeline', label: 'Sacred Timeline', swatch: '#b4874f' },
+  { id: 'quantum-realm', label: 'Quantum Realm', swatch: '#3be9f5' },
+  { id: 'wakanda', label: 'Wakanda', swatch: '#7a4cff' },
+  { id: 'asgard', label: 'Asgard', swatch: '#d7b66b' },
+  { id: 'hydra', label: 'Hydra', swatch: '#8f3a44' },
+  { id: 'stark-industries', label: 'Stark Industries', swatch: '#49d8ff' },
+  { id: 'scarlet-witch', label: 'Scarlet Witch', swatch: '#bd1f4f' },
+  { id: 'loki', label: 'Loki', swatch: '#3f9b64' },
+  { id: 'spider-verse', label: 'Spider-Verse', swatch: '#ff3050' },
+  { id: 'celestial', label: 'Celestial', swatch: '#5f7ff7' },
+  { id: 'midnight-suns', label: 'Midnight Suns', swatch: '#d64737' },
+  { id: 'shield', label: 'S.H.I.E.L.D.', swatch: '#4d89bb' },
 ];
 
 // Edit palette values below. Keep all variable names exactly as-is.
 export const THEME_PALETTES = {
-  classic: { accent: '#A63232', accentAlt: '#F2AE30', darkSurface: 'rgba(28,10,9,0.90)', lightSurface: 'rgba(255,246,244,0.96)', darkSurfaceHover: 'rgba(44,14,12,0.94)', lightSurfaceHover: 'rgba(255,236,232,0.97)', darkCompCard: 'rgba(26,9,8,0.88)', lightCompCard: 'rgba(255,248,246,0.95)' },
-  cosmic: { accent: '#4d7bff', accentAlt: '#ffb94a', darkSurface: 'rgba(7,12,32,0.90)', lightSurface: 'rgba(243,247,255,0.96)', darkSurfaceHover: 'rgba(10,16,44,0.94)', lightSurfaceHover: 'rgba(232,240,255,0.97)', darkCompCard: 'rgba(6,11,30,0.88)', lightCompCard: 'rgba(245,249,255,0.95)' },
-  vibranium: { accent: '#7e5dff', accentAlt: '#31c0f4', darkSurface: 'rgba(13,7,28,0.90)', lightSurface: 'rgba(248,244,255,0.96)', darkSurfaceHover: 'rgba(20,10,42,0.94)', lightSurfaceHover: 'rgba(238,230,255,0.97)', darkCompCard: 'rgba(12,6,26,0.88)', lightCompCard: 'rgba(250,246,255,0.95)' },
-  quantum: { accent: '#ff5da8', accentAlt: '#67f2ff', darkSurface: 'rgba(26,7,18,0.90)', lightSurface: 'rgba(255,243,251,0.96)', darkSurfaceHover: 'rgba(38,9,26,0.94)', lightSurfaceHover: 'rgba(255,230,246,0.97)', darkCompCard: 'rgba(24,6,17,0.88)', lightCompCard: 'rgba(255,246,253,0.95)' },
-  mystic: { accent: '#9f66ff', accentAlt: '#ff7b39', darkSurface: 'rgba(15,7,28,0.90)', lightSurface: 'rgba(250,244,255,0.96)', darkSurfaceHover: 'rgba(22,10,40,0.94)', lightSurfaceHover: 'rgba(240,230,255,0.97)', darkCompCard: 'rgba(14,6,26,0.88)', lightCompCard: 'rgba(252,247,255,0.95)' },
-  'web-slinger': { accent: '#df3f4c', accentAlt: '#2b7bdf', darkSurface: 'rgba(24,7,9,0.90)', lightSurface: 'rgba(255,244,245,0.96)', darkSurfaceHover: 'rgba(36,9,12,0.94)', lightSurfaceHover: 'rgba(255,232,234,0.97)', darkCompCard: 'rgba(22,6,8,0.88)', lightCompCard: 'rgba(255,247,248,0.95)' },
-  'god-of-thunder': { accent: '#3ca6ff', accentAlt: '#f0f6ff', darkSurface: 'rgba(5,12,26,0.90)', lightSurface: 'rgba(243,250,255,0.96)', darkSurfaceHover: 'rgba(7,17,36,0.94)', lightSurfaceHover: 'rgba(226,244,255,0.97)', darkCompCard: 'rgba(4,10,24,0.88)', lightCompCard: 'rgba(245,252,255,0.95)' },
-  'scarlet-witch': { accent: '#c61b59', accentAlt: '#ff7cb5', darkSurface: 'rgba(24,5,12,0.90)', lightSurface: 'rgba(255,242,247,0.96)', darkSurfaceHover: 'rgba(36,6,18,0.94)', lightSurfaceHover: 'rgba(255,228,238,0.97)', darkCompCard: 'rgba(22,4,11,0.88)', lightCompCard: 'rgba(255,245,250,0.95)' },
-  'winter-soldier': { accent: '#8fa0b8', accentAlt: '#4b596f', darkSurface: 'rgba(7,10,16,0.90)', lightSurface: 'rgba(244,247,252,0.96)', darkSurfaceHover: 'rgba(10,14,22,0.94)', lightSurfaceHover: 'rgba(230,237,248,0.97)', darkCompCard: 'rgba(6,9,15,0.88)', lightCompCard: 'rgba(246,249,254,0.95)' },
-  'captain-america': { accent: '#3b5fa4', accentAlt: '#9b3430', darkSurface: 'rgba(23,27,49,0.92)', lightSurface: 'rgba(254,254,254,0.96)', darkSurfaceHover: 'rgba(31,38,64,0.94)', lightSurfaceHover: 'rgba(174,183,194,0.34)', darkCompCard: 'rgba(23,27,49,0.88)', lightCompCard: 'rgba(254,254,254,0.95)' },
-  daredevil: { accent: '#BF0615', accentAlt: '#A61731', darkSurface: 'rgba(64,1,1,0.92)', lightSurface: 'rgba(255,242,243,0.96)', darkSurfaceHover: 'rgba(78,4,4,0.94)', lightSurfaceHover: 'rgba(255,228,230,0.98)', darkCompCard: 'rgba(64,1,1,0.88)', lightCompCard: 'rgba(255,246,247,0.95)' },
-  'panther-tech': { accent: '#6BB0BF', accentAlt: '#3B3F8C', darkSurface: 'rgba(26,27,27,0.92)', lightSurface: 'rgba(243,244,248,0.96)', darkSurfaceHover: 'rgba(38,40,49,0.94)', lightSurfaceHover: 'rgba(232,234,242,0.97)', darkCompCard: 'rgba(26,27,27,0.88)', lightCompCard: 'rgba(246,247,252,0.95)' },
-  'marvel-red': { accent: '#e23636', accentAlt: '#f78f3f', darkSurface: 'rgba(0,0,0,0.92)', lightSurface: 'rgba(255,245,245,0.96)', darkSurfaceHover: 'rgba(18,18,18,0.94)', lightSurfaceHover: 'rgba(255,233,233,0.97)', darkCompCard: 'rgba(14,14,14,0.88)', lightCompCard: 'rgba(255,248,248,0.95)' },
-  hela: { accent: '#49a561', accentAlt: '#d0d500', darkSurface: 'rgba(3,11,9,0.92)', lightSurface: 'rgba(242,248,244,0.96)', darkSurfaceHover: 'rgba(20,45,39,0.94)', lightSurfaceHover: 'rgba(231,243,235,0.97)', darkCompCard: 'rgba(13,34,28,0.88)', lightCompCard: 'rgba(246,251,247,0.95)' },
+  'sacred-timeline': { accent: '#b4874f', accentAlt: '#7ca37a', darkSurface: 'rgba(39,30,22,0.92)', lightSurface: 'rgba(237,228,208,0.96)', darkSurfaceHover: 'rgba(54,42,31,0.94)', lightSurfaceHover: 'rgba(228,216,193,0.97)', darkCompCard: 'rgba(48,38,29,0.90)', lightCompCard: 'rgba(242,233,216,0.95)' },
+  'quantum-realm': { accent: '#3be9f5', accentAlt: '#de4cff', darkSurface: 'rgba(10,15,44,0.92)', lightSurface: 'rgba(222,226,248,0.96)', darkSurfaceHover: 'rgba(16,22,58,0.94)', lightSurfaceHover: 'rgba(212,216,243,0.97)', darkCompCard: 'rgba(14,19,52,0.90)', lightCompCard: 'rgba(229,232,250,0.95)' },
+  wakanda: { accent: '#7a4cff', accentAlt: '#9fa6b8', darkSurface: 'rgba(19,19,24,0.92)', lightSurface: 'rgba(224,226,235,0.96)', darkSurfaceHover: 'rgba(30,30,38,0.94)', lightSurfaceHover: 'rgba(212,214,226,0.97)', darkCompCard: 'rgba(28,28,36,0.90)', lightCompCard: 'rgba(230,231,239,0.95)' },
+  asgard: { accent: '#d7b66b', accentAlt: '#4cc0b6', darkSurface: 'rgba(23,33,56,0.92)', lightSurface: 'rgba(226,231,239,0.96)', darkSurfaceHover: 'rgba(31,44,72,0.94)', lightSurfaceHover: 'rgba(215,221,232,0.97)', darkCompCard: 'rgba(31,43,69,0.90)', lightCompCard: 'rgba(232,236,244,0.95)' },
+  hydra: { accent: '#9f4750', accentAlt: '#b8bfc8', darkSurface: 'rgba(18,20,24,0.92)', lightSurface: 'rgba(219,223,229,0.96)', darkSurfaceHover: 'rgba(27,31,38,0.94)', lightSurfaceHover: 'rgba(208,213,220,0.97)', darkCompCard: 'rgba(26,30,35,0.90)', lightCompCard: 'rgba(226,229,234,0.95)' },
+  'stark-industries': { accent: '#49d8ff', accentAlt: '#b7c6d8', darkSurface: 'rgba(21,25,32,0.92)', lightSurface: 'rgba(226,232,240,0.96)', darkSurfaceHover: 'rgba(30,36,46,0.94)', lightSurfaceHover: 'rgba(214,221,232,0.97)', darkCompCard: 'rgba(31,37,46,0.90)', lightCompCard: 'rgba(232,237,245,0.95)' },
+  'scarlet-witch': { accent: '#bd1f4f', accentAlt: '#d687a0', darkSurface: 'rgba(32,13,20,0.92)', lightSurface: 'rgba(237,220,226,0.96)', darkSurfaceHover: 'rgba(44,18,27,0.94)', lightSurfaceHover: 'rgba(227,208,216,0.97)', darkCompCard: 'rgba(41,17,25,0.90)', lightCompCard: 'rgba(242,226,232,0.95)' },
+  loki: { accent: '#3f9b64', accentAlt: '#a07f3a', darkSurface: 'rgba(21,27,24,0.92)', lightSurface: 'rgba(227,232,224,0.96)', darkSurfaceHover: 'rgba(31,39,34,0.94)', lightSurfaceHover: 'rgba(216,223,212,0.97)', darkCompCard: 'rgba(30,37,33,0.90)', lightCompCard: 'rgba(233,237,229,0.95)' },
+  'spider-verse': { accent: '#ff3050', accentAlt: '#1ed3ff', darkSurface: 'rgba(17,24,43,0.92)', lightSurface: 'rgba(225,231,242,0.96)', darkSurfaceHover: 'rgba(25,35,59,0.94)', lightSurfaceHover: 'rgba(214,222,236,0.97)', darkCompCard: 'rgba(25,35,57,0.90)', lightCompCard: 'rgba(231,236,246,0.95)' },
+  celestial: { accent: '#5f7ff7', accentAlt: '#f1b1d8', darkSurface: 'rgba(13,14,40,0.92)', lightSurface: 'rgba(227,228,241,0.96)', darkSurfaceHover: 'rgba(22,24,58,0.94)', lightSurfaceHover: 'rgba(216,217,234,0.97)', darkCompCard: 'rgba(21,23,54,0.90)', lightCompCard: 'rgba(233,234,245,0.95)' },
+  'midnight-suns': { accent: '#d64737', accentAlt: '#f0ad54', darkSurface: 'rgba(30,19,17,0.92)', lightSurface: 'rgba(234,224,215,0.96)', darkSurfaceHover: 'rgba(42,27,23,0.94)', lightSurfaceHover: 'rgba(224,212,201,0.97)', darkCompCard: 'rgba(40,26,23,0.90)', lightCompCard: 'rgba(239,230,222,0.95)' },
+  shield: { accent: '#4d89bb', accentAlt: '#59d7f4', darkSurface: 'rgba(19,29,44,0.92)', lightSurface: 'rgba(224,231,239,0.96)', darkSurfaceHover: 'rgba(28,41,59,0.94)', lightSurfaceHover: 'rgba(212,221,231,0.97)', darkCompCard: 'rgba(28,40,58,0.90)', lightCompCard: 'rgba(231,237,245,0.95)' },
 };
 
+
 export const getActiveThemeVars = (themeMode, darkMode) => {
-  const p = THEME_PALETTES[themeMode] || THEME_PALETTES.classic;
+  const p = THEME_PALETTES[themeMode] || THEME_PALETTES['sacred-timeline'];
   const lightUnifiedBase = '#f1ece3';
   const darkUnifiedBase = '#1A1D23';
   const darkUnifiedElevated = '#272D36';

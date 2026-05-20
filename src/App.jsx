@@ -760,7 +760,7 @@ export default function MCUViewer() {
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
-  const [themeMode,      setThemeMode]      = useState('panther-tech');
+  const [themeMode,      setThemeMode]      = useState('sacred-timeline');
   const [spoilerSafeMode, setSpoilerSafeMode] = useState(true);
   const [autoHideStatuses, setAutoHideStatuses] = useState(initialUiState.autoHideStatuses);
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
@@ -2083,7 +2083,7 @@ export default function MCUViewer() {
       if (event.key === sequence[index]) {
         index += 1;
         if (index === sequence.length) {
-          setThemeMode('mystic');
+          setThemeMode('loki');
           index = 0;
         }
       } else {
