@@ -172,6 +172,50 @@
 [data-color-mode="light"] .calendar-section{background:color-mix(in srgb,var(--theme-surface) 62%, transparent) !important;backdrop-filter:blur(12px) saturate(124%);-webkit-backdrop-filter:blur(12px) saturate(124%)}
 [data-color-mode="light"] .calendar-row{background:color-mix(in srgb,var(--theme-surface) 72%, transparent) !important;border-color:color-mix(in srgb,var(--theme-border) 60%, transparent) !important;box-shadow:0 10px 18px rgba(15,23,42,0.08)}
 [data-color-mode="light"] .rrow .meta-muted,[data-color-mode="light"] .rrow .title-btn,[data-color-mode="light"] .rrow .title-main,[data-color-mode="light"] .rrow span,[data-color-mode="light"] .rrow strong{color:var(--theme-text-primary)}
+
+[data-color-mode="light"] .fpill,
+[data-color-mode="light"] .wbtn,
+[data-color-mode="light"] .status-pill,
+[data-color-mode="light"] .theme-btn{
+  background: color-mix(in srgb, var(--theme-surface) 90%, #f4efe6);
+  border-color: color-mix(in srgb, var(--theme-border) 82%, #f4efe6);
+  color: var(--theme-text-primary);
+  box-shadow: 0 6px 14px rgba(15,23,42,0.08);
+}
+[data-color-mode="light"] .fpill:hover,
+[data-color-mode="light"] .wbtn:hover,
+[data-color-mode="light"] .status-pill:hover,
+[data-color-mode="light"] .theme-btn:hover{
+  background: color-mix(in srgb, var(--theme-surface-hover) 82%, #efe7da) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 34%, var(--theme-border)) !important;
+  color: var(--theme-text-primary);
+}
+[data-color-mode="light"] .fpill:active,
+[data-color-mode="light"] .wbtn:active,
+[data-color-mode="light"] .status-pill:active,
+[data-color-mode="light"] .theme-btn:active{
+  background: color-mix(in srgb, var(--theme-surface-hover) 86%, #e9e0d2) !important;
+}
+[data-color-mode="light"] .fpill[aria-pressed="true"],
+[data-color-mode="light"] .fpill.active,
+[data-color-mode="light"] .fpill.picked,
+[data-color-mode="light"] .dropdown-item.active,
+[data-color-mode="light"] .sopt.picked{
+  background: color-mix(in srgb, var(--theme-accent) 12%, #f0e8dc) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 44%, var(--theme-border)) !important;
+  color: var(--theme-text-primary) !important;
+}
+[data-color-mode="light"] .filters-open .fpill,
+[data-color-mode="light"] .sidebar-menu .fpill,
+[data-color-mode="light"] .settings-menu .fpill,
+[data-color-mode="light"] .analytics-shell .fpill,
+[data-color-mode="light"] .filter-row-actions .fpill,
+[data-color-mode="light"] .filter-bar .fpill{
+  background: color-mix(in srgb, var(--theme-surface) 92%, #f3ede3) !important;
+  border-color: color-mix(in srgb, var(--theme-border) 84%, #f3ede3) !important;
+  color: var(--theme-text-primary) !important;
+}
+
 [data-color-mode="dark"] .fpill{box-shadow:0 10px 22px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.08)}
 [data-color-mode="dark"] .fpill:hover{box-shadow:0 14px 28px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12)}
 
