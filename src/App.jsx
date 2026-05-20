@@ -2516,11 +2516,11 @@ export default function MCUViewer() {
   const activeThemeVars = getActiveThemeVars(themeMode, darkMode);
 
   const cssThemeVars = {
-    '--theme-bg': darkMode ? '#06060f' : '#e2dbcf',
-    '--theme-border': darkMode ? '#1b1b33' : '#c8beaf',
-    '--theme-text': darkMode ? '#d8e3f5' : '#1a2030',
-    '--theme-text-muted': darkMode ? '#a9b6cb' : '#4f5c70',
-    '--theme-text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
+    '--theme-bg': darkMode ? '#0f1218' : '#e2dbcf',
+    '--theme-border': darkMode ? '#2b313b' : '#c8beaf',
+    '--theme-text': darkMode ? '#f2f4f7' : '#1a2030',
+    '--theme-text-muted': darkMode ? '#98a1ae' : '#4f5c70',
+    '--theme-text-disabled': darkMode ? '#6e7682' : 'rgba(77, 91, 111, 0.56)',
     '--font-marvel-display': 'var(--font-display)',
     '--font-marvel-ui': 'var(--font-ui)',
     '--font-marvel-body': 'var(--font-body)',
@@ -2530,14 +2530,14 @@ export default function MCUViewer() {
     '--theme-warning-soft': darkMode ? 'rgba(232,184,75,0.16)' : 'rgba(232,184,75,0.12)',
     '--theme-danger': '#d16a6a',
     '--theme-danger-soft': darkMode ? 'rgba(209,106,106,0.16)' : 'rgba(209,106,106,0.12)',
-    '--theme-text-primary': darkMode ? '#f4f8ff' : '#121a2a',
-    '--text-primary': darkMode ? '#f4f8ff' : '#121a2a',
-    '--text-secondary': darkMode ? '#d6deed' : '#243248',
-    '--text-muted': darkMode ? '#a9b6cb' : '#4f5c70',
-    '--text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
-    '--theme-text-secondary': darkMode ? `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 40%, #e9f1ff)` : `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 52%, #1f2f46)`,
+    '--theme-text-primary': darkMode ? '#f2f4f7' : '#121a2a',
+    '--text-primary': darkMode ? '#f2f4f7' : '#121a2a',
+    '--text-secondary': darkMode ? '#c7ccd4' : '#243248',
+    '--text-muted': darkMode ? '#98a1ae' : '#4f5c70',
+    '--text-disabled': darkMode ? '#6e7682' : 'rgba(77, 91, 111, 0.56)',
+    '--theme-text-secondary': darkMode ? '#c7ccd4' : `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 52%, #1f2f46)`,
     '--theme-overlay-surface': darkMode
-      ? `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 14%, rgba(255,255,255,0.06))`
+      ? `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 10%, rgba(242,244,247,0.05))`
       : `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 10%, rgba(15,23,42,0.04))`,
     '--theme-overlay-border': darkMode
       ? `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 32%, rgba(255,255,255,0.14))`

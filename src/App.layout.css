@@ -3,15 +3,15 @@
 :root {
   --bg-primary: var(--app-bg-base, #171A1F);
   --bg-secondary: color-mix(in srgb, var(--theme-bg, #171A1F) 88%, #20242B);
-  --surface-primary: color-mix(in srgb, var(--theme-surface, rgba(35,40,48,0.9)) 86%, transparent);
-  --surface-elevated: color-mix(in srgb, var(--theme-surface, rgba(49,56,68,0.9)) 92%, rgba(255,255,255,0.05));
+  --surface-primary: color-mix(in srgb, var(--theme-surface, rgba(35,40,48,0.9)) 88%, rgba(0,0,0,0.12));
+  --surface-elevated: color-mix(in srgb, var(--theme-surface, rgba(49,56,68,0.9)) 94%, rgba(255,255,255,0.06));
   --surface-overlay: var(--theme-overlay-surface, rgba(39,45,54,0.74));
   --border-soft: color-mix(in srgb, var(--theme-border, #2a3346) 84%, rgba(255,255,255,0.22));
   --border-strong: color-mix(in srgb, var(--theme-border, #2a3346) 66%, rgba(255,255,255,0.38));
   --accent-primary: var(--theme-accent);
   --accent-secondary: var(--theme-accent-alt);
-  --shadow-soft: 0 8px 20px rgba(2, 8, 23, 0.2);
-  --shadow-elevated: 0 16px 34px rgba(2, 8, 23, 0.28);
+  --shadow-soft: 0 10px 24px rgba(2, 8, 23, 0.24);
+  --shadow-elevated: 0 18px 38px rgba(2, 8, 23, 0.34);
   --interactive-duration: 180ms;
   --interactive-ease: cubic-bezier(.22,.9,.24,1);
   --radius-control: 12px;
@@ -67,7 +67,8 @@
 
 
 
-        .glass-panel{background:var(--surface-overlay);border:1px solid var(--border-soft);border-radius:16px;box-shadow:var(--shadow-soft)}
+        .glass-panel{position:relative;background:linear-gradient(180deg,color-mix(in srgb,var(--surface-overlay) 92%, rgba(255,255,255,0.04)),var(--surface-overlay));border:1px solid var(--border-soft);border-radius:16px;box-shadow:var(--shadow-soft),inset 0 1px 0 rgba(255,255,255,0.08)}
+        .glass-panel::before{content:"";position:absolute;left:1px;right:1px;top:1px;height:26%;border-radius:inherit;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,0.08),transparent)}
         .glass-grad{background:linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02))}
         .meta-muted{color:var(--theme-text-muted) !important}
 
@@ -95,7 +96,7 @@
 
         .floating-controls{position:fixed;right:max(var(--space-4), env(safe-area-inset-right));bottom:max(var(--space-4), env(safe-area-inset-bottom));z-index:9994;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}
         .floating-controls>*{pointer-events:auto}
-                .bottom-action-dock{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:8px 10px;border-radius:20px;border:1px solid color-mix(in srgb,var(--theme-accent-alt) 20%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 80%, transparent);backdrop-filter:blur(10px) saturate(145%)}
+                .bottom-action-dock{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:8px 10px;border-radius:20px;border:1px solid color-mix(in srgb,var(--theme-accent-alt) 20%, var(--theme-border));background:linear-gradient(180deg,color-mix(in srgb,var(--theme-surface) 82%, transparent),color-mix(in srgb,var(--theme-bg) 24%, transparent));box-shadow:var(--shadow-soft),inset 0 1px 0 rgba(255,255,255,0.08);backdrop-filter:blur(10px) saturate(145%)}
         .filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
         .fab-primary{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:10px 14px;border:1px solid color-mix(in srgb,var(--theme-accent) 35%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 84%, transparent);color:var(--theme-text);font-family:var(--font-marvel-ui);letter-spacing:1px;font-size:12px}
         .fab-primary:hover{border-color:var(--theme-accent);color:var(--theme-accent)}
