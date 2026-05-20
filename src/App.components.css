@@ -964,3 +964,38 @@ main{--content-max:1360px !important}
   border-color: color-mix(in srgb, var(--theme-border) 68%, #ffffff) !important;
   box-shadow: 0 6px 14px rgba(15,23,42,.08) !important;
 }
+
+/* --- 2026-05 follow-up cleanup --- */
+/* single clean background behind list (remove doubled panel look) */
+.phase-rows-full{
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 6px !important;
+}
+
+/* enlarge main list rail */
+main{--content-max:1480px !important}
+.hero-carousel-shell{max-width:1480px !important;width:min(1480px,calc(100% - 12px)) !important}
+
+/* DC carousel fix: remove previous custom system and restore reliable base behavior */
+.dc-universe .hero-carousel-track{
+  scroll-snap-type:none !important;
+  gap:clamp(14px,2vw,24px) !important;
+}
+.dc-universe .hero-carousel-card,
+.dc-universe .hero-carousel-card.is-active{
+  scroll-snap-align:unset !important;
+  opacity:unset !important;
+  transform:unset !important;
+}
+.dc-universe .hero-carousel-meta{
+  background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.76)) !important;
+}
+
+/* theme overlays made subtle so backdrop remains visible */
+.analytics-backdrop,
+.modal-backdrop,
+.overlay-backdrop{
+  background:color-mix(in srgb,var(--theme-bg) 34%, transparent) !important;
+}
