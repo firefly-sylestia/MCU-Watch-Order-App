@@ -565,7 +565,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
         <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 8} />
 
         <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
-          <div style={TITLE_ROW_STATIC.titleLine}>
+          <div className="title-row-top" style={TITLE_ROW_STATIC.titleLine}>
             <span className="title-main" style={{ fontSize: 'clamp(18px, 2.2vw, 21px)', fontWeight: 800, lineHeight: 1.34, color: 'var(--theme-text)', opacity: 1, transition: 'color 0.26s', fontFamily: 'var(--font-marvel-display)', maxWidth: '100%', letterSpacing: 0.2 }}>{item.title}</span>
             {item.episodes && <span className="meta-chip truncate-single-line" style={{ fontSize: 9 }}>{item.episodes} EP</span>}
             <span className="meta-chip truncate-single-line" style={{ fontSize: 11, color: typeMeta.color, fontWeight: 700 }}><TypeIcon size={8} />{typeMeta.label}</span>
@@ -573,7 +573,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             {!item.essential && <span className="meta-chip truncate-single-line" style={{ fontSize: 8.5 }}>OPT</span>}
             <ChevRight size={10} style={{ color: T.textFaint, transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
           </div>
-          <div className="meta-muted line-clamp-2 overflow-wrap-anywhere" style={TITLE_ROW_STATIC.genreMeta}>GENRES: {genres.join(' • ').toUpperCase()}</div>
+          <div className="meta-muted line-clamp-2 overflow-wrap-anywhere title-subline" style={TITLE_ROW_STATIC.genreMeta}>GENRES: {genres.join(' • ').toUpperCase()}</div>
         </button>
 
         <div className="row-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: 120, flexShrink: 0 }}>
@@ -3012,17 +3012,17 @@ export default function MCUViewer() {
                 )}
 
                 {/* Phase divider */}
-                <div className="curvy-panel" style={{ '--phase-color': ph.color, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap', padding: '10px 10px 10px 12px', border: `1px solid ${T.surfaceBorder}`, background: 'transparent', position: 'relative' }}>
+                <div className="curvy-panel phase-header-card" style={{ '--phase-color': ph.color, border: `1px solid ${T.surfaceBorder}` }}>
                   <WatermarkOverlay surface="card" theme={darkMode ? 'dark' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['title', 'progress']} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: 'var(--font-marvel-display)', fontSize: 'clamp(23px, 3vw, 28px)', letterSpacing: 2.2, color: ph.color, lineHeight: 1, fontWeight: 700 }}>
+                  <div className="phase-title-wrap">
+                    <div className="phase-title" style={{ color: ph.color }}>
                       {ph.name}
                     </div>
-                    <div style={{ fontSize: 'clamp(12px, 1.4vw, 14px)', color: T.textMuted, letterSpacing: 1.4, fontFamily: 'var(--font-marvel-ui)', marginTop: 1, textTransform: 'uppercase', maxWidth: 360, lineHeight: 1.15 }}>
+                    <div className="phase-tagline" style={{ color: T.textMuted }}>
                       {ph.tagline === 'Assembling the Avengers' ? <>ASSEMBLING<br />THE AVENGERS</> : ph.tagline}
                     </div>
                   </div>
-                  <span style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 11, letterSpacing: 1, color: phasePct === 100 ? ph.color : T.textMuted, flexShrink: 0, minWidth: 38, textAlign: 'right', background: 'color-mix(in srgb, var(--theme-surface) 92%, transparent)', border: `1px solid ${T.surfaceBorder}`, borderRadius: 999, padding: '3px 8px' }}>
+                  <span className="phase-progress-chip" style={{ color: phasePct === 100 ? ph.color : T.textMuted, border: `1px solid ${T.surfaceBorder}` }}>
                     {done}/{rows.length}
                   </span>
                   <button onClick={() => setExpandedPhase(summaryOpen ? null : pid)}
