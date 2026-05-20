@@ -30,6 +30,9 @@
   --overlay-z-base: 120;
   --overlay-z-floating: 140;
   --overlay-z-modal: 240;
+  --motion-fast: 180ms;
+  --motion-medium: 260ms;
+  --motion-ease: cubic-bezier(.22,.9,.24,1);
 }
 
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}

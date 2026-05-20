@@ -27,7 +27,7 @@
         .hero-backdrop-blend{position:absolute;inset:8px;border-radius:var(--radius-xl);pointer-events:none;background:linear-gradient(to top,color-mix(in srgb,var(--theme-bg) 12%, transparent) 0%,transparent 56%,transparent 100%);opacity:0.08}
         .hero-backdrop-image.is-exiting{opacity:0;transform:scale(1.004);filter:blur(1.2px) saturate(1.04) contrast(1.01) brightness(0.96)}
         .phase-rows-full{display:block;position:relative;padding:6px;border-radius:var(--radius-surface);border:1px solid var(--border-soft);background:var(--surface-primary)}
-        .rrow{position:relative;contain:layout style;content-visibility:visible;transition:background-color 240ms var(--interactive-ease),border-color 240ms var(--interactive-ease),transform 240ms var(--interactive-ease),box-shadow 260ms var(--interactive-ease);display:grid;align-items:center;grid-template-columns:26px 48px minmax(0,1fr) minmax(116px,auto);gap:var(--row-gap,14px);padding:var(--row-pad,16px 16px 16px 14px);border-left:3px solid transparent;border:1px solid color-mix(in srgb,var(--border-soft) 72%, transparent);min-height:var(--row-min-h,96px);border-radius:calc(var(--radius-surface) + 2px);overflow:hidden;background:linear-gradient(145deg,color-mix(in srgb,var(--surface-elevated) 90%, transparent),color-mix(in srgb,var(--surface-primary) 85%, transparent));backdrop-filter:blur(7px) saturate(122%);-webkit-backdrop-filter:blur(7px) saturate(122%);box-shadow:0 10px 28px rgba(2,8,23,0.22),inset 0 1px 0 rgba(255,255,255,.06)}
+        .rrow{position:relative;contain:layout style;content-visibility:auto;transition:background-color var(--motion-fast) var(--motion-ease),border-color var(--motion-fast) var(--motion-ease),transform var(--motion-fast) var(--motion-ease),box-shadow var(--motion-medium) var(--motion-ease);display:grid;align-items:center;grid-template-columns:26px 48px minmax(0,1fr) minmax(116px,auto);gap:var(--row-gap,14px);padding:var(--row-pad,16px 16px 16px 14px);border-left:3px solid transparent;border:1px solid var(--border-soft);min-height:var(--row-min-h,96px);border-radius:var(--radius-surface);overflow:hidden;background:linear-gradient(136deg,var(--surface-elevated),color-mix(in srgb,var(--bg-secondary) 38%, var(--surface-primary)));backdrop-filter:blur(1.5px) saturate(106%);-webkit-backdrop-filter:blur(1.5px) saturate(106%);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
         .rrow:last-child{border-bottom:none}
         .rrow > *{position:relative;z-index:1}
         .rrow:hover{border-left-color:color-mix(in srgb,var(--theme-accent) 78%, var(--phase-color,#c0392b));border-color:color-mix(in srgb,var(--theme-accent) 26%, var(--theme-border));transform:translateY(-1px);box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 14%, transparent),var(--shadow-soft)}
@@ -147,3 +147,17 @@
 .calendar-row{border-radius:14px !important;padding:12px !important;background:color-mix(in srgb,var(--surface-primary) 86%, transparent) !important;border:1px solid color-mix(in srgb,var(--theme-border) 70%, transparent) !important;box-shadow:0 8px 18px rgba(2,8,23,0.18);margin-bottom:8px}
 .calendar-row .title-btn{font-weight:700;letter-spacing:.01em}
 .calendar-row .title-btn div{font-size:11px !important;opacity:.9}
+.calendar-group-header{position:sticky;top:var(--sticky-offset);z-index:4;margin:14px 0 8px;padding:6px 10px;border-radius:999px;display:inline-flex;letter-spacing:1.1px;font:700 11px/1 var(--font-marvel-ui);text-transform:uppercase;color:var(--theme-text-secondary);background:color-mix(in srgb,var(--theme-surface) 80%, transparent);border:1px solid var(--border-soft)}
+.calendar-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:999px;border:1px solid var(--border-soft);font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.calendar-badge.upcoming{color:var(--theme-warning);border-color:color-mix(in srgb,var(--theme-warning) 55%, transparent);background:var(--theme-warning-soft)}
+.calendar-badge.released{color:var(--theme-success);border-color:color-mix(in srgb,var(--theme-success) 55%, transparent);background:var(--theme-success-soft)}
+.calendar-badge.TBA,.calendar-badge.certainty{color:var(--theme-text-secondary)}
+
+.poster-shell::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.14),transparent);transform:translateX(-130%);animation:posterShimmer 1.35s linear infinite;pointer-events:none}
+.poster-shell.is-loaded::after{display:none}
+@keyframes posterShimmer{to{transform:translateX(130%)}}
+
+@media (prefers-reduced-motion: reduce){
+  .rrow,.fpill,.wbtn,.dropdown-pop,.dropdown-pop-up,.fade-in,.section-up,.row-in{transition:none !important;animation:none !important}
+  .poster-shell::after{animation:none}
+}

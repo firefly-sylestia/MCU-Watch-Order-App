@@ -633,7 +633,7 @@ const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
     <>
       <div className="sidebar-control-cluster" style={controlsHidden ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
       <button className="theme-btn sidebar-toggle-btn" onClick={onToggle} aria-label="Toggle sidebar menu" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: darkMode ? 'var(--elevation-surface-2)' : 'var(--elevation-surface-1)' }}><Menu size={18} /></button>
-      <button className="theme-btn sidebar-toggle-btn settings-toggle-btn" disabled={settingsOpen} onClick={onOpenSettings} aria-label="Open settings and profile" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: darkMode ? 'var(--elevation-surface-2)' : 'var(--elevation-surface-1)', opacity: settingsOpen ? 0 : 1, pointerEvents: settingsOpen ? 'none' : 'auto', visibility: settingsOpen ? 'hidden' : 'visible' }}><Settings size={18} /></button>
+      <button className="theme-btn sidebar-toggle-btn settings-toggle-btn" onClick={onOpenSettings} aria-label="Open settings and profile" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: darkMode ? 'var(--elevation-surface-2)' : 'var(--elevation-surface-1)' }}><Settings size={18} /></button>
       </div>
       {open && <div className="sidebar-backdrop" onClick={onClose} />}
       <aside ref={ref} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
@@ -1646,6 +1646,12 @@ export default function MCUViewer() {
   const estRuntimeHours = Math.round(((filmCount * 2.3) + (seriesCount * 6.0)) * 10) / 10;
   const remainingHours = Math.max(0, Math.round((estRuntimeHours * (1 - pct / 100)) * 10) / 10);
 
+  const getReleaseCertainty = useCallback((entry) => {
+    if (entry.hasRealDate) return 'Exact Date';
+    if (entry.releaseStatus === 'TBA') return 'TBA';
+    return 'Window';
+  }, []);
+
   const calendarItems = useMemo(() => {
     const now = new Date();
     const withDates = activeItems.map(item => {
@@ -1663,10 +1669,24 @@ export default function MCUViewer() {
         sortTime: parsed ? parsed.getTime() : Date.UTC(yearSort, 11, 31),
       };
     }).sort((a, b) => a.sortTime - b.sortTime || a.item.order - b.item.order);
+    const groupLabel = (entry) => {
+      if (entry.parsed) return entry.parsed.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      const y = Number(entry.item.year) || new Date().getFullYear();
+      const seasonal = /spring|summer|fall|autumn|winter/i.test(entry.label || entry.rawDate || '');
+      if (seasonal) return `Q${Math.max(1, Math.min(4, Math.ceil((new Date(`${entry.label || 'Dec'} 1, ${y}`).getMonth() + 1) / 3)))} ${y}`;
+      return `${y}`;
+    };
+    const groupBy = (arr) => arr.reduce((acc, entry) => {
+      const key = groupLabel(entry);
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(entry);
+      return acc;
+    }, {});
     return {
       upcoming: withDates.filter(x => x.releaseStatus === 'upcoming' && x.hasRealDate),
       released: withDates.filter(x => x.releaseStatus === 'released'),
       tba: withDates.filter(x => x.releaseStatus === 'TBA' || (x.releaseStatus === 'upcoming' && !x.hasRealDate)),
+      grouped: groupBy(withDates),
     };
   }, [activeItems, metaCache]);
 
@@ -2712,7 +2732,7 @@ export default function MCUViewer() {
             <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
               <div className="header-title-mcu">MARVEL</div>
               <div className="header-title-sub">Spectrum</div>
-              <div className="header-tagline">Made with ♥ by Marvel Fan</div>
+              
             </div>
           </div>
         </div>
@@ -2953,28 +2973,24 @@ export default function MCUViewer() {
           {viewMode === 'calendar' ? (
             <section className='curvy-panel' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
               <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
-              <div style={{ marginBottom: 12, color: T.textMuted, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.2 }}>Upcoming with real dates</div>
-              {calendarItems.upcoming.length === 0 ? <div style={{ marginBottom: 12, color: T.textMuted }}>No dated upcoming entries in current filter.</div> : calendarItems.upcoming.map(({ item, rawDate, label, releaseStatus }) => (
-                <div key={'up-'+item.id} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
-                  <div style={{ fontSize: 11, color: 'var(--theme-warning)' }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
-                  <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
-                  <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left', textShadow: '0 1px 2px color-mix(in srgb, var(--theme-bg) 35%, transparent)' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
-                </div>
-              ))}
-              <div style={{ margin: '16px 0 12px', color: T.textMuted }}>TBA / release window only</div>
-              {calendarItems.tba.length === 0 ? <div style={{ marginBottom: 12, color: T.textMuted }}>No TBA entries in current filter.</div> : calendarItems.tba.map(({ item, rawDate, label, releaseStatus }) => (
-                <div key={'tba-'+item.id} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
-                  <div style={{ fontSize: 11, color: T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
-                  <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
-                  <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left', textShadow: '0 1px 2px color-mix(in srgb, var(--theme-bg) 35%, transparent)' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
-                </div>
-              ))}
-              <div style={{ margin: '16px 0 12px', color: T.textMuted }}>Already Released</div>
-              {calendarItems.released.map(({ item, rawDate, label, releaseStatus }) => (
-                <div key={'old-'+item.id} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
-                  <div style={{ fontSize: 11, color: T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
-                  <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
-                  <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left', textShadow: '0 1px 2px color-mix(in srgb, var(--theme-bg) 35%, transparent)' }}>{item.title}<div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label}</div></button>
+              <div style={{ marginBottom: 12, color: T.textMuted, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.2 }}>Grouped by month / quarter / year</div>
+              {Object.entries(calendarItems.grouped).map(([group, entries]) => (
+                <div key={group}>
+                  <div className="calendar-group-header">{group}</div>
+                  {entries.map(({ item, rawDate, label, releaseStatus, hasRealDate }) => (
+                    <div key={`${group}-${item.id}`} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
+                      <div style={{ fontSize: 11, color: releaseStatus === 'upcoming' ? 'var(--theme-warning)' : T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
+                      <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
+                      <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left', textShadow: '0 1px 2px color-mix(in srgb, var(--theme-bg) 35%, transparent)' }}>
+                        {item.title}
+                        <div style={{ fontSize: 11, color: T.textMuted, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          <span>Phase {item.phase} · {TYPE_META[item.type]?.label}</span>
+                          <span className={`calendar-badge ${releaseStatus}`}>{releaseStatus}</span>
+                          <span className="calendar-badge certainty">{hasRealDate ? 'Exact Date' : getReleaseCertainty({ hasRealDate, releaseStatus })}</span>
+                        </div>
+                      </button>
+                    </div>
+                  ))}
                 </div>
               ))}
             </section>
