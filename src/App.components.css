@@ -608,3 +608,76 @@ button:disabled, .is-disabled, [aria-disabled="true"] { color: var(--readable-te
 [data-color-mode="light"] .fpill[aria-pressed="true"], [data-color-mode="light"] .fpill.active, [data-color-mode="light"] .fpill.picked, [data-color-mode="light"] .sopt.picked{background: color-mix(in srgb, var(--theme-accent) 18%, #ece2d3) !important;border-color: color-mix(in srgb, var(--theme-accent) 62%, var(--theme-border)) !important;color: var(--theme-text-primary) !important}
 input[placeholder="Search title or prerequisite"]{border:1.2px solid color-mix(in srgb,var(--theme-border) 86%, transparent) !important;background:color-mix(in srgb,var(--theme-surface) 78%, transparent) !important;box-shadow:0 6px 14px rgba(2,8,23,.12)}
 input[placeholder="Search title or prerequisite"]:focus{border-color:color-mix(in srgb,var(--theme-accent) 60%, var(--theme-border)) !important;box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 34%, transparent),0 10px 18px rgba(2,8,23,.16)}
+
+/* === Full list redesign v2: unified cinematic ledger === */
+:root{
+  --list-shell-bg: linear-gradient(165deg, color-mix(in srgb,var(--theme-surface) 86%, rgba(8,12,20,.62)), color-mix(in srgb,var(--theme-bg) 76%, rgba(18,24,36,.74)));
+  --list-shell-border: color-mix(in srgb,var(--theme-border) 54%, rgba(255,255,255,.08));
+  --list-item-bg: linear-gradient(145deg, color-mix(in srgb,var(--theme-surface) 76%, rgba(11,16,28,.58)), color-mix(in srgb,var(--theme-bg) 74%, rgba(19,26,40,.74)));
+  --list-item-hover: linear-gradient(145deg, color-mix(in srgb,var(--theme-surface-hover) 80%, rgba(20,28,42,.62)), color-mix(in srgb,var(--theme-surface) 86%, rgba(16,22,34,.76)));
+}
+
+.list-panel,
+.phase-header-card,
+.phase-rows-full{
+  border-radius:22px !important;
+  border:1px solid var(--list-shell-border) !important;
+  background:var(--list-shell-bg) !important;
+  box-shadow:0 14px 30px rgba(2,8,23,.18), inset 0 1px 0 rgba(255,255,255,.06) !important;
+  backdrop-filter: blur(10px) saturate(116%);
+  -webkit-backdrop-filter: blur(10px) saturate(116%);
+}
+
+.phase-header-card{padding:18px 18px 16px 20px !important; margin-bottom:10px !important; gap:12px !important;}
+.phase-title{letter-spacing:.06em !important;}
+.phase-tagline{opacity:.86 !important;}
+.phase-progress-chip{border:1px solid color-mix(in srgb,var(--theme-accent) 34%, var(--theme-border)); background:color-mix(in srgb,var(--theme-accent) 12%, var(--theme-surface));}
+
+.phase-rows-full{padding:12px !important; gap:8px !important;}
+.rrow{
+  border-radius:16px !important;
+  border:1px solid color-mix(in srgb,var(--theme-border) 48%, transparent) !important;
+  background:var(--list-item-bg) !important;
+  box-shadow:0 4px 10px rgba(2,8,23,.12), inset 0 1px 0 rgba(255,255,255,.05) !important;
+  min-height:116px !important;
+  transition:background var(--motion-fast) var(--motion-ease), border-color var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) var(--motion-ease), transform var(--motion-fast) var(--motion-ease) !important;
+}
+.rrow::after{display:none !important;}
+.rrow:hover,
+.rrow.type-film:hover,
+.rrow.type-series:hover,
+.rrow.type-short:hover{
+  background:var(--list-item-hover) !important;
+  border-color:color-mix(in srgb,var(--theme-accent) 44%, var(--theme-border)) !important;
+  box-shadow:0 8px 18px rgba(2,8,23,.16), 0 0 0 1px color-mix(in srgb,var(--theme-accent) 20%, transparent) !important;
+  transform:translateY(-1px);
+}
+.rrow.curvy-selected{
+  border-color:color-mix(in srgb,var(--theme-accent) 72%, var(--theme-border)) !important;
+  background:linear-gradient(145deg, color-mix(in srgb,var(--theme-accent) 14%, var(--theme-surface)), color-mix(in srgb,var(--theme-surface) 84%, transparent)) !important;
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 34%, transparent), 0 10px 20px rgba(2,8,23,.18) !important;
+}
+
+.title-btn{min-height:72px !important; gap:6px !important; text-shadow:none !important;}
+.title-btn .title-main{font-size:clamp(17px,1.45vw,22px) !important; line-height:1.24 !important;}
+.meta-chip{background:color-mix(in srgb,var(--theme-bg) 58%, transparent) !important; border-color:color-mix(in srgb,var(--theme-border) 64%, transparent) !important;}
+
+@media (max-width: 767px){
+  .phase-header-card{padding:14px !important;}
+  .phase-rows-full{padding:9px !important;}
+  .rrow{min-height:102px !important;}
+}
+
+[data-color-mode="light"]{
+  --list-shell-bg: linear-gradient(165deg, #f6f1e8 0%, #efe7dc 100%);
+  --list-shell-border: color-mix(in srgb,var(--theme-border) 60%, #dccfbe);
+  --list-item-bg: linear-gradient(150deg, #fffdfa 0%, #f6efe4 100%);
+  --list-item-hover: linear-gradient(150deg, #fff9f1 0%, #f3e6d4 100%);
+}
+[data-color-mode="light"] .phase-title,
+[data-color-mode="light"] .title-btn,
+[data-color-mode="light"] .rrow .title-main{color:#1c2432 !important;}
+[data-color-mode="light"] .phase-tagline,
+[data-color-mode="light"] .meta-chip,
+[data-color-mode="light"] .meta-muted{color:#4b5563 !important;}
+[data-color-mode="light"] .phase-progress-chip{background:color-mix(in srgb,var(--theme-accent) 12%, #f3e7d7) !important;}
