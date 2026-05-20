@@ -2880,7 +2880,7 @@ export default function MCUViewer() {
               {/* Sort */}
               <div ref={sortRef} style={{ position: 'relative' }}>
                 <button className="fpill" onClick={() => setSortOpen(o => !o)}
-                  style={{ color: 'var(--theme-accent)', borderColor: 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'var(--chip-bg)', fontFamily: 'var(--font-marvel-ui)', fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
+                  style={{ color: 'var(--theme-accent)', borderColor: 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'transparent', fontFamily: 'var(--font-marvel-ui)', fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
                   {SORT_LABELS[sortBy]}
                   <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                 </button>
@@ -3107,7 +3107,7 @@ export default function MCUViewer() {
                 )}
 
                 {/* Row table */}
-                <div className="list-panel" style={{ background: 'transparent', border: 'none', borderRadius: 14, overflow: 'hidden', boxShadow: 'none' }}>
+                <div className="list-panel" style={{ overflow: 'hidden' }}>
                   <PhaseRows rows={rows} renderRow={(item, idx) => {
                     const itemReleaseStatus = releaseStatusFor(item);
                     const itemReleaseInfo = releaseInfoFor(item);
