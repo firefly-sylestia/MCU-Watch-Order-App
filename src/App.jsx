@@ -2985,7 +2985,7 @@ export default function MCUViewer() {
                       <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left', textShadow: '0 1px 2px color-mix(in srgb, var(--theme-bg) 35%, transparent)' }}>
                         {item.title}
                         <div style={{ fontSize: 11, color: T.textMuted, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                          <span>{formatReleaseDate(rawDate, item.year, label, releaseStatus).split(',')[0]} · Phase {item.phase} · {TYPE_META[item.type]?.label}</span>
+                          <span>Phase {item.phase} · {TYPE_META[item.type]?.label}</span>
                           <span className={`calendar-badge ${releaseStatus}`}>{releaseStatus}</span>
                           <span className="calendar-badge certainty">{hasRealDate ? 'Exact Date' : getReleaseCertainty({ hasRealDate, releaseStatus })}</span>
                         </div>
