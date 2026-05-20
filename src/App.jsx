@@ -589,7 +589,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             />
           ) : (idx + 1)}
         </div>
-        <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 8} />
+        <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 16} />
 
         <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
           <div className="title-row-top" style={TITLE_ROW_STATIC.titleLine}>
@@ -3046,7 +3046,7 @@ export default function MCUViewer() {
                   {entries.map(({ item, rawDate, label, releaseStatus, hasRealDate }) => (
                     <div key={`${group}-${item.id}`} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
                       <div style={{ fontSize: 11, color: releaseStatus === 'upcoming' ? 'var(--theme-warning)' : T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
-                      <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
+                      <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} eager />
                       <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left', textShadow: '0 1px 2px color-mix(in srgb, var(--theme-bg) 35%, transparent)' }}>
                         {item.title}
                         <div style={{ fontSize: 11, color: T.textMuted, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
