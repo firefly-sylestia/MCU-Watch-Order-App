@@ -26,7 +26,7 @@ export const THEME_CHOICES = [
 
 // Edit palette values below. Keep all variable names exactly as-is.
 export const THEME_PALETTES = {
-  classic: { accent: '#A63232', accentAlt: '#F2AE30', darkSurface: 'rgba(28,10,9,0.90)', lightSurface: 'rgba(255,246,244,0.96)', darkSurfaceHover: 'rgba(44,14,12,0.94)', lightSurfaceHover: 'rgba(255,236,232,0.97)', darkCompCard: 'rgba(26,9,8,0.88)', lightCompCard: 'rgba(255,248,246,0.95)' },
+  classic: { accent: '#A63232', accentAlt: '#F2AE30', darkSurface: 'rgba(26,29,35,0.90)', lightSurface: 'rgba(255,246,244,0.96)', darkSurfaceHover: 'rgba(44,50,60,0.94)', lightSurfaceHover: 'rgba(255,236,232,0.97)', darkCompCard: 'rgba(35,40,48,0.88)', lightCompCard: 'rgba(255,248,246,0.95)' },
   cosmic: { accent: '#4d7bff', accentAlt: '#ffb94a', darkSurface: 'rgba(7,12,32,0.90)', lightSurface: 'rgba(243,247,255,0.96)', darkSurfaceHover: 'rgba(10,16,44,0.94)', lightSurfaceHover: 'rgba(232,240,255,0.97)', darkCompCard: 'rgba(6,11,30,0.88)', lightCompCard: 'rgba(245,249,255,0.95)' },
   vibranium: { accent: '#7e5dff', accentAlt: '#31c0f4', darkSurface: 'rgba(13,7,28,0.90)', lightSurface: 'rgba(248,244,255,0.96)', darkSurfaceHover: 'rgba(20,10,42,0.94)', lightSurfaceHover: 'rgba(238,230,255,0.97)', darkCompCard: 'rgba(12,6,26,0.88)', lightCompCard: 'rgba(250,246,255,0.95)' },
   quantum: { accent: '#ff5da8', accentAlt: '#67f2ff', darkSurface: 'rgba(26,7,18,0.90)', lightSurface: 'rgba(255,243,251,0.96)', darkSurfaceHover: 'rgba(38,9,26,0.94)', lightSurfaceHover: 'rgba(255,230,246,0.97)', darkCompCard: 'rgba(24,6,17,0.88)', lightCompCard: 'rgba(255,246,253,0.95)' },
@@ -38,7 +38,7 @@ export const THEME_PALETTES = {
   'captain-america': { accent: '#3b5fa4', accentAlt: '#9b3430', darkSurface: 'rgba(23,27,49,0.92)', lightSurface: 'rgba(254,254,254,0.96)', darkSurfaceHover: 'rgba(31,38,64,0.94)', lightSurfaceHover: 'rgba(174,183,194,0.34)', darkCompCard: 'rgba(23,27,49,0.88)', lightCompCard: 'rgba(254,254,254,0.95)' },
   daredevil: { accent: '#BF0615', accentAlt: '#A61731', darkSurface: 'rgba(64,1,1,0.92)', lightSurface: 'rgba(255,242,243,0.96)', darkSurfaceHover: 'rgba(78,4,4,0.94)', lightSurfaceHover: 'rgba(255,228,230,0.98)', darkCompCard: 'rgba(64,1,1,0.88)', lightCompCard: 'rgba(255,246,247,0.95)' },
   'panther-tech': { accent: '#6BB0BF', accentAlt: '#3B3F8C', darkSurface: 'rgba(26,27,27,0.92)', lightSurface: 'rgba(243,244,248,0.96)', darkSurfaceHover: 'rgba(38,40,49,0.94)', lightSurfaceHover: 'rgba(232,234,242,0.97)', darkCompCard: 'rgba(26,27,27,0.88)', lightCompCard: 'rgba(246,247,252,0.95)' },
-  'marvel-red': { accent: '#e23636', accentAlt: '#f78f3f', darkSurface: 'rgba(0,0,0,0.92)', lightSurface: 'rgba(255,245,245,0.96)', darkSurfaceHover: 'rgba(18,18,18,0.94)', lightSurfaceHover: 'rgba(255,233,233,0.97)', darkCompCard: 'rgba(14,14,14,0.88)', lightCompCard: 'rgba(255,248,248,0.95)' },
+  'marvel-red': { accent: '#e23636', accentAlt: '#f78f3f', darkSurface: 'rgba(26,29,35,0.92)', lightSurface: 'rgba(255,245,245,0.96)', darkSurfaceHover: 'rgba(35,40,48,0.94)', lightSurfaceHover: 'rgba(255,233,233,0.97)', darkCompCard: 'rgba(32,36,43,0.88)', lightCompCard: 'rgba(255,248,248,0.95)' },
   hela: { accent: '#49a561', accentAlt: '#d0d500', darkSurface: 'rgba(3,11,9,0.92)', lightSurface: 'rgba(242,248,244,0.96)', darkSurfaceHover: 'rgba(20,45,39,0.94)', lightSurfaceHover: 'rgba(231,243,235,0.97)', darkCompCard: 'rgba(13,34,28,0.88)', lightCompCard: 'rgba(246,251,247,0.95)' },
 };
 

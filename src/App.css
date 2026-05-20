@@ -11,10 +11,10 @@
   display: flex;
   flex-direction: column;
   background: 
-    radial-gradient(circle at 18% 8%, rgba(124, 255, 218, 0.25), transparent 35%),
-    radial-gradient(circle at 82% 22%, rgba(154, 134, 255, 0.20), transparent 40%),
-    radial-gradient(circle at 50% 90%, rgba(124, 255, 218, 0.12), transparent 50%),
-    linear-gradient(155deg, #050812 0%, #0b1936 38%, #25114e 70%, #083d3b 100%);
+    radial-gradient(circle at 18% 8%, rgba(124, 255, 218, 0.14), transparent 35%),
+    radial-gradient(circle at 82% 22%, rgba(154, 134, 255, 0.12), transparent 40%),
+    radial-gradient(circle at 50% 90%, rgba(124, 255, 218, 0.08), transparent 50%),
+    linear-gradient(155deg, #14161A 0%, #171A1F 42%, #1A1D23 72%, #20242B 100%);
   overflow-x: hidden;
 }
 
@@ -50,7 +50,7 @@
 .hero .base {
   width: clamp(120px, 30vw, 180px);
   height: auto;
-  filter: drop-shadow(0 20px 40px rgba(124, 255, 218, 0.25));
+  filter: drop-shadow(0 20px 40px rgba(124, 255, 218, 0.14));
   animation: softFloat 6s var(--ease-smooth) infinite;
 }
 
@@ -99,7 +99,7 @@
 }
 
 .counter:hover {
-  background: rgba(124, 255, 218, 0.12);
+  background: rgba(124, 255, 218, 0.08);
   border-color: rgba(124, 255, 218, 0.35);
   box-shadow: 0 8px 32px rgba(124, 255, 218, 0.20);
   transform: translate3d(0, -2px, 0) scale(1.02);
