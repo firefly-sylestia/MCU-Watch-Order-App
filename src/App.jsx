@@ -1510,6 +1510,18 @@ export default function MCUViewer() {
     return () => window.cancelAnimationFrame(frame);
   }, [heroIndex, activeHeroSrc, visibleHeroPosters, performanceMode]);
 
+  const goToNextHero = useCallback(() => {
+    if (!heroPosters.length) return;
+    pauseHeroAutoSlide(2800);
+    setHeroIndex(i => (i + 1) % heroPosters.length);
+  }, [heroPosters.length, pauseHeroAutoSlide]);
+
+  const goToPrevHero = useCallback(() => {
+    if (!heroPosters.length) return;
+    pauseHeroAutoSlide(2800);
+    setHeroIndex(i => (i - 1 + heroPosters.length) % heroPosters.length);
+  }, [heroPosters.length, pauseHeroAutoSlide]);
+
   const handleHeroWheel = useCallback((e) => {
     const horizontalIntent = e.shiftKey || (Math.abs(e.deltaX) > 2 && Math.abs(e.deltaX) > Math.abs(e.deltaY) * 1.2);
     if (!horizontalIntent) return;
@@ -2803,13 +2815,15 @@ export default function MCUViewer() {
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <section className="hero-carousel-shell" aria-label="Featured MCU titles">
         {heroPosters.length > 0 && (
-          <div className="hero-carousel-track"
-            ref={heroRailRef}
-            onWheel={handleHeroWheel}
-            onScroll={() => { if (!heroProgrammaticScrollRef.current) pauseHeroAutoSlide(1800); }}
-            onPointerDown={() => pauseHeroAutoSlide(3200)}
-            onTouchStart={() => pauseHeroAutoSlide(3200)}>
-            {visibleHeroPosters.map(({ src, item: heroItem }, idx) => {
+          <>
+            <button className="hero-carousel-nav prev" type="button" aria-label="Previous featured poster" onClick={goToPrevHero}>‹</button>
+            <div className="hero-carousel-track"
+              ref={heroRailRef}
+              onWheel={handleHeroWheel}
+              onScroll={() => { if (!heroProgrammaticScrollRef.current) pauseHeroAutoSlide(1800); }}
+              onPointerDown={() => pauseHeroAutoSlide(3200)}
+              onTouchStart={() => pauseHeroAutoSlide(3200)}>
+              {visibleHeroPosters.map(({ src, item: heroItem }, idx) => {
               const isActive = src === activeHeroSrc;
               return (
                 <article key={`hero-rail-${src}`} ref={isActive ? heroActiveCardRef : null} className={`hero-carousel-card ${isActive ? 'is-active' : ''}`}>
@@ -2828,8 +2842,10 @@ export default function MCUViewer() {
                   </div>
                 </article>
               );
-            })}
-          </div>
+              })}
+            </div>
+            <button className="hero-carousel-nav next" type="button" aria-label="Next featured poster" onClick={goToNextHero}>›</button>
+          </>
         )}
 
         {!detailItem && !analyticsOpen && !settingsOpen && <WatermarkOverlay surface="hero" theme={darkMode ? 'cinematic' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['cta', 'title']} />}
