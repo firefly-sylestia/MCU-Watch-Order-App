@@ -829,11 +829,10 @@ export default function MCUViewer() {
   const [desktopTextScale, setDesktopTextScale] = useState(initialUiState.desktopTextScale);
   const [textScaleEnabled, setTextScaleEnabled] = useState(initialUiState.textScaleEnabled);
   const { isDesktopViewport } = useResponsiveLayout();
-  const isTouchPrimaryInput = typeof window !== 'undefined' && (window.matchMedia?.('(pointer: coarse)').matches || window.matchMedia?.('(hover: none)').matches || window.navigator?.maxTouchPoints > 1);
-  const desktopDpiCompensation = isDesktopViewport && !isTouchPrimaryInput
+  const desktopDpiCompensation = isDesktopViewport
     ? Math.min(1, Math.max(0.85, 1 / (window.devicePixelRatio || 1)))
     : 1;
-  const effectiveUiScale = isDesktopViewport && !isTouchPrimaryInput && textScaleEnabled ? desktopTextScale * desktopDpiCompensation : 1;
+  const effectiveUiScale = isDesktopViewport && textScaleEnabled ? desktopTextScale * desktopDpiCompensation : 1;
   const { heroBackdropScale, setHeroBackdropScale, heroBackdropOpacity, setHeroBackdropOpacity } = useHeroBackdrop();
   const [lightningStrike, setLightningStrike] = useState(false);
   const [spiderDrop, setSpiderDrop] = useState(false);
