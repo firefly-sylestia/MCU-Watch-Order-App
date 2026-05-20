@@ -92,6 +92,11 @@
         .overlay-open .hero-backdrop-image{filter:saturate(1.03) contrast(1.01) brightness(1);opacity:calc(var(--backdrop-opacity,0.67) * .93);transition-duration:180ms}
         .overlay-open .hero-backdrop-blend{opacity:.02}
         .overlay-open .dropdown-pop,.overlay-open .dropdown-pop-up{backdrop-filter:none;-webkit-backdrop-filter:none}
+
+        .sidebar-menu,.settings-menu,.detail-card,.analytics-shell{contain:layout paint style;will-change:transform,opacity;transform:translate3d(0,0,0)}
+        .overlay-open .rrow,.overlay-open .phase-rows-full,.overlay-open .curvy-panel{backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
+        .overlay-open .rrow{box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+        .overlay-open .poster{transition-duration:.14s}
         .header-brand{display:grid;gap:8px;padding:16px 20px 14px;border-radius:20px;background:linear-gradient(155deg,color-mix(in srgb,var(--theme-surface) 88%, transparent),color-mix(in srgb,var(--theme-bg) 72%, transparent) 50%,color-mix(in srgb,var(--theme-accent-alt) 14%, var(--theme-surface)) 100%);border:1px solid color-mix(in srgb,var(--theme-accent) 34%, var(--theme-border));box-shadow:var(--elevation-surface-2), inset 0 1px 0 color-mix(in srgb,var(--theme-border) 38%, transparent);max-width:max-content;backdrop-filter:blur(12px) saturate(140%)}
         .header-brand.compact{padding:8px 12px}
         @media (min-width:1024px){.sidebar-menu{top:16px;left:16px;bottom:16px;width:300px;border-radius:var(--radius-lg)}.sidebar-toggle-btn{top:20px;right:20px}}
