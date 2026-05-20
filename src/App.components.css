@@ -864,3 +864,27 @@ input[placeholder="Search title or prerequisite"]:focus{border-color:color-mix(i
   border-color: #d8d0c2 !important;
   color: #2d3748 !important;
 }
+
+/* Universe refinements */
+.dc-universe {
+  --theme-accent: #61a2ff;
+  --theme-accent-alt: #2d6be3;
+  background-image: radial-gradient(circle at 12% 4%, rgba(74, 145, 255, 0.28), transparent 34%), radial-gradient(circle at 86% 8%, rgba(35, 96, 214, 0.24), transparent 38%), linear-gradient(145deg, #040c1e 0%, #0b1731 42%, #122a55 100%) !important;
+}
+
+.phase-chip {
+  min-height: 36px !important;
+  padding: 6px 12px !important;
+  border-radius: 12px !important;
+}
+
+.filters-trigger {
+  padding: 6px 11px !important;
+  min-height: 34px !important;
+  border-radius: 12px !important;
+}
+
+.phase-header-card,
+.phase-rows-full {
+  border-radius: 14px !important;
+}
