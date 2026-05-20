@@ -888,3 +888,79 @@ input[placeholder="Search title or prerequisite"]:focus{border-color:color-mix(i
 .phase-rows-full {
   border-radius: 14px !important;
 }
+
+/* --- 2026-05 UI cleanup overrides --- */
+:root {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+*::-webkit-scrollbar{width:2px;height:2px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:transparent}
+*::-webkit-scrollbar-thumb:hover{background:transparent}
+
+/* Wider content/list rail */
+main{--content-max:1360px !important}
+.hero-carousel-shell{max-width:1360px !important;width:min(1360px,calc(100% - 18px)) !important}
+
+/* Subtle and theme-driven surfaces */
+.filters-open,
+.phase-rows-full,
+.phase-header-card,
+.rrow,
+.calendar-row,
+.glass-panel,
+.settings-menu,
+.analytics-shell{
+  background: color-mix(in srgb, var(--theme-surface) 88%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 62%, transparent) !important;
+  box-shadow: 0 8px 18px rgba(2,8,23,.14) !important;
+}
+
+/* Redesigned phase chips */
+.phase-chip{
+  min-height:44px !important;
+  padding:10px 16px !important;
+  border-radius:14px !important;
+  border:1px solid color-mix(in srgb,var(--theme-border) 74%, transparent) !important;
+  background:color-mix(in srgb,var(--theme-surface) 92%, transparent) !important;
+  color:var(--theme-text-secondary) !important;
+  transition:transform 150ms ease, border-color 150ms ease, background 150ms ease, color 150ms ease !important;
+  box-shadow:none !important;
+}
+.phase-chip:hover{transform:translateY(-1px)}
+.phase-chip[style*="var(--theme-accent)"]{
+  background:color-mix(in srgb,var(--theme-accent) 14%, var(--theme-surface)) !important;
+  border-color:color-mix(in srgb,var(--theme-accent) 44%, var(--theme-border)) !important;
+  color:var(--theme-text) !important;
+}
+
+/* Different DC carousel treatment */
+.dc-universe .hero-carousel-track{
+  scroll-snap-type:x mandatory;
+  gap:12px;
+}
+.dc-universe .hero-carousel-card{scroll-snap-align:center;opacity:.7;transform:scale(.95)}
+.dc-universe .hero-carousel-card.is-active{opacity:1;transform:translateY(-4px) scale(1)}
+.dc-universe .hero-carousel-meta{
+  background: linear-gradient(180deg, rgba(4,10,22,.08), rgba(3,9,20,.82));
+}
+
+/* DC badge/button familiar look: white text + dc blue bg */
+.dc-universe .header-title-mcu{
+  color:#ffffff !important;
+  background:linear-gradient(180deg,#1d4ed8,#1e40af) !important;
+  border-color:rgba(191,219,254,.55) !important;
+  text-shadow:none !important;
+}
+
+/* Ensure light mode still clean */
+[data-color-mode="light"] .filters-open,
+[data-color-mode="light"] .phase-rows-full,
+[data-color-mode="light"] .phase-header-card,
+[data-color-mode="light"] .rrow,
+[data-color-mode="light"] .calendar-row{
+  background: color-mix(in srgb, var(--theme-surface) 94%, #ffffff) !important;
+  border-color: color-mix(in srgb, var(--theme-border) 68%, #ffffff) !important;
+  box-shadow: 0 6px 14px rgba(15,23,42,.08) !important;
+}

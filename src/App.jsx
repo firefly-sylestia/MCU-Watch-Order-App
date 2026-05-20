@@ -2604,7 +2604,7 @@ export default function MCUViewer() {
   const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
 
   const renderPhaseSelector = () => (
-    <div ref={phaseRef} style={{ display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto', paddingBottom: 2, maxWidth: '100%' }}>
+    <div ref={phaseRef} style={{ display: 'flex', alignItems: 'center', gap: 10, overflowX: 'auto', paddingBottom: 4, maxWidth: '100%', width: '100%' }}>
       <button className="fpill phase-chip" onClick={() => setActivePhase(0)} style={{ borderRadius: 999, borderColor: activePhase === 0 ? 'var(--theme-accent)' : T.filterBorder, background: activePhase === 0 ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--chip-bg)', color: activePhase === 0 ? 'var(--theme-accent)' : 'var(--text-secondary)' }}>All</button>
       {currentPhases.map((ph) => {
         const stat = phaseStats.find(s => s.phase === ph.id);
@@ -2622,9 +2622,9 @@ export default function MCUViewer() {
               background: isActive ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--chip-bg)',
               color: isActive ? 'var(--theme-accent)' : 'var(--text-secondary)',
               fontWeight: 700,
-              padding: '0 14px'
+              padding: '0 18px'
             }}>
-            <span style={{ fontSize: 12, letterSpacing: 1.2, whiteSpace: 'nowrap' }}>{ph.name}</span>
+            <span style={{ fontSize: 12, letterSpacing: 1.1, whiteSpace: 'nowrap', color: 'inherit' }}>{ph.name}</span>
             <span style={{ fontSize: 11, color: isActive ? 'var(--theme-accent)' : 'var(--text-muted)', fontWeight: 600 }}>{watched}/{total}</span>
           </button>
         );
@@ -2834,7 +2834,7 @@ export default function MCUViewer() {
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <header className="hexbg" style={{ position: 'relative', zIndex: 'var(--overlay-z-base)', background: universe === 'dc' ? 'linear-gradient(180deg, rgba(20,44,88,.95), rgba(10,22,43,.88))' : 'transparent', borderBottom: universe === 'dc' ? '1px solid rgba(59,130,246,.35)' : 'none', flexShrink: 0 }}>
-        <div className="header-inner" style={{ width: '100%', maxWidth: 1240, margin: '0 auto', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 26px) 30px 16px', transition: 'padding 0.2s ease' }}>
+        <div className="header-inner" style={{ width: '100%', maxWidth: 1360, margin: '0 auto', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 26px) 30px 16px', transition: 'padding 0.2s ease' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} onClick={() => { setBrandTapCount(c => c + 1); setTimeout(() => setBrandTapCount(0), 550); }} onDoubleClick={() => setUniverse(prev => prev === 'mcu' ? 'dc' : 'mcu')} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900, cursor: 'pointer', userSelect: 'none', WebkitUserSelect: 'none' }}>
               <div className="header-title-mcu" style={{ color: universe === 'dc' ? '#9ac5ff' : undefined }}>{activeUniverse.title}</div>
@@ -2887,7 +2887,7 @@ export default function MCUViewer() {
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 60, marginTop: 16 }}>
         {/* Toggle row — always visible */}
-        <div style={{ maxWidth: 1240, margin: '0 auto', padding: '0 24px' }}>
+        <div style={{ maxWidth: 1360, margin: '0 auto', padding: '0 18px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
             <button className="filters-trigger"
               onClick={() => setFiltersOpen(v => !v)}
