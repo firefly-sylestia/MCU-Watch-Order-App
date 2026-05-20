@@ -655,25 +655,30 @@ a:hover {
 
 
 [data-color-mode="dark"] {
-  --theme-text-primary: #F2F4F7;
-  --theme-text-secondary: #C7CCD4;
-  --theme-text-muted: #98A1AE;
-  --theme-text-disabled: #6E7682;
+  --theme-text-primary: #EEF2F7;
+  --theme-text-secondary: #B8C2D1;
+  --theme-text-muted: #8E9AAB;
+  --theme-text-disabled: #657084;
+  --theme-bg: color-mix(in srgb, var(--theme-surface, #171A1F) 52%, #10141c);
+  --theme-bg-secondary: color-mix(in srgb, var(--theme-surface, #171A1F) 62%, #121824);
+  --theme-bg-tertiary: color-mix(in srgb, var(--theme-surface, #171A1F) 74%, #171e2b);
+  --theme-surface-elevated: color-mix(in srgb, var(--theme-surface, #1f2630) 80%, #1b212c);
+  --theme-border: color-mix(in srgb, var(--theme-accent, #7cffda) 16%, rgba(255, 255, 255, 0.1));
 }
 
 [data-color-mode="light"] {
-  --theme-bg: #F3F4F6;
-  --theme-bg-secondary: #ECEFF3;
-  --theme-bg-tertiary: #E7EAEE;
-  --theme-surface: #F8F9FB;
-  --theme-surface-elevated: #FFFFFF;
-  --theme-surface-hover: #ECEFF3;
-  --theme-border: rgba(0, 0, 0, 0.06);
-  --theme-text: #171A1F;
-  --theme-text-primary: #171A1F;
-  --theme-text-secondary: #4B5563;
-  --theme-text-muted: #6B7280;
-  --theme-text-disabled: #6B7280;
-  --row-top-tint: color-mix(in srgb, #d8c7ac 28%, transparent);
-  --row-top-tint-soft: color-mix(in srgb, var(--theme-accent, #7cffda) 10%, #F8F9FB);
+  --theme-bg: color-mix(in srgb, var(--theme-surface, #eef0f3) 60%, #e8e3d8);
+  --theme-bg-secondary: color-mix(in srgb, var(--theme-surface, #eef0f3) 72%, #dfe4eb);
+  --theme-bg-tertiary: color-mix(in srgb, var(--theme-surface, #eef0f3) 82%, #d7dde5);
+  --theme-surface: color-mix(in srgb, var(--theme-surface, #f2f3f5) 88%, #ebe4d8);
+  --theme-surface-elevated: color-mix(in srgb, var(--theme-surface, #f2f3f5) 94%, #f1ebe1);
+  --theme-surface-hover: color-mix(in srgb, var(--theme-surface-hover, #eceef2) 88%, #e5ddd0);
+  --theme-border: color-mix(in srgb, var(--theme-accent, #7cffda) 14%, rgba(24, 32, 44, 0.18));
+  --theme-text: #1d2430;
+  --theme-text-primary: #1d2430;
+  --theme-text-secondary: #536173;
+  --theme-text-muted: #68778a;
+  --theme-text-disabled: #7d8692;
+  --row-top-tint: color-mix(in srgb, var(--theme-accent) 21%, transparent);
+  --row-top-tint-soft: color-mix(in srgb, var(--theme-accent-alt, #9a86ff) 12%, var(--theme-surface));
 }
