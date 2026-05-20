@@ -137,6 +137,13 @@
 .wardrobe-modal-shell .cinematic-card{border-radius:16px;transform:rotateY(-11deg);transform-origin:center left}
 .wardrobe-modal-shell .cinematic-card:nth-child(even){transform:rotateY(11deg)}
 .wardrobe-modal-shell .cinematic-card:hover{transform:rotateY(0deg) translateY(-2px)}
+.wardrobe-ring-wrap{display:grid;gap:10px}
+.wardrobe-ring-stage{height:480px;display:grid;place-items:center;perspective:1500px;overflow:hidden;border-radius:18px;border:1px solid var(--border-soft);background:radial-gradient(circle at 50% 45%, color-mix(in srgb,var(--theme-accent) 14%, transparent), transparent 60%),color-mix(in srgb,var(--theme-surface) 86%, transparent)}
+.wardrobe-ring{position:relative;width:220px;height:320px;transform-style:preserve-3d;transition:transform 320ms var(--interactive-ease)}
+.wardrobe-ring-card{position:absolute;inset:0;display:grid;align-content:end;border-radius:16px;overflow:hidden;border:1px solid var(--border-soft);background:color-mix(in srgb,var(--theme-surface) 88%, transparent);box-shadow:var(--shadow-soft)}
+.wardrobe-ring-card .poster{width:100%;height:100%;object-fit:cover}
+.wardrobe-ring-label{position:absolute;left:8px;right:8px;bottom:8px;padding:7px 8px;border-radius:10px;background:linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.86));color:#fff;font-size:11px;line-height:1.2;text-align:center}
+.wardrobe-ring-hint{font-size:11px;color:var(--theme-text-muted);text-align:center}
 .cinematic-card{--card-overlay:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.01));display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px;align-items:center;border:1px solid var(--border-soft);border-radius:14px;padding:8px;background:var(--card-overlay),color-mix(in srgb,var(--theme-surface) 92%, transparent);text-align:left;cursor:pointer;scroll-snap-align:start;box-shadow:var(--shadow-soft)}
 .cinematic-card-safezone{min-height:58px;display:grid;align-content:center}
 .ui-actionable{transition:transform 140ms var(--interactive-ease), border-color var(--interactive-duration) var(--interactive-ease), background-color var(--interactive-duration) var(--interactive-ease), box-shadow var(--interactive-duration) var(--interactive-ease)}

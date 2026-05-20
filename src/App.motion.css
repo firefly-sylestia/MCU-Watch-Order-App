@@ -29,7 +29,6 @@
         @starting-style{.hero-backdrop-image:not(.is-exiting){opacity:0;transform:scale(1.01);filter:blur(1.2px) saturate(1.02) contrast(1.01) brightness(0.95)}}
         .progress-gradient{background:var(--phase-gradient, linear-gradient(90deg,var(--theme-accent), var(--theme-accent-alt)));background-size:200% 100%;animation:gradientPulse 3s ease-in-out infinite alternate}
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
-        .performance-mode *{animation:none !important}
         .tva-intro-overlay{position:fixed;inset:0;z-index:1200;pointer-events:none;display:grid;place-items:center;background:radial-gradient(circle at center, rgba(232,184,75,0.24) 0%, rgba(8,13,26,0.95) 40%, rgba(5,7,12,0.99) 100%);backdrop-filter:blur(2px);animation:tvaPortalOpen 4.2s cubic-bezier(.22,.9,.24,1) forwards}
         .tva-intro-time-rings{position:absolute;inset:8%;border-radius:50%;border:1px solid rgba(232,184,75,0.3);box-shadow:0 0 0 16px rgba(232,184,75,0.1),0 0 0 52px rgba(232,184,75,0.06),0 0 60px rgba(232,184,75,0.3) inset;animation:tvaRingSpin 4.2s linear forwards}
         .tva-intro-center{display:grid;gap:8px;text-align:center;padding:20px}
