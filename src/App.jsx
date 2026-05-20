@@ -2801,54 +2801,40 @@ export default function MCUViewer() {
       </header>
 
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ position: 'relative', height: isDesktopViewport ? 530 : 390, maxWidth: 1240, margin: '0 auto', width: 'min(1240px, calc(100% - 24px))', background: 'transparent', border: 'none', borderRadius: 'var(--hero-backdrop-radius)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 'var(--overlay-z-floating)', boxShadow: 'none', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)' }}>
+      <section className="hero-carousel-shell" aria-label="Featured MCU titles">
         {heroPosters.length > 0 && (
-          <div className="hero-rail"
+          <div className="hero-carousel-track"
             ref={heroRailRef}
             onWheel={handleHeroWheel}
             onScroll={() => { if (!heroProgrammaticScrollRef.current) pauseHeroAutoSlide(1800); }}
             onPointerDown={() => pauseHeroAutoSlide(3200)}
-            onTouchStart={() => pauseHeroAutoSlide(3200)}
-            style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: isDesktopViewport ? 16 : 12, overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'none', scrollPaddingInline: isDesktopViewport ? '12vw' : '7vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', overscrollBehaviorX: 'contain', overscrollBehaviorY: 'auto', touchAction: 'auto', cursor: 'pointer', userSelect: 'none', WebkitUserSelect: 'none' }}>
+            onTouchStart={() => pauseHeroAutoSlide(3200)}>
             {visibleHeroPosters.map(({ src, item: heroItem }, idx) => {
               const isActive = src === activeHeroSrc;
               return (
-                <div key={`hero-rail-${src}`} ref={isActive ? heroActiveCardRef : null} style={{ position: 'relative', display:'flex', flexDirection:'column', alignItems:'center', scrollSnapAlign:'center', flexShrink: 0 }}>
-                <img
-                  className="hero-poster-card"
-                  src={src}
-                  alt="Featured poster"
-                  draggable={false}
-                  loading={idx < 8 ? 'eager' : 'lazy'}
-                  decoding="async"
-                  onDragStart={(e) => e.preventDefault()}
-                  onClick={() => { if (heroItem) openDetail(heroItem); }}
-                  style={{
-                    height: isDesktopViewport ? 440 : 320,
-                    width: isDesktopViewport ? 292 : 218,
-                    objectFit: 'cover',
-                    borderRadius: isDesktopViewport ? 14 : 12,
-                    border: '1px solid color-mix(in srgb, var(--theme-border) 86%, transparent)',
-                    boxShadow: 'none',
-                    opacity: isActive ? 1 : 0.76,
-                    transform: isActive ? 'translate3d(0,-6px,0) scale(1.04)' : 'translate3d(0,0,0) scale(0.96)',
-                    transition: 'transform 260ms ease, opacity 180ms ease',
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                    WebkitUserSelect: 'none',
-                    WebkitTouchCallout: 'none',
-                  }}
-                />
-                <div style={{ position: 'absolute', left: 10, right: 10, bottom: 12, padding: '8px 9px 7px', borderRadius: 10, background: 'linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.76))', color: '#fff', fontFamily: 'var(--font-marvel-display)', fontSize: isDesktopViewport ? 18 : 15, fontWeight: 900, letterSpacing: 1.2, lineHeight: 1, textAlign: 'center', textTransform: 'uppercase', textShadow: '0 2px 9px rgba(0,0,0,0.95), 0 0 14px rgba(212,55,47,0.45)', boxShadow: 'inset 0 -18px 24px rgba(0,0,0,0.18)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', pointerEvents: 'none' }}>{heroItem?.title || 'Featured MCU poster'}</div>
-                </div>
+                <article key={`hero-rail-${src}`} ref={isActive ? heroActiveCardRef : null} className={`hero-carousel-card ${isActive ? 'is-active' : ''}`}>
+                  <img
+                    className="hero-carousel-poster"
+                    src={src}
+                    alt={heroItem?.title || 'Featured MCU poster'}
+                    draggable={false}
+                    loading={idx < 8 ? 'eager' : 'lazy'}
+                    decoding="async"
+                    onDragStart={(e) => e.preventDefault()}
+                    onClick={() => { if (heroItem) openDetail(heroItem); }}
+                    />
+                  <div className="hero-carousel-meta">
+                    <p className="hero-carousel-title">{heroItem?.title || 'Featured MCU poster'}</p>
+                    <p className="hero-carousel-sub">Tap to open details</p>
+                  </div>
+                </article>
               );
             })}
           </div>
         )}
-        
+
         {!detailItem && !analyticsOpen && !settingsOpen && <WatermarkOverlay surface="hero" theme={darkMode ? 'cinematic' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['cta', 'title']} />}
-       
-      </div>
+      </section>
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 60, marginTop: 16 }}>
         {/* Toggle row — always visible */}
