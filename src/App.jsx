@@ -606,7 +606,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
           <div className="meta-muted line-clamp-2 overflow-wrap-anywhere title-subline" style={TITLE_ROW_STATIC.genreMeta}>GENRES: {genres.join(' • ').toUpperCase()}</div>
         </button>
 
-        <div className="row-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', justifyContent: 'center', gap: 8, minWidth: isDesktopViewport ? 120 : 0, flexShrink: 0, padding: '10px', borderRadius: 14, border: '1px solid var(--row-action-border)', background: 'var(--row-action-bg)', boxShadow: 'var(--row-action-shadow)' }}>
+        <div className="row-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', justifyContent: 'center', gap: 8, minWidth: isDesktopViewport ? 120 : 0, flexShrink: 0, padding: '10px', borderRadius: 14, border: '1px solid var(--row-action-border)', background: 'var(--row-action-bg)', boxShadow: 'var(--row-action-shadow)', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
           <div className="row-meta-line truncate-single-line" style={{ fontSize: 11, color: 'var(--row-rating-color)', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.8, fontWeight: 700, textAlign: 'center' }}>★ {rating || '—'}</div>
           <button
             className="wbtn status-pill"
@@ -614,7 +614,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             aria-haspopup="menu"
             aria-expanded={statusDropdown === item.id}
             onClick={(event) => onOpenStatus(event, item.id)}
-            style={{ minWidth: 104, height: 30, padding: '0 10px', background: 'var(--row-action-button-bg)', color: statusMeta.color || T.textMuted, borderColor: `${statusMeta.color || T.surfaceBorder}80`, borderRadius: 999, fontSize: 10.5, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.9, justifyContent: 'space-between' }}
+            style={{ minWidth: 104, height: 30, padding: '0 10px', background: 'var(--row-action-button-bg)', color: statusMeta.color || T.textMuted, borderColor: `${statusMeta.color || T.surfaceBorder}80`, borderRadius: 999, fontSize: 10.5, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.9, justifyContent: 'space-between', boxShadow: 'var(--row-action-button-shadow)' }}
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
               <RowStatusIcon size={10} />
@@ -622,7 +622,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             </span>
             <ChevDown size={10} style={{ opacity: 0.8, transform: statusDropdown === item.id ? 'rotate(180deg)' : 'none' }} />
           </button>
-          <button className="wbtn" aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} style={{ width: isDesktopViewport ? 30 : 24, height: isDesktopViewport ? 30 : 24, background: isBookmarked ? 'rgba(125,211,252,0.28)' : 'var(--row-action-button-bg)', color: isBookmarked ? '#7dd3fc' : 'var(--row-action-icon-color)', borderColor: isBookmarked ? '#7dd3fc80' : 'var(--row-action-button-border)' }}><Bookmark size={11} /></button>
+          <button className="wbtn" aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} style={{ width: isDesktopViewport ? 30 : 24, height: isDesktopViewport ? 30 : 24, background: isBookmarked ? 'rgba(125,211,252,0.28)' : 'var(--row-action-button-bg)', color: isBookmarked ? '#7dd3fc' : 'var(--row-action-icon-color)', borderColor: isBookmarked ? '#7dd3fc80' : 'var(--row-action-button-border)', boxShadow: 'var(--row-action-button-shadow)' }}><Bookmark size={11} /></button>
           {!hideWatchToggle && (
             <button
               className="wbtn status-toggle"
@@ -632,7 +632,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
                 event.stopPropagation();
                 onSetStatus(item.id, isWatched ? 'unwatched' : 'watched');
               }}
-              style={{ width: 28, height: 28, background: 'var(--row-action-button-bg)', color: statusMeta.color || 'var(--row-action-icon-color)', borderColor: `${statusMeta.color || T.surfaceBorder}80` }}
+              style={{ width: 28, height: 28, background: 'var(--row-action-button-bg)', color: statusMeta.color || 'var(--row-action-icon-color)', borderColor: `${statusMeta.color || T.surfaceBorder}80`, boxShadow: 'var(--row-action-button-shadow)' }}
             ><RowStatusIcon size={12} /></button>
           )}
           {isWorthy && <span style={{ fontSize: 10, fontWeight: 700, color: '#9bd6ff', border: '1px solid #7dc3ff88', borderRadius: 999, padding: '1px 6px', background: 'rgba(60,166,255,0.14)', letterSpacing: 1 }}>WORTHY</span>}
