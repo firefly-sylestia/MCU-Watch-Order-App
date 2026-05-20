@@ -612,6 +612,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
           <div className="row-meta-line truncate-single-line" style={{ fontSize: 11, color: 'var(--theme-warning)', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.6 }}>★ {rating || '—'}</div>
           <button
             className="wbtn status-pill"
+            type="button"
             aria-label={`Open status menu for ${item.title}`}
             aria-haspopup="menu"
             aria-expanded={statusDropdown === item.id}
@@ -624,10 +625,11 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             </span>
             <ChevDown size={10} style={{ opacity: 0.8, transform: statusDropdown === item.id ? 'rotate(180deg)' : 'none' }} />
           </button>
-          <button className="wbtn" aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} style={{ width: isDesktopViewport ? 30 : 24, height: isDesktopViewport ? 30 : 24, background: isBookmarked ? 'rgba(125,211,252,0.2)' : 'transparent', color: isBookmarked ? '#9ddcff' : (darkMode ? '#dbe6fb' : T.textMuted), borderColor: isBookmarked ? '#7dd3fc66' : `${T.surfaceBorder}` }}><Bookmark size={11} /></button>
+          <button className="wbtn" type="button" aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} style={{ width: isDesktopViewport ? 30 : 24, height: isDesktopViewport ? 30 : 24, background: isBookmarked ? 'rgba(125,211,252,0.2)' : 'transparent', color: isBookmarked ? '#9ddcff' : (darkMode ? '#dbe6fb' : T.textMuted), borderColor: isBookmarked ? '#7dd3fc66' : `${T.surfaceBorder}` }}><Bookmark size={11} /></button>
           {!hideWatchToggle && (
             <button
               className="wbtn status-toggle"
+              type="button"
               aria-label={isWatched ? `Mark ${item.title} as unwatched` : `Mark ${item.title} as watched`}
               title={isWatched ? 'Mark unwatched' : 'Mark watched'}
               onClick={(event) => {
@@ -998,11 +1000,9 @@ export default function MCUViewer() {
 
   useEffect(() => {
     const el = mainRef.current;
+    if (!el) return;
     let scrollSaveTimer;
-    const getCurrentScrollTop = () => {
-      const canScrollMain = el && el.scrollHeight > el.clientHeight + 1;
-      return canScrollMain ? el.scrollTop : window.scrollY;
-    };
+    const getCurrentScrollTop = () => el.scrollTop;
     const onScroll = () => {
       isScrolling.current = true;
       clearTimeout(isScrolling._t);
@@ -1010,13 +1010,24 @@ export default function MCUViewer() {
       isScrolling._t = setTimeout(() => { isScrolling.current = false; }, 150);
       scrollSaveTimer = setTimeout(() => setScrollCheckpoint(getCurrentScrollTop()), 220);
     };
-    el?.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('scroll', onScroll, { passive: true });
+    el.addEventListener('scroll', onScroll, { passive: true });
     return () => {
       clearTimeout(scrollSaveTimer);
-      el?.removeEventListener('scroll', onScroll);
-      window.removeEventListener('scroll', onScroll);
+      el.removeEventListener('scroll', onScroll);
     };
+  }, []);
+
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
+    const onWheel = (event) => {
+      if (Math.abs(event.deltaY) < 30) return;
+      event.preventDefault();
+      const cappedDelta = Math.max(-120, Math.min(120, event.deltaY));
+      el.scrollBy({ top: cappedDelta, behavior: 'smooth' });
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
   }, []);
 
   useEffect(() => {
