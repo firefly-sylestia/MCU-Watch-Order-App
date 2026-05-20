@@ -75,6 +75,8 @@
   --surface-3: color-mix(in srgb, #343d49 94%, transparent);
   --ambient-glow: rgba(124, 255, 218, 0.08);
   --edge-highlight: rgba(242, 244, 247, 0.12);
+  --row-top-tint: color-mix(in srgb, var(--theme-accent, #7cffda) 26%, transparent);
+  --row-top-tint-soft: color-mix(in srgb, var(--theme-accent-alt, #9a86ff) 12%, transparent);
   
   /* Borders & Surfaces */
   --border: rgba(255, 255, 255, 0.06);
@@ -672,4 +674,6 @@ a:hover {
   --theme-text-secondary: #4B5563;
   --theme-text-muted: #6B7280;
   --theme-text-disabled: #6B7280;
+  --row-top-tint: color-mix(in srgb, #d8c7ac 28%, transparent);
+  --row-top-tint-soft: color-mix(in srgb, var(--theme-accent, #7cffda) 10%, #F8F9FB);
 }

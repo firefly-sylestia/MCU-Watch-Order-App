@@ -493,7 +493,7 @@
   right: 0;
   top: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(242, 244, 247, 0.2), transparent);
+  background: linear-gradient(90deg, transparent 8%, var(--row-top-tint), var(--row-top-tint-soft), transparent 92%);
   pointer-events: none;
 }
 
@@ -539,6 +539,11 @@ button:disabled, .is-disabled, [aria-disabled="true"] { color: var(--readable-te
   background: linear-gradient(160deg, #FFFFFF 0%, #F8F9FB 100%) !important;
   border-color: rgba(0, 0, 0, 0.06) !important;
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.75) !important;
+}
+
+[data-color-mode="light"] .rrow::before,
+[data-color-mode="light"] .phase-rows-full::before {
+  background: linear-gradient(90deg, transparent 6%, color-mix(in srgb, #d8c7ac 42%, transparent), color-mix(in srgb, var(--theme-accent) 18%, #F8F9FB), transparent 94%);
 }
 
 [data-color-mode="light"] .rrow {
