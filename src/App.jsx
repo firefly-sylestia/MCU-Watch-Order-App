@@ -656,8 +656,8 @@ const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
   return (
     <>
       <div className="sidebar-control-cluster" style={controlsHidden ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
-      <button className="theme-btn sidebar-toggle-btn" onClick={onToggle} aria-label="Toggle sidebar menu" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: darkMode ? 'var(--elevation-surface-2)' : 'var(--elevation-surface-1)' }}><Menu size={18} /></button>
-      <button className="theme-btn sidebar-toggle-btn settings-toggle-btn" onClick={onOpenSettings} aria-label="Open settings and profile" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: darkMode ? 'var(--elevation-surface-2)' : 'var(--elevation-surface-1)' }}><Settings size={18} /></button>
+      <button className="theme-btn sidebar-toggle-btn" onClick={onToggle} aria-label="Toggle sidebar menu" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Menu size={18} /></button>
+      <button className="theme-btn sidebar-toggle-btn settings-toggle-btn" onClick={onOpenSettings} aria-label="Open settings and profile" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Settings size={18} /></button>
       </div>
       {open && <div className="sidebar-backdrop" onClick={onClose} />}
       <aside ref={ref} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
@@ -2809,7 +2809,7 @@ export default function MCUViewer() {
             })}
           </div>
         )}
-        <div style={{ position: 'absolute', top: 0, bottom: 0, left: isDesktopViewport ? 2 : 6, right: isDesktopViewport ? 2 : 6, pointerEvents: 'none', borderRadius: isDesktopViewport ? 14 : 12, background: 'linear-gradient(90deg, rgba(4,6,12,0.18) 0%, transparent 12%, transparent 88%, rgba(4,6,12,0.18) 100%)' }} />
+        
         {!detailItem && !analyticsOpen && !settingsOpen && <WatermarkOverlay surface="hero" theme={darkMode ? 'cinematic' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['cta', 'title']} />}
        
       </div>
