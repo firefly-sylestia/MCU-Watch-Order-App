@@ -2524,8 +2524,12 @@ export default function MCUViewer() {
     '--font-marvel-display': 'var(--font-display)',
     '--font-marvel-ui': 'var(--font-ui)',
     '--font-marvel-body': 'var(--font-body)',
-    '--theme-success': '#3ec47a',
-    '--theme-success-soft': darkMode ? 'rgba(62,196,122,0.16)' : 'rgba(62,196,122,0.12)',
+    '--theme-success': darkMode
+      ? 'color-mix(in srgb, var(--theme-accent) 82%, #dbeafe)'
+      : 'color-mix(in srgb, var(--theme-accent) 74%, #1e3a8a)',
+    '--theme-success-soft': darkMode
+      ? 'color-mix(in srgb, var(--theme-accent) 16%, transparent)'
+      : 'color-mix(in srgb, var(--theme-accent) 12%, #f8f9fb)',
     '--theme-warning': 'var(--theme-accent-alt)',
     '--theme-warning-soft': darkMode ? 'rgba(232,184,75,0.16)' : 'rgba(232,184,75,0.12)',
     '--theme-danger': '#d16a6a',
