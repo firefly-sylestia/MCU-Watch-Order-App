@@ -25,8 +25,8 @@
   /* Premium semantic roles */
   --color-bg-base: #171A1F;
   --color-bg-elevated: rgba(44, 50, 60, 0.94);
-  --color-text-primary: #eef3ff;
-  --color-text-secondary: rgba(214, 224, 243, 0.74);
+  --color-text-primary: #F2F4F7;
+  --color-text-secondary: #C7CCD4;
   --color-accent: #7cffda;
   --color-border-subtle: rgba(255, 255, 255, 0.06);
 
@@ -63,10 +63,18 @@
   --bg-glass: rgba(39, 45, 54, 0.76);
   
   /* Text Colors */
-  --text: rgba(236, 242, 255, 0.92);
-  --text-h: #f3f6ff;
-  --text-dim: rgba(195, 206, 228, 0.7);
-  --text-muted: rgba(176, 188, 211, 0.56);
+  --text: #F2F4F7;
+  --text-h: #F2F4F7;
+  --text-dim: #C7CCD4;
+  --text-muted: #98A1AE;
+  --text-disabled: #6E7682;
+
+  /* Layered surface depth */
+  --surface-1: color-mix(in srgb, #21262f 86%, transparent);
+  --surface-2: color-mix(in srgb, #2a313b 90%, transparent);
+  --surface-3: color-mix(in srgb, #343d49 94%, transparent);
+  --ambient-glow: rgba(124, 255, 218, 0.08);
+  --edge-highlight: rgba(242, 244, 247, 0.12);
   
   /* Borders & Surfaces */
   --border: rgba(255, 255, 255, 0.06);
@@ -641,4 +649,12 @@ a:hover {
 @media (max-width: 768px) {
   .ui-touch-btn { min-height: 46px; }
   .ui-sticky-mobile-footer { position: sticky; bottom: 0; z-index: 5; background: var(--theme-surface, var(--bg-elevated)); padding: 8px 0; }
+}
+
+
+[data-color-mode="dark"] {
+  --theme-text-primary: #F2F4F7;
+  --theme-text-secondary: #C7CCD4;
+  --theme-text-muted: #98A1AE;
+  --theme-text-disabled: #6E7682;
 }
