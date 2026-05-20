@@ -208,3 +208,53 @@
   .rrow{min-height:98px;padding:14px 12px 14px 10px;gap:10px}
   .title-btn .title-main{font-size:clamp(16px,4.6vw,20px)!important}
 }
+
+/* Full redesign: settings + analytics surfaces */
+.settings-menu-redesign{
+  border-radius: 24px !important;
+  padding: 16px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 38%, var(--theme-border)) !important;
+  background:
+    radial-gradient(circle at 14% 10%, color-mix(in srgb, var(--theme-accent) 22%, transparent), transparent 42%),
+    radial-gradient(circle at 92% 6%, color-mix(in srgb, var(--theme-accent-alt) 20%, transparent), transparent 36%),
+    color-mix(in srgb, var(--theme-surface) 78%, transparent) !important;
+  box-shadow: 0 28px 72px rgba(2, 8, 23, 0.5), inset 0 1px 0 rgba(255,255,255,0.14) !important;
+}
+.settings-menu-redesign > *{
+  border-radius: 14px;
+}
+.settings-menu-redesign .fpill{
+  min-height: 42px !important;
+  border-color: color-mix(in srgb,var(--theme-accent) 44%, var(--theme-border));
+  background: color-mix(in srgb,var(--theme-surface) 82%, transparent);
+}
+.analytics-shell-redesign{
+  width: min(1180px, 94vw);
+  border-radius: 26px !important;
+  padding: 18px !important;
+  background:
+    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--theme-accent) 24%, transparent), transparent 40%),
+    radial-gradient(circle at 88% 0%, color-mix(in srgb, var(--theme-accent-alt) 20%, transparent), transparent 36%),
+    linear-gradient(150deg, color-mix(in srgb,var(--theme-surface) 85%, transparent), color-mix(in srgb,var(--theme-bg) 72%, transparent)) !important;
+}
+.analytics-header{
+  margin-bottom: 16px !important;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 28%, var(--theme-border));
+  border-radius: 16px;
+  background: color-mix(in srgb,var(--theme-surface) 72%, transparent);
+}
+.analytics-tabs{
+  top: 8px !important;
+  padding: 10px !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(16px) saturate(140%);
+}
+.analytics-tabs .fpill{
+  min-height: 40px;
+  border-width: 1.5px;
+}
+[data-color-mode="light"] .settings-menu-redesign,
+[data-color-mode="light"] .analytics-shell-redesign{
+  box-shadow: 0 24px 50px rgba(15,23,42,.15), inset 0 1px 0 rgba(255,255,255,.95) !important;
+}
