@@ -850,6 +850,7 @@ export default function MCUViewer() {
   const heroInteractionTimeoutRef = useRef(null);
   const heroUserInteractingUntilRef = useRef(0);
   const heroProgrammaticScrollRef = useRef(false);
+  const heroForceRecenterRef = useRef(false);
   const heroRandomSeedRef = useRef(() => Math.random().toString(36).slice(2));
   if (typeof heroRandomSeedRef.current === 'function') heroRandomSeedRef.current = heroRandomSeedRef.current();
   const restoredUiStateRef = useRef(false);
@@ -1494,7 +1495,7 @@ export default function MCUViewer() {
 
   useEffect(() => {
     if (!heroActiveCardRef.current || !heroRailRef.current) return undefined;
-    if (Date.now() < heroUserInteractingUntilRef.current) return undefined;
+    if (Date.now() < heroUserInteractingUntilRef.current && !heroForceRecenterRef.current) return undefined;
     const mainScrollTop = mainRef.current?.scrollTop || window.scrollY || 0;
     if (mainScrollTop > 220) return undefined;
     const frame = window.requestAnimationFrame(() => {
@@ -1505,7 +1506,7 @@ export default function MCUViewer() {
         const targetLeft = card.offsetLeft - (rail.clientWidth - card.clientWidth) / 2;
         rail.scrollTo({ left: Math.max(0, targetLeft), behavior: performanceMode ? 'auto' : 'smooth' });
       }
-      window.setTimeout(() => { heroProgrammaticScrollRef.current = false; }, performanceMode ? 120 : 520);
+      window.setTimeout(() => { heroProgrammaticScrollRef.current = false; heroForceRecenterRef.current = false; }, performanceMode ? 120 : 520);
     });
     return () => window.cancelAnimationFrame(frame);
   }, [heroIndex, activeHeroSrc, visibleHeroPosters, performanceMode]);
@@ -1513,12 +1514,14 @@ export default function MCUViewer() {
   const goToNextHero = useCallback(() => {
     if (!heroPosters.length) return;
     pauseHeroAutoSlide(2800);
+    heroForceRecenterRef.current = true;
     setHeroIndex(i => (i + 1) % heroPosters.length);
   }, [heroPosters.length, pauseHeroAutoSlide]);
 
   const goToPrevHero = useCallback(() => {
     if (!heroPosters.length) return;
     pauseHeroAutoSlide(2800);
+    heroForceRecenterRef.current = true;
     setHeroIndex(i => (i - 1 + heroPosters.length) % heroPosters.length);
   }, [heroPosters.length, pauseHeroAutoSlide]);
 
@@ -2491,21 +2494,21 @@ export default function MCUViewer() {
     hexDot: 'rgba(255,255,255,0.01)', switcherBg: '#080818', switcherBorder: '#13132a',
     phaseSummaryBg: 'color-mix(in srgb, #ffffff 5%, transparent)', phaseSummaryBorder: '#13132a',
   } : {
-    appBg: '#f2f0eb', headerBg: 'linear-gradient(180deg,#ffffff 0%,#f2f0eb 100%)',
+    appBg: '#e8e2d7', headerBg: 'linear-gradient(180deg,#f5f0e6 0%,#e8e2d7 100%)',
     headerBorder: '#ddd8d0', navBg: '#ffffff', navBorder: '#e8e2d8',
-    filterBg: 'transparent', filterBorder: 'rgba(214,205,194,0.58)',
-    surfaceBg: 'transparent', surfaceBorder: '#e0dbd2',
-    rowHoverBg: 'rgba(0,0,0,0.025)', rowWatchedBg: 'rgba(62,196,122,0.15)',
-    rowBorder: '#ede8e0', expandBg: '#faf7f2', expandBorder: '#e4ddd4',
-    pillBg: '#f0ece4', pillBorder: '#ddd8cf', pillText: '#6a7080',
-    pillHoverBorder: '#c8c2b8', pillHoverText: '#1a2030',
-    inputBg: '#ffffff', inputBorder: '#ddd8cf', inputColor: '#1a2030',
-    dropdownBg: '#ffffff', dropdownBorder: '#ddd8cf', dropdownShadow: '0 24px 64px rgba(0,0,0,0.16)',
-    text: '#111827', textMuted: '#4b5563', textFaint: '#6b7280',
-    sortHoverBg: '#f5f2ec', statBg: '#ffffff', statBorder: '#e4ddd4',
-    numFaint: '#a0a8b0', footerText: '#a0a8b0',
-    scrollTrack: '#ece8e0', scrollThumb: '#ccc8c0', scrollThumbH: '#b8b4ac',
-    hexDot: 'rgba(0,0,0,0.025)', switcherBg: '#f8f5f0', switcherBorder: '#e4ddd4',
+    filterBg: 'transparent', filterBorder: 'rgba(178,170,160,0.52)',
+    surfaceBg: 'transparent', surfaceBorder: '#d5cec3',
+    rowHoverBg: 'rgba(31,41,55,0.04)', rowWatchedBg: 'rgba(62,196,122,0.14)',
+    rowBorder: '#dfd7cc', expandBg: '#f0e9de', expandBorder: '#d8cfc3',
+    pillBg: '#e7e0d5', pillBorder: '#d0c8bc', pillText: '#535d6e',
+    pillHoverBorder: '#b8afa2', pillHoverText: '#172235',
+    inputBg: '#f5efe4', inputBorder: '#cbc2b6', inputColor: '#1a2030',
+    dropdownBg: '#f3ece1', dropdownBorder: '#cbc2b6', dropdownShadow: '0 20px 44px rgba(15,23,42,0.12)',
+    text: '#162033', textMuted: '#42506a', textFaint: '#607089',
+    sortHoverBg: '#ece4d9', statBg: '#f3ede2', statBorder: '#d8cfc3',
+    numFaint: '#8e98a6', footerText: '#8e98a6',
+    scrollTrack: '#e5ddd2', scrollThumb: '#beb5a8', scrollThumbH: '#aba294',
+    hexDot: 'rgba(13,24,42,0.028)', switcherBg: '#eee7dc', switcherBorder: '#d5ccbf',
     phaseSummaryBg: 'color-mix(in srgb, #ffffff 5%, transparent)', phaseSummaryBorder: 'rgba(214,205,194,0.5)',
   };
 
@@ -2513,8 +2516,8 @@ export default function MCUViewer() {
   const activeThemeVars = getActiveThemeVars(themeMode, darkMode);
 
   const cssThemeVars = {
-    '--theme-bg': darkMode ? '#06060f' : '#ebe6dc',
-    '--theme-border': darkMode ? '#1b1b33' : '#ddd8cf',
+    '--theme-bg': darkMode ? '#06060f' : '#e6ded1',
+    '--theme-border': darkMode ? '#1b1b33' : '#cfc5b8',
     '--theme-text': darkMode ? '#d8e3f5' : '#1a2030',
     '--theme-text-muted': darkMode ? '#a9b6cb' : '#4f5c70',
     '--theme-text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
@@ -2549,12 +2552,12 @@ export default function MCUViewer() {
     '--detail-panel-bg': darkMode
       ? 'color-mix(in srgb,var(--theme-surface) 74%, rgba(8,12,26,0.82))'
       : 'color-mix(in srgb,var(--theme-surface) 74%, var(--theme-bg))',
-    '--app-bg-base': darkMode ? '#06060f' : '#ebe6dc',
+    '--app-bg-base': darkMode ? '#06060f' : '#e6ded1',
     '--app-bg-vignette': darkMode ? 'rgba(2,6,23,0.42)' : 'rgba(2,6,23,0.08)',
     '--app-bg-noise-opacity': darkMode ? '0.06' : '0.03',
     '--theme-app-bg': darkMode
       ? `radial-gradient(circle at 8% 2%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 40%, transparent), transparent 34%), radial-gradient(circle at 90% 8%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 36%, transparent), transparent 40%), radial-gradient(circle at 50% 120%, rgba(14,165,233,0.22), transparent 52%), linear-gradient(138deg, #02030a 0%, #09071a 30%, #0f1031 58%, #1a1038 100%)`
-      : `radial-gradient(circle at 8% 4%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 20%, #f2ede2), transparent 34%), radial-gradient(circle at 88% 14%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 18%, #f2ede2), transparent 40%), linear-gradient(140deg, #efe9dd 0%, #e8e2d8 40%, #ece5db 100%)`,
+      : `radial-gradient(circle at 8% 4%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 15%, #e9e1d5), transparent 34%), radial-gradient(circle at 88% 14%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 13%, #e9e1d5), transparent 40%), linear-gradient(140deg, #e9e1d5 0%, #e3dbcf 44%, #e7dfd4 100%)`,
     '--comp-overlay-bg': darkMode ? 'rgba(12,16,34,0.88)' : 'rgba(245,239,230,0.93)',
     '--comp-dropdown-bg': darkMode ? 'rgba(13,18,34,0.72)' : 'rgba(243,237,228,0.8)',
     '--theme-header-bg': darkMode
@@ -2826,7 +2829,7 @@ export default function MCUViewer() {
               {visibleHeroPosters.map(({ src, item: heroItem }, idx) => {
               const isActive = src === activeHeroSrc;
               return (
-                <article key={`hero-rail-${src}`} ref={isActive ? heroActiveCardRef : null} className={`hero-carousel-card ${isActive ? 'is-active' : ''}`}>
+                <article key={`hero-rail-${src}`} ref={isActive ? heroActiveCardRef : null} className={`hero-carousel-card ${isActive ? 'is-active' : ''}${heroItem?.releaseStatus === 'upcoming' ? ' is-upcoming' : ''}`}>
                   <img
                     className="hero-carousel-poster"
                     src={src}
