@@ -44,12 +44,21 @@ export const THEME_PALETTES = {
 
 export const getActiveThemeVars = (themeMode, darkMode) => {
   const p = THEME_PALETTES[themeMode] || THEME_PALETTES.classic;
+  const softenedLightSurface = darkMode
+    ? p.darkSurface
+    : `color-mix(in srgb, ${p.lightSurface} 72%, #edf2f8)`;
+  const softenedLightSurfaceHover = darkMode
+    ? p.darkSurfaceHover
+    : `color-mix(in srgb, ${p.lightSurfaceHover} 68%, #e6edf6)`;
+  const softenedLightCompCard = darkMode
+    ? p.darkCompCard
+    : `color-mix(in srgb, ${p.lightCompCard} 74%, #eef3f8)`;
   return {
     '--theme-accent': p.accent,
     '--theme-accent-alt': p.accentAlt,
     '--theme-accent-glow': darkMode ? `color-mix(in srgb, ${p.accent} 42%, transparent)` : `color-mix(in srgb, ${p.accent} 24%, transparent)`,
-    '--theme-surface': darkMode ? p.darkSurface : p.lightSurface,
-    '--theme-surface-hover': darkMode ? p.darkSurfaceHover : p.lightSurfaceHover,
-    '--comp-card-bg': darkMode ? p.darkCompCard : p.lightCompCard,
+    '--theme-surface': softenedLightSurface,
+    '--theme-surface-hover': softenedLightSurfaceHover,
+    '--comp-card-bg': softenedLightCompCard,
   };
 };
