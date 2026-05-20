@@ -451,6 +451,56 @@
 [data-color-mode="light"] .phase-rows-full,
 [data-color-mode="light"] .list-panel{background:color-mix(in srgb,var(--theme-surface) 80%, #e8dece) !important;border-color:color-mix(in srgb,var(--theme-border) 70%, #e8dece) !important}
 
+/* Phase list depth tuning */
+[data-color-mode="dark"] .phase-header-card{
+  background: linear-gradient(152deg,
+    color-mix(in srgb,var(--theme-surface) 90%, #4b5367),
+    color-mix(in srgb,var(--theme-bg) 72%, #3d4458)
+  );
+  border-color: color-mix(in srgb,var(--theme-border) 76%, #6a748d);
+  box-shadow: 0 16px 30px rgba(9,12,20,.26), inset 0 1px 0 rgba(255,255,255,.10);
+}
+[data-color-mode="dark"] .phase-rows-full{
+  background: color-mix(in srgb,var(--theme-surface) 78%, #4a5368);
+  border-color: color-mix(in srgb,var(--theme-border) 74%, #6c7690);
+  box-shadow: 0 14px 26px rgba(9,12,20,.2), inset 0 1px 0 rgba(255,255,255,.06);
+}
+[data-color-mode="dark"] .rrow{
+  background: linear-gradient(150deg,
+    color-mix(in srgb,var(--theme-surface) 84%, #586178),
+    color-mix(in srgb,var(--theme-bg) 70%, #3e465a)
+  );
+  border-color: color-mix(in srgb,var(--theme-border) 74%, #72809a);
+  box-shadow: 0 10px 22px rgba(10,14,24,.22), inset 0 1px 0 rgba(255,255,255,.08);
+}
+[data-color-mode="dark"] .rrow:hover{
+  background: linear-gradient(150deg,
+    color-mix(in srgb,var(--theme-surface-hover) 82%, #626d85),
+    color-mix(in srgb,var(--theme-surface) 80%, #4c556a)
+  ) !important;
+}
+
+[data-color-mode="light"] .phase-header-card,
+[data-color-mode="light"] .phase-rows-full,
+[data-color-mode="light"] .list-panel{
+  background: color-mix(in srgb,var(--theme-surface) 78%, #ddd2c1) !important;
+  border-color: color-mix(in srgb,var(--theme-border) 72%, #ddd2c1) !important;
+}
+[data-color-mode="light"] .rrow{
+  background: linear-gradient(152deg,
+    color-mix(in srgb,var(--theme-surface) 80%, #e0d6c7),
+    color-mix(in srgb,var(--theme-bg) 46%, #d6cbb9)
+  ) !important;
+  border-color: color-mix(in srgb,var(--theme-border) 72%, #d9cebd) !important;
+  box-shadow: 0 8px 18px rgba(15,23,42,.07), inset 0 1px 0 rgba(255,255,255,.52);
+}
+[data-color-mode="light"] .rrow:hover{
+  background: linear-gradient(152deg,
+    color-mix(in srgb,var(--theme-surface-hover) 82%, #d8cdbb),
+    color-mix(in srgb,var(--theme-surface) 82%, #d9cebc)
+  ) !important;
+}
+
 @media (min-width: 1024px){
   .row-actions .wbtn.status-pill{min-width:92px !important;min-height:32px !important;padding:0 12px !important;font-size:12.5px !important}
   .row-actions .wbtn{width:30px !important;height:30px !important}
