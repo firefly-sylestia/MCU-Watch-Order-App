@@ -658,3 +658,18 @@ a:hover {
   --theme-text-muted: #98A1AE;
   --theme-text-disabled: #6E7682;
 }
+
+[data-color-mode="light"] {
+  --theme-bg: #F3F4F6;
+  --theme-bg-secondary: #ECEFF3;
+  --theme-bg-tertiary: #E7EAEE;
+  --theme-surface: #F8F9FB;
+  --theme-surface-elevated: #FFFFFF;
+  --theme-surface-hover: #ECEFF3;
+  --theme-border: rgba(0, 0, 0, 0.06);
+  --theme-text: #171A1F;
+  --theme-text-primary: #171A1F;
+  --theme-text-secondary: #4B5563;
+  --theme-text-muted: #6B7280;
+  --theme-text-disabled: #6B7280;
+}

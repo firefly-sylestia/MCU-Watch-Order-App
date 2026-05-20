@@ -514,3 +514,78 @@ button:disabled, .is-disabled, [aria-disabled="true"] { color: var(--readable-te
 
 [data-color-mode="light"] .title-btn { color: color-mix(in srgb, #1f2937 88%, #111827); }
 [data-color-mode="light"] .meta-chip, [data-color-mode="light"] .meta-muted { color: #334155; }
+
+/* Light mode rebalancing: premium paper-like neutral palette */
+[data-color-mode="light"] .app-container,
+[data-color-mode="light"] .analytics-backdrop {
+  background:
+    radial-gradient(circle at 16% 8%, rgba(255, 255, 255, 0.55), transparent 42%),
+    linear-gradient(165deg, #F3F4F6 0%, #ECEFF3 55%, #E7EAEE 100%) !important;
+}
+
+[data-color-mode="light"] .settings-menu,
+[data-color-mode="light"] .settings-menu-redesign,
+[data-color-mode="light"] .analytics-shell,
+[data-color-mode="light"] .analytics-shell-redesign,
+[data-color-mode="light"] .analytics-shell .ui-panel,
+[data-color-mode="light"] .analytics-shell .glass-panel,
+[data-color-mode="light"] .analytics-shell .ui-btn-group,
+[data-color-mode="light"] .phase-header-card,
+[data-color-mode="light"] .phase-rows-full,
+[data-color-mode="light"] .list-panel,
+[data-color-mode="light"] .calendar-row,
+[data-color-mode="light"] .filters-open,
+[data-color-mode="light"] .sidebar-menu {
+  background: linear-gradient(160deg, #FFFFFF 0%, #F8F9FB 100%) !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.75) !important;
+}
+
+[data-color-mode="light"] .rrow {
+  background: linear-gradient(155deg, #FFFFFF 0%, #F8F9FB 88%) !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.82) !important;
+}
+
+[data-color-mode="light"] .title-btn,
+[data-color-mode="light"] .rrow .title-main,
+[data-color-mode="light"] .rrow strong,
+[data-color-mode="light"] .rrow span {
+  color: #171A1F !important;
+  text-shadow: none !important;
+}
+
+[data-color-mode="light"] .meta-chip,
+[data-color-mode="light"] .meta-muted,
+[data-color-mode="light"] .calendar-group-header,
+[data-color-mode="light"] .ui-section-header {
+  color: #4B5563 !important;
+}
+
+[data-color-mode="light"] .status-block.loading,
+[data-color-mode="light"] .disabled,
+[data-color-mode="light"] [disabled],
+[data-color-mode="light"] [aria-disabled="true"] {
+  color: #6B7280 !important;
+}
+
+[data-color-mode="light"] .fpill,
+[data-color-mode="light"] .wbtn,
+[data-color-mode="light"] .status-pill,
+[data-color-mode="light"] .theme-btn,
+[data-color-mode="light"] .detail-btn,
+[data-color-mode="light"] .detail-pill {
+  background: #F8F9FB !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+  color: #171A1F !important;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05) !important;
+}
+
+[data-color-mode="light"] .fpill:hover,
+[data-color-mode="light"] .wbtn:hover,
+[data-color-mode="light"] .status-pill:hover,
+[data-color-mode="light"] .theme-btn:hover,
+[data-color-mode="light"] .detail-btn:hover {
+  background: #ECEFF3 !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
