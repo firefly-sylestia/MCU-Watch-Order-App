@@ -513,6 +513,30 @@ const useDebouncedEffect = (effect, deps, delay = 350) => {
 };
 
 
+const areTitleRowPropsEqual = (prev, next) => (
+  prev.item === next.item
+  && prev.idx === next.idx
+  && prev.ph === next.ph
+  && prev.T === next.T
+  && prev.typeMeta === next.typeMeta
+  && prev.statusMeta === next.statusMeta
+  && prev.releaseStatus === next.releaseStatus
+  && prev.releaseStatusText === next.releaseStatusText
+  && prev.releaseLabel === next.releaseLabel
+  && prev.poster === next.poster
+  && prev.genres === next.genres
+  && prev.isExpanded === next.isExpanded
+  && prev.isWatched === next.isWatched
+  && prev.isBookmarked === next.isBookmarked
+  && prev.statusDropdown === next.statusDropdown
+  && prev.rating === next.rating
+  && prev.bulkSelectMode === next.bulkSelectMode
+  && prev.isSelected === next.isSelected
+  && prev.statusLabelOverride === next.statusLabelOverride
+  && prev.isWorthy === next.isWorthy
+  && prev.multiverseShuffle === next.multiverseShuffle
+);
+
 const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   item,
   idx,
@@ -612,7 +636,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
       </div>
     </div>
   );
-});
+}, areTitleRowPropsEqual);
 
 
 
