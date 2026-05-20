@@ -79,11 +79,11 @@
           .rrow{grid-template-columns:34px 56px minmax(0,1fr) minmax(120px,auto);padding:14px 14px 14px 10px;min-height:84px}
           .rrow{font-size:17px}
           .header-inner{max-width:1240px;margin:0 auto}
-                .sidebar-control-cluster{position:fixed;top:calc(env(safe-area-inset-top, 0px) + var(--space-4));right:var(--space-4);z-index:10020;display:flex;gap:8px} .sidebar-toggle-btn{position:relative;width:50px;height:50px;pointer-events:auto;border-radius:16px;border:1px solid color-mix(in srgb,var(--theme-accent) 34%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 72%, transparent);backdrop-filter:blur(10px) saturate(150%);-webkit-backdrop-filter:blur(10px) saturate(150%)}        .sidebar-backdrop{position:fixed;inset:0;background:radial-gradient(circle at 20% 20%, rgba(79,70,229,0.26), transparent 42%),rgba(2,6,18,0.74);z-index:9995;pointer-events:auto;backdrop-filter:blur(6px)}
+        .sidebar-control-cluster{position:fixed;top:calc(env(safe-area-inset-top, 0px) + var(--space-4));right:var(--space-4);z-index:10020;display:flex;gap:8px;isolation:isolate;contain:paint} .sidebar-toggle-btn{position:relative;width:50px;height:50px;pointer-events:auto;border-radius:16px;border:1px solid color-mix(in srgb,var(--theme-accent) 34%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 92%, var(--theme-bg));backdrop-filter:blur(4px) saturate(118%);-webkit-backdrop-filter:blur(4px) saturate(118%);transform:translateZ(0)}        .sidebar-backdrop{position:fixed;inset:0;background:radial-gradient(circle at 20% 20%, rgba(79,70,229,0.26), transparent 42%),rgba(2,6,18,0.74);z-index:9995;pointer-events:auto;backdrop-filter:blur(6px)}
         .sidebar-menu{position:fixed;top:0;left:0;bottom:0;width:min(344px,86vw);padding:90px 16px 24px;background:linear-gradient(170deg, color-mix(in srgb,var(--theme-surface) 82%, transparent), color-mix(in srgb,var(--theme-bg) 86%, transparent));backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%);border-right:1px solid color-mix(in srgb,var(--theme-accent) 24%, var(--theme-border));transform:var(--sidebar-transform);transition:transform 0.24s cubic-bezier(.22,.9,.24,1);z-index:9996;overflow-y:auto;overflow-x:hidden;box-shadow:0 24px 56px rgba(0,0,0,.45);border-radius:22px;isolation:isolate}
-        .settings-menu-anchor{position:fixed;top:calc(env(safe-area-inset-top, 0px) + 16px);right:14px;z-index:10000}
+        .settings-menu-anchor{position:fixed;top:calc(env(safe-area-inset-top, 0px) + 16px);right:14px;z-index:10000;isolation:isolate;contain:paint}
         .settings-backdrop{position:fixed;inset:0;background:transparent;border:none;z-index:9990}
-        .settings-menu{position:absolute;top:100%;right:0;z-index:10001;margin-top:8px;min-width:320px;width:min(360px,calc(100vw - 28px));max-height:min(80vh,calc(100dvh - 92px));border-radius:var(--radius-surface);border:1px solid color-mix(in srgb,var(--theme-border) 62%, transparent);background:color-mix(in srgb,var(--theme-surface) 60%, transparent);backdrop-filter:blur(14px) saturate(132%);-webkit-backdrop-filter:blur(14px) saturate(132%);box-shadow:var(--shadow-elevated);padding:10px;display:grid;gap:8px;overflow:auto;color:var(--theme-text);overscroll-behavior:contain;overflow-x:hidden}
+        .settings-menu{position:absolute;top:100%;right:0;z-index:10001;margin-top:8px;min-width:320px;width:min(360px,calc(100vw - 28px));max-height:min(80vh,calc(100dvh - 92px));border-radius:var(--radius-surface);border:1px solid color-mix(in srgb,var(--theme-border) 62%, transparent);background:color-mix(in srgb,var(--theme-surface) 92%, var(--theme-bg));backdrop-filter:blur(22px) saturate(142%);-webkit-backdrop-filter:blur(22px) saturate(142%);box-shadow:var(--shadow-elevated);padding:10px;display:grid;gap:8px;overflow:auto;color:var(--theme-text);overscroll-behavior:contain;overflow-x:hidden;pointer-events:auto}
         .settings-menu .fpill{min-width:0}
         .settings-toggle-pill{font-weight:700;letter-spacing:.8px}
         .import-backup-pill:focus-within,.import-backup-pill:focus-visible{outline:none !important;box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 42%, transparent)}
@@ -207,4 +207,56 @@
   .phase-rows-full{padding:10px;gap:8px}
   .rrow{min-height:98px;padding:14px 12px 14px 10px;gap:10px}
   .title-btn .title-main{font-size:clamp(16px,4.6vw,20px)!important}
+}
+
+/* Full redesign: settings + analytics surfaces */
+.settings-menu-redesign{
+  border-radius: 24px !important;
+  padding: 16px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 38%, var(--theme-border)) !important;
+  background:
+    radial-gradient(circle at 14% 10%, color-mix(in srgb, var(--theme-accent) 22%, transparent), transparent 42%),
+    radial-gradient(circle at 92% 6%, color-mix(in srgb, var(--theme-accent-alt) 20%, transparent), transparent 36%),
+    color-mix(in srgb, var(--theme-surface) 94%, var(--theme-bg)) !important;
+  backdrop-filter: blur(24px) saturate(145%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(145%) !important;
+  box-shadow: 0 28px 72px rgba(2, 8, 23, 0.5), inset 0 1px 0 rgba(255,255,255,0.14) !important;
+}
+.settings-menu-redesign > *{
+  border-radius: 14px;
+}
+.settings-menu-redesign .fpill{
+  min-height: 42px !important;
+  border-color: color-mix(in srgb,var(--theme-accent) 44%, var(--theme-border));
+  background: color-mix(in srgb,var(--theme-surface) 82%, transparent);
+}
+.analytics-shell-redesign{
+  width: min(1180px, 94vw);
+  border-radius: 26px !important;
+  padding: 18px !important;
+  background:
+    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--theme-accent) 24%, transparent), transparent 40%),
+    radial-gradient(circle at 88% 0%, color-mix(in srgb, var(--theme-accent-alt) 20%, transparent), transparent 36%),
+    linear-gradient(150deg, color-mix(in srgb,var(--theme-surface) 85%, transparent), color-mix(in srgb,var(--theme-bg) 72%, transparent)) !important;
+}
+.analytics-header{
+  margin-bottom: 16px !important;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 28%, var(--theme-border));
+  border-radius: 16px;
+  background: color-mix(in srgb,var(--theme-surface) 72%, transparent);
+}
+.analytics-tabs{
+  top: 8px !important;
+  padding: 10px !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(16px) saturate(140%);
+}
+.analytics-tabs .fpill{
+  min-height: 40px;
+  border-width: 1.5px;
+}
+[data-color-mode="light"] .settings-menu-redesign,
+[data-color-mode="light"] .analytics-shell-redesign{
+  box-shadow: 0 24px 50px rgba(15,23,42,.15), inset 0 1px 0 rgba(255,255,255,.95) !important;
 }

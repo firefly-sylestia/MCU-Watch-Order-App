@@ -116,7 +116,7 @@ export default function CropModal({ src, onConfirm, onCancel, theme, cropTarget 
 
   return (
     <div
-      style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, animation: "modalBackdropFade 220ms var(--ease-ios)" }}
+      style={{ position: "fixed", inset: 0, zIndex: 20000, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, animation: "modalBackdropFade 220ms var(--ease-ios)" }}
       onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
     >
       <div style={{ background: theme?.cardBg || "#1c1c1e", borderRadius: 18, padding: 14, width: "100%", maxWidth: 480, display: "flex", flexDirection: "column", gap: 10, boxShadow: theme?.cardShadow || "0 24px 64px rgba(0,0,0,0.6)", border: `1px solid ${theme?.cardBorder || "rgba(255,255,255,0.14)"}`, animation: "modalContentSpring 380ms var(--ease-spring)" }}>
