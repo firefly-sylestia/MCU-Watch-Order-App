@@ -1,4 +1,5 @@
 import React, { useCallback, useReducer, useRef } from "react";
+import { createPortal } from "react-dom";
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
@@ -114,7 +115,7 @@ export default function CropModal({ src, onConfirm, onCancel, theme, cropTarget 
       ? "Crop Overlay"
       : "Crop Avatar";
 
-  return (
+  const modal = (
     <div
       style={{ position: "fixed", inset: 0, zIndex: 20000, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, animation: "modalBackdropFade 220ms var(--ease-ios)" }}
       onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
@@ -158,4 +159,7 @@ export default function CropModal({ src, onConfirm, onCancel, theme, cropTarget 
       </div>
     </div>
   );
+
+  if (typeof document === "undefined") return modal;
+  return createPortal(modal, document.body);
 }
