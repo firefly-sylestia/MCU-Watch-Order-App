@@ -1411,9 +1411,9 @@ export default function MCUViewer() {
 
   useEffect(() => {
     if (!previousHeroSrc) return undefined;
-    const timer = window.setTimeout(() => setPreviousHeroSrc(''), 1200);
+    const timer = window.setTimeout(() => setPreviousHeroSrc(''), darkMode ? 900 : 420);
     return () => window.clearTimeout(timer);
-  }, [previousHeroSrc]);
+  }, [previousHeroSrc, darkMode]);
 
   useEffect(() => {
     if (!activeHeroSrc) return undefined;
@@ -2643,7 +2643,7 @@ export default function MCUViewer() {
           />
         )}
         <div className="hero-backdrop-blend" />
-        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '8%' : '5%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '7%' : '4%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.16 : 0.11, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
+        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '6%' : '3%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '5%' : '2.5%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.12 : 0.06, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
       </div>
       {lightningStrike && <div style={{ position:'fixed', inset:0, pointerEvents:'none', background:'linear-gradient(180deg, rgba(180,220,255,0.95), rgba(255,255,255,0))', mixBlendMode:'screen', zIndex:9999, animation:'fadeInOut 0.7s ease' }} />}
       {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
