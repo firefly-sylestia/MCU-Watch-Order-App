@@ -2739,7 +2739,7 @@ export default function MCUViewer() {
       </header>
 
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ position: 'relative', height: isDesktopViewport ? 530 : 390, maxWidth: 1240, margin: '0 auto', width: 'min(1240px, calc(100% - 24px))', background: 'linear-gradient(160deg, color-mix(in srgb,var(--theme-surface) 82%, transparent), color-mix(in srgb,var(--theme-bg) 72%, transparent))', border: `1px solid ${T.surfaceBorder}`, borderRadius: 'var(--hero-backdrop-radius)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 'var(--overlay-z-floating)', boxShadow: 'var(--elevation-surface-2)' }}>
+      <div style={{ position: 'relative', height: isDesktopViewport ? 530 : 390, maxWidth: 1240, margin: '0 auto', width: 'min(1240px, calc(100% - 24px))', background: darkMode ? 'linear-gradient(160deg, color-mix(in srgb,var(--theme-surface) 70%, transparent), color-mix(in srgb,var(--theme-bg) 62%, transparent))' : 'linear-gradient(160deg, color-mix(in srgb,var(--theme-surface) 38%, transparent), color-mix(in srgb,var(--theme-bg) 20%, transparent))', border: `1px solid ${T.surfaceBorder}`, borderRadius: 'var(--hero-backdrop-radius)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 'var(--overlay-z-floating)', boxShadow: 'var(--elevation-surface-2)' }}>
         {heroPosters.length > 0 && (
           <div className="hero-rail"
             ref={heroRailRef}
@@ -2971,7 +2971,7 @@ export default function MCUViewer() {
           )}
 
           {viewMode === 'calendar' ? (
-            <section className='curvy-panel' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
+            <section className='curvy-panel calendar-section' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
               <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
               <div style={{ marginBottom: 12, color: T.textMuted, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.2 }}>Grouped by month / quarter / year</div>
               {Object.entries(calendarItems.grouped).map(([group, entries]) => (
