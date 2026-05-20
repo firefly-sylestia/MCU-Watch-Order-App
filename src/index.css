@@ -23,8 +23,8 @@
   --elevation-surface-3: 0 28px 72px rgba(0, 0, 0, 0.40);
 
   /* Premium semantic roles */
-  --color-bg-base: #050812;
-  --color-bg-elevated: rgba(12, 18, 35, 0.92);
+  --color-bg-base: #171b24;
+  --color-bg-elevated: rgba(33, 39, 54, 0.92);
   --color-text-primary: #f5fffd;
   --color-text-secondary: rgba(245, 255, 253, 0.66);
   --color-accent: #7cffda;
@@ -57,10 +57,10 @@
   --accent-glow-2: rgba(154, 134, 255, 0.30);
   
   /* Surface Colors */
-  --bg: #050812;
-  --bg-elevated: rgba(12, 18, 35, 0.92);
-  --bg-card: rgba(20, 28, 52, 0.85);
-  --bg-glass: rgba(15, 22, 42, 0.72);
+  --bg: #171b24;
+  --bg-elevated: rgba(33, 39, 54, 0.92);
+  --bg-card: rgba(44, 52, 70, 0.84);
+  --bg-glass: rgba(50, 59, 79, 0.70);
   
   /* Text Colors */
   --text: rgba(245, 255, 253, 0.92);

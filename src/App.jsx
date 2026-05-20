@@ -3028,7 +3028,7 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} className={snapMode ? 'snap-blip' : ''} style={{ overflow: 'visible', flex: '0 0 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
+      <main ref={mainRef} className={snapMode ? 'snap-blip' : ''} style={{ overflowX: 'clip', overflowY: 'auto', overscrollBehaviorY: 'contain', WebkitOverflowScrolling: 'touch', scrollbarGutter: 'stable', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
@@ -3043,10 +3043,10 @@ export default function MCUViewer() {
               {Object.entries(calendarItems.grouped).map(([group, entries]) => (
                 <div key={group}>
                   <div className="calendar-group-header">{group}</div>
-                  {entries.map(({ item, rawDate, label, releaseStatus, hasRealDate }) => (
+                  {entries.map(({ item, rawDate, label, releaseStatus, hasRealDate }, idx) => (
                     <div key={`${group}-${item.id}`} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
                       <div style={{ fontSize: 11, color: releaseStatus === 'upcoming' ? 'var(--theme-warning)' : T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
-                      <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
+                      <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} eager={idx < 8} />
                       <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left', textShadow: '0 1px 2px color-mix(in srgb, var(--theme-bg) 35%, transparent)' }}>
                         {item.title}
                         <div style={{ fontSize: 11, color: T.textMuted, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
