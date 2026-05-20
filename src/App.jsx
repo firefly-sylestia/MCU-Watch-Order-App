@@ -65,9 +65,9 @@ const X         = p => <Icon {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/>
 
 
 const TYPE_META = {
-  film:   { label: 'Film',   Icon: Film, color: '#d4372f' },
-  series: { label: 'Series', Icon: Tv,   color: '#4a9ede' },
-  short:  { label: 'Short',  Icon: Zap,  color: '#a06cd5' },
+  film:   { label: 'Film',   Icon: Film, tintVar: '--type-film-tint' },
+  series: { label: 'Series', Icon: Tv,   tintVar: '--type-series-tint' },
+  short:  { label: 'Short',  Icon: Zap,  tintVar: '--type-short-tint' },
 };
 
 const STATUS_META = {
@@ -598,7 +598,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
           </div>
           <div className="title-row-mid">
             {item.episodes && <span className="meta-chip truncate-single-line" style={{ fontSize: 9 }}>{item.episodes} EP</span>}
-            <span className="meta-chip truncate-single-line" style={{ fontSize: 11, color: typeMeta.color, fontWeight: 700 }}><TypeIcon size={8} />{typeMeta.label}</span>
+            <span className="meta-chip truncate-single-line" style={{ fontSize: 11, color: `var(${typeMeta.tintVar})`, fontWeight: 700 }}><TypeIcon size={8} />{typeMeta.label}</span>
             <span className="meta-chip truncate-single-line" style={{ fontSize: 10.5 }}>{item.year || releaseLabel}</span>
             <span className="meta-chip truncate-single-line" style={{ fontSize: 8.5, color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
             {!item.essential && <span className="meta-chip truncate-single-line" style={{ fontSize: 8.5 }}>OPT</span>}
@@ -696,10 +696,20 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
   );
 }));
 
-const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
+const PhaseRows = React.memo(function PhaseRows({ rows, renderRow, scrollTop = 0, viewportHeight = 900 }) {
+  const ROW_ESTIMATE = 124;
+  const OVERSCAN = 8;
+  const total = rows.length;
+  const start = Math.max(0, Math.floor(scrollTop / ROW_ESTIMATE) - OVERSCAN);
+  const end = Math.min(total, Math.ceil((scrollTop + viewportHeight) / ROW_ESTIMATE) + OVERSCAN);
+  const topPad = start * ROW_ESTIMATE;
+  const bottomPad = Math.max(0, (total - end) * ROW_ESTIMATE);
+  const visibleRows = rows.slice(start, end);
   return (
     <div className="phase-rows-full">
-      {rows.map((item, idx) => renderRow(item, idx))}
+      {topPad > 0 && <div aria-hidden style={{ height: topPad }} />}
+      {visibleRows.map((item, localIdx) => renderRow(item, start + localIdx))}
+      {bottomPad > 0 && <div aria-hidden style={{ height: bottomPad }} />}
     </div>
   );
 });
@@ -790,6 +800,7 @@ export default function MCUViewer() {
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [selectedIds,    setSelectedIds]    = useState(() => new Set());
   const [scrollCheckpoint, setScrollCheckpoint] = useState(initialUiState.scrollTop);
+  const [scrollMetrics, setScrollMetrics] = useState({ top: initialUiState.scrollTop, velocity: 0, active: false, viewportHeight: 900 });
   const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
   const [grootMode, setGrootMode] = useState(false);
   const [worthyIds, setWorthyIds] = useState({});
@@ -1009,20 +1020,37 @@ export default function MCUViewer() {
   useEffect(() => {
     const el = mainRef.current;
     let scrollSaveTimer;
+    let rafId = 0;
+    let lastTop = 0;
+    let lastTs = performance.now();
     const getCurrentScrollTop = () => {
       const canScrollMain = el && el.scrollHeight > el.clientHeight + 1;
       return canScrollMain ? el.scrollTop : window.scrollY;
     };
     const onScroll = () => {
+      const top = getCurrentScrollTop();
+      const now = performance.now();
+      const dt = Math.max(16, now - lastTs);
+      const velocity = Math.abs((top - lastTop) / dt);
+      lastTop = top;
+      lastTs = now;
       isScrolling.current = true;
       clearTimeout(isScrolling._t);
+      if (rafId) cancelAnimationFrame(rafId);
       clearTimeout(scrollSaveTimer);
       isScrolling._t = setTimeout(() => { isScrolling.current = false; }, 150);
-      scrollSaveTimer = setTimeout(() => setScrollCheckpoint(getCurrentScrollTop()), 220);
+      scrollSaveTimer = setTimeout(() => setScrollCheckpoint(top), 220);
+      if (!rafId) {
+        rafId = requestAnimationFrame(() => {
+          rafId = 0;
+          setScrollMetrics({ top, velocity, active: true, viewportHeight: el?.clientHeight || window.innerHeight || 900 });
+        });
+      }
     };
     el?.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => {
+      if (rafId) cancelAnimationFrame(rafId);
       clearTimeout(scrollSaveTimer);
       el?.removeEventListener('scroll', onScroll);
       window.removeEventListener('scroll', onScroll);
@@ -2563,6 +2591,9 @@ export default function MCUViewer() {
       ? `radial-gradient(circle at 8% 2%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 40%, transparent), transparent 34%), radial-gradient(circle at 90% 8%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 36%, transparent), transparent 40%), radial-gradient(circle at 50% 120%, rgba(14,165,233,0.22), transparent 52%), linear-gradient(138deg, #02030a 0%, #09071a 30%, #0f1031 58%, #1a1038 100%)`
       : `radial-gradient(circle at 8% 4%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 15%, #e9e1d5), transparent 34%), radial-gradient(circle at 88% 14%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 13%, #e9e1d5), transparent 40%), linear-gradient(140deg, #e5ddd1 0%, #dfd6c8 44%, #e4dbcf 100%)`,
     '--comp-overlay-bg': darkMode ? 'rgba(12,16,34,0.88)' : 'rgba(238,232,221,0.93)',
+    '--type-film-tint': darkMode ? 'color-mix(in srgb, var(--theme-accent) 72%, #f4b1ac)' : 'color-mix(in srgb, var(--theme-accent) 66%, #6b1d17)',
+    '--type-series-tint': darkMode ? 'color-mix(in srgb, var(--theme-accent-alt) 74%, #b3dcff)' : 'color-mix(in srgb, var(--theme-accent-alt) 62%, #1e4067)',
+    '--type-short-tint': darkMode ? 'color-mix(in srgb, var(--theme-text-secondary) 58%, #d4c4ff)' : 'color-mix(in srgb, var(--theme-text-secondary) 66%, #43315e)',
     '--comp-dropdown-bg': darkMode ? 'rgba(13,18,34,0.72)' : 'rgba(236,230,220,0.82)',
     '--theme-header-bg': darkMode
       ? `linear-gradient(180deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 18%, #0c1022), #06060f)`
@@ -3124,7 +3155,7 @@ export default function MCUViewer() {
 
                 {/* Row table */}
                 <div className="list-panel" style={{ overflow: 'hidden' }}>
-                  <PhaseRows rows={rows} renderRow={(item, idx) => {
+                  <PhaseRows rows={rows} scrollTop={scrollMetrics.top} viewportHeight={scrollMetrics.viewportHeight} renderRow={(item, idx) => {
                     const itemReleaseStatus = releaseStatusFor(item);
                     const itemReleaseInfo = releaseInfoFor(item);
                     return (
