@@ -1446,6 +1446,26 @@ export default function MCUViewer() {
     };
   }, [heroPosters.length, settingsOpen, analyticsOpen, detailItem, sidebarOpen]);
 
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const shouldLockBackground = Boolean(settingsOpen || analyticsOpen || detailItem || sidebarOpen);
+    const body = document.body;
+    const html = document.documentElement;
+    const prevBodyOverflow = body.style.overflow;
+    const prevBodyTouchAction = body.style.touchAction;
+    const prevHtmlOverflow = html.style.overflow;
+    if (shouldLockBackground) {
+      body.style.overflow = 'hidden';
+      body.style.touchAction = 'none';
+      html.style.overflow = 'hidden';
+    }
+    return () => {
+      body.style.overflow = prevBodyOverflow;
+      body.style.touchAction = prevBodyTouchAction;
+      html.style.overflow = prevHtmlOverflow;
+    };
+  }, [settingsOpen, analyticsOpen, detailItem, sidebarOpen]);
+
   const pauseHeroAutoSlide = useCallback((duration = 2200) => {
     heroUserInteractingUntilRef.current = Date.now() + duration;
     if (heroInteractionTimeoutRef.current) window.clearTimeout(heroInteractionTimeoutRef.current);
@@ -2755,9 +2775,9 @@ export default function MCUViewer() {
       <header className="hexbg" style={{ position: 'relative', zIndex: 'var(--overlay-z-base)', background: 'transparent', borderBottom: 'none', flexShrink: 0 }}>
         <div className="header-inner" style={{ width: '100%', maxWidth: 1240, margin: '0 auto', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 26px) 30px 16px', transition: 'padding 0.2s ease' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
-            <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
+              <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
               <div className="header-title-mcu">MARVEL</div>
-              <div className="header-title-sub">Spectrum</div>
+              <div className="header-title-sub">SPECTRUM</div>
               
             </div>
           </div>
@@ -3202,7 +3222,9 @@ export default function MCUViewer() {
                     <Heart size={12}/> {myLikes[detailItem.id] ? 'Liked' : 'Like'}
                   </button>
                   <button className="fpill glass-panel detail-btn" onClick={() => exportPosterForItem(detailItem)}><Download size={14}/> Export Details Card</button>
-                  <button className="fpill glass-panel detail-btn" onClick={() => setDetailItem(null)}>Close</button>
+                </div>
+                <div className="detail-close-sticky">
+                  <button className="fpill glass-panel detail-btn detail-close-btn" onClick={() => setDetailItem(null)}>Close</button>
                 </div>
               </div>
             </div>
