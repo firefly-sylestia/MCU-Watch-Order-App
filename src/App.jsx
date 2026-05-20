@@ -26,6 +26,8 @@ import {
   RELEASE_INFO,
   UPCOMING_PLACEHOLDERS,
 } from './data/mcuData';
+import { DC_RAW, DC_PHASES, DC_CORE_IDS } from './data/dcData';
+import { UNIVERSE_META } from './constants/universeSwitch';
 
 // ─── Icon primitives ────────────────────────────────────────────────────────
 const Icon = ({ children, size = 16, style = {} }) => (
@@ -134,7 +136,7 @@ const UI_STATE_DEFAULTS = {
 
 const VALID_LIST_MODES = new Set(LIST_MODES.map(mode => mode.id));
 const VALID_VIEW_MODES = new Set(['list', 'calendar']);
-const VALID_PHASES = new Set([0, ...PHASES.map(phase => phase.id)]);
+const VALID_PHASES = new Set([0, ...PHASES.map(phase => phase.id), ...DC_PHASES.map(phase => phase.id)]);
 const VALID_TYPES = new Set([null, ...Object.keys(TYPE_META)]);
 const VALID_STATUSES = new Set([null, ...Object.keys(STATUS_META)]);
 const VALID_DENSITY_MODES = new Set(['comfortable', 'compact']);
@@ -706,6 +708,7 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function MCUViewer() {
   const initialUiState = useMemo(() => readSavedUiState(), []);
+  const [universe, setUniverse] = useState('mcu');
   const [items,          setItems]          = useState(RAW);
   const [listMode,       setListMode]       = useState(initialUiState.listMode);
   const [search,         setSearch]         = useState(initialUiState.search);
@@ -715,6 +718,7 @@ export default function MCUViewer() {
   const [statusFilter,   setStatusFilter]   = useState(initialUiState.statusFilter);
   const [typeFilter,     setTypeFilter]     = useState(initialUiState.typeFilter);
   const [activePhase,    setActivePhase]    = useState(initialUiState.activePhase);
+  const activeUniverse = UNIVERSE_META[universe] || UNIVERSE_META.mcu;
   const [uiModeState, dispatchUiMode] = useReducer((state, action) => ({ ...state, ...action }), { sortOpen: false, phaseOpen: false, filterStatusOpen: false, dockStatusOpen: false, filtersOpen: initialUiState.filtersOpen });
   const { sortOpen, phaseOpen, filterStatusOpen, dockStatusOpen, filtersOpen } = uiModeState;
   const setSortOpen = (next) => dispatchUiMode({ sortOpen: typeof next === 'function' ? next(uiModeState.sortOpen) : next });
@@ -794,6 +798,13 @@ export default function MCUViewer() {
   const [grootMode, setGrootMode] = useState(false);
   const [worthyIds, setWorthyIds] = useState({});
 
+  useEffect(() => {
+    setItems(universe === 'dc' ? DC_RAW : RAW);
+    setActivePhase(0);
+    setExpandedPhase(null);
+    setExpandedItem(null);
+  }, [universe]);
+
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   const closeAnalytics = useCallback(() => setAnalyticsOpen(false), []);
@@ -861,6 +872,7 @@ export default function MCUViewer() {
 
   useOverlayNavigation({ sidebarOpen, settingsOpen, detailItem, analyticsOpen, onCloseDetail: closeDetail, onCloseAnalytics: closeAnalytics, onCloseSettings: closeSettings, onCloseSidebar: closeSidebar });
 
+  const currentPhases = universe === 'dc' ? DC_PHASES : PHASES;
   const overlayActive = Boolean(settingsOpen || analyticsOpen || detailItem || sidebarOpen);
 
   useEffect(() => {
@@ -1092,7 +1104,7 @@ export default function MCUViewer() {
   };
 
   const shareProgressCard = async () => {
-    const currentPhase = activePhase === 0 ? stickyPhaseProgress.label : (PHASES.find(p => p.id === activePhase)?.name || stickyPhaseProgress.label);
+    const currentPhase = activePhase === 0 ? stickyPhaseProgress.label : (currentPhases.find(p => p.id === activePhase)?.name || stickyPhaseProgress.label);
     await shareCardImage({ type: 'progress', data: { pct, currentPhase, totalWatched, totalItems: activeItems.length } });
   };
 
@@ -1189,7 +1201,7 @@ export default function MCUViewer() {
   };
 
   const STATUS_SORT_ORDER = { watching: 0, 'plan-to-watch': 1, unwatched: 2, watched: 3, 'on-hold': 4, dropped: 5 };
-  const coreIds = useMemo(() => new Set(ESSENTIAL_LIST.map(i => i.id)), []);
+  const coreIds = useMemo(() => (universe === 'dc' ? DC_CORE_IDS : new Set(ESSENTIAL_LIST.map(i => i.id))), [universe]);
   const openDetail = useCallback((item) => {
     detailRequestRef.current += 1;
     setDetailData(null);
@@ -1319,7 +1331,7 @@ export default function MCUViewer() {
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
   const pct = activeItems.length ? Math.round((totalWatched / activeItems.length) * 100) : 0;
-  const phaseStats = useMemo(() => PHASES.map(ph => {
+  const phaseStats = useMemo(() => currentPhases.map(ph => {
     const phaseItems = activeItems.filter(i => i.phase === ph.id);
     const watched = phaseItems.filter(i => i.status === 'watched').length;
     return { phase: ph.id, watched, total: phaseItems.length };
@@ -1905,7 +1917,7 @@ export default function MCUViewer() {
   const phaseGradient = useMemo(() => {
     let cursor = 0;
     const stops = [];
-    PHASES.forEach((ph, phIdx) => {
+    currentPhases.forEach((ph, phIdx) => {
       const phaseItems = activeItems.filter(i => i.phase === ph.id);
       const watched = phaseItems.filter(i => i.status === 'watched').length;
       const w = activeItems.length ? (watched / activeItems.length) * 100 : 0;
@@ -2702,7 +2714,7 @@ export default function MCUViewer() {
           {nextUnwatched && <div style={{ fontSize: 12, color: T.textMuted }}>Phase {nextUnwatched.phase} · {TYPE_META[nextUnwatched.type]?.label}</div>}
         </div>
         <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
-          {PHASES.map(ph => <button key={ph.id} className="fpill" onClick={() => { setSidebarOpen(false); setActivePhase(ph.id); scrollTo(ph.id); }} style={{ justifyContent: 'space-between' }}><span>{ph.name}</span><ChevRight size={13} /></button>)}
+          {currentPhases.map(ph => <button key={ph.id} className="fpill" onClick={() => { setSidebarOpen(false); setActivePhase(ph.id); scrollTo(ph.id); }} style={{ justifyContent: 'space-between' }}><span>{ph.name}</span><ChevRight size={13} /></button>)}
         </div>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Theme</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6, marginTop: 8 }}>
@@ -2811,16 +2823,19 @@ export default function MCUViewer() {
         <div className="header-inner" style={{ width: '100%', maxWidth: 1240, margin: '0 auto', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 26px) 30px 16px', transition: 'padding 0.2s ease' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
-              <div className="header-title-mcu">MARVEL</div>
-              <div className="header-title-sub">Spectrum</div>
+              <div className="header-title-mcu">{activeUniverse.title}</div>
+              <div className="header-title-sub">{activeUniverse.subtitle}</div>
               
             </div>
+            <button className='fpill universe-switch-btn' type='button' onClick={() => setUniverse(prev => prev === 'mcu' ? 'dc' : 'mcu')} aria-label={activeUniverse.switchLabel} title={activeUniverse.switchLabel} style={{ marginLeft: 'auto' }}>
+              <SwitchIcon size={14} /> {universe === 'mcu' ? 'DC Mode' : 'MCU Mode'}
+            </button>
           </div>
         </div>
       </header>
 
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section className="hero-carousel-shell" aria-label="Featured MCU titles">
+      <section className="hero-carousel-shell" aria-label={activeUniverse.heroLabel}>
         {heroPosters.length > 0 && (
           <>
             <button className="hero-carousel-nav prev" type="button" aria-label="Previous featured poster" onClick={goToPrevHero}>‹</button>
@@ -2837,7 +2852,7 @@ export default function MCUViewer() {
                   <img
                     className="hero-carousel-poster"
                     src={src}
-                    alt={heroItem?.title || 'Featured MCU poster'}
+                    alt={heroItem?.title || `Featured ${activeUniverse.title} poster`}
                     draggable={false}
                     loading={idx < 8 ? 'eager' : 'lazy'}
                     decoding="async"
@@ -2845,7 +2860,7 @@ export default function MCUViewer() {
                     onClick={() => { if (heroItem) openDetail(heroItem); }}
                     />
                   <div className="hero-carousel-meta">
-                    <p className="hero-carousel-title">{heroItem?.title || 'Featured MCU poster'}</p>
+                    <p className="hero-carousel-title">{heroItem?.title || `Featured ${activeUniverse.title} poster`}</p>
                   </div>
                 </article>
               );
@@ -3065,7 +3080,7 @@ export default function MCUViewer() {
               ))}
             </section>
           ) : phaseKeys.map(pid => {
-            const ph = PHASES.find(p => p.id === pid);
+            const ph = currentPhases.find(p => p.id === pid);
             const rows = grouped[pid];
             const done = rows.filter(r => r.status === 'watched').length;
             const phasePct = rows.length ? Math.round((done / rows.length) * 100) : 0;
