@@ -653,13 +653,13 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
   return (
     <>
       {open && <button className="settings-backdrop" aria-label="Close settings menu" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose?.(); }} />}
-      <div ref={ref} className="settings-menu-anchor">
       {open && (
-        <div className="fade-in settings-menu settings-menu-redesign" style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
-          {children}
+        <div className="settings-shell" role="dialog" aria-modal="true" aria-label="Settings and profile" ref={ref}>
+          <div className="fade-in settings-menu settings-menu-redesign" style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
+            {children}
+          </div>
         </div>
       )}
-      </div>
     </>
   );
 }));
