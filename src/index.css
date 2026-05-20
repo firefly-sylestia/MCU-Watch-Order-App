@@ -593,11 +593,6 @@ a:hover {
   outline-offset: 2px;
 }
 
-/* ── Performance Mode Overrides ─────────────────────────────────────────────── */
-.performance-mode * {
-  animation: none !important;
-}
-
 /* ── Aurora Background Effect ───────────────────────────────────────────────── */
 .aurora-bg {
   position: fixed;

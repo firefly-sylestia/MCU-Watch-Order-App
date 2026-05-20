@@ -124,12 +124,13 @@ const UI_STATE_DEFAULTS = {
   densityMode: 'comfortable',
   timelineMode: 'sacred',
   autoHideStatuses: false,
-  performanceMode: true,
   desktopTextScale: 1,
   textScaleEnabled: false,
   scrollTop: 0,
   exportPrefs: { font: 'inter', textScale: 1.08, detailUseReviewStyle: true },
 };
+
+const TVA_INTRO_DURATION_MS = 4200;
 
 const VALID_LIST_MODES = new Set(LIST_MODES.map(mode => mode.id));
 const VALID_VIEW_MODES = new Set(['list', 'calendar']);
@@ -162,7 +163,6 @@ const readSavedUiState = () => {
       densityMode: VALID_DENSITY_MODES.has(saved.densityMode) ? saved.densityMode : UI_STATE_DEFAULTS.densityMode,
       timelineMode: VALID_TIMELINE_MODES.has(saved.timelineMode) ? saved.timelineMode : UI_STATE_DEFAULTS.timelineMode,
       autoHideStatuses: typeof saved.autoHideStatuses === 'boolean' ? saved.autoHideStatuses : UI_STATE_DEFAULTS.autoHideStatuses,
-      performanceMode: typeof saved.performanceMode === 'boolean' ? saved.performanceMode : UI_STATE_DEFAULTS.performanceMode,
       desktopTextScale: VALID_DESKTOP_TEXT_SCALES.has(Number(saved.desktopTextScale)) ? Number(saved.desktopTextScale) : UI_STATE_DEFAULTS.desktopTextScale,
       textScaleEnabled: typeof saved.textScaleEnabled === 'boolean' ? saved.textScaleEnabled : UI_STATE_DEFAULTS.textScaleEnabled,
       scrollTop: Number.isFinite(Number(saved.scrollTop)) ? Math.max(0, Number(saved.scrollTop)) : UI_STATE_DEFAULTS.scrollTop,
@@ -619,7 +619,6 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
 const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
   open,
   darkMode,
-  performanceMode,
   pillBorder,
   surfaceBorder,
   onToggle,
@@ -636,7 +635,7 @@ const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
       <button className="theme-btn sidebar-toggle-btn settings-toggle-btn" disabled={settingsOpen} onClick={onOpenSettings} aria-label="Open settings and profile" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: darkMode ? 'var(--elevation-surface-2)' : 'var(--elevation-surface-1)', opacity: settingsOpen ? 0 : 1, pointerEvents: settingsOpen ? 'none' : 'auto', visibility: settingsOpen ? 'hidden' : 'visible' }}><Settings size={18} /></button>
       </div>
       {open && <div className="sidebar-backdrop" onClick={onClose} />}
-      <aside ref={ref} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
+      <aside ref={ref} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': 'blur(8px)' }}>
         {children}
       </aside>
     </>
@@ -646,7 +645,6 @@ const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
 const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
   open,
   darkMode,
-  performanceMode,
   onClose,
   children,
 }, ref) {
@@ -655,7 +653,7 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
       {open && <button className="settings-backdrop" aria-label="Close settings menu" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose?.(); }} />}
       <div ref={ref} className="settings-menu-anchor">
       {open && (
-        <div className="fade-in settings-menu" style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
+        <div className="fade-in settings-menu" style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': 'blur(8px)' }}>
           {children}
         </div>
       )}
@@ -669,6 +667,32 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
     <div className="phase-rows-full">
       {rows.map((item, idx) => renderRow(item, idx))}
     </div>
+  );
+});
+
+const CinematicRail = React.memo(function CinematicRail({ title, subtitle, items, onOpenDetail, posterSrc, onViewAll }) {
+  if (!items.length) return null;
+  return (
+    <section className="cinematic-rail-shell motion-fade-up">
+      <div className="cinematic-rail-head">
+        <div>
+          <div className="cinematic-rail-title">{title}</div>
+          <div className="cinematic-rail-subtitle">{subtitle}</div>
+        </div>
+        {onViewAll && <button className="fpill cinematic-rail-viewall" type="button" onClick={onViewAll}>View all</button>}
+      </div>
+      <div className="cinematic-rail-track">
+        {items.map(item => (
+          <button key={`${title}-${item.id}`} className="cinematic-card ui-actionable motion-scale-soft" type="button" onClick={() => onOpenDetail(item)}>
+            <div className="cinematic-card-poster motion-crossfade"><LazyPoster className="poster" src={posterSrc(item)} alt={item.title} /></div>
+            <div className="cinematic-card-copy cinematic-card-safezone">
+              <div className="cinematic-card-title">{item.title}</div>
+              <div className="cinematic-card-meta">Phase {item.phase} · {TYPE_META[item.type]?.label} · {item.year}</div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 });
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -734,7 +758,12 @@ export default function MCUViewer() {
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
-  const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
+  const [wardrobeOpen, setWardrobeOpen] = useState(false);
+  const [wardrobeRail, setWardrobeRail] = useState('continue');
+  const [wardrobeAngle, setWardrobeAngle] = useState(0);
+  const wardrobeDragRef = useRef({ active: false, x: 0 });
+  const [showTvaIntro, setShowTvaIntro] = useState(false);
+  const [allowTvaMotion, setAllowTvaMotion] = useState(false);
   const [genreFilter] = useState('all');
   const [myLikes,        setMyLikes]        = useState({});
   const [myRating,       setMyRating]       = useState({});
@@ -822,6 +851,16 @@ export default function MCUViewer() {
 
 
   useOverlayNavigation({ sidebarOpen, settingsOpen, detailItem, analyticsOpen, onCloseDetail: () => setDetailItem(null), onCloseAnalytics: () => setAnalyticsOpen(false), onCloseSettings: () => setSettingsOpen(false), onCloseSidebar: () => setSidebarOpen(false) });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const mq = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    const reducedMotion = Boolean(mq?.matches);
+    setAllowTvaMotion(!reducedMotion);
+    setShowTvaIntro(true);
+    const timer = window.setTimeout(() => setShowTvaIntro(false), TVA_INTRO_DURATION_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (!sidebarOpen || !sidebarRef.current) return;
@@ -1249,12 +1288,11 @@ export default function MCUViewer() {
       densityMode,
       timelineMode,
       autoHideStatuses,
-      performanceMode,
       desktopTextScale,
       textScaleEnabled,
       scrollTop,
     }));
-  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
+  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
   const totalWatched = useMemo(() => activeItems.filter(i => i.status === 'watched').length, [activeItems]);
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
@@ -1444,12 +1482,12 @@ export default function MCUViewer() {
       const card = heroActiveCardRef.current;
       if (rail && card) {
         const targetLeft = card.offsetLeft - (rail.clientWidth - card.clientWidth) / 2;
-        rail.scrollTo({ left: Math.max(0, targetLeft), behavior: performanceMode ? 'auto' : 'smooth' });
+        rail.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
       }
-      window.setTimeout(() => { heroProgrammaticScrollRef.current = false; }, performanceMode ? 120 : 520);
+      window.setTimeout(() => { heroProgrammaticScrollRef.current = false; }, 520);
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [heroIndex, activeHeroSrc, visibleHeroPosters, performanceMode]);
+  }, [heroIndex, activeHeroSrc, visibleHeroPosters]);
 
   const handleHeroWheel = useCallback((e) => {
     const horizontalIntent = e.shiftKey || (Math.abs(e.deltaX) > 2 && Math.abs(e.deltaX) > Math.abs(e.deltaY) * 1.2);
@@ -1635,6 +1673,21 @@ export default function MCUViewer() {
   const nextUnwatched = useMemo(() => filtered.find(i => i.status !== 'watched') || null, [filtered]);
   const allWatched = useMemo(() => activeItems.length > 0 && activeItems.every(i => i.status === 'watched'), [activeItems]);
   const recentActivity = useMemo(() => [...activeItems].filter(i => i.watchedDate).sort((a,b) => (b.watchedDate||'').localeCompare(a.watchedDate||'')).slice(0,5), [activeItems]);
+  const continueWatchingItems = useMemo(() => activeItems.filter(i => i.status === 'watching' || i.status === 'plan-to-watch').slice(0, 10), [activeItems]);
+  const sacredTimelineItems = useMemo(() => [...activeItems].sort((a, b) => a.order - b.order).slice(0, 14), [activeItems]);
+  const characterJourneyItems = useMemo(() => activeItems.filter(i => /(Iron Man|Captain America|Thor|Spider-Man|Loki|Wanda|Doctor Strange)/i.test(i.title)).slice(0, 12), [activeItems]);
+  const emotionalOrderItems = useMemo(() => [...activeItems].sort((a, b) => (myRating[b.id] || 0) - (myRating[a.id] || 0)).filter(i => myRating[i.id]).slice(0, 10), [activeItems, myRating]);
+  const postCreditItems = useMemo(() => activeItems.filter(i => /(Guardians|Ant-Man|Thor|Avengers|Spider-Man|Doctor Strange)/i.test(i.title)).slice(0, 12), [activeItems]);
+  const multiverseItems = useMemo(() => activeItems.filter(i => /(Loki|What If|Multiverse|No Way Home|Deadpool|Wolverine|Doctor Strange)/i.test(i.title)).slice(0, 12), [activeItems]);
+  const wardrobeSections = useMemo(() => ([
+    { id: 'continue', title: 'Continue Watching', subtitle: 'Resume your current mission.', items: continueWatchingItems },
+    { id: 'sacred', title: 'Sacred Timeline', subtitle: 'Chronological core path.', items: sacredTimelineItems },
+    { id: 'journeys', title: 'Character Journeys', subtitle: 'Follow hero-centric arcs.', items: characterJourneyItems },
+    { id: 'emotional', title: 'Emotional Order', subtitle: 'Your highest-rated impact stories.', items: emotionalOrderItems },
+    { id: 'postcredit', title: 'Post-Credit Connections', subtitle: 'Stories with strong crossover setups.', items: postCreditItems },
+    { id: 'multiverse', title: 'Multiverse Branches', subtitle: 'Variants, branches, and temporal chaos.', items: multiverseItems },
+  ]), [continueWatchingItems, sacredTimelineItems, characterJourneyItems, emotionalOrderItems, postCreditItems, multiverseItems]);
+  const activeWardrobeSection = wardrobeSections.find(s => s.id === wardrobeRail) || wardrobeSections[0];
   const recentlyWatchedItems = useMemo(() => [...activeItems]
     .filter(i => i.status === 'watched' && i.watchedDate)
     .sort((a, b) => (b.watchedDate || b.statusChangedAt || '').localeCompare(a.watchedDate || a.statusChangedAt || ''))
@@ -2524,9 +2577,19 @@ export default function MCUViewer() {
   const appThemeBg = routeMode === 'utility'
     ? `linear-gradient(180deg, color-mix(in srgb, var(--theme-surface) 36%, var(--app-bg-base)), var(--app-bg-base))`
     : `radial-gradient(circle at 50% 0%, var(--app-bg-vignette), transparent 58%), var(--theme-app-bg)`;
-  const appTexture = performanceMode ? 'none' : `radial-gradient(circle, rgba(255,255,255,var(--app-bg-noise-opacity)) 0.7px, transparent 0.8px)`;
+  const appTexture = `radial-gradient(circle, rgba(255,255,255,var(--app-bg-noise-opacity)) 0.7px, transparent 0.8px)`;
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': textScaleEnabled ? desktopTextScale : 1, width: '100%', minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: 'var(--ui-scale)', transformOrigin: 'top left', left: textScaleEnabled ? '0' : 'auto', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}${sidebarOpen || settingsOpen ? ' overlay-open' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': textScaleEnabled ? desktopTextScale : 1, width: '100%', minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: `${appTexture}, ${appThemeBg}`, backgroundSize: '6px 6px, auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: 'var(--ui-scale)', transformOrigin: 'top left', left: textScaleEnabled ? '0' : 'auto', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${sidebarOpen || settingsOpen ? ' overlay-open' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+      {showTvaIntro && (
+        <div className={`tva-intro-overlay${allowTvaMotion ? '' : ' static'}`} role="presentation" aria-hidden="true">
+          <div className="tva-intro-time-rings" />
+          <div className="tva-intro-center">
+            <div className="tva-intro-kicker">TIME VARIANCE AUTHORITY</div>
+            <div className="tva-intro-title">MARVEL SPECTRUM</div>
+            <div className="tva-intro-subtitle">Sacred Timeline Access</div>
+          </div>
+        </div>
+      )}
       
 
 
@@ -2552,7 +2615,7 @@ export default function MCUViewer() {
       {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} settingsOpen={settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
+      <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} settingsOpen={settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
         <div style={{ marginBottom: 8, fontSize: 11, letterSpacing: 1.8, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)', textTransform: 'uppercase' }}>Navigation Panel</div>
         <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -2620,7 +2683,7 @@ export default function MCUViewer() {
         </div>
       </SidebarMenu>
 
-      <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} performanceMode={performanceMode} onClose={closeSettings}>
+      <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} onClose={closeSettings}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Profile</div>
             <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 6 }}>
@@ -2649,11 +2712,17 @@ export default function MCUViewer() {
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><EyeOff size={14} /> Spoiler Safe</span>
               <button className='fpill settings-toggle-pill' type='button' onClick={() => setSpoilerSafeMode(v => !v)} style={{ minWidth: 72, justifyContent: 'center', borderColor: spoilerSafeMode ? 'var(--theme-accent)' : 'var(--theme-border)', background: spoilerSafeMode ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}>{spoilerSafeMode ? 'On' : 'Off'}</button>
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Zap size={14} /> Performance Mode</span>
-              <button className='fpill settings-toggle-pill' type='button' onClick={() => setPerformanceMode(v => !v)} style={{ minWidth: 72, justifyContent: 'center', borderColor: performanceMode ? 'var(--theme-accent)' : 'var(--theme-border)', background: performanceMode ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}>{performanceMode ? 'On' : 'Off'}</button>
-            </label>
-            <div style={{ fontSize: 11, color: T.textMuted, lineHeight: 1.35, marginTop: -4 }}>Leave off for full UI motion; turn on only if your device needs reduced effects.</div>
+            <button
+              className='fpill'
+              type='button'
+              onClick={() => {
+                setShowTvaIntro(true);
+                window.setTimeout(() => setShowTvaIntro(false), TVA_INTRO_DURATION_MS);
+              }}
+              style={{ justifyContent: 'center' }}
+            >
+              Replay TVA Opening
+            </button>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 6 }}>
               <button className='fpill' onClick={() => setDensityMode('comfortable')} style={{ borderColor: densityMode === 'comfortable' ? 'var(--theme-accent)' : 'var(--theme-border)', justifyContent: 'center' }}>Comfortable</button>
               <button className='fpill' onClick={() => setDensityMode('compact')} style={{ borderColor: densityMode === 'compact' ? 'var(--theme-accent)' : 'var(--theme-border)', justifyContent: 'center' }}>Compact</button>
@@ -2940,10 +3009,79 @@ export default function MCUViewer() {
         </div>
         </div>
       </div>
+      {wardrobeOpen && (
+        <div className="wardrobe-modal-backdrop" role="dialog" aria-modal="true">
+          <div className="wardrobe-modal-shell motion-fade-up">
+            <div className="wardrobe-modal-head">
+              <div>
+                <div className="cinematic-hero-kicker">Expanded Carousel</div>
+                <div className="cinematic-rail-title">3D Wardrobe Timeline</div>
+              </div>
+              <button className="fpill" type="button" onClick={() => setWardrobeOpen(false)}>Close</button>
+            </div>
+            <div className="wardrobe-tab-row">
+              {wardrobeSections.map(section => (
+                <button key={section.id} className={`fpill ui-actionable${wardrobeRail === section.id ? ' is-active' : ''}`} type="button" onClick={() => setWardrobeRail(section.id)}>
+                  {section.title}
+                </button>
+              ))}
+            </div>
+            <div
+              className="wardrobe-ring-wrap"
+              onWheel={(e) => { e.preventDefault(); setWardrobeAngle(a => a + (e.deltaY > 0 ? 18 : -18)); }}
+              onPointerDown={(e) => { wardrobeDragRef.current = { active: true, x: e.clientX }; }}
+              onPointerMove={(e) => {
+                if (!wardrobeDragRef.current.active) return;
+                const dx = e.clientX - wardrobeDragRef.current.x;
+                wardrobeDragRef.current.x = e.clientX;
+                setWardrobeAngle(a => a + (dx * 0.32));
+              }}
+              onPointerUp={() => { wardrobeDragRef.current.active = false; }}
+              onPointerCancel={() => { wardrobeDragRef.current.active = false; }}
+              onPointerLeave={() => { wardrobeDragRef.current.active = false; }}
+            >
+              <div className="wardrobe-ring-stage">
+                <div className="wardrobe-ring" style={{ transform: `translateZ(-360px) rotateY(${wardrobeAngle}deg)` }}>
+                  {activeWardrobeSection.items.map((item, idx) => {
+                    const angle = (360 / Math.max(1, activeWardrobeSection.items.length)) * idx;
+                    return (
+                      <button
+                        key={`wardrobe-${activeWardrobeSection.id}-${item.id}`}
+                        className="wardrobe-ring-card ui-actionable"
+                        type="button"
+                        style={{ transform: `rotateY(${angle}deg) translateZ(360px)` }}
+                        onClick={() => openDetail(item)}
+                      >
+                        <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
+                        <div className="wardrobe-ring-label">{item.title}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="wardrobe-ring-hint">Scroll to rotate the ring • Click a poster to open details</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={snapMode ? 'snap-blip' : ''} style={{ overflow: 'visible', flex: '0 0 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
+          {viewMode === 'list' && (
+            <section className="cinematic-home-shell">
+              <div className="cinematic-hero-panel motion-ambient-float">
+                <div className="cinematic-hero-kicker">Hero Section</div>
+                <h2 className="cinematic-hero-title">The Sacred Timeline Needs a Watcher</h2>
+                <p className="cinematic-hero-sub">Start where you left off, then explore timeline branches and character journeys in cinematic rails.</p>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button className="fpill" type="button" onClick={() => nextUnwatched && openDetail(nextUnwatched)}>{nextUnwatched ? `Continue: ${nextUnwatched.title}` : 'All caught up'}</button>
+                  <button className="fpill" type="button" onClick={() => setFiltersOpen(v => !v)}>Refine Timeline</button>
+                  <button className="fpill" type="button" onClick={() => setWardrobeOpen(true)}>Open 3D Wardrobe</button>
+                </div>
+              </div>
+            </section>
+          )}
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
