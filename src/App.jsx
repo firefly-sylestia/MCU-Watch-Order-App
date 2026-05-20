@@ -536,6 +536,7 @@ const areTitleRowPropsEqual = (prev, next) => (
   && prev.statusLabelOverride === next.statusLabelOverride
   && prev.isWorthy === next.isWorthy
   && prev.multiverseShuffle === next.multiverseShuffle
+  && prev.isDesktopViewport === next.isDesktopViewport
 );
 
 const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
@@ -567,6 +568,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   isWorthy = false,
   multiverseShuffle = false,
   onThorLongPress,
+  isDesktopViewport = false,
 }) {
   const StatusIcon = statusMeta.Icon;
   const TypeIcon = typeMeta.Icon;
@@ -3142,6 +3144,7 @@ export default function MCUViewer() {
                         isWorthy={Boolean(worthyIds[item.id])}
                         multiverseShuffle={multiverseShuffle}
                         onThorLongPress={(pressedItem) => { setWorthyIds(prev => ({ ...prev, [pressedItem.id]: !prev[pressedItem.id] })); setLightningStrike(true); setTimeout(() => setLightningStrike(false), 700); }}
+                        isDesktopViewport={isDesktopViewport}
                       />
                     );
                   }}/>
