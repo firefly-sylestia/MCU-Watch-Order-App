@@ -2604,6 +2604,9 @@ export default function MCUViewer() {
     ? `linear-gradient(180deg, color-mix(in srgb, var(--theme-surface) 36%, var(--app-bg-base)), var(--app-bg-base))`
     : `radial-gradient(circle at 50% 0%, var(--app-bg-vignette), transparent 58%), var(--theme-app-bg)`;
   const appTexture = performanceMode ? 'none' : `radial-gradient(circle, rgba(255,255,255,var(--app-bg-noise-opacity)) 0.7px, transparent 0.8px)`;
+  const heroBackdropBackgroundSize = isDesktopViewport
+    ? `${Math.max(heroBackdropScale, 132)}% auto`
+    : `auto ${heroBackdropScale}%`;
   return (
     <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
@@ -2614,14 +2617,14 @@ export default function MCUViewer() {
           <div
             key={`backdrop-exit-${previousHeroSrc}`}
             className="hero-backdrop-image is-exiting"
-            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${previousHeroSrc})`, backgroundSize: `auto ${heroBackdropScale}%`, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%' }}
+            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${previousHeroSrc})`, backgroundSize: heroBackdropBackgroundSize, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%' }}
           />
         )}
         {currentHeroSrc && (
           <div
             key={`backdrop-${currentHeroSrc}`}
             className="hero-backdrop-image"
-            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${currentHeroSrc})`, backgroundSize: `auto ${heroBackdropScale}%`, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%' }}
+            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${currentHeroSrc})`, backgroundSize: heroBackdropBackgroundSize, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%' }}
           />
         )}
         <div className="hero-backdrop-blend" />
