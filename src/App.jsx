@@ -2805,16 +2805,16 @@ export default function MCUViewer() {
               <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             {renderPhaseSelector()}
-            <button className="glass-grad" onClick={() => nextUnwatched && openDetail(nextUnwatched)} style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 360, background: 'transparent', cursor: nextUnwatched ? 'pointer' : 'default' }}>
+            <button className="glass-grad quick-continue-btn" onClick={() => nextUnwatched && openDetail(nextUnwatched)} style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 380, background: 'color-mix(in srgb, var(--theme-surface) 70%, transparent)', backdropFilter: 'blur(12px) saturate(130%)', WebkitBackdropFilter: 'blur(12px) saturate(130%)', cursor: nextUnwatched ? 'pointer' : 'default' }}>
               <span style={{ fontSize: 10, letterSpacing: 1.6, color: T.textMuted, textTransform: 'uppercase' }}>Continue</span>
               <span style={{ fontSize: 12, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</span>
             </button>
             {/* Search always visible */}
             <div style={{ position: 'relative', flex: '1 1 220px', minWidth: 170, maxWidth: isDesktopViewport ? 320 : '100%' }}>
               <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder=""
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search title or prerequisite"
                 aria-label="Search titles"
-                style={{ width: '100%', background: 'transparent', border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '7px 12px 7px 30px', color: T.inputColor, fontSize: 14, letterSpacing: 0.3, boxShadow: spiderSense ? '0 0 0 2px rgba(220,20,60,0.45), 0 0 16px rgba(220,20,60,0.35)' : 'none', animation: spiderSense ? 'spiderPulse 0.85s ease-in-out infinite' : 'none' }} />
+                style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 72%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '9px 14px 9px 32px', color: T.inputColor, fontSize: 14, fontWeight: 650, letterSpacing: 0.3, textShadow: '0 1px 2px color-mix(in srgb,var(--theme-bg) 28%, transparent)', backdropFilter: 'blur(12px) saturate(128%)', WebkitBackdropFilter: 'blur(12px) saturate(128%)', boxShadow: spiderSense ? '0 0 0 2px rgba(220,20,60,0.45), 0 0 16px rgba(220,20,60,0.35)' : 'none', animation: spiderSense ? 'spiderPulse 0.85s ease-in-out infinite' : 'none' }} />
             </div>
             <div className='filter-row-actions' style={{ marginLeft: 0, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-start', minWidth: 0 }} />
           </div>
@@ -3123,7 +3123,6 @@ export default function MCUViewer() {
                 <div className="detail-export-kicker">MCU DETAILS CARD</div>
                 <h2 className="detail-export-title">{detailItem.title}</h2>
                 <div className="detail-export-meta">
-                  <span>{detailData?.Year || detailItem.year}</span>
                   <span>Phase {detailItem.phase}</span>
                   <span>{TYPE_META[detailItem.type]?.label}</span>
                   {(detailData?.imdbRating && detailData.imdbRating !== 'N/A') && <span>★ {detailData.imdbRating}/10</span>}
