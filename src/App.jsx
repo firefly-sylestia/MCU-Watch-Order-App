@@ -987,26 +987,14 @@ export default function MCUViewer() {
     }
   };
 
-  useEffect(() => {
-    const normalized = search.trim().toLowerCase();
-    if (normalized === 'groot') {
-      setGrootMode(v => !v);
-    }
-    if (normalized === 'multiverse') {
-      setMultiverseShuffle(v => !v);
-    }
-    if (normalized === 'snap') {
-      setSnapMode(true);
-      setTimeout(() => setSnapMode(false), 1800);
-    }
-    if (normalized === 'spider man' || normalized === 'spiderman') {
-      setSpiderSense(true);
-      setSpiderDrop(true);
-      setTimeout(() => setSpiderDrop(false), 2600);
-    } else {
-      setSpiderSense(normalized.includes('spider'));
-    }
-  }, [search]);
+  const DIALOGUE_EASTER_EGGS = [
+    '“Part of the journey is the end.”',
+    '“I can do this all day.”',
+    '“We have a Hulk.”',
+    '“Whatever it takes.”',
+    '“I love you 3000.”',
+  ];
+  const [dialogueEggIndex, setDialogueEggIndex] = useState(() => Math.floor((Date.now() / 86400000)) % DIALOGUE_EASTER_EGGS.length);
 
   useEffect(() => {
     const el = mainRef.current;
@@ -2881,8 +2869,11 @@ export default function MCUViewer() {
               <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search title or prerequisite"
                 aria-label="Search titles"
-                style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 72%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '9px 14px 9px 32px', color: T.inputColor, fontSize: 14, fontWeight: 650, letterSpacing: 0.3, textShadow: '0 1px 2px color-mix(in srgb,var(--theme-bg) 28%, transparent)', backdropFilter: 'blur(12px) saturate(128%)', WebkitBackdropFilter: 'blur(12px) saturate(128%)', boxShadow: spiderSense ? '0 0 0 2px rgba(220,20,60,0.45), 0 0 16px rgba(220,20,60,0.35)' : 'none', animation: spiderSense ? 'spiderPulse 0.85s ease-in-out infinite' : 'none' }} />
+                style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 72%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '9px 14px 9px 32px', color: T.inputColor, fontSize: 14, fontWeight: 650, letterSpacing: 0.3, textShadow: '0 1px 2px color-mix(in srgb,var(--theme-bg) 28%, transparent)', backdropFilter: 'blur(12px) saturate(128%)', WebkitBackdropFilter: 'blur(12px) saturate(128%)' }} />
             </div>
+            <button className="fpill" type="button" onClick={() => setDialogueEggIndex(v => (v + 1) % DIALOGUE_EASTER_EGGS.length)} style={{ minHeight: 34, fontSize: 11, maxWidth: isDesktopViewport ? 300 : '100%', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {DIALOGUE_EASTER_EGGS[dialogueEggIndex]}
+            </button>
             <div className='filter-row-actions' style={{ marginLeft: 0, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-start', minWidth: 0 }} />
           </div>
         </div>
@@ -3030,7 +3021,7 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} className={snapMode ? 'snap-blip' : ''} style={{ overflow: 'visible', flex: '0 0 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
+      <main ref={mainRef} style={{ overflowY: 'auto', overflowX: 'visible', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
