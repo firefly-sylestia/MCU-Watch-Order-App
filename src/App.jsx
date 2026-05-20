@@ -80,11 +80,6 @@ const STATUS_META = {
 
 const SORT_LABELS = { order: 'Chronological', year: 'By Year', title: 'Alphabetical', runtime: 'Runtime', watched: 'Recently Watched', status: 'By Status' };
 const HIDDEN_FILTER_STATUSES = new Set(['watched', 'dropped']);
-const TITLE_ROW_STATIC = {
-  titleBtn: { overflow: 'hidden' },
-  titleLine: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  genreMeta: { marginTop: 2, fontSize: 10, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1.2 },
-};
 const DESKTOP_TEXT_SCALES = [0.9, 1, 1.1, 1.2, 1.35, 1.5];
 // ─── Static data ────────────────────────────────────────────────────────────
 const LIST_MODES = [
@@ -564,16 +559,16 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
         </div>
         <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 8} />
 
-        <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
-          <div style={TITLE_ROW_STATIC.titleLine}>
-            <span className="title-main" style={{ fontSize: 'clamp(18px, 2.2vw, 21px)', fontWeight: 800, lineHeight: 1.34, color: 'var(--theme-text)', opacity: 1, transition: 'color 0.26s', fontFamily: 'var(--font-marvel-display)', maxWidth: '100%', letterSpacing: 0.2 }}>{item.title}</span>
+        <button className="title-btn" onClick={() => onOpenDetail(item)}>
+          <div className="title-line">
+            <span className="title-main">{item.title}</span>
             {item.episodes && <span className="meta-chip truncate-single-line" style={{ fontSize: 9 }}>{item.episodes} EP</span>}
             <span className="meta-chip truncate-single-line" style={{ fontSize: 11, color: typeMeta.color, fontWeight: 700 }}><TypeIcon size={8} />{typeMeta.label}</span>
             <span className="meta-chip truncate-single-line" style={{ fontSize: 8.5, color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
             {!item.essential && <span className="meta-chip truncate-single-line" style={{ fontSize: 8.5 }}>OPT</span>}
             <ChevRight size={10} style={{ color: T.textFaint, transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
           </div>
-          <div className="meta-muted line-clamp-2 overflow-wrap-anywhere" style={TITLE_ROW_STATIC.genreMeta}>GENRES: {genres.join(' • ').toUpperCase()}</div>
+          <div className="meta-muted title-genre line-clamp-2 overflow-wrap-anywhere">GENRES: {genres.join(' • ').toUpperCase()}</div>
         </button>
 
         <div className="row-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: 120, flexShrink: 0 }}>
