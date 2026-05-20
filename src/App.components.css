@@ -687,3 +687,154 @@ input[placeholder="Search title or prerequisite"]:focus{border-color:color-mix(i
 [data-color-mode="light"] .phase-rows-full,
 [data-color-mode="light"] .rrow{backdrop-filter:none !important;-webkit-backdrop-filter:none !important;}
 [data-color-mode="light"] .phase-rows-full{box-shadow:0 8px 16px rgba(15,23,42,.07), inset 0 1px 0 rgba(255,255,255,.85) !important;}
+
+/* === 2026 Premium Unified UI Refresh === */
+:root {
+  --radius-pill: 999px;
+  --radius-panel: 22px;
+  --radius-card: 18px;
+  --radius-control: 14px;
+  --radius-tight: 10px;
+  --surface-premium: color-mix(in srgb, var(--theme-surface, var(--surface-1)) 84%, transparent);
+  --surface-premium-strong: color-mix(in srgb, var(--theme-surface, var(--surface-2)) 94%, transparent);
+  --border-premium: color-mix(in srgb, var(--theme-border, var(--border)) 72%, rgba(255,255,255,0.16));
+  --shadow-premium: 0 12px 28px rgba(2, 8, 23, 0.24), inset 0 1px 0 rgba(255,255,255,0.1);
+  --shadow-premium-hover: 0 18px 34px rgba(2, 8, 23, 0.3), 0 0 0 1px color-mix(in srgb, var(--theme-accent) 24%, transparent);
+}
+
+.app-container {
+  background:
+    radial-gradient(circle at 15% 5%, color-mix(in srgb, var(--theme-accent) 18%, transparent), transparent 34%),
+    radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt, #9a86ff) 15%, transparent), transparent 40%),
+    linear-gradient(162deg, color-mix(in srgb, var(--theme-bg) 92%, #090b10), var(--theme-bg));
+}
+
+.ui-panel,
+.glass-panel,
+.settings-menu,
+.analytics-shell,
+.filters-open,
+.phase-header-card,
+.phase-rows-full,
+.calendar-section,
+.calendar-row,
+.rrow,
+.sidebar-menu {
+  border-radius: var(--radius-panel) !important;
+  border: 1px solid var(--border-premium) !important;
+  box-shadow: var(--shadow-premium) !important;
+  backdrop-filter: blur(16px) saturate(138%);
+  -webkit-backdrop-filter: blur(16px) saturate(138%);
+}
+
+.fpill,
+.wbtn,
+.theme-btn,
+.status-pill,
+.filters-trigger,
+.phase-chip,
+.dropdown-item,
+.sopt,
+.quick-fab,
+.toggle-btn {
+  border-radius: var(--radius-control) !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 76%, transparent) !important;
+  transition: transform 180ms var(--ease-out), box-shadow 180ms var(--ease-out), background-color 160ms var(--ease-out), border-color 160ms var(--ease-out);
+}
+
+.fpill:hover,
+.wbtn:hover,
+.theme-btn:hover,
+.status-pill:hover,
+.filters-trigger:hover,
+.phase-chip:hover,
+.dropdown-item:hover,
+.sopt:hover,
+.quick-fab:hover,
+.toggle-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-premium-hover);
+  border-color: color-mix(in srgb, var(--theme-accent) 36%, var(--theme-border)) !important;
+}
+
+.fpill:focus-visible,
+.wbtn:focus-visible,
+.theme-btn:focus-visible,
+.status-pill:focus-visible,
+.filters-trigger:focus-visible,
+.phase-chip:focus-visible,
+.dropdown-item:focus-visible,
+.sopt:focus-visible,
+.quick-fab:focus-visible,
+.toggle-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--theme-accent) 72%, #fff);
+  outline-offset: 2px;
+}
+
+.rrow,
+.calendar-row {
+  min-height: 112px;
+  padding: 18px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--surface-premium) 92%, transparent), color-mix(in srgb, var(--surface-premium-strong) 72%, transparent)) !important;
+}
+
+.title-btn .title-main {
+  letter-spacing: 0.015em;
+}
+
+.phase-header-card {
+  padding: 18px 18px 18px 20px;
+  gap: 16px;
+}
+
+.phase-progress-chip,
+.meta-chip,
+.calendar-badge {
+  border-radius: var(--radius-pill) !important;
+}
+
+[data-color-mode="light"] .ui-panel,
+[data-color-mode="light"] .glass-panel,
+[data-color-mode="light"] .settings-menu,
+[data-color-mode="light"] .analytics-shell,
+[data-color-mode="light"] .filters-open,
+[data-color-mode="light"] .phase-header-card,
+[data-color-mode="light"] .phase-rows-full,
+[data-color-mode="light"] .calendar-section,
+[data-color-mode="light"] .calendar-row,
+[data-color-mode="light"] .rrow,
+[data-color-mode="light"] .sidebar-menu {
+  background: linear-gradient(154deg, #ffffff, color-mix(in srgb, var(--theme-surface) 95%, #ffffff)) !important;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.11), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+}
+
+[data-color-mode="dark"] .ui-panel,
+[data-color-mode="dark"] .glass-panel,
+[data-color-mode="dark"] .settings-menu,
+[data-color-mode="dark"] .analytics-shell,
+[data-color-mode="dark"] .filters-open,
+[data-color-mode="dark"] .phase-header-card,
+[data-color-mode="dark"] .phase-rows-full,
+[data-color-mode="dark"] .calendar-section,
+[data-color-mode="dark"] .calendar-row,
+[data-color-mode="dark"] .rrow,
+[data-color-mode="dark"] .sidebar-menu {
+  background: linear-gradient(148deg, color-mix(in srgb, var(--theme-surface) 88%, #0b1019), color-mix(in srgb, var(--theme-bg) 74%, #090c13)) !important;
+}
+
+@media (max-width: 767px) {
+  .ui-panel,
+  .glass-panel,
+  .settings-menu,
+  .analytics-shell,
+  .filters-open,
+  .phase-header-card,
+  .phase-rows-full,
+  .calendar-section,
+  .calendar-row,
+  .rrow,
+  .sidebar-menu {
+    border-radius: 16px !important;
+    padding: 12px !important;
+  }
+}
