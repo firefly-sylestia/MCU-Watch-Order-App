@@ -86,7 +86,7 @@ const TITLE_ROW_STATIC = {
   titleLine: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   genreMeta: { marginTop: 2, fontSize: 10, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1.2 },
 };
-const DESKTOP_TEXT_SCALES = [1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3];
+const DESKTOP_TEXT_SCALES = [1, 1.25, 1.5, 1.75, 2];
 // ─── Static data ────────────────────────────────────────────────────────────
 const LIST_MODES = [
   { id: 'core',     label: 'MCU',      sublabel: 'Curated List',       color: '#c0392b', desc: '60 curated films & series'           },
@@ -604,7 +604,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
           <div className="meta-muted line-clamp-2 overflow-wrap-anywhere title-subline" style={TITLE_ROW_STATIC.genreMeta}>GENRES: {genres.join(' • ').toUpperCase()}</div>
         </button>
 
-        <div className="row-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: 96, flexShrink: 0 }}>
+        <div className="row-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: isDesktopViewport ? 96 : 0, flexShrink: 0 }}>
           <div className="row-meta-line truncate-single-line" style={{ fontSize: 11, color: 'var(--theme-warning)', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.6 }}>★ {rating || '—'}</div>
           <button
             className="wbtn status-pill"
@@ -827,7 +827,7 @@ export default function MCUViewer() {
   const [desktopTextScale, setDesktopTextScale] = useState(initialUiState.desktopTextScale);
   const [textScaleEnabled, setTextScaleEnabled] = useState(initialUiState.textScaleEnabled);
   const { isDesktopViewport } = useResponsiveLayout();
-  const effectiveUiScale = textScaleEnabled ? desktopTextScale : 1;
+  const effectiveUiScale = isDesktopViewport && textScaleEnabled ? desktopTextScale : 1;
   const { heroBackdropScale, setHeroBackdropScale, heroBackdropOpacity, setHeroBackdropOpacity } = useHeroBackdrop();
   const [lightningStrike, setLightningStrike] = useState(false);
   const [spiderDrop, setSpiderDrop] = useState(false);
@@ -2734,7 +2734,7 @@ export default function MCUViewer() {
             </div>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase', marginTop: 2 }}>UI Scale</div>
             <button className='fpill' onClick={() => setTextScaleEnabled(v => !v)} style={{ justifyContent: 'center', borderColor: textScaleEnabled ? 'var(--theme-accent)' : 'var(--theme-border)', background: textScaleEnabled ? 'color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface))' : undefined }}>
-              {textScaleEnabled ? `Scale On · ${Math.round(desktopTextScale * 100)}%` : 'Scale Off'}
+              {textScaleEnabled ? `Scale On · ${Math.round(desktopTextScale * 100)}%` : 'Scale Off'} {!isDesktopViewport ? '(Desktop only)' : ''}
             </button>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6, opacity: textScaleEnabled ? 1 : 0.55 }}>
               {DESKTOP_TEXT_SCALES.map(scale => <button key={scale} className='fpill' disabled={!textScaleEnabled} onClick={() => setDesktopTextScale(scale)} style={{ justifyContent: 'center', borderColor: textScaleEnabled && desktopTextScale === scale ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{Math.round(scale * 100)}%</button>)}
