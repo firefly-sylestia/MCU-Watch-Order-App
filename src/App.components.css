@@ -191,14 +191,16 @@
 .phase-rows-full{padding:14px;display:grid;gap:10px;background:color-mix(in srgb,var(--theme-surface) 54%, transparent);border:1px solid color-mix(in srgb,var(--theme-border) 58%, transparent);border-radius:18px}
 .rrow{min-height:108px;gap:16px;padding:18px 18px 18px 16px;border:1px solid color-mix(in srgb,var(--theme-border) 60%, transparent);background:color-mix(in srgb,var(--surface-primary) 86%, transparent);box-shadow:0 8px 18px rgba(2,8,23,.18),inset 0 1px 0 rgba(255,255,255,.06)}
 .rrow:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(2,8,23,.2),0 0 0 1px color-mix(in srgb,var(--theme-accent) 20%, transparent)}
-.title-btn{padding:6px 0;display:grid;gap:8px;min-height:78px;align-content:center}
-.title-row-top{display:flex;align-items:flex-start;gap:7px;flex-wrap:wrap}
-.title-row-mid{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.title-btn .title-main{font-size:clamp(18px,2.15vw,23px)!important;line-height:1.24!important;letter-spacing:.012em;margin-bottom:0;font-weight:760}
+.title-btn{padding:6px 0;display:grid;gap:8px;min-height:78px;align-content:start}
+.title-row-top{display:flex;align-items:flex-start;gap:7px;flex-wrap:wrap;min-width:0}
+.title-row-mid{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+.title-btn .title-main{font-size:clamp(18px,1.55vw,24px)!important;line-height:1.24!important;letter-spacing:.01em;margin-bottom:0;font-weight:760;min-width:0;flex:1}
 .title-subline{font-size:11.5px!important;letter-spacing:.08em;opacity:.9}
 .meta-chip{padding:4px 9px;font-size:10px!important;font-weight:700;letter-spacing:.08em;background:color-mix(in srgb,var(--theme-bg) 72%, transparent)}
 .row-actions{gap:10px!important}
 .title-chevron{margin-left:auto !important}
+.rrow > :nth-child(3){min-width:0;padding-left:4px}
+.rrow .row-actions{min-width:132px}
 
 [data-color-mode="light"] .phase-header-card{background:linear-gradient(155deg,#ffffff,color-mix(in srgb,var(--theme-surface) 92%, #ffffff));box-shadow:0 12px 24px rgba(15,23,42,.08)}
 [data-color-mode="light"] .rrow{background:linear-gradient(150deg,#ffffff,color-mix(in srgb,var(--theme-surface) 95%, #ffffff));box-shadow:0 8px 20px rgba(15,23,42,.08)}
@@ -213,6 +215,9 @@
 
 /* Full redesign: settings + analytics surfaces */
 .settings-menu-redesign{
+  width:min(92vw, 460px) !important;
+  max-height: min(88vh, 820px) !important;
+  overflow:auto !important;
   border-radius: 24px !important;
   padding: 16px !important;
   border: 1px solid color-mix(in srgb, var(--theme-accent) 38%, var(--theme-border)) !important;
@@ -227,8 +232,11 @@
 .settings-menu-redesign > *{
   border-radius: 14px;
 }
+.settings-menu-redesign .fpill{font-size:12px !important;min-height:34px !important;padding:0 10px !important}
+.settings-menu-redesign input[type="range"]{height:18px}
+.settings-menu-redesign hr{margin:8px 0 !important}
 .settings-menu-redesign .fpill{
-  min-height: 42px !important;
+  min-height: 34px !important;
   border-color: color-mix(in srgb,var(--theme-accent) 44%, var(--theme-border));
   background: color-mix(in srgb,var(--theme-surface) 82%, transparent);
 }
@@ -276,7 +284,7 @@
 .header-title-sub{display:block;text-align:center;margin-left:0}
 
 .list-panel{background:color-mix(in srgb,var(--theme-surface) 45%, transparent) !important;border:1px solid color-mix(in srgb,var(--theme-border) 56%, transparent) !important;border-radius:18px !important;padding:12px !important;backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);box-shadow:0 14px 30px rgba(2,8,23,.24), inset 0 1px 0 rgba(255,255,255,.08) !important}
-.rrow{grid-template-columns:28px 74px minmax(0,1fr) minmax(124px,auto);min-height:124px;gap:18px}
-.poster-shell,.poster{width:74px;height:104px;border-radius:11px}
-@media (max-width: 767px){.rrow{grid-template-columns:24px 58px minmax(0,1fr)!important;min-height:112px;gap:10px}.poster-shell,.poster{width:58px;height:84px}.title-btn{min-height:70px}}
+.rrow{grid-template-columns:32px 86px minmax(0,1fr) minmax(136px,auto);min-height:136px;gap:16px}
+.poster-shell,.poster{width:86px;height:124px;border-radius:12px}
+@media (max-width: 767px){.rrow{grid-template-columns:24px 58px minmax(0,1fr)!important;min-height:112px;gap:10px}.poster-shell,.poster{width:58px;height:84px}.title-btn{min-height:70px}.row-actions{min-width:0!important}}
 [data-color-mode="light"] .phase-rows-full{background:color-mix(in srgb,var(--theme-surface) 97%, #ffffff);border-color:color-mix(in srgb,var(--theme-border) 72%, #ffffff)}
