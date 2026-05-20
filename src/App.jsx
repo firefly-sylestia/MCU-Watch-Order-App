@@ -765,6 +765,7 @@ export default function MCUViewer() {
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   const closeAnalytics = useCallback(() => setAnalyticsOpen(false), []);
+  const closeDetail = useCallback(() => setDetailItem(null), []);
   const toggleSidebarPanel = useCallback(() => {
     setSidebarOpen(prev => {
       const next = !prev;
@@ -822,7 +823,7 @@ export default function MCUViewer() {
 
 
 
-  useOverlayNavigation({ sidebarOpen, settingsOpen, detailItem, analyticsOpen, onCloseDetail: () => setDetailItem(null), onCloseAnalytics: () => setAnalyticsOpen(false), onCloseSettings: () => setSettingsOpen(false), onCloseSidebar: () => setSidebarOpen(false) });
+  useOverlayNavigation({ sidebarOpen, settingsOpen, detailItem, analyticsOpen, onCloseDetail: closeDetail, onCloseAnalytics: closeAnalytics, onCloseSettings: closeSettings, onCloseSidebar: closeSidebar });
 
   useEffect(() => {
     if (!sidebarOpen || !sidebarRef.current) return;
