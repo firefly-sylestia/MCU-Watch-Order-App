@@ -126,7 +126,7 @@ const UI_STATE_DEFAULTS = {
   timelineMode: 'sacred',
   autoHideStatuses: false,
   performanceMode: true,
-  desktopTextScale: 1.5,
+  desktopTextScale: 1,
   textScaleEnabled: true,
   scrollTop: 0,
   exportPrefs: { font: 'inter', textScale: 1.08, detailUseReviewStyle: true },
@@ -829,11 +829,10 @@ export default function MCUViewer() {
   const [desktopTextScale, setDesktopTextScale] = useState(initialUiState.desktopTextScale);
   const [textScaleEnabled, setTextScaleEnabled] = useState(initialUiState.textScaleEnabled);
   const { isDesktopViewport } = useResponsiveLayout();
-  const isTouchPrimaryInput = typeof window !== 'undefined' && (window.matchMedia?.('(pointer: coarse)').matches || window.matchMedia?.('(hover: none)').matches || window.navigator?.maxTouchPoints > 1);
-  const desktopDpiCompensation = isDesktopViewport && !isTouchPrimaryInput
+  const desktopDpiCompensation = isDesktopViewport
     ? Math.min(1, Math.max(0.85, 1 / (window.devicePixelRatio || 1)))
     : 1;
-  const effectiveUiScale = isDesktopViewport && !isTouchPrimaryInput && textScaleEnabled ? desktopTextScale * desktopDpiCompensation : 1;
+  const effectiveUiScale = isDesktopViewport && textScaleEnabled ? desktopTextScale * desktopDpiCompensation : 1;
   const { heroBackdropScale, setHeroBackdropScale, heroBackdropOpacity, setHeroBackdropOpacity } = useHeroBackdrop();
   const [lightningStrike, setLightningStrike] = useState(false);
   const [spiderDrop, setSpiderDrop] = useState(false);
@@ -2502,7 +2501,7 @@ export default function MCUViewer() {
   const activeThemeVars = getActiveThemeVars(themeMode, darkMode);
 
   const cssThemeVars = {
-    '--theme-bg': darkMode ? '#06060f' : '#f2f0eb',
+    '--theme-bg': darkMode ? '#06060f' : '#ebe6dc',
     '--theme-border': darkMode ? '#1b1b33' : '#ddd8cf',
     '--theme-text': darkMode ? '#d8e3f5' : '#1a2030',
     '--theme-text-muted': darkMode ? '#a9b6cb' : '#4f5c70',
@@ -2531,21 +2530,21 @@ export default function MCUViewer() {
     '--overlay-soft': darkMode ? 'rgba(2,6,18,0.3)' : 'rgba(15,23,42,0.09)',
     '--overlay-dark': darkMode ? 'rgba(2,6,18,0.46)' : 'rgba(15,23,42,0.15)',
     '--overlay-strong': darkMode ? 'rgba(2,6,18,0.58)' : 'rgba(15,23,42,0.24)',
-    '--control-solid-bg': darkMode ? 'rgba(20,25,46,0.84)' : 'rgba(255,255,255,0.96)',
+    '--control-solid-bg': darkMode ? 'rgba(20,25,46,0.84)' : 'rgba(247,242,233,0.94)',
     '--detail-shell-bg': darkMode
       ? 'linear-gradient(145deg, color-mix(in srgb,var(--theme-bg) 92%, #000), color-mix(in srgb,var(--theme-surface) 88%, #000) 54%, color-mix(in srgb,var(--theme-bg-alt) 88%, #000))'
-      : 'linear-gradient(145deg, color-mix(in srgb,var(--theme-surface) 88%, #ffffff), color-mix(in srgb,var(--theme-bg) 82%, #ffffff) 56%, color-mix(in srgb,var(--theme-surface) 78%, #ffffff))',
+      : 'linear-gradient(145deg, color-mix(in srgb,var(--theme-surface) 88%, var(--theme-bg)), color-mix(in srgb,var(--theme-bg) 90%, #f5efe3) 56%, color-mix(in srgb,var(--theme-surface) 78%, var(--theme-bg)))',
     '--detail-panel-bg': darkMode
       ? 'color-mix(in srgb,var(--theme-surface) 74%, rgba(8,12,26,0.82))'
-      : 'color-mix(in srgb,var(--theme-surface) 66%, #ffffff)',
-    '--app-bg-base': darkMode ? '#06060f' : '#f2f0eb',
+      : 'color-mix(in srgb,var(--theme-surface) 74%, var(--theme-bg))',
+    '--app-bg-base': darkMode ? '#06060f' : '#ebe6dc',
     '--app-bg-vignette': darkMode ? 'rgba(2,6,23,0.42)' : 'rgba(2,6,23,0.08)',
     '--app-bg-noise-opacity': darkMode ? '0.06' : '0.03',
     '--theme-app-bg': darkMode
       ? `radial-gradient(circle at 8% 2%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 40%, transparent), transparent 34%), radial-gradient(circle at 90% 8%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 36%, transparent), transparent 40%), radial-gradient(circle at 50% 120%, rgba(14,165,233,0.22), transparent 52%), linear-gradient(138deg, #02030a 0%, #09071a 30%, #0f1031 58%, #1a1038 100%)`
-      : `radial-gradient(circle at 8% 4%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 24%, #ffffff), transparent 34%), radial-gradient(circle at 88% 14%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 22%, #ffffff), transparent 40%), linear-gradient(140deg, #f6fbff 0%, #eef3ff 40%, #f2edff 100%)`,
-    '--comp-overlay-bg': darkMode ? 'rgba(12,16,34,0.88)' : 'rgba(255,255,255,0.95)',
-    '--comp-dropdown-bg': darkMode ? 'rgba(13,18,34,0.72)' : 'rgba(255,255,255,0.75)',
+      : `radial-gradient(circle at 8% 4%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 20%, #f2ede2), transparent 34%), radial-gradient(circle at 88% 14%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 18%, #f2ede2), transparent 40%), linear-gradient(140deg, #efe9dd 0%, #e8e2d8 40%, #ece5db 100%)`,
+    '--comp-overlay-bg': darkMode ? 'rgba(12,16,34,0.88)' : 'rgba(245,239,230,0.93)',
+    '--comp-dropdown-bg': darkMode ? 'rgba(13,18,34,0.72)' : 'rgba(243,237,228,0.8)',
     '--theme-header-bg': darkMode
       ? `linear-gradient(180deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 18%, #0c1022), #06060f)`
       : `linear-gradient(180deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 10%, #ffffff), #f6f2ea)`,
@@ -2605,6 +2604,9 @@ export default function MCUViewer() {
     ? `linear-gradient(180deg, color-mix(in srgb, var(--theme-surface) 36%, var(--app-bg-base)), var(--app-bg-base))`
     : `radial-gradient(circle at 50% 0%, var(--app-bg-vignette), transparent 58%), var(--theme-app-bg)`;
   const appTexture = performanceMode ? 'none' : `radial-gradient(circle, rgba(255,255,255,var(--app-bg-noise-opacity)) 0.7px, transparent 0.8px)`;
+  const heroBackdropBackgroundSize = isDesktopViewport
+    ? `${Math.max(heroBackdropScale, 132)}% auto`
+    : `auto ${heroBackdropScale}%`;
   return (
     <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
@@ -2615,14 +2617,14 @@ export default function MCUViewer() {
           <div
             key={`backdrop-exit-${previousHeroSrc}`}
             className="hero-backdrop-image is-exiting"
-            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${previousHeroSrc})`, backgroundSize: `auto ${heroBackdropScale}%`, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%' }}
+            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${previousHeroSrc})`, backgroundSize: heroBackdropBackgroundSize, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%' }}
           />
         )}
         {currentHeroSrc && (
           <div
             key={`backdrop-${currentHeroSrc}`}
             className="hero-backdrop-image"
-            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${currentHeroSrc})`, backgroundSize: `auto ${heroBackdropScale}%`, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%' }}
+            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${currentHeroSrc})`, backgroundSize: heroBackdropBackgroundSize, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%' }}
           />
         )}
         <div className="hero-backdrop-blend" />
@@ -2807,7 +2809,7 @@ export default function MCUViewer() {
             onScroll={() => { if (!heroProgrammaticScrollRef.current) pauseHeroAutoSlide(1800); }}
             onPointerDown={() => pauseHeroAutoSlide(3200)}
             onTouchStart={() => pauseHeroAutoSlide(3200)}
-            style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: isDesktopViewport ? 16 : 12, overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'none', scrollPaddingInline: isDesktopViewport ? '12vw' : '7vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', overscrollBehaviorX: 'contain', overscrollBehaviorY: 'auto', touchAction: 'pan-x', cursor: 'pointer', userSelect: 'none', WebkitUserSelect: 'none' }}>
+            style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: isDesktopViewport ? 16 : 12, overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'none', scrollPaddingInline: isDesktopViewport ? '12vw' : '7vw', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', overscrollBehaviorX: 'contain', overscrollBehaviorY: 'auto', touchAction: 'auto', cursor: 'pointer', userSelect: 'none', WebkitUserSelect: 'none' }}>
             {visibleHeroPosters.map(({ src, item: heroItem }, idx) => {
               const isActive = src === activeHeroSrc;
               return (
