@@ -61,6 +61,7 @@ const SlidersH  = p => <Icon {...p}><line x1="21" y1="4" x2="14" y2="4"/><line x
 const UserCircle = p => <Icon {...p}><circle cx="12" cy="8" r="4"/><path d="M4 20c1.9-3.4 5-5 8-5s6.1 1.6 8 5"/></Icon>;
 const Menu = p => <Icon {...p}><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></Icon>;
 const SwitchIcon = p => <Icon {...p}><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 8a9 9 0 0 0-15-3"/><path d="M3 16a9 9 0 0 0 15 3"/></Icon>;
+const X         = p => <Icon {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></Icon>;
 
 
 const TYPE_META = {
@@ -849,6 +850,28 @@ export default function MCUViewer() {
 
   useOverlayNavigation({ sidebarOpen, settingsOpen, detailItem, analyticsOpen, onCloseDetail: closeDetail, onCloseAnalytics: closeAnalytics, onCloseSettings: closeSettings, onCloseSidebar: closeSidebar });
 
+  const overlayActive = Boolean(settingsOpen || analyticsOpen || detailItem || sidebarOpen);
+
+  useEffect(() => {
+    const bodyStyle = document.body.style;
+    const htmlStyle = document.documentElement.style;
+    const prevBodyOverflow = bodyStyle.overflow;
+    const prevBodyTouchAction = bodyStyle.touchAction;
+    const prevHtmlOverflow = htmlStyle.overflow;
+
+    if (overlayActive) {
+      bodyStyle.overflow = 'hidden';
+      bodyStyle.touchAction = 'none';
+      htmlStyle.overflow = 'hidden';
+    }
+
+    return () => {
+      bodyStyle.overflow = prevBodyOverflow;
+      bodyStyle.touchAction = prevBodyTouchAction;
+      htmlStyle.overflow = prevHtmlOverflow;
+    };
+  }, [overlayActive]);
+
   useEffect(() => {
     if (!sidebarOpen || !sidebarRef.current) return;
     const panel = sidebarRef.current;
@@ -1411,7 +1434,7 @@ export default function MCUViewer() {
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
     if (heroPosters.length <= 1) return undefined;
-    const overlayBlockingCycle = Boolean(settingsOpen || analyticsOpen || detailItem || sidebarOpen);
+    const overlayBlockingCycle = overlayActive;
     const telemetry = (state, reason) => {
       if (typeof window === 'undefined') return;
       window.dispatchEvent(new CustomEvent(`backdrop_cycle_${state}_reason`, { detail: { reason } }));
@@ -2572,7 +2595,7 @@ export default function MCUViewer() {
     : `radial-gradient(circle at 50% 0%, var(--app-bg-vignette), transparent 58%), var(--theme-app-bg)`;
   const appTexture = performanceMode ? 'none' : `radial-gradient(circle, rgba(255,255,255,var(--app-bg-noise-opacity)) 0.7px, transparent 0.8px)`;
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, width: '100%', minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: 'var(--ui-scale)', transformOrigin: 'top left', left: effectiveUiScale !== 1 ? '0' : 'auto', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}${sidebarOpen || settingsOpen ? ' overlay-open' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, width: '100%', minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: 'var(--ui-scale)', transformOrigin: 'top left', left: effectiveUiScale !== 1 ? '0' : 'auto', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
 
 
@@ -3145,6 +3168,9 @@ export default function MCUViewer() {
               </div>
 
               <div className="detail-export-content">
+                <div className="detail-sticky-actions">
+                  <button className="fpill glass-panel detail-btn detail-close-sticky" onClick={() => setDetailItem(null)}><X size={14}/>Close</button>
+                </div>
                 <div className="detail-export-kicker">MCU DETAILS CARD</div>
                 <h2 className="detail-export-title">{detailItem.title}</h2>
                 <div className="detail-export-meta">
@@ -3202,7 +3228,6 @@ export default function MCUViewer() {
                     <Heart size={12}/> {myLikes[detailItem.id] ? 'Liked' : 'Like'}
                   </button>
                   <button className="fpill glass-panel detail-btn" onClick={() => exportPosterForItem(detailItem)}><Download size={14}/> Export Details Card</button>
-                  <button className="fpill glass-panel detail-btn" onClick={() => setDetailItem(null)}>Close</button>
                 </div>
               </div>
             </div>
