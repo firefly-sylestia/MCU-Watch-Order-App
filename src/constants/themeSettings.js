@@ -1,64 +1,55 @@
-/**
- * Theme settings are centralized here so you can edit palettes without touching App logic.
- *
- * HOW TO CUSTOMIZE:
- * 1) Pick a theme in THEME_CHOICES (shown in settings UI).
- * 2) In THEME_PALETTES, edit that theme's color values.
- * 3) Keep keys unchanged (e.g. --theme-accent) so UI keeps consuming them automatically.
- */
-
 export const THEME_CHOICES = [
-  { id: 'classic', label: 'Iron Man', swatch: '#d4372f' },
-  { id: 'cosmic', label: 'Capt. Marvel', swatch: '#4d7bff' },
-  { id: 'vibranium', label: 'Black Panther', swatch: '#7e5dff' },
-  { id: 'quantum', label: 'Ant-Man', swatch: '#ff5da8' },
-  { id: 'mystic', label: 'Dr. Strange', swatch: '#9f66ff' },
-  { id: 'web-slinger', label: 'Spider-Man', swatch: '#df3f4c' },
-  { id: 'god-of-thunder', label: 'Thor', swatch: '#3ca6ff' },
-  { id: 'scarlet-witch', label: 'Scarlet Witch', swatch: '#c61b59' },
-  { id: 'winter-soldier', label: 'Winter Soldier', swatch: '#8fa0b8' },
-  { id: 'captain-america', label: 'Captain America', swatch: '#3b5fa4' },
-  { id: 'daredevil', label: 'Daredevil', swatch: '#bf0615' },
-  { id: 'panther-tech', label: 'Panther Tech', swatch: '#6bb0bf' },
-  { id: 'marvel-red', label: 'Marvel Red', swatch: '#e23636' },
-  { id: 'hela', label: 'Hela', swatch: '#49a561' },
+  { id: 'sacred-timeline', label: 'Sacred Timeline', swatch: '#b8894f' },
+  { id: 'quantum-realm', label: 'Quantum Realm', swatch: '#45e7ff' },
+  { id: 'wakanda', label: 'Wakanda', swatch: '#6e3ad8' },
+  { id: 'asgard', label: 'Asgard', swatch: '#e0be63' },
+  { id: 'hydra', label: 'Hydra', swatch: '#8f2a33' },
+  { id: 'stark-industries', label: 'Stark Industries', swatch: '#51dfff' },
+  { id: 'scarlet-witch', label: 'Scarlet Witch', swatch: '#ab1f3d' },
+  { id: 'loki', label: 'Loki', swatch: '#2f9d62' },
+  { id: 'spider-verse', label: 'Spider-Verse', swatch: '#ff2f48' },
+  { id: 'celestial', label: 'Celestial', swatch: '#f1c56f' },
+  { id: 'midnight-suns', label: 'Midnight Suns', swatch: '#d3472f' },
+  { id: 'shield', label: 'SHIELD', swatch: '#4e7fb2' },
 ];
 
-// Edit palette values below. Keep all variable names exactly as-is.
 export const THEME_PALETTES = {
-  classic: { accent: '#A63232', accentAlt: '#F2AE30', darkSurface: 'rgba(28,10,9,0.90)', lightSurface: 'rgba(255,246,244,0.96)', darkSurfaceHover: 'rgba(44,14,12,0.94)', lightSurfaceHover: 'rgba(255,236,232,0.97)', darkCompCard: 'rgba(26,9,8,0.88)', lightCompCard: 'rgba(255,248,246,0.95)' },
-  cosmic: { accent: '#4d7bff', accentAlt: '#ffb94a', darkSurface: 'rgba(7,12,32,0.90)', lightSurface: 'rgba(243,247,255,0.96)', darkSurfaceHover: 'rgba(10,16,44,0.94)', lightSurfaceHover: 'rgba(232,240,255,0.97)', darkCompCard: 'rgba(6,11,30,0.88)', lightCompCard: 'rgba(245,249,255,0.95)' },
-  vibranium: { accent: '#7e5dff', accentAlt: '#31c0f4', darkSurface: 'rgba(13,7,28,0.90)', lightSurface: 'rgba(248,244,255,0.96)', darkSurfaceHover: 'rgba(20,10,42,0.94)', lightSurfaceHover: 'rgba(238,230,255,0.97)', darkCompCard: 'rgba(12,6,26,0.88)', lightCompCard: 'rgba(250,246,255,0.95)' },
-  quantum: { accent: '#ff5da8', accentAlt: '#67f2ff', darkSurface: 'rgba(26,7,18,0.90)', lightSurface: 'rgba(255,243,251,0.96)', darkSurfaceHover: 'rgba(38,9,26,0.94)', lightSurfaceHover: 'rgba(255,230,246,0.97)', darkCompCard: 'rgba(24,6,17,0.88)', lightCompCard: 'rgba(255,246,253,0.95)' },
-  mystic: { accent: '#9f66ff', accentAlt: '#ff7b39', darkSurface: 'rgba(15,7,28,0.90)', lightSurface: 'rgba(250,244,255,0.96)', darkSurfaceHover: 'rgba(22,10,40,0.94)', lightSurfaceHover: 'rgba(240,230,255,0.97)', darkCompCard: 'rgba(14,6,26,0.88)', lightCompCard: 'rgba(252,247,255,0.95)' },
-  'web-slinger': { accent: '#df3f4c', accentAlt: '#2b7bdf', darkSurface: 'rgba(24,7,9,0.90)', lightSurface: 'rgba(255,244,245,0.96)', darkSurfaceHover: 'rgba(36,9,12,0.94)', lightSurfaceHover: 'rgba(255,232,234,0.97)', darkCompCard: 'rgba(22,6,8,0.88)', lightCompCard: 'rgba(255,247,248,0.95)' },
-  'god-of-thunder': { accent: '#3ca6ff', accentAlt: '#f0f6ff', darkSurface: 'rgba(5,12,26,0.90)', lightSurface: 'rgba(243,250,255,0.96)', darkSurfaceHover: 'rgba(7,17,36,0.94)', lightSurfaceHover: 'rgba(226,244,255,0.97)', darkCompCard: 'rgba(4,10,24,0.88)', lightCompCard: 'rgba(245,252,255,0.95)' },
-  'scarlet-witch': { accent: '#c61b59', accentAlt: '#ff7cb5', darkSurface: 'rgba(24,5,12,0.90)', lightSurface: 'rgba(255,242,247,0.96)', darkSurfaceHover: 'rgba(36,6,18,0.94)', lightSurfaceHover: 'rgba(255,228,238,0.97)', darkCompCard: 'rgba(22,4,11,0.88)', lightCompCard: 'rgba(255,245,250,0.95)' },
-  'winter-soldier': { accent: '#8fa0b8', accentAlt: '#4b596f', darkSurface: 'rgba(7,10,16,0.90)', lightSurface: 'rgba(244,247,252,0.96)', darkSurfaceHover: 'rgba(10,14,22,0.94)', lightSurfaceHover: 'rgba(230,237,248,0.97)', darkCompCard: 'rgba(6,9,15,0.88)', lightCompCard: 'rgba(246,249,254,0.95)' },
-  'captain-america': { accent: '#3b5fa4', accentAlt: '#9b3430', darkSurface: 'rgba(23,27,49,0.92)', lightSurface: 'rgba(254,254,254,0.96)', darkSurfaceHover: 'rgba(31,38,64,0.94)', lightSurfaceHover: 'rgba(174,183,194,0.34)', darkCompCard: 'rgba(23,27,49,0.88)', lightCompCard: 'rgba(254,254,254,0.95)' },
-  daredevil: { accent: '#BF0615', accentAlt: '#A61731', darkSurface: 'rgba(64,1,1,0.92)', lightSurface: 'rgba(255,242,243,0.96)', darkSurfaceHover: 'rgba(78,4,4,0.94)', lightSurfaceHover: 'rgba(255,228,230,0.98)', darkCompCard: 'rgba(64,1,1,0.88)', lightCompCard: 'rgba(255,246,247,0.95)' },
-  'panther-tech': { accent: '#6BB0BF', accentAlt: '#3B3F8C', darkSurface: 'rgba(26,27,27,0.92)', lightSurface: 'rgba(243,244,248,0.96)', darkSurfaceHover: 'rgba(38,40,49,0.94)', lightSurfaceHover: 'rgba(232,234,242,0.97)', darkCompCard: 'rgba(26,27,27,0.88)', lightCompCard: 'rgba(246,247,252,0.95)' },
-  'marvel-red': { accent: '#e23636', accentAlt: '#f78f3f', darkSurface: 'rgba(0,0,0,0.92)', lightSurface: 'rgba(255,245,245,0.96)', darkSurfaceHover: 'rgba(18,18,18,0.94)', lightSurfaceHover: 'rgba(255,233,233,0.97)', darkCompCard: 'rgba(14,14,14,0.88)', lightCompCard: 'rgba(255,248,248,0.95)' },
-  hela: { accent: '#49a561', accentAlt: '#d0d500', darkSurface: 'rgba(3,11,9,0.92)', lightSurface: 'rgba(242,248,244,0.96)', darkSurfaceHover: 'rgba(20,45,39,0.94)', lightSurfaceHover: 'rgba(231,243,235,0.97)', darkCompCard: 'rgba(13,34,28,0.88)', lightCompCard: 'rgba(246,251,247,0.95)' },
+  'sacred-timeline': { accent: '#b8894f', accentAlt: '#8ea57a', baseDark: '#191613', baseLight: '#ebe4d7', cardDark: 'rgba(40,33,25,0.88)', cardLight: 'rgba(244,235,220,0.92)' },
+  'quantum-realm': { accent: '#45e7ff', accentAlt: '#c27bff', baseDark: '#0d1230', baseLight: '#e8e5f3', cardDark: 'rgba(23,20,52,0.88)', cardLight: 'rgba(236,232,248,0.92)' },
+  wakanda: { accent: '#6e3ad8', accentAlt: '#a9afc1', baseDark: '#121217', baseLight: '#e5e6ee', cardDark: 'rgba(30,28,40,0.9)', cardLight: 'rgba(235,233,243,0.92)' },
+  asgard: { accent: '#e0be63', accentAlt: '#4fa6a9', baseDark: '#131d36', baseLight: '#e8ecf0', cardDark: 'rgba(33,44,64,0.9)', cardLight: 'rgba(239,242,246,0.93)' },
+  hydra: { accent: '#8f2a33', accentAlt: '#9ea3ac', baseDark: '#141518', baseLight: '#e4e6e8', cardDark: 'rgba(34,35,40,0.9)', cardLight: 'rgba(236,237,239,0.92)' },
+  'stark-industries': { accent: '#51dfff', accentAlt: '#9ab3c9', baseDark: '#10161f', baseLight: '#e3e8ef', cardDark: 'rgba(29,38,50,0.88)', cardLight: 'rgba(233,238,245,0.92)' },
+  'scarlet-witch': { accent: '#ab1f3d', accentAlt: '#be6c95', baseDark: '#1d0f19', baseLight: '#eadde4', cardDark: 'rgba(47,20,33,0.9)', cardLight: 'rgba(240,227,233,0.93)' },
+  loki: { accent: '#2f9d62', accentAlt: '#a8803f', baseDark: '#151812', baseLight: '#e6e6df', cardDark: 'rgba(33,41,32,0.9)', cardLight: 'rgba(236,238,232,0.92)' },
+  'spider-verse': { accent: '#ff2f48', accentAlt: '#2fd8ff', baseDark: '#141a30', baseLight: '#e5e9f2', cardDark: 'rgba(26,33,58,0.9)', cardLight: 'rgba(233,237,245,0.92)' },
+  celestial: { accent: '#f1c56f', accentAlt: '#d28eb6', baseDark: '#12172c', baseLight: '#ece8f2', cardDark: 'rgba(32,30,60,0.88)', cardLight: 'rgba(241,237,247,0.93)' },
+  'midnight-suns': { accent: '#d3472f', accentAlt: '#d2a45c', baseDark: '#1b1312', baseLight: '#ece3d9', cardDark: 'rgba(47,29,27,0.9)', cardLight: 'rgba(243,233,222,0.92)' },
+  shield: { accent: '#4e7fb2', accentAlt: '#5dd5e8', baseDark: '#111a2a', baseLight: '#e2e8ef', cardDark: 'rgba(27,39,59,0.9)', cardLight: 'rgba(232,238,246,0.92)' },
 };
 
 export const getActiveThemeVars = (themeMode, darkMode) => {
-  const p = THEME_PALETTES[themeMode] || THEME_PALETTES.classic;
-  const lightUnifiedBase = '#f1ece3';
-  const darkUnifiedBase = '#1A1D23';
-  const darkUnifiedElevated = '#272D36';
-  const lightSurface = `color-mix(in srgb, ${p.lightSurface} 72%, ${lightUnifiedBase})`;
-  const lightSurfaceHover = `color-mix(in srgb, ${p.lightSurfaceHover} 68%, ${lightUnifiedBase})`;
-  const lightCompCard = `color-mix(in srgb, ${p.lightCompCard} 74%, ${lightUnifiedBase})`;
-  const darkSurface = `color-mix(in srgb, ${p.darkSurface} 58%, ${darkUnifiedBase})`;
-  const darkSurfaceHover = `color-mix(in srgb, ${p.darkSurfaceHover} 60%, ${darkUnifiedElevated})`;
-  const darkCompCard = `color-mix(in srgb, ${p.darkCompCard} 56%, ${darkUnifiedElevated})`;
+  const p = THEME_PALETTES[themeMode] || THEME_PALETTES['sacred-timeline'];
+  const bg = darkMode ? p.baseDark : p.baseLight;
+  const elevated = darkMode
+    ? `color-mix(in srgb, ${p.cardDark} 86%, ${p.baseDark})`
+    : `color-mix(in srgb, ${p.cardLight} 88%, ${p.baseLight})`;
+
   return {
     '--theme-accent': p.accent,
     '--theme-accent-alt': p.accentAlt,
-    '--theme-accent-glow': darkMode ? `color-mix(in srgb, ${p.accent} 42%, transparent)` : `color-mix(in srgb, ${p.accent} 24%, transparent)`,
-    '--theme-surface': darkMode ? darkSurface : lightSurface,
-    '--theme-surface-hover': darkMode ? darkSurfaceHover : lightSurfaceHover,
-    '--comp-card-bg': darkMode ? darkCompCard : lightCompCard,
+    '--theme-accent-glow': darkMode ? `color-mix(in srgb, ${p.accent} 22%, transparent)` : `color-mix(in srgb, ${p.accent} 14%, transparent)`,
+    '--theme-bg': bg,
+    '--theme-bg-secondary': darkMode ? `color-mix(in srgb, ${bg} 90%, #000)` : `color-mix(in srgb, ${bg} 92%, #cfd4dc)`,
+    '--theme-bg-tertiary': darkMode ? `color-mix(in srgb, ${bg} 86%, #10131a)` : `color-mix(in srgb, ${bg} 85%, #d5dae2)`,
+    '--theme-surface': elevated,
+    '--theme-surface-elevated': darkMode ? `color-mix(in srgb, ${elevated} 94%, #000)` : `color-mix(in srgb, ${elevated} 96%, #f6f7f9)`,
+    '--theme-surface-hover': darkMode ? `color-mix(in srgb, ${elevated} 92%, ${p.accentAlt})` : `color-mix(in srgb, ${elevated} 92%, ${p.accent})`,
+    '--comp-card-bg': elevated,
+    '--theme-text-primary': darkMode ? '#f3f5f9' : '#202734',
+    '--theme-text-secondary': darkMode ? '#b5bfcc' : '#526074',
+    '--theme-text-muted': darkMode ? '#9099a6' : '#6a7486',
+    '--theme-text-disabled': darkMode ? '#707986' : '#8891a0',
+    '--theme-border': darkMode ? 'rgba(225,231,242,0.14)' : 'rgba(41,52,72,0.14)',
   };
 };
