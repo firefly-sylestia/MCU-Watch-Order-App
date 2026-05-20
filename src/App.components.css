@@ -260,3 +260,53 @@
 [data-color-mode="light"] .analytics-shell-redesign{
   box-shadow: 0 24px 50px rgba(15,23,42,.15), inset 0 1px 0 rgba(255,255,255,.95) !important;
 }
+
+/* Baseline rendering optimizations (applies in normal mode) */
+.hero-backdrop-image,
+.hero-backdrop-blend,
+.poster,
+.poster-shell,
+.rrow,
+.calendar-row,
+.settings-menu,
+.analytics-shell,
+.detail-card,
+.filters-open {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.hero-backdrop-image,
+.poster,
+.rrow,
+.calendar-row {
+  will-change: transform, opacity;
+}
+
+.phase-rows-full,
+.calendar-section,
+.analytics-shell,
+.settings-menu,
+.detail-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 600px;
+}
+
+.rrow,
+.calendar-row,
+.phase-rows-full,
+.settings-menu,
+.analytics-shell {
+  contain: layout paint style;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .hero-backdrop-image,
+  .poster,
+  .poster-shell::after,
+  .progress-gradient {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
