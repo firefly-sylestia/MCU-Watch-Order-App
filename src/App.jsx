@@ -683,6 +683,9 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
       {open && (
         <div className="settings-shell" role="dialog" aria-modal="true" aria-label="Settings and profile" ref={ref}>
           <div className="fade-in settings-menu settings-menu-redesign" style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
+            <div className="settings-sticky-actions">
+              <button className="fpill glass-panel settings-close-sticky" onClick={() => onClose?.()}><X size={14}/>Close</button>
+            </div>
             {children}
           </div>
         </div>
@@ -2877,7 +2880,7 @@ export default function MCUViewer() {
               {/* Sort */}
               <div ref={sortRef} style={{ position: 'relative' }}>
                 <button className="fpill" onClick={() => setSortOpen(o => !o)}
-                  style={{ color: 'var(--theme-accent)', borderColor: 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'transparent', fontFamily: 'var(--font-marvel-ui)', fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
+                  style={{ color: 'var(--theme-accent)', borderColor: 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'var(--chip-bg)', fontFamily: 'var(--font-marvel-ui)', fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
                   {SORT_LABELS[sortBy]}
                   <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                 </button>
