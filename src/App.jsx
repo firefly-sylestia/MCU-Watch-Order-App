@@ -828,8 +828,9 @@ export default function MCUViewer() {
   const [multiverseShuffle, setMultiverseShuffle] = useState(false);
   const [desktopTextScale, setDesktopTextScale] = useState(initialUiState.desktopTextScale);
   const [textScaleEnabled, setTextScaleEnabled] = useState(initialUiState.textScaleEnabled);
-  const { isDesktopViewport } = useResponsiveLayout();
-  const effectiveUiScale = isDesktopViewport && textScaleEnabled ? desktopTextScale : 1;
+  const { isDesktopViewport, devicePixelRatio, isCoarsePointer } = useResponsiveLayout();
+  const dprDesktopEligible = !isCoarsePointer && isDesktopViewport && devicePixelRatio <= 1.5;
+  const effectiveUiScale = dprDesktopEligible && textScaleEnabled ? desktopTextScale : 1;
   const { heroBackdropScale, setHeroBackdropScale, heroBackdropOpacity, setHeroBackdropOpacity } = useHeroBackdrop();
   const [lightningStrike, setLightningStrike] = useState(false);
   const [spiderDrop, setSpiderDrop] = useState(false);
@@ -2736,7 +2737,7 @@ export default function MCUViewer() {
             </div>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase', marginTop: 2 }}>UI Scale</div>
             <button className='fpill' onClick={() => setTextScaleEnabled(v => !v)} style={{ justifyContent: 'center', borderColor: textScaleEnabled ? 'var(--theme-accent)' : 'var(--theme-border)', background: textScaleEnabled ? 'color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface))' : undefined }}>
-              {textScaleEnabled ? `Scale On · ${Math.round(desktopTextScale * 100)}%` : 'Scale Off'} {!isDesktopViewport ? '(Desktop only)' : ''}
+              {textScaleEnabled ? `Scale On · ${Math.round(desktopTextScale * 100)}%` : 'Scale Off'} {!dprDesktopEligible ? '(Desktop low-DPI only)' : ''}
             </button>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6, opacity: textScaleEnabled ? 1 : 0.55 }}>
               {DESKTOP_TEXT_SCALES.map(scale => <button key={scale} className='fpill' disabled={!textScaleEnabled} onClick={() => setDesktopTextScale(scale)} style={{ justifyContent: 'center', borderColor: textScaleEnabled && desktopTextScale === scale ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{Math.round(scale * 100)}%</button>)}

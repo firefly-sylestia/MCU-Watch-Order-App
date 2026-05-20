@@ -1,12 +1,37 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export function useResponsiveLayout() {
-  const [isDesktopViewport, setIsDesktopViewport] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : false));
+  const [viewport, setViewport] = useState(() => {
+    if (typeof window === 'undefined') return { width: 0, dpr: 1, coarsePointer: false };
+    return {
+      width: window.innerWidth,
+      dpr: window.devicePixelRatio || 1,
+      coarsePointer: window.matchMedia('(pointer: coarse)').matches,
+    };
+  });
+
   useEffect(() => {
-    const onResize = () => setIsDesktopViewport(window.innerWidth >= 1024);
+    const pointerQuery = window.matchMedia('(pointer: coarse)');
+    const onResize = () => {
+      setViewport({
+        width: window.innerWidth,
+        dpr: window.devicePixelRatio || 1,
+        coarsePointer: pointerQuery.matches,
+      });
+    };
     onResize();
     window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    pointerQuery.addEventListener?.('change', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      pointerQuery.removeEventListener?.('change', onResize);
+    };
   }, []);
-  return { isDesktopViewport };
+
+  const isDesktopViewport = useMemo(
+    () => viewport.width >= 1024 && !viewport.coarsePointer,
+    [viewport.width, viewport.coarsePointer]
+  );
+
+  return { isDesktopViewport, devicePixelRatio: viewport.dpr, isCoarsePointer: viewport.coarsePointer };
 }
