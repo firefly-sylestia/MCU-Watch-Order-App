@@ -592,17 +592,19 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
         <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
           <div className="title-row-top" style={TITLE_ROW_STATIC.titleLine}>
             <span className="title-main" style={{ fontSize: 'clamp(18px, 2.2vw, 21px)', fontWeight: 800, lineHeight: 1.34, color: 'var(--theme-text)', opacity: 1, transition: 'color 0.26s', fontFamily: 'var(--font-marvel-display)', maxWidth: '100%', letterSpacing: 0.2 }}>{item.title}</span>
-            {item.episodes && <span className="meta-chip truncate-single-line" style={{ fontSize: 9 }}>{item.episodes} EP</span>}
-            <span className="meta-chip truncate-single-line" style={{ fontSize: 11, color: typeMeta.color, fontWeight: 700 }}><TypeIcon size={8} />{typeMeta.label}</span>
-            <span className="meta-chip truncate-single-line" style={{ fontSize: 8.5, color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
             {!item.essential && <span className="meta-chip truncate-single-line" style={{ fontSize: 8.5 }}>OPT</span>}
             <ChevRight size={10} style={{ color: T.textFaint, transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
+          </div>
+          <div className="title-subline meta-line-two" style={TITLE_ROW_STATIC.genreMeta}>
+            <span className="meta-chip truncate-single-line" style={{ fontSize: 10.5, color: typeMeta.color, fontWeight: 700 }}><TypeIcon size={9} />{typeMeta.label}</span>
+            {item.episodes && <span className="meta-chip truncate-single-line" style={{ fontSize: 9.5 }}>{item.episodes} EP</span>}
+            <span className="meta-chip truncate-single-line" style={{ fontSize: 9, color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
+            <span className="meta-muted truncate-single-line" style={{ fontSize: 11.5, letterSpacing: '.06em' }}>{item.year || releaseLabel}</span>
           </div>
           <div className="meta-muted line-clamp-2 overflow-wrap-anywhere title-subline" style={TITLE_ROW_STATIC.genreMeta}>GENRES: {genres.join(' • ').toUpperCase()}</div>
         </button>
 
         <div className="row-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: 120, flexShrink: 0 }}>
-          <div className="row-meta-line truncate-single-line" style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: '12px', letterSpacing: 1.1, color: T.text, textAlign: 'right', fontWeight: 600 }}>{item.year || releaseLabel}</div>
           <div className="row-meta-line truncate-single-line" style={{ fontSize: 11, color: 'var(--theme-warning)', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.6 }}>★ {rating || '—'}</div>
           <button
             className="wbtn status-pill"
@@ -2880,7 +2882,7 @@ export default function MCUViewer() {
                   <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                 </button>
                 {sortOpen && (
-                  <div className="dropdown-pop" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 1400, boxShadow: 'none', minWidth: 200 }}>
+                  <div className="dropdown-pop" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--surface-primary) 90%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 12, overflow: 'hidden', zIndex: 1400, boxShadow: '0 12px 26px rgba(2,8,23,0.24)', minWidth: 200 }}>
                     {Object.entries(SORT_LABELS).map(([k, v]) => (
                       <div key={k} className={`sopt ${sortBy === k ? 'picked' : ''}`} onClick={() => { setSortBy(k); setSortOpen(false); }}>{v}</div>
                     ))}
