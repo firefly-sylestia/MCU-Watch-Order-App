@@ -344,3 +344,8 @@
 @keyframes heroCarouselEnter{from{opacity:0;transform:translateY(8px) scale(.9)}to{opacity:.58;transform:scale(.93)}}
 .hero-carousel-card.is-active{animation-duration:.34s}
 @media (max-width: 767px){.hero-carousel-nav{width:30px;height:30px;font-size:20px}}
+.hero-carousel-card.is-upcoming .hero-carousel-poster{animation:upcomingPosterCycle 3.4s ease-in-out infinite}
+[data-color-mode="light"] .hero-backdrop-image{filter:blur(2.2px) saturate(1.03) contrast(1) brightness(.72);opacity:var(--backdrop-opacity,0.48)}
+[data-color-mode="light"] .hero-carousel-nav{background:color-mix(in srgb,var(--theme-surface) 92%, rgba(15,23,42,0.04));border-color:color-mix(in srgb,var(--theme-border) 88%, transparent)}
+[data-color-mode="light"] .quick-continue-btn{background:color-mix(in srgb,var(--theme-surface) 90%, transparent) !important;border-color:color-mix(in srgb,var(--theme-border) 88%, transparent) !important}
+@keyframes upcomingPosterCycle{0%,100%{transform:translateY(0) scale(1);filter:saturate(1)}50%{transform:translateY(-4px) scale(1.01);filter:saturate(1.08)}}
