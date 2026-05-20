@@ -125,8 +125,8 @@ const UI_STATE_DEFAULTS = {
   timelineMode: 'sacred',
   autoHideStatuses: false,
   performanceMode: true,
-  desktopTextScale: 1,
-  textScaleEnabled: false,
+  desktopTextScale: 1.5,
+  textScaleEnabled: true,
   scrollTop: 0,
   exportPrefs: { font: 'inter', textScale: 1.08, detailUseReviewStyle: true },
 };
@@ -796,6 +796,7 @@ export default function MCUViewer() {
   const [desktopTextScale, setDesktopTextScale] = useState(initialUiState.desktopTextScale);
   const [textScaleEnabled, setTextScaleEnabled] = useState(initialUiState.textScaleEnabled);
   const { isDesktopViewport } = useResponsiveLayout();
+  const effectiveUiScale = isDesktopViewport && textScaleEnabled ? desktopTextScale : 1;
   const { heroBackdropScale, setHeroBackdropScale, heroBackdropOpacity, setHeroBackdropOpacity } = useHeroBackdrop();
   const [lightningStrike, setLightningStrike] = useState(false);
   const [spiderDrop, setSpiderDrop] = useState(false);
@@ -2546,7 +2547,7 @@ export default function MCUViewer() {
     : `radial-gradient(circle at 50% 0%, var(--app-bg-vignette), transparent 58%), var(--theme-app-bg)`;
   const appTexture = performanceMode ? 'none' : `radial-gradient(circle, rgba(255,255,255,var(--app-bg-noise-opacity)) 0.7px, transparent 0.8px)`;
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': textScaleEnabled ? desktopTextScale : 1, width: '100%', minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: 'var(--ui-scale)', transformOrigin: 'top left', left: textScaleEnabled ? '0' : 'auto', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}${sidebarOpen || settingsOpen ? ' overlay-open' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, width: '100%', minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: 'var(--ui-scale)', transformOrigin: 'top left', left: effectiveUiScale !== 1 ? '0' : 'auto', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}${sidebarOpen || settingsOpen ? ' overlay-open' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
 
 
@@ -2680,7 +2681,7 @@ export default function MCUViewer() {
             </div>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase', marginTop: 2 }}>UI Scale</div>
             <button className='fpill' onClick={() => setTextScaleEnabled(v => !v)} style={{ justifyContent: 'center', borderColor: textScaleEnabled ? 'var(--theme-accent)' : 'var(--theme-border)', background: textScaleEnabled ? 'color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface))' : undefined }}>
-              {textScaleEnabled ? `Scale On · ${Math.round(desktopTextScale * 100)}%` : 'Scale Off'}
+              {textScaleEnabled ? `Scale On · ${Math.round(desktopTextScale * 100)}%` : 'Scale Off'} {!isDesktopViewport ? '(Desktop only)' : ''}
             </button>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6, opacity: textScaleEnabled ? 1 : 0.55 }}>
               {DESKTOP_TEXT_SCALES.map(scale => <button key={scale} className='fpill' disabled={!textScaleEnabled} onClick={() => setDesktopTextScale(scale)} style={{ justifyContent: 'center', borderColor: textScaleEnabled && desktopTextScale === scale ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{Math.round(scale * 100)}%</button>)}
@@ -2739,7 +2740,7 @@ export default function MCUViewer() {
       </header>
 
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ position: 'relative', height: isDesktopViewport ? 530 : 390, maxWidth: 1240, margin: '0 auto', width: 'min(1240px, calc(100% - 24px))', background: darkMode ? 'linear-gradient(160deg, color-mix(in srgb,var(--theme-surface) 70%, transparent), color-mix(in srgb,var(--theme-bg) 62%, transparent))' : 'linear-gradient(160deg, color-mix(in srgb,var(--theme-surface) 38%, transparent), color-mix(in srgb,var(--theme-bg) 20%, transparent))', border: `1px solid ${T.surfaceBorder}`, borderRadius: 'var(--hero-backdrop-radius)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 'var(--overlay-z-floating)', boxShadow: 'var(--elevation-surface-2)' }}>
+      <div style={{ position: 'relative', height: isDesktopViewport ? 530 : 390, maxWidth: 1240, margin: '0 auto', width: 'min(1240px, calc(100% - 24px))', background: 'transparent', border: 'none', borderRadius: 'var(--hero-backdrop-radius)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 'var(--overlay-z-floating)', boxShadow: 'none', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)' }}>
         {heroPosters.length > 0 && (
           <div className="hero-rail"
             ref={heroRailRef}
@@ -2984,7 +2985,7 @@ export default function MCUViewer() {
                       <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left', textShadow: '0 1px 2px color-mix(in srgb, var(--theme-bg) 35%, transparent)' }}>
                         {item.title}
                         <div style={{ fontSize: 11, color: T.textMuted, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                          <span>Phase {item.phase} · {TYPE_META[item.type]?.label}</span>
+                          <span>{formatReleaseDate(rawDate, item.year, label, releaseStatus).split(',')[0]} · Phase {item.phase} · {TYPE_META[item.type]?.label}</span>
                           <span className={`calendar-badge ${releaseStatus}`}>{releaseStatus}</span>
                           <span className="calendar-badge certainty">{hasRealDate ? 'Exact Date' : getReleaseCertainty({ hasRealDate, releaseStatus })}</span>
                         </div>
