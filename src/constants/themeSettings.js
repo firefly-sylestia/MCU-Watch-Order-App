@@ -45,15 +45,20 @@ export const THEME_PALETTES = {
 export const getActiveThemeVars = (themeMode, darkMode) => {
   const p = THEME_PALETTES[themeMode] || THEME_PALETTES.classic;
   const lightUnifiedBase = '#f1ece3';
+  const darkUnifiedBase = '#1A1D23';
+  const darkUnifiedElevated = '#272D36';
   const lightSurface = `color-mix(in srgb, ${p.lightSurface} 72%, ${lightUnifiedBase})`;
   const lightSurfaceHover = `color-mix(in srgb, ${p.lightSurfaceHover} 68%, ${lightUnifiedBase})`;
   const lightCompCard = `color-mix(in srgb, ${p.lightCompCard} 74%, ${lightUnifiedBase})`;
+  const darkSurface = `color-mix(in srgb, ${p.darkSurface} 58%, ${darkUnifiedBase})`;
+  const darkSurfaceHover = `color-mix(in srgb, ${p.darkSurfaceHover} 60%, ${darkUnifiedElevated})`;
+  const darkCompCard = `color-mix(in srgb, ${p.darkCompCard} 56%, ${darkUnifiedElevated})`;
   return {
     '--theme-accent': p.accent,
     '--theme-accent-alt': p.accentAlt,
     '--theme-accent-glow': darkMode ? `color-mix(in srgb, ${p.accent} 42%, transparent)` : `color-mix(in srgb, ${p.accent} 24%, transparent)`,
-    '--theme-surface': darkMode ? p.darkSurface : lightSurface,
-    '--theme-surface-hover': darkMode ? p.darkSurfaceHover : lightSurfaceHover,
-    '--comp-card-bg': darkMode ? p.darkCompCard : lightCompCard,
+    '--theme-surface': darkMode ? darkSurface : lightSurface,
+    '--theme-surface-hover': darkMode ? darkSurfaceHover : lightSurfaceHover,
+    '--comp-card-bg': darkMode ? darkCompCard : lightCompCard,
   };
 };

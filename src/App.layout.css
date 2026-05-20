@@ -1,11 +1,11 @@
 /* Layout tokens and structural styles */
 
 :root {
-  --bg-primary: var(--app-bg-base, #06060f);
-  --bg-secondary: color-mix(in srgb, var(--theme-bg, #06060f) 90%, #0b1220);
-  --surface-primary: color-mix(in srgb, var(--theme-surface, rgba(16,22,38,0.84)) 88%, transparent);
-  --surface-elevated: color-mix(in srgb, var(--theme-surface, rgba(16,22,38,0.84)) 96%, rgba(255,255,255,0.04));
-  --surface-overlay: var(--theme-overlay-surface, rgba(15,23,42,0.7));
+  --bg-primary: var(--app-bg-base, #171A1F);
+  --bg-secondary: color-mix(in srgb, var(--theme-bg, #171A1F) 88%, #20242B);
+  --surface-primary: color-mix(in srgb, var(--theme-surface, rgba(35,40,48,0.9)) 86%, transparent);
+  --surface-elevated: color-mix(in srgb, var(--theme-surface, rgba(49,56,68,0.9)) 92%, rgba(255,255,255,0.05));
+  --surface-overlay: var(--theme-overlay-surface, rgba(39,45,54,0.74));
   --border-soft: color-mix(in srgb, var(--theme-border, #2a3346) 84%, rgba(255,255,255,0.22));
   --border-strong: color-mix(in srgb, var(--theme-border, #2a3346) 66%, rgba(255,255,255,0.38));
   --accent-primary: var(--theme-accent);
