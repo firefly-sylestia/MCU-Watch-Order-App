@@ -393,3 +393,43 @@
 [data-color-mode="light"] .hero-carousel-nav{background:color-mix(in srgb,var(--theme-surface) 92%, rgba(15,23,42,0.04));border-color:color-mix(in srgb,var(--theme-border) 88%, transparent)}
 [data-color-mode="light"] .quick-continue-btn{background:color-mix(in srgb,var(--theme-surface) 90%, transparent) !important;border-color:color-mix(in srgb,var(--theme-border) 88%, transparent) !important}
 @keyframes upcomingPosterCycle{0%,100%{transform:translateY(0) scale(1);filter:saturate(1)}50%{transform:translateY(-4px) scale(1.01);filter:saturate(1.08)}}
+
+/* Light mode refinements: soften utility panels and neutralize row hover tint */
+[data-color-mode="light"] .settings-menu,
+[data-color-mode="light"] .settings-menu-redesign{
+  background: color-mix(in srgb, var(--theme-surface) 88%, #ece4d8) !important;
+  border-color: color-mix(in srgb, var(--theme-border) 76%, #ece4d8) !important;
+}
+
+[data-color-mode="light"] .analytics-shell,
+[data-color-mode="light"] .analytics-shell-redesign{
+  background: linear-gradient(165deg,
+    color-mix(in srgb, var(--theme-surface) 86%, #ebe3d6),
+    color-mix(in srgb, var(--theme-bg) 24%, #ebe3d6)
+  ) !important;
+  border-color: color-mix(in srgb, var(--theme-border) 74%, #ece4d8) !important;
+}
+
+[data-color-mode="light"] .analytics-shell .ui-panel,
+[data-color-mode="light"] .analytics-shell .glass-panel,
+[data-color-mode="light"] .analytics-shell .ui-btn-group{
+  background: color-mix(in srgb, var(--theme-surface) 88%, #ede6da) !important;
+  border-color: color-mix(in srgb, var(--theme-border) 74%, #ede6da) !important;
+}
+
+[data-color-mode="light"] .phase-header-card,
+[data-color-mode="light"] .phase-rows-full,
+[data-color-mode="light"] .list-panel{
+  background: color-mix(in srgb, var(--theme-surface) 84%, #ece4d8) !important;
+  border-color: color-mix(in srgb, var(--theme-border) 72%, #ece4d8) !important;
+}
+
+/* Keep row hover aligned with UI palette (remove red cast in light mode) */
+[data-color-mode="light"] .rrow:hover,
+[data-color-mode="light"] .rrow.type-film:hover,
+[data-color-mode="light"] .rrow.type-series:hover,
+[data-color-mode="light"] .rrow.type-short:hover,
+[data-color-mode="light"] .title-btn:hover{
+  background: color-mix(in srgb, var(--theme-surface-hover) 84%, #ece4d8) !important;
+  border-left-color: color-mix(in srgb, var(--theme-accent) 40%, var(--theme-border)) !important;
+}
