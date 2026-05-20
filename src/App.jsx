@@ -709,6 +709,7 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
 export default function MCUViewer() {
   const initialUiState = useMemo(() => readSavedUiState(), []);
   const [universe, setUniverse] = useState('mcu');
+  const [brandTapCount, setBrandTapCount] = useState(0);
   const [items,          setItems]          = useState(RAW);
   const [listMode,       setListMode]       = useState(initialUiState.listMode);
   const [search,         setSearch]         = useState(initialUiState.search);
@@ -803,6 +804,7 @@ export default function MCUViewer() {
     setActivePhase(0);
     setExpandedPhase(null);
     setExpandedItem(null);
+    setHeroIndex(0);
   }, [universe]);
 
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
@@ -1623,6 +1625,7 @@ export default function MCUViewer() {
       Released: (trustTmdbYear ? tmdb?.Released : '') || (trustOmdbYear ? omdb?.released : '') || fallback.Released || metaCache[item.id]?.released || '',
       Actors: (trustTmdbYear ? tmdb?.Actors : '') || fallback.Actors || metaCache[item.id]?.cast || '',
       imdbRating: (trustOmdbYear ? omdb?.rating : '') || (trustTmdbYear ? tmdb?.imdbRating : '') || fallback.imdbRating || metaCache[item.id]?.rating || 'N/A',
+      Director: (trustTmdbYear ? tmdb?.Director : '') || fallback.Director || metaCache[item.id]?.director || '',
     };
   };
 
@@ -2135,6 +2138,7 @@ export default function MCUViewer() {
       rating: omdbInfo?.rating || tmdbDetails?.imdbRating || metaValue.rating || '',
       plot: omdbInfo?.plot || tmdbDetails?.Plot || metaValue.plot || '',
       cast: tmdbDetails?.Actors || metaValue.cast || '',
+      director: tmdbDetails?.Director || metaValue.director || '',
     };
 
     if (posterValue && !localPosterSrc(item)) {
@@ -2183,6 +2187,16 @@ export default function MCUViewer() {
     setPosterFetchState({ active: false, done: targets.length, total: targets.length, message: `Built metadata for ${targets.length} entries.` });
   };
 
+
+  useEffect(() => {
+    const run = async () => {
+      const targets = (universe === 'dc' ? DC_RAW : RAW).slice(0, 12);
+      for (const item of targets) {
+        try { await fetchAndCacheMetadataItem(item, { forcePoster: true, forceAll: true }); } catch {}
+      }
+    };
+    run();
+  }, [universe]);
   const refreshPosterForItem = async (item) => {
     if (localPosterSrc(item)) {
       setPosterFetchState({ active: false, done: 0, total: 0, message: `${item.title} uses a local poster override.` });
@@ -2819,10 +2833,10 @@ export default function MCUViewer() {
       </SettingsMenu>
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <header className="hexbg" style={{ position: 'relative', zIndex: 'var(--overlay-z-base)', background: 'transparent', borderBottom: 'none', flexShrink: 0 }}>
+      <header className="hexbg" style={{ position: 'relative', zIndex: 'var(--overlay-z-base)', background: universe === 'dc' ? 'linear-gradient(180deg, rgba(20,44,88,.95), rgba(10,22,43,.88))' : 'transparent', borderBottom: universe === 'dc' ? '1px solid rgba(59,130,246,.35)' : 'none', flexShrink: 0 }}>
         <div className="header-inner" style={{ width: '100%', maxWidth: 1240, margin: '0 auto', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 26px) 30px 16px', transition: 'padding 0.2s ease' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
-            <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900 }}>
+            <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} onClick={() => { setBrandTapCount(c => c + 1); setTimeout(() => setBrandTapCount(0), 550); }} onDoubleClick={() => setUniverse(prev => prev === 'mcu' ? 'dc' : 'mcu')} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900, cursor: 'pointer' }}>
               <div className="header-title-mcu">{activeUniverse.title}</div>
               <div className="header-title-sub">{activeUniverse.subtitle}</div>
               
@@ -3020,7 +3034,7 @@ export default function MCUViewer() {
         <button type="button" className="dock-btn"
           onClick={() => { const next = listMode === 'core' ? 'extended' : 'core'; setListMode(next); setExpandedItem(null); setExpandedPhase(null); }}
           style={{ background: 'color-mix(in srgb, var(--theme-accent-alt) 16%, var(--control-solid-bg))' }}>
-          Mode: {listMode === 'core' ? 'MCU' : 'Extended'}
+          Mode: {listMode === 'core' ? (universe === 'dc' ? 'DC Core' : 'MCU Core') : 'Extended'}
         </button>
         <div className="dock-status-menu" style={{ position: 'relative' }}>
           <button

@@ -838,3 +838,29 @@ input[placeholder="Search title or prerequisite"]:focus{border-color:color-mix(i
     padding: 12px !important;
   }
 }
+
+/* 2026 roundness + muted light redesign */
+:root {
+  --radius-panel: 26px;
+  --radius-card: 22px;
+  --radius-control: 18px;
+}
+.rrow,.calendar-row,.phase-header-card,.phase-rows-full,.ui-panel,.glass-panel,.settings-menu,.analytics-shell,.filters-open{border-radius:26px !important}
+.fpill,.wbtn,.theme-btn,.status-pill,.filters-trigger,.phase-chip,.dropdown-item,.sopt,.quick-fab,.toggle-btn,.dock-btn,.fab-primary{border-radius:18px !important}
+
+[data-color-mode="light"] .phase-rows-full,
+[data-color-mode="light"] .rrow,
+[data-color-mode="light"] .calendar-row,
+[data-color-mode="light"] .phase-header-card {
+  background: linear-gradient(155deg, #f2eee6, #ece5d8) !important;
+  border-color: color-mix(in srgb, var(--theme-border) 74%, #d8d0c2) !important;
+  box-shadow: 0 10px 20px rgba(70, 58, 43, 0.10), inset 0 1px 0 rgba(255,255,255,0.55) !important;
+}
+[data-color-mode="light"] .fpill,
+[data-color-mode="light"] .dock-btn,
+[data-color-mode="light"] .fab-primary,
+[data-color-mode="light"] .phase-chip {
+  background: #eee8dc !important;
+  border-color: #d8d0c2 !important;
+  color: #2d3748 !important;
+}
