@@ -2809,7 +2809,7 @@ export default function MCUViewer() {
             })}
           </div>
         )}
-        <div style={{ position: 'absolute', top: 0, bottom: 0, left: isDesktopViewport ? 2 : 6, right: isDesktopViewport ? 2 : 6, pointerEvents: 'none', borderRadius: isDesktopViewport ? 14 : 12, background: 'linear-gradient(90deg, rgba(4,6,12,0.18) 0%, transparent 12%, transparent 88%, rgba(4,6,12,0.18) 100%)' }} />
+        
         {!detailItem && !analyticsOpen && !settingsOpen && <WatermarkOverlay surface="hero" theme={darkMode ? 'cinematic' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['cta', 'title']} />}
        
       </div>
