@@ -85,7 +85,7 @@ const TITLE_ROW_STATIC = {
   titleLine: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   genreMeta: { marginTop: 2, fontSize: 10, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1.2 },
 };
-const DESKTOP_TEXT_SCALES = [0.9, 1, 1.1, 1.2, 1.35];
+const DESKTOP_TEXT_SCALES = [0.9, 1, 1.1, 1.2, 1.35, 1.5];
 // ─── Static data ────────────────────────────────────────────────────────────
 const LIST_MODES = [
   { id: 'core',     label: 'MCU',      sublabel: 'Curated List',       color: '#c0392b', desc: '60 curated films & series'           },
