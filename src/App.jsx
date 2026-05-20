@@ -2516,8 +2516,8 @@ export default function MCUViewer() {
   const activeThemeVars = getActiveThemeVars(themeMode, darkMode);
 
   const cssThemeVars = {
-    '--theme-bg': darkMode ? '#06060f' : '#e6ded1',
-    '--theme-border': darkMode ? '#1b1b33' : '#cfc5b8',
+    '--theme-bg': darkMode ? '#06060f' : '#e2dbcf',
+    '--theme-border': darkMode ? '#1b1b33' : '#c8beaf',
     '--theme-text': darkMode ? '#d8e3f5' : '#1a2030',
     '--theme-text-muted': darkMode ? '#a9b6cb' : '#4f5c70',
     '--theme-text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
@@ -2545,24 +2545,24 @@ export default function MCUViewer() {
     '--overlay-soft': darkMode ? 'rgba(2,6,18,0.3)' : 'rgba(15,23,42,0.09)',
     '--overlay-dark': darkMode ? 'rgba(2,6,18,0.46)' : 'rgba(15,23,42,0.15)',
     '--overlay-strong': darkMode ? 'rgba(2,6,18,0.58)' : 'rgba(15,23,42,0.24)',
-    '--control-solid-bg': darkMode ? 'rgba(20,25,46,0.84)' : 'rgba(247,242,233,0.94)',
+    '--control-solid-bg': darkMode ? 'rgba(20,25,46,0.84)' : 'rgba(239,233,223,0.94)',
     '--detail-shell-bg': darkMode
       ? 'linear-gradient(145deg, color-mix(in srgb,var(--theme-bg) 92%, #000), color-mix(in srgb,var(--theme-surface) 88%, #000) 54%, color-mix(in srgb,var(--theme-bg-alt) 88%, #000))'
       : 'linear-gradient(145deg, color-mix(in srgb,var(--theme-surface) 88%, var(--theme-bg)), color-mix(in srgb,var(--theme-bg) 90%, #f5efe3) 56%, color-mix(in srgb,var(--theme-surface) 78%, var(--theme-bg)))',
     '--detail-panel-bg': darkMode
       ? 'color-mix(in srgb,var(--theme-surface) 74%, rgba(8,12,26,0.82))'
       : 'color-mix(in srgb,var(--theme-surface) 74%, var(--theme-bg))',
-    '--app-bg-base': darkMode ? '#06060f' : '#e6ded1',
+    '--app-bg-base': darkMode ? '#06060f' : '#e2dbcf',
     '--app-bg-vignette': darkMode ? 'rgba(2,6,23,0.42)' : 'rgba(2,6,23,0.08)',
     '--app-bg-noise-opacity': darkMode ? '0.06' : '0.03',
     '--theme-app-bg': darkMode
       ? `radial-gradient(circle at 8% 2%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 40%, transparent), transparent 34%), radial-gradient(circle at 90% 8%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 36%, transparent), transparent 40%), radial-gradient(circle at 50% 120%, rgba(14,165,233,0.22), transparent 52%), linear-gradient(138deg, #02030a 0%, #09071a 30%, #0f1031 58%, #1a1038 100%)`
-      : `radial-gradient(circle at 8% 4%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 15%, #e9e1d5), transparent 34%), radial-gradient(circle at 88% 14%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 13%, #e9e1d5), transparent 40%), linear-gradient(140deg, #e9e1d5 0%, #e3dbcf 44%, #e7dfd4 100%)`,
-    '--comp-overlay-bg': darkMode ? 'rgba(12,16,34,0.88)' : 'rgba(245,239,230,0.93)',
-    '--comp-dropdown-bg': darkMode ? 'rgba(13,18,34,0.72)' : 'rgba(243,237,228,0.8)',
+      : `radial-gradient(circle at 8% 4%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 15%, #e9e1d5), transparent 34%), radial-gradient(circle at 88% 14%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 13%, #e9e1d5), transparent 40%), linear-gradient(140deg, #e5ddd1 0%, #dfd6c8 44%, #e4dbcf 100%)`,
+    '--comp-overlay-bg': darkMode ? 'rgba(12,16,34,0.88)' : 'rgba(238,232,221,0.93)',
+    '--comp-dropdown-bg': darkMode ? 'rgba(13,18,34,0.72)' : 'rgba(236,230,220,0.82)',
     '--theme-header-bg': darkMode
       ? `linear-gradient(180deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 18%, #0c1022), #06060f)`
-      : `linear-gradient(180deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 10%, #ffffff), #f6f2ea)`,
+      : `linear-gradient(180deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 9%, #f2ede3), #ece5d9)`,
     '--theme-watched-bg': darkMode
       ? `linear-gradient(100deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 18%, rgba(12,18,34,0.62)), color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 10%, rgba(10,20,32,0.54)))`
       : `linear-gradient(100deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 14%, #ffffff), color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 8%, #f7f5ef))`,
