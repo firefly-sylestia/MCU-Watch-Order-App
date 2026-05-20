@@ -191,10 +191,10 @@
 .phase-rows-full{padding:14px;display:grid;gap:10px;background:color-mix(in srgb,var(--theme-surface) 54%, transparent);border:1px solid color-mix(in srgb,var(--theme-border) 58%, transparent);border-radius:18px}
 .rrow{min-height:108px;gap:16px;padding:18px 18px 18px 16px;border:1px solid color-mix(in srgb,var(--theme-border) 60%, transparent);background:color-mix(in srgb,var(--surface-primary) 86%, transparent);box-shadow:0 8px 18px rgba(2,8,23,.18),inset 0 1px 0 rgba(255,255,255,.06)}
 .rrow:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(2,8,23,.2),0 0 0 1px color-mix(in srgb,var(--theme-accent) 20%, transparent)}
-.title-btn{padding:6px 0;display:grid;gap:8px;min-height:78px;align-content:center}
-.title-row-top{display:flex;align-items:flex-start;gap:7px;flex-wrap:wrap}
+.title-btn{padding:6px 0;display:grid;gap:8px;min-height:78px;align-content:start}
+.title-row-top{display:flex;align-items:flex-start;gap:7px;flex-wrap:nowrap;min-width:0}
 .title-row-mid{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.title-btn .title-main{font-size:clamp(18px,2.15vw,23px)!important;line-height:1.24!important;letter-spacing:.012em;margin-bottom:0;font-weight:760}
+.title-btn .title-main{font-size:clamp(17px,1.8vw,21px)!important;line-height:1.28!important;letter-spacing:.012em;margin-bottom:0;font-weight:760;min-width:0;flex:1}
 .title-subline{font-size:11.5px!important;letter-spacing:.08em;opacity:.9}
 .meta-chip{padding:4px 9px;font-size:10px!important;font-weight:700;letter-spacing:.08em;background:color-mix(in srgb,var(--theme-bg) 72%, transparent)}
 .row-actions{gap:10px!important}

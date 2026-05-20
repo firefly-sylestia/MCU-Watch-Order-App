@@ -86,7 +86,7 @@ const TITLE_ROW_STATIC = {
   titleLine: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   genreMeta: { marginTop: 2, fontSize: 10, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1.2 },
 };
-const DESKTOP_TEXT_SCALES = [0.9, 1, 1.1, 1.2, 1.35, 1.5];
+const DESKTOP_TEXT_SCALES = [1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3];
 // ─── Static data ────────────────────────────────────────────────────────────
 const LIST_MODES = [
   { id: 'core',     label: 'MCU',      sublabel: 'Curated List',       color: '#c0392b', desc: '60 curated films & series'           },
@@ -126,7 +126,7 @@ const UI_STATE_DEFAULTS = {
   timelineMode: 'sacred',
   autoHideStatuses: false,
   performanceMode: true,
-  desktopTextScale: 1.5,
+  desktopTextScale: 1,
   textScaleEnabled: true,
   scrollTop: 0,
   exportPrefs: { font: 'inter', textScale: 1.08, detailUseReviewStyle: true },
@@ -591,7 +591,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
 
         <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
           <div className="title-row-top" style={TITLE_ROW_STATIC.titleLine}>
-            <span className="title-main" style={{ fontSize: 'clamp(18px, 2.2vw, 21px)', fontWeight: 800, lineHeight: 1.34, color: 'var(--theme-text)', opacity: 1, transition: 'color 0.26s', fontFamily: 'var(--font-marvel-display)', maxWidth: '100%', letterSpacing: 0.2 }}>{item.title}</span>
+            <span className="title-main" style={{ fontWeight: 800, color: 'var(--theme-text)', opacity: 1, transition: 'color 0.26s', fontFamily: 'var(--font-marvel-display)', maxWidth: '100%', letterSpacing: 0.2, minWidth: 0 }}>{item.title}</span>
             <ChevRight size={10} className="title-chevron" style={{ color: T.textFaint, transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
           </div>
           <div className="title-row-mid">
@@ -2600,7 +2600,7 @@ export default function MCUViewer() {
     : `radial-gradient(circle at 50% 0%, var(--app-bg-vignette), transparent 58%), var(--theme-app-bg)`;
   const appTexture = performanceMode ? 'none' : `radial-gradient(circle, rgba(255,255,255,var(--app-bg-noise-opacity)) 0.7px, transparent 0.8px)`;
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, width: '100%', minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: 'var(--ui-scale)', transformOrigin: 'top left', left: effectiveUiScale !== 1 ? '0' : 'auto', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', transform: effectiveUiScale !== 1 ? `scale(${effectiveUiScale})` : 'none', transformOrigin: 'top left', width: effectiveUiScale !== 1 ? `${100 / effectiveUiScale}%` : '100%', display: 'flex', flexDirection: 'column', overflow: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch${performanceMode ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
 
 
