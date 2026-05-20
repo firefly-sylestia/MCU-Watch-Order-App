@@ -888,3 +888,158 @@ input[placeholder="Search title or prerequisite"]:focus{border-color:color-mix(i
 .phase-rows-full {
   border-radius: 14px !important;
 }
+
+/* --- 2026-05 UI cleanup overrides --- */
+:root {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+*::-webkit-scrollbar{width:2px;height:2px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:transparent}
+*::-webkit-scrollbar-thumb:hover{background:transparent}
+
+/* Wider content/list rail */
+main{--content-max:1360px !important}
+.hero-carousel-shell{max-width:1360px !important;width:min(1360px,calc(100% - 18px)) !important}
+
+/* Subtle and theme-driven surfaces */
+.filters-open,
+.phase-rows-full,
+.phase-header-card,
+.rrow,
+.calendar-row,
+.glass-panel,
+.settings-menu,
+.analytics-shell{
+  background: color-mix(in srgb, var(--theme-surface) 88%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 62%, transparent) !important;
+  box-shadow: 0 8px 18px rgba(2,8,23,.14) !important;
+}
+
+/* Redesigned phase chips */
+.phase-chip{
+  min-height:44px !important;
+  padding:10px 16px !important;
+  border-radius:14px !important;
+  border:1px solid color-mix(in srgb,var(--theme-border) 74%, transparent) !important;
+  background:color-mix(in srgb,var(--theme-surface) 92%, transparent) !important;
+  color:var(--theme-text-secondary) !important;
+  transition:transform 150ms ease, border-color 150ms ease, background 150ms ease, color 150ms ease !important;
+  box-shadow:none !important;
+}
+.phase-chip:hover{transform:translateY(-1px)}
+.phase-chip[style*="var(--theme-accent)"]{
+  background:color-mix(in srgb,var(--theme-accent) 14%, var(--theme-surface)) !important;
+  border-color:color-mix(in srgb,var(--theme-accent) 44%, var(--theme-border)) !important;
+  color:var(--theme-text) !important;
+}
+
+/* Different DC carousel treatment */
+.dc-universe .hero-carousel-track{
+  scroll-snap-type:x mandatory;
+  gap:12px;
+}
+.dc-universe .hero-carousel-card{scroll-snap-align:center;opacity:.7;transform:scale(.95)}
+.dc-universe .hero-carousel-card.is-active{opacity:1;transform:translateY(-4px) scale(1)}
+.dc-universe .hero-carousel-meta{
+  background: linear-gradient(180deg, rgba(4,10,22,.08), rgba(3,9,20,.82));
+}
+
+/* DC badge/button familiar look: white text + dc blue bg */
+.dc-universe .header-title-mcu{
+  color:#ffffff !important;
+  background:linear-gradient(180deg,#1d4ed8,#1e40af) !important;
+  border-color:rgba(191,219,254,.55) !important;
+  text-shadow:none !important;
+}
+
+/* Ensure light mode still clean */
+[data-color-mode="light"] .filters-open,
+[data-color-mode="light"] .phase-rows-full,
+[data-color-mode="light"] .phase-header-card,
+[data-color-mode="light"] .rrow,
+[data-color-mode="light"] .calendar-row{
+  background: color-mix(in srgb, var(--theme-surface) 94%, #ffffff) !important;
+  border-color: color-mix(in srgb, var(--theme-border) 68%, #ffffff) !important;
+  box-shadow: 0 6px 14px rgba(15,23,42,.08) !important;
+}
+
+/* --- 2026-05 follow-up cleanup --- */
+/* single clean background behind list (remove doubled panel look) */
+.phase-rows-full{
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 6px !important;
+}
+
+/* enlarge main list rail */
+main{--content-max:1480px !important}
+.hero-carousel-shell{max-width:1480px !important;width:min(1480px,calc(100% - 12px)) !important}
+
+/* DC carousel fix: remove previous custom system and restore reliable base behavior */
+.dc-universe .hero-carousel-track{
+  scroll-snap-type:none !important;
+  gap:clamp(14px,2vw,24px) !important;
+}
+.dc-universe .hero-carousel-card,
+.dc-universe .hero-carousel-card.is-active{
+  scroll-snap-align:unset !important;
+  opacity:unset !important;
+  transform:unset !important;
+}
+.dc-universe .hero-carousel-meta{
+  background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.76)) !important;
+}
+
+/* theme overlays made subtle so backdrop remains visible */
+.analytics-backdrop,
+.modal-backdrop,
+.overlay-backdrop{
+  background:color-mix(in srgb,var(--theme-bg) 34%, transparent) !important;
+}
+
+/* --- 2026-05 final redesign cleanup (remove noisy/duplicate styling) --- */
+/* Wide layout in dark mode and all modes */
+main{--content-max:1560px !important}
+.hero-carousel-shell{max-width:1560px !important;width:min(1560px,calc(100% - 10px)) !important}
+
+/* Remove harsh global shadow glow around UI shells */
+.rrow,
+.calendar-row,
+.phase-header-card,
+.phase-rows-full,
+.ui-panel,
+.glass-panel,
+.settings-menu,
+.analytics-shell,
+.filters-open{
+  box-shadow: 0 4px 12px rgba(0,0,0,.14) !important;
+  border-color: color-mix(in srgb, var(--theme-border) 58%, transparent) !important;
+}
+
+/* Redesign light-mode list cards to match dark-mode depth language */
+[data-color-mode="light"] .rrow,
+[data-color-mode="light"] .calendar-row,
+[data-color-mode="light"] .phase-header-card,
+[data-color-mode="light"] .phase-rows-full {
+  background: linear-gradient(160deg, color-mix(in srgb,var(--theme-surface) 96%, #fff), color-mix(in srgb,var(--theme-bg) 12%, #fff)) !important;
+  border: 1px solid color-mix(in srgb,var(--theme-border) 70%, #ffffff) !important;
+  box-shadow: 0 4px 12px rgba(15,23,42,.10) !important;
+}
+
+/* Keep overlays subtle so backdrop stays visible */
+.hero-backdrop-blend{
+  background: linear-gradient(180deg, rgba(5,8,18,0.18), rgba(5,8,18,0.24)) !important;
+}
+[data-color-mode="light"] .hero-backdrop-blend{
+  background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(248,250,252,0.18)) !important;
+}
+
+/* DC carousel explicit visibility safeguards */
+.dc-universe .hero-carousel-shell{display:flex !important;visibility:visible !important;opacity:1 !important}
+.dc-universe .hero-carousel-track{display:flex !important;overflow-x:auto !important}
+.dc-universe .hero-carousel-card{display:block !important;opacity:.62 !important;transform:scale(.94) !important}
+.dc-universe .hero-carousel-card.is-active{opacity:1 !important;transform:translateY(-6px) scale(1) !important}
+.dc-universe .hero-carousel-poster{border-color:color-mix(in srgb,#60a5fa 46%, var(--theme-border)) !important}
