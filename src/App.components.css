@@ -208,3 +208,33 @@
   .rrow{min-height:98px;padding:14px 12px 14px 10px;gap:10px}
   .title-btn .title-main{font-size:clamp(16px,4.6vw,20px)!important}
 }
+
+/* Settings + Analytics full redesign */
+.settings-backdrop{background:radial-gradient(1200px circle at 84% 8%, color-mix(in srgb,var(--theme-accent) 15%, transparent), transparent 52%), rgba(2,6,20,0.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.settings-menu-anchor{top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;z-index:10025}
+.settings-menu{--settings-glow:color-mix(in srgb,var(--theme-accent) 22%, transparent);position:absolute;top:100%;right:0;margin-top:10px;width:min(440px,calc(100vw - 24px));max-height:min(86vh,calc(100dvh - 84px));padding:16px !important;border-radius:24px !important;border:1px solid color-mix(in srgb,var(--theme-accent) 24%, var(--theme-border));background:linear-gradient(165deg,color-mix(in srgb,var(--theme-surface) 92%, transparent),color-mix(in srgb,var(--theme-bg) 54%, transparent));box-shadow:0 26px 72px rgba(2,8,23,.48),0 0 0 1px color-mix(in srgb,var(--theme-accent) 28%, transparent),inset 0 1px 0 rgba(255,255,255,.1);display:grid;gap:12px;overflow:auto;isolation:isolate}
+.settings-menu::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(560px circle at 92% -4%, var(--settings-glow), transparent 44%)}
+.settings-menu > *{position:relative;z-index:1}
+.settings-menu .fpill{min-height:42px;border-radius:14px;transition:transform 180ms var(--ease-out), box-shadow 180ms var(--ease-out), border-color 180ms var(--ease-out)}
+.settings-menu .fpill:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--theme-accent) 60%, var(--theme-border));box-shadow:0 10px 22px rgba(2,8,23,.24)}
+.settings-toggle-pill{font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+
+.analytics-backdrop{background:radial-gradient(1000px circle at 14% 2%, color-mix(in srgb,var(--theme-accent-alt) 18%, transparent), transparent 40%), rgba(2,8,24,.66);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.analytics-shell.analytics-redesign{width:min(1160px,95vw);max-height:min(90vh,calc(100dvh - 28px));overflow:auto;border-radius:28px !important;padding:22px !important;border:1px solid color-mix(in srgb,var(--theme-accent) 26%, var(--theme-border)) !important;background:linear-gradient(150deg,color-mix(in srgb,var(--theme-surface) 94%, transparent),color-mix(in srgb,var(--theme-bg) 58%, transparent)) !important;box-shadow:0 36px 90px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.1) !important}
+.analytics-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px}
+.analytics-title{font-size:clamp(30px,3.4vw,42px);line-height:1;letter-spacing:.01em;margin:0 0 8px;font-family:var(--font-marvel-display)}
+.analytics-subtitle{color:var(--theme-text-secondary);font-size:13px;max-width:64ch}
+.analytics-close-btn{min-width:90px;font-weight:700}
+.analytics-tabs{position:sticky;top:0;z-index:6;margin-bottom:14px;padding:8px;border-radius:16px;border:1px solid color-mix(in srgb,var(--theme-accent) 30%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 82%, transparent);box-shadow:0 12px 24px rgba(2,8,23,.2)}
+.analytics-tabs .fpill{border-radius:12px;min-height:40px}
+
+[data-color-mode="light"] .settings-backdrop{background:radial-gradient(900px circle at 90% 8%, rgba(56,189,248,0.18), transparent 50%), rgba(244,248,255,0.62)}
+[data-color-mode="light"] .settings-menu{background:linear-gradient(165deg,#fff,color-mix(in srgb,var(--theme-surface) 96%, #fff));box-shadow:0 22px 58px rgba(15,23,42,.16),0 0 0 1px color-mix(in srgb,var(--theme-accent) 18%, #fff),inset 0 1px 0 #fff}
+[data-color-mode="light"] .analytics-backdrop{background:radial-gradient(980px circle at 18% 0%, rgba(16,185,129,.14), transparent 42%), rgba(239,244,252,.72)}
+[data-color-mode="light"] .analytics-shell.analytics-redesign{background:linear-gradient(150deg,#fff,color-mix(in srgb,var(--theme-surface) 95%, #fff)) !important;box-shadow:0 24px 56px rgba(15,23,42,.14),inset 0 1px 0 #fff !important}
+
+@media (max-width: 767px){
+  .settings-menu{width:calc(100vw - 20px);left:0;right:auto;max-height:calc(100dvh - 94px);padding:14px !important;border-radius:20px !important}
+  .analytics-shell.analytics-redesign{width:calc(100vw - 12px);padding:14px !important;border-radius:18px !important}
+  .analytics-head{flex-direction:column;align-items:stretch}
+}

@@ -3187,15 +3187,15 @@ export default function MCUViewer() {
 
       {analyticsOpen && (
         <div className="detail-backdrop analytics-backdrop" onClick={closeAnalytics} role="dialog" aria-label="Analysis history">
-          <div className="detail-card glass-panel analytics-shell" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 1080, border: '1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border))', boxShadow: darkMode ? '0 28px 80px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06)' : '0 18px 44px rgba(15,23,42,0.16), inset 0 1px 0 rgba(255,255,255,0.86)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 14 }}>
+          <div className="detail-card glass-panel analytics-shell analytics-redesign" onClick={(e) => e.stopPropagation()}>
+            <div className="analytics-head">
               <div>
-                <h2 style={{ fontSize: 30, marginBottom: 4 }}>Analysis</h2>
-                <div style={{ color: T.textMuted, fontSize: 13 }}>Concise progress insights: phase counts, watch percentage, and streak.</div>
+                <h2 className="analytics-title">Analysis</h2>
+                <div className="analytics-subtitle">Concise progress insights: phase counts, watch percentage, and streak.</div>
               </div>
-              <button className="fpill" onClick={closeAnalytics}>Close</button>
+              <button className="fpill analytics-close-btn" onClick={closeAnalytics}>Close</button>
             </div>
-            <div className="ui-btn-group" style={{ position: 'sticky', top: 0, zIndex: 5, marginBottom: 10, paddingBottom: 8, background: 'var(--surface-overlay)', borderRadius: 14, border: '1px solid var(--border-soft)' }}>
+            <div className="ui-btn-group analytics-tabs">
               {[{ id: 'overview', label: 'Overview' }, { id: 'reviews', label: 'Reviews' }, { id: 'export', label: 'Quick Export' }, { id: 'advanced-export', label: 'Advanced Export' }].map(tab => (
                 <button key={tab.id} className="fpill" onClick={() => setAnalyticsTab(tab.id)} style={{ borderColor: analyticsTab === tab.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{tab.label}</button>
               ))}
