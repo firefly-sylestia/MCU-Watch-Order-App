@@ -213,6 +213,9 @@
 
 /* Full redesign: settings + analytics surfaces */
 .settings-menu-redesign{
+  width:min(92vw, 460px) !important;
+  max-height: min(88vh, 820px) !important;
+  overflow:auto !important;
   border-radius: 24px !important;
   padding: 16px !important;
   border: 1px solid color-mix(in srgb, var(--theme-accent) 38%, var(--theme-border)) !important;
@@ -227,8 +230,11 @@
 .settings-menu-redesign > *{
   border-radius: 14px;
 }
+.settings-menu-redesign .fpill{font-size:12px !important;min-height:34px !important;padding:0 10px !important}
+.settings-menu-redesign input[type="range"]{height:18px}
+.settings-menu-redesign hr{margin:8px 0 !important}
 .settings-menu-redesign .fpill{
-  min-height: 42px !important;
+  min-height: 34px !important;
   border-color: color-mix(in srgb,var(--theme-accent) 44%, var(--theme-border));
   background: color-mix(in srgb,var(--theme-surface) 82%, transparent);
 }
@@ -276,7 +282,7 @@
 .header-title-sub{display:block;text-align:center;margin-left:0}
 
 .list-panel{background:color-mix(in srgb,var(--theme-surface) 45%, transparent) !important;border:1px solid color-mix(in srgb,var(--theme-border) 56%, transparent) !important;border-radius:18px !important;padding:12px !important;backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);box-shadow:0 14px 30px rgba(2,8,23,.24), inset 0 1px 0 rgba(255,255,255,.08) !important}
-.rrow{grid-template-columns:28px 74px minmax(0,1fr) minmax(124px,auto);min-height:124px;gap:18px}
+.rrow{grid-template-columns:28px 74px minmax(0,1fr) minmax(104px,auto);min-height:124px;gap:16px}
 .poster-shell,.poster{width:74px;height:104px;border-radius:11px}
 @media (max-width: 767px){.rrow{grid-template-columns:24px 58px minmax(0,1fr)!important;min-height:112px;gap:10px}.poster-shell,.poster{width:58px;height:84px}.title-btn{min-height:70px}}
 [data-color-mode="light"] .phase-rows-full{background:color-mix(in srgb,var(--theme-surface) 97%, #ffffff);border-color:color-mix(in srgb,var(--theme-border) 72%, #ffffff)}
