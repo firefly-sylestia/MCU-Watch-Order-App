@@ -850,6 +850,7 @@ export default function MCUViewer() {
   const heroInteractionTimeoutRef = useRef(null);
   const heroUserInteractingUntilRef = useRef(0);
   const heroProgrammaticScrollRef = useRef(false);
+  const heroForceCenterRef = useRef(false);
   const heroRandomSeedRef = useRef(() => Math.random().toString(36).slice(2));
   if (typeof heroRandomSeedRef.current === 'function') heroRandomSeedRef.current = heroRandomSeedRef.current();
   const restoredUiStateRef = useRef(false);
@@ -1494,7 +1495,8 @@ export default function MCUViewer() {
 
   useEffect(() => {
     if (!heroActiveCardRef.current || !heroRailRef.current) return undefined;
-    if (Date.now() < heroUserInteractingUntilRef.current) return undefined;
+    const shouldForceCenter = heroForceCenterRef.current;
+    if (!shouldForceCenter && Date.now() < heroUserInteractingUntilRef.current) return undefined;
     const mainScrollTop = mainRef.current?.scrollTop || window.scrollY || 0;
     if (mainScrollTop > 220) return undefined;
     const frame = window.requestAnimationFrame(() => {
@@ -1502,6 +1504,7 @@ export default function MCUViewer() {
       const rail = heroRailRef.current;
       const card = heroActiveCardRef.current;
       if (rail && card) {
+        heroForceCenterRef.current = false;
         const targetLeft = card.offsetLeft - (rail.clientWidth - card.clientWidth) / 2;
         rail.scrollTo({ left: Math.max(0, targetLeft), behavior: performanceMode ? 'auto' : 'smooth' });
       }
@@ -1513,12 +1516,14 @@ export default function MCUViewer() {
   const goToNextHero = useCallback(() => {
     if (!heroPosters.length) return;
     pauseHeroAutoSlide(2800);
+    heroForceCenterRef.current = true;
     setHeroIndex(i => (i + 1) % heroPosters.length);
   }, [heroPosters.length, pauseHeroAutoSlide]);
 
   const goToPrevHero = useCallback(() => {
     if (!heroPosters.length) return;
     pauseHeroAutoSlide(2800);
+    heroForceCenterRef.current = true;
     setHeroIndex(i => (i - 1 + heroPosters.length) % heroPosters.length);
   }, [heroPosters.length, pauseHeroAutoSlide]);
 
@@ -2513,8 +2518,8 @@ export default function MCUViewer() {
   const activeThemeVars = getActiveThemeVars(themeMode, darkMode);
 
   const cssThemeVars = {
-    '--theme-bg': darkMode ? '#06060f' : '#ebe6dc',
-    '--theme-border': darkMode ? '#1b1b33' : '#ddd8cf',
+    '--theme-bg': darkMode ? '#06060f' : '#e6dfd2',
+    '--theme-border': darkMode ? '#1b1b33' : '#d4cbbc',
     '--theme-text': darkMode ? '#d8e3f5' : '#1a2030',
     '--theme-text-muted': darkMode ? '#a9b6cb' : '#4f5c70',
     '--theme-text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
@@ -2542,19 +2547,19 @@ export default function MCUViewer() {
     '--overlay-soft': darkMode ? 'rgba(2,6,18,0.3)' : 'rgba(15,23,42,0.09)',
     '--overlay-dark': darkMode ? 'rgba(2,6,18,0.46)' : 'rgba(15,23,42,0.15)',
     '--overlay-strong': darkMode ? 'rgba(2,6,18,0.58)' : 'rgba(15,23,42,0.24)',
-    '--control-solid-bg': darkMode ? 'rgba(20,25,46,0.84)' : 'rgba(247,242,233,0.94)',
+    '--control-solid-bg': darkMode ? 'rgba(20,25,46,0.84)' : 'rgba(238,230,216,0.94)',
     '--detail-shell-bg': darkMode
       ? 'linear-gradient(145deg, color-mix(in srgb,var(--theme-bg) 92%, #000), color-mix(in srgb,var(--theme-surface) 88%, #000) 54%, color-mix(in srgb,var(--theme-bg-alt) 88%, #000))'
       : 'linear-gradient(145deg, color-mix(in srgb,var(--theme-surface) 88%, var(--theme-bg)), color-mix(in srgb,var(--theme-bg) 90%, #f5efe3) 56%, color-mix(in srgb,var(--theme-surface) 78%, var(--theme-bg)))',
     '--detail-panel-bg': darkMode
       ? 'color-mix(in srgb,var(--theme-surface) 74%, rgba(8,12,26,0.82))'
       : 'color-mix(in srgb,var(--theme-surface) 74%, var(--theme-bg))',
-    '--app-bg-base': darkMode ? '#06060f' : '#ebe6dc',
+    '--app-bg-base': darkMode ? '#06060f' : '#e4dccf',
     '--app-bg-vignette': darkMode ? 'rgba(2,6,23,0.42)' : 'rgba(2,6,23,0.08)',
     '--app-bg-noise-opacity': darkMode ? '0.06' : '0.03',
     '--theme-app-bg': darkMode
       ? `radial-gradient(circle at 8% 2%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 40%, transparent), transparent 34%), radial-gradient(circle at 90% 8%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 36%, transparent), transparent 40%), radial-gradient(circle at 50% 120%, rgba(14,165,233,0.22), transparent 52%), linear-gradient(138deg, #02030a 0%, #09071a 30%, #0f1031 58%, #1a1038 100%)`
-      : `radial-gradient(circle at 8% 4%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 20%, #f2ede2), transparent 34%), radial-gradient(circle at 88% 14%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 18%, #f2ede2), transparent 40%), linear-gradient(140deg, #efe9dd 0%, #e8e2d8 40%, #ece5db 100%)`,
+      : `radial-gradient(circle at 8% 4%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 20%, #f2ede2), transparent 34%), radial-gradient(circle at 88% 14%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 18%, #f2ede2), transparent 40%), linear-gradient(140deg, #e7dfd2 0%, #dfd6c8 40%, #e5dccf 100%)`,
     '--comp-overlay-bg': darkMode ? 'rgba(12,16,34,0.88)' : 'rgba(245,239,230,0.93)',
     '--comp-dropdown-bg': darkMode ? 'rgba(13,18,34,0.72)' : 'rgba(243,237,228,0.8)',
     '--theme-header-bg': darkMode

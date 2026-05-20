@@ -124,7 +124,7 @@
 [data-color-mode="light"] .detail-btn:hover{background:var(--theme-surface-hover) !important}
 
 
-[data-color-mode="light"] .settings-menu{background:color-mix(in srgb,var(--theme-surface) 96%, #ffffff);color:var(--theme-text);border-color:color-mix(in srgb,var(--theme-border) 80%, #ffffff)}
+[data-color-mode="light"] .settings-menu{background:color-mix(in srgb,var(--theme-surface) 98%, #f6f1e8);color:var(--theme-text);border-color:color-mix(in srgb,var(--theme-border) 86%, #efe7db)}
 [data-color-mode="light"] .filter-row-actions .fpill,[data-color-mode="light"] .filter-bar .fpill{background:color-mix(in srgb,var(--theme-surface) 94%, #ffffff);color:var(--theme-text);border-color:color-mix(in srgb,var(--theme-border) 82%, #ffffff)}
 [data-color-mode="light"] .filter-row-actions .fpill:hover,[data-color-mode="light"] .filter-bar .fpill:hover{background:var(--theme-surface-hover)}
 .review-theme-pill{min-height:58px !important;white-space:normal !important;line-height:1.15;text-align:center}
@@ -344,3 +344,5 @@
 @keyframes heroCarouselEnter{from{opacity:0;transform:translateY(8px) scale(.9)}to{opacity:.58;transform:scale(.93)}}
 .hero-carousel-card.is-active{animation-duration:.34s}
 @media (max-width: 767px){.hero-carousel-nav{width:30px;height:30px;font-size:20px}}
+
+        @keyframes upcomingPulse{0%,100%{transform:translateY(0) scale(1);filter:saturate(1) contrast(1)}50%{transform:translateY(-2px) scale(1.012);filter:saturate(1.05) contrast(1.02)}}
