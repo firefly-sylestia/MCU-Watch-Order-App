@@ -383,7 +383,7 @@ const posterExportName = (item, ext = 'jpg') => posterFileName(item, ext);
 
 const loadedPosterSrcs = new Set();
 
-const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poster', eager = false }) {
+const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poster', eager = false, loadingMode = 'auto' }) {
   const [loaded, setLoaded] = useState(() => loadedPosterSrcs.has(src));
 
   useEffect(() => {
@@ -396,7 +396,7 @@ const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poste
   };
 
   return <div className={`poster-shell ${loaded ? 'is-loaded' : ''}`}>
-    <img className={`${className} ${loaded ? 'is-loaded' : ''}`} src={src} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding="async" fetchpriority={eager ? 'high' : 'auto'} onLoad={handleLoad} />
+    <img className={`${className} ${loaded ? 'is-loaded' : ''}`} src={src} alt={alt} loading={eager ? 'eager' : loadingMode} decoding="async" fetchpriority={eager ? 'high' : 'auto'} onLoad={handleLoad} />
   </div>;
 });
 const TMDB_LOOKUP_OVERRIDES = {
@@ -591,7 +591,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             />
           ) : (idx + 1)}
         </div>
-        <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 8} />
+        <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 24} loadingMode="auto" />
 
         <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
           <div className="title-row-top" style={TITLE_ROW_STATIC.titleLine}>
@@ -1287,6 +1287,31 @@ export default function MCUViewer() {
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
   }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap]);
+
+
+
+  useEffect(() => {
+    // Keep list scrolling visually stable by preloading poster assets used in the current filtered list.
+    const preloadTargets = filtered.slice(0, 180);
+    let cancelled = false;
+    const preloadBatch = (start = 0) => {
+      if (cancelled) return;
+      const batch = preloadTargets.slice(start, start + 20);
+      batch.forEach((item) => {
+        const src = posterSrc(item);
+        if (!src || loadedPosterSrcs.has(src)) return;
+        const img = new Image();
+        img.decoding = 'async';
+        img.src = src;
+        img.onload = () => loadedPosterSrcs.add(src);
+      });
+      if (start + 20 < preloadTargets.length) {
+        window.setTimeout(() => preloadBatch(start + 20), 50);
+      }
+    };
+    preloadBatch(0);
+    return () => { cancelled = true; };
+  }, [filtered, posterSrc]);
 
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
