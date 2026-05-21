@@ -121,7 +121,7 @@ const UI_STATE_DEFAULTS = {
   watchedOnly: false,
   statusFilter: null,
   typeFilter: null,
-  activePhase: 0,
+  activePhase: 1,
   filtersOpen: false,
   viewMode: 'list',
   densityMode: 'comfortable',
@@ -795,6 +795,10 @@ export default function MCUViewer() {
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [selectedIds,    setSelectedIds]    = useState(() => new Set());
   const [scrollCheckpoint, setScrollCheckpoint] = useState(initialUiState.scrollTop);
+
+  const scrollAnimatorRef = useRef({ rafId: 0, target: 0, active: false });
+  const scrollSpeedRef = useRef(1);
+
   const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
   const [grootMode, setGrootMode] = useState(false);
   const [worthyIds, setWorthyIds] = useState({});
@@ -1548,6 +1552,47 @@ export default function MCUViewer() {
     e.currentTarget.scrollBy({ left: horizontalDelta * 2.4, behavior: 'auto' });
     e.preventDefault();
   }, [pauseHeroAutoSlide]);
+
+
+
+  const handleMainWheel = useCallback((event) => {
+    if (!mainRef.current) return;
+    if (event.defaultPrevented || event.ctrlKey || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+    const scroller = mainRef.current;
+    const maxScroll = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+    if (maxScroll <= 0) return;
+
+    event.preventDefault();
+    const factor = scrollSpeedRef.current;
+    const state = scrollAnimatorRef.current;
+    const currentTop = scroller.scrollTop;
+    state.target = Math.max(0, Math.min(maxScroll, (state.active ? state.target : currentTop) + (event.deltaY * factor)));
+
+    if (state.active) return;
+    state.active = true;
+
+    const animate = () => {
+      const distance = state.target - scroller.scrollTop;
+      if (Math.abs(distance) < 0.4) {
+        scroller.scrollTop = state.target;
+        state.active = false;
+        state.rafId = 0;
+        return;
+      }
+      scroller.scrollTop += distance * 0.16;
+      state.rafId = window.requestAnimationFrame(animate);
+    };
+
+    state.rafId = window.requestAnimationFrame(animate);
+  }, []);
+
+  useEffect(() => () => {
+    const state = scrollAnimatorRef.current;
+    if (state.rafId) window.cancelAnimationFrame(state.rafId);
+  }, []);
+  useEffect(() => {
+    scrollSpeedRef.current = performanceMode ? 0.88 : 1;
+  }, [performanceMode]);
 
   const spoilerSafe = useMemo(() => spoilerSafeMode, [spoilerSafeMode]);
 
@@ -3059,7 +3104,7 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} className={snapMode ? 'snap-blip' : ''} style={{ overflow: 'visible', flex: '0 0 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
+      <main ref={mainRef} onWheel={handleMainWheel} className={snapMode ? 'snap-blip' : ''} style={{ overflowY: 'auto', overflowX: 'visible', flex: '1 1 auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
