@@ -1290,29 +1290,6 @@ export default function MCUViewer() {
 
 
 
-  useEffect(() => {
-    // Keep list scrolling visually stable by preloading poster assets used in the current filtered list.
-    const preloadTargets = filtered.slice(0, 180);
-    let cancelled = false;
-    const preloadBatch = (start = 0) => {
-      if (cancelled) return;
-      const batch = preloadTargets.slice(start, start + 20);
-      batch.forEach((item) => {
-        const src = posterSrc(item);
-        if (!src || loadedPosterSrcs.has(src)) return;
-        const img = new Image();
-        img.decoding = 'async';
-        img.src = src;
-        img.onload = () => loadedPosterSrcs.add(src);
-      });
-      if (start + 20 < preloadTargets.length) {
-        window.setTimeout(() => preloadBatch(start + 20), 50);
-      }
-    };
-    preloadBatch(0);
-    return () => { cancelled = true; };
-  }, [filtered, posterSrc]);
-
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
     [items, listMode, coreIds]
