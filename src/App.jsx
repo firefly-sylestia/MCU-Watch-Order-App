@@ -3096,7 +3096,7 @@ export default function MCUViewer() {
                 </div>
               ))}
             </section>
-                    ) : (
+          ) : (
             <>
               <section className="home-overview-grid section-up">
                 <article className="home-overview-card">
@@ -3115,13 +3115,32 @@ export default function MCUViewer() {
                   <span>{nextUnwatched ? `Phase ${nextUnwatched.phase}` : 'Great work'}</span>
                 </article>
               </section>
-) : phaseKeys.map(pid => {
+              {phaseKeys.map(pid => {
             const ph = currentPhases.find(p => p.id === pid);
             const rows = grouped[pid];
             const done = rows.filter(r => r.status === 'watched').length;
             const phasePct = rows.length ? Math.round((done / rows.length) * 100) : 0;
             const isCelebrating = celebPhase === pid;
             const summaryOpen = expandedPhase === pid;
+            const showTeaserOnly = activePhase === 0 && featuredPhase !== pid;
+
+            if (showTeaserOnly) {
+              return (
+                <section key={`teaser-${pid}`} className="phase-teaser-card row-in" style={{ borderColor: `color-mix(in srgb, ${ph.color} 42%, var(--theme-border))` }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div className="phase-teaser-title line-clamp-1">{ph.name}</div>
+                    <div className="phase-teaser-meta">{done}/{rows.length} watched · {phasePct}% complete</div>
+                  </div>
+                  <button
+                    className="fpill phase-teaser-btn"
+                    onClick={() => { setFeaturedPhase(pid); setExpandedPhase(null); }}
+                    style={{ borderColor: `${ph.color}88`, color: ph.color }}
+                  >
+                    Focus
+                  </button>
+                </section>
+              );
+            }
 
             return (
               <section key={pid} className="section-up" data-phase={pid}
@@ -3218,6 +3237,8 @@ export default function MCUViewer() {
               </section>
             );
           })}
+            </>
+          )}
 
           <div style={{ textAlign: 'center', marginTop: 44, fontFamily: 'var(--font-marvel-ui)', fontSize: 11, color: 'var(--theme-text-muted)', letterSpacing: 2.2, fontWeight: 700 }}>
             Made with ♥️ by Marvel Fan

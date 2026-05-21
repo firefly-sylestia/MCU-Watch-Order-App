@@ -1053,3 +1053,12 @@ main{--content-max:1560px !important}
 .phase-teaser-card{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-radius:14px;border:1px solid color-mix(in srgb,var(--theme-border) 72%, transparent);background:color-mix(in srgb,var(--theme-surface) 62%, transparent);margin-bottom:10px}
 .phase-teaser-title{font-family:var(--font-marvel-ui);font-weight:700;letter-spacing:.06em;color:var(--theme-text-primary)}
 .phase-teaser-meta{font-size:12px;color:var(--theme-text-muted)}
+.phase-teaser-btn{min-width:90px;justify-content:center;transition:transform .2s var(--ease-out),background .2s var(--ease-out)}
+.phase-teaser-btn:hover{transform:translateY(-1px);background:color-mix(in srgb,var(--theme-accent) 10%, var(--theme-surface))}
+
+/* List redesign refresh */
+.list-panel{border:1px solid color-mix(in srgb,var(--theme-border) 68%, transparent);border-radius:18px;background:color-mix(in srgb,var(--theme-surface) 42%, transparent);padding:10px}
+.phase-header-card{border-radius:18px;padding:18px 18px 16px 20px;gap:12px}
+.phase-progress-chip{background:color-mix(in srgb,var(--theme-surface) 85%, transparent);border-radius:999px;padding:7px 12px}
+.rrow{border-radius:14px;transition:transform .2s var(--ease-out),border-color .2s var(--ease-out),box-shadow .2s var(--ease-out)}
+.rrow:hover{border-color:color-mix(in srgb,var(--theme-accent) 26%, var(--theme-border))}
