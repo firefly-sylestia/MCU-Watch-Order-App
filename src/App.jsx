@@ -383,7 +383,7 @@ const posterExportName = (item, ext = 'jpg') => posterFileName(item, ext);
 
 const loadedPosterSrcs = new Set();
 
-const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poster', eager = false }) {
+const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poster' }) {
   const [loaded, setLoaded] = useState(() => loadedPosterSrcs.has(src));
 
   useEffect(() => {
@@ -396,7 +396,7 @@ const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poste
   };
 
   return <div className={`poster-shell ${loaded ? 'is-loaded' : ''}`}>
-    <img className={`${className} ${loaded ? 'is-loaded' : ''}`} src={src} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding="async" fetchpriority={eager ? 'high' : 'auto'} onLoad={handleLoad} />
+    <img className={`${className} ${loaded ? 'is-loaded' : ''}`} src={src} alt={alt} loading="eager" decoding="async" fetchpriority="low" onLoad={handleLoad} />
   </div>;
 });
 const TMDB_LOOKUP_OVERRIDES = {
@@ -591,7 +591,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             />
           ) : (idx + 1)}
         </div>
-        <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 12 || preloadedPosterSet.has(poster)} />
+        <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} />
 
         <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
           <div className="title-row-top" style={TITLE_ROW_STATIC.titleLine}>
@@ -1387,44 +1387,6 @@ export default function MCUViewer() {
   const posterSrc = useCallback((item) => (
     localPosterSrc(item) || posterCache[item.id] || `https://placehold.co/220x330/1a1f33/f7c4de?text=${encodeURIComponent(item.title+'\n'+item.year)}`
   ), [localPosterSrc, posterCache]);
-  const [preloadedPosterSet, setPreloadedPosterSet] = useState(() => new Set());
-
-  useEffect(() => {
-    const targets = filtered.map((item) => posterSrc(item)).filter(Boolean);
-    if (!targets.length) return;
-    let cancelled = false;
-    const nextLoaded = new Set(loadedPosterSrcs);
-    const markLoaded = (src) => {
-      if (!src) return;
-      loadedPosterSrcs.add(src);
-      nextLoaded.add(src);
-    };
-
-    const queue = async () => {
-      for (const src of targets) {
-        if (cancelled || nextLoaded.has(src)) continue;
-        await new Promise((resolve) => {
-          const img = new Image();
-          img.decoding = 'async';
-          img.loading = 'eager';
-          img.fetchPriority = 'low';
-          img.onload = () => { markLoaded(src); resolve(); };
-          img.onerror = () => resolve();
-          img.src = src;
-        });
-      }
-      if (!cancelled) setPreloadedPosterSet(new Set(nextLoaded));
-    };
-
-    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      const id = window.requestIdleCallback(() => { queue(); }, { timeout: 1200 });
-      return () => { cancelled = true; window.cancelIdleCallback(id); };
-    }
-
-    queue();
-    return () => { cancelled = true; };
-  }, [filtered, posterSrc]);
-
 
   const heroPosterItems = useMemo(() => {
     const seen = new Set();
@@ -3116,7 +3078,7 @@ export default function MCUViewer() {
                   {entries.map(({ item, rawDate, label, releaseStatus, hasRealDate }) => (
                     <div key={`${group}-${item.id}`} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
                       <div style={{ fontSize: 11, color: releaseStatus === 'upcoming' ? 'var(--theme-warning)' : T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
-                      <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} eager={preloadedPosterSet.has(posterSrc(item))} />
+                      <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
                       <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left', textShadow: '0 1px 2px color-mix(in srgb, var(--theme-bg) 35%, transparent)' }}>
                         {item.title}
                         <div style={{ fontSize: 11, color: T.textMuted, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
