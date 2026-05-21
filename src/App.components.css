@@ -1043,3 +1043,143 @@ main{--content-max:1560px !important}
 .dc-universe .hero-carousel-card{display:block !important;opacity:.62 !important;transform:scale(.94) !important}
 .dc-universe .hero-carousel-card.is-active{opacity:1 !important;transform:translateY(-6px) scale(1) !important}
 .dc-universe .hero-carousel-poster{border-color:color-mix(in srgb,#60a5fa 46%, var(--theme-border)) !important}
+
+/* 2026 Modernization pass: unified spacing, motion, and color system */
+:root {
+  --space-unit: 8px;
+  --space-1: calc(var(--space-unit) * 1);
+  --space-2: calc(var(--space-unit) * 1.5);
+  --space-3: calc(var(--space-unit) * 2);
+  --space-4: calc(var(--space-unit) * 2.5);
+  --space-5: calc(var(--space-unit) * 3);
+  --radius-modern-sm: 12px;
+  --radius-modern-md: 16px;
+  --radius-modern-lg: 22px;
+}
+
+main {
+  padding-inline: clamp(12px, 3vw, 28px);
+}
+
+.phase-rows-full,
+.filters-open,
+.settings-menu,
+.sidebar-menu,
+.detail-card,
+.detail-export-shell {
+  border-radius: var(--radius-modern-lg) !important;
+}
+
+.fpill,
+.dock-btn,
+.wbtn,
+.theme-btn,
+.status-pill,
+.bottom-action-bar {
+  min-height: 42px;
+  border-radius: 999px;
+  transition: transform var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) var(--motion-ease), border-color var(--motion-fast) var(--motion-ease), background-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease);
+}
+
+.fpill:hover,
+.dock-btn:hover,
+.theme-btn:hover,
+.wbtn:hover {
+  transform: translateY(-1px);
+}
+
+.fpill:active,
+.dock-btn:active,
+.theme-btn:active,
+.wbtn:active {
+  transform: translateY(0);
+}
+
+.rrow,
+.calendar-row {
+  border-radius: var(--radius-modern-md) !important;
+  min-height: 104px;
+}
+
+.rrow {
+  padding: var(--space-3) var(--space-3) var(--space-3) calc(var(--space-2) + 2px) !important;
+}
+
+.phase-header-card {
+  border-radius: var(--radius-modern-lg);
+  padding: var(--space-3) var(--space-4);
+}
+
+.header-brand {
+  border-radius: var(--radius-modern-lg);
+}
+
+.title-btn .title-main {
+  text-wrap: balance;
+}
+
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--theme-accent) 78%, #ffffff 22%);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rrow,
+  .calendar-row,
+  .phase-header-card,
+  .fpill,
+  .dock-btn,
+  .theme-btn,
+  .detail-card {
+    animation: fadeLiftIn 420ms var(--motion-ease) both;
+  }
+
+  .rrow:hover,
+  .calendar-row:hover {
+    box-shadow: 0 14px 28px color-mix(in srgb, var(--theme-bg) 38%, transparent);
+  }
+}
+
+@keyframes fadeLiftIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+[data-color-mode="dark"] .phase-rows-full,
+[data-color-mode="dark"] .settings-menu,
+[data-color-mode="dark"] .sidebar-menu,
+[data-color-mode="dark"] .filters-open {
+  background: linear-gradient(160deg, color-mix(in srgb,var(--theme-surface) 86%, #0b1020), color-mix(in srgb,var(--theme-bg) 92%, #080b16));
+  border-color: color-mix(in srgb,var(--theme-border) 74%, #64748b 26%);
+}
+
+[data-color-mode="light"] .phase-rows-full,
+[data-color-mode="light"] .settings-menu,
+[data-color-mode="light"] .sidebar-menu,
+[data-color-mode="light"] .filters-open {
+  background: linear-gradient(165deg, color-mix(in srgb,var(--theme-surface) 97%, #ffffff), color-mix(in srgb,var(--theme-bg) 8%, #ffffff));
+  border-color: color-mix(in srgb,var(--theme-border) 80%, #ffffff);
+}
+
+[data-color-mode="light"] .rrow,
+[data-color-mode="light"] .calendar-row {
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.09);
+}
+
+[data-color-mode="dark"] .rrow,
+[data-color-mode="dark"] .calendar-row {
+  box-shadow: 0 14px 26px rgba(2, 6, 18, 0.34);
+}
+
+@media (max-width: 767px) {
+  .rrow,
+  .calendar-row {
+    min-height: 96px;
+    padding: 14px 10px !important;
+  }
+
+  .phase-header-card {
+    padding: var(--space-3);
+    gap: var(--space-2);
+  }
+}
