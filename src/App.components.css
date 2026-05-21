@@ -1074,3 +1074,27 @@ main{--content-max:1560px !important}
 
 @media (prefers-reduced-motion: reduce){.sk-line::after,.sk-chip::after{animation:none}}
 @media (max-width: 768px){.detail-card.detail-export-shell{border-radius:18px !important}.detail-export-grid{gap:14px !important}}
+
+/* 2026-05: unified list title and skeleton heights */
+:root{
+  --list-row-height-desktop: 112px;
+  --list-row-height-mobile: 102px;
+  --list-title-height-desktop: 72px;
+  --list-title-height-mobile: 64px;
+}
+
+.rrow{min-height:var(--list-row-height-desktop) !important;align-items:stretch;}
+.title-btn{min-height:var(--list-title-height-desktop) !important;display:grid;align-content:start;}
+.title-btn .title-main{min-height:calc(1.24em * 2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+
+/* Make modal skeleton blocks visually match list card rhythm */
+.detail-skeleton{min-height:var(--list-row-height-desktop);align-content:space-between;}
+.detail-story-skeleton{min-height:var(--list-title-height-desktop);align-content:start;}
+.sk-chip{min-height:36px;}
+
+@media (max-width: 767px){
+  .rrow{min-height:var(--list-row-height-mobile) !important;}
+  .title-btn{min-height:var(--list-title-height-mobile) !important;}
+  .detail-skeleton{min-height:var(--list-row-height-mobile);}
+  .detail-story-skeleton{min-height:var(--list-title-height-mobile);}
+}
