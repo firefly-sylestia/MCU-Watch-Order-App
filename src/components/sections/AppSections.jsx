@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { memo } from 'react';
 
-export const HeaderShell = ({ children }) => <>{children}</>;
-export const HeroBackdrop = ({ children }) => <>{children}</>;
-export const HeroCarousel = ({ children }) => <>{children}</>;
-export const FloatingQuickControls = ({ children }) => <>{children}</>;
-export const FilterBar = ({ children }) => <>{children}</>;
-export const PhaseList = ({ children }) => <>{children}</>;
-export const SettingsPanel = ({ children }) => <>{children}</>;
-export const DetailModal = ({ children }) => <>{children}</>;
+const PassThrough = memo(function PassThrough({ children }) {
+  return <>{children}</>;
+});
+
+export const HeaderShell = PassThrough;
+export const HeroBackdrop = PassThrough;
+export const HeroCarousel = PassThrough;
+export const FloatingQuickControls = PassThrough;
+export const FilterBar = PassThrough;
+export const PhaseList = PassThrough;
+export const SettingsPanel = PassThrough;
+export const DetailModal = PassThrough;

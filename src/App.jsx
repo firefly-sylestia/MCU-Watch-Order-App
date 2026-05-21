@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback, useReducer } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, useReducer, lazy, Suspense } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { Media } from '@capacitor-community/media';
-import CropModal from './components/CropModal';
 import { readStorageJSON, readStorageValue, removeStorageValue, safeLocalStorageSetItem, scheduleStorageWrite, pruneObject } from './utils/cacheStorage';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { renderCardToCanvas } from './export/cards/renderCardToCanvas';
@@ -28,6 +27,8 @@ import {
 } from './data/mcuData';
 import { DC_RAW, DC_PHASES, DC_CORE_IDS } from './data/dcData';
 import { UNIVERSE_META } from './constants/universeSwitch';
+
+const CropModal = lazy(() => import('./components/CropModal'));
 
 // ─── Icon primitives ────────────────────────────────────────────────────────
 const Icon = ({ children, size = 16, style = {} }) => (
@@ -176,6 +177,17 @@ const readSavedUiState = () => {
 };
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const DetailSkeleton = () => (
+  <div className="detail-skeleton" aria-hidden="true">
+    <div className="sk-line sk-line-lg" />
+    <div className="sk-line" />
+    <div className="sk-line sk-line-short" />
+    <div className="sk-grid">
+      <div className="sk-chip" /><div className="sk-chip" /><div className="sk-chip" /><div className="sk-chip" />
+    </div>
+  </div>
+);
 
 const calculateWatchStreak = (items) => {
   const dayKey = (date) => {
@@ -3227,7 +3239,7 @@ export default function MCUViewer() {
                   <span>{TYPE_META[detailItem.type]?.label}</span>
                   {(detailData?.imdbRating && detailData.imdbRating !== 'N/A') && <span>★ {detailData.imdbRating}/10</span>}
                 </div>
-                {detailLoading && <div className="detail-export-loading">Loading metadata…</div>}
+                {detailLoading && <DetailSkeleton />}
                 {!detailLoading && !detailData && <div className="detail-export-loading">Showing local data.</div>}
 
                 <section className="detail-export-panel story">
@@ -3248,11 +3260,11 @@ export default function MCUViewer() {
                       <SwitchIcon size={11} /> {detailPlotState.active === 'primary' ? 'TMDB' : (detailPlotState.loadingSecondary ? 'Loading…' : 'OMDb')}
                     </button>
                   </div>
-                  <p style={{ filter: spoilerSafe ? 'blur(5px)' : 'none', transition: 'filter 0.18s ease' }}>
+                  {detailLoading ? <div className="detail-story-skeleton"><div className="sk-line"/><div className="sk-line"/><div className="sk-line sk-line-short"/></div> : <p style={{ filter: spoilerSafe ? 'blur(5px)' : 'none', transition: 'filter 0.18s ease' }}>
                     {detailPlotState.active === 'secondary'
                       ? (detailPlotState.secondary || detailItem.desc)
                       : (detailPlotState.primary || detailData?.Plot || detailItem.desc)}
-                  </p>
+                  </p>}
                 </section>
 
                 <section className="detail-export-panel intel">
@@ -3445,7 +3457,7 @@ export default function MCUViewer() {
       )}
 
       {avatarCropSrc && (
-        <CropModal
+        <Suspense fallback={null}><CropModal
           src={avatarCropSrc}
           cropTarget="avatar"
           theme={{ cardBg: T.surfaceBg, cardShadow: T.dropdownShadow, cardBorder: T.surfaceBorder, textPrimary: T.text, textDim: T.textMuted, accent: '#4a9ede', accent2: 'var(--theme-accent-alt)' }}
@@ -3455,7 +3467,7 @@ export default function MCUViewer() {
             setUploadedAvatars(a => [img, ...a.filter(x => x !== img)].slice(0, 24));
             setAvatarCropSrc('');
           }}
-        />
+        /></Suspense>
       )}
 
       {/* ━━ STATUS DROPDOWN ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
