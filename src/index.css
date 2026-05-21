@@ -677,3 +677,34 @@ a:hover {
   --row-top-tint: color-mix(in srgb, #d8c7ac 28%, transparent);
   --row-top-tint-soft: color-mix(in srgb, var(--theme-accent, #7cffda) 10%, #F8F9FB);
 }
+
+
+:root {
+  --sys-surface: #1f2630;
+  --sys-surface-hover: #2a3340;
+  --sys-background: #0f1622;
+  --sys-background-elevated: #162030;
+  --sys-text: #edf2fa;
+  --sys-text-muted: #b8c4d9;
+  --sys-border: #314157;
+  --sys-accent: #4a9ede;
+  --sys-success: #3ec47a;
+  --sys-warning: #e8b84b;
+  --sys-error: #d16a6a;
+  --sys-focus: #7cc3ff;
+  --sys-overlay: rgba(2,6,18,0.58);
+  --state-hover: color-mix(in srgb, var(--sys-accent) 10%, var(--sys-surface));
+  --state-active: color-mix(in srgb, var(--sys-accent) 16%, var(--sys-surface));
+  --state-disabled: color-mix(in srgb, var(--sys-text-muted) 35%, transparent);
+}
+
+[data-color-mode="light"] {
+  --sys-surface: #f6f2ea;
+  --sys-surface-hover: #efe8dc;
+  --sys-background: #e4dbcf;
+  --sys-background-elevated: #ece3d8;
+  --sys-text: #1a2030;
+  --sys-text-muted: #4f5c70;
+  --sys-border: #c8beaf;
+  --sys-overlay: rgba(15,23,42,0.22);
+}

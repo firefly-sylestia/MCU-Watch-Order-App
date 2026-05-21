@@ -10,7 +10,7 @@ export const filterAndSortItems = ({ items, listMode, coreIds, essentialOnly, wa
     if (typeFilter && i.type !== typeFilter) return false;
     if (activePhase && i.phase !== activePhase) return false;
     if (timelineMode === 'studio' && i.studioOrder == null) return false;
-    if (genreFilter && !(i.genre || []).includes(genreFilter)) return false;
+    if (genreFilter && genreFilter !== 'all' && !(i.genre || []).includes(genreFilter)) return false;
     if (search && !`${i.title} ${i.notes || ''}`.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   }).sort((a, b) => {
