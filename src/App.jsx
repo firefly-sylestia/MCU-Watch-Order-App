@@ -1,8 +1,4 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, useReducer } from 'react';
-import { Capacitor } from '@capacitor/core';
-import { Filesystem, Directory } from '@capacitor/filesystem';
-import { Share } from '@capacitor/share';
-import { Media } from '@capacitor-community/media';
 import CropModal from './components/CropModal';
 import { readStorageJSON, readStorageValue, removeStorageValue, safeLocalStorageSetItem, scheduleStorageWrite, pruneObject, readLegacySession, writeLegacySession } from './features/watchlist/storage';
 import { SpeedInsights } from '@vercel/speed-insights/react';
@@ -31,6 +27,11 @@ import { UNIVERSE_META } from './constants/universeSwitch';
 import { calculateWatchStreak, getProgressStats } from './features/watchlist/selectors';
 import { filterAndSortItems } from './features/filters/selectors';
 import { readUiState } from './features/settings/storage';
+import { isAndroidNative } from './platform/capabilities';
+import { shareContent } from './platform/shareAdapter';
+import { writeDocumentsFile, writeExternalFile } from './platform/filesystemAdapter';
+import { savePhotoToAlbum } from './platform/mediaAdapter';
+import { usePerfMark } from './hooks/usePerfMark';
 
 // ─── Icon primitives ────────────────────────────────────────────────────────
 const Icon = ({ children, size = 16, style = {} }) => (
@@ -1089,8 +1090,8 @@ export default function MCUViewer() {
     const content = JSON.stringify(payload, null, 2);
     if (Capacitor.isNativePlatform()) {
       const fileName = `mcu-progress-${Date.now()}.json`;
-      const res = await Filesystem.writeFile({ path: fileName, data: content, directory: Directory.Documents, recursive: true });
-      await Share.share({ title: 'MCU Progress Export', text: 'MCU progress backup JSON', url: res.uri });
+      const res = await writeDocumentsFile(fileName, content, true);
+      await shareContent({ title: 'MCU Progress Export', text: 'MCU progress backup JSON', url: res.uri });
       return;
     }
     const blob = new Blob([content], { type: 'application/json' });
@@ -1167,7 +1168,7 @@ export default function MCUViewer() {
             reader.onerror = reject;
             reader.readAsDataURL(blob);
           });
-          await Filesystem.writeFile({ path: `mcu-posters/${filename}`, data: base64, directory: Directory.Documents, recursive: true });
+          await writeDocumentsFile(`mcu-posters/${filename}`, base64, true);
         } else {
           triggerDownload(blob, filename);
         }
@@ -1190,8 +1191,8 @@ export default function MCUViewer() {
         reader.onerror = reject;
         reader.readAsDataURL(manifestBlob);
       });
-      const result = await Filesystem.writeFile({ path: mode === 'failed' ? 'mcu-posters/failed-manifest.json' : 'mcu-posters/manifest.json', data, directory: Directory.Documents, recursive: true });
-      await Share.share({ title: 'MCU Poster Images', text: 'Exported poster images and manifest', url: result.uri });
+      const result = await writeDocumentsFile(mode === 'failed' ? 'mcu-posters/failed-manifest.json' : 'mcu-posters/manifest.json', data, true);
+      await shareContent({ title: 'MCU Poster Images', text: 'Exported poster images and manifest', url: result.uri });
     } else {
       triggerDownload(manifestBlob, mode === 'failed' ? 'mcu-posters-failed-manifest.json' : 'mcu-posters-manifest.json');
     }
@@ -1356,26 +1357,17 @@ export default function MCUViewer() {
     'Captain America: The First Avenger': ['Chris Evans', 'Hayley Atwell', 'Sebastian Stan'],
     'Thor': ['Chris Hemsworth', 'Tom Hiddleston', 'Natalie Portman'],
   };
+  const perfMark = usePerfMark();
+
   const saveImageToDevice = useCallback(async (blob, filename) => {
     const base64 = await blobToBase64(blob);
-    const isNative = Capacitor.isNativePlatform();
-    if (isNative && Capacitor.getPlatform() === 'android') {
+    if (isAndroidNative()) {
       const dataUri = `data:image/png;base64,${base64}`;
       try {
-        try { await Media.createAlbum({ name: 'MCUViewingOrder' }); } catch {}
-        const albums = await Media.getAlbums();
-        const album = (albums?.albums || []).find(a => a.name === 'MCUViewingOrder');
-        if (album?.identifier) {
-          await Media.savePhoto({ path: dataUri, albumIdentifier: album.identifier, fileName: filename.replace(/\.png$/i, '') });
-          return { method: 'mediastore' };
-        }
+        const saved = await savePhotoToAlbum({ dataUri, albumName: 'MCUViewingOrder', fileName: filename.replace(/\.png$/i, '') });
+        if (saved) return { method: 'mediastore' };
       } catch {}
-      await Filesystem.writeFile({
-        path: `Pictures/MCUViewingOrder/${filename}`,
-        data: base64,
-        directory: Directory.ExternalStorage,
-        recursive: true,
-      });
+      await writeExternalFile(`Pictures/MCUViewingOrder/${filename}`, base64, true);
       return { method: 'filesystem' };
     }
     triggerDownload(blob, filename);
@@ -1804,7 +1796,7 @@ export default function MCUViewer() {
     try {
       const exportFontFamily = EXPORT_FONT_FAMILIES[exportFont] || EXPORT_FONT_FAMILIES.inter;
       await waitForExportFont(exportFontFamily);
-      const { blob, filename } = await renderCardToCanvas({
+      const { blob, filename } = await perfMark('export:renderCard', () => renderCardToCanvas({
         type,
         data,
         settings: {
@@ -1823,7 +1815,7 @@ export default function MCUViewer() {
             return `mcu-${cardType}-card.png`;
           },
         },
-      });
+      }));
       if (!blob) return;
       const result = await saveImageToDevice(blob, filename);
       statusHandlers?.onSuccess?.(result);
@@ -2314,7 +2306,7 @@ export default function MCUViewer() {
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
       if (Capacitor.isNativePlatform()) {
         const base64 = await blobToBase64(blob);
-        await Filesystem.writeFile({ path: `mcu-posters/${filename}`, data: base64, directory: Directory.Documents, recursive: true });
+        await writeDocumentsFile(`mcu-posters/${filename}`, base64, true);
       } else {
         triggerDownload(blob, filename);
       }
