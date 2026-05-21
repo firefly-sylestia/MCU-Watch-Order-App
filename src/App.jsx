@@ -4,7 +4,7 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { Media } from '@capacitor-community/media';
 import CropModal from './components/CropModal';
-import { readStorageJSON, readStorageValue, removeStorageValue, safeLocalStorageSetItem, scheduleStorageWrite, pruneObject } from './utils/cacheStorage';
+import { readStorageJSON, readStorageValue, removeStorageValue, safeLocalStorageSetItem, scheduleStorageWrite, pruneObject, readLegacySession, writeLegacySession } from './features/watchlist/storage';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { renderCardToCanvas } from './export/cards/renderCardToCanvas';
 import { drawPremiumStars, drawRoundedPanel, drawWrappedText } from './export/cards/helpers';
@@ -28,6 +28,9 @@ import {
 } from './data/mcuData';
 import { DC_RAW, DC_PHASES, DC_CORE_IDS } from './data/dcData';
 import { UNIVERSE_META } from './constants/universeSwitch';
+import { calculateWatchStreak, getProgressStats } from './features/watchlist/selectors';
+import { filterAndSortItems } from './features/filters/selectors';
+import { readUiState } from './features/settings/storage';
 
 // ─── Icon primitives ────────────────────────────────────────────────────────
 const Icon = ({ children, size = 16, style = {} }) => (
@@ -144,67 +147,35 @@ const VALID_TIMELINE_MODES = new Set(['sacred', 'studio', 'whatif']);
 const VALID_DESKTOP_TEXT_SCALES = new Set(DESKTOP_TEXT_SCALES);
 const AUTO_HIDDEN_STATUSES = HIDDEN_FILTER_STATUSES;
 
-const readSavedUiState = () => {
-  if (typeof window === 'undefined') return UI_STATE_DEFAULTS;
-  try {
-    const raw = window.localStorage.getItem(CACHE_KEYS.uiState);
-    if (!raw) return UI_STATE_DEFAULTS;
-    const saved = JSON.parse(raw);
-    return {
-      ...UI_STATE_DEFAULTS,
-      listMode: VALID_LIST_MODES.has(saved.listMode) ? saved.listMode : UI_STATE_DEFAULTS.listMode,
-      search: typeof saved.search === 'string' ? saved.search : UI_STATE_DEFAULTS.search,
-      sortBy: SORT_LABELS[saved.sortBy] ? saved.sortBy : UI_STATE_DEFAULTS.sortBy,
-      essentialOnly: Boolean(saved.essentialOnly),
-      watchedOnly: Boolean(saved.watchedOnly),
-      statusFilter: VALID_STATUSES.has(saved.statusFilter) ? saved.statusFilter : UI_STATE_DEFAULTS.statusFilter,
-      typeFilter: VALID_TYPES.has(saved.typeFilter) ? saved.typeFilter : UI_STATE_DEFAULTS.typeFilter,
-      activePhase: VALID_PHASES.has(Number(saved.activePhase)) ? Number(saved.activePhase) : UI_STATE_DEFAULTS.activePhase,
-      filtersOpen: Boolean(saved.filtersOpen),
-      viewMode: VALID_VIEW_MODES.has(saved.viewMode) ? saved.viewMode : UI_STATE_DEFAULTS.viewMode,
-      densityMode: VALID_DENSITY_MODES.has(saved.densityMode) ? saved.densityMode : UI_STATE_DEFAULTS.densityMode,
-      timelineMode: VALID_TIMELINE_MODES.has(saved.timelineMode) ? saved.timelineMode : UI_STATE_DEFAULTS.timelineMode,
-      autoHideStatuses: typeof saved.autoHideStatuses === 'boolean' ? saved.autoHideStatuses : UI_STATE_DEFAULTS.autoHideStatuses,
-      performanceMode: typeof saved.performanceMode === 'boolean' ? saved.performanceMode : UI_STATE_DEFAULTS.performanceMode,
-      desktopTextScale: VALID_DESKTOP_TEXT_SCALES.has(Number(saved.desktopTextScale)) ? Number(saved.desktopTextScale) : UI_STATE_DEFAULTS.desktopTextScale,
-      textScaleEnabled: typeof saved.textScaleEnabled === 'boolean' ? saved.textScaleEnabled : UI_STATE_DEFAULTS.textScaleEnabled,
-      scrollTop: Number.isFinite(Number(saved.scrollTop)) ? Math.max(0, Number(saved.scrollTop)) : UI_STATE_DEFAULTS.scrollTop,
-    };
-  } catch {
-    return UI_STATE_DEFAULTS;
-  }
-};
+
+
+const readSavedUiState = () => readUiState({
+  cacheKey: CACHE_KEYS.uiState,
+  defaults: UI_STATE_DEFAULTS,
+  validators: (saved, defaults) => ({
+    ...defaults,
+    listMode: VALID_LIST_MODES.has(saved.listMode) ? saved.listMode : defaults.listMode,
+    search: typeof saved.search === 'string' ? saved.search : defaults.search,
+    sortBy: SORT_LABELS[saved.sortBy] ? saved.sortBy : defaults.sortBy,
+    essentialOnly: Boolean(saved.essentialOnly),
+    watchedOnly: Boolean(saved.watchedOnly),
+    statusFilter: VALID_STATUSES.has(saved.statusFilter) ? saved.statusFilter : defaults.statusFilter,
+    typeFilter: VALID_TYPES.has(saved.typeFilter) ? saved.typeFilter : defaults.typeFilter,
+    activePhase: VALID_PHASES.has(Number(saved.activePhase)) ? Number(saved.activePhase) : defaults.activePhase,
+    filtersOpen: Boolean(saved.filtersOpen),
+    viewMode: VALID_VIEW_MODES.has(saved.viewMode) ? saved.viewMode : defaults.viewMode,
+    densityMode: VALID_DENSITY_MODES.has(saved.densityMode) ? saved.densityMode : defaults.densityMode,
+    timelineMode: VALID_TIMELINE_MODES.has(saved.timelineMode) ? saved.timelineMode : defaults.timelineMode,
+    autoHideStatuses: typeof saved.autoHideStatuses === 'boolean' ? saved.autoHideStatuses : defaults.autoHideStatuses,
+    performanceMode: typeof saved.performanceMode === 'boolean' ? saved.performanceMode : defaults.performanceMode,
+    desktopTextScale: VALID_DESKTOP_TEXT_SCALES.has(Number(saved.desktopTextScale)) ? Number(saved.desktopTextScale) : defaults.desktopTextScale,
+    textScaleEnabled: typeof saved.textScaleEnabled === 'boolean' ? saved.textScaleEnabled : defaults.textScaleEnabled,
+    scrollTop: Number.isFinite(Number(saved.scrollTop)) ? Math.max(0, Number(saved.scrollTop)) : defaults.scrollTop,
+  }),
+});
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-const calculateWatchStreak = (items) => {
-  const dayKey = (date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-  const daySet = new Set(
-    items
-      .filter(item => item.status === 'watched' && item.watchedDate)
-      .map(item => String(item.watchedDate).slice(0, 10))
-      .filter(Boolean)
-  );
-  if (!daySet.size) return 0;
-  const cursor = new Date();
-  cursor.setHours(0, 0, 0, 0);
-  const todayKey = dayKey(cursor);
-  if (!daySet.has(todayKey)) {
-    cursor.setDate(cursor.getDate() - 1);
-    if (!daySet.has(dayKey(cursor))) return 0;
-  }
-  let streak = 0;
-  while (daySet.has(dayKey(cursor))) {
-    streak += 1;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return streak;
-};
 
 const DEFAULT_EXPORT_TEXT_SCALE = 1.22;
 const EXPORT_FONT_FAMILIES = {
@@ -935,7 +906,7 @@ export default function MCUViewer() {
   }, [detailItem]);
 
   useEffect(() => {
-    const s = localStorage.getItem('mcu-v7');
+    const s = readLegacySession('mcu-v7') ? JSON.stringify(readLegacySession('mcu-v7')) : null;
     if (s) {
       try {
         const saved = JSON.parse(s);
@@ -956,7 +927,7 @@ export default function MCUViewer() {
         data[i.id] = { status: i.status, watchedDate: i.watchedDate, statusChangedAt: i.statusChangedAt || i.watchedDate || null };
       }
     });
-    localStorage.setItem('mcu-v7', JSON.stringify(data));
+    writeLegacySession(data, 'mcu-v7');
   };
 
   const setStatusDirect = (id, newStatus) => {
@@ -1260,7 +1231,11 @@ export default function MCUViewer() {
     });
   };
 
-  const { filtered, grouped, phaseKeys } = useMemo(() => {
+  const { filtered, grouped, phaseKeys } = useMemo(() => filterAndSortItems({
+    items, listMode, coreIds, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, hiddenStatuses: HIDDEN_FILTER_STATUSES, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy
+  }), [items, listMode, coreIds, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy]);
+
+  /* legacy selector moved
     const f = items.filter(i => {
       if (listMode === 'core' && !coreIds.has(i.id)) return false;
       if (showAllFiltersOverride) return true;
@@ -1287,6 +1262,7 @@ export default function MCUViewer() {
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
   }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap]);
+  */
 
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
@@ -1329,9 +1305,7 @@ export default function MCUViewer() {
       scrollTop,
     }));
   }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
-  const totalWatched = useMemo(() => activeItems.filter(i => i.status === 'watched').length, [activeItems]);
-  const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
-  const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
+  const { totalWatched, essTotal, essWatched } = useMemo(() => getProgressStats(activeItems), [activeItems]);
   const pct = activeItems.length ? Math.round((totalWatched / activeItems.length) * 100) : 0;
   const phaseStats = useMemo(() => currentPhases.map(ph => {
     const phaseItems = activeItems.filter(i => i.phase === ph.id);
