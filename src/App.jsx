@@ -719,6 +719,7 @@ export default function MCUViewer() {
   const [statusFilter,   setStatusFilter]   = useState(initialUiState.statusFilter);
   const [typeFilter,     setTypeFilter]     = useState(initialUiState.typeFilter);
   const [activePhase,    setActivePhase]    = useState(initialUiState.activePhase);
+  const [featuredPhase, setFeaturedPhase] = useState(initialUiState.activePhase || 1);
   const activeUniverse = UNIVERSE_META[universe] || UNIVERSE_META.mcu;
   const [uiModeState, dispatchUiMode] = useReducer((state, action) => ({ ...state, ...action }), { sortOpen: false, phaseOpen: false, filterStatusOpen: false, dockStatusOpen: false, filtersOpen: initialUiState.filtersOpen });
   const { sortOpen, phaseOpen, filterStatusOpen, dockStatusOpen, filtersOpen } = uiModeState;
@@ -1333,6 +1334,10 @@ export default function MCUViewer() {
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
   const pct = activeItems.length ? Math.round((totalWatched / activeItems.length) * 100) : 0;
+  useEffect(() => {
+    if (activePhase !== 0) setFeaturedPhase(activePhase);
+  }, [activePhase]);
+
   const phaseStats = useMemo(() => currentPhases.map(ph => {
     const phaseItems = activeItems.filter(i => i.phase === ph.id);
     const watched = phaseItems.filter(i => i.status === 'watched').length;
@@ -3091,7 +3096,26 @@ export default function MCUViewer() {
                 </div>
               ))}
             </section>
-          ) : phaseKeys.map(pid => {
+                    ) : (
+            <>
+              <section className="home-overview-grid section-up">
+                <article className="home-overview-card">
+                  <div className="home-overview-label">Completion</div>
+                  <strong>{pct}%</strong>
+                  <span>{totalWatched}/{activeItems.length} watched</span>
+                </article>
+                <article className="home-overview-card">
+                  <div className="home-overview-label">Watch Streak</div>
+                  <strong>{watchStreak} day{watchStreak === 1 ? '' : 's'}</strong>
+                  <span>Keep the momentum going</span>
+                </article>
+                <article className="home-overview-card">
+                  <div className="home-overview-label">Next Up</div>
+                  <strong className="line-clamp-1">{nextUnwatched ? nextUnwatched.title : 'All caught up'}</strong>
+                  <span>{nextUnwatched ? `Phase ${nextUnwatched.phase}` : 'Great work'}</span>
+                </article>
+              </section>
+) : phaseKeys.map(pid => {
             const ph = currentPhases.find(p => p.id === pid);
             const rows = grouped[pid];
             const done = rows.filter(r => r.status === 'watched').length;

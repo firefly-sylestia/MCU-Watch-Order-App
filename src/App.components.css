@@ -1043,3 +1043,13 @@ main{--content-max:1560px !important}
 .dc-universe .hero-carousel-card{display:block !important;opacity:.62 !important;transform:scale(.94) !important}
 .dc-universe .hero-carousel-card.is-active{opacity:1 !important;transform:translateY(-6px) scale(1) !important}
 .dc-universe .hero-carousel-poster{border-color:color-mix(in srgb,#60a5fa 46%, var(--theme-border)) !important}
+
+.home-overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:14px}
+.home-overview-card{padding:14px;border-radius:14px;border:1px solid color-mix(in srgb,var(--theme-border) 72%, transparent);background:color-mix(in srgb,var(--theme-surface) 72%, transparent);display:grid;gap:6px;transition:transform .2s var(--ease-out),border-color .2s var(--ease-out)}
+.home-overview-card:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--theme-accent) 35%, var(--theme-border))}
+.home-overview-card strong{font-size:20px;line-height:1.2;color:var(--theme-text-primary)}
+.home-overview-card span{font-size:12px;color:var(--theme-text-muted)}
+.home-overview-label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--theme-text-secondary)}
+.phase-teaser-card{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-radius:14px;border:1px solid color-mix(in srgb,var(--theme-border) 72%, transparent);background:color-mix(in srgb,var(--theme-surface) 62%, transparent);margin-bottom:10px}
+.phase-teaser-title{font-family:var(--font-marvel-ui);font-weight:700;letter-spacing:.06em;color:var(--theme-text-primary)}
+.phase-teaser-meta{font-size:12px;color:var(--theme-text-muted)}
