@@ -121,7 +121,7 @@ const UI_STATE_DEFAULTS = {
   watchedOnly: false,
   statusFilter: null,
   typeFilter: null,
-  activePhase: 0,
+  activePhase: 1,
   filtersOpen: false,
   viewMode: 'list',
   densityMode: 'comfortable',
@@ -1055,6 +1055,12 @@ export default function MCUViewer() {
     document.addEventListener('mousedown', fn);
     return () => document.removeEventListener('mousedown', fn);
   }, []);
+
+  useEffect(() => {
+    if (activePhase !== 0 && !currentPhases.some((phase) => phase.id === activePhase)) {
+      setActivePhase(currentPhases[0]?.id || 1);
+    }
+  }, [activePhase, currentPhases]);
   useEffect(() => {
     const fn = e => { if (phaseRef.current && !phaseRef.current.contains(e.target)) setPhaseOpen(false); };
     document.addEventListener('mousedown', fn);
@@ -1066,7 +1072,25 @@ export default function MCUViewer() {
     return () => document.removeEventListener('pointerdown', fn, true);
   }, []);
 
-  const scrollTo = id => {
+  const smoothScrollTo = useCallback((scroller, targetTop, duration = 420) => {
+    const start = scroller === window ? window.scrollY : scroller.scrollTop;
+    const distance = targetTop - start;
+    if (Math.abs(distance) < 1) return;
+    const t0 = performance.now();
+    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+    const step = (now) => {
+      const progress = Math.min(1, (now - t0) / duration);
+      const next = start + distance * easeOutCubic(progress);
+      if (scroller === window) window.scrollTo(0, next);
+      else scroller.scrollTop = next;
+      if (progress < 1) requestAnimationFrame(step);
+    };
+
+    requestAnimationFrame(step);
+  }, []);
+
+  const scrollTo = useCallback((id) => {
     const el = phaseRefs.current[id];
     const container = mainRef.current;
     if (!el) return;
@@ -1075,12 +1099,12 @@ export default function MCUViewer() {
       const containerTop = container.getBoundingClientRect().top;
       const elTop = el.getBoundingClientRect().top;
       const offset = elTop - containerTop + container.scrollTop - 16;
-      container.scrollTo({ top: offset, behavior: 'smooth' });
+      smoothScrollTo(container, Math.max(0, offset));
       return;
     }
     const top = el.getBoundingClientRect().top + window.scrollY - 82;
-    window.scrollTo({ top, behavior: 'smooth' });
-  };
+    smoothScrollTo(window, Math.max(0, top));
+  }, [smoothScrollTo]);
 
   const exportProgress = async () => {
     const payload = createProgressPayload({
@@ -1268,7 +1292,6 @@ export default function MCUViewer() {
       if (watchedOnly && i.status !== 'watched') return false;
       if (statusFilter && i.status !== statusFilter) return false;
       if (typeFilter && i.type !== typeFilter) return false;
-      if (activePhase && i.phase !== activePhase) return false;
       if (timelineMode === 'studio' && i.order % 2 === 0) return true;
       if (timelineMode === 'whatif' && i.type !== 'short') return true;
       if (genreFilter !== 'all' && i.type !== genreFilter) return false;
@@ -2605,7 +2628,7 @@ export default function MCUViewer() {
 
   const renderPhaseSelector = () => (
     <div ref={phaseRef} style={{ display: 'flex', alignItems: 'center', gap: 10, overflowX: 'auto', paddingBottom: 4, maxWidth: '100%', width: '100%' }}>
-      <button className="fpill phase-chip" onClick={() => setActivePhase(0)} style={{ borderRadius: 999, borderColor: activePhase === 0 ? 'var(--theme-accent)' : T.filterBorder, background: activePhase === 0 ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--chip-bg)', color: activePhase === 0 ? 'var(--theme-accent)' : 'var(--text-secondary)' }}>All</button>
+      <button className="fpill phase-chip" onClick={() => { setActivePhase(0); smoothScrollTo(mainRef.current && mainRef.current.scrollHeight > mainRef.current.clientHeight + 1 ? mainRef.current : window, 0); }} style={{ borderRadius: 999, borderColor: activePhase === 0 ? 'var(--theme-accent)' : T.filterBorder, background: activePhase === 0 ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--chip-bg)', color: activePhase === 0 ? 'var(--theme-accent)' : 'var(--text-secondary)' }}>All</button>
       {currentPhases.map((ph) => {
         const stat = phaseStats.find(s => s.phase === ph.id);
         const total = stat?.total || 0;
@@ -3059,7 +3082,7 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} className={snapMode ? 'snap-blip' : ''} style={{ overflow: 'visible', flex: '0 0 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
+      <main ref={mainRef} className={`main-scroll ${snapMode ? 'snap-blip' : ''}`} style={{ overflow: 'visible', flex: '0 0 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>

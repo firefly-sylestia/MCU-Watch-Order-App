@@ -1043,3 +1043,17 @@ main{--content-max:1560px !important}
 .dc-universe .hero-carousel-card{display:block !important;opacity:.62 !important;transform:scale(.94) !important}
 .dc-universe .hero-carousel-card.is-active{opacity:1 !important;transform:translateY(-6px) scale(1) !important}
 .dc-universe .hero-carousel-poster{border-color:color-mix(in srgb,#60a5fa 46%, var(--theme-border)) !important}
+
+
+/* High-refresh scrolling stability */
+.main-scroll,
+.phase-rows-full {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: scroll-position;
+}
+
+.phase-rows-full {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 1200px;
+}
