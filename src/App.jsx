@@ -669,10 +669,36 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
   );
 }));
 
-const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
+const PhaseRows = React.memo(function PhaseRows({ rows, rowHeight, overscan = 6, renderRow }) {
+  const viewportRef = useRef(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const totalHeight = rows.length * rowHeight;
+  const [viewportHeight, setViewportHeight] = useState(720);
+
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const update = () => setViewportHeight(el.clientHeight || 720);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  const start = Math.max(0, Math.floor(scrollTop / rowHeight) - overscan);
+  const visibleCount = Math.ceil(viewportHeight / rowHeight) + overscan * 2;
+  const end = Math.min(rows.length, start + visibleCount);
+  const offsetY = start * rowHeight;
+  const visibleRows = rows.slice(start, end);
+
+  const onScroll = useCallback((e) => setScrollTop(e.currentTarget.scrollTop), []);
+
   return (
-    <div className="phase-rows-full">
-      {rows.map((item, idx) => renderRow(item, idx))}
+    <div ref={viewportRef} className="phase-rows-full" onScroll={onScroll} style={{ maxHeight: '72vh', overflowY: 'auto', overflowAnchor: 'none' }}>
+      <div style={{ height: totalHeight, position: 'relative' }}>
+        <div style={{ transform: `translateY(${offsetY}px)` }}>
+          {visibleRows.map((item, localIdx) => renderRow(item, start + localIdx))}
+        </div>
+      </div>
     </div>
   );
 });
@@ -1263,6 +1289,9 @@ export default function MCUViewer() {
     return { filtered: f, grouped: g, phaseKeys: pk };
   }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap]);
   */
+
+  
+  const virtualRowHeight = useMemo(() => (densityMode === 'compact' ? 88 : 104), [densityMode]);
 
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
@@ -3125,44 +3154,35 @@ export default function MCUViewer() {
 
                 {/* Row table */}
                 <div className="list-panel" style={{ overflow: 'hidden' }}>
-                  <PhaseRows rows={rows} renderRow={(item, idx) => {
+                  {(() => {
+                  const rowModels = rows.map((item) => {
                     const itemReleaseStatus = releaseStatusFor(item);
                     const itemReleaseInfo = releaseInfoFor(item);
-                    return (
-                      <MemoizedTitleRow
-                        key={item.id}
-                        item={item}
-                        idx={idx}
-                        ph={ph}
-                        T={T}
-                        typeMeta={TYPE_META[item.type]}
-                        statusMeta={STATUS_META[item.status]}
-                        releaseStatus={itemReleaseStatus}
-                        releaseStatusText={releaseStatusLabel(itemReleaseStatus)}
-                        releaseStatusStyleObj={releaseStatusStyle(itemReleaseStatus)}
-                        releaseLabel={formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}
-                        poster={posterSrc(item)}
-                        genres={inferGenres(item)}
-                        isExpanded={expandedItem === item.id}
-                        isWatched={item.status === 'watched'}
-                        isBookmarked={Boolean(bookmarks[item.id])}
-                        statusDropdown={statusDropdown}
-                        rating={metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
-                        onOpenDetail={openDetail}
-                        onSetStatus={setStatusDirect}
-                        onToggleBookmark={toggleBookmark}
-                        onOpenStatus={openStatusDropdown}
-                        bulkSelectMode={bulkSelectMode}
-                        isSelected={selectedIds.has(item.id)}
-                        onToggleSelected={toggleSelected}
-                        statusLabelOverride={grootMode ? 'I am Groot' : null}
-                        isWorthy={Boolean(worthyIds[item.id])}
-                        multiverseShuffle={multiverseShuffle}
-                        onThorLongPress={(pressedItem) => { setWorthyIds(prev => ({ ...prev, [pressedItem.id]: !prev[pressedItem.id] })); setLightningStrike(true); setTimeout(() => setLightningStrike(false), 700); }}
-                        isDesktopViewport={isDesktopViewport}
-                      />
-                    );
-                  }}/>
+                    return {
+                      item,
+                      typeMeta: TYPE_META[item.type],
+                      statusMeta: STATUS_META[item.status],
+                      releaseStatus: itemReleaseStatus,
+                      releaseStatusText: releaseStatusLabel(itemReleaseStatus),
+                      releaseStatusStyleObj: releaseStatusStyle(itemReleaseStatus),
+                      releaseLabel: formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus),
+                      poster: posterSrc(item),
+                      genres: inferGenres(item),
+                      isExpanded: expandedItem === item.id,
+                      isWatched: item.status === 'watched',
+                      isBookmarked: Boolean(bookmarks[item.id]),
+                      rating: metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating,
+                      isSelected: selectedIds.has(item.id),
+                      isWorthy: Boolean(worthyIds[item.id]),
+                    };
+                  });
+                  const handleThorLongPress = (pressedItem) => { setWorthyIds(prev => ({ ...prev, [pressedItem.id]: !prev[pressedItem.id] })); setLightningStrike(true); setTimeout(() => setLightningStrike(false), 700); };
+                  const renderVirtualRow = (item, idx) => {
+                    const model = rowModels.find((r) => r.item.id === item.id);
+                    return <MemoizedTitleRow key={item.id} idx={idx} ph={ph} T={T} statusDropdown={statusDropdown} onOpenDetail={openDetail} onSetStatus={setStatusDirect} onToggleBookmark={toggleBookmark} onOpenStatus={openStatusDropdown} bulkSelectMode={bulkSelectMode} onToggleSelected={toggleSelected} statusLabelOverride={grootMode ? 'I am Groot' : null} multiverseShuffle={multiverseShuffle} onThorLongPress={handleThorLongPress} isDesktopViewport={isDesktopViewport} {...model} />;
+                  };
+                  return <PhaseRows rows={rows} rowHeight={virtualRowHeight} renderRow={renderVirtualRow} />;
+                })()}
 
                 </div>
               </section>
