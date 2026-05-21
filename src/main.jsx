@@ -1,7 +1,20 @@
-import { Component, StrictMode } from 'react'
+import { Component, StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
+import { motion, motionEase } from './constants/motion'
+
+const MotionSystem = () => {
+  useEffect(() => {
+    const root = document.documentElement
+    root.style.setProperty('--motion-fast', `${motion.fast}s`)
+    root.style.setProperty('--motion-medium', `${motion.medium}s`)
+    root.style.setProperty('--motion-slow', `${motion.slow}s`)
+    root.style.setProperty('--motion-ease', motionEase)
+  }, [])
+
+  return null
+}
 
 class AppErrorBoundary extends Component {
   constructor(props) {
@@ -46,6 +59,7 @@ class AppErrorBoundary extends Component {
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
+    <MotionSystem />
     <AppErrorBoundary>
       <App />
     </AppErrorBoundary>
