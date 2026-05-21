@@ -784,7 +784,8 @@ export default function MCUViewer() {
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [selectedIds,    setSelectedIds]    = useState(() => new Set());
   const [scrollCheckpoint, setScrollCheckpoint] = useState(initialUiState.scrollTop);
-  const hasScrolled = scrollCheckpoint > 18;
+  const scrollCheckpointRef = useRef(initialUiState.scrollTop);
+  const [hasScrolled, setHasScrolled] = useState(initialUiState.scrollTop > 18);
   const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
   const [grootMode, setGrootMode] = useState(false);
   const [worthyIds, setWorthyIds] = useState({});
