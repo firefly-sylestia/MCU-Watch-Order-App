@@ -384,19 +384,8 @@ const posterExportName = (item, ext = 'jpg') => posterFileName(item, ext);
 const loadedPosterSrcs = new Set();
 
 const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poster' }) {
-  const [loaded, setLoaded] = useState(() => loadedPosterSrcs.has(src));
-
-  useEffect(() => {
-    setLoaded(loadedPosterSrcs.has(src));
-  }, [src]);
-
-  const handleLoad = () => {
-    loadedPosterSrcs.add(src);
-    setLoaded(true);
-  };
-
-  return <div className={`poster-shell ${loaded ? 'is-loaded' : ''}`}>
-    <img className={`${className} ${loaded ? 'is-loaded' : ''}`} src={src} alt={alt} loading="eager" decoding="async" fetchpriority="low" onLoad={handleLoad} />
+  return <div className="poster-shell">
+    <img className={className} src={src} alt={alt} loading="eager" decoding="async" fetchpriority="high" />
   </div>;
 });
 const TMDB_LOOKUP_OVERRIDES = {
@@ -1387,6 +1376,18 @@ export default function MCUViewer() {
   const posterSrc = useCallback((item) => (
     localPosterSrc(item) || posterCache[item.id] || `https://placehold.co/220x330/1a1f33/f7c4de?text=${encodeURIComponent(item.title+'\n'+item.year)}`
   ), [localPosterSrc, posterCache]);
+
+  useEffect(() => {
+    const urls = filtered.map((item) => posterSrc(item)).filter(Boolean);
+    urls.forEach((src) => {
+      if (loadedPosterSrcs.has(src)) return;
+      const img = new Image();
+      img.decoding = 'async';
+      img.fetchPriority = 'high';
+      img.onload = () => loadedPosterSrcs.add(src);
+      img.src = src;
+    });
+  }, [filtered, posterSrc]);
 
   const heroPosterItems = useMemo(() => {
     const seen = new Set();
