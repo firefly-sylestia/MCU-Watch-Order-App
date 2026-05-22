@@ -1967,3 +1967,50 @@ main{--content-max:1560px !important}
 .bookmark-marvel-btn.is-desktop{width:38px;height:38px}
 
 .rrow,.title-main,.title-chevron,.meta-chip,.title-subline{transition-duration:var(--motion-content) !important}
+/* Performance mode: prioritize stable frame pacing over decorative depth.
+   Keeps spacing/typography/contrast tokens intact while reducing expensive paint effects. */
+main.app-scroll-shell.scroll-performance .row-actions .rating-marvel-pill,
+main.app-scroll-shell.scroll-performance .row-actions .wbtn.bookmark-marvel-btn,
+main.app-scroll-shell.scroll-performance .row-actions .wbtn.status-toggle.notwatched-marvel-btn,
+main.app-scroll-shell.scroll-performance .row-actions .wbtn.status-pill.status-marvel-pill,
+main.app-scroll-shell.scroll-performance .rrow .meta-chip,
+main.app-scroll-shell.scroll-performance .fpill,
+main.app-scroll-shell.scroll-performance .theme-btn,
+main.app-scroll-shell.scroll-performance .wbtn,
+main.app-scroll-shell.scroll-performance .status-pill{
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+
+main.app-scroll-shell.scroll-performance .rrow,
+main.app-scroll-shell.scroll-performance .rrow .meta-chip,
+main.app-scroll-shell.scroll-performance .row-actions .wbtn,
+main.app-scroll-shell.scroll-performance .row-actions .rating-marvel-pill,
+main.app-scroll-shell.scroll-performance .status-pill,
+main.app-scroll-shell.scroll-performance .fpill,
+main.app-scroll-shell.scroll-performance .theme-btn{
+  box-shadow:none !important;
+}
+
+[data-color-mode="light"] main.app-scroll-shell.scroll-performance .rrow,
+[data-color-mode="dark"] main.app-scroll-shell.scroll-performance .rrow{
+  background:var(--theme-surface) !important;
+}
+
+[data-color-mode="light"] main.app-scroll-shell.scroll-performance .rrow .meta-chip,
+[data-color-mode="light"] main.app-scroll-shell.scroll-performance .fpill,
+[data-color-mode="light"] main.app-scroll-shell.scroll-performance .theme-btn,
+[data-color-mode="light"] main.app-scroll-shell.scroll-performance .wbtn,
+[data-color-mode="light"] main.app-scroll-shell.scroll-performance .status-pill{
+  background:color-mix(in srgb,var(--theme-surface) 96%, #ffffff) !important;
+  border-color:color-mix(in srgb,var(--theme-border) 82%, #ffffff) !important;
+}
+
+[data-color-mode="dark"] main.app-scroll-shell.scroll-performance .rrow .meta-chip,
+[data-color-mode="dark"] main.app-scroll-shell.scroll-performance .fpill,
+[data-color-mode="dark"] main.app-scroll-shell.scroll-performance .theme-btn,
+[data-color-mode="dark"] main.app-scroll-shell.scroll-performance .wbtn,
+[data-color-mode="dark"] main.app-scroll-shell.scroll-performance .status-pill{
+  background:color-mix(in srgb,var(--theme-surface) 94%, #0b1220) !important;
+  border-color:color-mix(in srgb,var(--theme-border) 88%, #0b1220) !important;
+}

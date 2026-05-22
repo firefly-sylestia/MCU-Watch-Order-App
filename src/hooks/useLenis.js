@@ -33,15 +33,10 @@ const hasScrollableParent = (target, { deltaX = 0, deltaY = 0, axis = 'y' } = {}
   return false;
 };
 
-const getScrollTuning = () => {
-  const t = (typeof window !== 'undefined' && window.__scrollTuning) ? window.__scrollTuning : {};
-  const clamp10 = (v, d) => Math.max(1, Math.min(10, Number.isFinite(Number(v)) ? Number(v) : d));
-  return {
-    desktopMultiplier: clamp10(t.desktopMultiplier, 7),
-    desktopDeltaCap: clamp10(t.desktopDeltaCap, 8),
-    mobileMultiplier: clamp10(t.mobileMultiplier, 7),
-    mobileDeltaCap: clamp10(t.mobileDeltaCap, 8),
-  };
+const normalizeDeltaY = (event) => {
+  if (event.deltaMode === 1) return event.deltaY * 16;
+  if (event.deltaMode === 2) return event.deltaY * window.innerHeight;
+  return event.deltaY;
 };
 
 export const useLenis = () => {
@@ -49,127 +44,79 @@ export const useLenis = () => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
 
-    const html = document.documentElement;
-    const isFinePointer = window.matchMedia('(pointer: fine)').matches;
-    const saveDataMode = navigator?.connection?.saveData === true;
-    html.classList.add('lenis-ready');
-    const prevHtmlOverscroll = html.style.overscrollBehaviorY;
-    const prevBodyOverscroll = document.body.style.overscrollBehaviorY;
-    html.style.overscrollBehaviorY = 'none';
-    document.body.style.overscrollBehaviorY = 'none';
+    // Native browser scrolling is preferred for this app's long, media-heavy lists.
+    // It preserves platform momentum/trackpad physics, minimizes jank under load,
+    // and avoids JS scroll loops competing with image/video rendering.
+    const shouldEnableCustomScroll = window.__enableCustomScroll === true;
+    if (!shouldEnableCustomScroll) return undefined;
 
-    let current = window.scrollY;
-    let target = window.scrollY;
-    let rafId = 0;
-    let lastTs = 0;
-    let internalScrollWrite = false;
-    let releaseWriteId = 0;
+    const html = document.documentElement;
+    html.classList.add('lenis-ready');
 
     let touchY = null;
     let touchX = null;
 
-    const maxScrollY = () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-    const isOverlayActive = () => Boolean(typeof window !== 'undefined' && window.__overlayActive);
-
-    const kickoff = () => { if (!rafId) rafId = window.requestAnimationFrame(step); };
-
-    const step = (ts) => {
-      const dt = lastTs ? Math.min(48, Math.max(8, ts - lastTs)) : 16;
-      lastTs = ts;
-
-      const distance = target - current;
-      const absDistance = Math.abs(distance);
-      const baseFollow = isFinePointer ? 0.34 : 0.3;
-      const boost = isFinePointer ? Math.min(0.26, absDistance / 1200) : Math.min(0.16, absDistance / 1400);
-      const follow = Math.min(0.62, baseFollow + boost);
-      const t = 1 - Math.pow(1 - follow, dt / 16.67);
-      current += distance * t;
-      current = Math.min(maxScrollY(), Math.max(0, current));
-
-      const done = Math.abs(target - current) < 0.2;
-      if (done) current = target;
-
-      internalScrollWrite = true;
-      window.scrollTo(0, current);
-      if (releaseWriteId) window.cancelAnimationFrame(releaseWriteId);
-      releaseWriteId = window.requestAnimationFrame(() => { internalScrollWrite = false; releaseWriteId = 0; });
-
-      if (!done) rafId = window.requestAnimationFrame(step);
-      else { rafId = 0; lastTs = 0; }
-    };
-
-    const normalizeDelta = (event) => {
-      if (event.deltaMode === 1) return event.deltaY * 16;
-      if (event.deltaMode === 2) return event.deltaY * window.innerHeight;
-      return event.deltaY;
-    };
+    const isOverlayActive = () => Boolean(window.__overlayActive);
 
     const onWheel = (event) => {
-      if (!isFinePointer || saveDataMode) return;
       if (event.defaultPrevented || event.ctrlKey) return;
       if (isOverlayActive()) return;
       if (isEditableTarget(event.target)) return;
+
       const horizontalIntent = Math.abs(event.deltaX) > Math.abs(event.deltaY) * 1.1;
-      const deltaY = normalizeDelta(event);
+      const deltaY = normalizeDeltaY(event);
+
       if (horizontalIntent) {
         if (hasScrollableParent(event.target, { deltaX: event.deltaX, axis: 'x' })) return;
         return;
       }
+
       if (!Number.isFinite(deltaY) || deltaY === 0) return;
       if (hasScrollableParent(event.target, { deltaY, axis: 'y' })) return;
 
-      const tune = getScrollTuning();
-      const deskCap = 38 + tune.desktopDeltaCap * 10;
-      const deskMult = 1.1 + (tune.desktopMultiplier * 0.22);
-      const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult;
-      target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
-      kickoff();
+      // Minimal normalization only: convert line/page-wheel units to pixel-ish units,
+      // then rely on native scrollBy behavior (no RAF-follow loop / no scrollTo loop).
       event.preventDefault();
+      window.scrollBy({ top: deltaY, left: 0, behavior: 'auto' });
     };
 
     const onTouchStart = (event) => {
-      if (isFinePointer || saveDataMode || event.touches.length !== 1) return;
+      if (event.touches.length !== 1) return;
       if (isOverlayActive()) return;
       touchY = event.touches[0].clientY;
       touchX = event.touches[0].clientX;
     };
 
     const onTouchMove = (event) => {
-      if (isFinePointer || saveDataMode || event.touches.length !== 1) return;
+      if (event.touches.length !== 1) return;
       if (isOverlayActive()) return;
       if (isEditableTarget(event.target)) return;
-      if (touchY == null) { touchY = event.touches[0].clientY; return; }
+
+      if (touchY == null) {
+        touchY = event.touches[0].clientY;
+        touchX = event.touches[0].clientX;
+        return;
+      }
 
       const nextY = event.touches[0].clientY;
       const nextX = event.touches[0].clientX;
-      const rawDeltaY = touchY - nextY;
-      const rawDeltaX = (touchX ?? nextX) - nextX;
+      const deltaY = touchY - nextY;
+      const deltaX = (touchX ?? nextX) - nextX;
       touchY = nextY;
       touchX = nextX;
 
-      if (!Number.isFinite(rawDeltaY) || Math.abs(rawDeltaY) < 0.8) return;
-      const horizontalIntent = Math.abs(rawDeltaX) > Math.abs(rawDeltaY) * 1.1;
+      if (!Number.isFinite(deltaY) || Math.abs(deltaY) < 0.8) return;
+      const horizontalIntent = Math.abs(deltaX) > Math.abs(deltaY) * 1.1;
       if (horizontalIntent) return;
-      if (hasScrollableParent(event.target, { deltaY: rawDeltaY, axis: 'y' })) return;
+      if (hasScrollableParent(event.target, { deltaY, axis: 'y' })) return;
 
-      const tune = getScrollTuning();
-      const mobileCap = 20 + tune.mobileDeltaCap * 9;
-      const mobileMult = 1.06 + (tune.mobileMultiplier * 0.19);
-      const limitedDelta = Math.max(-mobileCap, Math.min(mobileCap, rawDeltaY)) * mobileMult;
-      target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
-      kickoff();
       event.preventDefault();
+      window.scrollBy({ top: deltaY, left: 0, behavior: 'auto' });
     };
 
-    const onTouchEnd = () => { touchY = null; touchX = null; };
-
-    const onNativeScroll = () => {
-      if (isOverlayActive()) return;
-      if (internalScrollWrite) return;
-      if (rafId) return;
-      const y = window.scrollY;
-      current = y;
-      target = y;
+    const onTouchEnd = () => {
+      touchY = null;
+      touchX = null;
     };
 
     window.addEventListener('wheel', onWheel, { passive: false });
@@ -177,13 +124,6 @@ export const useLenis = () => {
     window.addEventListener('touchmove', onTouchMove, { passive: false });
     window.addEventListener('touchend', onTouchEnd, { passive: true });
     window.addEventListener('touchcancel', onTouchEnd, { passive: true });
-    window.addEventListener('scroll', onNativeScroll, { passive: true });
-    const onResize = () => {
-      const maxY = maxScrollY();
-      target = Math.min(target, maxY);
-      current = Math.min(current, maxY);
-    };
-    window.addEventListener('resize', onResize);
 
     return () => {
       window.removeEventListener('wheel', onWheel);
@@ -191,12 +131,6 @@ export const useLenis = () => {
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('touchcancel', onTouchEnd);
-      window.removeEventListener('scroll', onNativeScroll);
-      window.removeEventListener('resize', onResize);
-      window.cancelAnimationFrame(rafId);
-      if (releaseWriteId) window.cancelAnimationFrame(releaseWriteId);
-      html.style.overscrollBehaviorY = prevHtmlOverscroll;
-      document.body.style.overscrollBehaviorY = prevBodyOverscroll;
       html.classList.remove('lenis-ready');
     };
   }, []);
