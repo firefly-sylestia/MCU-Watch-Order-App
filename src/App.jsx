@@ -579,7 +579,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   return (
     <div>
       <div className={`rrow type-${item.type} ${isExpanded ? 'curvy-selected' : ''}`} style={{ opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow, ...(isWatched ? { background: 'color-mix(in srgb, var(--theme-watched-bg) 62%, transparent)' } : {}) }}>
-        <div style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 13, color: isWatched ? 'var(--theme-accent)' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
+        <div className={`row-index ${isWatched ? 'is-watched' : ''}`}>
           {bulkSelectMode ? (
             <input
               type="checkbox"
@@ -587,7 +587,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
               aria-label={`Select ${item.title}`}
               onChange={(event) => onToggleSelected(item.id, event.target.checked)}
               onClick={(event) => event.stopPropagation()}
-              style={{ width: 18, height: 18, accentColor: 'var(--theme-accent)' }}
+              className="row-select-checkbox"
             />
           ) : (idx + 1)}
         </div>
@@ -595,46 +595,44 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
 
         <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
           <div className="title-row-top" style={TITLE_ROW_STATIC.titleLine}>
-            <span className="title-main" style={{ fontWeight: 800, color: 'var(--theme-text)', opacity: 1, transition: 'color 0.26s', fontFamily: 'var(--font-marvel-display)', maxWidth: '100%', letterSpacing: 0.2, minWidth: 0 }}>{item.title}</span>
-            <ChevRight size={10} className="title-chevron" style={{ color: T.textFaint, transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
+            <span className="title-main">{item.title}</span>
+            <ChevRight size={10} className="title-chevron" />
           </div>
           <div className="title-row-mid release-meta-grid">
-            {item.episodes && <span className="meta-chip truncate-single-line" style={{ fontSize: 9 }}>{item.episodes} EP</span>}
-            <span className="meta-chip meta-chip-type truncate-single-line" style={{ fontSize: 11, color: typeMeta.color, fontWeight: 700 }}><TypeIcon size={8} />{typeMeta.label}</span>
-            <span className="meta-chip truncate-single-line" style={{ fontSize: 9.5 }}>{item.year || releaseLabel}</span>
-            <span className="meta-chip meta-chip-release truncate-single-line" style={{ fontSize: 7.75, color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
-            {!item.essential && <span className="meta-chip truncate-single-line" style={{ fontSize: 8.5 }}>OPT</span>}
+            {item.episodes && <span className="meta-chip meta-chip-xs truncate-single-line">{item.episodes} EP</span>}
+            <span className="meta-chip meta-chip-type truncate-single-line" style={{ color: typeMeta.color }}><TypeIcon size={8} />{typeMeta.label}</span>
+            <span className="meta-chip meta-chip-sm truncate-single-line">{item.year || releaseLabel}</span>
+            <span className="meta-chip meta-chip-release meta-chip-xxs truncate-single-line" style={{ color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
+            {!item.essential && <span className="meta-chip meta-chip-xs truncate-single-line">OPT</span>}
           </div>
           <div className="meta-muted line-clamp-2 overflow-wrap-anywhere title-subline" style={TITLE_ROW_STATIC.genreMeta}>GENRES: {genres.join(' • ').toUpperCase()}</div>
         </button>
 
-        <div className="row-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: isDesktopViewport ? 96 : 0, flexShrink: 0 }}>
-          <div className="row-meta-line truncate-single-line rating-marvel-pill" style={{ fontSize: 11, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.6 }}>★ {rating || '—'}</div>
+        <div className={`row-actions ${isDesktopViewport ? 'is-desktop' : ''}`}>
+          <div className="row-meta-line truncate-single-line rating-marvel-pill">★ {rating || '—'}</div>
           <button
-            className={`wbtn status-pill status-marvel-pill status-shade-${item.status}`}
             aria-label={`Open status menu for ${item.title}`}
             aria-haspopup="menu"
             aria-expanded={statusDropdown === item.id}
             onClick={(event) => onOpenStatus(event, item.id)}
-            style={{ minWidth: 92, height: 30, padding: '0 10px', borderRadius: 999, fontSize: 10.5, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.6, justifyContent: 'space-between' }}
+            className={`wbtn status-pill status-marvel-pill status-shade-${item.status} row-status-btn`}
           >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <span className="row-status-label">
               <RowStatusIcon size={10} />
               {statusLabelOverride || statusMeta.label}
             </span>
-            <ChevDown size={10} style={{ opacity: 0.8, transform: statusDropdown === item.id ? 'rotate(180deg)' : 'none' }} />
+            <ChevDown size={10} className={`row-status-chevron ${statusDropdown === item.id ? 'is-open' : ''}`} />
           </button>
-          <button className="wbtn bookmark-marvel-btn" aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} data-bookmarked={isBookmarked} style={{ width: isDesktopViewport ? 38 : 34, height: isDesktopViewport ? 38 : 34 }}><Bookmark size={11} /></button>
+          <button className={`wbtn bookmark-marvel-btn ${isDesktopViewport ? 'is-desktop' : ''}`} aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} data-bookmarked={isBookmarked}><Bookmark size={11} /></button>
           {!hideWatchToggle && (
             <button
-              className="wbtn status-toggle notwatched-marvel-btn"
               aria-label={isWatched ? `Mark ${item.title} as unwatched` : `Mark ${item.title} as watched`}
               title={isWatched ? 'Mark unwatched' : 'Mark watched'}
               onClick={(event) => {
                 event.stopPropagation();
                 onSetStatus(item.id, isWatched ? 'unwatched' : 'watched');
               }}
-              style={{ width: 28, height: 28 }}
+              className="wbtn status-toggle notwatched-marvel-btn row-watch-toggle"
             ><RowStatusIcon size={12} /></button>
           )}
         </div>
