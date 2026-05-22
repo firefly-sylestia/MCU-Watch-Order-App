@@ -592,7 +592,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             />
           ) : (idx + 1)}
         </div>
-        <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 72} loadingMode="eager" />
+        <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 28} loadingMode="auto" />
 
         <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
           <div className="title-row-top" style={TITLE_ROW_STATIC.titleLine}>
@@ -1394,13 +1394,13 @@ export default function MCUViewer() {
 
   useEffect(() => {
     // Aggressively preload list posters so items feel fully loaded during long timeline scrolling.
-    const targets = filtered.slice(0, 240);
+    const targets = filtered.slice(0, 120);
     if (!targets.length) return undefined;
 
     let cancelled = false;
     const enqueue = (start = 0) => {
       if (cancelled) return;
-      const batch = targets.slice(start, start + 24);
+      const batch = targets.slice(start, start + 16);
       batch.forEach((item) => {
         const src = posterSrc(item);
         if (!src || loadedPosterSrcs.has(src) || requestedPosterSrcs.has(src)) return;
@@ -1415,8 +1415,8 @@ export default function MCUViewer() {
         img.onload = markLoaded;
         img.onerror = () => requestedPosterSrcs.delete(src);
       });
-      if (start + 24 < targets.length) {
-        window.setTimeout(() => enqueue(start + 24), 36);
+      if (start + 16 < targets.length) {
+        window.setTimeout(() => enqueue(start + 16), 50);
       }
     };
 
@@ -3099,7 +3099,7 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} className={`app-scroll-shell ${snapMode ? 'snap-blip' : ''}`} style={{ overflow: 'visible', flex: '0 0 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
+      <main ref={mainRef} className={`app-scroll-shell ${snapMode ? 'snap-blip' : ''}`} style={{ overflow: 'visible', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>

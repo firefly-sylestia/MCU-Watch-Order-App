@@ -27,6 +27,8 @@ export const useLenis = () => {
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    // Avoid custom wheel smoothing on touch/mobile; native scrolling is more reliable there.
+    if (!window.matchMedia('(pointer: fine)').matches) return undefined;
 
     const html = document.documentElement;
     html.classList.add('lenis-ready');
