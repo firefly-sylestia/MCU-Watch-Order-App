@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import Lenis from 'lenis';
 
 const isEditableTarget = (target) => {
   if (!(target instanceof Element)) return false;
@@ -6,7 +7,7 @@ const isEditableTarget = (target) => {
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || Boolean(target.closest('[contenteditable], [contenteditable="true"], [contenteditable="plaintext-only"]'));
 };
 
-const hasScrollableParent = (target, { deltaX = 0, deltaY = 0, axis = 'y' } = {}) => {
+const hasScrollableParent = (target) => {
   if (!(target instanceof Element)) return false;
   let node = target;
   while (node && node !== document.body) {
@@ -16,18 +17,7 @@ const hasScrollableParent = (target, { deltaX = 0, deltaY = 0, axis = 'y' } = {}
     const canScrollY = (overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight + 1;
     const canScrollX = (overflowX === 'auto' || overflowX === 'scroll') && node.scrollWidth > node.clientWidth + 1;
 
-    if (axis === 'x' && canScrollX) {
-      const atLeft = node.scrollLeft <= 0;
-      const atRight = node.scrollLeft + node.clientWidth >= node.scrollWidth - 1;
-      if ((deltaX < 0 && !atLeft) || (deltaX > 0 && !atRight)) return true;
-    }
-
-    if (axis === 'y' && canScrollY) {
-      const atTop = node.scrollTop <= 0;
-      const atBottom = node.scrollTop + node.clientHeight >= node.scrollHeight - 1;
-      if ((deltaY < 0 && !atTop) || (deltaY > 0 && !atBottom)) return true;
-    }
-
+    if (canScrollY || canScrollX) return true;
     node = node.parentElement;
   }
   return false;
@@ -37,10 +27,8 @@ const getScrollTuning = () => {
   const t = (typeof window !== 'undefined' && window.__scrollTuning) ? window.__scrollTuning : {};
   const clamp10 = (v, d) => Math.max(1, Math.min(10, Number.isFinite(Number(v)) ? Number(v) : d));
   return {
-    desktopMultiplier: clamp10(t.desktopMultiplier, 7),
-    desktopDeltaCap: clamp10(t.desktopDeltaCap, 8),
-    mobileMultiplier: clamp10(t.mobileMultiplier, 7),
-    mobileDeltaCap: clamp10(t.mobileDeltaCap, 8),
+    desktopMultiplier: clamp10(t.desktopMultiplier, 6),
+    mobileMultiplier: clamp10(t.mobileMultiplier, 6),
   };
 };
 
@@ -50,144 +38,43 @@ export const useLenis = () => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
 
     const html = document.documentElement;
-    const isFinePointer = window.matchMedia('(pointer: fine)').matches;
     const saveDataMode = navigator?.connection?.saveData === true;
+    if (saveDataMode) return undefined;
+
+    const isFinePointer = window.matchMedia('(pointer: fine)').matches;
+    const tune = getScrollTuning();
+
+    const lenis = new Lenis({
+      smoothWheel: true,
+      syncTouch: true,
+      touchInertiaMultiplier: 18,
+      wheelMultiplier: isFinePointer ? 0.72 + (tune.desktopMultiplier * 0.14) : 1,
+      touchMultiplier: isFinePointer ? 1 : 0.7 + (tune.mobileMultiplier * 0.1),
+      duration: isFinePointer ? 0.95 : 0.85,
+      lerp: isFinePointer ? 0.12 : 0.15,
+      easing: (t) => 1 - Math.pow(1 - t, 3),
+      overscroll: false,
+      gestureOrientation: 'vertical',
+      prevent: (node) => {
+        if (!(node instanceof Element)) return false;
+        if (window.__overlayActive) return true;
+        if (isEditableTarget(node)) return true;
+        return hasScrollableParent(node);
+      },
+    });
+
     html.classList.add('lenis-ready');
-    const prevHtmlOverscroll = html.style.overscrollBehaviorY;
-    const prevBodyOverscroll = document.body.style.overscrollBehaviorY;
-    html.style.overscrollBehaviorY = 'none';
-    document.body.style.overscrollBehaviorY = 'none';
 
-    let current = window.scrollY;
-    let target = window.scrollY;
     let rafId = 0;
-    let lastTs = 0;
-    let internalScrollWrite = false;
-
-    let touchY = null;
-    let touchX = null;
-
-    const maxScrollY = () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-    const isOverlayActive = () => Boolean(typeof window !== 'undefined' && window.__overlayActive);
-
-    const kickoff = () => { if (!rafId) rafId = window.requestAnimationFrame(step); };
-
-    const step = (ts) => {
-      const dt = lastTs ? Math.min(42, Math.max(8, ts - lastTs)) : 16;
-      lastTs = ts;
-      const smooth = isFinePointer ? 0.18 : 0.22;
-      const t = 1 - Math.pow(1 - smooth, dt / 16.67);
-      current += (target - current) * t;
-
-      const done = Math.abs(target - current) < 0.2;
-      if (done) current = target;
-
-      internalScrollWrite = true;
-      window.scrollTo(0, current);
-      window.requestAnimationFrame(() => { internalScrollWrite = false; });
-
-      if (!done) rafId = window.requestAnimationFrame(step);
-      else { rafId = 0; lastTs = 0; }
+    const raf = (time) => {
+      lenis.raf(time);
+      rafId = window.requestAnimationFrame(raf);
     };
-
-    const normalizeDelta = (event) => {
-      if (event.deltaMode === 1) return event.deltaY * 16;
-      if (event.deltaMode === 2) return event.deltaY * window.innerHeight;
-      return event.deltaY;
-    };
-
-    const onWheel = (event) => {
-      if (!isFinePointer || saveDataMode) return;
-      if (event.defaultPrevented || event.ctrlKey) return;
-      if (isOverlayActive()) return;
-      if (isEditableTarget(event.target)) return;
-      const horizontalIntent = Math.abs(event.deltaX) > Math.abs(event.deltaY) * 1.1;
-      const deltaY = normalizeDelta(event);
-      if (horizontalIntent) {
-        if (hasScrollableParent(event.target, { deltaX: event.deltaX, axis: 'x' })) return;
-        return;
-      }
-      if (!Number.isFinite(deltaY) || deltaY === 0) return;
-      if (hasScrollableParent(event.target, { deltaY, axis: 'y' })) return;
-
-      const tune = getScrollTuning();
-      const deskCap = 38 + tune.desktopDeltaCap * 10;
-      const deskMult = 1.1 + (tune.desktopMultiplier * 0.22);
-      const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult;
-      target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
-      kickoff();
-      event.preventDefault();
-    };
-
-    const onTouchStart = (event) => {
-      if (isFinePointer || saveDataMode || event.touches.length !== 1) return;
-      if (isOverlayActive()) return;
-      touchY = event.touches[0].clientY;
-      touchX = event.touches[0].clientX;
-    };
-
-    const onTouchMove = (event) => {
-      if (isFinePointer || saveDataMode || event.touches.length !== 1) return;
-      if (isOverlayActive()) return;
-      if (isEditableTarget(event.target)) return;
-      if (touchY == null) { touchY = event.touches[0].clientY; return; }
-
-      const nextY = event.touches[0].clientY;
-      const nextX = event.touches[0].clientX;
-      const rawDeltaY = touchY - nextY;
-      const rawDeltaX = (touchX ?? nextX) - nextX;
-      touchY = nextY;
-      touchX = nextX;
-
-      if (!Number.isFinite(rawDeltaY) || Math.abs(rawDeltaY) < 0.8) return;
-      const horizontalIntent = Math.abs(rawDeltaX) > Math.abs(rawDeltaY) * 1.1;
-      if (horizontalIntent) return;
-      if (hasScrollableParent(event.target, { deltaY: rawDeltaY, axis: 'y' })) return;
-
-      const tune = getScrollTuning();
-      const mobileCap = 20 + tune.mobileDeltaCap * 9;
-      const mobileMult = 1.06 + (tune.mobileMultiplier * 0.19);
-      const limitedDelta = Math.max(-mobileCap, Math.min(mobileCap, rawDeltaY)) * mobileMult;
-      target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
-      kickoff();
-      event.preventDefault();
-    };
-
-    const onTouchEnd = () => { touchY = null; touchX = null; };
-
-    const onNativeScroll = () => {
-      if (isOverlayActive()) return;
-      if (internalScrollWrite) return;
-      if (rafId) return;
-      const y = window.scrollY;
-      current = y;
-      target = y;
-    };
-
-    window.addEventListener('wheel', onWheel, { passive: false });
-    window.addEventListener('touchstart', onTouchStart, { passive: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: false });
-    window.addEventListener('touchend', onTouchEnd, { passive: true });
-    window.addEventListener('touchcancel', onTouchEnd, { passive: true });
-    window.addEventListener('scroll', onNativeScroll, { passive: true });
-    const onResize = () => {
-      const maxY = maxScrollY();
-      target = Math.min(target, maxY);
-      current = Math.min(current, maxY);
-    };
-    window.addEventListener('resize', onResize);
+    rafId = window.requestAnimationFrame(raf);
 
     return () => {
-      window.removeEventListener('wheel', onWheel);
-      window.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('touchend', onTouchEnd);
-      window.removeEventListener('touchcancel', onTouchEnd);
-      window.removeEventListener('scroll', onNativeScroll);
-      window.removeEventListener('resize', onResize);
       window.cancelAnimationFrame(rafId);
-      html.style.overscrollBehaviorY = prevHtmlOverscroll;
-      document.body.style.overscrollBehaviorY = prevBodyOverscroll;
+      lenis.destroy();
       html.classList.remove('lenis-ready');
     };
   }, []);
