@@ -37,10 +37,10 @@ const getScrollTuning = () => {
   const t = (typeof window !== 'undefined' && window.__scrollTuning) ? window.__scrollTuning : {};
   const clamp10 = (v, d) => Math.max(1, Math.min(10, Number.isFinite(Number(v)) ? Number(v) : d));
   return {
-    desktopMultiplier: clamp10(t.desktopMultiplier, 8.5),
+    desktopMultiplier: clamp10(t.desktopMultiplier, 8),
     desktopDeltaCap: clamp10(t.desktopDeltaCap, 9),
-    mobileMultiplier: clamp10(t.mobileMultiplier, 8),
-    mobileDeltaCap: clamp10(t.mobileDeltaCap, 9),
+    mobileMultiplier: clamp10(t.mobileMultiplier, 7),
+    mobileDeltaCap: clamp10(t.mobileDeltaCap, 8),
   };
 };
 
@@ -49,48 +49,82 @@ export const useLenis = () => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
 
+    const shell = document.querySelector('main.app-scroll-shell');
+    if (!(shell instanceof HTMLElement)) return undefined;
+
     const html = document.documentElement;
+    const body = document.body;
     const isFinePointer = window.matchMedia('(pointer: fine)').matches;
     const saveDataMode = navigator?.connection?.saveData === true;
-    html.classList.add('lenis-ready');
-    const prevHtmlOverscroll = html.style.overscrollBehaviorY;
-    const prevBodyOverscroll = document.body.style.overscrollBehaviorY;
-    html.style.overscrollBehaviorY = 'none';
-    document.body.style.overscrollBehaviorY = 'none';
 
-    let current = window.scrollY;
-    let target = window.scrollY;
+    const prev = {
+      htmlOverflow: html.style.overflow,
+      bodyOverflow: body.style.overflow,
+      htmlOverscrollY: html.style.overscrollBehaviorY,
+      bodyOverscrollY: body.style.overscrollBehaviorY,
+      bodyTouchAction: body.style.touchAction,
+      shellTransform: shell.style.transform,
+      shellWillChange: shell.style.willChange,
+      shellTransition: shell.style.transition,
+    };
+
+    html.classList.add('lenis-ready');
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    html.style.overscrollBehaviorY = 'none';
+    body.style.overscrollBehaviorY = 'none';
+    body.style.touchAction = 'none';
+
+    shell.style.willChange = 'transform';
+    shell.style.transition = 'none';
+
+    let current = 0;
+    let target = 0;
+    let maxY = 0;
     let rafId = 0;
     let lastTs = 0;
-    let internalScrollWrite = false;
 
     let touchY = null;
     let touchX = null;
 
-    const maxScrollY = () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-    const isOverlayActive = () => Boolean(typeof window !== 'undefined' && window.__overlayActive);
+    const isOverlayActive = () => Boolean(window.__overlayActive);
+
+    const clampTarget = (value) => Math.max(0, Math.min(maxY, value));
+
+    const refreshBounds = () => {
+      const fullHeight = Math.max(shell.scrollHeight, shell.offsetHeight);
+      maxY = Math.max(0, fullHeight - window.innerHeight);
+      target = clampTarget(target);
+      current = clampTarget(current);
+    };
+
+    const render = () => {
+      shell.style.transform = `translate3d(0, ${-current.toFixed(3)}px, 0)`;
+    };
 
     const kickoff = () => { if (!rafId) rafId = window.requestAnimationFrame(step); };
 
     const step = (ts) => {
-      const dt = lastTs ? Math.min(42, Math.max(8, ts - lastTs)) : 16;
+      const dt = lastTs ? Math.min(40, Math.max(8, ts - lastTs)) : 16;
       lastTs = ts;
-      const smooth = isFinePointer ? 0.24 : 0.3;
-      const t = 1 - Math.pow(1 - smooth, dt / 16.67);
-      current += (target - current) * t;
+      const response = isFinePointer ? 0.22 : 0.28;
+      const lerp = 1 - Math.pow(1 - response, dt / 16.67);
+      current += (target - current) * lerp;
 
-      const done = Math.abs(target - current) < 0.2;
-      if (done) current = target;
+      if (Math.abs(target - current) <= 0.15) current = target;
+      render();
 
-      internalScrollWrite = true;
-      window.scrollTo(0, current);
-      window.requestAnimationFrame(() => { internalScrollWrite = false; });
-
-      if (!done) rafId = window.requestAnimationFrame(step);
+      if (Math.abs(target - current) > 0.15) rafId = window.requestAnimationFrame(step);
       else { rafId = 0; lastTs = 0; }
     };
 
-    const normalizeDelta = (event) => {
+    const pushDelta = (delta) => {
+      if (!Number.isFinite(delta) || delta === 0) return;
+      target = clampTarget(target + delta);
+      kickoff();
+    };
+
+    const normalizeWheel = (event) => {
       if (event.deltaMode === 1) return event.deltaY * 16;
       if (event.deltaMode === 2) return event.deltaY * window.innerHeight;
       return event.deltaY;
@@ -98,83 +132,89 @@ export const useLenis = () => {
 
     const onWheel = (event) => {
       if (!isFinePointer || saveDataMode) return;
-      if (event.defaultPrevented || event.ctrlKey) return;
-      if (isOverlayActive()) return;
+      if (event.defaultPrevented || event.ctrlKey || isOverlayActive()) return;
       if (isEditableTarget(event.target)) return;
-      const horizontalIntent = Math.abs(event.deltaX) > Math.abs(event.deltaY) * 1.1;
-      const deltaY = normalizeDelta(event);
+
+      const horizontalIntent = Math.abs(event.deltaX) > Math.abs(event.deltaY) * 1.12;
       if (horizontalIntent) {
         if (hasScrollableParent(event.target, { deltaX: event.deltaX, axis: 'x' })) return;
         return;
       }
-      if (!Number.isFinite(deltaY) || deltaY === 0) return;
+
+      const deltaY = normalizeWheel(event);
       if (hasScrollableParent(event.target, { deltaY, axis: 'y' })) return;
 
       const tune = getScrollTuning();
-      const deskCap = 48 + tune.desktopDeltaCap * 10;
-      const deskMult = 1.25 + (tune.desktopMultiplier * 0.24);
-      const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult;
-      target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
-      kickoff();
+      const cap = 46 + tune.desktopDeltaCap * 10;
+      const mult = 1.18 + (tune.desktopMultiplier * 0.22);
+      const next = Math.max(-cap, Math.min(cap, deltaY)) * mult;
+      pushDelta(next);
       event.preventDefault();
     };
 
     const onTouchStart = (event) => {
-      if (isFinePointer || saveDataMode || event.touches.length !== 1) return;
-      if (isOverlayActive()) return;
+      if (isFinePointer || saveDataMode || event.touches.length !== 1 || isOverlayActive()) return;
       touchY = event.touches[0].clientY;
       touchX = event.touches[0].clientX;
     };
 
     const onTouchMove = (event) => {
-      if (isFinePointer || saveDataMode || event.touches.length !== 1) return;
-      if (isOverlayActive()) return;
+      if (isFinePointer || saveDataMode || event.touches.length !== 1 || isOverlayActive()) return;
       if (isEditableTarget(event.target)) return;
       if (touchY == null) { touchY = event.touches[0].clientY; return; }
 
       const nextY = event.touches[0].clientY;
       const nextX = event.touches[0].clientX;
-      const rawDeltaY = touchY - nextY;
-      const rawDeltaX = (touchX ?? nextX) - nextX;
+      const deltaY = touchY - nextY;
+      const deltaX = (touchX ?? nextX) - nextX;
       touchY = nextY;
       touchX = nextX;
 
-      if (!Number.isFinite(rawDeltaY) || Math.abs(rawDeltaY) < 0.8) return;
-      const horizontalIntent = Math.abs(rawDeltaX) > Math.abs(rawDeltaY) * 1.1;
-      if (horizontalIntent) return;
-      if (hasScrollableParent(event.target, { deltaY: rawDeltaY, axis: 'y' })) return;
+      if (!Number.isFinite(deltaY) || Math.abs(deltaY) < 0.6) return;
+      const horizontalIntent = Math.abs(deltaX) > Math.abs(deltaY) * 1.1;
+      if (horizontalIntent || hasScrollableParent(event.target, { deltaY, axis: 'y' })) return;
 
       const tune = getScrollTuning();
-      const mobileCap = 26 + tune.mobileDeltaCap * 10;
-      const mobileMult = 1.18 + (tune.mobileMultiplier * 0.2);
-      const limitedDelta = Math.max(-mobileCap, Math.min(mobileCap, rawDeltaY)) * mobileMult;
-      target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
-      kickoff();
+      const cap = 24 + tune.mobileDeltaCap * 9;
+      const mult = 1.12 + (tune.mobileMultiplier * 0.19);
+      const next = Math.max(-cap, Math.min(cap, deltaY)) * mult;
+      pushDelta(next);
       event.preventDefault();
     };
 
     const onTouchEnd = () => { touchY = null; touchX = null; };
 
-    const onNativeScroll = () => {
-      if (isOverlayActive()) return;
-      if (internalScrollWrite) return;
-      if (rafId) return;
-      const y = window.scrollY;
-      current = y;
-      target = y;
+    const onKeyDown = (event) => {
+      if (isOverlayActive() || isEditableTarget(event.target)) return;
+      const pageJump = Math.max(240, window.innerHeight * 0.88);
+      if (event.key === 'ArrowDown') { pushDelta(110); event.preventDefault(); }
+      else if (event.key === 'ArrowUp') { pushDelta(-110); event.preventDefault(); }
+      else if (event.key === 'PageDown' || event.key === ' ') { pushDelta(pageJump); event.preventDefault(); }
+      else if (event.key === 'PageUp') { pushDelta(-pageJump); event.preventDefault(); }
+      else if (event.key === 'Home') { target = 0; kickoff(); event.preventDefault(); }
+      else if (event.key === 'End') { target = maxY; kickoff(); event.preventDefault(); }
     };
+
+    const resizeObserver = new ResizeObserver(() => {
+      refreshBounds();
+      render();
+    });
+    resizeObserver.observe(shell);
+
+    const onResize = () => {
+      refreshBounds();
+      render();
+    };
+
+    refreshBounds();
+    render();
 
     window.addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('touchstart', onTouchStart, { passive: true });
     window.addEventListener('touchmove', onTouchMove, { passive: false });
     window.addEventListener('touchend', onTouchEnd, { passive: true });
     window.addEventListener('touchcancel', onTouchEnd, { passive: true });
-    window.addEventListener('scroll', onNativeScroll, { passive: true });
-    const onResize = () => {
-      const maxY = maxScrollY();
-      target = Math.min(target, maxY);
-      current = Math.min(current, maxY);
-    };
+    window.addEventListener('keydown', onKeyDown, { passive: false });
     window.addEventListener('resize', onResize);
 
     return () => {
@@ -183,11 +223,19 @@ export const useLenis = () => {
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('touchcancel', onTouchEnd);
-      window.removeEventListener('scroll', onNativeScroll);
+      window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('resize', onResize);
+      resizeObserver.disconnect();
       window.cancelAnimationFrame(rafId);
-      html.style.overscrollBehaviorY = prevHtmlOverscroll;
-      document.body.style.overscrollBehaviorY = prevBodyOverscroll;
+
+      html.style.overflow = prev.htmlOverflow;
+      body.style.overflow = prev.bodyOverflow;
+      html.style.overscrollBehaviorY = prev.htmlOverscrollY;
+      body.style.overscrollBehaviorY = prev.bodyOverscrollY;
+      body.style.touchAction = prev.bodyTouchAction;
+      shell.style.transform = prev.shellTransform;
+      shell.style.willChange = prev.shellWillChange;
+      shell.style.transition = prev.shellTransition;
       html.classList.remove('lenis-ready');
     };
   }, []);
