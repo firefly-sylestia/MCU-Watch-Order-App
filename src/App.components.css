@@ -1189,3 +1189,39 @@ main{--content-max:1560px !important}
 
 .sidebar-backdrop[data-state='closed'],
 .settings-backdrop[data-state='closed']{pointer-events:none !important;opacity:0 !important;}
+
+/* --- 2026-05 phase action redesign (marvel-inspired, modernized) --- */
+.phase-chip{
+  position:relative;
+  overflow:hidden;
+  min-height:46px !important;
+  padding:11px 17px !important;
+  border-radius:999px !important;
+  border:1px solid color-mix(in srgb,var(--theme-border) 62%, transparent) !important;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--theme-surface) 92%, transparent),color-mix(in srgb,var(--theme-surface-2,var(--theme-surface)) 86%, transparent)) !important;
+  color:var(--theme-text) !important;
+  box-shadow:0 6px 16px rgba(2,8,23,.16), inset 0 1px 0 rgba(255,255,255,.14) !important;
+  transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease, background .22s ease, filter .22s ease !important;
+}
+.phase-chip::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(110deg, transparent 30%, rgba(255,255,255,.16) 48%, transparent 66%);
+  transform:translateX(-120%);
+  transition:transform .5s ease;
+  pointer-events:none;
+}
+.phase-chip:hover{transform:translateY(-1px); box-shadow:0 10px 20px rgba(2,8,23,.2), inset 0 1px 0 rgba(255,255,255,.2) !important}
+.phase-chip:hover::before{transform:translateX(120%)}
+.phase-chip:active{transform:translateY(0) scale(.985); filter:saturate(1.06)}
+.phase-chip:focus-visible{outline:2px solid color-mix(in srgb,var(--theme-accent) 70%, #fff); outline-offset:2px}
+.phase-chip[style*="var(--theme-accent)"]{
+  background:linear-gradient(132deg,color-mix(in srgb,var(--theme-accent) 30%, var(--theme-surface)),color-mix(in srgb,var(--theme-accent) 12%, var(--theme-surface))) !important;
+  border-color:color-mix(in srgb,var(--theme-accent) 62%, var(--theme-border)) !important;
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 36%, transparent),0 12px 24px color-mix(in srgb,var(--theme-accent) 20%, rgba(2,8,23,.2)) !important;
+}
+[data-color-mode="light"] .phase-chip{
+  background:linear-gradient(135deg,#ffffff,color-mix(in srgb,var(--theme-surface) 92%, #fff)) !important;
+  box-shadow:0 8px 16px rgba(15,23,42,.1), inset 0 1px 0 rgba(255,255,255,.9) !important;
+}

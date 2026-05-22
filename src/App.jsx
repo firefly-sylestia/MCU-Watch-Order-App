@@ -770,7 +770,7 @@ export default function MCUViewer() {
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
   const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
-  const [scrollTuning] = useState({ desktopMultiplier: 6, desktopDeltaCap: 10, mobileMultiplier: 6, mobileDeltaCap: 10 });
+  const [scrollTuning] = useState({ desktopMultiplier: 5.4, desktopDeltaCap: 7, mobileMultiplier: 5.2, mobileDeltaCap: 7 });
   const [genreFilter] = useState('all');
   const [myLikes,        setMyLikes]        = useState({});
   const [myRating,       setMyRating]       = useState({});
@@ -1924,7 +1924,8 @@ export default function MCUViewer() {
             bgOpacity: exportSettings.bgOpacity,
             density: exportSettings.density,
             sections: exportSettings.sections,
-            previewScale: 0.42,
+            previewScale: 0.48,
+            dpiScale: 2,
           },
         });
         objectUrl = URL.createObjectURL(blob);

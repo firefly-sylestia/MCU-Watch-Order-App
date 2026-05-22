@@ -178,6 +178,19 @@ const drawWatermark = (ctx, canvas, fontFamily, theme) => {
   ctx.restore();
 };
 
+
+const applyDpiScale = (canvas, settings) => {
+  const dpiScale = Number.isFinite(Number(settings?.dpiScale)) ? Number(settings.dpiScale) : 1;
+  const ratio = Math.max(1, Math.min(3, dpiScale));
+  if (ratio === 1) return;
+  const baseWidth = canvas.width;
+  const baseHeight = canvas.height;
+  canvas.width = Math.round(baseWidth * ratio);
+  canvas.height = Math.round(baseHeight * ratio);
+  const ctx = canvas.getContext('2d');
+  ctx.scale(ratio, ratio);
+};
+
 const applyPreviewScale = (canvas, settings) => {
   const previewScale = settings?.previewScale;
   if (!previewScale || previewScale >= 1) return 1;
@@ -200,6 +213,7 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
 
   if (type === 'review') {
     canvas.width = 1600; canvas.height = 2200;
+    applyDpiScale(canvas, settings);
     applyPreviewScale(canvas, settings);
     const ctx = canvas.getContext('2d');
     const scale = (settings?.textScale || 1) * fontScale;
@@ -237,6 +251,7 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
     drawWatermark(ctx, { width: 1600, height: 2200 }, fontFamily, theme);
   } else if (type === 'analysis') {
     canvas.width = 1080; canvas.height = 1350;
+    applyDpiScale(canvas, settings);
     applyPreviewScale(canvas, settings);
     const ctx = canvas.getContext('2d');
     const scale = (settings?.textScale || 1) * fontScale;
@@ -293,6 +308,7 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
     drawWatermark(ctx, { width: 1080, height: 1350 }, fontFamily, theme);
   } else if (type === 'unified') {
     canvas.width = 1080; canvas.height = 1350;
+    applyDpiScale(canvas, settings);
     applyPreviewScale(canvas, settings);
     const ctx = canvas.getContext('2d');
     const scale = (settings?.textScale || 1) * fontScale;
@@ -328,6 +344,7 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
     drawWatermark(ctx, { width: 1080, height: 1350 }, fontFamily, theme);
   } else {
     canvas.width = 1080; canvas.height = 1350;
+    applyDpiScale(canvas, settings);
     applyPreviewScale(canvas, settings);
     const ctx = canvas.getContext('2d');
     drawCardBackdrop(ctx, { width: 1080, height: 1350 }, theme, null, bgOpacity);
