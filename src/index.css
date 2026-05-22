@@ -692,3 +692,23 @@ a:hover {
   --row-top-tint: color-mix(in srgb, #d8c7ac 28%, transparent);
   --row-top-tint-soft: color-mix(in srgb, var(--theme-accent, #7cffda) 10%, #F8F9FB);
 }
+
+
+html.lenis-pending,
+html.lenis-pending body,
+html.lenis-ready,
+html.lenis-ready body {
+  overflow: hidden;
+}
+
+html.lenis-ready .app-scroll-shell {
+  scrollbar-width: none;
+}
+html.lenis-ready .app-scroll-shell::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.theme-switch {
+  transition: background 320ms var(--ease-out), color 220ms var(--ease-out), filter 220ms var(--ease-out);
+}
