@@ -72,7 +72,7 @@ export const useLenis = () => {
       if (hasScrollableParent(event.target, deltaY)) return;
 
       // Desktop speed governor.
-      const limitedDelta = Math.max(-72, Math.min(72, deltaY));
+      const limitedDelta = Math.max(-86, Math.min(86, deltaY));
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
       kickoff();
       event.preventDefault();
@@ -99,7 +99,7 @@ export const useLenis = () => {
       if (hasScrollableParent(event.target, rawDelta)) return;
 
       // Mobile speed governor: cap fast flick deltas for steadier scroll.
-      const limitedDelta = Math.max(-32, Math.min(32, rawDelta)) * 0.92;
+      const limitedDelta = Math.max(-38, Math.min(38, rawDelta)) * 0.92;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
       kickoff();
       event.preventDefault();

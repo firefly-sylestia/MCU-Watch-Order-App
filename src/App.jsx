@@ -2925,6 +2925,29 @@ export default function MCUViewer() {
 
         {!detailItem && !analyticsOpen && !settingsOpen && <WatermarkOverlay surface="hero" theme={darkMode ? 'cinematic' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['cta', 'title']} />}
       </section>}
+      {browseMode === 'home' && (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 16px 12px' }}>
+          <button
+            className="fpill"
+            onClick={() => setBrowseMode('phase')}
+            style={{ minHeight: 42, padding: '0 18px', fontSize: 13, borderColor: 'color-mix(in srgb, var(--theme-accent) 40%, var(--theme-border))', color: 'var(--theme-accent)' }}
+          >
+            <ChevRight size={14}/> Open Full Phase List
+          </button>
+        </div>
+      )}
+      {browseMode === 'phase' && (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 16px 12px' }}>
+          <button
+            className="fpill"
+            onClick={() => setBrowseMode('home')}
+            style={{ minHeight: 42, padding: '0 18px', fontSize: 13 }}
+          >
+            <ChevDown size={14}/> Back to Home Carousel
+          </button>
+        </div>
+      )}
+
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 60, marginTop: 16 }}>
         {/* Toggle row — always visible */}
