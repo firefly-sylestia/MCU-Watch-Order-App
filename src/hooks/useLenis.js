@@ -101,7 +101,9 @@ export const useLenis = () => {
       const tune = getScrollTuning();
       const deskCap = 30 + tune.desktopDeltaCap * 10;
       const deskMult = 0.8 + (tune.desktopMultiplier * 0.2);
-      const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult;
+      const magnitude = Math.abs(deltaY);
+      const quickBoost = magnitude <= 26 ? 1.24 : magnitude <= 52 ? 1.12 : 1;
+      const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult * quickBoost;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
       kickoff();
       event.preventDefault();
