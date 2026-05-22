@@ -53,6 +53,10 @@ export const useLenis = () => {
     const isFinePointer = window.matchMedia('(pointer: fine)').matches;
     const saveDataMode = navigator?.connection?.saveData === true;
     html.classList.add('lenis-ready');
+    const prevHtmlOverscroll = html.style.overscrollBehaviorY;
+    const prevBodyOverscroll = document.body.style.overscrollBehaviorY;
+    html.style.overscrollBehaviorY = 'none';
+    document.body.style.overscrollBehaviorY = 'none';
 
     let current = window.scrollY;
     let target = window.scrollY;
@@ -141,11 +145,11 @@ export const useLenis = () => {
 
     const onTouchEnd = () => { touchY = null; touchX = null; };
 
-    const syncToNativeScroll = () => {
-      if (rafId) return;
+    const enforceVirtualScroll = () => {
       if (isOverlayActive()) return;
-      current = window.scrollY;
-      target = window.scrollY;
+      if (Math.abs(window.scrollY - current) > 0.75) {
+        window.scrollTo(0, current);
+      }
     };
 
     window.addEventListener('wheel', onWheel, { passive: false });
@@ -153,7 +157,7 @@ export const useLenis = () => {
     window.addEventListener('touchmove', onTouchMove, { passive: false });
     window.addEventListener('touchend', onTouchEnd, { passive: true });
     window.addEventListener('touchcancel', onTouchEnd, { passive: true });
-    window.addEventListener('scroll', syncToNativeScroll, { passive: true });
+    window.addEventListener('scroll', enforceVirtualScroll, { passive: true });
     const onResize = () => { target = Math.min(target, maxScrollY()); current = Math.min(current, maxScrollY()); };
     window.addEventListener('resize', onResize);
 
@@ -163,9 +167,11 @@ export const useLenis = () => {
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('touchcancel', onTouchEnd);
-      window.removeEventListener('scroll', syncToNativeScroll);
+      window.removeEventListener('scroll', enforceVirtualScroll);
       window.removeEventListener('resize', onResize);
       window.cancelAnimationFrame(rafId);
+      html.style.overscrollBehaviorY = prevHtmlOverscroll;
+      document.body.style.overscrollBehaviorY = prevBodyOverscroll;
       html.classList.remove('lenis-ready');
     };
   }, []);

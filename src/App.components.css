@@ -1395,3 +1395,15 @@ main{--content-max:1560px !important}
   .rrow{min-height:116px !important;}
   .rrow .title-btn{min-height:72px !important;height:72px !important;}
 }
+
+
+/* Taller unified row/title geometry to avoid text overlap on long metadata */
+.rrow{min-height:152px !important;grid-template-columns:32px 86px minmax(0,1fr) minmax(148px,auto) !important;}
+.rrow .title-btn{min-height:104px !important;height:104px !important;grid-template-rows:auto auto minmax(22px,1fr) !important;gap:10px !important;}
+.rrow .title-row-mid{min-height:28px !important;align-items:flex-start !important;}
+.rrow .title-subline{min-height:20px !important;line-height:1.4 !important;}
+@media (max-width: 767px){
+  .rrow{min-height:132px !important;grid-template-columns:24px 58px minmax(0,1fr) !important;}
+  .rrow .title-btn{min-height:90px !important;height:90px !important;gap:8px !important;}
+  .rrow .title-row-mid{min-height:24px !important;}
+}
