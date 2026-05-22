@@ -11,50 +11,39 @@ export const useLenis = () => {
     html.classList.add('lenis-ready');
 
     const lenis = new Lenis({
+      autoRaf: true,
       smoothWheel: true,
-      syncTouch: true,
-      syncTouchLerp: 0.085,
-      touchInertiaExponent: 1.4,
+      syncTouch: false,
       gestureOrientation: 'vertical',
       autoResize: true,
-      lerp: 0.13,
-      wheelMultiplier: 1.18,
-      touchMultiplier: 1.1,
+      lerp: 0.09,
+      duration: 1.05,
+      wheelMultiplier: 1.3,
+      touchMultiplier: 1,
       overscroll: true,
-      autoRaf: false,
     });
 
-    let rafId = 0;
-    let idleTimer = 0;
-
-    const setScrollFeedback = () => {
-      document.body.classList.add('is-scrolling');
-      window.clearTimeout(idleTimer);
-      idleTimer = window.setTimeout(() => document.body.classList.remove('is-scrolling'), 140);
-    };
-
-    lenis.on('scroll', (e) => {
-      const progress = Number.isFinite(e?.progress) ? e.progress : 0;
+    const onScroll = (event) => {
+      const progress = Number.isFinite(event?.progress) ? event.progress : 0;
       document.documentElement.style.setProperty('--lenis-progress', String(progress));
-      setScrollFeedback();
-    });
-
-    const raf = (time) => {
-      if (window.__overlayActive) {
-        lenis.stop();
-      } else {
-        lenis.start();
-        lenis.raf(time);
-      }
-      rafId = window.requestAnimationFrame(raf);
     };
 
-    rafId = window.requestAnimationFrame(raf);
+    lenis.on('scroll', onScroll);
+
+    let prevOverlay = Boolean(window.__overlayActive);
+    if (prevOverlay) lenis.stop();
+
+    const overlayCheckInterval = window.setInterval(() => {
+      const next = Boolean(window.__overlayActive);
+      if (next === prevOverlay) return;
+      prevOverlay = next;
+      if (next) lenis.stop();
+      else lenis.start();
+    }, 120);
 
     return () => {
-      window.clearTimeout(idleTimer);
-      document.body.classList.remove('is-scrolling');
-      window.cancelAnimationFrame(rafId);
+      window.clearInterval(overlayCheckInterval);
+      lenis.off('scroll', onScroll);
       lenis.destroy();
       html.classList.remove('lenis-ready');
     };

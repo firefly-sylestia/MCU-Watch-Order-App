@@ -703,17 +703,3 @@ a:hover {
 :root {
   --lenis-progress: 0;
 }
-
-.app-shell,
-.main-content,
-.hero-shell {
-  transition: transform 220ms var(--ease-out), filter 220ms var(--ease-out);
-  will-change: transform;
-}
-
-body.is-scrolling .app-shell,
-body.is-scrolling .main-content,
-body.is-scrolling .hero-shell {
-  transform: translateY(-1px);
-  filter: saturate(1.015);
-}
