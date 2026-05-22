@@ -537,8 +537,6 @@ const areTitleRowPropsEqual = (prev, next) => (
   && prev.bulkSelectMode === next.bulkSelectMode
   && prev.isSelected === next.isSelected
   && prev.statusLabelOverride === next.statusLabelOverride
-  && prev.isWorthy === next.isWorthy
-  && prev.multiverseShuffle === next.multiverseShuffle
   && prev.isDesktopViewport === next.isDesktopViewport
 );
 
@@ -568,9 +566,6 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   isSelected = false,
   onToggleSelected,
   statusLabelOverride = null,
-  isWorthy = false,
-  multiverseShuffle = false,
-  onThorLongPress,
   isDesktopViewport = false,
 }) {
   const StatusIcon = statusMeta.Icon;
@@ -579,7 +574,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   const hideWatchToggle = releaseStatus === 'upcoming';
   return (
     <div>
-      <div className={`rrow type-${item.type} ${isExpanded ? 'curvy-selected' : ''}`} onPointerDown={() => { if (item.title.toLowerCase().includes('thor')) { window.__thorPress = setTimeout(() => onThorLongPress?.(item), 650); } }} onPointerUp={() => clearTimeout(window.__thorPress)} onPointerLeave={() => clearTimeout(window.__thorPress)} style={{ opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow, borderColor: multiverseShuffle ? `hsl(${(item.id * 47) % 360} 90% 60% / 0.7)` : undefined, ...(isWatched ? { background: 'color-mix(in srgb, var(--theme-watched-bg) 62%, transparent)' } : {}) }}>
+      <div className={`rrow type-${item.type} ${isExpanded ? 'curvy-selected' : ''}`} style={{ opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow, ...(isWatched ? { background: 'color-mix(in srgb, var(--theme-watched-bg) 62%, transparent)' } : {}) }}>
         <div style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 13, color: isWatched ? 'var(--theme-accent)' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
           {bulkSelectMode ? (
             <input
@@ -638,7 +633,6 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
               style={{ width: 28, height: 28, background: statusMeta.bg || 'transparent', color: statusMeta.color || T.textMuted, borderColor: `${statusMeta.color || T.surfaceBorder}66` }}
             ><RowStatusIcon size={12} /></button>
           )}
-          {isWorthy && <span style={{ fontSize: 10, fontWeight: 700, color: '#9bd6ff', border: '1px solid #7dc3ff88', borderRadius: 999, padding: '1px 6px', background: 'rgba(60,166,255,0.14)', letterSpacing: 1 }}>WORTHY</span>}
         </div>
         
       </div>
@@ -799,8 +793,6 @@ export default function MCUViewer() {
   const [selectedIds,    setSelectedIds]    = useState(() => new Set());
   const [scrollCheckpoint, setScrollCheckpoint] = useState(initialUiState.scrollTop);
   const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
-  const [grootMode, setGrootMode] = useState(false);
-  const [worthyIds, setWorthyIds] = useState({});
 
   useEffect(() => {
     setItems(universe === 'dc' ? DC_RAW : RAW);
@@ -839,9 +831,6 @@ export default function MCUViewer() {
     setSettingsOpen(false);
     setAnalyticsOpen(true);
   }, []);
-  const [snapMode, setSnapMode] = useState(false);
-  const [spiderSense, setSpiderSense] = useState(false);
-  const [multiverseShuffle, setMultiverseShuffle] = useState(false);
   const [desktopTextScale, setDesktopTextScale] = useState(initialUiState.desktopTextScale);
   const [textScaleEnabled, setTextScaleEnabled] = useState(initialUiState.textScaleEnabled);
   const { isDesktopViewport } = useResponsiveLayout();
@@ -850,8 +839,6 @@ export default function MCUViewer() {
     : 1;
   const effectiveUiScale = isDesktopViewport && textScaleEnabled ? desktopTextScale * desktopDpiCompensation : 1;
   const { heroBackdropScale, setHeroBackdropScale, heroBackdropOpacity, setHeroBackdropOpacity } = useHeroBackdrop();
-  const [lightningStrike, setLightningStrike] = useState(false);
-  const [spiderDrop, setSpiderDrop] = useState(false);
   const headerMinimized = false;
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
@@ -981,14 +968,6 @@ export default function MCUViewer() {
       });
       const item = n.find(i => i.id === id);
       if (newStatus === 'watched' && item) {
-        if (item.title.toLowerCase().includes('infinity war')) {
-          const watchedCount = n.filter(entry => entry.status === 'watched').length;
-          const threshold = Math.ceil(n.length / 2);
-          if (watchedCount >= threshold) {
-            setSnapMode(true);
-            setTimeout(() => setSnapMode(false), 1800);
-          }
-        }
         const phaseItems = n.filter(i => i.phase === item.phase && (listMode === 'core' ? coreIds.has(i.id) : true));
         const allDone = phaseItems.every(i => i.status === 'watched');
         if (allDone) {
@@ -1007,26 +986,7 @@ export default function MCUViewer() {
     }
   };
 
-  useEffect(() => {
-    const normalized = search.trim().toLowerCase();
-    if (normalized === 'groot') {
-      setGrootMode(v => !v);
-    }
-    if (normalized === 'multiverse') {
-      setMultiverseShuffle(v => !v);
-    }
-    if (normalized === 'snap') {
-      setSnapMode(true);
-      setTimeout(() => setSnapMode(false), 1800);
-    }
-    if (normalized === 'spider man' || normalized === 'spiderman') {
-      setSpiderSense(true);
-      setSpiderDrop(true);
-      setTimeout(() => setSpiderDrop(false), 2600);
-    } else {
-      setSpiderSense(normalized.includes('spider'));
-    }
-  }, [search]);
+
 
   useEffect(() => {
     const el = mainRef.current;
@@ -1078,16 +1038,23 @@ export default function MCUViewer() {
     const el = phaseRefs.current[id];
     const container = mainRef.current;
     if (!el) return;
+
+    const topBarOffset = headerCompact ? 72 : 96;
     const canScrollMain = container && container.scrollHeight > container.clientHeight + 1;
     if (canScrollMain) {
       const containerTop = container.getBoundingClientRect().top;
       const elTop = el.getBoundingClientRect().top;
-      const offset = elTop - containerTop + container.scrollTop - 16;
-      container.scrollTo({ top: offset, behavior: 'smooth' });
+      const desiredTop = elTop - containerTop + container.scrollTop - topBarOffset;
+      const maxTop = Math.max(0, container.scrollHeight - container.clientHeight);
+      const clampedTop = Math.max(0, Math.min(maxTop, desiredTop));
+      container.scrollTo({ top: clampedTop, behavior: 'smooth' });
       return;
     }
-    const top = el.getBoundingClientRect().top + window.scrollY - 82;
-    window.scrollTo({ top, behavior: 'smooth' });
+
+    const desiredWindowTop = el.getBoundingClientRect().top + window.scrollY - topBarOffset;
+    const maxWindowTop = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    const clampedWindowTop = Math.max(0, Math.min(maxWindowTop, desiredWindowTop));
+    window.scrollTo({ top: clampedWindowTop, behavior: 'smooth' });
   };
 
   const exportProgress = async () => {
@@ -2722,8 +2689,6 @@ export default function MCUViewer() {
         <div className="hero-backdrop-blend" />
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '6%' : '3%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '5%' : '2.5%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.12 : 0.06, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
       </div>
-      {lightningStrike && <div style={{ position:'fixed', inset:0, pointerEvents:'none', background:'linear-gradient(180deg, rgba(180,220,255,0.95), rgba(255,255,255,0))', mixBlendMode:'screen', zIndex:9999, animation:'fadeInOut 0.7s ease' }} />}
-      {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} settingsOpen={settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
@@ -2958,7 +2923,7 @@ export default function MCUViewer() {
               <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search title or prerequisite"
                 aria-label="Search titles"
-                style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 72%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '9px 14px 9px 32px', color: T.inputColor, fontSize: 14, fontWeight: 650, letterSpacing: 0.3, textShadow: '0 1px 2px color-mix(in srgb,var(--theme-bg) 28%, transparent)', backdropFilter: 'blur(12px) saturate(128%)', WebkitBackdropFilter: 'blur(12px) saturate(128%)', boxShadow: spiderSense ? '0 0 0 2px rgba(220,20,60,0.45), 0 0 16px rgba(220,20,60,0.35)' : 'none', animation: spiderSense ? 'spiderPulse 0.85s ease-in-out infinite' : 'none' }} />
+                style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 72%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '9px 14px 9px 32px', color: T.inputColor, fontSize: 14, fontWeight: 650, letterSpacing: 0.3, textShadow: '0 1px 2px color-mix(in srgb,var(--theme-bg) 28%, transparent)', backdropFilter: 'blur(12px) saturate(128%)', WebkitBackdropFilter: 'blur(12px) saturate(128%)' }} />
             </div>
             <div className='filter-row-actions' style={{ marginLeft: 0, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-start', minWidth: 0 }} />
           </div>
@@ -3107,7 +3072,7 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} className={`app-scroll-shell ${snapMode ? 'snap-blip' : ''}`} style={{ overflow: 'visible', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
+      <main ref={mainRef} className='app-scroll-shell' style={{ overflow: 'visible', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
@@ -3229,10 +3194,6 @@ export default function MCUViewer() {
                         bulkSelectMode={bulkSelectMode}
                         isSelected={selectedIds.has(item.id)}
                         onToggleSelected={toggleSelected}
-                        statusLabelOverride={grootMode ? 'I am Groot' : null}
-                        isWorthy={Boolean(worthyIds[item.id])}
-                        multiverseShuffle={multiverseShuffle}
-                        onThorLongPress={(pressedItem) => { setWorthyIds(prev => ({ ...prev, [pressedItem.id]: !prev[pressedItem.id] })); setLightningStrike(true); setTimeout(() => setLightningStrike(false), 700); }}
                         isDesktopViewport={isDesktopViewport}
                       />
                     );
