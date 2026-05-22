@@ -50,9 +50,12 @@ export const useLenis = () => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
 
     const html = document.documentElement;
+    const body = document.body;
     const isFinePointer = window.matchMedia('(pointer: fine)').matches;
+    const isAndroid = /Android/i.test(navigator.userAgent || '');
     const saveDataMode = navigator?.connection?.saveData === true;
     html.classList.add('lenis-ready');
+    if (isAndroid) html.classList.add('android-native-scroll-lock');
     const prevHtmlOverscroll = html.style.overscrollBehaviorY;
     const prevBodyOverscroll = document.body.style.overscrollBehaviorY;
     html.style.overscrollBehaviorY = 'none';
@@ -127,7 +130,7 @@ export const useLenis = () => {
     };
 
     const onTouchMove = (event) => {
-      if (isFinePointer || saveDataMode || event.touches.length !== 1) return;
+      if (isFinePointer || (saveDataMode && !isAndroid) || event.touches.length !== 1) return;
       if (isOverlayActive()) return;
       if (isEditableTarget(event.target)) return;
       if (touchY == null) { touchY = event.touches[0].clientY; return; }
@@ -155,6 +158,16 @@ export const useLenis = () => {
 
     const onTouchEnd = () => { touchY = null; touchX = null; };
 
+    const onAndroidNativeScrollBlock = (event) => {
+      if (!isAndroid) return;
+      if (isOverlayActive()) return;
+      if (event.defaultPrevented) return;
+      if (isEditableTarget(event.target)) return;
+      const deltaY = touchY == null || event.touches.length !== 1 ? 0 : (touchY - event.touches[0].clientY);
+      if (hasScrollableParent(event.target, { deltaY, axis: 'y' })) return;
+      event.preventDefault();
+    };
+
     const onNativeScroll = () => {
       if (isOverlayActive()) return;
       if (internalScrollWrite) return;
@@ -167,6 +180,7 @@ export const useLenis = () => {
     window.addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('touchstart', onTouchStart, { passive: true });
     window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchmove', onAndroidNativeScrollBlock, { passive: false });
     window.addEventListener('touchend', onTouchEnd, { passive: true });
     window.addEventListener('touchcancel', onTouchEnd, { passive: true });
     window.addEventListener('scroll', onNativeScroll, { passive: true });
@@ -181,6 +195,7 @@ export const useLenis = () => {
       window.removeEventListener('wheel', onWheel);
       window.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchmove', onAndroidNativeScrollBlock);
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('touchcancel', onTouchEnd);
       window.removeEventListener('scroll', onNativeScroll);
@@ -189,6 +204,7 @@ export const useLenis = () => {
       html.style.overscrollBehaviorY = prevHtmlOverscroll;
       document.body.style.overscrollBehaviorY = prevBodyOverscroll;
       html.classList.remove('lenis-ready');
+      html.classList.remove('android-native-scroll-lock');
     };
   }, []);
 };
