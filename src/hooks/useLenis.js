@@ -80,19 +80,26 @@ export const useLenis = () => {
 
       const frame = dt / 16.67;
       const distance = target - current;
-      const stiffness = isFinePointer ? 0.15 : 0.17;
-      const damping = isFinePointer ? 0.78 : 0.74;
+      const stiffness = isFinePointer ? 0.17 : 0.19;
+      const damping = isFinePointer ? 0.8 : 0.76;
 
       velocity += distance * stiffness * frame;
       velocity *= Math.pow(damping, frame);
 
-      const maxVelocity = isFinePointer ? 22 : 18;
+      const maxVelocity = isFinePointer ? 26 : 22;
       velocity = Math.max(-maxVelocity, Math.min(maxVelocity, velocity));
 
+      const beforeStepDistance = distance;
       current += velocity * frame;
       current = Math.min(maxScrollY(), Math.max(0, current));
 
-      const done = Math.abs(target - current) < 0.12 && Math.abs(velocity) < 0.04;
+      const afterStepDistance = target - current;
+      if (Math.sign(beforeStepDistance) !== Math.sign(afterStepDistance) && Math.abs(afterStepDistance) < 10) {
+        current = target;
+        velocity = 0;
+      }
+
+      const done = Math.abs(target - current) < 0.14 && Math.abs(velocity) < 0.05;
       if (done) {
         current = target;
         velocity = 0;
@@ -132,7 +139,7 @@ export const useLenis = () => {
       const deskMult = 1.1 + (tune.desktopMultiplier * 0.22);
       const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
-      velocity += limitedDelta * 0.03;
+      velocity += limitedDelta * 0.04;
       kickoff();
       event.preventDefault();
     };
@@ -167,7 +174,7 @@ export const useLenis = () => {
       const mobileMult = 1.06 + (tune.mobileMultiplier * 0.19);
       const limitedDelta = Math.max(-mobileCap, Math.min(mobileCap, rawDeltaY)) * mobileMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
-      velocity += limitedDelta * 0.028;
+      velocity += limitedDelta * 0.037;
       kickoff();
       event.preventDefault();
     };
