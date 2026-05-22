@@ -74,16 +74,19 @@ export const useLenis = () => {
     const kickoff = () => { if (!rafId) rafId = window.requestAnimationFrame(step); };
 
     const step = (ts) => {
-      const dt = lastTs ? Math.min(24, Math.max(8, ts - lastTs)) : 16;
+      const dt = lastTs ? Math.min(48, Math.max(8, ts - lastTs)) : 16;
       lastTs = ts;
 
       const distance = target - current;
-      const follow = isFinePointer ? 0.26 : 0.3;
+      const absDistance = Math.abs(distance);
+      const baseFollow = isFinePointer ? 0.34 : 0.3;
+      const boost = isFinePointer ? Math.min(0.26, absDistance / 1200) : Math.min(0.16, absDistance / 1400);
+      const follow = Math.min(0.62, baseFollow + boost);
       const t = 1 - Math.pow(1 - follow, dt / 16.67);
       current += distance * t;
       current = Math.min(maxScrollY(), Math.max(0, current));
 
-      const done = Math.abs(target - current) < 0.1;
+      const done = Math.abs(target - current) < 0.2;
       if (done) current = target;
 
       internalScrollWrite = true;
