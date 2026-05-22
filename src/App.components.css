@@ -1758,3 +1758,48 @@ main{--content-max:1560px !important}
 
 .row-actions .rating-marvel-pill{width:78px !important;min-width:78px !important}
 .row-actions .wbtn.bookmark-marvel-btn,.row-actions .wbtn.notwatched-marvel-btn{width:34px !important;height:34px !important;border-radius:14px !important}
+
+/* 2026-05 action controls redesign: compact rating + unified status/bookmark language */
+.row-actions .rating-marvel-pill{
+  width:64px !important;
+  min-width:64px !important;
+  max-width:64px !important;
+  min-height:30px !important;
+  border-radius:11px !important;
+  padding:0 7px !important;
+  font-size:10px !important;
+  letter-spacing:.03em !important;
+}
+
+.row-actions .wbtn.status-pill.status-marvel-pill{
+  min-width:92px !important;
+  height:34px !important;
+  padding:0 12px !important;
+  border-radius:12px !important;
+  justify-content:space-between !important;
+  gap:6px !important;
+}
+
+.row-actions .wbtn.status-toggle.notwatched-marvel-btn,
+.row-actions .wbtn.bookmark-marvel-btn{
+  width:34px !important;
+  height:34px !important;
+  border-radius:12px !important;
+}
+
+/* Bookmark active state: light-blue in both themes */
+.bookmark-marvel-btn[data-bookmarked="true"],
+[data-color-mode="light"] .bookmark-marvel-btn[data-bookmarked="true"],
+[data-color-mode="dark"] .bookmark-marvel-btn[data-bookmarked="true"]{
+  background:linear-gradient(135deg,#38bdf8 0%, #0ea5e9 55%, #0369a1 100%) !important;
+  border-color:#7dd3fc !important;
+  color:#e0f2fe !important;
+  box-shadow:0 0 0 1px rgba(125,211,252,.46),0 10px 18px rgba(3,105,161,.34) !important;
+}
+
+.rrow.curvy-selected .bookmark-marvel-btn[data-bookmarked="true"],
+[data-color-mode="light"] .rrow.curvy-selected .bookmark-marvel-btn[data-bookmarked="true"]{
+  background:linear-gradient(135deg,#7dd3fc 0%, #38bdf8 52%, #0284c7 100%) !important;
+  border-color:#bae6fd !important;
+  box-shadow:0 0 0 2px rgba(125,211,252,.58),0 12px 20px rgba(2,132,199,.32) !important;
+}
