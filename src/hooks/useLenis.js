@@ -52,6 +52,7 @@ export const useLenis = () => {
     const html = document.documentElement;
     const isFinePointer = window.matchMedia('(pointer: fine)').matches;
     const saveDataMode = navigator?.connection?.saveData === true;
+    const desktopNativeScroll = isFinePointer;
     html.classList.add('lenis-ready');
     const prevHtmlOverscroll = html.style.overscrollBehaviorY;
     const prevBodyOverscroll = document.body.style.overscrollBehaviorY;
@@ -105,7 +106,7 @@ export const useLenis = () => {
     };
 
     const onWheel = (event) => {
-      if (!isFinePointer || saveDataMode) return;
+      if (desktopNativeScroll || saveDataMode) return;
       if (event.defaultPrevented || event.ctrlKey) return;
       if (isOverlayActive()) return;
       if (isEditableTarget(event.target)) return;
@@ -128,14 +129,14 @@ export const useLenis = () => {
     };
 
     const onTouchStart = (event) => {
-      if (isFinePointer || saveDataMode || event.touches.length !== 1) return;
+      if (desktopNativeScroll || saveDataMode || event.touches.length !== 1) return;
       if (isOverlayActive()) return;
       touchY = event.touches[0].clientY;
       touchX = event.touches[0].clientX;
     };
 
     const onTouchMove = (event) => {
-      if (isFinePointer || saveDataMode || event.touches.length !== 1) return;
+      if (desktopNativeScroll || saveDataMode || event.touches.length !== 1) return;
       if (isOverlayActive()) return;
       if (isEditableTarget(event.target)) return;
       if (touchY == null) { touchY = event.touches[0].clientY; return; }
@@ -172,7 +173,7 @@ export const useLenis = () => {
       target = y;
     };
 
-    window.addEventListener('wheel', onWheel, { passive: false });
+    if (!desktopNativeScroll) window.addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('touchstart', onTouchStart, { passive: true });
     window.addEventListener('touchmove', onTouchMove, { passive: false });
     window.addEventListener('touchend', onTouchEnd, { passive: true });
@@ -186,7 +187,7 @@ export const useLenis = () => {
     window.addEventListener('resize', onResize);
 
     return () => {
-      window.removeEventListener('wheel', onWheel);
+      if (!desktopNativeScroll) window.removeEventListener('wheel', onWheel);
       window.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
