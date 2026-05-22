@@ -1189,3 +1189,52 @@ main{--content-max:1560px !important}
 
 .sidebar-backdrop[data-state='closed'],
 .settings-backdrop[data-state='closed']{pointer-events:none !important;opacity:0 !important;}
+
+
+/* Modernized phase rail + Marvel-style CTA buttons */
+.phase-selector-rail{display:flex;align-items:center;gap:10px;overflow-x:auto;padding:4px 2px 8px;max-width:100%;width:100%;scroll-snap-type:x proximity}
+.phase-selector-rail .marvel-phase-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 16px;border:1px solid color-mix(in srgb,var(--theme-border) 60%, transparent);background:linear-gradient(140deg,color-mix(in srgb,var(--theme-surface) 92%, transparent),color-mix(in srgb,var(--theme-bg) 42%, transparent));color:var(--text-secondary);font-weight:760;letter-spacing:.04em;transition:transform .2s var(--ease-out),box-shadow .2s var(--ease-out),border-color .2s var(--ease-out),color .2s var(--ease-out),background .2s var(--ease-out);scroll-snap-align:start}
+.phase-selector-rail .marvel-phase-btn::before{content:"";position:absolute;inset:1px;border-radius:inherit;background:linear-gradient(120deg,rgba(225,29,72,.12),rgba(239,68,68,.04) 38%,rgba(255,255,255,.02));opacity:.86;pointer-events:none}
+.phase-selector-rail .marvel-phase-btn:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--theme-accent) 42%, var(--theme-border));box-shadow:0 12px 22px rgba(2,8,23,.2)}
+.phase-selector-rail .marvel-phase-btn[data-active="true"]{color:var(--theme-accent);border-color:color-mix(in srgb,var(--theme-accent) 66%, var(--theme-border));background:linear-gradient(140deg,color-mix(in srgb,var(--theme-accent) 20%, var(--theme-surface)),color-mix(in srgb,var(--theme-accent-alt) 10%, var(--theme-surface)));box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 34%, transparent),0 12px 24px rgba(2,8,23,.22)}
+.phase-chip-label{font-size:12px;white-space:nowrap;color:inherit;position:relative;z-index:1}
+.phase-chip-count{font-size:11px;font-weight:700;color:var(--text-muted);position:relative;z-index:1}
+.phase-selector-rail .marvel-phase-btn[data-active="true"] .phase-chip-count{color:var(--theme-accent)}
+
+.fpill.marvel-btn,.theme-btn.marvel-btn{position:relative;overflow:hidden;background:linear-gradient(130deg,#ed1d24 0%,#c20f16 52%,#8f0710 100%) !important;color:#fff !important;border:1px solid color-mix(in srgb,#ffffff 20%, #7f1d1d) !important;box-shadow:0 10px 20px rgba(127,29,29,.28);transition:transform .2s var(--ease-out),filter .2s var(--ease-out)}
+.fpill.marvel-btn:hover,.theme-btn.marvel-btn:hover{transform:translateY(-1px);filter:brightness(1.04)}
+.fpill.marvel-btn::after,.theme-btn.marvel-btn::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 20%,rgba(255,255,255,.2) 48%,transparent 74%);transform:translateX(-120%);transition:transform .45s ease}
+.fpill.marvel-btn:hover::after,.theme-btn.marvel-btn:hover::after{transform:translateX(120%)}
+[data-color-mode="light"] .phase-selector-rail .marvel-phase-btn{background:linear-gradient(135deg,#ffffff,#f6f8fc);color:#1f2937;border-color:rgba(148,163,184,.45)}
+
+
+/* Marvel accent for status/bookmark controls (keeps light/dark readable) */
+.status-marvel-pill{background:linear-gradient(130deg,color-mix(in srgb,var(--theme-accent) 14%, var(--theme-surface)),color-mix(in srgb,var(--theme-accent-alt) 8%, var(--theme-surface))) !important;border-color:color-mix(in srgb,var(--theme-accent) 42%, var(--theme-border)) !important;box-shadow:0 8px 16px rgba(2,8,23,.16)}
+.status-marvel-pill:hover{transform:translateY(-1px);filter:brightness(1.02)}
+.bookmark-marvel-btn{background:linear-gradient(135deg,color-mix(in srgb,#ef4444 16%, var(--theme-surface)),color-mix(in srgb,#f97316 10%, var(--theme-surface))) !important;border-color:color-mix(in srgb,#ef4444 36%, var(--theme-border)) !important;color:color-mix(in srgb,#fca5a5 72%, var(--theme-text)) !important}
+.bookmark-marvel-btn[aria-label^="Remove"]{background:linear-gradient(135deg,color-mix(in srgb,#ef4444 24%, var(--theme-surface)),color-mix(in srgb,#fb7185 16%, var(--theme-surface))) !important;color:#fecdd3 !important}
+.marvel-mini-btn{position:relative;overflow:hidden;transition:transform .18s var(--ease-out),border-color .18s var(--ease-out),background .18s var(--ease-out),color .18s var(--ease-out)}
+.marvel-mini-btn:hover{transform:translateY(-1px)}
+.marvel-mini-btn::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 25%,rgba(255,255,255,.16) 52%,transparent 78%);transform:translateX(-120%);transition:transform .42s ease;pointer-events:none}
+.marvel-mini-btn:hover::after{transform:translateX(120%)}
+.status-menu-bookmark{border-radius:10px !important}
+.status-menu-item{border-radius:10px !important}
+[data-color-mode="light"] .bookmark-marvel-btn{color:#9f1239 !important}
+
+
+.status-marvel-pill{color:#ffe4ea !important;background:linear-gradient(130deg,#8a101d 0%,#c1121f 48%,#610913 100%) !important;border-color:color-mix(in srgb,#fb7185 36%, var(--theme-border)) !important;}
+.status-marvel-pill svg{color:#ffd0db !important}
+.notwatched-marvel-btn{background:linear-gradient(130deg,color-mix(in srgb,#991b1b 28%, var(--theme-surface)),color-mix(in srgb,#7f1d1d 14%, var(--theme-surface))) !important;border-color:color-mix(in srgb,#ef4444 46%, var(--theme-border)) !important;color:#fecdd3 !important;box-shadow:0 8px 14px rgba(69,10,10,.28)}
+.notwatched-marvel-btn:hover{filter:brightness(1.06)}
+.bookmark-marvel-btn{box-shadow:0 8px 16px rgba(127,29,29,.2)}
+.bookmark-marvel-btn[data-bookmarked="true"]{background:linear-gradient(135deg,#ef4444,#be123c) !important;color:#fff1f2 !important;border-color:#fb7185 !important;box-shadow:0 0 0 1px rgba(251,113,133,.4),0 12px 18px rgba(159,18,57,.35)}
+[data-color-mode="dark"] .status-marvel-pill,[data-color-mode="dark"] .notwatched-marvel-btn,[data-color-mode="dark"] .bookmark-marvel-btn{backdrop-filter:blur(6px) saturate(130%);-webkit-backdrop-filter:blur(6px) saturate(130%)}
+
+
+/* Fixes: selected-row bookmark visibility + reduce style conflicts */
+.bookmark-marvel-btn{position:relative;z-index:2}
+.bookmark-marvel-btn[data-bookmarked="true"] svg{filter:drop-shadow(0 0 4px rgba(255,241,242,.7));transform:scale(1.04)}
+.rrow.curvy-selected .bookmark-marvel-btn[data-bookmarked="true"]{background:linear-gradient(135deg,#fb7185,#be123c) !important;border-color:#fecdd3 !important;box-shadow:0 0 0 2px rgba(251,113,133,.55),0 12px 20px rgba(159,18,57,.42) !important}
+[data-color-mode="light"] .rrow.curvy-selected .bookmark-marvel-btn[data-bookmarked="true"]{box-shadow:0 0 0 2px rgba(225,29,72,.45),0 8px 16px rgba(159,18,57,.22) !important}
+/* remove minor color conflict from aria-label selector by preferring explicit data state */
+.bookmark-marvel-btn[data-bookmarked="false"]{color:color-mix(in srgb,#fca5a5 72%, var(--theme-text)) !important}
