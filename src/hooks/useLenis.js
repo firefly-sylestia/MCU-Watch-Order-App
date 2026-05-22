@@ -75,23 +75,27 @@ export const useLenis = () => {
     const kickoff = () => { if (!rafId) rafId = window.requestAnimationFrame(step); };
 
     const step = (ts) => {
-      const dt = lastTs ? Math.min(42, Math.max(8, ts - lastTs)) : 16;
+      const dt = lastTs ? Math.min(34, Math.max(8, ts - lastTs)) : 16;
       lastTs = ts;
 
-      const follow = isFinePointer ? 0.095 : 0.12;
-      const followT = 1 - Math.pow(1 - follow, dt / 16.67);
+      const frame = dt / 16.67;
       const distance = target - current;
 
-      inputVelocity *= Math.pow(0.9, dt / 16.67);
-      velocity += distance * followT + inputVelocity;
-      velocity *= Math.pow(isFinePointer ? 0.84 : 0.8, dt / 16.67);
+      const spring = isFinePointer ? 0.06 : 0.072;
+      const damping = isFinePointer ? 0.84 : 0.8;
+      const inputDecay = isFinePointer ? 0.91 : 0.88;
 
-      const maxStepPerFrame = isFinePointer ? 38 : 32;
-      const stepPx = Math.max(-maxStepPerFrame, Math.min(maxStepPerFrame, velocity));
-      current += stepPx;
+      inputVelocity *= Math.pow(inputDecay, frame);
+      velocity += distance * spring * frame + inputVelocity;
+      velocity *= Math.pow(damping, frame);
+
+      const maxVelocity = isFinePointer ? 26 : 22;
+      velocity = Math.max(-maxVelocity, Math.min(maxVelocity, velocity));
+
+      current += velocity * frame;
       current = Math.min(maxScrollY(), Math.max(0, current));
 
-      const done = Math.abs(target - current) < 0.18 && Math.abs(velocity) < 0.055 && Math.abs(inputVelocity) < 0.035;
+      const done = Math.abs(target - current) < 0.14 && Math.abs(velocity) < 0.045 && Math.abs(inputVelocity) < 0.03;
       if (done) {
         current = target;
         velocity = 0;
@@ -100,7 +104,7 @@ export const useLenis = () => {
 
       internalScrollWrite = true;
       window.scrollTo(0, current);
-      window.requestAnimationFrame(() => { internalScrollWrite = false; });
+      setTimeout(() => { internalScrollWrite = false; }, 0);
 
       if (!done) rafId = window.requestAnimationFrame(step);
       else { rafId = 0; lastTs = 0; }
@@ -131,7 +135,7 @@ export const useLenis = () => {
       const deskMult = 1.1 + (tune.desktopMultiplier * 0.22);
       const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
-      inputVelocity += limitedDelta * 0.022;
+      inputVelocity += limitedDelta * 0.012;
       kickoff();
       event.preventDefault();
     };
@@ -166,7 +170,7 @@ export const useLenis = () => {
       const mobileMult = 1.06 + (tune.mobileMultiplier * 0.19);
       const limitedDelta = Math.max(-mobileCap, Math.min(mobileCap, rawDeltaY)) * mobileMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
-      inputVelocity += limitedDelta * 0.02;
+      inputVelocity += limitedDelta * 0.011;
       kickoff();
       event.preventDefault();
     };
