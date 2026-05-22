@@ -696,9 +696,107 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
 }));
 
 const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
+  const shellRef = useRef(null);
+  const rowHeightsRef = useRef(new Map());
+  const [scrollY, setScrollY] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(() => (typeof window !== 'undefined' ? window.innerHeight : 900));
+  const [measuredVersion, setMeasuredVersion] = useState(0);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    let rafId = 0;
+    const schedule = () => {
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = 0;
+        setScrollY(window.scrollY || 0);
+        setViewportHeight(window.innerHeight || 900);
+      });
+    };
+    schedule();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    return () => {
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+      if (rafId) window.cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+  const estimatedRowHeight = 132;
+  const estimatedTotalHeight = rows.length * estimatedRowHeight;
+  const computedOverscan = Math.min(12, Math.max(6, Math.round(viewportHeight / 220)));
+
+  const windowRange = useMemo(() => {
+    if (!rows.length) return { start: 0, end: -1 };
+    const shellRect = shellRef.current?.getBoundingClientRect?.();
+    if (!shellRect) return { start: 0, end: Math.min(rows.length - 1, 26) };
+
+    const listTopInPage = shellRect.top + scrollY;
+    const top = Math.max(0, scrollY - listTopInPage);
+    const bottom = top + viewportHeight;
+
+    let acc = 0;
+    let start = 0;
+    for (let i = 0; i < rows.length; i += 1) {
+      const h = rowHeightsRef.current.get(rows[i]?.id) ?? estimatedRowHeight;
+      if (acc + h >= top) {
+        start = i;
+        break;
+      }
+      acc += h;
+    }
+
+    let end = start;
+    let run = acc;
+    for (let i = start; i < rows.length; i += 1) {
+      const h = rowHeightsRef.current.get(rows[i]?.id) ?? estimatedRowHeight;
+      run += h;
+      end = i;
+      if (run >= bottom) break;
+    }
+
+    return {
+      start: Math.max(0, start - computedOverscan),
+      end: Math.min(rows.length - 1, end + computedOverscan),
+    };
+  }, [rows, scrollY, viewportHeight, measuredVersion, computedOverscan]);
+
+  const { topSpacer, bottomSpacer, visibleRows } = useMemo(() => {
+    if (!rows.length || windowRange.end < windowRange.start) return { topSpacer: 0, bottomSpacer: 0, visibleRows: [] };
+    let topPx = 0;
+    for (let i = 0; i < windowRange.start; i += 1) topPx += rowHeightsRef.current.get(rows[i]?.id) ?? estimatedRowHeight;
+    let visiblePx = 0;
+    const subset = [];
+    for (let i = windowRange.start; i <= windowRange.end; i += 1) {
+      subset.push({ item: rows[i], idx: i });
+      visiblePx += rowHeightsRef.current.get(rows[i]?.id) ?? estimatedRowHeight;
+    }
+    const measuredTotal = rows.reduce((sum, row) => sum + (rowHeightsRef.current.get(row?.id) ?? estimatedRowHeight), 0);
+    const total = Math.max(estimatedTotalHeight, measuredTotal);
+    const bottomPx = Math.max(0, total - topPx - visiblePx);
+    return { topSpacer: topPx, bottomSpacer: bottomPx, visibleRows: subset };
+  }, [rows, windowRange, estimatedTotalHeight]);
+
+  const setRowRef = useCallback((rowId) => (node) => {
+    if (!node || !rowId) return;
+    const nextHeight = Math.ceil(node.getBoundingClientRect().height);
+    const prevHeight = rowHeightsRef.current.get(rowId);
+    if (nextHeight > 0 && prevHeight !== nextHeight) {
+      rowHeightsRef.current.set(rowId, nextHeight);
+      setMeasuredVersion(v => v + 1);
+    }
+  }, []);
+
   return (
-    <div className="phase-rows-full">
-      {rows.map((item, idx) => renderRow(item, idx))}
+    <div className="phase-rows-full" ref={shellRef}>
+      {topSpacer > 0 && <div style={{ height: topSpacer }} aria-hidden="true" />}
+      {visibleRows.map(({ item, idx }) => (
+        <div key={item.id} ref={setRowRef(item.id)} className="phase-row-virtualized">
+          {renderRow(item, idx)}
+        </div>
+      ))}
+      {bottomSpacer > 0 && <div style={{ height: bottomSpacer }} aria-hidden="true" />}
     </div>
   );
 });
