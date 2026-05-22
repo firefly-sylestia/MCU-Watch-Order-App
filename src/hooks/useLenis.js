@@ -6,6 +6,12 @@ const LENIS_SCRIPT_SOURCES = [
   'https://cdn.jsdelivr.net/npm/lenis@1.3.23/dist/lenis.min.js',
 ];
 
+const LENIS_PRESET_OPTIONS = {
+  gentle: { duration: 1.35, lerp: 0.075, wheelMultiplier: 0.84, touchMultiplier: 0.88 },
+  balanced: { duration: 1.1, lerp: 0.09, wheelMultiplier: 0.92, touchMultiplier: 0.98 },
+  snappy: { duration: 0.86, lerp: 0.13, wheelMultiplier: 1.02, touchMultiplier: 1.04 },
+};
+
 const isEditableTarget = (target) => {
   if (!(target instanceof Element)) return false;
   const tag = target.tagName;
@@ -55,11 +61,30 @@ export const useLenis = () => {
 
     let disposed = false;
     let lenis = null;
+    let activePreset = 'balanced';
     const html = document.documentElement;
     html.classList.add('lenis-pending');
 
     const hardPrevent = (event) => {
       if (!lenis && !isEditableTarget(event.target)) event.preventDefault();
+    };
+
+    const getRuntimeConfig = () => window.__lenisConfig || { preset: 'balanced', performanceMode: false };
+
+    const buildLenisOptions = () => {
+      const cfg = getRuntimeConfig();
+      activePreset = LENIS_PRESET_OPTIONS[cfg.preset] ? cfg.preset : 'balanced';
+      const preset = LENIS_PRESET_OPTIONS[activePreset];
+      return {
+        autoRaf: true,
+        smoothWheel: true,
+        syncTouch: !cfg.performanceMode,
+        normalizeWheel: true,
+        gestureOrientation: 'vertical',
+        overscroll: false,
+        ...preset,
+        prevent: (node) => Boolean(node instanceof Element && node.closest('[data-lenis-prevent], .hero-carousel-track, .detail-card, .settings-menu')),
+      };
     };
 
     const handleOverlayToggle = () => {
@@ -68,22 +93,21 @@ export const useLenis = () => {
       else lenis.start();
     };
 
+    const handleLenisConfigChange = () => {
+      if (!lenis) return;
+      const prev = activePreset;
+      const nextOptions = buildLenisOptions();
+      const presetChanged = prev !== activePreset;
+      Object.assign(lenis.options, nextOptions);
+      if (presetChanged) {
+        lenis.scrollTo(window.scrollY, { immediate: true });
+      }
+    };
+
     loadLenisScript()
       .then((LenisCtor) => {
         if (disposed || typeof LenisCtor !== 'function') return;
-        lenis = new LenisCtor({
-          autoRaf: true,
-          duration: 1.1,
-          lerp: 0.09,
-          smoothWheel: true,
-          syncTouch: true,
-          normalizeWheel: true,
-          gestureOrientation: 'vertical',
-          overscroll: false,
-          wheelMultiplier: 0.92,
-          touchMultiplier: 0.98,
-          prevent: (node) => Boolean(node instanceof Element && node.closest('[data-lenis-prevent], .hero-carousel-track, .detail-card, .settings-menu')),
-        });
+        lenis = new LenisCtor(buildLenisOptions());
 
         window.__lenis = lenis;
         html.classList.remove('lenis-pending');
@@ -97,12 +121,14 @@ export const useLenis = () => {
     window.addEventListener('wheel', hardPrevent, { passive: false });
     window.addEventListener('touchmove', hardPrevent, { passive: false });
     window.addEventListener('overlay:change', handleOverlayToggle);
+    window.addEventListener('lenis:config-change', handleLenisConfigChange);
 
     return () => {
       disposed = true;
       window.removeEventListener('wheel', hardPrevent);
       window.removeEventListener('touchmove', hardPrevent);
       window.removeEventListener('overlay:change', handleOverlayToggle);
+      window.removeEventListener('lenis:config-change', handleLenisConfigChange);
       html.classList.remove('lenis-pending');
       html.classList.remove('lenis-ready');
       if (window.__lenis === lenis) delete window.__lenis;
