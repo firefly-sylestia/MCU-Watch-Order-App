@@ -37,10 +37,10 @@ const getScrollTuning = () => {
   const t = (typeof window !== 'undefined' && window.__scrollTuning) ? window.__scrollTuning : {};
   const clamp10 = (v, d) => Math.max(1, Math.min(10, Number.isFinite(Number(v)) ? Number(v) : d));
   return {
-    desktopMultiplier: clamp10(t.desktopMultiplier, 7),
-    desktopDeltaCap: clamp10(t.desktopDeltaCap, 8),
-    mobileMultiplier: clamp10(t.mobileMultiplier, 7),
-    mobileDeltaCap: clamp10(t.mobileDeltaCap, 8),
+    desktopMultiplier: clamp10(t.desktopMultiplier, 5),
+    desktopDeltaCap: clamp10(t.desktopDeltaCap, 6),
+    mobileMultiplier: clamp10(t.mobileMultiplier, 6),
+    mobileDeltaCap: clamp10(t.mobileDeltaCap, 7),
   };
 };
 
@@ -74,23 +74,23 @@ export const useLenis = () => {
     const kickoff = () => { if (!rafId) rafId = window.requestAnimationFrame(step); };
 
     const step = (ts) => {
-      const dt = lastTs ? Math.min(48, Math.max(8, ts - lastTs)) : 16;
+      const dt = lastTs ? Math.min(32, Math.max(8, ts - lastTs)) : 16;
       lastTs = ts;
 
       const distance = target - current;
       const absDistance = Math.abs(distance);
-      const baseFollow = isFinePointer ? 0.34 : 0.3;
-      const boost = isFinePointer ? Math.min(0.26, absDistance / 1200) : Math.min(0.16, absDistance / 1400);
-      const follow = Math.min(0.62, baseFollow + boost);
+      const baseFollow = isFinePointer ? 0.24 : 0.28;
+      const boost = isFinePointer ? Math.min(0.14, absDistance / 1600) : Math.min(0.12, absDistance / 1500);
+      const follow = Math.min(0.44, baseFollow + boost);
       const t = 1 - Math.pow(1 - follow, dt / 16.67);
       current += distance * t;
       current = Math.min(maxScrollY(), Math.max(0, current));
 
-      const done = Math.abs(target - current) < 0.2;
+      const done = Math.abs(target - current) < 0.5;
       if (done) current = target;
 
       internalScrollWrite = true;
-      window.scrollTo(0, current);
+      window.scrollTo(0, Math.round(current));
       if (releaseWriteId) window.cancelAnimationFrame(releaseWriteId);
       releaseWriteId = window.requestAnimationFrame(() => { internalScrollWrite = false; releaseWriteId = 0; });
 
@@ -118,9 +118,14 @@ export const useLenis = () => {
       if (!Number.isFinite(deltaY) || deltaY === 0) return;
       if (hasScrollableParent(event.target, { deltaY, axis: 'y' })) return;
 
+      if (!rafId) {
+        current = window.scrollY;
+        target = window.scrollY;
+      }
+
       const tune = getScrollTuning();
-      const deskCap = 38 + tune.desktopDeltaCap * 10;
-      const deskMult = 1.1 + (tune.desktopMultiplier * 0.22);
+      const deskCap = 26 + tune.desktopDeltaCap * 8;
+      const deskMult = 0.88 + (tune.desktopMultiplier * 0.14);
       const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
       kickoff();
