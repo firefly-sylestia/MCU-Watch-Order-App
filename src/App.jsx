@@ -646,6 +646,7 @@ const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
   open,
   darkMode,
   performanceMode,
+  reducedFx,
   pillBorder,
   surfaceBorder,
   onToggle,
@@ -661,8 +662,8 @@ const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
       <button className="theme-btn sidebar-toggle-btn" onClick={onToggle} aria-label="Toggle sidebar menu" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Menu size={18} /></button>
       <button className="theme-btn sidebar-toggle-btn settings-toggle-btn" onClick={onOpenSettings} aria-label="Open settings and profile" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Settings size={18} /></button>
       </div>
-      {open && <div className="sidebar-backdrop" onClick={onClose} />}
-      <aside ref={ref} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
+      {open && <div className={`sidebar-backdrop${reducedFx ? ' reduced-fx' : ''}`} onClick={onClose} />}
+      <aside ref={ref} className={`sidebar-menu${reducedFx ? ' reduced-fx' : ''}`} style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': performanceMode || reducedFx ? 'none' : 'blur(8px)' }}>
         {children}
       </aside>
     </>
@@ -673,15 +674,16 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
   open,
   darkMode,
   performanceMode,
+  reducedFx,
   onClose,
   children,
 }, ref) {
   return (
     <>
-      {open && <button className="settings-backdrop" aria-label="Close settings menu" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose?.(); }} />}
+      {open && <button className={`settings-backdrop${reducedFx ? ' reduced-fx' : ''}`} aria-label="Close settings menu" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose?.(); }} />}
       {open && (
         <div className="settings-shell" role="dialog" aria-modal="true" aria-label="Settings and profile" ref={ref}>
-          <div className="fade-in settings-menu settings-menu-redesign" style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
+          <div className={`fade-in settings-menu settings-menu-redesign${reducedFx ? ' reduced-fx' : ''}`} style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceMode || reducedFx ? 'none' : 'blur(8px)' }}>
             <div className="settings-sticky-actions">
               <button className="fpill glass-panel settings-close-sticky" onClick={() => onClose?.()}><X size={14}/>Close</button>
             </div>
@@ -845,6 +847,7 @@ export default function MCUViewer() {
   const phaseRef   = useRef(null);
   const obsRef     = useRef(null);  const isScrolling= useRef(false);
   const mainRef    = useRef(null);
+  const listTopRef = useRef(null);
   const settingsRef= useRef(null);
   const sidebarRef = useRef(null);
   const heroIntervalRef = useRef(null);
@@ -1056,6 +1059,17 @@ export default function MCUViewer() {
     const clampedWindowTop = Math.max(0, Math.min(maxWindowTop, desiredWindowTop));
     window.scrollTo({ top: clampedWindowTop, behavior: 'smooth' });
   };
+  const scrollToListTop = useCallback(() => {
+    const container = mainRef.current;
+    const listTop = listTopRef.current;
+    if (container && container.scrollHeight > container.clientHeight + 1) {
+      const targetTop = listTop ? Math.max(0, listTop.offsetTop - (headerCompact ? 12 : 18)) : 0;
+      container.scrollTo({ top: targetTop, behavior: 'smooth' });
+      return;
+    }
+    const targetWindowTop = listTop ? Math.max(0, listTop.getBoundingClientRect().top + window.scrollY - (headerCompact ? 84 : 104)) : 0;
+    window.scrollTo({ top: targetWindowTop, behavior: 'smooth' });
+  }, [headerCompact]);
 
   const exportProgress = async () => {
     const payload = createProgressPayload({
@@ -2628,7 +2642,7 @@ export default function MCUViewer() {
         return (
           <button
             key={ph.id}
-            onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); }}
+            onClick={() => { setActivePhase(ph.id); scrollToListTop(); }}
             className="fpill phase-chip"
             style={{
               borderRadius: 999,
@@ -2691,7 +2705,7 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} settingsOpen={settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
+      <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} settingsOpen={settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} reducedFx={!isDesktopViewport} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
         <div style={{ marginBottom: 8, fontSize: 11, letterSpacing: 1.8, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)', textTransform: 'uppercase' }}>Navigation Panel</div>
         <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -2740,7 +2754,7 @@ export default function MCUViewer() {
           {nextUnwatched && <div style={{ fontSize: 12, color: T.textMuted }}>Phase {nextUnwatched.phase} · {TYPE_META[nextUnwatched.type]?.label}</div>}
         </div>
         <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
-          {currentPhases.map(ph => <button key={ph.id} className="fpill" onClick={() => { setSidebarOpen(false); setActivePhase(ph.id); scrollTo(ph.id); }} style={{ justifyContent: 'space-between' }}><span>{ph.name}</span><ChevRight size={13} /></button>)}
+          {currentPhases.map(ph => <button key={ph.id} className="fpill" onClick={() => { setSidebarOpen(false); setActivePhase(ph.id); scrollToListTop(); }} style={{ justifyContent: 'space-between' }}><span>{ph.name}</span><ChevRight size={13} /></button>)}
         </div>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Theme</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6, marginTop: 8 }}>
@@ -2759,7 +2773,7 @@ export default function MCUViewer() {
         </div>
       </SidebarMenu>
 
-      <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} performanceMode={performanceMode} onClose={closeSettings}>
+      <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} performanceMode={performanceMode} reducedFx={!isDesktopViewport} onClose={closeSettings}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Profile</div>
             <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 6 }}>
@@ -3073,7 +3087,7 @@ export default function MCUViewer() {
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className='app-scroll-shell' style={{ overflow: 'visible', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
-        <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
+        <div ref={listTopRef} style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
