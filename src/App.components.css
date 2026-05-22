@@ -1238,3 +1238,272 @@ main{--content-max:1560px !important}
 [data-color-mode="light"] .rrow.curvy-selected .bookmark-marvel-btn[data-bookmarked="true"]{box-shadow:0 0 0 2px rgba(225,29,72,.45),0 8px 16px rgba(159,18,57,.22) !important}
 /* remove minor color conflict from aria-label selector by preferring explicit data state */
 .bookmark-marvel-btn[data-bookmarked="false"]{color:color-mix(in srgb,#fca5a5 72%, var(--theme-text)) !important}
+
+/* === 2026 interaction polish: smoother marvel controls + unified light/dark === */
+:root{
+  --btn-height:40px;
+  --btn-radius:14px;
+}
+.fpill,
+.theme-btn,
+.wbtn,
+.status-pill,
+.filters-trigger,
+.phase-chip{
+  min-height:var(--btn-height) !important;
+  border-radius:var(--btn-radius) !important;
+  transition:transform 160ms var(--ease-out), box-shadow 200ms var(--ease-out), background-color 180ms var(--ease-out), border-color 180ms var(--ease-out), color 180ms var(--ease-out) !important;
+}
+.fpill.marvel-btn,
+.theme-btn.marvel-btn,
+.filters-trigger,
+.phase-chip{
+  background:linear-gradient(132deg,#ed1d24 0%,#c8111a 58%,#7f0c12 100%) !important;
+  color:#fff !important;
+  border-color:color-mix(in srgb,#ffffff 25%, #7f1d1d) !important;
+  box-shadow:0 10px 24px rgba(127,29,29,.30), inset 0 1px 0 rgba(255,255,255,.2) !important;
+}
+.fpill.marvel-btn:hover,
+.theme-btn.marvel-btn:hover,
+.filters-trigger:hover,
+.phase-chip:hover{
+  transform:translateY(-1px);
+  box-shadow:0 14px 30px rgba(127,29,29,.34), inset 0 1px 0 rgba(255,255,255,.24) !important;
+}
+.fpill:active,
+.theme-btn:active,
+.wbtn:active,
+.filters-trigger:active,
+.phase-chip:active{transform:translateY(0) scale(.98) !important}
+.fpill:focus-visible,
+.theme-btn:focus-visible,
+.wbtn:focus-visible,
+.filters-trigger:focus-visible,
+.phase-chip:focus-visible{outline:2px solid color-mix(in srgb,var(--theme-accent) 80%, #fff);outline-offset:2px}
+
+[data-color-mode="light"] .app-shell,
+[data-color-mode="light"] .app-container{
+  background:linear-gradient(168deg,#f7f2ea 0%, #f3ede3 52%, #eee5d8 100%) !important;
+}
+[data-color-mode="light"] .fpill,
+[data-color-mode="light"] .theme-btn,
+[data-color-mode="light"] .wbtn,
+[data-color-mode="light"] .status-pill{
+  background:linear-gradient(145deg,#ffffff 0%,#f2e8da 100%) !important;
+  border-color:color-mix(in srgb,var(--theme-border) 72%, #dbc9b1) !important;
+  color:var(--theme-text-primary) !important;
+  box-shadow:0 8px 16px rgba(15,23,42,0.1) !important;
+}
+[data-color-mode="light"] .fpill:hover,
+[data-color-mode="light"] .theme-btn:hover,
+[data-color-mode="light"] .wbtn:hover,
+[data-color-mode="light"] .status-pill:hover{
+  background:linear-gradient(145deg,#fffdf8 0%,#ecdfcd 100%) !important;
+  border-color:color-mix(in srgb,var(--theme-accent) 34%, #cbb79e) !important;
+}
+[data-color-mode="light"] .rrow{
+  border-color:color-mix(in srgb,var(--theme-border) 70%, #d8c4aa) !important;
+  box-shadow:0 8px 18px rgba(15,23,42,0.09) !important;
+}
+
+
+/* Feedback pass v2: keep dark phase chips neutral, improve stretched status actions */
+[data-color-mode="dark"] .phase-chip{
+  background:color-mix(in srgb,var(--theme-surface) 88%, transparent) !important;
+  border-color:color-mix(in srgb,var(--theme-border) 88%, transparent) !important;
+  color:var(--theme-text-primary) !important;
+  box-shadow:0 8px 16px rgba(2,8,23,.2) !important;
+}
+[data-color-mode="dark"] .phase-chip:hover{
+  border-color:color-mix(in srgb,var(--theme-accent) 40%, var(--theme-border)) !important;
+  background:color-mix(in srgb,var(--theme-surface-hover) 92%, transparent) !important;
+}
+[data-color-mode="dark"] .phase-chip[style*="var(--theme-accent)"]{
+  background:linear-gradient(145deg,color-mix(in srgb,var(--theme-surface) 94%, transparent), color-mix(in srgb,var(--theme-surface-hover) 84%, transparent)) !important;
+  color:var(--theme-accent) !important;
+}
+[data-color-mode="light"] .phase-chip{
+  background:linear-gradient(132deg,#ed1d24 0%,#c8111a 58%,#7f0c12 100%) !important;
+  color:#fff !important;
+  border-color:color-mix(in srgb,#ffffff 25%, #7f1d1d) !important;
+}
+
+.row-actions .wbtn.status-pill.status-marvel-pill{
+  min-width:126px !important;
+  width:auto !important;
+  height:38px !important;
+  padding:0 16px !important;
+  border-radius:999px !important;
+  justify-content:center !important;
+  font-size:13px !important;
+  letter-spacing:.02em !important;
+}
+.row-actions .wbtn.bookmark-marvel-btn,
+.row-actions .wbtn.notwatched-marvel-btn{
+  width:38px !important;
+  height:38px !important;
+  border-radius:12px !important;
+}
+[data-color-mode="light"] .bookmark-marvel-btn[data-bookmarked="true"]{
+  background:linear-gradient(135deg,#be123c,#881337) !important;
+  border-color:#9f1239 !important;
+  color:#fff7ed !important;
+  box-shadow:0 0 0 2px rgba(190,24,93,.30),0 10px 20px rgba(136,19,55,.26) !important;
+}
+
+/* Final normalization pass: neutral phase chips in all themes + unified title tile heights */
+.phase-chip,
+[data-color-mode="light"] .phase-chip,
+[data-color-mode="dark"] .phase-chip{
+  background:linear-gradient(145deg,color-mix(in srgb,var(--theme-surface) 92%, transparent),color-mix(in srgb,var(--theme-bg) 32%, transparent)) !important;
+  color:var(--theme-text-primary) !important;
+  border-color:color-mix(in srgb,var(--theme-border) 82%, transparent) !important;
+  box-shadow:0 8px 18px rgba(2,8,23,.16) !important;
+}
+.phase-chip:hover,
+[data-color-mode="light"] .phase-chip:hover,
+[data-color-mode="dark"] .phase-chip:hover{
+  background:color-mix(in srgb,var(--theme-surface-hover) 90%, transparent) !important;
+  border-color:color-mix(in srgb,var(--theme-accent) 36%, var(--theme-border)) !important;
+  color:var(--theme-text-primary) !important;
+}
+.phase-chip[style*="var(--theme-accent)"],
+[data-color-mode="light"] .phase-chip[style*="var(--theme-accent)"],
+[data-color-mode="dark"] .phase-chip[style*="var(--theme-accent)"]{
+  background:linear-gradient(145deg,color-mix(in srgb,var(--theme-accent) 15%, var(--theme-surface)),color-mix(in srgb,var(--theme-accent-alt) 8%, var(--theme-surface))) !important;
+  border-color:color-mix(in srgb,var(--theme-accent) 56%, var(--theme-border)) !important;
+  color:var(--theme-text-primary) !important;
+}
+
+.rrow{
+  min-height:128px !important;
+}
+.rrow .title-btn{
+  min-height:86px !important;
+  height:86px !important;
+  display:grid !important;
+  grid-template-rows:auto auto 1fr;
+  align-content:start;
+}
+.rrow .title-row-mid{
+  min-height:22px;
+}
+.rrow .title-subline{
+  min-height:14px;
+}
+@media (max-width: 767px){
+  .rrow{min-height:116px !important;}
+  .rrow .title-btn{min-height:72px !important;height:72px !important;}
+}
+
+
+/* Taller unified row/title geometry to avoid text overlap on long metadata */
+.rrow{min-height:152px !important;grid-template-columns:32px 86px minmax(0,1fr) minmax(148px,auto) !important;}
+.rrow .title-btn{min-height:104px !important;height:104px !important;grid-template-rows:auto auto minmax(22px,1fr) !important;gap:10px !important;}
+.rrow .title-row-mid{min-height:28px !important;align-items:flex-start !important;}
+.rrow .title-subline{min-height:20px !important;line-height:1.4 !important;}
+@media (max-width: 767px){
+  .rrow{min-height:132px !important;grid-template-columns:24px 58px minmax(0,1fr) !important;}
+  .rrow .title-btn{min-height:90px !important;height:90px !important;gap:8px !important;}
+  .rrow .title-row-mid{min-height:24px !important;}
+}
+
+/* --- Final redesign pass: stronger row heights + solid phase chips + modern quick-actions --- */
+.rrow{
+  min-height:170px !important;
+  grid-template-columns:32px 92px minmax(0,1fr) minmax(160px,auto) !important;
+  padding:20px 18px 20px 16px !important;
+}
+.rrow .title-btn{
+  min-height:120px !important;
+  height:120px !important;
+  grid-template-rows:auto auto minmax(34px,1fr) !important;
+  gap:12px !important;
+}
+.rrow .title-row-mid{min-height:34px !important;row-gap:8px !important}
+.rrow .title-subline{min-height:28px !important;line-height:1.45 !important}
+@media (max-width: 767px){
+  .rrow{min-height:146px !important;grid-template-columns:24px 62px minmax(0,1fr) !important;padding:16px 12px !important}
+  .rrow .title-btn{min-height:102px !important;height:102px !important;grid-template-rows:auto auto minmax(28px,1fr) !important}
+  .rrow .title-row-mid{min-height:30px !important}
+}
+
+/* Phase chips: remove transparency/glass and match solid control language */
+.phase-chip,
+[data-color-mode="light"] .phase-chip,
+[data-color-mode="dark"] .phase-chip{
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--theme-surface) 98%, #10131a),color-mix(in srgb,var(--theme-bg) 88%, #10131a)) !important;
+  border:1px solid color-mix(in srgb,var(--theme-border) 96%, #000) !important;
+  box-shadow:0 10px 20px rgba(2,8,23,.20), inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+.phase-chip:hover{transform:translateY(-1px)}
+.phase-chip[style*="var(--theme-accent)"]{
+  background:linear-gradient(145deg,color-mix(in srgb,var(--theme-accent) 20%, var(--theme-surface)),color-mix(in srgb,var(--theme-accent-alt) 10%, var(--theme-surface))) !important;
+  border-color:color-mix(in srgb,var(--theme-accent) 64%, var(--theme-border)) !important;
+}
+
+/* Quick action trigger redesign (button only; action behavior unchanged) */
+.fab-primary{
+  min-height:44px !important;
+  padding:0 16px !important;
+  border-radius:14px !important;
+  border:1px solid color-mix(in srgb,var(--theme-border) 86%, #000) !important;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--theme-surface) 96%, #0f172a),color-mix(in srgb,var(--theme-bg) 88%, #0f172a)) !important;
+  box-shadow:0 10px 18px rgba(2,8,23,.22), inset 0 1px 0 rgba(255,255,255,.10) !important;
+  color:var(--theme-text-primary) !important;
+  font-weight:780 !important;
+  letter-spacing:.03em !important;
+  transition:transform .18s var(--ease-out), box-shadow .2s var(--ease-out), border-color .18s var(--ease-out), background .18s var(--ease-out) !important;
+}
+.fab-primary:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--theme-accent) 44%, var(--theme-border)) !important}
+.fab-primary:active{transform:translateY(0) scale(.98)}
+
+/* Light mode watched/status should pop Marvel-style like bookmark */
+[data-color-mode="light"] .status-marvel-pill{
+  background:linear-gradient(135deg,#be123c 0%, #9f1239 54%, #7a0f33 100%) !important;
+  border-color:#9f1239 !important;
+  color:#fff7ed !important;
+  box-shadow:0 0 0 2px rgba(190,24,93,.22),0 10px 20px rgba(136,19,55,.24) !important;
+}
+[data-color-mode="light"] .status-marvel-pill svg,
+[data-color-mode="light"] .status-marvel-pill span{color:#fff7ed !important}
+
+
+/* ===== Status Shade System (single source of truth) =====
+   Reuse these classes for future buttons to keep gradients consistent:
+   - status-shade-watched (primary Marvel)
+   - status-shade-plan, status-shade-watching, status-shade-hold, status-shade-dropped, status-shade-unwatched
+*/
+:root{
+  --status-shade-watched: linear-gradient(135deg,#be123c 0%, #9f1239 54%, #7a0f33 100%);
+  --status-shade-plan: linear-gradient(135deg,#1d4ed8 0%, #1e40af 56%, #1e3a8a 100%);
+  --status-shade-watching: linear-gradient(135deg,#9333ea 0%, #7e22ce 56%, #6b21a8 100%);
+  --status-shade-hold: linear-gradient(135deg,#d97706 0%, #b45309 56%, #92400e 100%);
+  --status-shade-dropped: linear-gradient(135deg,#dc2626 0%, #b91c1c 56%, #991b1b 100%);
+  --status-shade-unwatched: linear-gradient(135deg,#334155 0%, #1f2937 56%, #111827 100%);
+}
+
+.status-pill.status-shade-watched{background:var(--status-shade-watched) !important;border-color:#9f1239 !important;color:#fff7ed !important;box-shadow:0 0 0 2px rgba(190,24,93,.22),0 10px 20px rgba(136,19,55,.24) !important}
+.status-pill.status-shade-plan{background:var(--status-shade-plan) !important;border-color:#1d4ed8 !important;color:#dbeafe !important;box-shadow:0 0 0 2px rgba(37,99,235,.18),0 10px 18px rgba(30,64,175,.24) !important}
+.status-pill.status-shade-watching{background:var(--status-shade-watching) !important;border-color:#7e22ce !important;color:#f3e8ff !important;box-shadow:0 0 0 2px rgba(126,34,206,.18),0 10px 18px rgba(91,33,182,.24) !important}
+.status-pill.status-shade-hold{background:var(--status-shade-hold) !important;border-color:#b45309 !important;color:#ffedd5 !important;box-shadow:0 0 0 2px rgba(217,119,6,.18),0 10px 18px rgba(146,64,14,.24) !important}
+.status-pill.status-shade-dropped{background:var(--status-shade-dropped) !important;border-color:#b91c1c !important;color:#fee2e2 !important;box-shadow:0 0 0 2px rgba(220,38,38,.2),0 10px 18px rgba(127,29,29,.24) !important}
+.status-pill.status-shade-unwatched{background:var(--status-shade-unwatched) !important;border-color:#374151 !important;color:#e5e7eb !important;box-shadow:0 0 0 2px rgba(55,65,81,.2),0 10px 18px rgba(17,24,39,.26) !important}
+.status-pill[class*="status-shade-"] svg,.status-pill[class*="status-shade-"] span{color:inherit !important}
+
+/* map current status trigger to watched style only (as requested) */
+.status-marvel-pill{background:var(--status-shade-watched) !important;border-color:#9f1239 !important;color:#fff7ed !important;box-shadow:0 0 0 2px rgba(190,24,93,.22),0 10px 20px rgba(136,19,55,.24) !important}
+
+/* increase tile height further + denser chip wrap safety */
+.rrow{min-height:186px !important;grid-template-columns:32px 92px minmax(0,1fr) minmax(164px,auto) !important}
+.rrow .title-btn{min-height:134px !important;height:134px !important;grid-template-rows:auto auto minmax(44px,1fr) !important}
+.rrow .title-row-mid{min-height:42px !important;gap:7px !important}
+.rrow .meta-chip{font-size:9px !important;padding:3px 8px !important;letter-spacing:.06em !important;max-width:100%}
+.rrow .title-subline{min-height:34px !important;line-height:1.46 !important}
+@media (max-width: 767px){
+  .rrow{min-height:156px !important;grid-template-columns:24px 62px minmax(0,1fr) !important}
+  .rrow .title-btn{min-height:112px !important;height:112px !important;grid-template-rows:auto auto minmax(34px,1fr) !important}
+  .rrow .title-row-mid{min-height:36px !important}
+}

@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 const isEditableTarget = (target) => {
   if (!(target instanceof Element)) return false;
   const tag = target.tagName;
-  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.closest('[contenteditable="true"]');
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || Boolean(target.closest('[contenteditable], [contenteditable="true"], [contenteditable="plaintext-only"]'));
 };
 
 const hasScrollableParent = (target, { deltaX = 0, deltaY = 0, axis = 'y' } = {}) => {
@@ -51,11 +51,17 @@ export const useLenis = () => {
 
     const html = document.documentElement;
     const isFinePointer = window.matchMedia('(pointer: fine)').matches;
+    const saveDataMode = navigator?.connection?.saveData === true;
     html.classList.add('lenis-ready');
+    const prevHtmlOverscroll = html.style.overscrollBehaviorY;
+    const prevBodyOverscroll = document.body.style.overscrollBehaviorY;
+    html.style.overscrollBehaviorY = 'none';
+    document.body.style.overscrollBehaviorY = 'none';
 
     let current = window.scrollY;
     let target = window.scrollY;
     let rafId = 0;
+
     let touchY = null;
     let touchX = null;
 
@@ -80,7 +86,7 @@ export const useLenis = () => {
     };
 
     const onWheel = (event) => {
-      if (!isFinePointer) return;
+      if (!isFinePointer || saveDataMode) return;
       if (event.defaultPrevented || event.ctrlKey) return;
       if (isOverlayActive()) return;
       if (isEditableTarget(event.target)) return;
@@ -102,15 +108,16 @@ export const useLenis = () => {
       event.preventDefault();
     };
 
+
     const onTouchStart = (event) => {
-      if (isFinePointer || event.touches.length !== 1) return;
+      if (isFinePointer || saveDataMode || event.touches.length !== 1) return;
       if (isOverlayActive()) return;
       touchY = event.touches[0].clientY;
       touchX = event.touches[0].clientX;
     };
 
     const onTouchMove = (event) => {
-      if (isFinePointer || event.touches.length !== 1) return;
+      if (isFinePointer || saveDataMode || event.touches.length !== 1) return;
       if (isOverlayActive()) return;
       if (isEditableTarget(event.target)) return;
       if (touchY == null) { touchY = event.touches[0].clientY; return; }
@@ -123,7 +130,6 @@ export const useLenis = () => {
       touchX = nextX;
 
       if (!Number.isFinite(rawDeltaY) || Math.abs(rawDeltaY) < 0.8) return;
-
       const horizontalIntent = Math.abs(rawDeltaX) > Math.abs(rawDeltaY) * 1.1;
       if (horizontalIntent) return;
       if (hasScrollableParent(event.target, { deltaY: rawDeltaY, axis: 'y' })) return;
@@ -138,11 +144,12 @@ export const useLenis = () => {
     };
 
     const onTouchEnd = () => { touchY = null; touchX = null; };
-    const syncToNativeScroll = () => {
-      if (rafId) return;
+
+    const enforceVirtualScroll = () => {
       if (isOverlayActive()) return;
-      current = window.scrollY;
-      target = window.scrollY;
+      if (Math.abs(window.scrollY - current) > 0.75) {
+        window.scrollTo(0, current);
+      }
     };
 
     window.addEventListener('wheel', onWheel, { passive: false });
@@ -150,7 +157,7 @@ export const useLenis = () => {
     window.addEventListener('touchmove', onTouchMove, { passive: false });
     window.addEventListener('touchend', onTouchEnd, { passive: true });
     window.addEventListener('touchcancel', onTouchEnd, { passive: true });
-    window.addEventListener('scroll', syncToNativeScroll, { passive: true });
+    window.addEventListener('scroll', enforceVirtualScroll, { passive: true });
     const onResize = () => { target = Math.min(target, maxScrollY()); current = Math.min(current, maxScrollY()); };
     window.addEventListener('resize', onResize);
 
@@ -160,9 +167,11 @@ export const useLenis = () => {
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('touchcancel', onTouchEnd);
-      window.removeEventListener('scroll', syncToNativeScroll);
+      window.removeEventListener('scroll', enforceVirtualScroll);
       window.removeEventListener('resize', onResize);
       window.cancelAnimationFrame(rafId);
+      html.style.overscrollBehaviorY = prevHtmlOverscroll;
+      document.body.style.overscrollBehaviorY = prevBodyOverscroll;
       html.classList.remove('lenis-ready');
     };
   }, []);

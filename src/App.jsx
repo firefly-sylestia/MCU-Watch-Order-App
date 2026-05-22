@@ -601,8 +601,8 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
           <div className="title-row-mid">
             {item.episodes && <span className="meta-chip truncate-single-line" style={{ fontSize: 9 }}>{item.episodes} EP</span>}
             <span className="meta-chip truncate-single-line" style={{ fontSize: 11, color: typeMeta.color, fontWeight: 700 }}><TypeIcon size={8} />{typeMeta.label}</span>
-            <span className="meta-chip truncate-single-line" style={{ fontSize: 10.5 }}>{item.year || releaseLabel}</span>
-            <span className="meta-chip truncate-single-line" style={{ fontSize: 8.5, color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
+            <span className="meta-chip truncate-single-line" style={{ fontSize: 9.5 }}>{item.year || releaseLabel}</span>
+            <span className="meta-chip truncate-single-line" style={{ fontSize: 7.75, color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
             {!item.essential && <span className="meta-chip truncate-single-line" style={{ fontSize: 8.5 }}>OPT</span>}
           </div>
           <div className="meta-muted line-clamp-2 overflow-wrap-anywhere title-subline" style={TITLE_ROW_STATIC.genreMeta}>GENRES: {genres.join(' • ').toUpperCase()}</div>
@@ -624,7 +624,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             </span>
             <ChevDown size={10} style={{ opacity: 0.8, transform: statusDropdown === item.id ? 'rotate(180deg)' : 'none' }} />
           </button>
-          <button className="wbtn bookmark-marvel-btn" aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} data-bookmarked={isBookmarked} style={{ width: isDesktopViewport ? 30 : 24, height: isDesktopViewport ? 30 : 24 }}><Bookmark size={11} /></button>
+          <button className="wbtn bookmark-marvel-btn" aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} data-bookmarked={isBookmarked} style={{ width: isDesktopViewport ? 38 : 34, height: isDesktopViewport ? 38 : 34 }}><Bookmark size={11} /></button>
           {!hideWatchToggle && (
             <button
               className="wbtn status-toggle notwatched-marvel-btn"
