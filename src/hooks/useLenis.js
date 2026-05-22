@@ -38,9 +38,9 @@ const getScrollTuning = () => {
   const clamp10 = (v, d) => Math.max(1, Math.min(10, Number.isFinite(Number(v)) ? Number(v) : d));
   return {
     desktopMultiplier: clamp10(t.desktopMultiplier, 6),
-    desktopDeltaCap: clamp10(t.desktopDeltaCap, 7),
+    desktopDeltaCap: clamp10(t.desktopDeltaCap, 9),
     mobileMultiplier: clamp10(t.mobileMultiplier, 6),
-    mobileDeltaCap: clamp10(t.mobileDeltaCap, 7),
+    mobileDeltaCap: clamp10(t.mobileDeltaCap, 9),
   };
 };
 
@@ -64,18 +64,13 @@ export const useLenis = () => {
 
     const kickoff = () => { if (!rafId) rafId = window.requestAnimationFrame(step); };
 
-    let lastTs = 0;
-    const step = (ts) => {
-      const dt = lastTs ? Math.min(32, ts - lastTs) : 8.33;
-      lastTs = ts;
+    const step = () => {
       const delta = target - current;
-      const tau = isFinePointer ? 88 : 102;
-      const alpha = 1 - Math.exp(-dt / tau);
-      current += delta * alpha;
-      if (Math.abs(delta) <= 0.12) current = target;
+      current += delta * (isFinePointer ? 0.14 : 0.19);
+      if (Math.abs(delta) <= 0.35) current = target;
       window.scrollTo(0, current);
-      if (Math.abs(target - current) > 0.12) rafId = window.requestAnimationFrame(step);
-      else { rafId = 0; lastTs = 0; }
+      if (Math.abs(target - current) > 0.35) rafId = window.requestAnimationFrame(step);
+      else rafId = 0;
     };
 
     const normalizeDelta = (event) => {
@@ -101,9 +96,7 @@ export const useLenis = () => {
       const tune = getScrollTuning();
       const deskCap = 30 + tune.desktopDeltaCap * 10;
       const deskMult = 0.8 + (tune.desktopMultiplier * 0.2);
-      const magnitude = Math.abs(deltaY);
-      const quickBoost = magnitude <= 26 ? 1.24 : magnitude <= 52 ? 1.12 : 1;
-      const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult * quickBoost;
+      const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
       kickoff();
       event.preventDefault();

@@ -1229,3 +1229,12 @@ main{--content-max:1560px !important}
 .bookmark-marvel-btn{box-shadow:0 8px 16px rgba(127,29,29,.2)}
 .bookmark-marvel-btn[data-bookmarked="true"]{background:linear-gradient(135deg,#ef4444,#be123c) !important;color:#fff1f2 !important;border-color:#fb7185 !important;box-shadow:0 0 0 1px rgba(251,113,133,.4),0 12px 18px rgba(159,18,57,.35)}
 [data-color-mode="dark"] .status-marvel-pill,[data-color-mode="dark"] .notwatched-marvel-btn,[data-color-mode="dark"] .bookmark-marvel-btn{backdrop-filter:blur(6px) saturate(130%);-webkit-backdrop-filter:blur(6px) saturate(130%)}
+
+
+/* Fixes: selected-row bookmark visibility + reduce style conflicts */
+.bookmark-marvel-btn{position:relative;z-index:2}
+.bookmark-marvel-btn[data-bookmarked="true"] svg{filter:drop-shadow(0 0 4px rgba(255,241,242,.7));transform:scale(1.04)}
+.rrow.curvy-selected .bookmark-marvel-btn[data-bookmarked="true"]{background:linear-gradient(135deg,#fb7185,#be123c) !important;border-color:#fecdd3 !important;box-shadow:0 0 0 2px rgba(251,113,133,.55),0 12px 20px rgba(159,18,57,.42) !important}
+[data-color-mode="light"] .rrow.curvy-selected .bookmark-marvel-btn[data-bookmarked="true"]{box-shadow:0 0 0 2px rgba(225,29,72,.45),0 8px 16px rgba(159,18,57,.22) !important}
+/* remove minor color conflict from aria-label selector by preferring explicit data state */
+.bookmark-marvel-btn[data-bookmarked="false"]{color:color-mix(in srgb,#fca5a5 72%, var(--theme-text)) !important}
