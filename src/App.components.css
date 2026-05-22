@@ -1666,6 +1666,37 @@ main{--content-max:1560px !important}
   gap:10px !important;
   padding-top:2px !important;
 }
+
+/* Poster loading modernization: fixed aspect skeleton + opacity-only reveal */
+.poster-shell{
+  position:relative;
+  overflow:hidden;
+}
+.poster-skeleton{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  aspect-ratio:2 / 3;
+  border-radius:inherit;
+  background:linear-gradient(135deg, color-mix(in srgb,var(--theme-surface-elevated,#1f2937) 84%, transparent), color-mix(in srgb,var(--theme-border) 18%, transparent));
+  opacity:1;
+  transition:opacity .22s ease-out;
+  pointer-events:none;
+}
+[data-color-mode="light"] .poster-skeleton{
+  background:linear-gradient(135deg, color-mix(in srgb,#f8fafc 92%, var(--theme-surface)), color-mix(in srgb,#cbd5e1 38%, #ffffff));
+}
+.poster-shell.is-loaded .poster-skeleton{opacity:0}
+.poster-shell .poster{
+  opacity:0;
+  transform:none !important;
+  filter:none !important;
+  transition:opacity .26s ease-out !important;
+}
+.poster-shell.is-loaded .poster{
+  opacity:1;
+}
 .rrow .title-row-mid.release-meta-grid{
   align-content:start !important;
   grid-auto-rows:minmax(28px,auto);
