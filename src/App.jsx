@@ -121,7 +121,7 @@ const UI_STATE_DEFAULTS = {
   watchedOnly: false,
   statusFilter: null,
   typeFilter: null,
-  activePhase: 0,
+  activePhase: 1,
   filtersOpen: false,
   viewMode: 'list',
   densityMode: 'comfortable',
@@ -2652,7 +2652,7 @@ export default function MCUViewer() {
 
   const renderPhaseSelector = () => (
     <div ref={phaseRef} style={{ display: 'flex', alignItems: 'center', gap: 10, overflowX: 'auto', paddingBottom: 4, maxWidth: '100%', width: '100%' }}>
-      <button className="fpill phase-chip" onClick={() => setActivePhase(0)} style={{ borderRadius: 999, borderColor: activePhase === 0 ? 'var(--theme-accent)' : T.filterBorder, background: activePhase === 0 ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--chip-bg)', color: activePhase === 0 ? 'var(--theme-accent)' : 'var(--text-secondary)' }}>All</button>
+      <button className="fpill phase-chip" onClick={() => { setActivePhase(0); if (browseMode !== 'phase') setBrowseMode('phase'); }} style={{ borderRadius: 999, borderColor: activePhase === 0 ? 'var(--theme-accent)' : T.filterBorder, background: activePhase === 0 ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--chip-bg)', color: activePhase === 0 ? 'var(--theme-accent)' : 'var(--text-secondary)' }}>All</button>
       {currentPhases.map((ph) => {
         const stat = phaseStats.find(s => s.phase === ph.id);
         const total = stat?.total || 0;
@@ -2920,17 +2920,6 @@ export default function MCUViewer() {
 
         {!detailItem && !analyticsOpen && !settingsOpen && <WatermarkOverlay surface="hero" theme={darkMode ? 'cinematic' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['cta', 'title']} />}
       </section>}
-      {browseMode === 'home' && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 16px 12px' }}>
-          <button
-            className="fpill"
-            onClick={() => setBrowseMode('phase')}
-            style={{ minHeight: 42, padding: '0 18px', fontSize: 13, borderColor: 'color-mix(in srgb, var(--theme-accent) 40%, var(--theme-border))', color: 'var(--theme-accent)' }}
-          >
-            <ChevRight size={14}/> Open Full Phase List
-          </button>
-        </div>
-      )}
       {browseMode === 'phase' && (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 16px 12px' }}>
           <button
