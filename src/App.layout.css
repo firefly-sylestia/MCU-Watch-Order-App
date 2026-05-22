@@ -110,3 +110,65 @@
       
 
 [data-color-mode="light"] .glass-panel{background:color-mix(in srgb,var(--theme-surface) 88%, #ffffff);border-color:color-mix(in srgb,var(--theme-border) 72%, #ffffff);box-shadow:0 10px 26px rgba(15,23,42,0.12)}
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --font-size-2xs: 7.75px;
+  --font-size-xs: 8.5px;
+  --font-size-sm: 9.5px;
+  --font-size-md: 11px;
+  --radius-pill: 999px;
+  --radius-button: 14px;
+  --control-height-sm: 30px;
+  --control-height-md: 34px;
+  --motion-micro: 120ms;
+  --motion-ui: 180ms;
+  --motion-content: 220ms;
+  --interactive-hover-bg: color-mix(in srgb,var(--theme-surface-hover) 72%, var(--theme-surface));
+  --interactive-active-bg: color-mix(in srgb,var(--theme-accent) 16%, var(--theme-surface));
+  --interactive-focus-ring: 0 0 0 2px color-mix(in srgb,var(--theme-accent) 70%, transparent);
+}
+
+[data-color-mode="dark"],
+[data-color-mode="light"] {
+  --interactive-border-default: color-mix(in srgb,var(--theme-border) 84%, transparent);
+  --interactive-border-hover: color-mix(in srgb,var(--theme-accent) 42%, var(--theme-border));
+  --interactive-text-default: var(--theme-text);
+  --interactive-text-active: var(--theme-accent);
+}
+
+.ui-interactive,
+.fpill,
+.wbtn,
+.theme-btn,
+.status-pill {
+  transition: background-color var(--motion-ui) var(--interactive-ease), border-color var(--motion-ui) var(--interactive-ease), color var(--motion-ui) var(--interactive-ease), transform var(--motion-micro) var(--interactive-ease), box-shadow var(--motion-ui) var(--interactive-ease);
+}
+.ui-interactive:hover,
+.fpill:hover,
+.wbtn:hover,
+.theme-btn:hover,
+.status-pill:hover { border-color: var(--interactive-border-hover); }
+.ui-interactive:focus-visible,
+.fpill:focus-visible,
+.wbtn:focus-visible,
+.theme-btn:focus-visible,
+.status-pill:focus-visible { outline: none; box-shadow: var(--interactive-focus-ring); }
+.ui-interactive:active,
+.fpill:active,
+.wbtn:active,
+.theme-btn:active,
+.status-pill:active,
+.ui-interactive[aria-pressed="true"],
+.fpill[aria-pressed="true"],
+.wbtn[aria-pressed="true"],
+.theme-btn[aria-pressed="true"],
+.status-pill[aria-pressed="true"] { transform: translateY(1px); background: var(--interactive-active-bg); }
+.ui-interactive:disabled,
+.fpill:disabled,
+.wbtn:disabled,
+.theme-btn:disabled,
+.status-pill:disabled { opacity: .56; cursor: not-allowed; transform: none; box-shadow: none; }
