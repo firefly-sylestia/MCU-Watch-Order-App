@@ -63,6 +63,8 @@ export const useLenis = () => {
     let rafId = 0;
     let lastTs = 0;
     let internalScrollWrite = false;
+    let velocity = 0;
+    let inputVelocity = 0;
 
     let touchY = null;
     let touchX = null;
@@ -75,21 +77,26 @@ export const useLenis = () => {
     const step = (ts) => {
       const dt = lastTs ? Math.min(42, Math.max(8, ts - lastTs)) : 16;
       lastTs = ts;
+
+      const follow = isFinePointer ? 0.115 : 0.14;
+      const followT = 1 - Math.pow(1 - follow, dt / 16.67);
       const distance = target - current;
-      const absDistance = Math.abs(distance);
-      const smooth = isFinePointer ? 0.16 : 0.2;
-      const t = 1 - Math.pow(1 - smooth, dt / 16.67);
 
-      current += distance * t;
+      inputVelocity *= Math.pow(0.82, dt / 16.67);
+      velocity += distance * followT + inputVelocity;
+      velocity *= Math.pow(isFinePointer ? 0.73 : 0.7, dt / 16.67);
 
-      const maxStepPerFrame = isFinePointer ? 88 : 72;
-      const deltaStep = current - window.scrollY;
-      if (Math.abs(deltaStep) > maxStepPerFrame) {
-        current = window.scrollY + Math.sign(deltaStep) * maxStepPerFrame;
+      const maxStepPerFrame = isFinePointer ? 64 : 52;
+      const stepPx = Math.max(-maxStepPerFrame, Math.min(maxStepPerFrame, velocity));
+      current += stepPx;
+      current = Math.min(maxScrollY(), Math.max(0, current));
+
+      const done = Math.abs(target - current) < 0.2 && Math.abs(velocity) < 0.08 && Math.abs(inputVelocity) < 0.05;
+      if (done) {
+        current = target;
+        velocity = 0;
+        inputVelocity = 0;
       }
-
-      const done = absDistance < 0.24;
-      if (done) current = target;
 
       internalScrollWrite = true;
       window.scrollTo(0, current);
@@ -124,6 +131,7 @@ export const useLenis = () => {
       const deskMult = 1.1 + (tune.desktopMultiplier * 0.22);
       const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
+      inputVelocity += limitedDelta * 0.045;
       kickoff();
       event.preventDefault();
     };
@@ -158,6 +166,7 @@ export const useLenis = () => {
       const mobileMult = 1.06 + (tune.mobileMultiplier * 0.19);
       const limitedDelta = Math.max(-mobileCap, Math.min(mobileCap, rawDeltaY)) * mobileMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
+      inputVelocity += limitedDelta * 0.042;
       kickoff();
       event.preventDefault();
     };
@@ -171,6 +180,8 @@ export const useLenis = () => {
       const y = window.scrollY;
       current = y;
       target = y;
+      velocity = 0;
+      inputVelocity = 0;
     };
 
     window.addEventListener('wheel', onWheel, { passive: false });
@@ -183,6 +194,8 @@ export const useLenis = () => {
       const maxY = maxScrollY();
       target = Math.min(target, maxY);
       current = Math.min(current, maxY);
+      velocity = 0;
+      inputVelocity = 0;
     };
     window.addEventListener('resize', onResize);
 
