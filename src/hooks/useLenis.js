@@ -74,8 +74,8 @@ export const useLenis = () => {
 
     const step = () => {
       const delta = target - current;
-      const spring = isFinePointer ? 0.12 : 0.15;
-      const damping = isFinePointer ? 0.8 : 0.78;
+      const spring = isFinePointer ? 0.16 : 0.2;
+      const damping = isFinePointer ? 0.84 : 0.82;
       velocity = (velocity + (delta * spring)) * damping;
       current += velocity;
 
@@ -87,7 +87,7 @@ export const useLenis = () => {
 
       internalScrollWrite = true;
       window.scrollTo(0, current);
-      queueMicrotask(() => { internalScrollWrite = false; });
+      window.requestAnimationFrame(() => { internalScrollWrite = false; });
 
       if (!done) rafId = window.requestAnimationFrame(step);
       else rafId = 0;
@@ -115,7 +115,7 @@ export const useLenis = () => {
 
       const tune = getScrollTuning();
       const deskCap = 34 + tune.desktopDeltaCap * 9;
-      const deskMult = 0.86 + (tune.desktopMultiplier * 0.18);
+      const deskMult = 1.08 + (tune.desktopMultiplier * 0.24);
       const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
       kickoff();
@@ -149,7 +149,7 @@ export const useLenis = () => {
 
       const tune = getScrollTuning();
       const mobileCap = 18 + tune.mobileDeltaCap * 9;
-      const mobileMult = 0.9 + (tune.mobileMultiplier * 0.16);
+      const mobileMult = 1.02 + (tune.mobileMultiplier * 0.2);
       const limitedDelta = Math.max(-mobileCap, Math.min(mobileCap, rawDeltaY)) * mobileMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
       kickoff();
@@ -161,6 +161,7 @@ export const useLenis = () => {
     const onNativeScroll = () => {
       if (isOverlayActive()) return;
       if (internalScrollWrite) return;
+      if (rafId) return;
       const y = window.scrollY;
       current = y;
       target = y;

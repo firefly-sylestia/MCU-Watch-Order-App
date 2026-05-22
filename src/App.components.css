@@ -1847,3 +1847,24 @@ main{--content-max:1560px !important}
 [data-color-mode="dark"] .row-actions .wbtn.status-toggle.notwatched-marvel-btn[aria-label*="unwatched"]{
   box-shadow:0 10px 20px rgba(159,18,57,.4) !important;
 }
+
+
+/* 2026-05 corrective pass: keep light-mode status palette + remove dark glow depth mismatch */
+[data-color-mode="light"] .rrow .meta-chip.meta-chip-type,
+[data-color-mode="light"] .rrow .meta-chip.meta-chip-release{
+  background:unset !important;
+  color:unset !important;
+  border-color:unset !important;
+  box-shadow:none !important;
+}
+[data-color-mode="dark"] .row-actions .rating-marvel-pill,
+[data-color-mode="dark"] .row-actions .wbtn.bookmark-marvel-btn[data-bookmarked="false"],
+[data-color-mode="dark"] .row-actions .wbtn.status-toggle.notwatched-marvel-btn{
+  box-shadow:0 2px 0 rgba(255,255,255,.04) inset, 0 1px 2px rgba(2,8,23,.28) !important;
+}
+[data-color-mode="dark"] .row-actions .wbtn.status-toggle.notwatched-marvel-btn[aria-label*="unwatched"]{
+  box-shadow:0 2px 0 rgba(255,255,255,.06) inset, 0 1px 2px rgba(2,8,23,.3) !important;
+}
+[data-color-mode="dark"] .row-actions .wbtn.status-pill.status-marvel-pill{
+  box-shadow:0 2px 0 rgba(255,255,255,.08) inset, 0 2px 3px rgba(2,8,23,.3) !important;
+}
