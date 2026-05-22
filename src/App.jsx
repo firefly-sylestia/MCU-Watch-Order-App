@@ -600,9 +600,9 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
           </div>
           <div className="title-row-mid release-meta-grid">
             {item.episodes && <span className="meta-chip truncate-single-line" style={{ fontSize: 9 }}>{item.episodes} EP</span>}
-            <span className="meta-chip truncate-single-line" style={{ fontSize: 11, color: typeMeta.color, fontWeight: 700 }}><TypeIcon size={8} />{typeMeta.label}</span>
+            <span className="meta-chip meta-chip-type truncate-single-line" style={{ fontSize: 11, color: typeMeta.color, fontWeight: 700 }}><TypeIcon size={8} />{typeMeta.label}</span>
             <span className="meta-chip truncate-single-line" style={{ fontSize: 9.5 }}>{item.year || releaseLabel}</span>
-            <span className="meta-chip truncate-single-line" style={{ fontSize: 7.75, color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
+            <span className="meta-chip meta-chip-release truncate-single-line" style={{ fontSize: 7.75, color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
             {!item.essential && <span className="meta-chip truncate-single-line" style={{ fontSize: 8.5 }}>OPT</span>}
           </div>
           <div className="meta-muted line-clamp-2 overflow-wrap-anywhere title-subline" style={TITLE_ROW_STATIC.genreMeta}>GENRES: {genres.join(' • ').toUpperCase()}</div>

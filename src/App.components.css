@@ -1803,3 +1803,47 @@ main{--content-max:1560px !important}
   border-color:#bae6fd !important;
   box-shadow:0 0 0 2px rgba(125,211,252,.58),0 12px 20px rgba(2,132,199,.32) !important;
 }
+
+/* 2026-05 dark/light parity refresh + stronger virtual scrolling visual language */
+[data-color-mode="light"] .rrow .meta-chip.meta-chip-type,
+[data-color-mode="light"] .rrow .meta-chip.meta-chip-release{
+  border-color:color-mix(in srgb,var(--theme-accent) 30%, #cbd5e1) !important;
+  box-shadow:0 1px 0 rgba(255,255,255,.9),0 8px 16px rgba(15,23,42,.06) !important;
+}
+[data-color-mode="light"] .rrow .meta-chip.meta-chip-type{
+  background:linear-gradient(135deg,color-mix(in srgb,var(--theme-accent) 16%, #ffffff),#ffffff) !important;
+}
+[data-color-mode="light"] .rrow .meta-chip.meta-chip-release{
+  background:linear-gradient(135deg,color-mix(in srgb,#2563eb 14%, #ffffff),color-mix(in srgb,#0ea5e9 10%, #ffffff)) !important;
+  color:#1d4ed8 !important;
+}
+
+[data-color-mode="dark"] .row-actions .rating-marvel-pill,
+[data-color-mode="dark"] .row-actions .wbtn.bookmark-marvel-btn,
+[data-color-mode="dark"] .row-actions .wbtn.status-toggle.notwatched-marvel-btn,
+[data-color-mode="dark"] .row-actions .wbtn.status-pill.status-marvel-pill{
+  backdrop-filter:blur(8px) saturate(145%) !important;
+  -webkit-backdrop-filter:blur(8px) saturate(145%) !important;
+}
+
+[data-color-mode="dark"] .row-actions .rating-marvel-pill{
+  background:linear-gradient(135deg,rgba(15,23,42,.9),rgba(30,41,59,.88)) !important;
+  border-color:rgba(148,163,184,.38) !important;
+  color:#fcd34d !important;
+  box-shadow:0 8px 18px rgba(2,8,23,.45) !important;
+}
+[data-color-mode="dark"] .row-actions .wbtn.bookmark-marvel-btn[data-bookmarked="false"]{
+  background:linear-gradient(135deg,rgba(15,23,42,.95),rgba(30,41,59,.88)) !important;
+  border-color:rgba(125,211,252,.3) !important;
+  color:#7dd3fc !important;
+  box-shadow:0 8px 18px rgba(2,8,23,.42) !important;
+}
+[data-color-mode="dark"] .row-actions .wbtn.status-toggle.notwatched-marvel-btn[aria-label*="watched"]{
+  background:linear-gradient(135deg,rgba(16,185,129,.32),rgba(5,150,105,.22)) !important;
+  border-color:rgba(16,185,129,.46) !important;
+  color:#a7f3d0 !important;
+  box-shadow:0 8px 18px rgba(4,120,87,.35) !important;
+}
+[data-color-mode="dark"] .row-actions .wbtn.status-toggle.notwatched-marvel-btn[aria-label*="unwatched"]{
+  box-shadow:0 10px 20px rgba(159,18,57,.4) !important;
+}
