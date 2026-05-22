@@ -1046,10 +1046,10 @@ export default function MCUViewer() {
   const scrollToListTop = useCallback(() => {
     const container = mainRef.current;
     if (container && container.scrollHeight > container.clientHeight + 1) {
-      container.scrollTo({ top: 0, behavior: 'auto' });
+      container.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    window.scrollTo({ top: 0, behavior: 'auto' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   const scrollTo = id => {
@@ -3046,24 +3046,28 @@ export default function MCUViewer() {
             boxShadow: '0 16px 34px rgba(0,0,0,.30)',
           }}
         >
-          <Zap size={14} /> Quick Actions <ChevDown size={12} style={{ transform: fabMenuOpen ? 'rotate(180deg)' : 'none' }} />
+          <Zap size={14} /> Action Hub <ChevDown size={12} style={{ transform: fabMenuOpen ? 'rotate(180deg)' : 'none' }} />
         </button>
 
-        {/* ━━ JUMP NEXT BUTTON ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-        <div className="bottom-action-dock modern-quick-actions" style={{ display: fabMenuOpen ? 'flex' : 'none' }}>
-        <button type="button" onClick={handleMetadataBuildClick} className="dock-btn modern-quick-action-btn"
-          style={{ borderColor: metadataBuild.status === 'running' ? 'var(--theme-warning)' : T.surfaceBorder }}>
-          {metadataBuild.status === 'running' ? `Fetch ${metadataBuild.done}/${metadataBuild.total}` : 'Fetch'}
+        <div className={`bottom-action-dock modern-quick-actions ${fabMenuOpen ? 'is-open' : ''}`} style={{ display: fabMenuOpen ? 'grid' : 'none' }}>
+        <button type="button" className="dock-btn modern-quick-action-btn"
+          onClick={scrollToListTop}
+          style={{ background: 'color-mix(in srgb, var(--theme-accent) 16%, var(--control-solid-bg))' }}>
+          ↑ Go Top
         </button>
         <button type="button" className="dock-btn modern-quick-action-btn"
           onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
-          style={{ background: 'color-mix(in srgb, var(--theme-accent) 16%, var(--control-solid-bg))' }}>
+          style={{ background: 'color-mix(in srgb, var(--theme-success) 16%, var(--control-solid-bg))' }}>
           View: {viewMode === 'list' ? 'List' : 'Calendar'}
         </button>
         <button type="button" className="dock-btn modern-quick-action-btn"
           onClick={() => { const next = listMode === 'core' ? 'extended' : 'core'; setListMode(next); setExpandedItem(null); setExpandedPhase(null); }}
           style={{ background: 'color-mix(in srgb, var(--theme-accent-alt) 16%, var(--control-solid-bg))' }}>
           Mode: {listMode === 'core' ? (universe === 'dc' ? 'DC Core' : 'MCU Core') : 'Extended'}
+        </button>
+        <button type="button" onClick={handleMetadataBuildClick} className="dock-btn modern-quick-action-btn"
+          style={{ borderColor: metadataBuild.status === 'running' ? 'var(--theme-warning)' : T.surfaceBorder }}>
+          {metadataBuild.status === 'running' ? `Fetch ${metadataBuild.done}/${metadataBuild.total}` : 'Fetch Data'}
         </button>
         <div className="dock-status-menu" style={{ position: 'relative' }}>
           <button
@@ -3073,7 +3077,7 @@ export default function MCUViewer() {
             className="bottom-action-bar modern-quick-action-btn"
             style={{ border: `1px solid ${T.surfaceBorder}`, background: 'var(--control-solid-bg)', color: 'var(--theme-text)', boxShadow: 'none', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1.2, fontSize: 12, fontWeight: 700 }}
           >
-            Status Menu <ChevDown size={12} style={{ transform: dockStatusOpen ? 'rotate(180deg)' : 'none' }} />
+            Status Filters <ChevDown size={12} style={{ transform: dockStatusOpen ? 'rotate(180deg)' : 'none' }} />
           </button>
           {dockStatusOpen && (
             <div className="dropdown-pop-up dock-status-dropdown" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, minWidth: 220, zIndex: 1400, color: 'var(--theme-text)' }}>
@@ -3097,6 +3101,15 @@ export default function MCUViewer() {
           )}
         </div>
         </div>
+        <button
+          type="button"
+          className="dock-btn modern-go-top-btn"
+          onClick={scrollToListTop}
+          aria-label="Go to top"
+          style={{ display: scrollCheckpoint > 420 ? 'inline-flex' : 'none' }}
+        >
+          ↑ Top
+        </button>
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
