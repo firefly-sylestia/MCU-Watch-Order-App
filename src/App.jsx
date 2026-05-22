@@ -766,7 +766,7 @@ export default function MCUViewer() {
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
   const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
-  const [scrollTuning] = useState({ desktopMultiplier: 6, desktopDeltaCap: 9, mobileMultiplier: 6, mobileDeltaCap: 9 });
+  const [scrollTuning] = useState({ desktopMultiplier: 7, desktopDeltaCap: 10, mobileMultiplier: 7, mobileDeltaCap: 10 });
   const [genreFilter] = useState('all');
   const [myLikes,        setMyLikes]        = useState({});
   const [myRating,       setMyRating]       = useState({});
@@ -868,7 +868,14 @@ export default function MCUViewer() {
     if (typeof window === 'undefined') return;
     window.__scrollTuning = scrollTuning;
   }, [scrollTuning]);
+
   const overlayActive = Boolean(settingsOpen || analyticsOpen || detailItem || sidebarOpen);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.__overlayActive = overlayActive;
+    return () => { window.__overlayActive = false; };
+  }, [overlayActive]);
 
   useEffect(() => {
     const bodyStyle = document.body.style;
@@ -3079,7 +3086,7 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} className='app-scroll-shell' style={{ overflow: 'visible', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
+      <main ref={mainRef} className='app-scroll-shell' style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
