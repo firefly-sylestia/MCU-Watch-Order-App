@@ -677,3 +677,17 @@ a:hover {
   --row-top-tint: color-mix(in srgb, #d8c7ac 28%, transparent);
   --row-top-tint-soft: color-mix(in srgb, var(--theme-accent, #7cffda) 10%, #F8F9FB);
 }
+
+/* Lenis smooth scroll integration */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
