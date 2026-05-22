@@ -21,6 +21,18 @@ const hasScrollableParent = (target, deltaY) => {
     node = node.parentElement;
   }
   return false;
+
+
+const getScrollTuning = () => {
+  const t = (typeof window !== 'undefined' && window.__scrollTuning) ? window.__scrollTuning : {};
+  const clamp10 = (v, d) => Math.max(1, Math.min(10, Number.isFinite(Number(v)) ? Number(v) : d));
+  return {
+    desktopMultiplier: clamp10(t.desktopMultiplier, 6),
+    desktopDeltaCap: clamp10(t.desktopDeltaCap, 6),
+    mobileMultiplier: clamp10(t.mobileMultiplier, 8),
+    mobileDeltaCap: clamp10(t.mobileDeltaCap, 8),
+  };
+};
 };
 
 export const useLenis = () => {
@@ -71,8 +83,10 @@ export const useLenis = () => {
       if (!Number.isFinite(deltaY) || deltaY === 0) return;
       if (hasScrollableParent(event.target, deltaY)) return;
 
-      // Desktop speed governor.
-      const limitedDelta = Math.max(-86, Math.min(86, deltaY));
+      const tune = getScrollTuning();
+      const deskCap = 40 + tune.desktopDeltaCap * 10;
+      const deskMult = 1 + (tune.desktopMultiplier * 0.2);
+      const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
       kickoff();
       event.preventDefault();
@@ -98,8 +112,10 @@ export const useLenis = () => {
       if (!Number.isFinite(rawDelta) || rawDelta === 0) return;
       if (hasScrollableParent(event.target, rawDelta)) return;
 
-      // Mobile speed governor: cap fast flick deltas for steadier scroll.
-      const limitedDelta = Math.max(-70, Math.min(70, rawDelta)) * 1.05;
+      const tune = getScrollTuning();
+      const mobileCap = 20 + tune.mobileDeltaCap * 10;
+      const mobileMult = 1 + (tune.mobileMultiplier * 0.22);
+      const limitedDelta = Math.max(-mobileCap, Math.min(mobileCap, rawDelta)) * mobileMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
       kickoff();
       event.preventDefault();
