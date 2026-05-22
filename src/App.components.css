@@ -1189,3 +1189,24 @@ main{--content-max:1560px !important}
 
 .sidebar-backdrop[data-state='closed'],
 .settings-backdrop[data-state='closed']{pointer-events:none !important;opacity:0 !important;}
+
+/* Modernized phase + quick action redesign */
+.phase-selector-rail{scrollbar-width:none;-ms-overflow-style:none;padding-inline:2px 6px;scroll-behavior:smooth;overscroll-behavior-x:contain;scroll-snap-type:x proximity}
+.phase-selector-rail::-webkit-scrollbar{display:none}
+.modern-phase-chip{position:relative;min-height:46px !important;padding:0 15px !important;gap:7px;border-radius:16px !important;scroll-snap-align:start;background:linear-gradient(145deg,color-mix(in srgb,var(--theme-surface) 82%, transparent),color-mix(in srgb,var(--theme-bg) 36%, transparent)) !important;border:1px solid color-mix(in srgb,var(--theme-border) 74%, transparent) !important;box-shadow:0 8px 20px rgba(7,11,28,.18),inset 0 1px 0 rgba(255,255,255,.08);transition:transform .2s var(--interactive-ease),box-shadow .2s var(--interactive-ease),border-color .2s var(--interactive-ease),background .2s var(--interactive-ease)}
+.modern-phase-chip:hover{transform:translateY(-2px);box-shadow:0 12px 24px rgba(7,11,28,.24)}
+.modern-phase-chip:active{transform:translateY(0) scale(.99)}
+.modern-phase-chip[style*="var(--theme-accent)"]{background:linear-gradient(145deg,color-mix(in srgb,var(--theme-accent) 18%, var(--theme-surface)),color-mix(in srgb,var(--theme-accent-alt) 13%, var(--theme-surface))) !important;border-color:color-mix(in srgb,var(--theme-accent) 65%, var(--theme-border)) !important;box-shadow:0 12px 26px color-mix(in srgb,var(--theme-accent) 22%, transparent), inset 0 1px 0 rgba(255,255,255,.18)}
+
+.modern-floating-controls{bottom:max(20px, env(safe-area-inset-bottom, 0px) + 10px) !important;right:18px !important;gap:12px !important}
+.modern-quick-main{min-height:48px;padding:0 18px !important;border-radius:18px !important;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:linear-gradient(150deg,color-mix(in srgb,var(--theme-surface) 86%, transparent),color-mix(in srgb,var(--theme-accent) 11%, var(--theme-surface))) !important;border:1px solid color-mix(in srgb,var(--theme-accent) 45%, var(--theme-border));backdrop-filter:blur(16px) saturate(145%)}
+.modern-quick-actions{display:grid !important;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:12px;border-radius:22px;border:1px solid color-mix(in srgb,var(--theme-border) 66%, transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--theme-surface) 86%, transparent),color-mix(in srgb,var(--theme-bg) 42%, transparent));box-shadow:0 18px 38px rgba(2,8,23,.26), inset 0 1px 0 rgba(255,255,255,.1)}
+.modern-quick-action-btn{min-height:42px;border-radius:14px !important;font-weight:700;letter-spacing:.02em;background:color-mix(in srgb,var(--theme-surface) 84%, transparent) !important;border:1px solid color-mix(in srgb,var(--theme-border) 72%, transparent) !important;transition:transform .18s var(--interactive-ease),background .18s var(--interactive-ease),border-color .18s var(--interactive-ease)}
+.modern-quick-action-btn:hover{transform:translateY(-1px);background:color-mix(in srgb,var(--theme-surface-hover) 92%, transparent) !important;border-color:color-mix(in srgb,var(--theme-accent) 44%, var(--theme-border)) !important}
+.modern-quick-action-btn:active{transform:translateY(0) scale(.985)}
+
+.app-scroll-shell{scroll-behavior:smooth;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;transform:translateZ(0)}
+.rrow{transition:transform .2s var(--interactive-ease),box-shadow .22s var(--interactive-ease),background .25s var(--interactive-ease),border-color .25s var(--interactive-ease)}
+
+[data-color-mode="light"] .modern-phase-chip{background:linear-gradient(145deg,#fff,color-mix(in srgb,var(--theme-surface) 94%, #fff)) !important;box-shadow:0 8px 18px rgba(15,23,42,.08), inset 0 1px 0 rgba(255,255,255,.95)}
+[data-color-mode="light"] .modern-quick-main,[data-color-mode="light"] .modern-quick-actions{box-shadow:0 12px 26px rgba(15,23,42,.1), inset 0 1px 0 rgba(255,255,255,.85)}
