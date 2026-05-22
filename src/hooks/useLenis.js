@@ -37,10 +37,10 @@ const getScrollTuning = () => {
   const t = (typeof window !== 'undefined' && window.__scrollTuning) ? window.__scrollTuning : {};
   const clamp10 = (v, d) => Math.max(1, Math.min(10, Number.isFinite(Number(v)) ? Number(v) : d));
   return {
-    desktopMultiplier: clamp10(t.desktopMultiplier, 8),
-    desktopDeltaCap: clamp10(t.desktopDeltaCap, 10),
-    mobileMultiplier: clamp10(t.mobileMultiplier, 8),
-    mobileDeltaCap: clamp10(t.mobileDeltaCap, 10),
+    desktopMultiplier: clamp10(t.desktopMultiplier, 7),
+    desktopDeltaCap: clamp10(t.desktopDeltaCap, 8),
+    mobileMultiplier: clamp10(t.mobileMultiplier, 7),
+    mobileDeltaCap: clamp10(t.mobileDeltaCap, 8),
   };
 };
 
@@ -60,7 +60,9 @@ export const useLenis = () => {
 
     let current = window.scrollY;
     let target = window.scrollY;
+    let velocity = 0;
     let rafId = 0;
+    let internalScrollWrite = false;
 
     let touchY = null;
     let touchX = null;
@@ -72,10 +74,22 @@ export const useLenis = () => {
 
     const step = () => {
       const delta = target - current;
-      current += delta * (isFinePointer ? 0.2 : 0.26);
-      if (Math.abs(delta) <= 0.35) current = target;
+      const spring = isFinePointer ? 0.12 : 0.15;
+      const damping = isFinePointer ? 0.8 : 0.78;
+      velocity = (velocity + (delta * spring)) * damping;
+      current += velocity;
+
+      const done = Math.abs(delta) < 0.2 && Math.abs(velocity) < 0.2;
+      if (done) {
+        current = target;
+        velocity = 0;
+      }
+
+      internalScrollWrite = true;
       window.scrollTo(0, current);
-      if (Math.abs(target - current) > 0.35) rafId = window.requestAnimationFrame(step);
+      queueMicrotask(() => { internalScrollWrite = false; });
+
+      if (!done) rafId = window.requestAnimationFrame(step);
       else rafId = 0;
     };
 
@@ -100,14 +114,13 @@ export const useLenis = () => {
       if (hasScrollableParent(event.target, { deltaY, axis: 'y' })) return;
 
       const tune = getScrollTuning();
-      const deskCap = 30 + tune.desktopDeltaCap * 10;
-      const deskMult = 1 + (tune.desktopMultiplier * 0.24);
+      const deskCap = 34 + tune.desktopDeltaCap * 9;
+      const deskMult = 0.86 + (tune.desktopMultiplier * 0.18);
       const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
       kickoff();
       event.preventDefault();
     };
-
 
     const onTouchStart = (event) => {
       if (isFinePointer || saveDataMode || event.touches.length !== 1) return;
@@ -135,8 +148,8 @@ export const useLenis = () => {
       if (hasScrollableParent(event.target, { deltaY: rawDeltaY, axis: 'y' })) return;
 
       const tune = getScrollTuning();
-      const mobileCap = 15 + tune.mobileDeltaCap * 10;
-      const mobileMult = 1 + (tune.mobileMultiplier * 0.22);
+      const mobileCap = 18 + tune.mobileDeltaCap * 9;
+      const mobileMult = 0.9 + (tune.mobileMultiplier * 0.16);
       const limitedDelta = Math.max(-mobileCap, Math.min(mobileCap, rawDeltaY)) * mobileMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
       kickoff();
@@ -145,11 +158,13 @@ export const useLenis = () => {
 
     const onTouchEnd = () => { touchY = null; touchX = null; };
 
-    const enforceVirtualScroll = () => {
+    const onNativeScroll = () => {
       if (isOverlayActive()) return;
-      if (Math.abs(window.scrollY - current) > 0.75) {
-        window.scrollTo(0, current);
-      }
+      if (internalScrollWrite) return;
+      const y = window.scrollY;
+      current = y;
+      target = y;
+      velocity = 0;
     };
 
     window.addEventListener('wheel', onWheel, { passive: false });
@@ -157,8 +172,13 @@ export const useLenis = () => {
     window.addEventListener('touchmove', onTouchMove, { passive: false });
     window.addEventListener('touchend', onTouchEnd, { passive: true });
     window.addEventListener('touchcancel', onTouchEnd, { passive: true });
-    window.addEventListener('scroll', enforceVirtualScroll, { passive: true });
-    const onResize = () => { target = Math.min(target, maxScrollY()); current = Math.min(current, maxScrollY()); };
+    window.addEventListener('scroll', onNativeScroll, { passive: true });
+    const onResize = () => {
+      const maxY = maxScrollY();
+      target = Math.min(target, maxY);
+      current = Math.min(current, maxY);
+      velocity = 0;
+    };
     window.addEventListener('resize', onResize);
 
     return () => {
@@ -167,7 +187,7 @@ export const useLenis = () => {
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('touchcancel', onTouchEnd);
-      window.removeEventListener('scroll', enforceVirtualScroll);
+      window.removeEventListener('scroll', onNativeScroll);
       window.removeEventListener('resize', onResize);
       window.cancelAnimationFrame(rafId);
       html.style.overscrollBehaviorY = prevHtmlOverscroll;
