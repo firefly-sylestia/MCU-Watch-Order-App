@@ -1049,3 +1049,108 @@ main{--content-max:1560px !important}
 
 .phase-list-mode .hero-backdrop-image{filter:none !important;transition:none !important;opacity:.2 !important}
 .phase-list-mode .hero-carousel-shell{display:none !important}
+
+/* Mobile interaction performance + overlay stability fixes */
+.sidebar-menu,
+.settings-menu {
+  contain: layout paint style;
+}
+
+.sidebar-menu[data-state='open'],
+.settings-shell[data-state='open'],
+.settings-menu[data-state='open'] {
+  will-change: transform, opacity;
+}
+
+.sidebar-menu {
+  transition: transform 180ms cubic-bezier(.22,.9,.24,1), opacity 180ms ease;
+  opacity: 0;
+}
+.sidebar-menu[data-state='open'] {
+  opacity: 1;
+}
+
+.settings-shell {
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+.settings-shell[data-state='open'] {
+  opacity: 1;
+}
+
+.settings-menu[data-state='open'] {
+  animation: settingsIn 180ms ease-out;
+}
+
+@keyframes settingsIn {
+  from { opacity: 0; transform: translateY(8px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 900px) {
+  .sidebar-menu,
+  .settings-menu,
+  .settings-menu-redesign,
+  .sidebar-backdrop,
+  .settings-backdrop {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .sidebar-menu,
+  .settings-menu,
+  .settings-menu-redesign {
+    box-shadow: 0 10px 24px rgba(2,8,23,0.22) !important;
+  }
+}
+
+
+/* Immediate overlays: keep mounted, toggle via state to avoid open lag */
+.sidebar-backdrop,
+.settings-backdrop {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+.sidebar-backdrop[data-state='open'],
+.settings-backdrop[data-state='open'] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sidebar-menu[data-state='closed'] {
+  pointer-events: none;
+}
+.settings-shell[data-state='closed'] {
+  pointer-events: none;
+}
+.settings-shell[data-state='open'] {
+  pointer-events: auto;
+}
+
+
+.settings-shell[data-state='closed'] {
+  visibility: hidden;
+}
+.settings-shell[data-state='open'] {
+  visibility: visible;
+}
+
+
+.settings-menu[data-state='closed'] {
+  opacity: 0;
+  transform: translateY(6px) scale(.99);
+}
+
+/* Faster/cleaner hero cross-fade to prevent old image lingering */
+.hero-backdrop-image {
+  transition: opacity 240ms cubic-bezier(0.22,1,0.36,1), transform 240ms cubic-bezier(0.22,1,0.36,1), filter 240ms cubic-bezier(0.22,1,0.36,1) !important;
+}
+.hero-backdrop-image.is-exiting {
+  opacity: 0 !important;
+  transform: scale(1.001) !important;
+  filter: blur(1.2px) saturate(1) brightness(.9) !important;
+}
+
+.sidebar-backdrop[data-state='closed'],
+.settings-backdrop[data-state='closed']{pointer-events:none !important;opacity:0 !important;}

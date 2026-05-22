@@ -60,6 +60,8 @@ export const useLenis = () => {
     let touchX = null;
 
     const maxScrollY = () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    const isOverlayActive = () => Boolean(typeof window !== 'undefined' && window.__overlayActive);
+
     const kickoff = () => { if (!rafId) rafId = window.requestAnimationFrame(step); };
 
     const step = () => {
@@ -80,6 +82,7 @@ export const useLenis = () => {
     const onWheel = (event) => {
       if (!isFinePointer) return;
       if (event.defaultPrevented || event.ctrlKey) return;
+      if (isOverlayActive()) return;
       if (isEditableTarget(event.target)) return;
       const horizontalIntent = Math.abs(event.deltaX) > Math.abs(event.deltaY) * 1.1;
       const deltaY = normalizeDelta(event);
@@ -101,12 +104,14 @@ export const useLenis = () => {
 
     const onTouchStart = (event) => {
       if (isFinePointer || event.touches.length !== 1) return;
+      if (isOverlayActive()) return;
       touchY = event.touches[0].clientY;
       touchX = event.touches[0].clientX;
     };
 
     const onTouchMove = (event) => {
       if (isFinePointer || event.touches.length !== 1) return;
+      if (isOverlayActive()) return;
       if (isEditableTarget(event.target)) return;
       if (touchY == null) { touchY = event.touches[0].clientY; return; }
 
@@ -135,6 +140,7 @@ export const useLenis = () => {
     const onTouchEnd = () => { touchY = null; touchX = null; };
     const syncToNativeScroll = () => {
       if (rafId) return;
+      if (isOverlayActive()) return;
       current = window.scrollY;
       target = window.scrollY;
     };

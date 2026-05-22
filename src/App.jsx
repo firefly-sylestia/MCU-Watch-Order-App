@@ -661,8 +661,8 @@ const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
       <button className="theme-btn sidebar-toggle-btn" onClick={onToggle} aria-label="Toggle sidebar menu" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Menu size={18} /></button>
       <button className="theme-btn sidebar-toggle-btn settings-toggle-btn" onClick={onOpenSettings} aria-label="Open settings and profile" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Settings size={18} /></button>
       </div>
-      {open && <div className="sidebar-backdrop" onClick={onClose} />}
-      <aside ref={ref} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
+      <div className="sidebar-backdrop" data-state={open ? 'open' : 'closed'} onPointerDown={(e) => { e.preventDefault(); onClose?.(); }} />
+      <aside ref={ref} data-state={open ? 'open' : 'closed'} aria-hidden={!open} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
         {children}
       </aside>
     </>
@@ -678,17 +678,15 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
 }, ref) {
   return (
     <>
-      {open && <button className="settings-backdrop" aria-label="Close settings menu" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose?.(); }} />}
-      {open && (
-        <div className="settings-shell" role="dialog" aria-modal="true" aria-label="Settings and profile" ref={ref}>
-          <div className="fade-in settings-menu settings-menu-redesign" style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
-            <div className="settings-sticky-actions">
-              <button className="fpill glass-panel settings-close-sticky" onClick={() => onClose?.()}><X size={14}/>Close</button>
-            </div>
-            {children}
+      <button className="settings-backdrop" data-state={open ? 'open' : 'closed'} aria-label="Close settings menu" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose?.(); }} />
+      <div className="settings-shell" data-state={open ? 'open' : 'closed'} role="dialog" aria-modal={open ? 'true' : 'false'} aria-hidden={!open} aria-label="Settings and profile" ref={ref}>
+        <div className="fade-in settings-menu settings-menu-redesign" data-state={open ? 'open' : 'closed'} style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
+          <div className="settings-sticky-actions">
+            <button className="fpill glass-panel settings-close-sticky" onClick={() => onClose?.()}><X size={14}/>Close</button>
           </div>
+          {children}
         </div>
-      )}
+      </div>
     </>
   );
 }));
@@ -768,7 +766,7 @@ export default function MCUViewer() {
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
   const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
-  const [scrollTuning] = useState({ desktopMultiplier: 6, desktopDeltaCap: 9, mobileMultiplier: 6, mobileDeltaCap: 9 });
+  const [scrollTuning] = useState({ desktopMultiplier: 7, desktopDeltaCap: 10, mobileMultiplier: 7, mobileDeltaCap: 10 });
   const [genreFilter] = useState('all');
   const [myLikes,        setMyLikes]        = useState({});
   const [myRating,       setMyRating]       = useState({});
@@ -870,7 +868,14 @@ export default function MCUViewer() {
     if (typeof window === 'undefined') return;
     window.__scrollTuning = scrollTuning;
   }, [scrollTuning]);
+
   const overlayActive = Boolean(settingsOpen || analyticsOpen || detailItem || sidebarOpen);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.__overlayActive = overlayActive;
+    return () => { window.__overlayActive = false; };
+  }, [overlayActive]);
 
   useEffect(() => {
     const bodyStyle = document.body.style;
@@ -1032,6 +1037,15 @@ export default function MCUViewer() {
     const fn = e => { if (settingsRef.current && !settingsRef.current.contains(e.target)) setSettingsOpen(false); };
     document.addEventListener('pointerdown', fn, true);
     return () => document.removeEventListener('pointerdown', fn, true);
+  }, []);
+
+  const scrollToListTop = useCallback(() => {
+    const container = mainRef.current;
+    if (container && container.scrollHeight > container.clientHeight + 1) {
+      container.scrollTo({ top: 0, behavior: 'auto' });
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
 
   const scrollTo = id => {
@@ -1439,7 +1453,7 @@ export default function MCUViewer() {
 
   useEffect(() => {
     if (!previousHeroSrc) return undefined;
-    const timer = window.setTimeout(() => setPreviousHeroSrc(''), darkMode ? 900 : 420);
+    const timer = window.setTimeout(() => setPreviousHeroSrc(''), performanceMode ? 140 : 220);
     return () => window.clearTimeout(timer);
   }, [previousHeroSrc, darkMode]);
 
@@ -2628,7 +2642,7 @@ export default function MCUViewer() {
         return (
           <button
             key={ph.id}
-            onClick={() => { setActivePhase(ph.id); scrollTo(ph.id); }}
+            onClick={() => { setActivePhase(ph.id); scrollToListTop(); }}
             className="fpill phase-chip"
             style={{
               borderRadius: 999,
@@ -2740,7 +2754,7 @@ export default function MCUViewer() {
           {nextUnwatched && <div style={{ fontSize: 12, color: T.textMuted }}>Phase {nextUnwatched.phase} · {TYPE_META[nextUnwatched.type]?.label}</div>}
         </div>
         <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
-          {currentPhases.map(ph => <button key={ph.id} className="fpill" onClick={() => { setSidebarOpen(false); setActivePhase(ph.id); scrollTo(ph.id); }} style={{ justifyContent: 'space-between' }}><span>{ph.name}</span><ChevRight size={13} /></button>)}
+          {currentPhases.map(ph => <button key={ph.id} className="fpill" onClick={() => { setSidebarOpen(false); setActivePhase(ph.id); scrollToListTop(); }} style={{ justifyContent: 'space-between' }}><span>{ph.name}</span><ChevRight size={13} /></button>)}
         </div>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Theme</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6, marginTop: 8 }}>
@@ -3072,7 +3086,7 @@ export default function MCUViewer() {
       </div>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} className='app-scroll-shell' style={{ overflow: 'visible', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
+      <main ref={mainRef} className='app-scroll-shell' style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
