@@ -58,6 +58,9 @@ export const useLenis = () => {
     let target = window.scrollY;
     let rafId = 0;
 
+    let touchY = null;
+    let touchX = null;
+
     const maxScrollY = () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
     const isOverlayActive = () => Boolean(typeof window !== 'undefined' && window.__overlayActive);
 
@@ -101,6 +104,43 @@ export const useLenis = () => {
       event.preventDefault();
     };
 
+
+    const onTouchStart = (event) => {
+      if (isFinePointer || saveDataMode || event.touches.length !== 1) return;
+      if (isOverlayActive()) return;
+      touchY = event.touches[0].clientY;
+      touchX = event.touches[0].clientX;
+    };
+
+    const onTouchMove = (event) => {
+      if (isFinePointer || saveDataMode || event.touches.length !== 1) return;
+      if (isOverlayActive()) return;
+      if (isEditableTarget(event.target)) return;
+      if (touchY == null) { touchY = event.touches[0].clientY; return; }
+
+      const nextY = event.touches[0].clientY;
+      const nextX = event.touches[0].clientX;
+      const rawDeltaY = touchY - nextY;
+      const rawDeltaX = (touchX ?? nextX) - nextX;
+      touchY = nextY;
+      touchX = nextX;
+
+      if (!Number.isFinite(rawDeltaY) || Math.abs(rawDeltaY) < 0.8) return;
+      const horizontalIntent = Math.abs(rawDeltaX) > Math.abs(rawDeltaY) * 1.1;
+      if (horizontalIntent) return;
+      if (hasScrollableParent(event.target, { deltaY: rawDeltaY, axis: 'y' })) return;
+
+      const tune = getScrollTuning();
+      const mobileCap = 15 + tune.mobileDeltaCap * 10;
+      const mobileMult = 0.85 + (tune.mobileMultiplier * 0.2);
+      const limitedDelta = Math.max(-mobileCap, Math.min(mobileCap, rawDeltaY)) * mobileMult;
+      target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
+      kickoff();
+      event.preventDefault();
+    };
+
+    const onTouchEnd = () => { touchY = null; touchX = null; };
+
     const syncToNativeScroll = () => {
       if (rafId) return;
       if (isOverlayActive()) return;
@@ -109,12 +149,20 @@ export const useLenis = () => {
     };
 
     window.addEventListener('wheel', onWheel, { passive: false });
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', onTouchEnd, { passive: true });
     window.addEventListener('scroll', syncToNativeScroll, { passive: true });
     const onResize = () => { target = Math.min(target, maxScrollY()); current = Math.min(current, maxScrollY()); };
     window.addEventListener('resize', onResize);
 
     return () => {
       window.removeEventListener('wheel', onWheel);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('touchcancel', onTouchEnd);
       window.removeEventListener('scroll', syncToNativeScroll);
       window.removeEventListener('resize', onResize);
       window.cancelAnimationFrame(rafId);

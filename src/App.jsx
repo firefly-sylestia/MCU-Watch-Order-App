@@ -624,7 +624,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             </span>
             <ChevDown size={10} style={{ opacity: 0.8, transform: statusDropdown === item.id ? 'rotate(180deg)' : 'none' }} />
           </button>
-          <button className="wbtn bookmark-marvel-btn" aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} data-bookmarked={isBookmarked} style={{ width: isDesktopViewport ? 30 : 24, height: isDesktopViewport ? 30 : 24 }}><Bookmark size={11} /></button>
+          <button className="wbtn bookmark-marvel-btn" aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} data-bookmarked={isBookmarked} style={{ width: isDesktopViewport ? 38 : 34, height: isDesktopViewport ? 38 : 34 }}><Bookmark size={11} /></button>
           {!hideWatchToggle && (
             <button
               className="wbtn status-toggle notwatched-marvel-btn"

@@ -1305,3 +1305,48 @@ main{--content-max:1560px !important}
   border-color:color-mix(in srgb,var(--theme-border) 70%, #d8c4aa) !important;
   box-shadow:0 8px 18px rgba(15,23,42,0.09) !important;
 }
+
+
+/* Feedback pass v2: keep dark phase chips neutral, improve stretched status actions */
+[data-color-mode="dark"] .phase-chip{
+  background:color-mix(in srgb,var(--theme-surface) 88%, transparent) !important;
+  border-color:color-mix(in srgb,var(--theme-border) 88%, transparent) !important;
+  color:var(--theme-text-primary) !important;
+  box-shadow:0 8px 16px rgba(2,8,23,.2) !important;
+}
+[data-color-mode="dark"] .phase-chip:hover{
+  border-color:color-mix(in srgb,var(--theme-accent) 40%, var(--theme-border)) !important;
+  background:color-mix(in srgb,var(--theme-surface-hover) 92%, transparent) !important;
+}
+[data-color-mode="dark"] .phase-chip[style*="var(--theme-accent)"]{
+  background:linear-gradient(145deg,color-mix(in srgb,var(--theme-surface) 94%, transparent), color-mix(in srgb,var(--theme-surface-hover) 84%, transparent)) !important;
+  color:var(--theme-accent) !important;
+}
+[data-color-mode="light"] .phase-chip{
+  background:linear-gradient(132deg,#ed1d24 0%,#c8111a 58%,#7f0c12 100%) !important;
+  color:#fff !important;
+  border-color:color-mix(in srgb,#ffffff 25%, #7f1d1d) !important;
+}
+
+.row-actions .wbtn.status-pill.status-marvel-pill{
+  min-width:126px !important;
+  width:auto !important;
+  height:38px !important;
+  padding:0 16px !important;
+  border-radius:999px !important;
+  justify-content:center !important;
+  font-size:13px !important;
+  letter-spacing:.02em !important;
+}
+.row-actions .wbtn.bookmark-marvel-btn,
+.row-actions .wbtn.notwatched-marvel-btn{
+  width:38px !important;
+  height:38px !important;
+  border-radius:12px !important;
+}
+[data-color-mode="light"] .bookmark-marvel-btn[data-bookmarked="true"]{
+  background:linear-gradient(135deg,#be123c,#881337) !important;
+  border-color:#9f1239 !important;
+  color:#fff7ed !important;
+  box-shadow:0 0 0 2px rgba(190,24,93,.30),0 10px 20px rgba(136,19,55,.26) !important;
+}
