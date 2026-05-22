@@ -49,27 +49,44 @@ export const useLenis = () => {
 
     let touchY = null;
     let touchX = null;
+    let lastTouchTime = 0;
+    let touchVelocity = 0;
+    let momentumVelocity = 0;
     let targetY = window.scrollY;
     let rafId = null;
 
     const isOverlayActive = () => Boolean(window.__overlayActive);
-    const clampTarget = () => Math.max(0, Math.min(targetY, document.documentElement.scrollHeight - window.innerHeight));
+    const clamp = (value) => Math.max(0, Math.min(value, document.documentElement.scrollHeight - window.innerHeight));
+
+    const startLoop = () => {
+      if (rafId == null) rafId = window.requestAnimationFrame(tick);
+    };
 
     const tick = () => {
       const currentY = window.scrollY;
-      const diff = clampTarget() - currentY;
-      if (Math.abs(diff) < 0.35) {
-        window.scrollTo(0, clampTarget());
+      targetY = clamp(targetY + momentumVelocity);
+      momentumVelocity *= 0.92;
+
+      const diff = targetY - currentY;
+      const easing = Math.abs(diff) > 48 ? 0.2 : 0.16;
+      const nextY = currentY + diff * easing;
+
+      window.scrollTo(0, nextY);
+
+      const closeEnough = Math.abs(diff) < 0.45;
+      const almostStill = Math.abs(momentumVelocity) < 0.08;
+      if (closeEnough && almostStill) {
+        window.scrollTo(0, targetY);
         rafId = null;
         return;
       }
-      window.scrollTo(0, currentY + diff * 0.18);
+
       rafId = window.requestAnimationFrame(tick);
     };
 
     const queueScroll = (deltaY) => {
-      targetY += deltaY;
-      if (rafId == null) rafId = window.requestAnimationFrame(tick);
+      targetY = clamp(targetY + deltaY);
+      startLoop();
     };
 
     const onWheel = (event) => {
@@ -89,13 +106,17 @@ export const useLenis = () => {
       if (hasScrollableParent(event.target, { deltaY, axis: 'y' })) return;
 
       event.preventDefault();
-      queueScroll(deltaY * 0.96);
+      momentumVelocity = 0;
+      queueScroll(deltaY * 0.98);
     };
 
     const onTouchStart = (event) => {
       if (event.touches.length !== 1 || isOverlayActive()) return;
       touchY = event.touches[0].clientY;
       touchX = event.touches[0].clientX;
+      lastTouchTime = performance.now();
+      touchVelocity = 0;
+      momentumVelocity = 0;
       targetY = window.scrollY;
     };
 
@@ -106,15 +127,20 @@ export const useLenis = () => {
       if (touchY == null) {
         touchY = event.touches[0].clientY;
         touchX = event.touches[0].clientX;
+        lastTouchTime = performance.now();
         return;
       }
 
+      const now = performance.now();
       const nextY = event.touches[0].clientY;
       const nextX = event.touches[0].clientX;
       const deltaY = touchY - nextY;
       const deltaX = (touchX ?? nextX) - nextX;
+      const dt = Math.max(8, now - lastTouchTime);
+
       touchY = nextY;
       touchX = nextX;
+      lastTouchTime = now;
 
       if (!Number.isFinite(deltaY) || Math.abs(deltaY) < 0.8) return;
       const horizontalIntent = Math.abs(deltaX) > Math.abs(deltaY) * 1.1;
@@ -124,12 +150,22 @@ export const useLenis = () => {
       event.preventDefault();
       window.scrollBy({ top: deltaY, left: 0, behavior: 'auto' });
       targetY = window.scrollY;
+      touchVelocity = deltaY / dt;
     };
 
     const onTouchEnd = () => {
       touchY = null;
       touchX = null;
       targetY = window.scrollY;
+
+      const projected = touchVelocity * 26;
+      momentumVelocity = Math.max(-38, Math.min(38, projected));
+      touchVelocity = 0;
+
+      if (Math.abs(momentumVelocity) > 0.25) {
+        targetY = clamp(targetY + momentumVelocity * 7.5);
+        startLoop();
+      }
     };
 
     window.addEventListener('wheel', onWheel, { passive: false });
