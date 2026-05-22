@@ -600,9 +600,9 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
           </div>
           <div className="title-row-mid release-meta-grid">
             {item.episodes && <span className="meta-chip truncate-single-line" style={{ fontSize: 9 }}>{item.episodes} EP</span>}
-            <span className="meta-chip truncate-single-line" style={{ fontSize: 11, color: typeMeta.color, fontWeight: 700 }}><TypeIcon size={8} />{typeMeta.label}</span>
+            <span className="meta-chip meta-chip-type truncate-single-line" style={{ fontSize: 11, color: typeMeta.color, fontWeight: 700 }}><TypeIcon size={8} />{typeMeta.label}</span>
             <span className="meta-chip truncate-single-line" style={{ fontSize: 9.5 }}>{item.year || releaseLabel}</span>
-            <span className="meta-chip truncate-single-line" style={{ fontSize: 7.75, color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
+            <span className="meta-chip meta-chip-release truncate-single-line" style={{ fontSize: 7.75, color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
             {!item.essential && <span className="meta-chip truncate-single-line" style={{ fontSize: 8.5 }}>OPT</span>}
           </div>
           <div className="meta-muted line-clamp-2 overflow-wrap-anywhere title-subline" style={TITLE_ROW_STATIC.genreMeta}>GENRES: {genres.join(' • ').toUpperCase()}</div>
@@ -611,12 +611,12 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
         <div className="row-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: isDesktopViewport ? 96 : 0, flexShrink: 0 }}>
           <div className="row-meta-line truncate-single-line rating-marvel-pill" style={{ fontSize: 11, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.6 }}>★ {rating || '—'}</div>
           <button
-            className={`wbtn status-pill status-shade-${item.status}`}
+            className={`wbtn status-pill status-marvel-pill status-shade-${item.status}`}
             aria-label={`Open status menu for ${item.title}`}
             aria-haspopup="menu"
             aria-expanded={statusDropdown === item.id}
             onClick={(event) => onOpenStatus(event, item.id)}
-            style={{ minWidth: 104, height: 28, padding: '0 10px', borderRadius: 999, fontSize: 10.5, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.9, justifyContent: 'space-between' }}
+            style={{ minWidth: 92, height: 30, padding: '0 10px', borderRadius: 999, fontSize: 10.5, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.6, justifyContent: 'space-between' }}
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
               <RowStatusIcon size={10} />
