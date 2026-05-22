@@ -37,10 +37,10 @@ const getScrollTuning = () => {
   const t = (typeof window !== 'undefined' && window.__scrollTuning) ? window.__scrollTuning : {};
   const clamp10 = (v, d) => Math.max(1, Math.min(10, Number.isFinite(Number(v)) ? Number(v) : d));
   return {
-    desktopMultiplier: clamp10(t.desktopMultiplier, 7),
-    desktopDeltaCap: clamp10(t.desktopDeltaCap, 8),
-    mobileMultiplier: clamp10(t.mobileMultiplier, 7),
-    mobileDeltaCap: clamp10(t.mobileDeltaCap, 8),
+    desktopMultiplier: clamp10(t.desktopMultiplier, 8.5),
+    desktopDeltaCap: clamp10(t.desktopDeltaCap, 9),
+    mobileMultiplier: clamp10(t.mobileMultiplier, 8),
+    mobileDeltaCap: clamp10(t.mobileDeltaCap, 9),
   };
 };
 
@@ -75,7 +75,7 @@ export const useLenis = () => {
     const step = (ts) => {
       const dt = lastTs ? Math.min(42, Math.max(8, ts - lastTs)) : 16;
       lastTs = ts;
-      const smooth = isFinePointer ? 0.18 : 0.22;
+      const smooth = isFinePointer ? 0.24 : 0.3;
       const t = 1 - Math.pow(1 - smooth, dt / 16.67);
       current += (target - current) * t;
 
@@ -111,8 +111,8 @@ export const useLenis = () => {
       if (hasScrollableParent(event.target, { deltaY, axis: 'y' })) return;
 
       const tune = getScrollTuning();
-      const deskCap = 38 + tune.desktopDeltaCap * 10;
-      const deskMult = 1.1 + (tune.desktopMultiplier * 0.22);
+      const deskCap = 48 + tune.desktopDeltaCap * 10;
+      const deskMult = 1.25 + (tune.desktopMultiplier * 0.24);
       const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
       kickoff();
@@ -145,8 +145,8 @@ export const useLenis = () => {
       if (hasScrollableParent(event.target, { deltaY: rawDeltaY, axis: 'y' })) return;
 
       const tune = getScrollTuning();
-      const mobileCap = 20 + tune.mobileDeltaCap * 9;
-      const mobileMult = 1.06 + (tune.mobileMultiplier * 0.19);
+      const mobileCap = 26 + tune.mobileDeltaCap * 10;
+      const mobileMult = 1.18 + (tune.mobileMultiplier * 0.2);
       const limitedDelta = Math.max(-mobileCap, Math.min(mobileCap, rawDeltaY)) * mobileMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
       kickoff();
