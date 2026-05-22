@@ -1543,3 +1543,53 @@ main{--content-max:1560px !important}
 @media (max-width: 767px){
   .rrow .title-subline{font-size:9.5px !important;letter-spacing:.05em !important}
 }
+
+/* Final spacing normalization: modern balanced tiles */
+.rrow{
+  min-height:154px !important;
+  grid-template-columns:28px 76px minmax(0,1fr) minmax(134px,auto) !important;
+  gap:12px !important;
+  padding:14px 14px 14px 12px !important;
+  border-radius:22px !important;
+}
+.rrow .title-btn{
+  min-height:98px !important;
+  height:98px !important;
+  grid-template-rows:auto auto minmax(24px,1fr) !important;
+  gap:8px !important;
+}
+.rrow .title-row-mid{min-height:30px !important;row-gap:6px !important}
+.rrow .meta-chip{font-size:8.5px !important;padding:3px 7px !important;letter-spacing:.05em !important}
+.rrow .title-subline{font-size:9.5px !important;line-height:1.24 !important;opacity:.8;min-height:16px !important}
+.rrow .row-actions{gap:7px !important;min-width:116px !important}
+.row-actions .wbtn.status-pill{min-width:98px !important;min-height:34px !important;padding:0 11px !important;font-size:11px !important}
+.row-actions .wbtn{width:34px !important;height:34px !important}
+
+@media (max-width: 767px){
+  .rrow{min-height:138px !important;grid-template-columns:22px 58px minmax(0,1fr) !important;gap:10px !important;padding:12px 10px !important}
+  .rrow .title-btn{min-height:88px !important;height:88px !important;gap:6px !important}
+  .rrow .title-row-mid{min-height:28px !important}
+  .rrow .row-actions{min-width:0 !important;gap:8px !important}
+}
+
+/* Unwatched dropdown redesign */
+.status-menu-item.status-menu-unwatched{
+  background:color-mix(in srgb,var(--theme-surface) 92%, transparent) !important;
+  border:1px dashed color-mix(in srgb,var(--theme-border) 86%, transparent) !important;
+  color:var(--theme-text-secondary) !important;
+  box-shadow:none !important;
+}
+.status-menu-item.status-menu-unwatched:hover{
+  background:color-mix(in srgb,var(--theme-surface-hover) 82%, var(--theme-surface)) !important;
+  border-color:color-mix(in srgb,var(--theme-accent) 34%, var(--theme-border)) !important;
+  transform:translateY(-1px);
+}
+.status-menu-item.status-menu-unwatched.is-current{
+  border-style:solid !important;
+  border-color:color-mix(in srgb,var(--theme-accent) 44%, var(--theme-border)) !important;
+  background:color-mix(in srgb,var(--theme-accent) 8%, var(--theme-surface)) !important;
+}
+[data-color-mode="light"] .status-menu-item.status-menu-unwatched{
+  background:#fff !important;
+  color:#475569 !important;
+}

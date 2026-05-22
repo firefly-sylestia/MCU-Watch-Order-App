@@ -3514,7 +3514,7 @@ export default function MCUViewer() {
                   const isCurrent = key === activeItem?.status;
                   return (
                     <button key={key}
-                      className="status-menu-item marvel-mini-btn"
+                      className={`status-menu-item marvel-mini-btn status-menu-${key} ${isCurrent ? 'is-current' : ''}`}
                       autoFocus={isCurrent}
                       onClick={() => { setStatusDirect(activeItem.id, key); setStatusDropdown(null); }}
                       onKeyDown={e => { if (e.key === 'Escape') setStatusDropdown(null); }}
