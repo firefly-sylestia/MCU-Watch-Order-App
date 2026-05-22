@@ -21,18 +21,17 @@ const hasScrollableParent = (target, deltaY) => {
     node = node.parentElement;
   }
   return false;
-
+};
 
 const getScrollTuning = () => {
   const t = (typeof window !== 'undefined' && window.__scrollTuning) ? window.__scrollTuning : {};
   const clamp10 = (v, d) => Math.max(1, Math.min(10, Number.isFinite(Number(v)) ? Number(v) : d));
   return {
-    desktopMultiplier: clamp10(t.desktopMultiplier, 6),
-    desktopDeltaCap: clamp10(t.desktopDeltaCap, 6),
-    mobileMultiplier: clamp10(t.mobileMultiplier, 8),
-    mobileDeltaCap: clamp10(t.mobileDeltaCap, 8),
+    desktopMultiplier: clamp10(t.desktopMultiplier, 4),
+    desktopDeltaCap: clamp10(t.desktopDeltaCap, 4),
+    mobileMultiplier: clamp10(t.mobileMultiplier, 5),
+    mobileDeltaCap: clamp10(t.mobileDeltaCap, 5),
   };
-};
 };
 
 export const useLenis = () => {
@@ -50,21 +49,15 @@ export const useLenis = () => {
     let touchY = null;
 
     const maxScrollY = () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    const kickoff = () => { if (!rafId) rafId = window.requestAnimationFrame(step); };
 
     const step = () => {
       const delta = target - current;
-      current += delta * (isFinePointer ? 0.115 : 0.16);
+      current += delta * (isFinePointer ? 0.14 : 0.19);
       if (Math.abs(delta) <= 0.35) current = target;
       window.scrollTo(0, current);
-      if (Math.abs(target - current) > 0.35) {
-        rafId = window.requestAnimationFrame(step);
-      } else {
-        rafId = 0;
-      }
-    };
-
-    const kickoff = () => {
-      if (!rafId) rafId = window.requestAnimationFrame(step);
+      if (Math.abs(target - current) > 0.35) rafId = window.requestAnimationFrame(step);
+      else rafId = 0;
     };
 
     const normalizeDelta = (event) => {
@@ -78,14 +71,13 @@ export const useLenis = () => {
       if (event.defaultPrevented || event.ctrlKey) return;
       if (isEditableTarget(event.target)) return;
       if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
-
       const deltaY = normalizeDelta(event);
       if (!Number.isFinite(deltaY) || deltaY === 0) return;
       if (hasScrollableParent(event.target, deltaY)) return;
 
       const tune = getScrollTuning();
-      const deskCap = 40 + tune.desktopDeltaCap * 10;
-      const deskMult = 1 + (tune.desktopMultiplier * 0.2);
+      const deskCap = 30 + tune.desktopDeltaCap * 10;
+      const deskMult = 0.8 + (tune.desktopMultiplier * 0.2);
       const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
       kickoff();
@@ -93,19 +85,15 @@ export const useLenis = () => {
     };
 
     const onTouchStart = (event) => {
-      if (isFinePointer) return;
-      if (event.touches.length !== 1) return;
+      if (isFinePointer || event.touches.length !== 1) return;
       touchY = event.touches[0].clientY;
     };
 
     const onTouchMove = (event) => {
-      if (isFinePointer) return;
-      if (event.touches.length !== 1) return;
+      if (isFinePointer || event.touches.length !== 1) return;
       if (isEditableTarget(event.target)) return;
-      if (touchY == null) {
-        touchY = event.touches[0].clientY;
-        return;
-      }
+      if (touchY == null) { touchY = event.touches[0].clientY; return; }
+
       const nextY = event.touches[0].clientY;
       const rawDelta = touchY - nextY;
       touchY = nextY;
@@ -113,18 +101,15 @@ export const useLenis = () => {
       if (hasScrollableParent(event.target, rawDelta)) return;
 
       const tune = getScrollTuning();
-      const mobileCap = 20 + tune.mobileDeltaCap * 10;
-      const mobileMult = 1 + (tune.mobileMultiplier * 0.22);
+      const mobileCap = 15 + tune.mobileDeltaCap * 10;
+      const mobileMult = 0.85 + (tune.mobileMultiplier * 0.2);
       const limitedDelta = Math.max(-mobileCap, Math.min(mobileCap, rawDelta)) * mobileMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
       kickoff();
       event.preventDefault();
     };
 
-    const onTouchEnd = () => {
-      touchY = null;
-    };
-
+    const onTouchEnd = () => { touchY = null; };
     const syncToNativeScroll = () => {
       if (rafId) return;
       current = window.scrollY;
@@ -137,11 +122,7 @@ export const useLenis = () => {
     window.addEventListener('touchend', onTouchEnd, { passive: true });
     window.addEventListener('touchcancel', onTouchEnd, { passive: true });
     window.addEventListener('scroll', syncToNativeScroll, { passive: true });
-
-    const onResize = () => {
-      target = Math.min(target, maxScrollY());
-      current = Math.min(current, maxScrollY());
-    };
+    const onResize = () => { target = Math.min(target, maxScrollY()); current = Math.min(current, maxScrollY()); };
     window.addEventListener('resize', onResize);
 
     return () => {

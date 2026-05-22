@@ -774,7 +774,7 @@ export default function MCUViewer() {
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
   const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
-  const [scrollTuning, setScrollTuning] = useState({ desktopMultiplier: 6, desktopDeltaCap: 6, mobileMultiplier: 8, mobileDeltaCap: 8 });
+  const [scrollTuning, setScrollTuning] = useState({ desktopMultiplier: 4, desktopDeltaCap: 4, mobileMultiplier: 5, mobileDeltaCap: 5 });
   const [genreFilter] = useState('all');
   const [myLikes,        setMyLikes]        = useState({});
   const [myRating,       setMyRating]       = useState({});
@@ -2828,6 +2828,20 @@ export default function MCUViewer() {
               <button className='fpill settings-toggle-pill' type='button' onClick={() => setPerformanceMode(v => !v)} style={{ minWidth: 72, justifyContent: 'center', borderColor: performanceMode ? 'var(--theme-accent)' : 'var(--theme-border)', background: performanceMode ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}>{performanceMode ? 'On' : 'Off'}</button>
             </label>
             <div style={{ fontSize: 11, color: T.textMuted, lineHeight: 1.35, marginTop: -4 }}>Leave off for full UI motion; turn on only if your device needs reduced effects.</div>
+            <div style={{ marginTop: 10, borderTop: `1px solid ${T.surfaceBorder}`, paddingTop: 10, display: 'grid', gap: 8 }}>
+              <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Scroll Tuning</div>
+              {[['desktopMultiplier','Desktop Multiplier'],['desktopDeltaCap','Desktop Delta Cap'],['mobileMultiplier','Mobile Multiplier'],['mobileDeltaCap','Mobile Delta Cap']].map(([key,label]) => (
+                <label key={key} style={{ display: 'grid', gap: 4 }}>
+                  <span style={{ fontSize: 12, color: T.textMuted }}>{label}: {scrollTuning[key]}/10</span>
+                  <input type='range' min={1} max={10} step={1} value={scrollTuning[key]} onChange={(e) => setScrollTuning(prev => ({ ...prev, [key]: Number(e.target.value) }))} />
+                </label>
+              ))}
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button className='fpill' onClick={() => setScrollTuning({ desktopMultiplier: 4, desktopDeltaCap: 4, mobileMultiplier: 5, mobileDeltaCap: 5 })} style={{ justifyContent: 'center', flex: 1 }}>Balanced</button>
+                <button className='fpill' onClick={() => setScrollTuning({ desktopMultiplier: 8, desktopDeltaCap: 8, mobileMultiplier: 8, mobileDeltaCap: 8 })} style={{ justifyContent: 'center', flex: 1 }}>Fast</button>
+              </div>
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 6 }}>
               <button className='fpill' onClick={() => setDensityMode('comfortable')} style={{ borderColor: densityMode === 'comfortable' ? 'var(--theme-accent)' : 'var(--theme-border)', justifyContent: 'center' }}>Comfortable</button>
               <button className='fpill' onClick={() => setDensityMode('compact')} style={{ borderColor: densityMode === 'compact' ? 'var(--theme-accent)' : 'var(--theme-border)', justifyContent: 'center' }}>Compact</button>
