@@ -382,6 +382,7 @@ const posterExportName = (item, ext = 'jpg') => posterFileName(item, ext);
 
 
 const loadedPosterSrcs = new Set();
+const requestedPosterSrcs = new Set();
 
 const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poster', eager = false, loadingMode = 'auto' }) {
   const [loaded, setLoaded] = useState(() => loadedPosterSrcs.has(src));
@@ -591,7 +592,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             />
           ) : (idx + 1)}
         </div>
-        <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 24} loadingMode="auto" />
+        <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 72} loadingMode="eager" />
 
         <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
           <div className="title-row-top" style={TITLE_ROW_STATIC.titleLine}>
@@ -1389,6 +1390,43 @@ export default function MCUViewer() {
   const posterSrc = useCallback((item) => (
     localPosterSrc(item) || posterCache[item.id] || `https://placehold.co/220x330/1a1f33/f7c4de?text=${encodeURIComponent(item.title+'\n'+item.year)}`
   ), [localPosterSrc, posterCache]);
+
+
+  useEffect(() => {
+    // Aggressively preload list posters so items feel fully loaded during long timeline scrolling.
+    const targets = filtered.slice(0, 240);
+    if (!targets.length) return undefined;
+
+    let cancelled = false;
+    const enqueue = (start = 0) => {
+      if (cancelled) return;
+      const batch = targets.slice(start, start + 24);
+      batch.forEach((item) => {
+        const src = posterSrc(item);
+        if (!src || loadedPosterSrcs.has(src) || requestedPosterSrcs.has(src)) return;
+        requestedPosterSrcs.add(src);
+        const img = new Image();
+        img.decoding = 'async';
+        img.src = src;
+        const markLoaded = () => {
+          loadedPosterSrcs.add(src);
+          requestedPosterSrcs.delete(src);
+        };
+        img.onload = markLoaded;
+        img.onerror = () => requestedPosterSrcs.delete(src);
+      });
+      if (start + 24 < targets.length) {
+        window.setTimeout(() => enqueue(start + 24), 36);
+      }
+    };
+
+    enqueue(0);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [filtered, posterSrc]);
+
   const heroPosterItems = useMemo(() => {
     const seen = new Set();
     return activeItems
