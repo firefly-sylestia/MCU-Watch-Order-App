@@ -1593,3 +1593,66 @@ main{--content-max:1560px !important}
   background:#fff !important;
   color:#475569 !important;
 }
+
+/* Title/meta/poster modernization pass: balanced hierarchy + fit */
+.rrow{
+  min-height:162px !important;
+  grid-template-columns:30px 82px minmax(0,1fr) minmax(136px,auto) !important;
+  gap:14px !important;
+  padding:16px 16px 16px 13px !important;
+  align-items:center !important;
+}
+.rrow .poster-shell,.rrow .poster{
+  width:82px !important;
+  height:118px !important;
+  border-radius:18px !important;
+}
+.rrow .poster{
+  box-shadow:0 14px 24px rgba(2,8,23,.2),0 0 0 1px color-mix(in srgb,var(--theme-border) 74%, transparent) !important;
+}
+.rrow .title-btn{
+  min-height:108px !important;
+  height:108px !important;
+  gap:9px !important;
+  grid-template-rows:auto auto minmax(26px,1fr) !important;
+}
+.rrow .title-btn .title-main{
+  font-size:clamp(27px,1.62vw,36px) !important;
+  line-height:1.04 !important;
+  letter-spacing:.01em !important;
+}
+.rrow .title-row-top{align-items:flex-start !important;gap:6px !important}
+.rrow .title-chevron{margin-top:3px !important;opacity:.72 !important}
+.title-row-mid.release-meta-grid{gap:7px !important}
+.rrow .meta-chip{
+  min-height:29px !important;
+  font-size:10px !important;
+  font-weight:760 !important;
+  letter-spacing:.04em !important;
+  padding:4px 8px !important;
+  background:color-mix(in srgb,var(--theme-surface) 92%, transparent) !important;
+  border-color:color-mix(in srgb,var(--theme-border) 86%, transparent) !important;
+}
+.rrow .title-subline{
+  font-size:10px !important;
+  letter-spacing:.08em !important;
+  line-height:1.32 !important;
+  opacity:.76 !important;
+  min-height:18px !important;
+  -webkit-line-clamp:1 !important;
+}
+
+[data-color-mode="light"] .rrow .meta-chip{
+  background:color-mix(in srgb,#ffffff 94%, var(--theme-surface)) !important;
+  border-color:color-mix(in srgb,#cbd5e1 72%, var(--theme-border)) !important;
+}
+
+@media (max-width: 767px){
+  .rrow{min-height:144px !important;grid-template-columns:24px 62px minmax(0,1fr) !important;gap:10px !important;padding:12px 10px !important}
+  .rrow .poster-shell,.rrow .poster{width:62px !important;height:90px !important;border-radius:14px !important}
+  .rrow .title-btn{min-height:92px !important;height:92px !important;gap:7px !important}
+  .rrow .title-btn .title-main{font-size:clamp(18px,5.2vw,24px) !important;line-height:1.08 !important}
+  .title-row-mid.release-meta-grid{gap:6px !important}
+  .rrow .meta-chip{min-height:26px !important;font-size:8.8px !important;padding:3px 6px !important}
+  .rrow .title-subline{font-size:9px !important;letter-spacing:.06em !important}
+}
