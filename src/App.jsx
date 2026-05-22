@@ -633,7 +633,6 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
               style={{ width: 28, height: 28, background: statusMeta.bg || 'transparent', color: statusMeta.color || T.textMuted, borderColor: `${statusMeta.color || T.surfaceBorder}66` }}
             ><RowStatusIcon size={12} /></button>
           )}
-          {isWorthy && <span style={{ fontSize: 10, fontWeight: 700, color: '#9bd6ff', border: '1px solid #7dc3ff88', borderRadius: 999, padding: '1px 6px', background: 'rgba(60,166,255,0.14)', letterSpacing: 1 }}>WORTHY</span>}
         </div>
         
       </div>
