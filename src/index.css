@@ -164,19 +164,6 @@ html {
 
 
 
-html.lenis,
-html.lenis body {
-  height: auto;
-}
-
-.lenis.lenis-smooth {
-  scroll-behavior: auto !important;
-}
-
-.lenis.lenis-stopped {
-  overflow: clip;
-}
-
 body {
   margin: 0;
   min-height: 100dvh;
@@ -694,19 +681,3 @@ a:hover {
 }
 
 
-html.lenis-ready,
-html.lenis-ready body {
-  overflow: hidden;
-}
-
-html.lenis-ready .app-scroll-shell {
-  scrollbar-width: none;
-}
-html.lenis-ready .app-scroll-shell::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
-
-.theme-switch {
-  transition: background 320ms var(--ease-out), color 220ms var(--ease-out), filter 220ms var(--ease-out);
-}

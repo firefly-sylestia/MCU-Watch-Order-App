@@ -1,57 +1,47 @@
 import { useEffect } from 'react';
 
-const LENIS_SCRIPT_ID = 'lenis-runtime-script';
-const LENIS_SCRIPT_SOURCES = [
-  'https://unpkg.com/lenis@1.3.23/dist/lenis.min.js',
-  'https://cdn.jsdelivr.net/npm/lenis@1.3.23/dist/lenis.min.js',
-];
-
-const LENIS_PRESET_OPTIONS = {
-  gentle: { duration: 1.35, lerp: 0.075, wheelMultiplier: 0.84, touchMultiplier: 0.88 },
-  balanced: { duration: 1.1, lerp: 0.09, wheelMultiplier: 0.92, touchMultiplier: 0.98 },
-  snappy: { duration: 0.86, lerp: 0.13, wheelMultiplier: 1.02, touchMultiplier: 1.04 },
-};
-
 const isEditableTarget = (target) => {
   if (!(target instanceof Element)) return false;
   const tag = target.tagName;
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || Boolean(target.closest('[contenteditable], [contenteditable="true"], [contenteditable="plaintext-only"]'));
 };
 
-const injectLenisScript = (src) => new Promise((resolve, reject) => {
-  const script = document.createElement('script');
-  script.id = LENIS_SCRIPT_ID;
-  script.src = src;
-  script.async = true;
-  script.onload = () => resolve(window.Lenis);
-  script.onerror = reject;
-  document.head.appendChild(script);
-});
+const hasScrollableParent = (target, { deltaX = 0, deltaY = 0, axis = 'y' } = {}) => {
+  if (!(target instanceof Element)) return false;
+  let node = target;
+  while (node && node !== document.body) {
+    const style = window.getComputedStyle(node);
+    const overflowY = style.overflowY;
+    const overflowX = style.overflowX;
+    const canScrollY = (overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight + 1;
+    const canScrollX = (overflowX === 'auto' || overflowX === 'scroll') && node.scrollWidth > node.clientWidth + 1;
 
-const loadLenisScript = async () => {
-  if (window.Lenis) return window.Lenis;
-
-  const existing = document.getElementById(LENIS_SCRIPT_ID);
-  if (existing) {
-    return new Promise((resolve, reject) => {
-      existing.addEventListener('load', () => resolve(window.Lenis), { once: true });
-      existing.addEventListener('error', reject, { once: true });
-    });
-  }
-
-  let lastError = null;
-  for (const src of LENIS_SCRIPT_SOURCES) {
-    try {
-      const LenisCtor = await injectLenisScript(src);
-      if (typeof LenisCtor === 'function') return LenisCtor;
-    } catch (error) {
-      lastError = error;
-      const staleScript = document.getElementById(LENIS_SCRIPT_ID);
-      staleScript?.remove();
+    if (axis === 'x' && canScrollX) {
+      const atLeft = node.scrollLeft <= 0;
+      const atRight = node.scrollLeft + node.clientWidth >= node.scrollWidth - 1;
+      if ((deltaX < 0 && !atLeft) || (deltaX > 0 && !atRight)) return true;
     }
-  }
 
-  throw lastError || new Error('Unable to load Lenis runtime');
+    if (axis === 'y' && canScrollY) {
+      const atTop = node.scrollTop <= 0;
+      const atBottom = node.scrollTop + node.clientHeight >= node.scrollHeight - 1;
+      if ((deltaY < 0 && !atTop) || (deltaY > 0 && !atBottom)) return true;
+    }
+
+    node = node.parentElement;
+  }
+  return false;
+};
+
+const getScrollTuning = () => {
+  const t = (typeof window !== 'undefined' && window.__scrollTuning) ? window.__scrollTuning : {};
+  const clamp10 = (v, d) => Math.max(1, Math.min(10, Number.isFinite(Number(v)) ? Number(v) : d));
+  return {
+    desktopMultiplier: clamp10(t.desktopMultiplier, 7),
+    desktopDeltaCap: clamp10(t.desktopDeltaCap, 8),
+    mobileMultiplier: clamp10(t.mobileMultiplier, 7),
+    mobileDeltaCap: clamp10(t.mobileDeltaCap, 8),
+  };
 };
 
 export const useLenis = () => {
@@ -59,69 +49,146 @@ export const useLenis = () => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
 
-    let disposed = false;
-    let lenis = null;
-    let activePreset = 'balanced';
     const html = document.documentElement;
+    const isFinePointer = window.matchMedia('(pointer: fine)').matches;
+    const saveDataMode = navigator?.connection?.saveData === true;
+    html.classList.add('lenis-ready');
+    const prevHtmlOverscroll = html.style.overscrollBehaviorY;
+    const prevBodyOverscroll = document.body.style.overscrollBehaviorY;
+    html.style.overscrollBehaviorY = 'none';
+    document.body.style.overscrollBehaviorY = 'none';
 
-    const getRuntimeConfig = () => window.__lenisConfig || { preset: 'balanced', performanceMode: false };
+    let current = window.scrollY;
+    let target = window.scrollY;
+    let rafId = 0;
+    let lastTs = 0;
+    let internalScrollWrite = false;
 
-    const buildLenisOptions = () => {
-      const cfg = getRuntimeConfig();
-      activePreset = LENIS_PRESET_OPTIONS[cfg.preset] ? cfg.preset : 'balanced';
-      const preset = LENIS_PRESET_OPTIONS[activePreset];
-      return {
-        autoRaf: true,
-        smoothWheel: true,
-        syncTouch: !cfg.performanceMode,
-        normalizeWheel: true,
-        gestureOrientation: 'vertical',
-        overscroll: false,
-        ...preset,
-        prevent: (node) => Boolean(node instanceof Element && node.closest('[data-lenis-prevent], .hero-carousel-track, .detail-card, .settings-menu')),
-      };
+    let touchY = null;
+    let touchX = null;
+
+    const maxScrollY = () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    const isOverlayActive = () => Boolean(typeof window !== 'undefined' && window.__overlayActive);
+
+    const kickoff = () => { if (!rafId) rafId = window.requestAnimationFrame(step); };
+
+    const step = (ts) => {
+      const dt = lastTs ? Math.min(42, Math.max(8, ts - lastTs)) : 16;
+      lastTs = ts;
+      const smooth = isFinePointer ? 0.18 : 0.22;
+      const t = 1 - Math.pow(1 - smooth, dt / 16.67);
+      current += (target - current) * t;
+
+      const done = Math.abs(target - current) < 0.2;
+      if (done) current = target;
+
+      internalScrollWrite = true;
+      window.scrollTo(0, current);
+      window.requestAnimationFrame(() => { internalScrollWrite = false; });
+
+      if (!done) rafId = window.requestAnimationFrame(step);
+      else { rafId = 0; lastTs = 0; }
     };
 
-    const handleOverlayToggle = () => {
-      if (!lenis) return;
-      if (window.__overlayActive) lenis.stop();
-      else lenis.start();
+    const normalizeDelta = (event) => {
+      if (event.deltaMode === 1) return event.deltaY * 16;
+      if (event.deltaMode === 2) return event.deltaY * window.innerHeight;
+      return event.deltaY;
     };
 
-    const handleLenisConfigChange = () => {
-      if (!lenis) return;
-      const prev = activePreset;
-      const nextOptions = buildLenisOptions();
-      const presetChanged = prev !== activePreset;
-      Object.assign(lenis.options, nextOptions);
-      if (presetChanged) {
-        lenis.scrollTo(window.scrollY, { immediate: true });
+    const onWheel = (event) => {
+      if (!isFinePointer || saveDataMode) return;
+      if (event.defaultPrevented || event.ctrlKey) return;
+      if (isOverlayActive()) return;
+      if (isEditableTarget(event.target)) return;
+      const horizontalIntent = Math.abs(event.deltaX) > Math.abs(event.deltaY) * 1.1;
+      const deltaY = normalizeDelta(event);
+      if (horizontalIntent) {
+        if (hasScrollableParent(event.target, { deltaX: event.deltaX, axis: 'x' })) return;
+        return;
       }
+      if (!Number.isFinite(deltaY) || deltaY === 0) return;
+      if (hasScrollableParent(event.target, { deltaY, axis: 'y' })) return;
+
+      const tune = getScrollTuning();
+      const deskCap = 38 + tune.desktopDeltaCap * 10;
+      const deskMult = 1.1 + (tune.desktopMultiplier * 0.22);
+      const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult;
+      target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
+      kickoff();
+      event.preventDefault();
     };
 
-    loadLenisScript()
-      .then((LenisCtor) => {
-        if (disposed || typeof LenisCtor !== 'function') return;
-        lenis = new LenisCtor(buildLenisOptions());
+    const onTouchStart = (event) => {
+      if (isFinePointer || saveDataMode || event.touches.length !== 1) return;
+      if (isOverlayActive()) return;
+      touchY = event.touches[0].clientY;
+      touchX = event.touches[0].clientX;
+    };
 
-        window.__lenis = lenis;
-        html.classList.add('lenis-ready');
-        handleOverlayToggle();
-      })
-      .catch((error) => {
-        console.error('Lenis is required but failed to initialize.', error);
-      });
+    const onTouchMove = (event) => {
+      if (isFinePointer || saveDataMode || event.touches.length !== 1) return;
+      if (isOverlayActive()) return;
+      if (isEditableTarget(event.target)) return;
+      if (touchY == null) { touchY = event.touches[0].clientY; return; }
 
-    window.addEventListener('overlay:change', handleOverlayToggle);
-    window.addEventListener('lenis:config-change', handleLenisConfigChange);
+      const nextY = event.touches[0].clientY;
+      const nextX = event.touches[0].clientX;
+      const rawDeltaY = touchY - nextY;
+      const rawDeltaX = (touchX ?? nextX) - nextX;
+      touchY = nextY;
+      touchX = nextX;
+
+      if (!Number.isFinite(rawDeltaY) || Math.abs(rawDeltaY) < 0.8) return;
+      const horizontalIntent = Math.abs(rawDeltaX) > Math.abs(rawDeltaY) * 1.1;
+      if (horizontalIntent) return;
+      if (hasScrollableParent(event.target, { deltaY: rawDeltaY, axis: 'y' })) return;
+
+      const tune = getScrollTuning();
+      const mobileCap = 20 + tune.mobileDeltaCap * 9;
+      const mobileMult = 1.06 + (tune.mobileMultiplier * 0.19);
+      const limitedDelta = Math.max(-mobileCap, Math.min(mobileCap, rawDeltaY)) * mobileMult;
+      target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
+      kickoff();
+      event.preventDefault();
+    };
+
+    const onTouchEnd = () => { touchY = null; touchX = null; };
+
+    const onNativeScroll = () => {
+      if (isOverlayActive()) return;
+      if (internalScrollWrite) return;
+      if (rafId) return;
+      const y = window.scrollY;
+      current = y;
+      target = y;
+    };
+
+    window.addEventListener('wheel', onWheel, { passive: false });
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', onTouchEnd, { passive: true });
+    window.addEventListener('scroll', onNativeScroll, { passive: true });
+    const onResize = () => {
+      const maxY = maxScrollY();
+      target = Math.min(target, maxY);
+      current = Math.min(current, maxY);
+    };
+    window.addEventListener('resize', onResize);
 
     return () => {
-      disposed = true;
-      window.removeEventListener('overlay:change', handleOverlayToggle);
-      window.removeEventListener('lenis:config-change', handleLenisConfigChange);
+      window.removeEventListener('wheel', onWheel);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('touchcancel', onTouchEnd);
+      window.removeEventListener('scroll', onNativeScroll);
+      window.removeEventListener('resize', onResize);
+      window.cancelAnimationFrame(rafId);
+      html.style.overscrollBehaviorY = prevHtmlOverscroll;
+      document.body.style.overscrollBehaviorY = prevBodyOverscroll;
       html.classList.remove('lenis-ready');
-      if (window.__lenis === lenis) delete window.__lenis;
-      lenis?.destroy?.();
     };
   }, []);
 };
