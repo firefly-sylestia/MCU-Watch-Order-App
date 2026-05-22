@@ -770,7 +770,6 @@ export default function MCUViewer() {
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
   const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
-  const [scrollTuning] = useState({ desktopMultiplier: 5, desktopDeltaCap: 7, mobileMultiplier: 5, mobileDeltaCap: 7 });
   const [genreFilter] = useState('all');
   const [myLikes,        setMyLikes]        = useState({});
   const [myRating,       setMyRating]       = useState({});
@@ -867,12 +866,6 @@ export default function MCUViewer() {
   useOverlayNavigation({ sidebarOpen, settingsOpen, detailItem, analyticsOpen, onCloseDetail: closeDetail, onCloseAnalytics: closeAnalytics, onCloseSettings: closeSettings, onCloseSidebar: closeSidebar });
 
   const currentPhases = universe === 'dc' ? DC_PHASES : PHASES;
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.__scrollTuning = scrollTuning;
-  }, [scrollTuning]);
-
   const overlayActive = Boolean(settingsOpen || analyticsOpen || detailItem || sidebarOpen);
 
   useEffect(() => {

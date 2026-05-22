@@ -173,6 +173,21 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent],
+.lenis.lenis-smooth .lenis-prevent {
+  overscroll-behavior: contain;
+}
 #root {
   width: 100%;
   max-width: 100vw;
