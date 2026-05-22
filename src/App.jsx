@@ -661,8 +661,8 @@ const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
       <button className="theme-btn sidebar-toggle-btn" onClick={onToggle} aria-label="Toggle sidebar menu" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Menu size={18} /></button>
       <button className="theme-btn sidebar-toggle-btn settings-toggle-btn" onClick={onOpenSettings} aria-label="Open settings and profile" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Settings size={18} /></button>
       </div>
-      {open && <div className="sidebar-backdrop" onClick={onClose} />}
-      <aside ref={ref} data-state={open ? 'open' : 'closed'} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
+      <div className="sidebar-backdrop" data-state={open ? 'open' : 'closed'} onClick={onClose} />
+      <aside ref={ref} data-state={open ? 'open' : 'closed'} aria-hidden={!open} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
         {children}
       </aside>
     </>
@@ -678,17 +678,15 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
 }, ref) {
   return (
     <>
-      {open && <button className="settings-backdrop" aria-label="Close settings menu" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose?.(); }} />}
-      {open && (
-        <div className="settings-shell" data-state={open ? 'open' : 'closed'} role="dialog" aria-modal="true" aria-label="Settings and profile" ref={ref}>
-          <div className="fade-in settings-menu settings-menu-redesign" data-state={open ? 'open' : 'closed'} style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
-            <div className="settings-sticky-actions">
-              <button className="fpill glass-panel settings-close-sticky" onClick={() => onClose?.()}><X size={14}/>Close</button>
-            </div>
-            {children}
+      <button className="settings-backdrop" data-state={open ? 'open' : 'closed'} aria-label="Close settings menu" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose?.(); }} />
+      <div className="settings-shell" data-state={open ? 'open' : 'closed'} role="dialog" aria-modal={open ? 'true' : 'false'} aria-hidden={!open} aria-label="Settings and profile" ref={ref}>
+        <div className="fade-in settings-menu settings-menu-redesign" data-state={open ? 'open' : 'closed'} style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
+          <div className="settings-sticky-actions">
+            <button className="fpill glass-panel settings-close-sticky" onClick={() => onClose?.()}><X size={14}/>Close</button>
           </div>
+          {children}
         </div>
-      )}
+      </div>
     </>
   );
 }));
@@ -1448,7 +1446,7 @@ export default function MCUViewer() {
 
   useEffect(() => {
     if (!previousHeroSrc) return undefined;
-    const timer = window.setTimeout(() => setPreviousHeroSrc(''), darkMode ? 900 : 420);
+    const timer = window.setTimeout(() => setPreviousHeroSrc(''), performanceMode ? 140 : 220);
     return () => window.clearTimeout(timer);
   }, [previousHeroSrc, darkMode]);
 
