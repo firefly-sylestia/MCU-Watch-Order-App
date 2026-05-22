@@ -537,7 +537,6 @@ const areTitleRowPropsEqual = (prev, next) => (
   && prev.bulkSelectMode === next.bulkSelectMode
   && prev.isSelected === next.isSelected
   && prev.statusLabelOverride === next.statusLabelOverride
-  && prev.isWorthy === next.isWorthy
   && prev.multiverseShuffle === next.multiverseShuffle
   && prev.isDesktopViewport === next.isDesktopViewport
 );
@@ -568,9 +567,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   isSelected = false,
   onToggleSelected,
   statusLabelOverride = null,
-  isWorthy = false,
   multiverseShuffle = false,
-  onThorLongPress,
   isDesktopViewport = false,
 }) {
   const StatusIcon = statusMeta.Icon;
@@ -579,7 +576,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   const hideWatchToggle = releaseStatus === 'upcoming';
   return (
     <div>
-      <div className={`rrow type-${item.type} ${isExpanded ? 'curvy-selected' : ''}`} onPointerDown={() => { if (item.title.toLowerCase().includes('thor')) { window.__thorPress = setTimeout(() => onThorLongPress?.(item), 650); } }} onPointerUp={() => clearTimeout(window.__thorPress)} onPointerLeave={() => clearTimeout(window.__thorPress)} style={{ opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow, borderColor: multiverseShuffle ? `hsl(${(item.id * 47) % 360} 90% 60% / 0.7)` : undefined, ...(isWatched ? { background: 'color-mix(in srgb, var(--theme-watched-bg) 62%, transparent)' } : {}) }}>
+      <div className={`rrow type-${item.type} ${isExpanded ? 'curvy-selected' : ''}`} style={{ opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow, borderColor: multiverseShuffle ? `hsl(${(item.id * 47) % 360} 90% 60% / 0.7)` : undefined, ...(isWatched ? { background: 'color-mix(in srgb, var(--theme-watched-bg) 62%, transparent)' } : {}) }}>
         <div style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 13, color: isWatched ? 'var(--theme-accent)' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
           {bulkSelectMode ? (
             <input
@@ -800,7 +797,6 @@ export default function MCUViewer() {
   const [scrollCheckpoint, setScrollCheckpoint] = useState(initialUiState.scrollTop);
   const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
   const [grootMode, setGrootMode] = useState(false);
-  const [worthyIds, setWorthyIds] = useState({});
 
   useEffect(() => {
     setItems(universe === 'dc' ? DC_RAW : RAW);
@@ -850,7 +846,6 @@ export default function MCUViewer() {
     : 1;
   const effectiveUiScale = isDesktopViewport && textScaleEnabled ? desktopTextScale * desktopDpiCompensation : 1;
   const { heroBackdropScale, setHeroBackdropScale, heroBackdropOpacity, setHeroBackdropOpacity } = useHeroBackdrop();
-  const [lightningStrike, setLightningStrike] = useState(false);
   const [spiderDrop, setSpiderDrop] = useState(false);
   const headerMinimized = false;
   const phaseRefs  = useRef({});
@@ -1078,16 +1073,23 @@ export default function MCUViewer() {
     const el = phaseRefs.current[id];
     const container = mainRef.current;
     if (!el) return;
+
+    const topBarOffset = headerCompact ? 72 : 96;
     const canScrollMain = container && container.scrollHeight > container.clientHeight + 1;
     if (canScrollMain) {
       const containerTop = container.getBoundingClientRect().top;
       const elTop = el.getBoundingClientRect().top;
-      const offset = elTop - containerTop + container.scrollTop - 16;
-      container.scrollTo({ top: offset, behavior: 'smooth' });
+      const desiredTop = elTop - containerTop + container.scrollTop - topBarOffset;
+      const maxTop = Math.max(0, container.scrollHeight - container.clientHeight);
+      const clampedTop = Math.max(0, Math.min(maxTop, desiredTop));
+      container.scrollTo({ top: clampedTop, behavior: 'smooth' });
       return;
     }
-    const top = el.getBoundingClientRect().top + window.scrollY - 82;
-    window.scrollTo({ top, behavior: 'smooth' });
+
+    const desiredWindowTop = el.getBoundingClientRect().top + window.scrollY - topBarOffset;
+    const maxWindowTop = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    const clampedWindowTop = Math.max(0, Math.min(maxWindowTop, desiredWindowTop));
+    window.scrollTo({ top: clampedWindowTop, behavior: 'smooth' });
   };
 
   const exportProgress = async () => {
@@ -2722,7 +2724,6 @@ export default function MCUViewer() {
         <div className="hero-backdrop-blend" />
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '6%' : '3%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '5%' : '2.5%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.12 : 0.06, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
       </div>
-      {lightningStrike && <div style={{ position:'fixed', inset:0, pointerEvents:'none', background:'linear-gradient(180deg, rgba(180,220,255,0.95), rgba(255,255,255,0))', mixBlendMode:'screen', zIndex:9999, animation:'fadeInOut 0.7s ease' }} />}
       {spiderDrop && <div style={{ position:'fixed', top:0, left:'50%', transform:'translateX(-50%)', fontSize:40, zIndex:9999, animation:'spiderDrop 2.4s ease forwards', pointerEvents:'none' }}>🕷️</div>}
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
@@ -3230,9 +3231,7 @@ export default function MCUViewer() {
                         isSelected={selectedIds.has(item.id)}
                         onToggleSelected={toggleSelected}
                         statusLabelOverride={grootMode ? 'I am Groot' : null}
-                        isWorthy={Boolean(worthyIds[item.id])}
                         multiverseShuffle={multiverseShuffle}
-                        onThorLongPress={(pressedItem) => { setWorthyIds(prev => ({ ...prev, [pressedItem.id]: !prev[pressedItem.id] })); setLightningStrike(true); setTimeout(() => setLightningStrike(false), 700); }}
                         isDesktopViewport={isDesktopViewport}
                       />
                     );
