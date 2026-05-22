@@ -77,12 +77,12 @@ const TYPE_META = {
 };
 
 const STATUS_META = {
-  watched:        { label: 'Watched',        color: '#3ec47a', Icon: Check,  bg: 'rgba(62,196,122,0.1)'  },
-  'plan-to-watch':{ label: 'Plan to Watch',  color: '#4a9ede', Icon: Clock,  bg: 'rgba(74,158,222,0.1)'  },
-  watching:       { label: 'Watching',       color: '#d4372f', Icon: Eye,    bg: 'rgba(212,55,47,0.1)'   },
-  'on-hold':      { label: 'On Hold',        color: '#f39c12', Icon: Pause,  bg: 'rgba(243,156,18,0.1)'  },
-  dropped:        { label: 'Dropped',        color: '#e05252', Icon: Trash2, bg: 'rgba(224,82,82,0.1)'   },
-  unwatched:      { label: 'Not Watched',    color: '#334455', Icon: EyeOff, bg: 'transparent'           },
+  watched:        { label: 'Completed',      color: '#e11d48', Icon: Check,      bg: 'rgba(225,29,72,0.12)'  },
+  'plan-to-watch':{ label: 'Watchlist',      color: '#3b82f6', Icon: Bookmark,   bg: 'rgba(59,130,246,0.12)' },
+  watching:       { label: 'In Progress',    color: '#8b5cf6', Icon: PlayCircle, bg: 'rgba(139,92,246,0.12)' },
+  'on-hold':      { label: 'Paused',         color: '#f59e0b', Icon: PauseCircle,bg: 'rgba(245,158,11,0.12)' },
+  dropped:        { label: 'Dropped',        color: '#ef4444', Icon: XCircle,    bg: 'rgba(239,68,68,0.12)'  },
+  unwatched:      { label: 'Unwatched',      color: 'var(--theme-text-secondary)', Icon: EyeOff, bg: 'transparent' },
 };
 
 const SORT_LABELS = { order: 'Chronological', year: 'By Year', title: 'Alphabetical', runtime: 'Runtime', watched: 'Recently Watched', status: 'By Status' };
@@ -598,7 +598,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             <span className="title-main" style={{ fontWeight: 800, color: 'var(--theme-text)', opacity: 1, transition: 'color 0.26s', fontFamily: 'var(--font-marvel-display)', maxWidth: '100%', letterSpacing: 0.2, minWidth: 0 }}>{item.title}</span>
             <ChevRight size={10} className="title-chevron" style={{ color: T.textFaint, transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
           </div>
-          <div className="title-row-mid">
+          <div className="title-row-mid release-meta-grid">
             {item.episodes && <span className="meta-chip truncate-single-line" style={{ fontSize: 9 }}>{item.episodes} EP</span>}
             <span className="meta-chip truncate-single-line" style={{ fontSize: 11, color: typeMeta.color, fontWeight: 700 }}><TypeIcon size={8} />{typeMeta.label}</span>
             <span className="meta-chip truncate-single-line" style={{ fontSize: 9.5 }}>{item.year || releaseLabel}</span>
@@ -611,7 +611,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
         <div className="row-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: isDesktopViewport ? 96 : 0, flexShrink: 0 }}>
           <div className="row-meta-line truncate-single-line" style={{ fontSize: 11, color: 'var(--theme-warning)', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.6 }}>★ {rating || '—'}</div>
           <button
-            className="wbtn status-pill status-marvel-pill"
+            className={`wbtn status-pill status-shade-${item.status}`}
             aria-label={`Open status menu for ${item.title}`}
             aria-haspopup="menu"
             aria-expanded={statusDropdown === item.id}
@@ -3514,7 +3514,8 @@ export default function MCUViewer() {
                   const isCurrent = key === activeItem?.status;
                   return (
                     <button key={key}
-                      className="status-menu-item marvel-mini-btn"
+                      className={`status-menu-item status-menu-item-${key} marvel-mini-btn ${isCurrent ? 'is-current' : ''}`}
+                      data-status={key}
                       autoFocus={isCurrent}
                       onClick={() => { setStatusDirect(activeItem.id, key); setStatusDropdown(null); }}
                       onKeyDown={e => { if (e.key === 'Escape') setStatusDropdown(null); }}
