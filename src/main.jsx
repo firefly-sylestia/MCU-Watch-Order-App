@@ -2,6 +2,18 @@ import { Component, StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
+import { useLenis } from './hooks/useLenis'
+import { motionCssVars } from './constants/motion'
+
+const AppRuntime = () => {
+  useLenis()
+
+  return <App />
+}
+
+Object.entries(motionCssVars).forEach(([key, value]) => {
+  document.documentElement.style.setProperty(key, value)
+})
 
 class AppErrorBoundary extends Component {
   constructor(props) {
@@ -47,7 +59,7 @@ class AppErrorBoundary extends Component {
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AppErrorBoundary>
-      <App />
+      <AppRuntime />
     </AppErrorBoundary>
   </StrictMode>,
 )
