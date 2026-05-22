@@ -38,9 +38,9 @@ const getScrollTuning = () => {
   const clamp10 = (v, d) => Math.max(1, Math.min(10, Number.isFinite(Number(v)) ? Number(v) : d));
   return {
     desktopMultiplier: clamp10(t.desktopMultiplier, 6),
-    desktopDeltaCap: clamp10(t.desktopDeltaCap, 9),
+    desktopDeltaCap: clamp10(t.desktopDeltaCap, 10),
     mobileMultiplier: clamp10(t.mobileMultiplier, 6),
-    mobileDeltaCap: clamp10(t.mobileDeltaCap, 9),
+    mobileDeltaCap: clamp10(t.mobileDeltaCap, 10),
   };
 };
 
@@ -58,6 +58,7 @@ export const useLenis = () => {
     let rafId = 0;
     let touchY = null;
     let touchX = null;
+    let lastWheelAt = 0;
 
     const maxScrollY = () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
     const isOverlayActive = () => Boolean(typeof window !== 'undefined' && window.__overlayActive);
@@ -66,8 +67,8 @@ export const useLenis = () => {
 
     const step = () => {
       const delta = target - current;
-      current += delta * (isFinePointer ? 0.14 : 0.19);
-      if (Math.abs(delta) <= 0.35) current = target;
+      current += delta * (isFinePointer ? 0.16 : 0.22);
+      if (Math.abs(delta) <= 0.3) current = target;
       window.scrollTo(0, current);
       if (Math.abs(target - current) > 0.35) rafId = window.requestAnimationFrame(step);
       else rafId = 0;
@@ -93,10 +94,15 @@ export const useLenis = () => {
       if (!Number.isFinite(deltaY) || deltaY === 0) return;
       if (hasScrollableParent(event.target, { deltaY, axis: 'y' })) return;
 
+      const now = performance.now();
+      const isBurst = now - lastWheelAt < 14;
+      lastWheelAt = now;
+
       const tune = getScrollTuning();
       const deskCap = 30 + tune.desktopDeltaCap * 10;
       const deskMult = 0.8 + (tune.desktopMultiplier * 0.2);
-      const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult;
+      const burstDamp = isBurst ? 0.82 : 1;
+      const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult * burstDamp;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
       kickoff();
       event.preventDefault();

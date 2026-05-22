@@ -3072,13 +3072,26 @@ export default function MCUViewer() {
             Status Menu <ChevDown size={12} style={{ transform: dockStatusOpen ? 'rotate(180deg)' : 'none' }} />
           </button>
           {dockStatusOpen && (
-            <div className="dropdown-pop-up" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, minWidth: 172, zIndex: 1400, background: darkMode ? 'rgba(17,21,39,0.92)' : 'rgba(255,255,255,0.92)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 10, overflow: 'hidden', boxShadow: 'none', color: 'var(--theme-text)' }}>
-              <div className="sopt" onClick={() => { setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setDockStatusOpen(false); }}>All statuses</div>
-              <div className="sopt" onClick={() => { setWatchedOnly(true); setStatusFilter(null); setAutoHideStatuses(false); setDockStatusOpen(false); }}>Watched</div>
-              <div className="sopt" onClick={() => { setStatusFilter('watching'); setWatchedOnly(false); setDockStatusOpen(false); }}>Watching</div>
-              <div className="sopt" onClick={() => { setStatusFilter('on-hold'); setWatchedOnly(false); setDockStatusOpen(false); }}>On Hold</div>
-              <div className="sopt" onClick={() => { setStatusFilter('dropped'); setWatchedOnly(false); setDockStatusOpen(false); }}>Dropped</div>
-              <div className="sopt" onClick={() => { setStatusFilter('plan-to-watch'); setWatchedOnly(false); setDockStatusOpen(false); }}>Plan to Watch</div>
+            <div className="dropdown-pop-up quick-status-menu" style={{ position: 'absolute', bottom: 'calc(100% + 10px)', right: 0, zIndex: 1400 }}>
+              <div className="quick-status-header">Quick Status</div>
+              <button type="button" className="quick-status-option" onClick={() => { setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setDockStatusOpen(false); }}>
+                <strong>All statuses</strong><span>Reset all status filters</span>
+              </button>
+              <button type="button" className="quick-status-option" onClick={() => { setWatchedOnly(true); setStatusFilter(null); setAutoHideStatuses(false); setDockStatusOpen(false); }}>
+                <strong>Watched</strong><span>Show completed titles</span>
+              </button>
+              <button type="button" className="quick-status-option" onClick={() => { setStatusFilter('watching'); setWatchedOnly(false); setDockStatusOpen(false); }}>
+                <strong>Watching</strong><span>Continue currently watching</span>
+              </button>
+              <button type="button" className="quick-status-option" onClick={() => { setStatusFilter('on-hold'); setWatchedOnly(false); setDockStatusOpen(false); }}>
+                <strong>On Hold</strong><span>Paused for later</span>
+              </button>
+              <button type="button" className="quick-status-option" onClick={() => { setStatusFilter('dropped'); setWatchedOnly(false); setDockStatusOpen(false); }}>
+                <strong>Dropped</strong><span>Skipped titles</span>
+              </button>
+              <button type="button" className="quick-status-option" onClick={() => { setStatusFilter('plan-to-watch'); setWatchedOnly(false); setDockStatusOpen(false); }}>
+                <strong>Plan to Watch</strong><span>Queue up next titles</span>
+              </button>
             </div>
           )}
         </div>
