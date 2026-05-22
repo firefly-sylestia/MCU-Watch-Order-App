@@ -63,11 +63,6 @@ export const useLenis = () => {
     let lenis = null;
     let activePreset = 'balanced';
     const html = document.documentElement;
-    html.classList.add('lenis-pending');
-
-    const hardPrevent = (event) => {
-      if (!lenis && !isEditableTarget(event.target)) event.preventDefault();
-    };
 
     const getRuntimeConfig = () => window.__lenisConfig || { preset: 'balanced', performanceMode: false };
 
@@ -110,7 +105,6 @@ export const useLenis = () => {
         lenis = new LenisCtor(buildLenisOptions());
 
         window.__lenis = lenis;
-        html.classList.remove('lenis-pending');
         html.classList.add('lenis-ready');
         handleOverlayToggle();
       })
@@ -118,18 +112,13 @@ export const useLenis = () => {
         console.error('Lenis is required but failed to initialize.', error);
       });
 
-    window.addEventListener('wheel', hardPrevent, { passive: false });
-    window.addEventListener('touchmove', hardPrevent, { passive: false });
     window.addEventListener('overlay:change', handleOverlayToggle);
     window.addEventListener('lenis:config-change', handleLenisConfigChange);
 
     return () => {
       disposed = true;
-      window.removeEventListener('wheel', hardPrevent);
-      window.removeEventListener('touchmove', hardPrevent);
       window.removeEventListener('overlay:change', handleOverlayToggle);
       window.removeEventListener('lenis:config-change', handleLenisConfigChange);
-      html.classList.remove('lenis-pending');
       html.classList.remove('lenis-ready');
       if (window.__lenis === lenis) delete window.__lenis;
       lenis?.destroy?.();

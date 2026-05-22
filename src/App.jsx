@@ -390,7 +390,7 @@ const posterExportName = (item, ext = 'jpg') => posterFileName(item, ext);
 const loadedPosterSrcs = new Set();
 const requestedPosterSrcs = new Set();
 
-const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poster', eager = false, loadingMode = 'auto' }) {
+const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poster', eager = false, loadingMode = 'eager' }) {
   const [loaded, setLoaded] = useState(() => loadedPosterSrcs.has(src));
 
   useEffect(() => {
@@ -403,7 +403,7 @@ const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poste
   };
 
   return <div className={`poster-shell ${loaded ? 'is-loaded' : ''}`}>
-    <img className={`${className} ${loaded ? 'is-loaded' : ''}`} src={src} alt={alt} loading={eager ? 'eager' : loadingMode} decoding="async" fetchpriority={eager ? 'high' : 'auto'} onLoad={handleLoad} />
+    <img className={`${className} ${loaded ? 'is-loaded' : ''}`} src={src} alt={alt} loading={eager ? 'eager' : loadingMode} decoding="async" fetchpriority={eager ? 'high' : 'high'} onLoad={handleLoad} />
   </div>;
 });
 const TMDB_LOOKUP_OVERRIDES = {
@@ -593,7 +593,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             />
           ) : (idx + 1)}
         </div>
-        <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 28} loadingMode="auto" />
+        <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 64} loadingMode="eager" />
 
         <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
           <div className="title-row-top" style={TITLE_ROW_STATIC.titleLine}>
@@ -774,6 +774,7 @@ export default function MCUViewer() {
   const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
   const [scrollTuning] = useState({ desktopMultiplier: 5, desktopDeltaCap: 7, mobileMultiplier: 5, mobileDeltaCap: 7 });
   const [lenisPreset, setLenisPreset] = useState(initialUiState.lenisPreset || 'balanced');
+  if (typeof window !== 'undefined' && !window.__lenisConfig) window.__lenisConfig = { preset: initialUiState.lenisPreset || 'balanced', performanceMode: initialUiState.performanceMode };
   const [genreFilter] = useState('all');
   const [myLikes,        setMyLikes]        = useState({});
   const [myRating,       setMyRating]       = useState({});

@@ -694,8 +694,6 @@ a:hover {
 }
 
 
-html.lenis-pending,
-html.lenis-pending body,
 html.lenis-ready,
 html.lenis-ready body {
   overflow: hidden;
