@@ -2758,7 +2758,7 @@ export default function MCUViewer() {
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Theme</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6, marginTop: 8 }}>
           {THEME_CHOICES.map(({ id: t, label, swatch }) => (
-            <button key={t} className="fpill"
+            <button key={t} className="fpill filter-pill type-pill"
               style={{ justifyContent: 'center', gap: 6, fontSize: 11, borderColor: themeMode === t ? swatch : 'var(--theme-border)', boxShadow: themeMode === t ? `0 0 0 1px ${swatch}, 0 0 10px ${swatch}44` : 'none', background: themeMode === t ? `${swatch}18` : 'var(--theme-surface)', color: themeMode === t ? swatch : 'var(--theme-text)' }}
               onClick={() => setThemeMode(t)}
             >
@@ -2948,13 +2948,13 @@ export default function MCUViewer() {
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', overflow: 'visible' }}>
               {/* Sort */}
               <div ref={sortRef} style={{ position: 'relative' }}>
-                <button className="fpill" onClick={() => setSortOpen(o => !o)}
+                <button className="fpill filter-pill sort-pill" onClick={() => setSortOpen(o => !o)}
                   style={{ color: 'var(--theme-accent)', borderColor: 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'transparent', fontFamily: 'var(--font-marvel-ui)', fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
                   {SORT_LABELS[sortBy]}
                   <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                 </button>
                 {sortOpen && (
-                  <div className="dropdown-pop" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 1400, boxShadow: 'none', minWidth: 200 }}>
+                  <div className="dropdown-pop filter-dropdown" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1400, minWidth: 220 }}>
                     {Object.entries(SORT_LABELS).map(([k, v]) => (
                       <div key={k} className={`sopt ${sortBy === k ? 'picked' : ''}`} onClick={() => { setSortBy(k); setSortOpen(false); }}>{v}</div>
                     ))}
@@ -2966,7 +2966,7 @@ export default function MCUViewer() {
                 const m = TYPE_META[t];
                 const on = typeFilter === t;
                 return (
-                  <button key={t} className="fpill"
+                  <button key={t} className="fpill filter-pill type-pill"
                     style={on ? { borderColor: m.color + '88', background: m.color + '14', color: m.color } : {}}
                     onClick={() => setTypeFilter(on ? null : t)}>
                     <m.Icon size={10} />{m.label}
@@ -2994,7 +2994,7 @@ export default function MCUViewer() {
                   <Check size={10} />Status
                 </button>
                 {filterStatusOpen && (
-                  <div className="dropdown-pop" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 1400, boxShadow: 'none', minWidth: 180 }}
+                  <div className="dropdown-pop filter-dropdown" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1400, minWidth: 220 }}
                     >
                     <div className={`sopt ${!statusFilter && !watchedOnly ? 'picked' : ''}`} onClick={() => { setStatusFilter(null); setWatchedOnly(false); setFilterStatusOpen(false); }}>Show all status</div>
                     <div className={`sopt ${watchedOnly ? 'picked' : ''}`} onClick={() => { setWatchedOnly(true); setStatusFilter(null); setFilterStatusOpen(false); }}>Watched only</div>
@@ -3093,6 +3093,15 @@ export default function MCUViewer() {
         </div>
         </div>
       </div>
+        <button
+          type="button"
+          className="go-top-fab"
+          onClick={scrollToListTop}
+          aria-label="Go to top"
+          style={scrollCheckpoint > 420 ? undefined : { opacity: 0, pointerEvents: 'none', transform: 'translateY(8px)' }}
+        >
+          <ChevDown size={14} style={{ transform: 'rotate(180deg)' }} /> Top
+        </button>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className='app-scroll-shell' style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>

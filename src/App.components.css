@@ -1700,3 +1700,23 @@ main{--content-max:1560px !important}
   box-shadow:0 6px 14px rgba(190,24,93,.28);
 }
 [data-color-mode="light"] .filters-count-badge{color:#fff7ed}
+
+/* Filter controls redesign */
+.filter-pill{min-height:36px !important;padding:0 13px !important;font-size:12px !important;letter-spacing:.08em !important;font-family:var(--font-marvel-ui) !important}
+.sort-pill{background:linear-gradient(135deg,color-mix(in srgb,var(--theme-accent) 12%, var(--theme-surface)),var(--theme-surface)) !important;border-color:color-mix(in srgb,var(--theme-accent) 36%, var(--theme-border)) !important;color:var(--theme-accent) !important}
+.type-pill{background:color-mix(in srgb,var(--theme-surface) 88%, transparent) !important}
+.filter-dropdown{background:color-mix(in srgb,var(--theme-surface) 92%, transparent) !important;border:1px solid color-mix(in srgb,var(--theme-border) 80%, transparent) !important;border-radius:14px !important;overflow:hidden !important;box-shadow:0 16px 34px rgba(2,8,23,.24) !important;padding:6px !important;display:grid;gap:4px}
+.filter-dropdown .sopt{border-radius:10px !important;padding:10px 12px !important;font-size:12px !important;letter-spacing:.08em !important}
+
+/* Tile action cleanup */
+.bookmark-marvel-btn{background:color-mix(in srgb,var(--theme-surface) 92%, transparent) !important;border-color:color-mix(in srgb,var(--theme-border) 84%, transparent) !important;color:var(--theme-text-muted) !important;box-shadow:none !important}
+.bookmark-marvel-btn[data-bookmarked="true"]{background:linear-gradient(135deg,#f97316,#ef4444) !important;border-color:#fb7185 !important;color:#fff !important;box-shadow:0 8px 16px rgba(190,24,93,.3) !important}
+[data-color-mode="dark"] .bookmark-marvel-btn[data-bookmarked="false"]{color:#94a3b8 !important}
+
+.notwatched-marvel-btn{background:color-mix(in srgb,var(--theme-surface) 92%, transparent) !important;border-color:color-mix(in srgb,var(--theme-border) 86%, transparent) !important;color:var(--theme-text-secondary) !important;box-shadow:none !important}
+.notwatched-marvel-btn:hover{border-color:color-mix(in srgb,var(--theme-accent) 36%, var(--theme-border)) !important;filter:none !important}
+
+/* Floating go-top button */
+.go-top-fab{position:fixed;right:22px;bottom:22px;z-index:1200;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid color-mix(in srgb,var(--theme-accent) 34%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 90%, transparent);color:var(--theme-text);font-family:var(--font-marvel-ui);font-size:11px;letter-spacing:.09em;font-weight:800;box-shadow:0 12px 22px rgba(2,8,23,.26);transition:opacity .2s ease,transform .2s ease,border-color .2s ease}
+.go-top-fab:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--theme-accent) 58%, var(--theme-border))}
+[data-color-mode="light"] .go-top-fab{background:#fff}
