@@ -770,7 +770,7 @@ export default function MCUViewer() {
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
   const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
-  const [scrollTuning] = useState({ desktopMultiplier: 6, desktopDeltaCap: 10, mobileMultiplier: 6, mobileDeltaCap: 10 });
+  const [scrollTuning] = useState({ desktopMultiplier: 5, desktopDeltaCap: 7, mobileMultiplier: 5, mobileDeltaCap: 7 });
   const [genreFilter] = useState('all');
   const [myLikes,        setMyLikes]        = useState({});
   const [myRating,       setMyRating]       = useState({});
@@ -1924,7 +1924,7 @@ export default function MCUViewer() {
             bgOpacity: exportSettings.bgOpacity,
             density: exportSettings.density,
             sections: exportSettings.sections,
-            previewScale: 0.42,
+            previewScale: 0.56,
           },
         });
         objectUrl = URL.createObjectURL(blob);
@@ -2636,8 +2636,10 @@ export default function MCUViewer() {
   const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
 
   const renderPhaseSelector = () => (
-    <div ref={phaseRef} style={{ display: 'flex', alignItems: 'center', gap: 10, overflowX: 'auto', paddingBottom: 4, maxWidth: '100%', width: '100%' }}>
-      <button className="fpill phase-chip" onClick={() => { setActivePhase(0); if (browseMode !== 'phase') setBrowseMode('phase'); }} style={{ borderRadius: 999, borderColor: activePhase === 0 ? 'var(--theme-accent)' : T.filterBorder, background: activePhase === 0 ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--chip-bg)', color: activePhase === 0 ? 'var(--theme-accent)' : 'var(--text-secondary)' }}>All</button>
+    <div ref={phaseRef} className="phase-selector-rail">
+      <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} onClick={() => { setActivePhase(0); if (browseMode !== 'phase') setBrowseMode('phase'); }}>
+        <span className="phase-chip-label">All Phases</span>
+      </button>
       {currentPhases.map((ph) => {
         const stat = phaseStats.find(s => s.phase === ph.id);
         const total = stat?.total || 0;
@@ -2647,17 +2649,10 @@ export default function MCUViewer() {
           <button
             key={ph.id}
             onClick={() => { setActivePhase(ph.id); scrollToListTop(); }}
-            className="fpill phase-chip"
-            style={{
-              borderRadius: 999,
-              borderColor: isActive ? 'var(--theme-accent)' : T.filterBorder,
-              background: isActive ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--chip-bg)',
-              color: isActive ? 'var(--theme-accent)' : 'var(--text-secondary)',
-              fontWeight: 700,
-              padding: '0 16px'
-            }}>
-            <span style={{ fontSize: 12, letterSpacing: 1.1, whiteSpace: 'nowrap', color: 'inherit' }}>{ph.name}</span>
-            <span style={{ fontSize: 11, color: isActive ? 'var(--theme-accent)' : 'var(--text-muted)', fontWeight: 600 }}>{watched}/{total}</span>
+            className="fpill phase-chip marvel-phase-btn"
+            data-active={isActive}>
+            <span className="phase-chip-label">{ph.name}</span>
+            <span className="phase-chip-count">{watched}/{total}</span>
           </button>
         );
       })}
@@ -2717,13 +2712,13 @@ export default function MCUViewer() {
             <div style={{ fontSize: 12, color: T.textMuted }}>{profile.name || 'Marvel Fan'}</div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6 }}>
-            <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', color: darkMode ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Moon size={12} />Dark</button>
-            <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', color: !darkMode ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Sun size={12} />Light</button>
+            <button className="fpill marvel-btn" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', color: darkMode ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Moon size={12} />Dark</button>
+            <button className="fpill marvel-btn" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', color: !darkMode ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Sun size={12} />Light</button>
           </div>
                   </div>
                 <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Quick Phases</div>
-        <button className="fpill" onClick={openAnalyticsPanel} style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}>Analytics</button>
+        <button className="fpill marvel-btn" onClick={openAnalyticsPanel} style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}>Analytics</button>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Viewing List</div>
         <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
           {LIST_MODES.map(mode => {

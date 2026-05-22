@@ -38,9 +38,9 @@ const getScrollTuning = () => {
   const clamp10 = (v, d) => Math.max(1, Math.min(10, Number.isFinite(Number(v)) ? Number(v) : d));
   return {
     desktopMultiplier: clamp10(t.desktopMultiplier, 6),
-    desktopDeltaCap: clamp10(t.desktopDeltaCap, 9),
+    desktopDeltaCap: clamp10(t.desktopDeltaCap, 7),
     mobileMultiplier: clamp10(t.mobileMultiplier, 6),
-    mobileDeltaCap: clamp10(t.mobileDeltaCap, 9),
+    mobileDeltaCap: clamp10(t.mobileDeltaCap, 7),
   };
 };
 
@@ -66,8 +66,8 @@ export const useLenis = () => {
 
     const step = () => {
       const delta = target - current;
-      current += delta * (isFinePointer ? 0.14 : 0.19);
-      if (Math.abs(delta) <= 0.35) current = target;
+      current += delta * (isFinePointer ? 0.1 : 0.14);
+      if (Math.abs(delta) <= 0.25) current = target;
       window.scrollTo(0, current);
       if (Math.abs(target - current) > 0.35) rafId = window.requestAnimationFrame(step);
       else rafId = 0;
