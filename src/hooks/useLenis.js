@@ -63,6 +63,9 @@ export const useLenis = () => {
     let rafId = 0;
     let lastTs = 0;
     let internalScrollWrite = false;
+    let releaseWriteId = 0;
+    let velocity = 0;
+    let inputVelocity = 0;
 
     let touchY = null;
     let touchX = null;
@@ -73,18 +76,37 @@ export const useLenis = () => {
     const kickoff = () => { if (!rafId) rafId = window.requestAnimationFrame(step); };
 
     const step = (ts) => {
-      const dt = lastTs ? Math.min(42, Math.max(8, ts - lastTs)) : 16;
+      const dt = lastTs ? Math.min(28, Math.max(8, ts - lastTs)) : 16;
       lastTs = ts;
-      const smooth = isFinePointer ? 0.18 : 0.22;
-      const t = 1 - Math.pow(1 - smooth, dt / 16.67);
-      current += (target - current) * t;
 
-      const done = Math.abs(target - current) < 0.2;
-      if (done) current = target;
+      const frame = dt / 16.67;
+      const distance = target - current;
+
+      const spring = isFinePointer ? 0.074 : 0.084;
+      const damping = isFinePointer ? 0.86 : 0.83;
+      const inputDecay = isFinePointer ? 0.915 : 0.9;
+
+      inputVelocity *= Math.pow(inputDecay, frame);
+      velocity += distance * spring * frame + inputVelocity;
+      velocity *= Math.pow(damping, frame);
+
+      const maxVelocity = isFinePointer ? 30 : 24;
+      velocity = Math.max(-maxVelocity, Math.min(maxVelocity, velocity));
+
+      current += velocity * frame;
+      current = Math.min(maxScrollY(), Math.max(0, current));
+
+      const done = Math.abs(target - current) < 0.16 && Math.abs(velocity) < 0.06 && Math.abs(inputVelocity) < 0.035;
+      if (done) {
+        current = target;
+        velocity = 0;
+        inputVelocity = 0;
+      }
 
       internalScrollWrite = true;
       window.scrollTo(0, current);
-      window.requestAnimationFrame(() => { internalScrollWrite = false; });
+      if (releaseWriteId) window.cancelAnimationFrame(releaseWriteId);
+      releaseWriteId = window.requestAnimationFrame(() => { internalScrollWrite = false; releaseWriteId = 0; });
 
       if (!done) rafId = window.requestAnimationFrame(step);
       else { rafId = 0; lastTs = 0; }
@@ -115,6 +137,7 @@ export const useLenis = () => {
       const deskMult = 1.1 + (tune.desktopMultiplier * 0.22);
       const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
+      inputVelocity += limitedDelta * 0.014;
       kickoff();
       event.preventDefault();
     };
@@ -149,6 +172,7 @@ export const useLenis = () => {
       const mobileMult = 1.06 + (tune.mobileMultiplier * 0.19);
       const limitedDelta = Math.max(-mobileCap, Math.min(mobileCap, rawDeltaY)) * mobileMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
+      inputVelocity += limitedDelta * 0.013;
       kickoff();
       event.preventDefault();
     };
@@ -162,6 +186,8 @@ export const useLenis = () => {
       const y = window.scrollY;
       current = y;
       target = y;
+      velocity = 0;
+      inputVelocity = 0;
     };
 
     window.addEventListener('wheel', onWheel, { passive: false });
@@ -174,6 +200,8 @@ export const useLenis = () => {
       const maxY = maxScrollY();
       target = Math.min(target, maxY);
       current = Math.min(current, maxY);
+      velocity = 0;
+      inputVelocity = 0;
     };
     window.addEventListener('resize', onResize);
 
@@ -186,6 +214,7 @@ export const useLenis = () => {
       window.removeEventListener('scroll', onNativeScroll);
       window.removeEventListener('resize', onResize);
       window.cancelAnimationFrame(rafId);
+      if (releaseWriteId) window.cancelAnimationFrame(releaseWriteId);
       html.style.overscrollBehaviorY = prevHtmlOverscroll;
       document.body.style.overscrollBehaviorY = prevBodyOverscroll;
       html.classList.remove('lenis-ready');
