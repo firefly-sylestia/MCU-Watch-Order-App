@@ -99,7 +99,7 @@ export const useLenis = () => {
       if (hasScrollableParent(event.target, rawDelta)) return;
 
       // Mobile speed governor: cap fast flick deltas for steadier scroll.
-      const limitedDelta = Math.max(-38, Math.min(38, rawDelta)) * 0.92;
+      const limitedDelta = Math.max(-50, Math.min(50, rawDelta)) * 0.92;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
       kickoff();
       event.preventDefault();
