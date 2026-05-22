@@ -1238,3 +1238,70 @@ main{--content-max:1560px !important}
 [data-color-mode="light"] .rrow.curvy-selected .bookmark-marvel-btn[data-bookmarked="true"]{box-shadow:0 0 0 2px rgba(225,29,72,.45),0 8px 16px rgba(159,18,57,.22) !important}
 /* remove minor color conflict from aria-label selector by preferring explicit data state */
 .bookmark-marvel-btn[data-bookmarked="false"]{color:color-mix(in srgb,#fca5a5 72%, var(--theme-text)) !important}
+
+/* === 2026 interaction polish: smoother marvel controls + unified light/dark === */
+:root{
+  --btn-height:40px;
+  --btn-radius:14px;
+}
+.fpill,
+.theme-btn,
+.wbtn,
+.status-pill,
+.filters-trigger,
+.phase-chip{
+  min-height:var(--btn-height) !important;
+  border-radius:var(--btn-radius) !important;
+  transition:transform 160ms var(--ease-out), box-shadow 200ms var(--ease-out), background-color 180ms var(--ease-out), border-color 180ms var(--ease-out), color 180ms var(--ease-out) !important;
+}
+.fpill.marvel-btn,
+.theme-btn.marvel-btn,
+.filters-trigger,
+.phase-chip{
+  background:linear-gradient(132deg,#ed1d24 0%,#c8111a 58%,#7f0c12 100%) !important;
+  color:#fff !important;
+  border-color:color-mix(in srgb,#ffffff 25%, #7f1d1d) !important;
+  box-shadow:0 10px 24px rgba(127,29,29,.30), inset 0 1px 0 rgba(255,255,255,.2) !important;
+}
+.fpill.marvel-btn:hover,
+.theme-btn.marvel-btn:hover,
+.filters-trigger:hover,
+.phase-chip:hover{
+  transform:translateY(-1px);
+  box-shadow:0 14px 30px rgba(127,29,29,.34), inset 0 1px 0 rgba(255,255,255,.24) !important;
+}
+.fpill:active,
+.theme-btn:active,
+.wbtn:active,
+.filters-trigger:active,
+.phase-chip:active{transform:translateY(0) scale(.98) !important}
+.fpill:focus-visible,
+.theme-btn:focus-visible,
+.wbtn:focus-visible,
+.filters-trigger:focus-visible,
+.phase-chip:focus-visible{outline:2px solid color-mix(in srgb,var(--theme-accent) 80%, #fff);outline-offset:2px}
+
+[data-color-mode="light"] .app-shell,
+[data-color-mode="light"] .app-container{
+  background:linear-gradient(168deg,#f7f2ea 0%, #f3ede3 52%, #eee5d8 100%) !important;
+}
+[data-color-mode="light"] .fpill,
+[data-color-mode="light"] .theme-btn,
+[data-color-mode="light"] .wbtn,
+[data-color-mode="light"] .status-pill{
+  background:linear-gradient(145deg,#ffffff 0%,#f2e8da 100%) !important;
+  border-color:color-mix(in srgb,var(--theme-border) 72%, #dbc9b1) !important;
+  color:var(--theme-text-primary) !important;
+  box-shadow:0 8px 16px rgba(15,23,42,0.1) !important;
+}
+[data-color-mode="light"] .fpill:hover,
+[data-color-mode="light"] .theme-btn:hover,
+[data-color-mode="light"] .wbtn:hover,
+[data-color-mode="light"] .status-pill:hover{
+  background:linear-gradient(145deg,#fffdf8 0%,#ecdfcd 100%) !important;
+  border-color:color-mix(in srgb,var(--theme-accent) 34%, #cbb79e) !important;
+}
+[data-color-mode="light"] .rrow{
+  border-color:color-mix(in srgb,var(--theme-border) 70%, #d8c4aa) !important;
+  box-shadow:0 8px 18px rgba(15,23,42,0.09) !important;
+}
