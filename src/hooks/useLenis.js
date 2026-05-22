@@ -60,8 +60,8 @@ export const useLenis = () => {
 
     let current = window.scrollY;
     let target = window.scrollY;
-    let velocity = 0;
     let rafId = 0;
+    let lastTs = 0;
     let internalScrollWrite = false;
 
     let touchY = null;
@@ -72,25 +72,22 @@ export const useLenis = () => {
 
     const kickoff = () => { if (!rafId) rafId = window.requestAnimationFrame(step); };
 
-    const step = () => {
-      const delta = target - current;
-      const spring = isFinePointer ? 0.16 : 0.2;
-      const damping = isFinePointer ? 0.84 : 0.82;
-      velocity = (velocity + (delta * spring)) * damping;
-      current += velocity;
+    const step = (ts) => {
+      const dt = lastTs ? Math.min(42, Math.max(8, ts - lastTs)) : 16;
+      lastTs = ts;
+      const smooth = isFinePointer ? 0.18 : 0.22;
+      const t = 1 - Math.pow(1 - smooth, dt / 16.67);
+      current += (target - current) * t;
 
-      const done = Math.abs(delta) < 0.2 && Math.abs(velocity) < 0.2;
-      if (done) {
-        current = target;
-        velocity = 0;
-      }
+      const done = Math.abs(target - current) < 0.2;
+      if (done) current = target;
 
       internalScrollWrite = true;
       window.scrollTo(0, current);
       window.requestAnimationFrame(() => { internalScrollWrite = false; });
 
       if (!done) rafId = window.requestAnimationFrame(step);
-      else rafId = 0;
+      else { rafId = 0; lastTs = 0; }
     };
 
     const normalizeDelta = (event) => {
@@ -114,8 +111,8 @@ export const useLenis = () => {
       if (hasScrollableParent(event.target, { deltaY, axis: 'y' })) return;
 
       const tune = getScrollTuning();
-      const deskCap = 34 + tune.desktopDeltaCap * 9;
-      const deskMult = 1.08 + (tune.desktopMultiplier * 0.24);
+      const deskCap = 38 + tune.desktopDeltaCap * 10;
+      const deskMult = 1.1 + (tune.desktopMultiplier * 0.22);
       const limitedDelta = Math.max(-deskCap, Math.min(deskCap, deltaY)) * deskMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
       kickoff();
@@ -148,8 +145,8 @@ export const useLenis = () => {
       if (hasScrollableParent(event.target, { deltaY: rawDeltaY, axis: 'y' })) return;
 
       const tune = getScrollTuning();
-      const mobileCap = 18 + tune.mobileDeltaCap * 9;
-      const mobileMult = 1.02 + (tune.mobileMultiplier * 0.2);
+      const mobileCap = 20 + tune.mobileDeltaCap * 9;
+      const mobileMult = 1.06 + (tune.mobileMultiplier * 0.19);
       const limitedDelta = Math.max(-mobileCap, Math.min(mobileCap, rawDeltaY)) * mobileMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
       kickoff();
@@ -165,7 +162,6 @@ export const useLenis = () => {
       const y = window.scrollY;
       current = y;
       target = y;
-      velocity = 0;
     };
 
     window.addEventListener('wheel', onWheel, { passive: false });
@@ -178,7 +174,6 @@ export const useLenis = () => {
       const maxY = maxScrollY();
       target = Math.min(target, maxY);
       current = Math.min(current, maxY);
-      velocity = 0;
     };
     window.addEventListener('resize', onResize);
 

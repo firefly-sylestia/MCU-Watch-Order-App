@@ -1868,3 +1868,29 @@ main{--content-max:1560px !important}
 [data-color-mode="dark"] .row-actions .wbtn.status-pill.status-marvel-pill{
   box-shadow:0 2px 0 rgba(255,255,255,.08) inset, 0 2px 3px rgba(2,8,23,.3) !important;
 }
+
+/* 2026-05 pro polish: consistent depth system without dark glow */
+:root{
+  --btn-depth-light:0 1px 0 rgba(255,255,255,.92) inset, 0 1px 2px rgba(15,23,42,.12);
+  --btn-depth-dark:0 1px 0 rgba(255,255,255,.08) inset, 0 1px 2px rgba(2,8,23,.32);
+}
+
+/* Inactive small actions: bookmark/watch/rating depth parity */
+.row-actions .rating-marvel-pill,
+.row-actions .wbtn.bookmark-marvel-btn[data-bookmarked="false"],
+.row-actions .wbtn.status-toggle.notwatched-marvel-btn{
+  box-shadow:var(--btn-depth-light) !important;
+}
+[data-color-mode="dark"] .row-actions .rating-marvel-pill,
+[data-color-mode="dark"] .row-actions .wbtn.bookmark-marvel-btn[data-bookmarked="false"],
+[data-color-mode="dark"] .row-actions .wbtn.status-toggle.notwatched-marvel-btn,
+[data-color-mode="dark"] .row-actions .wbtn.status-pill.status-marvel-pill{
+  box-shadow:var(--btn-depth-dark) !important;
+}
+
+/* Remove residual glow from active action treatments in dark mode */
+[data-color-mode="dark"] .bookmark-marvel-btn[data-bookmarked="true"],
+[data-color-mode="dark"] .rrow.curvy-selected .bookmark-marvel-btn[data-bookmarked="true"],
+[data-color-mode="dark"] .notwatched-marvel-btn[aria-label*="unwatched"]{
+  box-shadow:var(--btn-depth-dark) !important;
+}
