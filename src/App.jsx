@@ -387,21 +387,54 @@ const posterExportName = (item, ext = 'jpg') => posterFileName(item, ext);
 
 const loadedPosterSrcs = new Set();
 const requestedPosterSrcs = new Set();
+const posterDecodeStateBySrc = new Map();
+const posterPreloadObserversBySrc = new Map();
 
 const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poster', eager = false, loadingMode = 'auto' }) {
-  const [loaded, setLoaded] = useState(() => loadedPosterSrcs.has(src));
+  const shellRef = useRef(null);
+  const [shouldLoadSrc, setShouldLoadSrc] = useState(() => eager || loadedPosterSrcs.has(src));
+  const [loaded, setLoaded] = useState(() => loadedPosterSrcs.has(src) || posterDecodeStateBySrc.get(src) === 'loaded');
 
   useEffect(() => {
-    setLoaded(loadedPosterSrcs.has(src));
-  }, [src]);
+    const isLoaded = loadedPosterSrcs.has(src) || posterDecodeStateBySrc.get(src) === 'loaded';
+    setShouldLoadSrc(eager || isLoaded);
+    setLoaded(isLoaded);
+  }, [eager, src]);
+
+  useEffect(() => {
+    if (!src || shouldLoadSrc || eager) return undefined;
+    const target = shellRef.current;
+    if (!target) return undefined;
+    if (typeof IntersectionObserver !== 'function') {
+      setShouldLoadSrc(true);
+      return undefined;
+    }
+    const existingObserver = posterPreloadObserversBySrc.get(src);
+    if (existingObserver) {
+      existingObserver.observe(target);
+      return () => existingObserver.unobserve(target);
+    }
+    const observer = new IntersectionObserver((entries) => {
+      const hasMatch = entries.some(entry => entry.isIntersecting || entry.intersectionRatio > 0.01);
+      if (!hasMatch) return;
+      setShouldLoadSrc(true);
+      observer.disconnect();
+      posterPreloadObserversBySrc.delete(src);
+    }, { threshold: 0.01, rootMargin: '220px 0px 220px 0px' });
+    posterPreloadObserversBySrc.set(src, observer);
+    observer.observe(target);
+    return () => observer.unobserve(target);
+  }, [eager, shouldLoadSrc, src]);
 
   const handleLoad = () => {
+    posterDecodeStateBySrc.set(src, 'loaded');
     loadedPosterSrcs.add(src);
     setLoaded(true);
   };
 
-  return <div className={`poster-shell ${loaded ? 'is-loaded' : ''}`}>
-    <img className={`${className} ${loaded ? 'is-loaded' : ''}`} src={src} alt={alt} loading={eager ? 'eager' : loadingMode} decoding="async" fetchpriority={eager ? 'high' : 'auto'} onLoad={handleLoad} />
+  return <div ref={shellRef} className={`poster-shell ${loaded ? 'is-loaded' : ''}`}>
+    <div className="poster-skeleton" aria-hidden="true" />
+    <img className={`${className} ${loaded ? 'is-loaded' : ''}`} src={shouldLoadSrc ? src : undefined} alt={alt} loading={eager ? 'eager' : loadingMode} decoding="async" fetchpriority={eager ? 'high' : 'auto'} onLoad={handleLoad} />
   </div>;
 });
 const TMDB_LOOKUP_OVERRIDES = {
@@ -591,7 +624,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             />
           ) : (idx + 1)}
         </div>
-        <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 28} loadingMode="auto" />
+        <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 8} loadingMode="lazy" />
 
         <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
           <div className="title-row-top" style={TITLE_ROW_STATIC.titleLine}>
@@ -1481,30 +1514,31 @@ export default function MCUViewer() {
 
 
   useEffect(() => {
-    // Aggressively preload list posters so items feel fully loaded during long timeline scrolling.
-    const targets = filtered.slice(0, 120);
+    // Keep a small warm cache near the top of the active list without forcing deep eager fetches.
+    const targets = filtered.slice(0, 24);
     if (!targets.length) return undefined;
 
     let cancelled = false;
     const enqueue = (start = 0) => {
       if (cancelled) return;
-      const batch = targets.slice(start, start + 16);
+      const batch = targets.slice(start, start + 8);
       batch.forEach((item) => {
         const src = posterSrc(item);
-        if (!src || loadedPosterSrcs.has(src) || requestedPosterSrcs.has(src)) return;
+        if (!src || loadedPosterSrcs.has(src) || requestedPosterSrcs.has(src) || posterDecodeStateBySrc.get(src) === 'loaded') return;
         requestedPosterSrcs.add(src);
         const img = new Image();
         img.decoding = 'async';
         img.src = src;
         const markLoaded = () => {
+          posterDecodeStateBySrc.set(src, 'loaded');
           loadedPosterSrcs.add(src);
           requestedPosterSrcs.delete(src);
         };
         img.onload = markLoaded;
         img.onerror = () => requestedPosterSrcs.delete(src);
       });
-      if (start + 16 < targets.length) {
-        window.setTimeout(() => enqueue(start + 16), 50);
+      if (start + 8 < targets.length) {
+        window.setTimeout(() => enqueue(start + 8), 90);
       }
     };
 
