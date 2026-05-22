@@ -579,7 +579,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   const hideWatchToggle = releaseStatus === 'upcoming';
   return (
     <div>
-      <div className={`rrow row-in type-${item.type} ${isExpanded ? 'curvy-selected' : ''}`} onPointerDown={() => { if (item.title.toLowerCase().includes('thor')) { window.__thorPress = setTimeout(() => onThorLongPress?.(item), 650); } }} onPointerUp={() => clearTimeout(window.__thorPress)} onPointerLeave={() => clearTimeout(window.__thorPress)} style={{ opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow, borderColor: multiverseShuffle ? `hsl(${(item.id * 47) % 360} 90% 60% / 0.7)` : undefined, ...(isWatched ? { background: 'color-mix(in srgb, var(--theme-watched-bg) 62%, transparent)' } : {}) }}>
+      <div className={`rrow type-${item.type} ${isExpanded ? 'curvy-selected' : ''}`} onPointerDown={() => { if (item.title.toLowerCase().includes('thor')) { window.__thorPress = setTimeout(() => onThorLongPress?.(item), 650); } }} onPointerUp={() => clearTimeout(window.__thorPress)} onPointerLeave={() => clearTimeout(window.__thorPress)} style={{ opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow, borderColor: multiverseShuffle ? `hsl(${(item.id * 47) % 360} 90% 60% / 0.7)` : undefined, ...(isWatched ? { background: 'color-mix(in srgb, var(--theme-watched-bg) 62%, transparent)' } : {}) }}>
         <div style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 13, color: isWatched ? 'var(--theme-accent)' : T.textMuted, transition: 'color 0.26s', textAlign: 'center', flexShrink: 0 }}>
           {bulkSelectMode ? (
             <input
