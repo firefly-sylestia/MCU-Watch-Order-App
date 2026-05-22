@@ -77,12 +77,12 @@ const TYPE_META = {
 };
 
 const STATUS_META = {
-  watched:        { label: 'Watched',        color: '#3ec47a', Icon: Check,  bg: 'rgba(62,196,122,0.1)'  },
-  'plan-to-watch':{ label: 'Plan to Watch',  color: '#4a9ede', Icon: Clock,  bg: 'rgba(74,158,222,0.1)'  },
-  watching:       { label: 'Watching',       color: '#d4372f', Icon: Eye,    bg: 'rgba(212,55,47,0.1)'   },
-  'on-hold':      { label: 'On Hold',        color: '#f39c12', Icon: Pause,  bg: 'rgba(243,156,18,0.1)'  },
-  dropped:        { label: 'Dropped',        color: '#e05252', Icon: Trash2, bg: 'rgba(224,82,82,0.1)'   },
-  unwatched:      { label: 'Not Watched',    color: '#334455', Icon: EyeOff, bg: 'transparent'           },
+  watched:        { label: 'Completed',      color: '#ed1d24', Icon: Check,    bg: 'linear-gradient(135deg, rgba(237,29,36,0.26), rgba(125,10,20,0.48))', key: 'watched' },
+  'plan-to-watch':{ label: 'Queued',         color: '#4f8ef7', Icon: Clock,    bg: 'linear-gradient(135deg, rgba(79,142,247,0.2), rgba(28,78,216,0.38))', key: 'plan' },
+  watching:       { label: 'In Progress',    color: '#8b5cf6', Icon: PlayCircle, bg: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(91,33,182,0.4))', key: 'watching' },
+  'on-hold':      { label: 'On Pause',       color: '#f59e0b', Icon: PauseCircle, bg: 'linear-gradient(135deg, rgba(245,158,11,0.2), rgba(180,83,9,0.38))', key: 'hold' },
+  dropped:        { label: 'Dropped',        color: '#ef4444', Icon: XCircle,  bg: 'linear-gradient(135deg, rgba(239,68,68,0.2), rgba(153,27,27,0.42))', key: 'dropped' },
+  unwatched:      { label: 'Unwatched',      color: 'var(--theme-text-muted)', Icon: EyeOff, bg: 'transparent', key: 'unwatched' },
 };
 
 const SORT_LABELS = { order: 'Chronological', year: 'By Year', title: 'Alphabetical', runtime: 'Runtime', watched: 'Recently Watched', status: 'By Status' };
@@ -611,7 +611,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
         <div className="row-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: isDesktopViewport ? 96 : 0, flexShrink: 0 }}>
           <div className="row-meta-line truncate-single-line" style={{ fontSize: 11, color: 'var(--theme-warning)', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.6 }}>★ {rating || '—'}</div>
           <button
-            className="wbtn status-pill status-marvel-pill"
+            className={`wbtn status-pill status-modern-pill ${`status-pill-${statusMeta.key || 'unwatched'}`}`}
             aria-label={`Open status menu for ${item.title}`}
             aria-haspopup="menu"
             aria-expanded={statusDropdown === item.id}
@@ -627,7 +627,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
           <button className="wbtn bookmark-marvel-btn" aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} data-bookmarked={isBookmarked} style={{ width: isDesktopViewport ? 38 : 34, height: isDesktopViewport ? 38 : 34 }}><Bookmark size={11} /></button>
           {!hideWatchToggle && (
             <button
-              className="wbtn status-toggle notwatched-marvel-btn"
+              className={`wbtn status-toggle quick-status-toggle ${isWatched ? 'is-watched' : 'is-unwatched'}`}
               aria-label={isWatched ? `Mark ${item.title} as unwatched` : `Mark ${item.title} as watched`}
               title={isWatched ? 'Mark unwatched' : 'Mark watched'}
               onClick={(event) => {
@@ -3110,7 +3110,7 @@ export default function MCUViewer() {
               {Object.entries(calendarItems.grouped).map(([group, entries]) => (
                 <div key={group}>
                   <div className="calendar-group-header">{group}</div>
-                  {entries.map(({ item, rawDate, label, releaseStatus, hasRealDate }) => (
+                  <div className="calendar-grid">{entries.map(({ item, rawDate, label, releaseStatus, hasRealDate }) => (
                     <div key={`${group}-${item.id}`} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
                       <div style={{ fontSize: 11, color: releaseStatus === 'upcoming' ? 'var(--theme-warning)' : T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
                       <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
@@ -3123,7 +3123,7 @@ export default function MCUViewer() {
                         </div>
                       </button>
                     </div>
-                  ))}
+                  ))}</div>
                 </div>
               ))}
             </section>
@@ -3369,7 +3369,6 @@ export default function MCUViewer() {
                   <div style={{ color: T.textMuted, fontSize: 12 }}>Focused composer for card type, theme identity, typography, analysis sections, and live preview.</div>
                 </div>
                 <button className="fpill ui-touch-btn" onClick={shareAdvancedExportCard}><Upload size={14}/>Share Selected Card</button>
-              </div>
               <div style={{ display: 'grid', gap: 6 }}>
                 <div style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.4, textTransform: 'uppercase' }}>Card type</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 8 }}>
@@ -3378,7 +3377,7 @@ export default function MCUViewer() {
                       <strong style={{ fontSize: 12 }}>{opt.label}</strong>
                       <span style={{ fontSize: 10, color: T.textMuted }}>{opt.desc}</span>
                     </button>
-                  ))}
+                  ))}</div>
                 </div>
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
@@ -3389,7 +3388,7 @@ export default function MCUViewer() {
                       <strong style={{ fontSize: 12 }}>{opt.label}</strong>
                       <span style={{ fontSize: 10, color: T.textMuted }}>{opt.desc}</span>
                     </button>
-                  ))}
+                  ))}</div>
                 </div>
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
@@ -3397,9 +3396,8 @@ export default function MCUViewer() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
                   {[{ id: 'inter', label: 'Inter' }, { id: 'grotesk', label: 'Grotesk' }, { id: 'manrope', label: 'Manrope' }, { id: 'marvel', label: 'Marvel' }].map(opt => (
                     <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: EXPORT_FONT_PREVIEW_FAMILY[opt.id] || EXPORT_FONT_PREVIEW_FAMILY.inter, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
-                  ))}
+                  ))}</div>
                 </div>
-              </div>
               <label style={{ display: 'grid', gap: 4 }}>
                 <span style={{ fontSize: 11, color: T.textMuted }}>Text size: {Math.round(exportTextScale * 100)}%</span>
                 <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr) auto', gap: 8, alignItems: 'center' }}>
@@ -3417,9 +3415,8 @@ export default function MCUViewer() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 6 }}>
                   {[{ id: 'completion', label: 'Completion %' }, { id: 'phaseBreakdown', label: 'Phase breakdown' }, { id: 'streak', label: 'Streak' }, { id: 'hours', label: 'Total hours' }, { id: 'recentMomentum', label: 'Recent momentum' }, { id: 'topRated', label: 'Top rated' }].map(opt => (
                     <button key={opt.id} className="fpill" onClick={() => setExportSettings(prev => ({ ...prev, sections: { ...prev.sections, [opt.id]: !prev.sections?.[opt.id] } }))} style={{ justifyContent: 'center', borderColor: exportSettings.sections?.[opt.id] !== false ? 'var(--theme-accent)' : 'var(--theme-border)', opacity: exportSettings.type === 'analysis' ? 1 : 0.58 }}>{exportSettings.sections?.[opt.id] !== false ? '✓ ' : ''}{opt.label}</button>
-                  ))}
+                  ))}</div>
                 </div>
-              </div>
             </div>
             <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'minmax(0,1fr)', maxHeight: '55vh', overflow: 'auto' }}>
               <div className="glass-panel" style={{ padding: 10, borderRadius: 10 }}>
