@@ -1758,3 +1758,57 @@ main{--content-max:1560px !important}
 
 .row-actions .rating-marvel-pill{width:78px !important;min-width:78px !important}
 .row-actions .wbtn.bookmark-marvel-btn,.row-actions .wbtn.notwatched-marvel-btn{width:34px !important;height:34px !important;border-radius:14px !important}
+
+/* Action controls modernization pass: tighter rating + unified status/bookmark styling */
+.row-actions .rating-marvel-pill{
+  width:64px !important;
+  min-width:64px !important;
+  max-width:64px !important;
+  min-height:32px !important;
+  border-radius:12px !important;
+  font-size:10.5px !important;
+}
+
+.row-actions .wbtn.status-pill,
+.row-actions .wbtn.notwatched-marvel-btn{
+  min-width:96px !important;
+  height:32px !important;
+  padding:0 10px !important;
+  border-radius:999px !important;
+  font-size:10.5px !important;
+  letter-spacing:.08em !important;
+  font-weight:760 !important;
+}
+
+.row-actions .wbtn.status-pill{
+  background:linear-gradient(135deg,color-mix(in srgb,var(--theme-accent) 14%, var(--theme-surface)),color-mix(in srgb,var(--theme-accent-alt) 10%, var(--theme-surface))) !important;
+  border-color:color-mix(in srgb,var(--theme-accent) 42%, var(--theme-border)) !important;
+  color:var(--theme-accent) !important;
+  box-shadow:0 8px 16px rgba(2,8,23,.14) !important;
+}
+
+.row-actions .wbtn.notwatched-marvel-btn{
+  background:linear-gradient(135deg,color-mix(in srgb,var(--theme-accent) 10%, var(--theme-surface)),color-mix(in srgb,var(--theme-accent-alt) 6%, var(--theme-surface))) !important;
+  border:1px solid color-mix(in srgb,var(--theme-accent) 34%, var(--theme-border)) !important;
+  color:var(--theme-text) !important;
+  box-shadow:0 8px 14px rgba(2,8,23,.14) !important;
+}
+
+.row-actions .wbtn.notwatched-marvel-btn[aria-label*="unwatched"]{
+  background:linear-gradient(135deg,color-mix(in srgb,var(--theme-success) 26%, var(--theme-surface)),color-mix(in srgb,var(--theme-success) 14%, var(--theme-surface))) !important;
+  border-color:color-mix(in srgb,var(--theme-success) 52%, var(--theme-border)) !important;
+  color:var(--theme-success) !important;
+}
+
+.bookmark-marvel-btn[data-bookmarked="true"],
+[data-color-mode="light"] .bookmark-marvel-btn[data-bookmarked="true"],
+[data-color-mode="dark"] .bookmark-marvel-btn[data-bookmarked="true"]{
+  background:linear-gradient(135deg,#7dd3fc 0%, #38bdf8 54%, #2563eb 100%) !important;
+  border-color:#7dd3fc !important;
+  color:#eff6ff !important;
+  box-shadow:0 10px 20px rgba(37,99,235,.32) !important;
+}
+
+.action-character-btn{transition:transform .18s ease, box-shadow .18s ease, filter .18s ease}
+.action-character-btn:hover{transform:translateY(-1px);filter:brightness(1.03)}
+.action-character-btn:active{transform:translateY(0) scale(.98)}

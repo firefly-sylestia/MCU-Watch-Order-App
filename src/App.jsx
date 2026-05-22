@@ -627,15 +627,15 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
           <button className="wbtn bookmark-marvel-btn" aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} data-bookmarked={isBookmarked} style={{ width: isDesktopViewport ? 38 : 34, height: isDesktopViewport ? 38 : 34 }}><Bookmark size={11} /></button>
           {!hideWatchToggle && (
             <button
-              className="wbtn status-toggle notwatched-marvel-btn"
+              className="wbtn status-toggle notwatched-marvel-btn action-character-btn"
               aria-label={isWatched ? `Mark ${item.title} as unwatched` : `Mark ${item.title} as watched`}
               title={isWatched ? 'Mark unwatched' : 'Mark watched'}
               onClick={(event) => {
                 event.stopPropagation();
                 onSetStatus(item.id, isWatched ? 'unwatched' : 'watched');
               }}
-              style={{ width: 28, height: 28 }}
-            ><RowStatusIcon size={12} /></button>
+              style={{ minWidth: 96, height: 32, padding: '0 10px', borderRadius: 999, fontSize: 10.5, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.85, justifyContent: 'space-between' }}
+            ><span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><RowStatusIcon size={10} />{isWatched ? 'Watched' : 'Unwatched'}</span><ChevDown size={10} style={{ opacity: 0.62, transform: 'rotate(-90deg)' }} /></button>
           )}
         </div>
         
