@@ -1894,3 +1894,32 @@ main{--content-max:1560px !important}
 [data-color-mode="dark"] .notwatched-marvel-btn[aria-label*="unwatched"]{
   box-shadow:var(--btn-depth-dark) !important;
 }
+
+
+/* Overlay motion tuning: smoother + slightly faster without jitter */
+.sidebar-menu {
+  transform: translate3d(-12px, 0, 0);
+  transition: transform 150ms cubic-bezier(.22,1,.36,1), opacity 150ms cubic-bezier(.22,1,.36,1);
+  will-change: transform, opacity;
+}
+.sidebar-menu[data-state='open'] { transform: translate3d(0,0,0); }
+
+.settings-shell {
+  transition: opacity 130ms cubic-bezier(.22,1,.36,1);
+}
+.settings-menu {
+  transform: translate3d(0, 8px, 0) scale(.992);
+  opacity: .01;
+  transition: transform 150ms cubic-bezier(.22,1,.36,1), opacity 150ms cubic-bezier(.22,1,.36,1);
+  will-change: transform, opacity;
+}
+.settings-menu[data-state='open'] {
+  transform: translate3d(0,0,0) scale(1);
+  opacity: 1;
+  animation: none;
+}
+
+.sidebar-backdrop,
+.settings-backdrop {
+  transition: opacity 120ms cubic-bezier(.22,1,.36,1);
+}
