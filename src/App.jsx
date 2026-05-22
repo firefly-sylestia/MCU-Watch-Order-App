@@ -3369,6 +3369,7 @@ export default function MCUViewer() {
                   <div style={{ color: T.textMuted, fontSize: 12 }}>Focused composer for card type, theme identity, typography, analysis sections, and live preview.</div>
                 </div>
                 <button className="fpill ui-touch-btn" onClick={shareAdvancedExportCard}><Upload size={14}/>Share Selected Card</button>
+              </div>
               <div style={{ display: 'grid', gap: 6 }}>
                 <div style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.4, textTransform: 'uppercase' }}>Card type</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 8 }}>
@@ -3390,7 +3391,6 @@ export default function MCUViewer() {
                     </button>
                   ))}</div>
                 </div>
-              </div>
               <div style={{ display: 'grid', gap: 6 }}>
                 <div style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.4, textTransform: 'uppercase' }}>Font</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
