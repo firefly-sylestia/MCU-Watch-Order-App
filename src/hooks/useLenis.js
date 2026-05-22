@@ -81,8 +81,8 @@ export const useLenis = () => {
       const frame = dt / 16.67;
       const distance = target - current;
 
-      const spring = isFinePointer ? 0.06 : 0.072;
-      const damping = isFinePointer ? 0.84 : 0.8;
+      const spring = isFinePointer ? 0.054 : 0.068;
+      const damping = isFinePointer ? 0.86 : 0.82;
       const inputDecay = isFinePointer ? 0.91 : 0.88;
 
       inputVelocity *= Math.pow(inputDecay, frame);
@@ -104,7 +104,7 @@ export const useLenis = () => {
 
       internalScrollWrite = true;
       window.scrollTo(0, current);
-      setTimeout(() => { internalScrollWrite = false; }, 0);
+      window.requestAnimationFrame(() => { internalScrollWrite = false; });
 
       if (!done) rafId = window.requestAnimationFrame(step);
       else { rafId = 0; lastTs = 0; }

@@ -1894,3 +1894,54 @@ main{--content-max:1560px !important}
 [data-color-mode="dark"] .notwatched-marvel-btn[aria-label*="unwatched"]{
   box-shadow:var(--btn-depth-dark) !important;
 }
+
+/* Smooth overlay modernization pass: faster but stable sidebar/settings motion */
+.sidebar-menu,
+.settings-menu,
+.settings-menu-redesign {
+  transform: translate3d(0,0,0);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+.sidebar-menu {
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), opacity 160ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+.sidebar-menu[data-state='closed'] {
+  transform: translate3d(-10px, 0, 0) !important;
+  opacity: 0.97;
+}
+
+.sidebar-menu[data-state='open'] {
+  transform: translate3d(0, 0, 0) !important;
+  opacity: 1;
+}
+
+.settings-shell {
+  transition: opacity 120ms ease !important;
+}
+
+.settings-menu,
+.settings-menu-redesign {
+  transition: transform 150ms cubic-bezier(0.22, 1, 0.36, 1), opacity 150ms cubic-bezier(0.22, 1, 0.36, 1), filter 150ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+.settings-menu[data-state='closed'],
+.settings-menu-redesign[data-state='closed'] {
+  transform: translate3d(0, 6px, 0) scale(0.996) !important;
+  opacity: 0;
+  filter: blur(0.5px);
+}
+
+.settings-menu[data-state='open'],
+.settings-menu-redesign[data-state='open'] {
+  transform: translate3d(0, 0, 0) scale(1) !important;
+  opacity: 1;
+  filter: blur(0);
+}
+
+.sidebar-backdrop,
+.settings-backdrop {
+  transition: opacity 120ms ease !important;
+}
