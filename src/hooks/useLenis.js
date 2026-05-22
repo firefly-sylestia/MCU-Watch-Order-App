@@ -63,6 +63,7 @@ export const useLenis = () => {
     let rafId = 0;
     let lastTs = 0;
     let internalScrollWrite = false;
+    let releaseWriteId = 0;
 
     let touchY = null;
     let touchX = null;
@@ -73,18 +74,25 @@ export const useLenis = () => {
     const kickoff = () => { if (!rafId) rafId = window.requestAnimationFrame(step); };
 
     const step = (ts) => {
-      const dt = lastTs ? Math.min(42, Math.max(8, ts - lastTs)) : 16;
+      const dt = lastTs ? Math.min(48, Math.max(8, ts - lastTs)) : 16;
       lastTs = ts;
-      const smooth = isFinePointer ? 0.18 : 0.22;
-      const t = 1 - Math.pow(1 - smooth, dt / 16.67);
-      current += (target - current) * t;
+
+      const distance = target - current;
+      const absDistance = Math.abs(distance);
+      const baseFollow = isFinePointer ? 0.34 : 0.3;
+      const boost = isFinePointer ? Math.min(0.26, absDistance / 1200) : Math.min(0.16, absDistance / 1400);
+      const follow = Math.min(0.62, baseFollow + boost);
+      const t = 1 - Math.pow(1 - follow, dt / 16.67);
+      current += distance * t;
+      current = Math.min(maxScrollY(), Math.max(0, current));
 
       const done = Math.abs(target - current) < 0.2;
       if (done) current = target;
 
       internalScrollWrite = true;
       window.scrollTo(0, current);
-      window.requestAnimationFrame(() => { internalScrollWrite = false; });
+      if (releaseWriteId) window.cancelAnimationFrame(releaseWriteId);
+      releaseWriteId = window.requestAnimationFrame(() => { internalScrollWrite = false; releaseWriteId = 0; });
 
       if (!done) rafId = window.requestAnimationFrame(step);
       else { rafId = 0; lastTs = 0; }
@@ -186,6 +194,7 @@ export const useLenis = () => {
       window.removeEventListener('scroll', onNativeScroll);
       window.removeEventListener('resize', onResize);
       window.cancelAnimationFrame(rafId);
+      if (releaseWriteId) window.cancelAnimationFrame(releaseWriteId);
       html.style.overscrollBehaviorY = prevHtmlOverscroll;
       document.body.style.overscrollBehaviorY = prevBodyOverscroll;
       html.classList.remove('lenis-ready');
