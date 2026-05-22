@@ -698,3 +698,22 @@ a:hover {
   --row-top-tint: color-mix(in srgb, #d8c7ac 28%, transparent);
   --row-top-tint-soft: color-mix(in srgb, var(--theme-accent, #7cffda) 10%, #F8F9FB);
 }
+
+
+:root {
+  --lenis-progress: 0;
+}
+
+.app-shell,
+.main-content,
+.hero-shell {
+  transition: transform 220ms var(--ease-out), filter 220ms var(--ease-out);
+  will-change: transform;
+}
+
+body.is-scrolling .app-shell,
+body.is-scrolling .main-content,
+body.is-scrolling .hero-shell {
+  transform: translateY(-1px);
+  filter: saturate(1.015);
+}
