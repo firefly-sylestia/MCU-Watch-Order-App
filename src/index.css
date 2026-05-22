@@ -160,6 +160,8 @@ html {
   scroll-behavior: auto;
   -webkit-text-size-adjust: 100%;
   overflow-x: hidden;
+  overscroll-behavior-y: none;
+  scrollbar-gutter: stable both-edges;
 }
 
 body {
@@ -169,8 +171,9 @@ body {
   color: var(--text);
   font-family: var(--font-body);
   overflow-x: hidden;
-  overscroll-behavior-y: auto;
+  overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 #root {
@@ -676,4 +679,9 @@ a:hover {
   --theme-text-disabled: #6B7280;
   --row-top-tint: color-mix(in srgb, #d8c7ac 28%, transparent);
   --row-top-tint-soft: color-mix(in srgb, var(--theme-accent, #7cffda) 10%, #F8F9FB);
+}
+
+
+.lenis-ready body {
+  scroll-behavior: auto;
 }
