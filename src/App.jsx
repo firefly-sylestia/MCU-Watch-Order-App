@@ -611,7 +611,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
         <div className="row-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: isDesktopViewport ? 96 : 0, flexShrink: 0 }}>
           <div className="row-meta-line truncate-single-line" style={{ fontSize: 11, color: 'var(--theme-warning)', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.6 }}>★ {rating || '—'}</div>
           <button
-            className="wbtn status-pill"
+            className="wbtn status-pill status-marvel-pill"
             aria-label={`Open status menu for ${item.title}`}
             aria-haspopup="menu"
             aria-expanded={statusDropdown === item.id}
@@ -624,7 +624,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             </span>
             <ChevDown size={10} style={{ opacity: 0.8, transform: statusDropdown === item.id ? 'rotate(180deg)' : 'none' }} />
           </button>
-          <button className="wbtn" aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} style={{ width: isDesktopViewport ? 30 : 24, height: isDesktopViewport ? 30 : 24, background: isBookmarked ? 'rgba(125,211,252,0.2)' : 'transparent', color: isBookmarked ? '#7dd3fc' : T.textMuted, borderColor: isBookmarked ? '#7dd3fc66' : `${T.surfaceBorder}` }}><Bookmark size={11} /></button>
+          <button className="wbtn bookmark-marvel-btn" aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} style={{ width: isDesktopViewport ? 30 : 24, height: isDesktopViewport ? 30 : 24, background: isBookmarked ? 'rgba(125,211,252,0.2)' : 'transparent', color: isBookmarked ? '#7dd3fc' : T.textMuted, borderColor: isBookmarked ? '#7dd3fc66' : `${T.surfaceBorder}` }}><Bookmark size={11} /></button>
           {!hideWatchToggle && (
             <button
               className="wbtn status-toggle"
@@ -1924,7 +1924,7 @@ export default function MCUViewer() {
             bgOpacity: exportSettings.bgOpacity,
             density: exportSettings.density,
             sections: exportSettings.sections,
-            previewScale: 0.56,
+            previewScale: 0.42,
           },
         });
         objectUrl = URL.createObjectURL(blob);
@@ -2712,8 +2712,8 @@ export default function MCUViewer() {
             <div style={{ fontSize: 12, color: T.textMuted }}>{profile.name || 'Marvel Fan'}</div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6 }}>
-            <button className="fpill marvel-btn" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', color: darkMode ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Moon size={12} />Dark</button>
-            <button className="fpill marvel-btn" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', color: !darkMode ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Sun size={12} />Light</button>
+            <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', color: darkMode ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Moon size={12} />Dark</button>
+            <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', color: !darkMode ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Sun size={12} />Light</button>
           </div>
                   </div>
                 <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
@@ -3502,6 +3502,7 @@ export default function MCUViewer() {
                 {activeItem?.title}
               </div>
               <button
+                className="status-menu-bookmark marvel-mini-btn"
                 onClick={() => { setBookmarks(p => ({ ...p, [activeItem.id]: p[activeItem.id] ? 0 : 1 })); setStatusDropdown(null); }}
                 style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '7px 9px', border: `1px solid ${bookmarks[activeItem?.id] ? '#7dd3fc66' : 'transparent'}`, background: bookmarks[activeItem?.id] ? 'rgba(125,211,252,0.12)' : 'transparent', color: bookmarks[activeItem?.id] ? '#7dd3fc' : T.pillText, borderRadius: 6, cursor: 'pointer', fontFamily: 'var(--font-marvel-display)', fontSize: 12.5, textAlign: 'left' }}
               >
@@ -3513,6 +3514,7 @@ export default function MCUViewer() {
                   const isCurrent = key === activeItem?.status;
                   return (
                     <button key={key}
+                      className="status-menu-item marvel-mini-btn"
                       autoFocus={isCurrent}
                       onClick={() => { setStatusDirect(activeItem.id, key); setStatusDropdown(null); }}
                       onKeyDown={e => { if (e.key === 'Escape') setStatusDropdown(null); }}

@@ -1206,3 +1206,17 @@ main{--content-max:1560px !important}
 .fpill.marvel-btn::after,.theme-btn.marvel-btn::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 20%,rgba(255,255,255,.2) 48%,transparent 74%);transform:translateX(-120%);transition:transform .45s ease}
 .fpill.marvel-btn:hover::after,.theme-btn.marvel-btn:hover::after{transform:translateX(120%)}
 [data-color-mode="light"] .phase-selector-rail .marvel-phase-btn{background:linear-gradient(135deg,#ffffff,#f6f8fc);color:#1f2937;border-color:rgba(148,163,184,.45)}
+
+
+/* Marvel accent for status/bookmark controls (keeps light/dark readable) */
+.status-marvel-pill{background:linear-gradient(130deg,color-mix(in srgb,var(--theme-accent) 14%, var(--theme-surface)),color-mix(in srgb,var(--theme-accent-alt) 8%, var(--theme-surface))) !important;border-color:color-mix(in srgb,var(--theme-accent) 42%, var(--theme-border)) !important;box-shadow:0 8px 16px rgba(2,8,23,.16)}
+.status-marvel-pill:hover{transform:translateY(-1px);filter:brightness(1.02)}
+.bookmark-marvel-btn{background:linear-gradient(135deg,color-mix(in srgb,#ef4444 16%, var(--theme-surface)),color-mix(in srgb,#f97316 10%, var(--theme-surface))) !important;border-color:color-mix(in srgb,#ef4444 36%, var(--theme-border)) !important;color:color-mix(in srgb,#fca5a5 72%, var(--theme-text)) !important}
+.bookmark-marvel-btn[aria-label^="Remove"]{background:linear-gradient(135deg,color-mix(in srgb,#ef4444 24%, var(--theme-surface)),color-mix(in srgb,#fb7185 16%, var(--theme-surface))) !important;color:#fecdd3 !important}
+.marvel-mini-btn{position:relative;overflow:hidden;transition:transform .18s var(--ease-out),border-color .18s var(--ease-out),background .18s var(--ease-out),color .18s var(--ease-out)}
+.marvel-mini-btn:hover{transform:translateY(-1px)}
+.marvel-mini-btn::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 25%,rgba(255,255,255,.16) 52%,transparent 78%);transform:translateX(-120%);transition:transform .42s ease;pointer-events:none}
+.marvel-mini-btn:hover::after{transform:translateX(120%)}
+.status-menu-bookmark{border-radius:10px !important}
+.status-menu-item{border-radius:10px !important}
+[data-color-mode="light"] .bookmark-marvel-btn{color:#9f1239 !important}

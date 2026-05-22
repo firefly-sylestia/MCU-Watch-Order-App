@@ -64,13 +64,18 @@ export const useLenis = () => {
 
     const kickoff = () => { if (!rafId) rafId = window.requestAnimationFrame(step); };
 
-    const step = () => {
+    let lastTs = 0;
+    const step = (ts) => {
+      const dt = lastTs ? Math.min(32, ts - lastTs) : 8.33;
+      lastTs = ts;
       const delta = target - current;
-      current += delta * (isFinePointer ? 0.1 : 0.14);
-      if (Math.abs(delta) <= 0.25) current = target;
+      const tau = isFinePointer ? 88 : 102;
+      const alpha = 1 - Math.exp(-dt / tau);
+      current += delta * alpha;
+      if (Math.abs(delta) <= 0.12) current = target;
       window.scrollTo(0, current);
-      if (Math.abs(target - current) > 0.35) rafId = window.requestAnimationFrame(step);
-      else rafId = 0;
+      if (Math.abs(target - current) > 0.12) rafId = window.requestAnimationFrame(step);
+      else { rafId = 0; lastTs = 0; }
     };
 
     const normalizeDelta = (event) => {
