@@ -6,6 +6,23 @@ const isEditableTarget = (target) => {
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.closest('[contenteditable="true"]');
 };
 
+const hasScrollableParent = (target, deltaY) => {
+  if (!(target instanceof Element)) return false;
+  let node = target;
+  while (node && node !== document.body) {
+    const style = window.getComputedStyle(node);
+    const overflowY = style.overflowY;
+    const canScroll = (overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight + 1;
+    if (canScroll) {
+      const atTop = node.scrollTop <= 0;
+      const atBottom = node.scrollTop + node.clientHeight >= node.scrollHeight - 1;
+      if ((deltaY < 0 && !atTop) || (deltaY > 0 && !atBottom)) return true;
+    }
+    node = node.parentElement;
+  }
+  return false;
+};
+
 export const useLenis = () => {
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
@@ -45,8 +62,13 @@ export const useLenis = () => {
     const onWheel = (event) => {
       if (event.defaultPrevented || event.ctrlKey) return;
       if (isEditableTarget(event.target)) return;
+
+      // Let native scrolling handle nested scroll regions and horizontal carousels.
+      if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+
       const deltaY = normalizeDelta(event);
       if (!Number.isFinite(deltaY) || deltaY === 0) return;
+      if (hasScrollableParent(event.target, deltaY)) return;
 
       target = Math.min(maxScrollY(), Math.max(0, target + deltaY));
       kickoff();
