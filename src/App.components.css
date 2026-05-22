@@ -1507,3 +1507,18 @@ main{--content-max:1560px !important}
   .rrow .title-btn{min-height:112px !important;height:112px !important;grid-template-rows:auto auto minmax(34px,1fr) !important}
   .rrow .title-row-mid{min-height:36px !important}
 }
+
+/* 2026 refresh: status system + release meta layout */
+.release-meta-grid > .meta-chip{flex:1 1 calc((100% - 12px)/3);min-width:0;justify-content:center}
+.release-meta-grid > .meta-chip:nth-child(n+4){margin-top:2px}
+
+.status-pill[class*="status-shade-"]{transition:transform .16s ease,filter .18s ease,box-shadow .18s ease}
+.status-pill.status-shade-watched{background:linear-gradient(135deg,#ef4444 0%,#dc2626 52%,#991b1b 100%) !important;border-color:#ef4444 !important;color:#fff1f2 !important;box-shadow:0 8px 20px rgba(185,28,28,.32) !important}
+.status-pill.status-shade-plan-to-watch{background:linear-gradient(135deg,#3b82f6 0%,#2563eb 52%,#1d4ed8 100%) !important;border-color:#3b82f6 !important;color:#eff6ff !important;box-shadow:0 8px 20px rgba(29,78,216,.26) !important}
+.status-pill.status-shade-watching{background:linear-gradient(135deg,#8b5cf6 0%,#7c3aed 52%,#6d28d9 100%) !important;border-color:#8b5cf6 !important;color:#f5f3ff !important;box-shadow:0 8px 20px rgba(109,40,217,.25) !important}
+.status-pill.status-shade-on-hold{background:linear-gradient(135deg,#f59e0b 0%,#d97706 52%,#b45309 100%) !important;border-color:#f59e0b !important;color:#fffbeb !important;box-shadow:0 8px 20px rgba(180,83,9,.26) !important}
+.status-pill.status-shade-dropped{background:linear-gradient(135deg,#f97316 0%,#ef4444 52%,#b91c1c 100%) !important;border-color:#f97316 !important;color:#fff1f2 !important;box-shadow:0 8px 20px rgba(185,28,28,.28) !important}
+.status-pill.status-shade-unwatched{background:var(--theme-surface) !important;border-color:var(--theme-border) !important;color:var(--theme-text-secondary) !important;box-shadow:none !important}
+.status-pill.status-shade-unwatched svg{opacity:.8}
+.status-pill:hover{transform:translateY(-1px)}
+[data-color-mode="light"] .status-pill.status-shade-unwatched{background:#fff !important}
