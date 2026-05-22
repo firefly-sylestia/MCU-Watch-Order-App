@@ -6,18 +6,26 @@ const isEditableTarget = (target) => {
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.closest('[contenteditable="true"]');
 };
 
-const hasScrollableParent = (target, deltaY) => {
+const hasScrollableParent = (target, deltaY, deltaX = 0) => {
   if (!(target instanceof Element)) return false;
   let node = target;
   while (node && node !== document.body) {
     const style = window.getComputedStyle(node);
     const overflowY = style.overflowY;
+    const overflowX = style.overflowX;
     const canScroll = (overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight + 1;
+    const canScrollX = (overflowX === 'auto' || overflowX === 'scroll') && node.scrollWidth > node.clientWidth + 1;
     if (canScroll) {
       const atTop = node.scrollTop <= 0;
       const atBottom = node.scrollTop + node.clientHeight >= node.scrollHeight - 1;
       if ((deltaY < 0 && !atTop) || (deltaY > 0 && !atBottom)) return true;
     }
+    if (canScrollX && Math.abs(deltaX) >= Math.abs(deltaY)) {
+      const atLeft = node.scrollLeft <= 0;
+      const atRight = node.scrollLeft + node.clientWidth >= node.scrollWidth - 1;
+      if ((deltaX < 0 && !atLeft) || (deltaX > 0 && !atRight)) return true;
+    }
+    if (canScrollX && Math.abs(deltaX) > 0) return true;
     node = node.parentElement;
   }
   return false;
@@ -53,9 +61,14 @@ export const useLenis = () => {
 
     const step = () => {
       const delta = target - current;
+      if (Math.abs(delta) <= 0.2) {
+        current = target;
+        rafId = 0;
+        return;
+      }
       current += delta * (isFinePointer ? 0.14 : 0.19);
       if (Math.abs(delta) <= 0.35) current = target;
-      window.scrollTo(0, current);
+      window.scrollTo({ top: current, left: 0, behavior: 'auto' });
       if (Math.abs(target - current) > 0.35) rafId = window.requestAnimationFrame(step);
       else rafId = 0;
     };
@@ -72,8 +85,9 @@ export const useLenis = () => {
       if (isEditableTarget(event.target)) return;
       if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
       const deltaY = normalizeDelta(event);
+      const deltaX = event.deltaX;
       if (!Number.isFinite(deltaY) || deltaY === 0) return;
-      if (hasScrollableParent(event.target, deltaY)) return;
+      if (hasScrollableParent(event.target, deltaY, deltaX)) return;
 
       const tune = getScrollTuning();
       const deskCap = 30 + tune.desktopDeltaCap * 10;
@@ -98,7 +112,7 @@ export const useLenis = () => {
       const rawDelta = touchY - nextY;
       touchY = nextY;
       if (!Number.isFinite(rawDelta) || rawDelta === 0) return;
-      if (hasScrollableParent(event.target, rawDelta)) return;
+      if (hasScrollableParent(event.target, rawDelta, 0)) return;
 
       const tune = getScrollTuning();
       const mobileCap = 15 + tune.mobileDeltaCap * 10;
@@ -115,6 +129,12 @@ export const useLenis = () => {
       current = window.scrollY;
       target = window.scrollY;
     };
+    const stabilizeScrollState = () => {
+      if (rafId) return;
+      const y = window.scrollY;
+      current = y;
+      target = y;
+    };
 
     window.addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('touchstart', onTouchStart, { passive: true });
@@ -122,6 +142,8 @@ export const useLenis = () => {
     window.addEventListener('touchend', onTouchEnd, { passive: true });
     window.addEventListener('touchcancel', onTouchEnd, { passive: true });
     window.addEventListener('scroll', syncToNativeScroll, { passive: true });
+    window.addEventListener('pageshow', stabilizeScrollState, { passive: true });
+    window.addEventListener('load', stabilizeScrollState, { passive: true });
     const onResize = () => { target = Math.min(target, maxScrollY()); current = Math.min(current, maxScrollY()); };
     window.addEventListener('resize', onResize);
 
@@ -132,6 +154,8 @@ export const useLenis = () => {
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('touchcancel', onTouchEnd);
       window.removeEventListener('scroll', syncToNativeScroll);
+      window.removeEventListener('pageshow', stabilizeScrollState);
+      window.removeEventListener('load', stabilizeScrollState);
       window.removeEventListener('resize', onResize);
       window.cancelAnimationFrame(rafId);
       html.classList.remove('lenis-ready');
