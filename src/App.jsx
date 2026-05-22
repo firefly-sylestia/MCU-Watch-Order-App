@@ -878,7 +878,11 @@ export default function MCUViewer() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     window.__overlayActive = overlayActive;
-    return () => { window.__overlayActive = false; };
+    window.dispatchEvent(new CustomEvent('overlay:change'));
+    return () => {
+      window.__overlayActive = false;
+      window.dispatchEvent(new CustomEvent('overlay:change'));
+    };
   }, [overlayActive]);
 
   useEffect(() => {
@@ -1049,6 +1053,10 @@ export default function MCUViewer() {
       container.scrollTo({ top: 0, behavior: 'auto' });
       return;
     }
+    if (window.__lenis) {
+      window.__lenis.scrollTo(0, { immediate: true });
+      return;
+    }
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
 
@@ -1072,6 +1080,10 @@ export default function MCUViewer() {
     const desiredWindowTop = el.getBoundingClientRect().top + window.scrollY - topBarOffset;
     const maxWindowTop = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
     const clampedWindowTop = Math.max(0, Math.min(maxWindowTop, desiredWindowTop));
+    if (window.__lenis) {
+      window.__lenis.scrollTo(clampedWindowTop, { duration: 1 });
+      return;
+    }
     window.scrollTo({ top: clampedWindowTop, behavior: 'smooth' });
   };
 
