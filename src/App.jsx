@@ -77,12 +77,12 @@ const TYPE_META = {
 };
 
 const STATUS_META = {
-  watched:        { label: 'Watched',        color: '#3ec47a', Icon: Check,  bg: 'rgba(62,196,122,0.1)'  },
-  'plan-to-watch':{ label: 'Plan to Watch',  color: '#4a9ede', Icon: Clock,  bg: 'rgba(74,158,222,0.1)'  },
-  watching:       { label: 'Watching',       color: '#d4372f', Icon: Eye,    bg: 'rgba(212,55,47,0.1)'   },
-  'on-hold':      { label: 'On Hold',        color: '#f39c12', Icon: Pause,  bg: 'rgba(243,156,18,0.1)'  },
-  dropped:        { label: 'Dropped',        color: '#e05252', Icon: Trash2, bg: 'rgba(224,82,82,0.1)'   },
-  unwatched:      { label: 'Not Watched',    color: '#334455', Icon: EyeOff, bg: 'transparent'           },
+  watched:        { label: 'Completed',      color: '#e11d48', Icon: Check,      bg: 'rgba(225,29,72,0.12)'  },
+  'plan-to-watch':{ label: 'Watchlist',      color: '#3b82f6', Icon: Bookmark,   bg: 'rgba(59,130,246,0.12)' },
+  watching:       { label: 'In Progress',    color: '#8b5cf6', Icon: PlayCircle, bg: 'rgba(139,92,246,0.12)' },
+  'on-hold':      { label: 'Paused',         color: '#f59e0b', Icon: PauseCircle,bg: 'rgba(245,158,11,0.12)' },
+  dropped:        { label: 'Dropped',        color: '#ef4444', Icon: XCircle,    bg: 'rgba(239,68,68,0.12)'  },
+  unwatched:      { label: 'Unwatched',      color: 'var(--theme-text-secondary)', Icon: EyeOff, bg: 'transparent' },
 };
 
 const SORT_LABELS = { order: 'Chronological', year: 'By Year', title: 'Alphabetical', runtime: 'Runtime', watched: 'Recently Watched', status: 'By Status' };
@@ -598,7 +598,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             <span className="title-main" style={{ fontWeight: 800, color: 'var(--theme-text)', opacity: 1, transition: 'color 0.26s', fontFamily: 'var(--font-marvel-display)', maxWidth: '100%', letterSpacing: 0.2, minWidth: 0 }}>{item.title}</span>
             <ChevRight size={10} className="title-chevron" style={{ color: T.textFaint, transition: 'transform 0.2s', flexShrink: 0, marginLeft: 2 }} />
           </div>
-          <div className="title-row-mid">
+          <div className="title-row-mid release-meta-grid">
             {item.episodes && <span className="meta-chip truncate-single-line" style={{ fontSize: 9 }}>{item.episodes} EP</span>}
             <span className="meta-chip truncate-single-line" style={{ fontSize: 11, color: typeMeta.color, fontWeight: 700 }}><TypeIcon size={8} />{typeMeta.label}</span>
             <span className="meta-chip truncate-single-line" style={{ fontSize: 9.5 }}>{item.year || releaseLabel}</span>
@@ -609,9 +609,9 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
         </button>
 
         <div className="row-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: isDesktopViewport ? 96 : 0, flexShrink: 0 }}>
-          <div className="row-meta-line truncate-single-line" style={{ fontSize: 11, color: 'var(--theme-warning)', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.6 }}>★ {rating || '—'}</div>
+          <div className="row-meta-line truncate-single-line rating-marvel-pill" style={{ fontSize: 11, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.6 }}>★ {rating || '—'}</div>
           <button
-            className="wbtn status-pill status-marvel-pill"
+            className={`wbtn status-pill status-shade-${item.status}`}
             aria-label={`Open status menu for ${item.title}`}
             aria-haspopup="menu"
             aria-expanded={statusDropdown === item.id}
@@ -2758,7 +2758,7 @@ export default function MCUViewer() {
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Theme</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6, marginTop: 8 }}>
           {THEME_CHOICES.map(({ id: t, label, swatch }) => (
-            <button key={t} className="fpill"
+            <button key={t} className="fpill filter-pill type-pill"
               style={{ justifyContent: 'center', gap: 6, fontSize: 11, borderColor: themeMode === t ? swatch : 'var(--theme-border)', boxShadow: themeMode === t ? `0 0 0 1px ${swatch}, 0 0 10px ${swatch}44` : 'none', background: themeMode === t ? `${swatch}18` : 'var(--theme-surface)', color: themeMode === t ? swatch : 'var(--theme-text)' }}
               onClick={() => setThemeMode(t)}
             >
@@ -2922,7 +2922,7 @@ export default function MCUViewer() {
               <SlidersH size={13} />
               Filters
               {activeFilterCount > 0 && (
-                <span style={{ background: 'var(--theme-accent)', color: '#fff', borderRadius: 999, fontSize: 10, fontFamily: 'var(--font-marvel-display)', fontWeight: 700, padding: '1px 6px', lineHeight: 1.4 }}>{activeFilterCount}</span>
+                <span className="filters-count-badge" aria-label={`${activeFilterCount} active filters`}>{activeFilterCount}</span>
               )}
               <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
@@ -2948,13 +2948,13 @@ export default function MCUViewer() {
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', overflow: 'visible' }}>
               {/* Sort */}
               <div ref={sortRef} style={{ position: 'relative' }}>
-                <button className="fpill" onClick={() => setSortOpen(o => !o)}
+                <button className="fpill filter-pill sort-pill" onClick={() => setSortOpen(o => !o)}
                   style={{ color: 'var(--theme-accent)', borderColor: 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'transparent', fontFamily: 'var(--font-marvel-ui)', fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
                   {SORT_LABELS[sortBy]}
                   <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                 </button>
                 {sortOpen && (
-                  <div className="dropdown-pop" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 1400, boxShadow: 'none', minWidth: 200 }}>
+                  <div className="dropdown-pop filter-dropdown" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1400, minWidth: 220 }}>
                     {Object.entries(SORT_LABELS).map(([k, v]) => (
                       <div key={k} className={`sopt ${sortBy === k ? 'picked' : ''}`} onClick={() => { setSortBy(k); setSortOpen(false); }}>{v}</div>
                     ))}
@@ -2966,7 +2966,7 @@ export default function MCUViewer() {
                 const m = TYPE_META[t];
                 const on = typeFilter === t;
                 return (
-                  <button key={t} className="fpill"
+                  <button key={t} className="fpill filter-pill type-pill"
                     style={on ? { borderColor: m.color + '88', background: m.color + '14', color: m.color } : {}}
                     onClick={() => setTypeFilter(on ? null : t)}>
                     <m.Icon size={10} />{m.label}
@@ -2994,7 +2994,7 @@ export default function MCUViewer() {
                   <Check size={10} />Status
                 </button>
                 {filterStatusOpen && (
-                  <div className="dropdown-pop" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: 'color-mix(in srgb, var(--theme-surface) 65%, transparent)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 9, overflow: 'hidden', zIndex: 1400, boxShadow: 'none', minWidth: 180 }}
+                  <div className="dropdown-pop filter-dropdown" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1400, minWidth: 220 }}
                     >
                     <div className={`sopt ${!statusFilter && !watchedOnly ? 'picked' : ''}`} onClick={() => { setStatusFilter(null); setWatchedOnly(false); setFilterStatusOpen(false); }}>Show all status</div>
                     <div className={`sopt ${watchedOnly ? 'picked' : ''}`} onClick={() => { setWatchedOnly(true); setStatusFilter(null); setFilterStatusOpen(false); }}>Watched only</div>
@@ -3093,6 +3093,15 @@ export default function MCUViewer() {
         </div>
         </div>
       </div>
+        <button
+          type="button"
+          className="go-top-fab"
+          onClick={scrollToListTop}
+          aria-label="Go to top"
+          style={scrollCheckpoint > 420 ? undefined : { opacity: 0, pointerEvents: 'none', transform: 'translateY(8px)' }}
+        >
+          <ChevDown size={14} style={{ transform: 'rotate(180deg)' }} /> Top
+        </button>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className='app-scroll-shell' style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
@@ -3514,7 +3523,7 @@ export default function MCUViewer() {
                   const isCurrent = key === activeItem?.status;
                   return (
                     <button key={key}
-                      className="status-menu-item marvel-mini-btn"
+                      className={`status-menu-item marvel-mini-btn status-menu-${key} ${isCurrent ? 'is-current' : ''}`}
                       autoFocus={isCurrent}
                       onClick={() => { setStatusDirect(activeItem.id, key); setStatusDropdown(null); }}
                       onKeyDown={e => { if (e.key === 'Escape') setStatusDropdown(null); }}
