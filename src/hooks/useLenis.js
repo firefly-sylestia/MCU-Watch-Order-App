@@ -27,10 +27,10 @@ const getScrollTuning = () => {
   const t = (typeof window !== 'undefined' && window.__scrollTuning) ? window.__scrollTuning : {};
   const clamp10 = (v, d) => Math.max(1, Math.min(10, Number.isFinite(Number(v)) ? Number(v) : d));
   return {
-    desktopMultiplier: clamp10(t.desktopMultiplier, 4),
-    desktopDeltaCap: clamp10(t.desktopDeltaCap, 4),
-    mobileMultiplier: clamp10(t.mobileMultiplier, 5),
-    mobileDeltaCap: clamp10(t.mobileDeltaCap, 5),
+    desktopMultiplier: clamp10(t.desktopMultiplier, 6),
+    desktopDeltaCap: clamp10(t.desktopDeltaCap, 9),
+    mobileMultiplier: clamp10(t.mobileMultiplier, 6),
+    mobileDeltaCap: clamp10(t.mobileDeltaCap, 9),
   };
 };
 
