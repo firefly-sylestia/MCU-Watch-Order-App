@@ -1189,3 +1189,19 @@ main{--content-max:1560px !important}
 
 .sidebar-backdrop[data-state='closed'],
 .settings-backdrop[data-state='closed']{pointer-events:none !important;opacity:0 !important;}
+
+/* Modernized top filters + quick actions */
+.phase-filter-rail{display:flex;align-items:center;gap:10px;overflow-x:auto;overflow-y:hidden;padding:2px 2px 6px;max-width:100%;width:100%;scrollbar-width:none;scroll-snap-type:x proximity}
+.phase-filter-rail::-webkit-scrollbar{display:none}
+.phase-chip-modern{scroll-snap-align:start;min-height:44px !important;padding:0 16px !important;border-radius:14px !important;background:linear-gradient(145deg,color-mix(in srgb,var(--theme-surface) 88%, transparent),color-mix(in srgb,var(--theme-bg) 22%, transparent)) !important;border:1px solid color-mix(in srgb,var(--theme-border) 75%, transparent) !important;box-shadow:0 10px 22px rgba(2,8,23,.16);transition:transform .18s var(--interactive-ease),box-shadow .18s var(--interactive-ease),border-color .18s var(--interactive-ease),background .18s var(--interactive-ease)}
+.phase-chip-modern:hover{transform:translateY(-1px);box-shadow:0 14px 24px rgba(2,8,23,.2)}
+.filters-trigger-modern{min-height:44px;border-radius:14px !important;padding:0 14px !important;background:linear-gradient(145deg,color-mix(in srgb,var(--theme-surface) 86%, transparent),color-mix(in srgb,var(--theme-bg) 18%, transparent)) !important}
+.top-filter-modern .quick-continue-btn{min-height:44px;border-radius:14px !important;padding:0 14px !important}
+
+.floating-controls-modern .fab-primary{min-height:48px;border-radius:16px !important;padding:0 16px !important}
+.quick-actions-modern{padding:10px;border-radius:18px;border:1px solid color-mix(in srgb,var(--theme-accent) 22%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 86%, transparent);box-shadow:0 20px 40px rgba(2,8,23,.32)}
+.quick-action-btn{min-height:40px;border-radius:12px !important;padding:0 12px !important;background:linear-gradient(145deg,color-mix(in srgb,var(--theme-surface) 86%, transparent),color-mix(in srgb,var(--theme-bg) 16%, transparent));border:1px solid color-mix(in srgb,var(--theme-border) 78%, transparent);transition:transform .16s var(--interactive-ease),box-shadow .16s var(--interactive-ease),border-color .16s var(--interactive-ease)}
+.quick-action-btn:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--theme-accent) 40%, var(--theme-border));box-shadow:0 10px 20px rgba(2,8,23,.2)}
+
+[data-color-mode="light"] .quick-actions-modern{background:color-mix(in srgb,var(--theme-surface) 95%, #fff);box-shadow:0 14px 30px rgba(15,23,42,.14)}
+[data-color-mode="light"] .quick-action-btn,[data-color-mode="light"] .phase-chip-modern,[data-color-mode="light"] .filters-trigger-modern{background:linear-gradient(145deg,#fff,color-mix(in srgb,var(--theme-surface) 96%, #fff)) !important}

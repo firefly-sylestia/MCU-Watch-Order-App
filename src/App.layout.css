@@ -110,3 +110,10 @@
       
 
 [data-color-mode="light"] .glass-panel{background:color-mix(in srgb,var(--theme-surface) 88%, #ffffff);border-color:color-mix(in srgb,var(--theme-border) 72%, #ffffff);box-shadow:0 10px 26px rgba(15,23,42,0.12)}
+
+/* Smoother list scrolling */
+main.app-scroll-shell{scroll-behavior:smooth;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scrollbar-gutter:stable both-edges;scroll-timeline:none}
+.list-mode-switch{contain:layout style paint;transform:translateZ(0);will-change:transform}
+@media (prefers-reduced-motion: reduce){
+  main.app-scroll-shell{scroll-behavior:auto}
+}

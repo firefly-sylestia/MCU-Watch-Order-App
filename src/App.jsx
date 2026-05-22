@@ -2636,8 +2636,8 @@ export default function MCUViewer() {
   const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
 
   const renderPhaseSelector = () => (
-    <div ref={phaseRef} style={{ display: 'flex', alignItems: 'center', gap: 10, overflowX: 'auto', paddingBottom: 4, maxWidth: '100%', width: '100%' }}>
-      <button className="fpill phase-chip" onClick={() => { setActivePhase(0); if (browseMode !== 'phase') setBrowseMode('phase'); }} style={{ borderRadius: 999, borderColor: activePhase === 0 ? 'var(--theme-accent)' : T.filterBorder, background: activePhase === 0 ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--chip-bg)', color: activePhase === 0 ? 'var(--theme-accent)' : 'var(--text-secondary)' }}>All</button>
+    <div ref={phaseRef} className="phase-filter-rail">
+      <button className="fpill phase-chip phase-chip-modern" onClick={() => { setActivePhase(0); if (browseMode !== 'phase') setBrowseMode('phase'); }} style={{ borderRadius: 999, borderColor: activePhase === 0 ? 'var(--theme-accent)' : T.filterBorder, background: activePhase === 0 ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--chip-bg)', color: activePhase === 0 ? 'var(--theme-accent)' : 'var(--text-secondary)' }}>All</button>
       {currentPhases.map((ph) => {
         const stat = phaseStats.find(s => s.phase === ph.id);
         const total = stat?.total || 0;
@@ -2647,7 +2647,7 @@ export default function MCUViewer() {
           <button
             key={ph.id}
             onClick={() => { setActivePhase(ph.id); scrollToListTop(); }}
-            className="fpill phase-chip"
+            className="fpill phase-chip phase-chip-modern"
             style={{
               borderRadius: 999,
               borderColor: isActive ? 'var(--theme-accent)' : T.filterBorder,
@@ -2919,8 +2919,8 @@ export default function MCUViewer() {
       <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 60, marginTop: 16 }}>
         {/* Toggle row — always visible */}
         <div style={{ maxWidth: 1480, margin: '0 auto', padding: '0 16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
-            <button className="filters-trigger"
+          <div className="top-filter-modern" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
+            <button className="filters-trigger filters-trigger-modern"
               onClick={() => setFiltersOpen(v => !v)}
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: `1px solid ${filtersOpen ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: filtersOpen ? 'var(--theme-accent)' : T.textMuted, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 2, transition: 'all 0.18s' }}
             >
@@ -3035,7 +3035,7 @@ export default function MCUViewer() {
           </div>
         )}
       </div>
-      <div className="floating-controls" style={detailItem || analyticsOpen || settingsOpen || sidebarOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
+      <div className="floating-controls floating-controls-modern" style={detailItem || analyticsOpen || settingsOpen || sidebarOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
         <button
           type="button"
           className="fab-primary"
@@ -3050,17 +3050,17 @@ export default function MCUViewer() {
         </button>
 
         {/* ━━ JUMP NEXT BUTTON ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-        <div className="bottom-action-dock" style={{ display: fabMenuOpen ? 'flex' : 'none' }}>
-        <button type="button" onClick={handleMetadataBuildClick} className="dock-btn"
+        <div className="bottom-action-dock quick-actions-modern" style={{ display: fabMenuOpen ? 'flex' : 'none' }}>
+        <button type="button" onClick={handleMetadataBuildClick} className="dock-btn quick-action-btn"
           style={{ borderColor: metadataBuild.status === 'running' ? 'var(--theme-warning)' : T.surfaceBorder }}>
           {metadataBuild.status === 'running' ? `Fetch ${metadataBuild.done}/${metadataBuild.total}` : 'Fetch'}
         </button>
-        <button type="button" className="dock-btn"
+        <button type="button" className="dock-btn quick-action-btn"
           onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
           style={{ background: 'color-mix(in srgb, var(--theme-accent) 16%, var(--control-solid-bg))' }}>
           View: {viewMode === 'list' ? 'List' : 'Calendar'}
         </button>
-        <button type="button" className="dock-btn"
+        <button type="button" className="dock-btn quick-action-btn"
           onClick={() => { const next = listMode === 'core' ? 'extended' : 'core'; setListMode(next); setExpandedItem(null); setExpandedPhase(null); }}
           style={{ background: 'color-mix(in srgb, var(--theme-accent-alt) 16%, var(--control-solid-bg))' }}>
           Mode: {listMode === 'core' ? (universe === 'dc' ? 'DC Core' : 'MCU Core') : 'Extended'}
