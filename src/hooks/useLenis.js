@@ -44,19 +44,33 @@ export const useLenis = () => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
 
-    // Native browser scrolling is preferred for this app's long, media-heavy lists.
-    // It preserves platform momentum/trackpad physics, minimizes jank under load,
-    // and avoids JS scroll loops competing with image/video rendering.
-    const shouldEnableCustomScroll = window.__enableCustomScroll === true;
-    if (!shouldEnableCustomScroll) return undefined;
-
     const html = document.documentElement;
     html.classList.add('lenis-ready');
 
     let touchY = null;
     let touchX = null;
+    let targetY = window.scrollY;
+    let rafId = null;
 
     const isOverlayActive = () => Boolean(window.__overlayActive);
+    const clampTarget = () => Math.max(0, Math.min(targetY, document.documentElement.scrollHeight - window.innerHeight));
+
+    const tick = () => {
+      const currentY = window.scrollY;
+      const diff = clampTarget() - currentY;
+      if (Math.abs(diff) < 0.35) {
+        window.scrollTo(0, clampTarget());
+        rafId = null;
+        return;
+      }
+      window.scrollTo(0, currentY + diff * 0.18);
+      rafId = window.requestAnimationFrame(tick);
+    };
+
+    const queueScroll = (deltaY) => {
+      targetY += deltaY;
+      if (rafId == null) rafId = window.requestAnimationFrame(tick);
+    };
 
     const onWheel = (event) => {
       if (event.defaultPrevented || event.ctrlKey) return;
@@ -74,22 +88,19 @@ export const useLenis = () => {
       if (!Number.isFinite(deltaY) || deltaY === 0) return;
       if (hasScrollableParent(event.target, { deltaY, axis: 'y' })) return;
 
-      // Minimal normalization only: convert line/page-wheel units to pixel-ish units,
-      // then rely on native scrollBy behavior (no RAF-follow loop / no scrollTo loop).
       event.preventDefault();
-      window.scrollBy({ top: deltaY, left: 0, behavior: 'auto' });
+      queueScroll(deltaY * 0.96);
     };
 
     const onTouchStart = (event) => {
-      if (event.touches.length !== 1) return;
-      if (isOverlayActive()) return;
+      if (event.touches.length !== 1 || isOverlayActive()) return;
       touchY = event.touches[0].clientY;
       touchX = event.touches[0].clientX;
+      targetY = window.scrollY;
     };
 
     const onTouchMove = (event) => {
-      if (event.touches.length !== 1) return;
-      if (isOverlayActive()) return;
+      if (event.touches.length !== 1 || isOverlayActive()) return;
       if (isEditableTarget(event.target)) return;
 
       if (touchY == null) {
@@ -112,11 +123,13 @@ export const useLenis = () => {
 
       event.preventDefault();
       window.scrollBy({ top: deltaY, left: 0, behavior: 'auto' });
+      targetY = window.scrollY;
     };
 
     const onTouchEnd = () => {
       touchY = null;
       touchX = null;
+      targetY = window.scrollY;
     };
 
     window.addEventListener('wheel', onWheel, { passive: false });
@@ -131,6 +144,7 @@ export const useLenis = () => {
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('touchcancel', onTouchEnd);
+      if (rafId != null) window.cancelAnimationFrame(rafId);
       html.classList.remove('lenis-ready');
     };
   }, []);
