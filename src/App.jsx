@@ -609,7 +609,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
         </button>
 
         <div className="row-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: isDesktopViewport ? 96 : 0, flexShrink: 0 }}>
-          <div className="row-meta-line truncate-single-line" style={{ fontSize: 11, color: 'var(--theme-warning)', fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.6 }}>★ {rating || '—'}</div>
+          <div className="row-meta-line truncate-single-line rating-marvel-pill" style={{ fontSize: 11, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 0.6 }}>★ {rating || '—'}</div>
           <button
             className={`wbtn status-pill status-shade-${item.status}`}
             aria-label={`Open status menu for ${item.title}`}

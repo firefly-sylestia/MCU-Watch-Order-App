@@ -1726,3 +1726,33 @@ main{--content-max:1560px !important}
 [data-color-mode="dark"] .bookmark-marvel-btn[data-bookmarked="true"]{background:linear-gradient(135deg,#fb7185 0%, #e11d48 50%, #881337 100%) !important;border-color:#fb7185 !important;color:#ffe4e6 !important;box-shadow:0 12px 22px rgba(136,19,55,.45) !important}
 .go-top-fab{bottom:92px !important}
 @media (max-width: 767px){.go-top-fab{bottom:86px !important;right:14px !important}}
+
+/* Harmonize row action mini controls */
+.row-actions .wbtn{border-radius:14px !important}
+.notwatched-marvel-btn{
+  background:color-mix(in srgb,var(--theme-surface) 92%, transparent) !important;
+  border:1px solid color-mix(in srgb,var(--theme-border) 84%, transparent) !important;
+  color:var(--theme-text-muted) !important;
+  box-shadow:none !important;
+}
+.notwatched-marvel-btn[aria-label*="unwatched"]{
+  background:linear-gradient(135deg,#fb7185 0%, #e11d48 52%, #9f1239 100%) !important;
+  border-color:#fb7185 !important;
+  color:#fff1f2 !important;
+  box-shadow:0 10px 20px rgba(159,18,57,.34) !important;
+}
+[data-color-mode="light"] .notwatched-marvel-btn[aria-label*="unwatched"]{background:linear-gradient(135deg,#f43f5e 0%, #e11d48 54%, #9f1239 100%) !important;border-color:#e11d48 !important;color:#fff1f2 !important}
+[data-color-mode="dark"] .notwatched-marvel-btn[aria-label*="unwatched"]{background:linear-gradient(135deg,#fb7185 0%, #e11d48 50%, #881337 100%) !important;border-color:#fb7185 !important;color:#ffe4e6 !important}
+
+.rating-marvel-pill{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:34px;min-width:98px;padding:0 11px;border-radius:14px;
+  border:1px solid color-mix(in srgb,var(--theme-border) 84%, transparent);
+  background:color-mix(in srgb,var(--theme-surface) 92%, transparent);
+  color:var(--theme-text-muted);
+  box-shadow:none;
+  font-weight:780;letter-spacing:.07em;
+}
+.rating-marvel-pill{color:color-mix(in srgb,#f59e0b 64%, var(--theme-text))}
+[data-color-mode="light"] .rating-marvel-pill{background:#fff;color:#b45309;border-color:color-mix(in srgb,#d6c8aa 62%, var(--theme-border))}
+[data-color-mode="dark"] .rating-marvel-pill{background:color-mix(in srgb,#111827 66%, var(--theme-surface));color:#fbbf24}
