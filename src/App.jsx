@@ -3378,7 +3378,7 @@ export default function MCUViewer() {
                       <strong style={{ fontSize: 12 }}>{opt.label}</strong>
                       <span style={{ fontSize: 10, color: T.textMuted }}>{opt.desc}</span>
                     </button>
-                  ))}</div>
+                  ))}
                 </div>
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
@@ -3389,8 +3389,9 @@ export default function MCUViewer() {
                       <strong style={{ fontSize: 12 }}>{opt.label}</strong>
                       <span style={{ fontSize: 10, color: T.textMuted }}>{opt.desc}</span>
                     </button>
-                  ))}</div>
+                  ))}
                 </div>
+              </div>
               <div style={{ display: 'grid', gap: 6 }}>
                 <div style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.4, textTransform: 'uppercase' }}>Font</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
