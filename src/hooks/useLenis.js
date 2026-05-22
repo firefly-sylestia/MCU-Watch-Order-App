@@ -6,18 +6,28 @@ const isEditableTarget = (target) => {
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.closest('[contenteditable="true"]');
 };
 
-const hasScrollableParent = (target, deltaY) => {
+const hasScrollableParent = (target, { deltaX = 0, deltaY = 0, axis = 'y' } = {}) => {
   if (!(target instanceof Element)) return false;
   let node = target;
   while (node && node !== document.body) {
     const style = window.getComputedStyle(node);
     const overflowY = style.overflowY;
-    const canScroll = (overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight + 1;
-    if (canScroll) {
+    const overflowX = style.overflowX;
+    const canScrollY = (overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight + 1;
+    const canScrollX = (overflowX === 'auto' || overflowX === 'scroll') && node.scrollWidth > node.clientWidth + 1;
+
+    if (axis === 'x' && canScrollX) {
+      const atLeft = node.scrollLeft <= 0;
+      const atRight = node.scrollLeft + node.clientWidth >= node.scrollWidth - 1;
+      if ((deltaX < 0 && !atLeft) || (deltaX > 0 && !atRight)) return true;
+    }
+
+    if (axis === 'y' && canScrollY) {
       const atTop = node.scrollTop <= 0;
       const atBottom = node.scrollTop + node.clientHeight >= node.scrollHeight - 1;
       if ((deltaY < 0 && !atTop) || (deltaY > 0 && !atBottom)) return true;
     }
+
     node = node.parentElement;
   }
   return false;
@@ -47,6 +57,7 @@ export const useLenis = () => {
     let target = window.scrollY;
     let rafId = 0;
     let touchY = null;
+    let touchX = null;
 
     const maxScrollY = () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
     const kickoff = () => { if (!rafId) rafId = window.requestAnimationFrame(step); };
@@ -70,10 +81,14 @@ export const useLenis = () => {
       if (!isFinePointer) return;
       if (event.defaultPrevented || event.ctrlKey) return;
       if (isEditableTarget(event.target)) return;
-      if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+      const horizontalIntent = Math.abs(event.deltaX) > Math.abs(event.deltaY) * 1.1;
       const deltaY = normalizeDelta(event);
+      if (horizontalIntent) {
+        if (hasScrollableParent(event.target, { deltaX: event.deltaX, axis: 'x' })) return;
+        return;
+      }
       if (!Number.isFinite(deltaY) || deltaY === 0) return;
-      if (hasScrollableParent(event.target, deltaY)) return;
+      if (hasScrollableParent(event.target, { deltaY, axis: 'y' })) return;
 
       const tune = getScrollTuning();
       const deskCap = 30 + tune.desktopDeltaCap * 10;
@@ -87,6 +102,7 @@ export const useLenis = () => {
     const onTouchStart = (event) => {
       if (isFinePointer || event.touches.length !== 1) return;
       touchY = event.touches[0].clientY;
+      touchX = event.touches[0].clientX;
     };
 
     const onTouchMove = (event) => {
@@ -95,21 +111,28 @@ export const useLenis = () => {
       if (touchY == null) { touchY = event.touches[0].clientY; return; }
 
       const nextY = event.touches[0].clientY;
-      const rawDelta = touchY - nextY;
+      const nextX = event.touches[0].clientX;
+      const rawDeltaY = touchY - nextY;
+      const rawDeltaX = (touchX ?? nextX) - nextX;
       touchY = nextY;
-      if (!Number.isFinite(rawDelta) || rawDelta === 0) return;
-      if (hasScrollableParent(event.target, rawDelta)) return;
+      touchX = nextX;
+
+      if (!Number.isFinite(rawDeltaY) || Math.abs(rawDeltaY) < 0.8) return;
+
+      const horizontalIntent = Math.abs(rawDeltaX) > Math.abs(rawDeltaY) * 1.1;
+      if (horizontalIntent) return;
+      if (hasScrollableParent(event.target, { deltaY: rawDeltaY, axis: 'y' })) return;
 
       const tune = getScrollTuning();
       const mobileCap = 15 + tune.mobileDeltaCap * 10;
       const mobileMult = 0.85 + (tune.mobileMultiplier * 0.2);
-      const limitedDelta = Math.max(-mobileCap, Math.min(mobileCap, rawDelta)) * mobileMult;
+      const limitedDelta = Math.max(-mobileCap, Math.min(mobileCap, rawDeltaY)) * mobileMult;
       target = Math.min(maxScrollY(), Math.max(0, target + limitedDelta));
       kickoff();
       event.preventDefault();
     };
 
-    const onTouchEnd = () => { touchY = null; };
+    const onTouchEnd = () => { touchY = null; touchX = null; };
     const syncToNativeScroll = () => {
       if (rafId) return;
       current = window.scrollY;
