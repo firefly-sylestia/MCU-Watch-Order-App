@@ -59,6 +59,10 @@ const Moon      = p => <Icon {...p}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0
 const Settings  = p => <Icon {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.02.02a2 2 0 1 1-2.83 2.83l-.02-.02A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.03a1.7 1.7 0 0 0-.4-1.1 1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.87.34l-.02.02a2 2 0 1 1-2.83-2.83l.02-.02A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H2.9a2 2 0 1 1 0-4h.03a1.7 1.7 0 0 0 1.1-.4 1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.87l-.02-.02a2 2 0 1 1 2.83-2.83l.02.02A1.7 1.7 0 0 0 9 4.6c.4 0 .78-.2 1-.6.25-.31.39-.7.4-1.1V2.9a2 2 0 1 1 4 0v.03c0 .4.15.79.4 1.1.22.4.6.6 1 .6.67.07 1.34-.16 1.87-.62l.02-.02a2 2 0 1 1 2.83 2.83l-.02.02a1.7 1.7 0 0 0-.34 1.87c0 .4.2.78.6 1 .31.25.7.39 1.1.4h.03a2 2 0 1 1 0 4h-.03a1.7 1.7 0 0 0-1.1.4 1.7 1.7 0 0 0-.6 1z"/></Icon>;
 const Info      = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></Icon>;
 const Bookmark  = p => <Icon {...p}><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"/></Icon>;
+const Layers    = p => <Icon {...p}><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/><path d="m3 16 9 5 9-5"/></Icon>;
+const PlayCircle = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4V8z"/></Icon>;
+const PauseCircle = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M10 9v6M14 9v6"/></Icon>;
+const XCircle   = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></Icon>;
 const SlidersH  = p => <Icon {...p}><line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><circle cx="12" cy="4" r="2"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><circle cx="10" cy="12" r="2"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><circle cx="14" cy="20" r="2"/></Icon>;
 const UserCircle = p => <Icon {...p}><circle cx="12" cy="8" r="4"/><path d="M4 20c1.9-3.4 5-5 8-5s6.1 1.6 8 5"/></Icon>;
 const Menu = p => <Icon {...p}><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></Icon>;
@@ -766,7 +770,7 @@ export default function MCUViewer() {
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
   const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
-  const [scrollTuning] = useState({ desktopMultiplier: 7, desktopDeltaCap: 10, mobileMultiplier: 7, mobileDeltaCap: 10 });
+  const [scrollTuning] = useState({ desktopMultiplier: 6, desktopDeltaCap: 10, mobileMultiplier: 6, mobileDeltaCap: 10 });
   const [genreFilter] = useState('all');
   const [myLikes,        setMyLikes]        = useState({});
   const [myRating,       setMyRating]       = useState({});
@@ -1568,9 +1572,9 @@ export default function MCUViewer() {
   }, [heroPosters.length, pauseHeroAutoSlide]);
 
   const handleHeroWheel = useCallback((e) => {
-    const horizontalIntent = e.shiftKey || (Math.abs(e.deltaX) > 2 && Math.abs(e.deltaX) > Math.abs(e.deltaY) * 1.2);
+    const horizontalIntent = e.shiftKey || (Math.abs(e.deltaX) > 6 && Math.abs(e.deltaX) > Math.abs(e.deltaY) * 1.35);
     if (!horizontalIntent) return;
-    const horizontalDelta = Math.abs(e.deltaX) > 0 ? e.deltaX : e.deltaY;
+    const horizontalDelta = e.shiftKey ? e.deltaY : e.deltaX;
     if (!horizontalDelta) return;
     pauseHeroAutoSlide(2600);
     e.currentTarget.scrollBy({ left: horizontalDelta * 2.4, behavior: 'auto' });
@@ -3072,13 +3076,23 @@ export default function MCUViewer() {
             Status Menu <ChevDown size={12} style={{ transform: dockStatusOpen ? 'rotate(180deg)' : 'none' }} />
           </button>
           {dockStatusOpen && (
-            <div className="dropdown-pop-up" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, minWidth: 172, zIndex: 1400, background: darkMode ? 'rgba(17,21,39,0.92)' : 'rgba(255,255,255,0.92)', border: `1px solid ${T.dropdownBorder}`, borderRadius: 10, overflow: 'hidden', boxShadow: 'none', color: 'var(--theme-text)' }}>
-              <div className="sopt" onClick={() => { setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setDockStatusOpen(false); }}>All statuses</div>
-              <div className="sopt" onClick={() => { setWatchedOnly(true); setStatusFilter(null); setAutoHideStatuses(false); setDockStatusOpen(false); }}>Watched</div>
-              <div className="sopt" onClick={() => { setStatusFilter('watching'); setWatchedOnly(false); setDockStatusOpen(false); }}>Watching</div>
-              <div className="sopt" onClick={() => { setStatusFilter('on-hold'); setWatchedOnly(false); setDockStatusOpen(false); }}>On Hold</div>
-              <div className="sopt" onClick={() => { setStatusFilter('dropped'); setWatchedOnly(false); setDockStatusOpen(false); }}>Dropped</div>
-              <div className="sopt" onClick={() => { setStatusFilter('plan-to-watch'); setWatchedOnly(false); setDockStatusOpen(false); }}>Plan to Watch</div>
+            <div className="dropdown-pop-up dock-status-dropdown" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, minWidth: 220, zIndex: 1400, color: 'var(--theme-text)' }}>
+              <div className="dock-status-head">Quick status filter</div>
+              <div className="dock-status-grid">
+                {[
+                  { key: 'all', label: 'All Statuses', Icon: Layers, active: !statusFilter && !watchedOnly, onClick: () => { setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setDockStatusOpen(false); } },
+                  { key: 'watched', label: 'Watched', Icon: Check, active: watchedOnly, onClick: () => { setWatchedOnly(true); setStatusFilter(null); setAutoHideStatuses(false); setDockStatusOpen(false); } },
+                  { key: 'watching', label: 'Watching', Icon: PlayCircle, active: statusFilter === 'watching', onClick: () => { setStatusFilter('watching'); setWatchedOnly(false); setDockStatusOpen(false); } },
+                  { key: 'on-hold', label: 'On Hold', Icon: PauseCircle, active: statusFilter === 'on-hold', onClick: () => { setStatusFilter('on-hold'); setWatchedOnly(false); setDockStatusOpen(false); } },
+                  { key: 'dropped', label: 'Dropped', Icon: XCircle, active: statusFilter === 'dropped', onClick: () => { setStatusFilter('dropped'); setWatchedOnly(false); setDockStatusOpen(false); } },
+                  { key: 'plan-to-watch', label: 'Plan to Watch', Icon: Clock, active: statusFilter === 'plan-to-watch', onClick: () => { setStatusFilter('plan-to-watch'); setWatchedOnly(false); setDockStatusOpen(false); } },
+                ].map(opt => (
+                  <button key={opt.key} type="button" className={`dock-status-item ${opt.active ? 'active' : ''}`} onClick={opt.onClick} aria-pressed={opt.active}>
+                    <opt.Icon size={14} />
+                    <span>{opt.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
