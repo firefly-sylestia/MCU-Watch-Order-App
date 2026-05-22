@@ -1052,9 +1052,13 @@ main{--content-max:1560px !important}
 
 /* Mobile interaction performance + overlay stability fixes */
 .sidebar-menu,
-.settings-menu,
-.settings-shell {
+.settings-menu {
   contain: layout paint style;
+}
+
+.sidebar-menu[data-state='open'],
+.settings-shell[data-state='open'],
+.settings-menu[data-state='open'] {
   will-change: transform, opacity;
 }
 
@@ -1124,6 +1128,15 @@ main{--content-max:1560px !important}
   pointer-events: auto;
 }
 
+
+.settings-shell[data-state='closed'] {
+  visibility: hidden;
+}
+.settings-shell[data-state='open'] {
+  visibility: visible;
+}
+
+
 .settings-menu[data-state='closed'] {
   opacity: 0;
   transform: translateY(6px) scale(.99);
@@ -1138,3 +1151,6 @@ main{--content-max:1560px !important}
   transform: scale(1.001) !important;
   filter: blur(1.2px) saturate(1) brightness(.9) !important;
 }
+
+.sidebar-backdrop[data-state='closed'],
+.settings-backdrop[data-state='closed']{pointer-events:none !important;opacity:0 !important;}
