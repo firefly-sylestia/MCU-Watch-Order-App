@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Rajdhani:wght@500;600;700&family=Sora:wght@500;600;700&display=swap');
 /* ═══════════════════════════════════════════════════════════════════════════
    MCU VIEWING TRACKER — Core Design Tokens
    Cinematic dark interface for timeline-driven viewing workflows
@@ -704,4 +704,11 @@ button,[role="button"],input,select,textarea{font-family:var(--font-ui);font-wei
 
 .fpill,.wbtn,.status-pill,.theme-btn,.sopt,.dock-btn,.fab-primary,.bottom-action-bar,.title-btn{
   transition:transform 130ms var(--ease-out), background-color 180ms var(--ease-out), border-color 180ms var(--ease-out), box-shadow 180ms var(--ease-out), color 180ms var(--ease-out);
+}
+
+/* ===== 2026 Typography refresh v2 (softer, smaller movie titles) ===== */
+:root{
+  --font-ui:"Plus Jakarta Sans","Inter","Manrope",system-ui,sans-serif;
+  --font-body:"Manrope","Inter","Plus Jakarta Sans",system-ui,sans-serif;
+  --font-title:"Sora","Plus Jakarta Sans","Inter",system-ui,sans-serif;
 }
