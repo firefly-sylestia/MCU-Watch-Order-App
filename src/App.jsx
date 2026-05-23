@@ -861,6 +861,7 @@ export default function MCUViewer() {
   const setPhaseOpen = (next) => dispatchUiMode({ phaseOpen: typeof next === 'function' ? next(uiModeState.phaseOpen) : next });
   const [statusDropdown, setStatusDropdown] = useState(null);
   const [fabMenuOpen, setFabMenuOpen] = useState(true);
+  const [hasAutoCollapsedQuickActions, setHasAutoCollapsedQuickActions] = useState(false);
   const [browseMode, setBrowseMode] = useState('home');
   const setFilterStatusOpen = (next) => dispatchUiMode({ filterStatusOpen: typeof next === 'function' ? next(uiModeState.filterStatusOpen) : next });
   const setDockStatusOpen = (next) => dispatchUiMode({ dockStatusOpen: typeof next === 'function' ? next(uiModeState.dockStatusOpen) : next });
@@ -1256,13 +1257,35 @@ export default function MCUViewer() {
     return () => document.removeEventListener('pointerdown', fn, true);
   }, []);
 
+  useEffect(() => {
+    if (hasAutoCollapsedQuickActions || detailItem || analyticsOpen || settingsOpen || sidebarOpen) return;
+    const collapseOnFirstScroll = () => {
+      const y = window.scrollY || document.documentElement.scrollTop || 0;
+      if (y > 18) {
+        setFabMenuOpen(false);
+        setHasAutoCollapsedQuickActions(true);
+      }
+    };
+    window.addEventListener('scroll', collapseOnFirstScroll, { passive: true });
+    collapseOnFirstScroll();
+    return () => window.removeEventListener('scroll', collapseOnFirstScroll);
+  }, [hasAutoCollapsedQuickActions, detailItem, analyticsOpen, settingsOpen, sidebarOpen]);
+
   const scrollToListTop = useCallback(() => {
     const container = mainRef.current;
-    if (container && container.scrollHeight > container.clientHeight + 1) {
-      container.scrollTo({ top: 0, behavior: 'auto' });
-      return;
+    try {
+      if (container && container.scrollHeight > container.clientHeight + 1) {
+        container.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      setScrollCheckpoint(0);
+    } catch {
+      window.scrollTo(0, 0);
+      if (container) container.scrollTop = 0;
+      setScrollCheckpoint(0);
     }
-    window.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
 
   const scrollTo = id => {
