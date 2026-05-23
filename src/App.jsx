@@ -3152,11 +3152,19 @@ export default function MCUViewer() {
             <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} onClick={() => { setBrandTapCount(c => c + 1); setTimeout(() => setBrandTapCount(0), 550); }} onDoubleClick={() => setUniverse(prev => prev === 'mcu' ? 'dc' : 'mcu')} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900, cursor: 'pointer', userSelect: 'none', WebkitUserSelect: 'none' }}>
               <div className="header-title-mcu" style={{ color: universe === 'dc' ? '#9ac5ff' : undefined }}>{activeUniverse.title}</div>
               <div className="header-title-sub">{activeUniverse.subtitle}</div>
-              <div className="header-tagline">{universe === 'dc' ? 'Earth-Prime Stream' : 'Earth-616 Stream'}</div>
+              <div className="header-tagline">
+                {universe === 'dc'
+                  ? (darkMode ? 'In Brightest Day, In Blackest Night' : 'Truth, Justice, and a Better Tomorrow')
+                  : (darkMode ? 'Whatever It Takes' : 'Part of the Journey is the End')}
+              </div>
             </div>
             <div className="header-mode-switches">
-              <button className="header-mode-chip" type="button" onClick={() => setDarkMode(d => !d)}>{darkMode ? <Moon size={13} /> : <Sun size={13} />}{darkMode ? 'Night Mode' : 'Day Mode'}</button>
-              <button className="header-mode-chip" type="button" onClick={() => setUniverse(prev => prev === 'mcu' ? 'dc' : 'mcu')}><SwitchIcon size={13} />{universe === 'dc' ? 'Earth-Prime' : 'Earth-616'}</button>
+              <div className="header-mode-chip" role="button" tabIndex={0} aria-label="Toggle day and night mode"
+                onClick={() => setDarkMode(d => !d)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDarkMode(d => !d); } }}>
+                {darkMode ? <Moon size={13} /> : <Sun size={13} />}
+                {darkMode ? 'Night Mode' : 'Day Mode'}
+              </div>
             </div>
           </div>
         </div>
@@ -3416,7 +3424,7 @@ export default function MCUViewer() {
 
           {viewMode === 'calendar' ? (
             <section data-motion="section" className='curvy-panel calendar-section motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
-              <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
+              <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', color: 'var(--theme-text-primary)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
               <div style={{ marginBottom: 12, color: T.textMuted, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.2 }}>Grouped by month / quarter / year</div>
               {Object.entries(calendarItems.grouped).map(([group, entries]) => (
                 <div key={group}>
