@@ -836,6 +836,10 @@ export default function MCUViewer() {
   const initialUiState = useMemo(() => readSavedUiState(), []);
   const [universe, setUniverse] = useState('mcu');
   const [brandTapCount, setBrandTapCount] = useState(0);
+
+  const [allowMotionReplay] = useState(false);
+
+
   const [items,          setItems]          = useState(RAW);
   const [listMode,       setListMode]       = useState(initialUiState.listMode);
   const [search,         setSearch]         = useState(initialUiState.search);
@@ -1462,6 +1466,58 @@ export default function MCUViewer() {
     const watched = phaseItems.filter(i => i.status === 'watched').length;
     return { phase: ph.id, watched, total: phaseItems.length };
   }).filter(p => p.total > 0), [activeItems]);
+
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const shell = mainRef.current;
+    if (!shell) return undefined;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const animated = Array.from(shell.querySelectorAll('[data-motion]'));
+    if (!animated.length) return undefined;
+
+    if (prefersReducedMotion) {
+      animated.forEach((el) => {
+        el.classList.add('is-visible');
+        el.style.setProperty('--section-progress', '0');
+      });
+      return undefined;
+    }
+
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const el = entry.target;
+        const replay = el.dataset.replay === 'true' || allowMotionReplay;
+        if (entry.isIntersecting) {
+          el.classList.add('is-visible', 'in-view');
+          if (!replay) el.dataset.played = 'true';
+        } else {
+          el.classList.remove('in-view');
+          if (replay) el.classList.remove('is-visible');
+        }
+      });
+    }, { threshold: [0, 0.15, 0.3], rootMargin: '0px 0px -18% 0px' });
+
+    const progressObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const range = entry.boundingClientRect.height + window.innerHeight;
+        const raw = (window.innerHeight - entry.boundingClientRect.top) / Math.max(range, 1);
+        const progress = Math.max(0, Math.min(1, raw));
+        entry.target.style.setProperty('--section-progress', progress.toFixed(3));
+      });
+    }, { threshold: [0, 0.25, 0.5, 0.75, 1] });
+
+    animated.forEach((el) => {
+      el.style.setProperty('--section-progress', '0');
+      revealObserver.observe(el);
+      progressObserver.observe(el);
+    });
+
+    return () => {
+      revealObserver.disconnect();
+      progressObserver.disconnect();
+    };
+  }, [allowMotionReplay, viewMode, phaseKeys.length]);
 
   const stickyPhaseProgress = useMemo(() => {
     if (activePhase === 0) return { label: 'All Phases', done: totalWatched, total: activeItems.length, pct };
@@ -3243,7 +3299,7 @@ export default function MCUViewer() {
           )}
 
           {viewMode === 'calendar' ? (
-            <section className='curvy-panel calendar-section' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
+            <section data-motion="section" className='curvy-panel calendar-section motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
               <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
               <div style={{ marginBottom: 12, color: T.textMuted, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.2 }}>Grouped by month / quarter / year</div>
               {Object.entries(calendarItems.grouped).map(([group, entries]) => (
@@ -3275,7 +3331,7 @@ export default function MCUViewer() {
             const summaryOpen = expandedPhase === pid;
 
             return (
-              <section key={pid} className="section-up" data-phase={pid}
+              <section key={pid} className="section-up motion-section" data-motion="section" data-phase={pid}
                 ref={el => { phaseRefs.current[pid] = el; }}
                 style={{ marginBottom: 36, scrollMarginTop: 'var(--sticky-offset)', position: 'relative' }}>
                 {isCelebrating && (
@@ -3283,7 +3339,7 @@ export default function MCUViewer() {
                 )}
 
                 {/* Phase divider */}
-                <div className="curvy-panel phase-header-card" style={{ '--phase-color': ph.color, border: `1px solid ${T.surfaceBorder}` }}>
+                <div className="curvy-panel phase-header-card motion-pop" style={{ '--phase-color': ph.color, border: `1px solid ${T.surfaceBorder}` }}>
                   <WatermarkOverlay surface="card" theme={darkMode ? 'dark' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['title', 'progress']} />
                   <div className="phase-title-wrap">
                     <div className="phase-title" style={{ color: ph.color }}>
@@ -3366,7 +3422,7 @@ export default function MCUViewer() {
             );
           })}
 
-          <div style={{ textAlign: 'center', marginTop: 44, fontFamily: 'var(--font-marvel-ui)', fontSize: 11, color: 'var(--theme-text-muted)', letterSpacing: 2.2, fontWeight: 700 }}>
+          <div data-motion="section" className="motion-section motion-pop" style={{ textAlign: 'center', marginTop: 44, fontFamily: 'var(--font-marvel-ui)', fontSize: 11, color: 'var(--theme-text-muted)', letterSpacing: 2.2, fontWeight: 700 }}>
             Made with ♥️ by Marvel Fan
           </div>
         </div>
