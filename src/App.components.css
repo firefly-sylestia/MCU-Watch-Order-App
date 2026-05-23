@@ -2096,3 +2096,38 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   background:#fff !important;
   color:#334155 !important;
 }
+
+/* Final active-state correction: use filled accent backgrounds (not text-only) */
+.status-menu-item.is-current{
+  color:#fff7ed !important;
+  background:linear-gradient(145deg,#be123c 0%,#9f1239 54%,#7a0f33 100%) !important;
+  border-color:color-mix(in srgb,#fb7185 62%, var(--theme-border)) !important;
+  box-shadow:0 8px 16px rgba(159,18,57,.26),0 0 0 1px rgba(251,113,133,.28) !important;
+}
+.status-menu-item.is-current svg,.status-menu-item.is-current span{color:inherit !important}
+
+.status-menu-bookmark{
+  border:1px solid color-mix(in srgb,var(--theme-border) 82%, transparent) !important;
+  background:color-mix(in srgb,var(--theme-surface) 94%, transparent) !important;
+  color:var(--theme-text-secondary) !important;
+  transition:background-color .16s ease,border-color .16s ease,color .16s ease,transform .12s ease,box-shadow .16s ease !important;
+}
+.status-menu-bookmark:hover{transform:translateY(-1px)}
+.status-menu-bookmark[data-active="true"]{
+  background:linear-gradient(145deg,#38bdf8 0%, #0ea5e9 54%, #0284c7 100%) !important;
+  border-color:#38bdf8 !important;
+  color:#f0f9ff !important;
+  box-shadow:0 8px 16px rgba(2,132,199,.26),0 0 0 1px rgba(56,189,248,.3) !important;
+}
+.status-menu-bookmark[data-active="true"] svg{color:inherit !important}
+
+.bookmark-marvel-btn[data-bookmarked="true"],
+[data-color-mode="light"] .bookmark-marvel-btn[data-bookmarked="true"],
+[data-color-mode="dark"] .bookmark-marvel-btn[data-bookmarked="true"],
+.rrow.curvy-selected .bookmark-marvel-btn[data-bookmarked="true"],
+[data-color-mode="light"] .rrow.curvy-selected .bookmark-marvel-btn[data-bookmarked="true"]{
+  background:linear-gradient(145deg,#38bdf8 0%, #0ea5e9 52%, #0369a1 100%) !important;
+  border-color:#38bdf8 !important;
+  color:#f0f9ff !important;
+  box-shadow:0 10px 18px rgba(3,105,161,.34),0 0 0 1px rgba(125,211,252,.35) !important;
+}
