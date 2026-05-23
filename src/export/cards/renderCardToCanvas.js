@@ -29,6 +29,38 @@ const THEMES = {
 };
 
 const getTheme = (settings) => THEMES[settings?.theme] || THEME_PRESETS.sacredTimeline;
+const getMode = (settings) => (settings?.colorMode === 'light' ? 'light' : 'dark');
+
+const getSurfacePalette = (theme, mode = 'dark') => {
+  if (mode === 'light') {
+    return {
+      cardBase: 'rgba(248,252,255,0.94)',
+      cardSubtle: 'rgba(255,255,255,0.8)',
+      title: '#10233f',
+      body: '#1a2f4a',
+      muted: 'rgba(26,47,74,0.72)',
+      stroke: withAlpha(theme.accent, 0.34),
+      softStroke: 'rgba(15,23,42,0.14)',
+      chipFill: 'rgba(255,255,255,0.9)',
+      chipStroke: 'rgba(15,23,42,0.12)',
+      rowFill: 'rgba(255,255,255,0.78)',
+      barTrack: 'rgba(15,23,42,0.14)',
+    };
+  }
+  return {
+    cardBase: 'rgba(8,13,24,0.84)',
+    cardSubtle: 'rgba(255,255,255,0.05)',
+    title: '#f8fbff',
+    body: '#e8f1ff',
+    muted: 'rgba(220,232,255,0.78)',
+    stroke: withAlpha(theme.accent, 0.42),
+    softStroke: 'rgba(255,255,255,0.12)',
+    chipFill: 'rgba(255,255,255,0.09)',
+    chipStroke: 'rgba(255,255,255,0.2)',
+    rowFill: 'rgba(255,255,255,0.08)',
+    barTrack: 'rgba(255,255,255,0.12)',
+  };
+};
 
 const fitTitleText = (ctx, { text, x, y, maxWidth, preferredSize, minSize, fontFamily, weight = 800, lineHeightFactor = 1.12, maxLines = 2, color = '#fff' }) => {
   let size = preferredSize;
@@ -147,9 +179,9 @@ const drawCardBackdrop = (ctx, canvas, theme, bgImg, bgOpacity = 46) => {
   }
 };
 
-const drawBadge = (ctx, { x, y, label, value, color, fontFamily, scale = 1, w = 220 }) => {
-  drawRoundedPanel(ctx, { x, y, w, h: 86, radius: 26, fill: 'rgba(255,255,255,0.095)', stroke: 'rgba(255,255,255,0.2)' });
-  ctx.fillStyle = 'rgba(222,235,255,0.72)';
+const drawBadge = (ctx, { x, y, label, value, color, fontFamily, scale = 1, w = 220, palette = null }) => {
+  drawRoundedPanel(ctx, { x, y, w, h: 86, radius: 26, fill: palette?.chipFill || 'rgba(255,255,255,0.095)', stroke: palette?.chipStroke || 'rgba(255,255,255,0.2)' });
+  ctx.fillStyle = palette?.muted || 'rgba(222,235,255,0.72)';
   ctx.font = `700 ${Math.round(18 * scale)}px ${fontFamily}`;
   ctx.fillText(label.toUpperCase(), x + 24, y + 30);
   ctx.fillStyle = color;
@@ -157,8 +189,8 @@ const drawBadge = (ctx, { x, y, label, value, color, fontFamily, scale = 1, w = 
   ctx.fillText(value, x + 24, y + 66, w - 48);
 };
 
-const drawProgressBar = (ctx, { x, y, w, h, pct, accent, accent2 }) => {
-  drawRoundedPanel(ctx, { x, y, w, h, radius: h / 2, fill: 'rgba(255,255,255,0.12)' });
+const drawProgressBar = (ctx, { x, y, w, h, pct, accent, accent2, track }) => {
+  drawRoundedPanel(ctx, { x, y, w, h, radius: h / 2, fill: track || 'rgba(255,255,255,0.12)' });
   const fillW = Math.max(h, Math.min(w, w * (Number(pct || 0) / 100)));
   const g = ctx.createLinearGradient(x, y, x + w, y);
   g.addColorStop(0, accent);
@@ -195,6 +227,8 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
   const canvas = document.createElement('canvas');
   const fontFamily = settings?.fontFamily || 'Inter, sans-serif';
   const theme = getTheme(settings);
+  const mode = getMode(settings);
+  const palette = getSurfacePalette(theme, mode);
   const bgOpacity = Number.isFinite(settings?.bgOpacity) ? settings.bgOpacity : 46;
   const fontScale = settings?.fontKey === 'marvel' ? 1.18 : 1;
 
@@ -206,8 +240,8 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
     const item = data.item;
     const img = await loadPosterWithFallback({ primarySrc: settings.posterSrc(item), fallbackText: item.title });
     drawCardBackdrop(ctx, { width: 1600, height: 2200 }, theme, img, Math.max(bgOpacity, 54));
-    drawRoundedPanel(ctx, { x: 54, y: 60, w: 1492, h: 2080, radius: 72, fill: 'rgba(9,14,24,0.84)', stroke: withAlpha(theme.accent, 0.42), lineWidth: 4 });
-    drawRoundedPanel(ctx, { x: 88, y: 96, w: 1424, h: 2016, radius: 56, fill: 'rgba(255,255,255,0.03)', stroke: withAlpha(theme.gold, 0.24) });
+    drawRoundedPanel(ctx, { x: 54, y: 60, w: 1492, h: 2080, radius: 72, fill: palette.cardBase, stroke: palette.stroke, lineWidth: 4 });
+    drawRoundedPanel(ctx, { x: 88, y: 96, w: 1424, h: 2016, radius: 56, fill: palette.cardSubtle, stroke: withAlpha(theme.gold, mode === 'light' ? 0.2 : 0.24) });
     drawThemeStamp(ctx, { x: 148, y: 1764, theme, fontFamily, scale });
 
     const posterX = 126, posterY = 170, posterW = 532, posterH = 798;
@@ -217,22 +251,22 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
     drawCoverImage(ctx, img, posterX, posterY, posterW, posterH);
     ctx.restore();
 
-    ctx.fillStyle = withAlpha(theme.accent, 0.95);
+    ctx.fillStyle = withAlpha(theme.accent, mode === 'light' ? 0.9 : 0.95);
     ctx.font = `900 ${Math.round(30 * scale)}px ${fontFamily}`;
     ctx.fillText('PREMIUM REVIEW CARD', posterX + posterW + 64, posterY + 42);
-    fitTitleText(ctx, { text: item.title, x: posterX + posterW + 60, y: posterY + 128, maxWidth: 760, preferredSize: 88 * scale, minSize: 46 * scale, fontFamily, maxLines: 3, color: '#fff' });
+    fitTitleText(ctx, { text: item.title, x: posterX + posterW + 60, y: posterY + 128, maxWidth: 760, preferredSize: 88 * scale, minSize: 46 * scale, fontFamily, maxLines: 3, color: palette.title });
     drawPremiumStars(ctx, { x: posterX + posterW + 60, y: posterY + 372, size: Math.round(62 * scale), rating10: clampTenPoint(data.rating), active: theme.gold, fontFamily });
-    ctx.fillStyle = '#fff'; ctx.font = `900 ${Math.round(58 * scale)}px ${fontFamily}`;
+    ctx.fillStyle = palette.title; ctx.font = `900 ${Math.round(58 * scale)}px ${fontFamily}`;
     ctx.fillText(`${clampTenPoint(data.rating).toFixed(1)}/10`, posterX + posterW + 60, posterY + 468);
-    drawBadge(ctx, { x: posterX + posterW + 60, y: posterY + 540, label: 'Phase', value: String(item.phase || '—'), color: theme.accent, fontFamily, scale, w: 160 });
-    drawBadge(ctx, { x: posterX + posterW + 248, y: posterY + 540, label: 'Year', value: String(item.year || '—'), color: theme.accent2, fontFamily, scale, w: 190 });
-    drawBadge(ctx, { x: posterX + posterW + 468, y: posterY + 540, label: 'Fan', value: data.reviewer || 'Reviewer', color: theme.gold, fontFamily, scale, w: 300 });
+    drawBadge(ctx, { x: posterX + posterW + 60, y: posterY + 540, label: 'Phase', value: String(item.phase || '—'), color: theme.accent, fontFamily, scale, w: 160, palette });
+    drawBadge(ctx, { x: posterX + posterW + 248, y: posterY + 540, label: 'Year', value: String(item.year || '—'), color: theme.accent2, fontFamily, scale, w: 190, palette });
+    drawBadge(ctx, { x: posterX + posterW + 468, y: posterY + 540, label: 'Fan', value: data.reviewer || 'Reviewer', color: theme.gold, fontFamily, scale, w: 300, palette });
 
-    drawRoundedPanel(ctx, { x: 126, y: 1010, w: 1348, h: 920, radius: 42, fill: 'rgba(255,255,255,0.08)', stroke: withAlpha(theme.accent2, 0.34) });
+    drawRoundedPanel(ctx, { x: 126, y: 1010, w: 1348, h: 920, radius: 42, fill: palette.rowFill, stroke: withAlpha(theme.accent2, 0.34) });
     ctx.fillStyle = withAlpha(theme.accent, 0.92);
     ctx.font = `900 ${Math.round(34 * scale)}px ${fontFamily}`;
     ctx.fillText('CINEMATIC NOTES', 172, 1100);
-    ctx.font = `650 ${Math.round(62 * scale)}px ${fontFamily}`; ctx.fillStyle = '#f8fbff';
+    ctx.font = `650 ${Math.round(62 * scale)}px ${fontFamily}`; ctx.fillStyle = palette.body;
     drawWrappedText(ctx, data.reviewText || 'No review yet — but the multiverse is ready for your hot take.', 172, 1184, 1258, Math.round(56 * scale), 11);
     drawWatermark(ctx, { width: 1600, height: 2200 }, fontFamily, theme);
   } else if (type === 'analysis') {
@@ -241,17 +275,17 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
     const ctx = canvas.getContext('2d');
     const scale = (settings?.textScale || 1) * fontScale;
     drawCardBackdrop(ctx, { width: 1080, height: 1350 }, theme, null, bgOpacity);
-    drawRoundedPanel(ctx, { x: 34, y: 34, w: 1012, h: 1282, radius: 56, fill: 'rgba(8,13,24,0.84)', stroke: withAlpha(theme.accent, 0.4), lineWidth: 4 });
+    drawRoundedPanel(ctx, { x: 34, y: 34, w: 1012, h: 1282, radius: 56, fill: palette.cardBase, stroke: palette.stroke, lineWidth: 4 });
     drawThemeStamp(ctx, { x: 596, y: 84, theme, fontFamily, scale });
 
     ctx.fillStyle = withAlpha(theme.accent, 0.95);
     ctx.font = `900 ${Math.round(26 * scale)}px ${fontFamily}`;
     ctx.fillText('ANALYTICS EXPORT', 92, 122);
-    fitTitleText(ctx, { text: 'Your premium watch blueprint', x: 92, y: 206, maxWidth: 820, preferredSize: 64 * scale, minSize: 34 * scale, fontFamily, maxLines: 1, color: '#fff' });
+    fitTitleText(ctx, { text: 'Your premium watch blueprint', x: 92, y: 206, maxWidth: 820, preferredSize: 64 * scale, minSize: 34 * scale, fontFamily, maxLines: 1, color: palette.title });
     const sections = { completion: true, hours: true, streak: true, phaseBreakdown: true, recentMomentum: true, topRated: true, ...(settings?.sections || {}) };
-    ctx.fillStyle = '#ffffff'; ctx.font = `950 ${Math.round(172 * scale)}px ${fontFamily}`;
+    ctx.fillStyle = palette.title; ctx.font = `950 ${Math.round(172 * scale)}px ${fontFamily}`;
     ctx.fillText(sections.completion === false ? 'MCU' : `${Number(data.pct || 0)}%`, 92, 402);
-    if (sections.completion !== false) drawProgressBar(ctx, { x: 98, y: 436, w: 884, h: 30, pct: data.pct, accent: theme.accent, accent2: theme.accent2 });
+    if (sections.completion !== false) drawProgressBar(ctx, { x: 98, y: 436, w: 884, h: 30, pct: data.pct, accent: theme.accent, accent2: theme.accent2, track: palette.barTrack });
 
     const badgeRows = [
       { enabled: sections.completion !== false, label: 'Completed', value: `${data.totalWatched || 0}/${data.totalItems || 0}`, color: theme.accent, w: 260 },
@@ -260,24 +294,24 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
     ].filter(row => row.enabled);
     let badgeX = 96;
     badgeRows.forEach(row => {
-      drawBadge(ctx, { x: badgeX, y: 498, label: row.label, value: row.value, color: row.color, fontFamily, scale, w: row.w });
+      drawBadge(ctx, { x: badgeX, y: 498, label: row.label, value: row.value, color: row.color, fontFamily, scale, w: row.w, palette });
       badgeX += row.w + 28;
     });
 
-    ctx.fillStyle = '#dce8ff'; ctx.font = `850 ${Math.round(34 * scale)}px ${fontFamily}`;
+    ctx.fillStyle = palette.body; ctx.font = `850 ${Math.round(34 * scale)}px ${fontFamily}`;
     ctx.fillText(`Current mission: ${data.currentPhase || '—'}`, 100, 666);
     const rows = sections.phaseBreakdown === false ? [] : (Array.isArray(data.phaseStats) ? data.phaseStats : []);
     rows.slice(0, sections.topRated === false ? 9 : 7).forEach((row, idx) => {
       const y = 738 + idx * 56;
       const rowPct = row.total ? (row.watched / row.total) * 100 : 0;
-      ctx.fillStyle = 'rgba(255,255,255,0.94)'; ctx.font = `800 ${Math.round(28 * scale)}px ${fontFamily}`;
+      ctx.fillStyle = palette.title; ctx.font = `800 ${Math.round(28 * scale)}px ${fontFamily}`;
       ctx.fillText(`Phase ${row.phase}`, 112, y);
-      drawProgressBar(ctx, { x: 300, y: y - 22, w: 520, h: 18, pct: rowPct, accent: theme.accent, accent2: theme.accent2 });
-      ctx.fillStyle = 'rgba(220,232,255,0.84)'; ctx.font = `800 ${Math.round(26 * scale)}px ${fontFamily}`;
+      drawProgressBar(ctx, { x: 300, y: y - 22, w: 520, h: 18, pct: rowPct, accent: theme.accent, accent2: theme.accent2, track: palette.barTrack });
+      ctx.fillStyle = palette.muted; ctx.font = `800 ${Math.round(26 * scale)}px ${fontFamily}`;
       ctx.fillText(`${row.watched}/${row.total}`, 854, y);
     });
     if (sections.recentMomentum !== false) {
-      drawBadge(ctx, { x: 96, y: 1164, label: 'Recent momentum', value: `${data.recentCount || 0} logs`, color: theme.accent2, fontFamily, scale, w: 300 });
+      drawBadge(ctx, { x: 96, y: 1164, label: 'Recent momentum', value: `${data.recentCount || 0} logs`, color: theme.accent2, fontFamily, scale, w: 300, palette });
     }
     if (sections.topRated !== false && Array.isArray(data.topRatedItems) && data.topRatedItems.length) {
       ctx.fillStyle = '#eaf2ff'; ctx.font = `900 ${Math.round(28 * scale)}px ${fontFamily}`;
@@ -299,8 +333,8 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
     const featured = data.featured;
     const bgImg = featured ? await loadPosterWithFallback({ primarySrc: settings.posterSrc(featured), fallbackText: featured.title }) : null;
     drawCardBackdrop(ctx, { width: 1080, height: 1350 }, theme, bgImg, bgOpacity);
-    drawRoundedPanel(ctx, { x: 30, y: 30, w: 1020, h: 1290, radius: 58, fill: 'rgba(8,13,24,0.84)', stroke: withAlpha(theme.accent2, 0.42), lineWidth: 4 });
-    drawRoundedPanel(ctx, { x: 60, y: 62, w: 960, h: 1230, radius: 44, fill: 'rgba(255,255,255,0.04)', stroke: withAlpha(theme.gold, 0.24) });
+    drawRoundedPanel(ctx, { x: 30, y: 30, w: 1020, h: 1290, radius: 58, fill: palette.cardBase, stroke: withAlpha(theme.accent2, 0.42), lineWidth: 4 });
+    drawRoundedPanel(ctx, { x: 60, y: 62, w: 960, h: 1230, radius: 44, fill: palette.cardSubtle, stroke: withAlpha(theme.gold, 0.24) });
     drawThemeStamp(ctx, { x: 104, y: 1196, theme, fontFamily, scale });
 
     const ratingMap = data.ratings || {};
@@ -308,21 +342,21 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
     const featuredRating = clampTenPoint(ratingMap[featured?.id] || data.rating || 0);
     ctx.fillStyle = withAlpha(theme.accent, 0.96); ctx.font = `900 ${Math.round(24 * scale)}px ${fontFamily}`;
     ctx.fillText(`${theme.titleLabel || 'WATCH'} PREMIUM RECAP`, 104, 138);
-    if (featured?.title) fitTitleText(ctx, { text: featured.title, x: 104, y: 216, maxWidth: 820, preferredSize: 54 * scale, minSize: 28 * scale, fontFamily, maxLines: 2, color: '#fff', weight: 900 });
+    if (featured?.title) fitTitleText(ctx, { text: featured.title, x: 104, y: 216, maxWidth: 820, preferredSize: 54 * scale, minSize: 28 * scale, fontFamily, maxLines: 2, color: palette.title, weight: 900 });
 
-    ctx.fillStyle = '#ffffff'; ctx.font = `950 ${Math.round(164 * scale)}px ${fontFamily}`; ctx.fillText(`${Number(data.pct || 0)}%`, 104, 410);
-    drawProgressBar(ctx, { x: 110, y: 446, w: 858, h: 26, pct: data.pct, accent: theme.accent, accent2: theme.accent2 });
-    drawBadge(ctx, { x: 110, y: 506, label: 'Completed', value: `${data.totalWatched || 0}/${data.totalItems || 0}`, color: theme.accent, fontFamily, scale, w: 270 });
-    drawBadge(ctx, { x: 410, y: 506, label: 'Phase', value: data.currentPhase || '—', color: theme.accent2, fontFamily, scale, w: 252 });
-    drawBadge(ctx, { x: 692, y: 506, label: 'Feature', value: `${featuredRating.toFixed(1)}★`, color: theme.gold, fontFamily, scale, w: 276 });
+    ctx.fillStyle = palette.title; ctx.font = `950 ${Math.round(164 * scale)}px ${fontFamily}`; ctx.fillText(`${Number(data.pct || 0)}%`, 104, 410);
+    drawProgressBar(ctx, { x: 110, y: 446, w: 858, h: 26, pct: data.pct, accent: theme.accent, accent2: theme.accent2, track: palette.barTrack });
+    drawBadge(ctx, { x: 110, y: 506, label: 'Completed', value: `${data.totalWatched || 0}/${data.totalItems || 0}`, color: theme.accent, fontFamily, scale, w: 270, palette });
+    drawBadge(ctx, { x: 410, y: 506, label: 'Phase', value: data.currentPhase || '—', color: theme.accent2, fontFamily, scale, w: 252, palette });
+    drawBadge(ctx, { x: 692, y: 506, label: 'Feature', value: `${featuredRating.toFixed(1)}★`, color: theme.gold, fontFamily, scale, w: 276, palette });
 
     ctx.fillStyle = '#eaf2ff'; ctx.font = `900 ${Math.round(34 * scale)}px ${fontFamily}`; ctx.fillText('Recent timeline wins', 112, 692);
     topRows.forEach((row, idx) => {
       const y = 752 + idx * 92;
       const rowRating = clampTenPoint(ratingMap[row.id] || row.rating || 0);
-      drawRoundedPanel(ctx, { x: 104, y: y - 50, w: 872, h: 72, radius: 24, fill: idx % 2 ? 'rgba(255,255,255,0.055)' : 'rgba(255,255,255,0.085)', stroke: 'rgba(255,255,255,0.1)' });
-      fitTitleText(ctx, { text: row.title, x: 132, y: y - 10, maxWidth: 570, preferredSize: 30 * scale, minSize: 20 * scale, fontFamily, maxLines: 1, color: 'rgba(255,255,255,0.96)', weight: 850 });
-      ctx.fillStyle = 'rgba(210,226,248,0.74)'; ctx.font = `700 ${Math.round(21 * scale)}px ${fontFamily}`; ctx.fillText(`${row.year || '—'} • Phase ${row.phase || '—'}`, 132, y + 16);
+      drawRoundedPanel(ctx, { x: 104, y: y - 50, w: 872, h: 72, radius: 24, fill: idx % 2 ? withAlpha(theme.accent, mode === 'light' ? 0.08 : 0.05) : palette.rowFill, stroke: palette.softStroke });
+      fitTitleText(ctx, { text: row.title, x: 132, y: y - 10, maxWidth: 570, preferredSize: 30 * scale, minSize: 20 * scale, fontFamily, maxLines: 1, color: palette.title, weight: 850 });
+      ctx.fillStyle = palette.muted; ctx.font = `700 ${Math.round(21 * scale)}px ${fontFamily}`; ctx.fillText(`${row.year || '—'} • Phase ${row.phase || '—'}`, 132, y + 16);
       ctx.fillStyle = theme.gold; ctx.font = `900 ${Math.round(30 * scale)}px ${fontFamily}`; ctx.fillText(`${rowRating.toFixed(1)}★`, 826, y - 2);
     });
     drawWatermark(ctx, { width: 1080, height: 1350 }, fontFamily, theme);

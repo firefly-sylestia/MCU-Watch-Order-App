@@ -2109,6 +2109,7 @@ export default function MCUViewer() {
           posterSrc,
           theme: type === 'review' ? reviewCardTheme : exportSettings.theme,
           bgOpacity: exportSettings.bgOpacity,
+          colorMode: darkMode ? 'dark' : 'light',
           density: exportSettings.density,
           sections: exportSettings.sections,
           namingStrategy: ({ type: cardType, data: cardData }) => {
@@ -2126,7 +2127,7 @@ export default function MCUViewer() {
       console.error(`Failed to share ${type} card`, e);
       statusHandlers?.onError?.(e);
     }
-  }, [exportFont, exportTextScale, posterSrc, saveImageToDevice, reviewCardTheme, exportSettings.theme, exportSettings.bgOpacity, exportSettings.density, exportSettings.sections]);
+  }, [exportFont, exportTextScale, posterSrc, saveImageToDevice, reviewCardTheme, exportSettings.theme, exportSettings.bgOpacity, exportSettings.density, exportSettings.sections, darkMode]);
 
   const shareReviewCard = async (item) => {
     await shareCardImage({
@@ -2188,6 +2189,7 @@ export default function MCUViewer() {
             posterSrc,
             theme: exportSettings.theme,
             bgOpacity: exportSettings.bgOpacity,
+            colorMode: darkMode ? 'dark' : 'light',
             density: exportSettings.density,
             sections: exportSettings.sections,
             previewScale: 0.42,
@@ -2211,7 +2213,7 @@ export default function MCUViewer() {
       window.clearTimeout(timer);
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [exportComposerOpen, analyticsTab, exportSettings.type, exportSettings.theme, exportSettings.bgOpacity, exportSettings.density, exportSettings.sections, exportFont, exportTextScale, exportPreviewFeatured, buildExportCardData, posterSrc]);
+  }, [exportComposerOpen, analyticsTab, exportSettings.type, exportSettings.theme, exportSettings.bgOpacity, exportSettings.density, exportSettings.sections, exportFont, exportTextScale, exportPreviewFeatured, buildExportCardData, posterSrc, darkMode]);
 
 
   // ─── Smoother phase gradient (multi-stop per phase for richer look) ──────
