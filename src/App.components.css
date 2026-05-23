@@ -2308,3 +2308,152 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   color:inherit !important;
   filter:none !important;
 }
+/* ===== 2026 Modernized Marvel-inspired UI Redesign ===== */
+:root {
+  --font-display: "Barlow Condensed", "Bebas Neue", sans-serif;
+  --font-ui: "Sora", "Rajdhani", sans-serif;
+  --font-body: "Inter", "Outfit", system-ui, sans-serif;
+
+  --hero-red: #e31837;
+  --hero-red-soft: rgba(227, 24, 55, 0.16);
+  --hero-gold: #ffcf5a;
+  --hero-cyan: #66e2ff;
+}
+
+.app-container {
+  background:
+    radial-gradient(circle at 12% 4%, color-mix(in srgb, var(--hero-red) 30%, transparent), transparent 42%),
+    radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--hero-cyan) 20%, transparent), transparent 44%),
+    linear-gradient(160deg, color-mix(in srgb, var(--theme-bg) 94%, #05070d) 0%, color-mix(in srgb, var(--theme-bg) 86%, #0f1320) 45%, color-mix(in srgb, var(--theme-bg) 82%, #1b1020) 100%);
+}
+
+.phase-rows-full,
+.curvy-panel,
+.settings-menu,
+.analytics-shell,
+.filters-open,
+.glass-panel {
+  background:
+    linear-gradient(165deg, color-mix(in srgb, var(--theme-surface) 80%, transparent), color-mix(in srgb, var(--theme-bg) 40%, transparent)) !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 66%, var(--hero-red-soft)) !important;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.rrow {
+  border-radius: 18px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 72%, rgba(255,255,255,0.06)) !important;
+  background:
+    linear-gradient(120deg, color-mix(in srgb, var(--theme-surface) 88%, transparent), color-mix(in srgb, var(--theme-bg) 58%, transparent)) !important;
+}
+.rrow:hover {
+  transform: translateY(-2px) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 45%, var(--hero-red)) !important;
+  box-shadow: 0 14px 28px rgba(0,0,0,.3), 0 0 0 1px color-mix(in srgb, var(--hero-red) 24%, transparent) !important;
+}
+
+.fpill,
+.theme-btn,
+.wbtn,
+.status-pill,
+.fab-primary,
+.bottom-action-bar,
+.dock-btn {
+  min-height: 38px;
+  border-radius: 12px !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 78%, rgba(255,255,255,0.14)) !important;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--theme-surface) 95%, transparent), color-mix(in srgb, var(--theme-bg) 66%, transparent)) !important;
+  color: var(--theme-text) !important;
+  font-family: var(--font-ui) !important;
+  font-weight: 650 !important;
+  letter-spacing: .02em !important;
+  box-shadow: 0 8px 18px rgba(2,8,23,0.2), inset 0 1px 0 rgba(255,255,255,.1) !important;
+}
+
+.fpill:hover,
+.theme-btn:hover,
+.wbtn:hover,
+.status-pill:hover,
+.fab-primary:hover,
+.bottom-action-bar:hover,
+.dock-btn:hover {
+  border-color: color-mix(in srgb, var(--theme-accent) 50%, var(--hero-red)) !important;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--theme-surface-hover) 92%, transparent), color-mix(in srgb, var(--hero-red-soft) 35%, transparent)) !important;
+  transform: translateY(-1px);
+}
+
+.fpill:focus-visible,
+.theme-btn:focus-visible,
+.wbtn:focus-visible,
+.status-pill:focus-visible,
+.title-btn:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-accent) 62%, transparent), 0 0 0 5px color-mix(in srgb, var(--hero-red) 34%, transparent) !important;
+}
+
+.header-title-mcu,
+.header-title-sub,
+.ntab,
+.detail-export-title,
+.hero-carousel-title,
+h1,h2,h3 {
+  font-family: var(--font-display) !important;
+  letter-spacing: 0.06em !important;
+}
+
+.title-btn,
+.meta-chip,
+.sopt,
+.calendar-group-header,
+.detail-export-kicker,
+.detail-export-panel-head {
+  font-family: var(--font-ui) !important;
+}
+
+body,
+p,
+span,
+small,
+input,
+select,
+textarea {
+  font-family: var(--font-body);
+}
+
+[data-color-mode="light"] .app-container {
+  background:
+    radial-gradient(circle at 14% 6%, rgba(227, 24, 55, 0.16), transparent 40%),
+    radial-gradient(circle at 88% 16%, rgba(102, 226, 255, 0.14), transparent 43%),
+    linear-gradient(165deg, #f8fbff 0%, #eef2f9 45%, #f5f0f2 100%);
+}
+[data-color-mode="light"] .phase-rows-full,
+[data-color-mode="light"] .curvy-panel,
+[data-color-mode="light"] .filters-open,
+[data-color-mode="light"] .settings-menu,
+[data-color-mode="light"] .analytics-shell,
+[data-color-mode="light"] .glass-panel,
+[data-color-mode="light"] .rrow {
+  background: linear-gradient(165deg, #ffffff, #f4f7fc) !important;
+  border-color: color-mix(in srgb, var(--theme-border) 75%, rgba(227,24,55,0.2)) !important;
+  box-shadow: 0 12px 28px rgba(15,23,42,0.1), inset 0 1px 0 rgba(255,255,255,0.95) !important;
+}
+[data-color-mode="light"] .fpill,
+[data-color-mode="light"] .theme-btn,
+[data-color-mode="light"] .wbtn,
+[data-color-mode="light"] .status-pill,
+[data-color-mode="light"] .fab-primary,
+[data-color-mode="light"] .bottom-action-bar,
+[data-color-mode="light"] .dock-btn {
+  background: linear-gradient(160deg, #ffffff, #f3f6fb) !important;
+  color: var(--theme-text-primary) !important;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fpill,
+  .theme-btn,
+  .wbtn,
+  .status-pill,
+  .rrow,
+  .hero-carousel-card {
+    transition: transform 140ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 220ms ease !important;
+  }
+}
