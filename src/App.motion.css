@@ -30,3 +30,56 @@
         .progress-gradient{background:var(--phase-gradient, linear-gradient(90deg,var(--theme-accent), var(--theme-accent-alt)));background-size:200% 100%;animation:gradientPulse 3s ease-in-out infinite alternate}
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
         .performance-mode *{animation:none !important}
+/* Modernized scroll trigger + section progress motion system */
+.motion-section {
+  --section-progress: 0;
+  opacity: 0;
+  transform: translate3d(0, 22px, 0);
+  transition: opacity 460ms var(--ease-out), transform 560ms var(--ease-out), filter 560ms var(--ease-out);
+  will-change: opacity, transform;
+}
+.motion-section.is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+.motion-pop {
+  transform: translate3d(0, calc(16px - (var(--section-progress) * 6px)), 0) scale(calc(0.99 + (var(--section-progress) * 0.01)));
+}
+.motion-section.in-view .phase-header-card {
+  transform: translate3d(0, calc(var(--section-progress) * -8px), 0);
+  transition: transform 260ms var(--ease-smooth);
+}
+.phase-rows-full .phase-row-virtualized {
+  opacity: 0;
+  transform: translate3d(0, 12px, 0);
+  transition: opacity 380ms var(--ease-out), transform 420ms var(--ease-out);
+}
+.motion-section.is-visible .phase-rows-full .phase-row-virtualized {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+.motion-section.is-visible .phase-rows-full .phase-row-virtualized:nth-child(1) { transition-delay: 40ms; }
+.motion-section.is-visible .phase-rows-full .phase-row-virtualized:nth-child(2) { transition-delay: 80ms; }
+.motion-section.is-visible .phase-rows-full .phase-row-virtualized:nth-child(3) { transition-delay: 120ms; }
+.motion-section.is-visible .phase-rows-full .phase-row-virtualized:nth-child(4) { transition-delay: 160ms; }
+
+@media (max-width: 1024px) {
+  .motion-section { transform: translate3d(0, 16px, 0); transition-duration: 380ms; }
+  .motion-pop { transform: translate3d(0, calc(10px - (var(--section-progress) * 4px)), 0); }
+}
+
+@media (max-width: 640px) {
+  .motion-section { transform: translate3d(0, 10px, 0); transition-duration: 320ms; }
+  .motion-section.in-view .phase-header-card { transform: translate3d(0, calc(var(--section-progress) * -4px), 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-section,
+  .phase-rows-full .phase-row-virtualized,
+  .motion-section.in-view .phase-header-card {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
