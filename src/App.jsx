@@ -693,11 +693,11 @@ const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
   return (
     <>
       <div className="sidebar-control-cluster" style={controlsHidden ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
-      <button className="theme-btn sidebar-toggle-btn" onClick={onToggle} aria-label="Toggle sidebar menu" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Menu size={18} /></button>
-      <button className="theme-btn sidebar-toggle-btn settings-toggle-btn" onClick={onOpenSettings} aria-label="Open settings and profile" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Settings size={18} /></button>
+      <button className="theme-btn sidebar-toggle-btn app-modern-icon-btn" onClick={onToggle} aria-label="Toggle sidebar menu"><Menu size={18} /></button>
+      <button className="theme-btn sidebar-toggle-btn settings-toggle-btn app-modern-icon-btn" onClick={onOpenSettings} aria-label="Open settings and profile"><Settings size={18} /></button>
       </div>
       <div className="sidebar-backdrop" data-state={open ? 'open' : 'closed'} onPointerDown={(e) => { e.preventDefault(); onClose?.(); }} />
-      <aside ref={ref} data-state={open ? 'open' : 'closed'} aria-hidden={!open} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
+      <aside ref={ref} data-state={open ? 'open' : 'closed'} aria-hidden={!open} className="sidebar-menu app-modern-sidebar" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
         {children}
       </aside>
     </>
@@ -714,8 +714,8 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
   return (
     <>
       <button className="settings-backdrop" data-state={open ? 'open' : 'closed'} aria-label="Close settings menu" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose?.(); }} />
-      <div className="settings-shell" data-state={open ? 'open' : 'closed'} role="dialog" aria-modal={open ? 'true' : 'false'} aria-hidden={!open} aria-label="Settings and profile" ref={ref}>
-        <div className="fade-in settings-menu settings-menu-redesign" data-state={open ? 'open' : 'closed'} style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
+      <div className="settings-shell app-modern-settings-shell" data-state={open ? 'open' : 'closed'} role="dialog" aria-modal={open ? 'true' : 'false'} aria-hidden={!open} aria-label="Settings and profile" ref={ref}>
+        <div className="fade-in settings-menu settings-menu-redesign app-modern-settings-menu" data-state={open ? 'open' : 'closed'} style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
           <div className="settings-sticky-actions">
             <button className="fpill glass-panel settings-close-sticky" onClick={() => onClose?.()}><X size={14}/>Close</button>
           </div>
@@ -2971,8 +2971,8 @@ export default function MCUViewer() {
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} settingsOpen={settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
-        <div style={{ marginBottom: 8, fontSize: 11, letterSpacing: 1.8, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)', textTransform: 'uppercase' }}>Navigation Panel</div>
-        <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
+        <div className="modern-nav-eyebrow">Navigation Panel</div>
+        <div className="modern-sidebar-block">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {profile.pfp ? <img src={profile.pfp} alt="profile" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover' }} /> : <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(145deg,var(--theme-accent),var(--theme-accent-alt))', color: '#fff', display: 'grid', placeItems: 'center' }}><UserCircle size={18} /></div>}
             <div style={{ fontSize: 12, color: T.textMuted }}>{profile.name || 'Marvel Fan'}</div>
@@ -2982,7 +2982,7 @@ export default function MCUViewer() {
             <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', color: !darkMode ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Sun size={12} />Light</button>
           </div>
                   </div>
-                <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
+        <button className="fpill modern-action-pill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Quick Phases</div>
         <button className="fpill marvel-btn" onClick={openAnalyticsPanel} style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}>Analytics</button>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Viewing List</div>
@@ -3039,6 +3039,7 @@ export default function MCUViewer() {
       </SidebarMenu>
 
       <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} performanceMode={performanceMode} onClose={closeSettings}>
+          <div className="modern-settings-content">
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Profile</div>
             <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 6 }}>
@@ -3143,6 +3144,7 @@ export default function MCUViewer() {
             <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setShowCompleted(false); setActivePhase(0); }}><Trash2 size={14}/>Reset Filters</button>
             <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={clearPosterMetaCache}><Trash2 size={14}/>Clear Poster/Meta Cache</button>
             <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={clearAvatarActionCache}><Trash2 size={14}/>Clear Avatar/Actions Cache</button>
+          </div>
       </SettingsMenu>
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
@@ -3415,19 +3417,21 @@ export default function MCUViewer() {
           )}
 
           {viewMode === 'calendar' ? (
-            <section data-motion="section" className='curvy-panel calendar-section motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
-              <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', color: 'var(--theme-text-primary)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
-              <div style={{ marginBottom: 12, color: T.textMuted, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.2 }}>Grouped by month / quarter / year</div>
+            <section data-motion="section" className='curvy-panel calendar-section motion-section motion-pop app-modern-calendar' style={{ border: `1px solid ${T.surfaceBorder}`, borderRadius: 18, padding: 18 }}>
+              <div className="calendar-headline-wrap">
+                <h3 className="calendar-headline">Release Calendar</h3>
+                <div className="calendar-subhead">Grouped by month / quarter / year</div>
+              </div>
               {Object.entries(calendarItems.grouped).map(([group, entries]) => (
-                <div key={group}>
+                <div key={group} className="calendar-group-shell">
                   <div className="calendar-group-header">{group}</div>
                   {entries.map(({ item, rawDate, label, releaseStatus, hasRealDate }) => (
-                    <div key={`${group}-${item.id}`} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
-                      <div style={{ fontSize: 11, color: releaseStatus === 'upcoming' ? 'var(--theme-warning)' : T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
+                    <div key={`${group}-${item.id}`} className='rrow calendar-row app-modern-calendar-row'>
+                      <div className={`calendar-date ${releaseStatus === 'upcoming' ? 'is-upcoming' : ''}`}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
                       <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
-                      <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left', textShadow: '0 1px 2px color-mix(in srgb, var(--theme-bg) 35%, transparent)' }}>
+                      <button className='title-btn calendar-title-btn' onClick={() => openDetail(item)}>
                         {item.title}
-                        <div style={{ fontSize: 11, color: T.textMuted, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        <div className="calendar-meta-row">
                           <span>Phase {item.phase} · {TYPE_META[item.type]?.label}</span>
                           <span className={`calendar-badge ${releaseStatus}`}>{releaseStatus}</span>
                           <span className="calendar-badge certainty">{hasRealDate ? 'Exact Date' : getReleaseCertainty({ hasRealDate, releaseStatus })}</span>
