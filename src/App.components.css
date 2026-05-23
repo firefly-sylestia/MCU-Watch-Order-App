@@ -2391,3 +2391,128 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   border-color:color-mix(in srgb,var(--theme-accent) 30%, #cfbaa1) !important;
   box-shadow:0 7px 14px rgba(88,53,16,.12), inset 0 1px 0 rgba(255,255,255,.9) !important;
 }
+
+/* ===== Hero Carousel Modern Redesign ===== */
+.hero-carousel-shell{
+  --carousel-edge-pad: clamp(14px, 3vw, 30px);
+  --carousel-gap: clamp(14px, 2.2vw, 24px);
+  position: relative;
+  height: clamp(400px, 57vw, 590px);
+  width: min(1520px, calc(100% - 20px)) !important;
+  max-width: 1520px !important;
+  margin: 0 auto;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: clamp(18px, 2.6vw, 28px);
+}
+
+.hero-carousel-shell::before{
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 70%, transparent);
+  background: linear-gradient(145deg,
+    color-mix(in srgb, var(--theme-surface) 52%, transparent),
+    color-mix(in srgb, var(--theme-bg) 24%, transparent));
+  backdrop-filter: blur(10px) saturate(125%);
+  -webkit-backdrop-filter: blur(10px) saturate(125%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.hero-carousel-track{
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--carousel-gap);
+  padding: 26px var(--carousel-edge-pad);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-padding-inline: calc(var(--carousel-edge-pad) + 10px);
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.hero-carousel-card{
+  width: clamp(230px, 25vw, 332px);
+  opacity: .52;
+  transform: translateY(7px) scale(.915);
+  transition: transform 280ms var(--interactive-ease), opacity 220ms var(--interactive-ease), filter 220ms var(--interactive-ease);
+  filter: saturate(.88);
+  scroll-snap-align: center;
+}
+
+.hero-carousel-card.is-active{
+  opacity: 1;
+  transform: translateY(-5px) scale(1);
+  filter: saturate(1.06);
+}
+
+.hero-carousel-poster{
+  border-radius: clamp(16px, 2vw, 22px);
+  border: 1px solid color-mix(in srgb, var(--theme-border) 68%, transparent);
+  box-shadow: 0 14px 32px rgba(2, 8, 23, .34), 0 0 0 1px color-mix(in srgb, var(--theme-accent) 14%, transparent);
+  transition: transform 220ms var(--interactive-ease), box-shadow 220ms var(--interactive-ease), border-color 220ms var(--interactive-ease);
+}
+
+.hero-carousel-card:hover .hero-carousel-poster{
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--theme-accent) 44%, var(--theme-border));
+  box-shadow: 0 18px 36px rgba(2, 8, 23, .42), 0 0 0 1px color-mix(in srgb, var(--theme-accent) 26%, transparent);
+}
+
+.hero-carousel-meta{
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, rgba(255,255,255,.35) 70%, transparent);
+  background: linear-gradient(180deg, rgba(6, 10, 23, .12), rgba(6, 10, 23, .78));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.hero-carousel-title{
+  letter-spacing: .055em;
+  line-height: 1.15;
+}
+
+.hero-carousel-nav{
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 78%, transparent);
+  background: color-mix(in srgb, var(--theme-surface) 82%, transparent);
+  box-shadow: 0 10px 22px rgba(2,8,23,.24);
+}
+.hero-carousel-nav.prev{left: clamp(8px, 1.4vw, 18px)}
+.hero-carousel-nav.next{right: clamp(8px, 1.4vw, 18px)}
+.hero-carousel-nav:hover{transform: translateY(-50%) scale(1.05)}
+.hero-carousel-nav:focus-visible{
+  outline: 2px solid color-mix(in srgb, var(--theme-accent) 66%, transparent);
+  outline-offset: 2px;
+}
+
+[data-color-mode="light"] .hero-carousel-shell::before{
+  background: linear-gradient(150deg,
+    color-mix(in srgb, var(--theme-surface) 88%, #fff),
+    color-mix(in srgb, var(--theme-bg) 10%, #fff));
+  border-color: color-mix(in srgb, var(--theme-border) 74%, #fff);
+}
+[data-color-mode="light"] .hero-carousel-poster{
+  box-shadow: 0 14px 28px rgba(15, 23, 42, .16), 0 0 0 1px color-mix(in srgb, var(--theme-accent) 10%, transparent);
+}
+[data-color-mode="light"] .hero-carousel-meta{
+  border-color: color-mix(in srgb, rgba(255,255,255,.85) 68%, transparent);
+  background: linear-gradient(180deg, rgba(248,250,252,.4), rgba(15,23,42,.7));
+}
+
+@media (max-width: 768px){
+  .hero-carousel-shell{height: clamp(360px, 104vw, 460px); width: min(100%, calc(100% - 12px)) !important;}
+  .hero-carousel-track{padding: 20px 10px; gap: 12px;}
+  .hero-carousel-card{width: clamp(196px, 63vw, 264px);}
+  .hero-carousel-nav{width: 34px; height: 34px;}
+}
