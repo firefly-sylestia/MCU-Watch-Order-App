@@ -1061,6 +1061,12 @@ export default function MCUViewer() {
   useEffect(() => {
     if (sidebarOpen) setFabMenuOpen(false);
   }, [sidebarOpen]);
+  useEffect(() => {
+    if (!sidebarOpen && !settingsOpen) return;
+    setStatusDropdown(null);
+    setDockStatusOpen(false);
+  }, [sidebarOpen, settingsOpen]);
+
 
   useEffect(() => {
     if (!detailItem) return;

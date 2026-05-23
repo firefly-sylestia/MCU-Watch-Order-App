@@ -2066,3 +2066,33 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 [data-color-mode="light"] .rrow.curvy-selected{
   background:color-mix(in srgb,var(--status-accent) 10%, #fff) !important;
 }
+
+/* Status dropdown: restore clear status color buttons with unified dark/light readability */
+.status-menu-item{
+  border:1px solid color-mix(in srgb,var(--theme-border) 82%, transparent) !important;
+  background:color-mix(in srgb,var(--theme-surface) 94%, transparent) !important;
+  color:var(--theme-text-secondary) !important;
+  transition:background-color .16s ease,border-color .16s ease,color .16s ease,transform .12s ease !important;
+}
+.status-menu-item:hover{transform:translateY(-1px)}
+
+.status-menu-item.status-menu-watched{--menu-accent:#ef4444}
+.status-menu-item.status-menu-watching{--menu-accent:#8b5cf6}
+.status-menu-item.status-menu-plan-to-watch{--menu-accent:#3b82f6}
+.status-menu-item.status-menu-on-hold{--menu-accent:#f59e0b}
+.status-menu-item.status-menu-dropped{--menu-accent:#f97316}
+.status-menu-item[class*="status-menu-"]:not(.status-menu-unwatched):hover{
+  border-color:color-mix(in srgb,var(--menu-accent) 52%, var(--theme-border)) !important;
+  background:color-mix(in srgb,var(--menu-accent) 12%, var(--theme-surface)) !important;
+  color:var(--menu-accent) !important;
+}
+.status-menu-item.is-current{
+  border-color:color-mix(in srgb,var(--menu-accent) 64%, var(--theme-border)) !important;
+  background:color-mix(in srgb,var(--menu-accent) 18%, var(--theme-surface)) !important;
+  color:var(--menu-accent) !important;
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--menu-accent) 24%, transparent) !important;
+}
+[data-color-mode="light"] .status-menu-item{
+  background:#fff !important;
+  color:#334155 !important;
+}
