@@ -3147,7 +3147,6 @@ export default function MCUViewer() {
             <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} onClick={() => { setBrandTapCount(c => c + 1); setTimeout(() => setBrandTapCount(0), 550); }} onDoubleClick={() => setUniverse(prev => prev === 'mcu' ? 'dc' : 'mcu')} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900, cursor: 'pointer', userSelect: 'none', WebkitUserSelect: 'none' }}>
               <div className="header-title-mcu" style={{ color: universe === 'dc' ? '#9ac5ff' : undefined }}>{activeUniverse.title}</div>
               <div className="header-title-sub">{activeUniverse.subtitle}</div>
-              
             </div>
             
           </div>
