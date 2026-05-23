@@ -2391,3 +2391,64 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   border-color:color-mix(in srgb,var(--theme-accent) 30%, #cfbaa1) !important;
   box-shadow:0 7px 14px rgba(88,53,16,.12), inset 0 1px 0 rgba(255,255,255,.9) !important;
 }
+
+/* Modernized redesign: Calendar + Sidebar + Settings */
+.calendar-section{
+  padding: 18px !important;
+  border-radius: 24px !important;
+  background: linear-gradient(165deg, color-mix(in srgb,var(--theme-surface) 88%, transparent), color-mix(in srgb,var(--theme-bg) 84%, var(--theme-surface))) !important;
+}
+.calendar-section h3{font-size:14px !important;letter-spacing:2.4px !important;text-transform:uppercase;margin-bottom:8px !important}
+.calendar-section > div{line-height:1.4}
+.calendar-row{
+  margin-bottom: 10px !important;
+  padding: 14px !important;
+  border-radius: 18px !important;
+  border: 1px solid color-mix(in srgb,var(--theme-accent) 18%, var(--theme-border)) !important;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .2s ease !important;
+}
+.calendar-row:hover{
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb,var(--theme-accent) 46%, var(--theme-border)) !important;
+  box-shadow: 0 12px 24px rgba(2,8,23,.22);
+}
+.calendar-group-header{
+  margin: 16px 0 10px !important;
+  padding: 8px 12px !important;
+  border-radius: 999px !important;
+}
+
+.sidebar-menu{
+  width:min(360px,90vw) !important;
+  padding:92px 16px 26px !important;
+  display:grid;
+  gap:10px;
+}
+.sidebar-menu .fpill{min-height:42px !important}
+.sidebar-menu .fpill:focus-visible{
+  box-shadow: 0 0 0 2px color-mix(in srgb,var(--theme-accent) 50%, transparent) !important;
+}
+
+.settings-menu{
+  width:min(860px,98vw) !important;
+  margin: 8px auto !important;
+  max-height: calc(100dvh - 16px) !important;
+  border-radius: 26px !important;
+  padding: 16px !important;
+  display:grid !important;
+  gap:10px !important;
+}
+.settings-menu hr{margin:8px 0 !important}
+.settings-menu label{
+  border:1px solid color-mix(in srgb,var(--theme-border) 75%, transparent);
+  border-radius:14px;
+  padding:10px 12px !important;
+  background: color-mix(in srgb,var(--theme-surface) 82%, transparent);
+}
+.settings-menu .fpill{min-height:40px !important}
+
+[data-color-mode="light"] .calendar-section,
+[data-color-mode="light"] .sidebar-menu,
+[data-color-mode="light"] .settings-menu{
+  box-shadow: 0 16px 28px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,.85) !important;
+}
