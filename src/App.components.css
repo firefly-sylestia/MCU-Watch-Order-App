@@ -1017,22 +1017,22 @@ main{--content-max:1360px !important}
 
 /* Header alignment cleanup + simplified brand treatment */
 .header-brand{
-  justify-items:center !important;
-  text-align:center !important;
-  width: min(100%, 560px);
-  margin-inline: auto;
+  justify-items:start !important;
+  text-align:left !important;
+  width: auto;
+  margin-inline: 0;
 }
 .header-brand-topline,
 .header-brand-chip{
   display:none !important;
 }
 .header-title-mcu{
-  margin-inline:auto;
+  margin-inline:0;
 }
 .header-title-sub{
-  width:100%;
-  text-align:center;
-  margin-left:0;
+  width:auto;
+  text-align:left;
+  margin-left:2px;
 }
 
 /* Minimal accent pass in additional places */
@@ -1061,6 +1061,47 @@ main{--content-max:1360px !important}
 [data-color-mode="light"] .calendar-group-header{
   background: color-mix(in srgb, var(--theme-surface) 95%, #ffffff);
   border-color: color-mix(in srgb, var(--theme-accent) 30%, #dbe4f3);
+  color: color-mix(in srgb, var(--theme-accent) 52%, #0f172a);
+}
+
+/* Light mode calendar readability + refined accents */
+[data-color-mode="light"] .calendar-row{
+  color: var(--theme-text-primary) !important;
+}
+[data-color-mode="light"] .calendar-row .title-btn,
+[data-color-mode="light"] .calendar-row .title-btn .title-main,
+[data-color-mode="light"] .calendar-row .title-btn strong{
+  color: var(--theme-text-primary) !important;
+}
+[data-color-mode="light"] .calendar-row .title-btn div,
+[data-color-mode="light"] .calendar-row .meta-muted,
+[data-color-mode="light"] .calendar-row span{
+  color: color-mix(in srgb, var(--theme-text) 72%, #334155) !important;
+  opacity: 1 !important;
+}
+[data-color-mode="light"] .calendar-badge{
+  background: color-mix(in srgb, var(--theme-surface) 95%, #ffffff);
+  border-color: color-mix(in srgb, var(--theme-accent) 24%, #cbd5e1);
+  color: var(--theme-text-primary);
+}
+[data-color-mode="light"] .calendar-badge.released{
+  color: #14532d;
+  background: #ecfdf3;
+  border-color: #86efac;
+}
+[data-color-mode="light"] .calendar-badge.upcoming{
+  color: #7c2d12;
+  background: #fff7ed;
+  border-color: #fdba74;
+}
+
+/* Additional minimal accent implications */
+.filters-open{
+  border-color: color-mix(in srgb, var(--theme-accent) 30%, var(--theme-border)) !important;
+}
+[data-color-mode="light"] .filters-open{
+  background: linear-gradient(165deg, color-mix(in srgb, var(--theme-surface) 96%, #ffffff), color-mix(in srgb, var(--theme-bg) 8%, #ffffff)) !important;
+  box-shadow: 0 10px 20px rgba(15,23,42,0.10) !important;
 }
 
 /* DC badge/button familiar look: white text + dc blue bg */
