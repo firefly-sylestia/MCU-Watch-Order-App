@@ -1205,7 +1205,7 @@ export default function MCUViewer() {
       root.removeEventListener('scroll', updateProgress);
       window.removeEventListener('resize', updateProgress);
     };
-  }, [phaseKeys.length, viewMode]);
+  }, [viewMode, items.length, listMode, activePhase, sortBy, search, statusFilter, typeFilter, watchedOnly, essentialOnly, timelineMode, genreFilter, showAllFiltersOverride, universe]);
 
   useEffect(() => {
     // Phase selection is a filter, so do not rewrite it from scroll position.
