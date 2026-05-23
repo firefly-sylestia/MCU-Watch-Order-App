@@ -1846,6 +1846,28 @@ export default function MCUViewer() {
     e.currentTarget.scrollBy({ left: horizontalDelta * 2.4, behavior: 'auto' });
     e.preventDefault();
   }, [pauseHeroAutoSlide]);
+  const handleHeroRailScroll = useCallback((e) => {
+    if (!heroProgrammaticScrollRef.current) pauseHeroAutoSlide(1800);
+    const rail = e.currentTarget;
+    const cards = rail.querySelectorAll('.hero-carousel-card[data-hero-src]');
+    if (!cards.length) return;
+    const railRect = rail.getBoundingClientRect();
+    const railCenter = railRect.left + (railRect.width / 2);
+    let closestSrc = '';
+    let closestDistance = Number.POSITIVE_INFINITY;
+    cards.forEach((card) => {
+      const rect = card.getBoundingClientRect();
+      const center = rect.left + (rect.width / 2);
+      const distance = Math.abs(center - railCenter);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestSrc = card.getAttribute('data-hero-src') || '';
+      }
+    });
+    if (!closestSrc) return;
+    const nextIndex = heroPosters.indexOf(closestSrc);
+    if (nextIndex >= 0 && nextIndex !== heroIndex) setHeroIndex(nextIndex);
+  }, [heroPosters, heroIndex, pauseHeroAutoSlide]);
 
   const spoilerSafe = useMemo(() => spoilerSafeMode, [spoilerSafeMode]);
 
@@ -3170,13 +3192,13 @@ export default function MCUViewer() {
             <div className="hero-carousel-track"
               ref={heroRailRef}
               onWheel={handleHeroWheel}
-              onScroll={() => { if (!heroProgrammaticScrollRef.current) pauseHeroAutoSlide(1800); }}
+              onScroll={handleHeroRailScroll}
               onPointerDown={() => pauseHeroAutoSlide(3200)}
               onTouchStart={() => pauseHeroAutoSlide(3200)}>
               {visibleHeroPosters.map(({ src, item: heroItem }, idx) => {
               const isActive = src === activeHeroSrc;
               return (
-                <article key={`hero-rail-${src}`} ref={isActive ? heroActiveCardRef : null} className={`hero-carousel-card ${isActive ? 'is-active' : ''}${heroItem?.releaseStatus === 'upcoming' ? ' is-upcoming' : ''}`}>
+                <article key={`hero-rail-${src}`} data-hero-src={src} ref={isActive ? heroActiveCardRef : null} className={`hero-carousel-card ${isActive ? 'is-active' : ''}${heroItem?.releaseStatus === 'upcoming' ? ' is-upcoming' : ''}`}>
                   <img
                     className="hero-carousel-poster"
                     src={src}

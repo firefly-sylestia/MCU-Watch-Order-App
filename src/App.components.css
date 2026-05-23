@@ -2401,17 +2401,10 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   border-radius:28px;
   padding:clamp(10px,2vw,20px);
   isolation:isolate;
+  overflow:visible;
 }
 .hero-carousel-shell::before{
-  content:'';
-  position:absolute;
-  inset:0;
-  border-radius:inherit;
-  background:linear-gradient(145deg,color-mix(in srgb,var(--theme-surface) 42%, transparent),color-mix(in srgb,var(--theme-bg) 30%, transparent));
-  border:1px solid color-mix(in srgb,var(--theme-accent) 18%, var(--theme-border));
-  backdrop-filter:blur(8px) saturate(112%);
-  -webkit-backdrop-filter:blur(8px) saturate(112%);
-  pointer-events:none;
+  content:none;
 }
 .hero-carousel-track{
   position:relative;
@@ -2419,7 +2412,7 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   z-index:1;
   height:100%;
   gap:clamp(18px,2.8vw,30px);
-  padding:clamp(22px,3vw,34px) clamp(24px,3vw,40px) clamp(74px,9vw,98px);
+  padding:clamp(34px,4vw,48px) clamp(24px,3vw,40px) clamp(74px,9vw,98px);
   scroll-snap-type:x mandatory;
   scroll-padding-inline:26vw;
 }
@@ -2437,7 +2430,6 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 .hero-carousel-dot{width:8px;height:8px;border-radius:999px;border:none;background:color-mix(in srgb,var(--theme-text-muted) 60%, transparent);cursor:pointer;transition:transform 160ms ease,background 160ms ease,opacity 160ms ease;opacity:.72}
 .hero-carousel-dot:hover{transform:scale(1.16);opacity:1}
 .hero-carousel-dot.is-active{width:22px;background:var(--theme-accent);opacity:1}
-[data-color-mode="light"] .hero-carousel-shell::before{background:linear-gradient(145deg,color-mix(in srgb,var(--theme-surface) 84%, #fff),color-mix(in srgb,var(--theme-bg) 20%, #fff))}
 [data-color-mode="light"] .hero-carousel-poster{box-shadow:0 16px 30px rgba(15,23,42,.18)}
 @media (max-width: 767px){
   .hero-carousel-shell{height:clamp(390px,95vw,560px);width:min(100%,calc(100% - 8px)) !important;padding:8px;border-radius:22px}
