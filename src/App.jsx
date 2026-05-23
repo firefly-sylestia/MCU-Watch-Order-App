@@ -3642,22 +3642,40 @@ export default function MCUViewer() {
                 <button key={tab.id} className="fpill" onClick={() => setAnalyticsTab(tab.id)} style={{ borderColor: analyticsTab === tab.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{tab.label}</button>
               ))}
             </div>
-            {analyticsTab === 'overview' && <div style={{ display: 'grid', gridTemplateColumns: isDesktopViewport ? 'repeat(3,minmax(0,1fr))' : 'repeat(2,minmax(0,1fr))', gap: 14, marginBottom: 16 }}>
-              <div className="glass-panel" style={{ padding: '14px 14px 16px', borderRadius: 12, border: '1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border))' }}><div style={{ color: T.textMuted, fontSize: 11, letterSpacing: 1.2 }}>PRIMARY · TOTAL WATCHED</div><div style={{ fontSize: 28, fontWeight: 800, marginTop: 4 }}>{Math.round(totalWatchedHours * 10) / 10}h</div></div>
-              <div style={{ padding: '8px 0', borderBottom: `1px solid ${T.surfaceBorder}` }}><div style={{ color: T.textMuted, fontSize: 11, letterSpacing: 1.2 }}>SUPPORTING · WATCHED ITEMS</div><div style={{ fontSize: 22, fontWeight: 700, marginTop: 2 }}>{totalWatched}</div></div>
-              {isDesktopViewport && <div style={{ padding: '8px 0', borderBottom: `1px solid ${T.surfaceBorder}` }}><div style={{ color: T.textMuted, fontSize: 11, letterSpacing: 1.2 }}>OPTIONAL · RE-WATCHES</div><div style={{ fontSize: 22, fontWeight: 700, marginTop: 2 }}>{Object.values(rewatchCount).reduce((a, b) => a + (Number(b) || 0), 0)}</div></div>}
-            </div>}
-            {analyticsTab === 'overview' && <div style={{ marginBottom: 14, padding: '8px 2px' }}>
-              <div style={{ color: T.textMuted, fontSize: 11, marginBottom: 10, letterSpacing: 1.3 }}>PHASE BREAKDOWN</div>
-              <div style={{ display: 'grid', gap: 10 }}>
-                {phaseStats.map(stat => (
-                  <div key={stat.phase} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 14, paddingBottom: 8, borderBottom: `1px solid color-mix(in srgb, var(--theme-border) 72%, transparent)` }}>
-                    <strong style={{ fontWeight: 700 }}>Phase {stat.phase}</strong>
-                    <span style={{ color: T.textMuted }}>{stat.watched}/{stat.total} <span style={{ marginLeft: 8, padding: '2px 7px', borderRadius: 999, border: `1px solid ${T.surfaceBorder}`, fontSize: 11 }}>{stat.total ? Math.round((stat.watched / stat.total) * 100) : 0}%</span></span>
+            {analyticsTab === 'overview' && (
+              <section className="analytics-overview-modern">
+                <div className="analytics-kpi-grid" style={{ gridTemplateColumns: isDesktopViewport ? 'repeat(3,minmax(0,1fr))' : 'repeat(2,minmax(0,1fr))' }}>
+                  {[{ label: 'Total Watched Time', value: `${Math.round(totalWatchedHours * 10) / 10}h`, tone: 'primary' }, { label: 'Watched Titles', value: `${totalWatched}`, tone: 'neutral' }, ...(isDesktopViewport ? [{ label: 'Re-watch Sessions', value: `${Object.values(rewatchCount).reduce((a, b) => a + (Number(b) || 0), 0)}`, tone: 'accent' }] : [])].map((metric) => (
+                    <article key={metric.label} className={`analytics-kpi-card analytics-kpi-${metric.tone}`}>
+                      <div className="analytics-kpi-label">{metric.label}</div>
+                      <div className="analytics-kpi-value">{metric.value}</div>
+                      <div className="analytics-kpi-shine" aria-hidden="true" />
+                    </article>
+                  ))}
+                </div>
+
+                <div className="analytics-phase-block">
+                  <div className="analytics-phase-title">Phase Completion</div>
+                  <div className="analytics-phase-list">
+                    {phaseStats.map((stat) => {
+                      const progress = stat.total ? Math.round((stat.watched / stat.total) * 100) : 0;
+                      return (
+                        <article key={stat.phase} className="analytics-phase-row">
+                          <div className="analytics-phase-row-head">
+                            <strong>Phase {stat.phase}</strong>
+                            <span>{stat.watched}/{stat.total} watched</span>
+                          </div>
+                          <div className="analytics-phase-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+                            <div className="analytics-phase-progress-fill" style={{ width: `${progress}%` }} />
+                          </div>
+                          <div className="analytics-phase-percent">{progress}%</div>
+                        </article>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
-            </div>}
+                </div>
+              </section>
+            )}
             {analyticsTab === 'export' && <>
             <div className="glass-panel ui-panel" style={{ marginBottom: 12, padding: 14, borderRadius: 14, display: 'grid', gap: 12 }}>
               <div>
