@@ -6,8 +6,17 @@
         .phase-flash{animation:phaseFlash 2.4s ease both}
         @keyframes rowIn{from{opacity:1;transform:none}to{opacity:1;transform:none}}
         .row-in{animation:rowIn 320ms var(--ease-out) both}
-        @keyframes sectionUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-        .section-up{animation:sectionUp 360ms var(--ease-out) both}
+        @keyframes sectionUp{from{opacity:0;transform:translateY(18px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+        .section-up{opacity:0;transform:translateY(18px);transition:opacity 560ms ease-out,transform 560ms ease-out}
+        .section-up.is-visible{opacity:1;transform:translateY(0)}
+        .section-up[data-in-view="true"] .phase-header-card{transform:translateY(calc((0.5 - var(--section-progress,0)) * 8px));transition:transform 280ms ease-in-out}
+        .section-up .rrow{opacity:0;transform:translateY(14px);transition:opacity 420ms ease-out,transform 420ms ease-out}
+        .section-up.is-visible .rrow{opacity:1;transform:translateY(0)}
+        .section-up.is-visible .rrow:nth-child(1){transition-delay:60ms}
+        .section-up.is-visible .rrow:nth-child(2){transition-delay:110ms}
+        .section-up.is-visible .rrow:nth-child(3){transition-delay:160ms}
+        .section-up.is-visible .rrow:nth-child(4){transition-delay:210ms}
+        .section-up.is-visible .rrow:nth-child(n+5){transition-delay:260ms}
         @keyframes fadeIn{from{opacity:0;transform:scale(0.97) translateY(-4px)}to{opacity:1;transform:scale(1) translateY(0)}}
         .fade-in{animation:fadeIn 240ms var(--ease-out) both}
         @starting-style{.dropdown-pop{opacity:0;transform:translate3d(0,-8px,0) scale(0.96);filter:blur(3px)}.dropdown-pop-up{opacity:0;transform:translate3d(0,8px,0) scale(0.96);filter:blur(3px)}}
@@ -30,3 +39,15 @@
         .progress-gradient{background:var(--phase-gradient, linear-gradient(90deg,var(--theme-accent), var(--theme-accent-alt)));background-size:200% 100%;animation:gradientPulse 3s ease-in-out infinite alternate}
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
         .performance-mode *{animation:none !important}
+        @media (max-width: 1023px){
+          .section-up{transform:translateY(12px)}
+          .section-up[data-in-view="true"] .phase-header-card{transform:translateY(calc((0.5 - var(--section-progress,0)) * 4px))}
+        }
+        @media (max-width: 767px){
+          .section-up{transform:translateY(8px)}
+          .section-up .rrow{transform:translateY(8px)}
+          .section-up.is-visible .rrow:nth-child(n){transition-delay:80ms}
+        }
+        @media (prefers-reduced-motion: reduce){
+          .section-up,.section-up .rrow,.section-up .phase-header-card{transition:none !important;transform:none !important;opacity:1 !important}
+        }

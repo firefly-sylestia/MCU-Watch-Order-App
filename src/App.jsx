@@ -990,6 +990,7 @@ export default function MCUViewer() {
   const restoredUiStateRef = useRef(false);
   const metadataBuildRef = useRef({ paused: false, running: false });
   const detailRequestRef = useRef(0);
+  const replayMotionRef = useRef(false);
 
 
 
@@ -1148,6 +1149,63 @@ export default function MCUViewer() {
       window.removeEventListener('scroll', onScroll);
     };
   }, []);
+
+  useEffect(() => {
+    const root = mainRef.current;
+    if (!root || viewMode === 'calendar') return;
+    const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    const sections = Array.from(root.querySelectorAll('.section-up'));
+    if (!sections.length) return;
+
+    if (prefersReduced) {
+      sections.forEach((section) => {
+        section.classList.add('is-visible');
+        section.setAttribute('data-in-view', 'true');
+        section.style.setProperty('--section-progress', '0');
+      });
+      return;
+    }
+
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-visible');
+        if (!replayMotionRef.current) revealObserver.unobserve(entry.target);
+      });
+    }, { root, threshold: 0.05, rootMargin: '0px 0px -18% 0px' });
+
+    const inViewObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        entry.target.setAttribute('data-in-view', entry.isIntersecting ? 'true' : 'false');
+        if (!entry.isIntersecting && replayMotionRef.current) entry.target.classList.remove('is-visible');
+      });
+    }, { root, threshold: 0 });
+
+    const updateProgress = () => {
+      const viewportHeight = root.clientHeight || window.innerHeight;
+      sections.forEach((section) => {
+        const rect = section.getBoundingClientRect();
+        const start = viewportHeight * 0.85;
+        const end = -rect.height * 0.2;
+        const raw = (start - rect.top) / Math.max(1, (start - end));
+        section.style.setProperty('--section-progress', String(Math.max(0, Math.min(1, raw))));
+      });
+    };
+
+    sections.forEach((section) => {
+      revealObserver.observe(section);
+      inViewObserver.observe(section);
+    });
+    updateProgress();
+    root.addEventListener('scroll', updateProgress, { passive: true });
+    window.addEventListener('resize', updateProgress);
+    return () => {
+      revealObserver.disconnect();
+      inViewObserver.disconnect();
+      root.removeEventListener('scroll', updateProgress);
+      window.removeEventListener('resize', updateProgress);
+    };
+  }, [phaseKeys.length, viewMode]);
 
   useEffect(() => {
     // Phase selection is a filter, so do not rewrite it from scroll position.
