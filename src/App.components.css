@@ -2308,3 +2308,87 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   color:inherit !important;
   filter:none !important;
 }
+
+/* 2026 full background modernization + calendar redesign */
+:root {
+  --app-bg-canvas:
+    radial-gradient(1250px circle at 6% -4%, color-mix(in srgb, var(--theme-accent) 22%, transparent), transparent 44%),
+    radial-gradient(950px circle at 93% 8%, color-mix(in srgb, var(--theme-accent-alt) 20%, transparent), transparent 43%),
+    radial-gradient(1100px circle at 50% 108%, color-mix(in srgb, #5da9ff 10%, transparent), transparent 45%),
+    linear-gradient(162deg, color-mix(in srgb, var(--theme-bg) 96%, #05070d), color-mix(in srgb, var(--theme-surface) 84%, #05070d));
+  --modern-surface: color-mix(in srgb, var(--theme-surface) 76%, transparent);
+  --modern-surface-strong: color-mix(in srgb, var(--theme-surface) 90%, transparent);
+  --modern-border: color-mix(in srgb, var(--theme-border) 72%, transparent);
+}
+
+body, #root {
+  background: var(--app-bg-canvas);
+  background-attachment: fixed;
+}
+
+main.app-scroll-shell {
+  position: relative;
+}
+main.app-scroll-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    linear-gradient(115deg, color-mix(in srgb, var(--theme-accent) 8%, transparent), transparent 55%),
+    linear-gradient(245deg, color-mix(in srgb, var(--theme-accent-alt) 10%, transparent), transparent 52%);
+}
+
+.curvy-panel,
+.list-panel,
+.phase-rows-full,
+.settings-menu,
+.analytics-shell,
+.filters-open,
+.header-brand,
+.bottom-action-dock,
+.calendar-section {
+  background: linear-gradient(148deg, var(--modern-surface-strong), var(--modern-surface)) !important;
+  border: 1px solid var(--modern-border) !important;
+  box-shadow: 0 20px 44px rgba(2, 8, 23, 0.24), inset 0 1px 0 rgba(255,255,255,0.07) !important;
+  backdrop-filter: blur(14px) saturate(135%);
+}
+
+.rrow,
+.calendar-row,
+.phase-header-card {
+  background: linear-gradient(152deg, color-mix(in srgb, var(--theme-surface) 91%, transparent), color-mix(in srgb, var(--theme-bg) 58%, transparent)) !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 70%, transparent) !important;
+}
+
+.calendar-redesign { padding: 18px !important; border-radius: 20px !important; }
+.calendar-redesign-row { padding: 14px 14px 14px 12px !important; margin-bottom: 10px; border-radius: 16px !important; }
+.calendar-date-pill {
+  font-size: 11px;
+  font-family: var(--font-marvel-ui);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 6px 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 68%, transparent);
+  background: color-mix(in srgb, var(--theme-surface) 82%, transparent);
+  width: fit-content;
+}
+
+.floating-controls { z-index: 10020 !important; }
+.go-top-fab {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(86px, calc(env(safe-area-inset-bottom) + 86px));
+  z-index: 10030;
+}
+
+[data-color-mode="light"] {
+  --app-bg-canvas:
+    radial-gradient(860px circle at 4% -6%, color-mix(in srgb, var(--theme-accent) 14%, #ffffff), transparent 44%),
+    radial-gradient(780px circle at 96% 8%, color-mix(in srgb, var(--theme-accent-alt) 13%, #ffffff), transparent 42%),
+    linear-gradient(160deg, #f5f7fb, #eef2f8 46%, #e8edf5);
+  --modern-surface: color-mix(in srgb, var(--theme-surface) 93%, #ffffff);
+  --modern-surface-strong: color-mix(in srgb, #ffffff 88%, var(--theme-surface));
+}

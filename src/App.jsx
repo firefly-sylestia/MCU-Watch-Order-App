@@ -1259,10 +1259,11 @@ export default function MCUViewer() {
   const scrollToListTop = useCallback(() => {
     const container = mainRef.current;
     if (container && container.scrollHeight > container.clientHeight + 1) {
-      container.scrollTo({ top: 0, behavior: 'auto' });
-      return;
+      container.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    window.scrollTo({ top: 0, behavior: 'auto' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
   }, []);
 
   const scrollTo = id => {
@@ -3415,15 +3416,15 @@ export default function MCUViewer() {
           )}
 
           {viewMode === 'calendar' ? (
-            <section data-motion="section" className='curvy-panel calendar-section motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
+            <section data-motion="section" className='curvy-panel calendar-section calendar-redesign motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}` }}>
               <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', color: 'var(--theme-text-primary)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
               <div style={{ marginBottom: 12, color: T.textMuted, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.2 }}>Grouped by month / quarter / year</div>
               {Object.entries(calendarItems.grouped).map(([group, entries]) => (
                 <div key={group}>
                   <div className="calendar-group-header">{group}</div>
                   {entries.map(({ item, rawDate, label, releaseStatus, hasRealDate }) => (
-                    <div key={`${group}-${item.id}`} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
-                      <div style={{ fontSize: 11, color: releaseStatus === 'upcoming' ? 'var(--theme-warning)' : T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
+                    <div key={`${group}-${item.id}`} className='rrow calendar-row calendar-redesign-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)' }}>
+                      <div className="calendar-date-pill" style={{ color: releaseStatus === 'upcoming' ? 'var(--theme-warning)' : T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
                       <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
                       <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left', textShadow: '0 1px 2px color-mix(in srgb, var(--theme-bg) 35%, transparent)' }}>
                         {item.title}
