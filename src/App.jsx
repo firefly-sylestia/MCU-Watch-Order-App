@@ -3151,7 +3151,6 @@ export default function MCUViewer() {
               </div>
               <div className="header-title-mcu" style={{ color: universe === 'dc' ? '#9ac5ff' : undefined }}>{activeUniverse.title}</div>
               <div className="header-title-sub">{activeUniverse.subtitle}</div>
-              <div className="header-tagline">Cinematic viewing timeline · curated for every phase</div>
             </div>
             
           </div>
