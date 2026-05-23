@@ -978,6 +978,57 @@ export default function MCUViewer() {
   const mainRef    = useRef(null);
   const settingsRef= useRef(null);
   const sidebarRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof IntersectionObserver !== 'function') return undefined;
+    const animatedNodes = Array.from(document.querySelectorAll('[data-animate]'));
+    if (!animatedNodes.length) return undefined;
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting || entry.intersectionRatio > 0.01) {
+          entry.target.classList.add('is-inview');
+          if (entry.target.getAttribute('data-replay') !== 'true') observer.unobserve(entry.target);
+        } else if (entry.target.getAttribute('data-replay') === 'true') {
+          entry.target.classList.remove('is-inview');
+        }
+      });
+    }, { threshold: [0.01, 0.15], rootMargin: '0px 0px -22% 0px' });
+    animatedNodes.forEach((node, index) => {
+      node.style.setProperty('--reveal-delay', `${Math.min(index * 28, 240)}ms`);
+      observer.observe(node);
+    });
+    return () => observer.disconnect();
+  }, [browseMode, viewMode, phaseKeys.length, filtersOpen]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    let rafId = 0;
+    const sectionNodes = Array.from(document.querySelectorAll('[data-section-progress]'));
+    if (!sectionNodes.length) return undefined;
+    const updateSectionProgress = () => {
+      sectionNodes.forEach((section) => {
+        const rect = section.getBoundingClientRect();
+        const viewportHeight = Math.max(window.innerHeight || 0, 1);
+        const totalTravel = rect.height + viewportHeight;
+        const progress = (viewportHeight - rect.top) / Math.max(totalTravel, 1);
+        const clamped = Math.min(1, Math.max(0, progress));
+        section.style.setProperty('--section-progress', clamped.toFixed(4));
+      });
+      rafId = 0;
+    };
+    const queueUpdate = () => {
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(updateSectionProgress);
+    };
+    queueUpdate();
+    window.addEventListener('scroll', queueUpdate, { passive: true });
+    window.addEventListener('resize', queueUpdate);
+    return () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', queueUpdate);
+      window.removeEventListener('resize', queueUpdate);
+    };
+  }, [browseMode, viewMode, phaseKeys.length]);
   const heroIntervalRef = useRef(null);
   const heroRailRef = useRef(null);
   const heroActiveCardRef = useRef(null);
@@ -2810,7 +2861,7 @@ export default function MCUViewer() {
     ? `${Math.max(heroBackdropScale - 16, 112)}% auto`
     : `auto ${Math.max(heroBackdropScale - 8, 96)}%`;
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, '--scroll-parallax': `${scrollCheckpoint}px`, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
 
 
@@ -2991,7 +3042,7 @@ export default function MCUViewer() {
       </header>
 
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {browseMode === 'home' && <section className="hero-carousel-shell" aria-label={activeUniverse.heroLabel}>
+      {browseMode === 'home' && <section className="hero-carousel-shell" aria-label={activeUniverse.heroLabel} data-animate="section-rise" data-replay="true" data-section-progress="hero">
         {heroPosters.length > 0 && (
           <>
             <button className="hero-carousel-nav prev" type="button" aria-label="Previous featured poster" onClick={goToPrevHero}>‹</button>
@@ -3004,7 +3055,7 @@ export default function MCUViewer() {
               {visibleHeroPosters.map(({ src, item: heroItem }, idx) => {
               const isActive = src === activeHeroSrc;
               return (
-                <article key={`hero-rail-${src}`} ref={isActive ? heroActiveCardRef : null} className={`hero-carousel-card ${isActive ? 'is-active' : ''}${heroItem?.releaseStatus === 'upcoming' ? ' is-upcoming' : ''}`}>
+                <article key={`hero-rail-${src}`} ref={isActive ? heroActiveCardRef : null} className={`hero-carousel-card ${isActive ? 'is-active' : ''}${heroItem?.releaseStatus === 'upcoming' ? ' is-upcoming' : ''}`} data-animate={idx % 2 === 0 ? 'slide-left' : 'slide-right'}>
                   <img
                     className="hero-carousel-poster"
                     src={src}
@@ -3057,7 +3108,7 @@ export default function MCUViewer() {
               <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             {renderPhaseSelector()}
-            <button className="glass-grad quick-continue-btn" onClick={() => nextUnwatched && openDetail(nextUnwatched)} style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 380, background: 'color-mix(in srgb, var(--theme-surface) 70%, transparent)', backdropFilter: 'blur(12px) saturate(130%)', WebkitBackdropFilter: 'blur(12px) saturate(130%)', cursor: nextUnwatched ? 'pointer' : 'default' }}>
+            <button className="glass-grad quick-continue-btn" data-animate="fade-up" onClick={() => nextUnwatched && openDetail(nextUnwatched)} style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 380, background: 'color-mix(in srgb, var(--theme-surface) 70%, transparent)', backdropFilter: 'blur(12px) saturate(130%)', WebkitBackdropFilter: 'blur(12px) saturate(130%)', cursor: nextUnwatched ? 'pointer' : 'default' }}>
               <span style={{ fontSize: 10, letterSpacing: 1.6, color: T.textMuted, textTransform: 'uppercase' }}>Continue</span>
               <span style={{ fontSize: 12, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</span>
             </button>
@@ -3243,7 +3294,7 @@ export default function MCUViewer() {
           )}
 
           {viewMode === 'calendar' ? (
-            <section className='curvy-panel calendar-section' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
+            <section className='curvy-panel calendar-section' data-animate="section-rise" data-section-progress="calendar" style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
               <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
               <div style={{ marginBottom: 12, color: T.textMuted, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.2 }}>Grouped by month / quarter / year</div>
               {Object.entries(calendarItems.grouped).map(([group, entries]) => (
@@ -3275,7 +3326,7 @@ export default function MCUViewer() {
             const summaryOpen = expandedPhase === pid;
 
             return (
-              <section key={pid} className="section-up" data-phase={pid}
+              <section key={pid} className="section-up" data-phase={pid} data-animate="section-rise" data-section-progress="phase"
                 ref={el => { phaseRefs.current[pid] = el; }}
                 style={{ marginBottom: 36, scrollMarginTop: 'var(--sticky-offset)', position: 'relative' }}>
                 {isCelebrating && (
@@ -3283,7 +3334,7 @@ export default function MCUViewer() {
                 )}
 
                 {/* Phase divider */}
-                <div className="curvy-panel phase-header-card" style={{ '--phase-color': ph.color, border: `1px solid ${T.surfaceBorder}` }}>
+                <div className="curvy-panel phase-header-card" data-animate="scale-in" style={{ '--phase-color': ph.color, border: `1px solid ${T.surfaceBorder}` }}>
                   <WatermarkOverlay surface="card" theme={darkMode ? 'dark' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['title', 'progress']} />
                   <div className="phase-title-wrap">
                     <div className="phase-title" style={{ color: ph.color }}>
