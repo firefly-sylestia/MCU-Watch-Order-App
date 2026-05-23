@@ -172,3 +172,13 @@
 .wbtn:disabled,
 .theme-btn:disabled,
 .status-pill:disabled { opacity: .56; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* Desktop scroll parity with mobile scrolling feel (do not alter mobile rules) */
+@media (min-width: 768px) {
+  main.app-scroll-shell.scroll-unified {
+    overscroll-behavior-y: none;
+    scrollbar-gutter: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: auto;
+  }
+}

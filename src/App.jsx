@@ -3005,6 +3005,33 @@ export default function MCUViewer() {
             <input type='range' min={75} max={100} step={1} value={Math.round(heroBackdropOpacity * 100)} onChange={(e) => setHeroBackdropOpacity(Number(e.target.value) / 100)} aria-label='Carousel background opacity' />
             <div style={{ fontSize: 10, color: T.textMuted }}>{Math.round(heroBackdropOpacity * 100)}%</div>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
+            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Desktop</div>
+            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px', opacity: isDesktopViewport ? 1 : 0.62 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}>Desktop scaling</span>
+              <button className='fpill settings-toggle-pill' type='button' disabled={!isDesktopViewport} onClick={() => setTextScaleEnabled(v => !v)} style={{ minWidth: 72, justifyContent: 'center', borderColor: textScaleEnabled ? 'var(--theme-accent)' : 'var(--theme-border)', background: textScaleEnabled ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)', opacity: isDesktopViewport ? 1 : 0.6 }}>{textScaleEnabled ? 'On' : 'Off'}</button>
+            </label>
+            <div style={{ display: 'grid', gap: 6, padding: '2px 2px 8px', opacity: isDesktopViewport && textScaleEnabled ? 1 : 0.62 }}>
+              <div style={{ fontSize: 10, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase' }}>Scale level</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,minmax(0,1fr))', gap: 6 }}>
+                {DESKTOP_TEXT_SCALES.map(scale => {
+                  const active = desktopTextScale === scale;
+                  return (
+                    <button
+                      key={`desktop-scale-${scale}`}
+                      className='fpill'
+                      type='button'
+                      disabled={!isDesktopViewport || !textScaleEnabled}
+                      onClick={() => setDesktopTextScale(scale)}
+                      style={{ justifyContent: 'center', borderColor: active ? 'var(--theme-accent)' : 'var(--theme-border)', background: active ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)', color: active ? 'var(--theme-accent)' : 'var(--theme-text)' }}
+                    >
+                      {Math.round(scale * 100)}%
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ fontSize: 10, color: T.textMuted }}>Desktop uses the same scroll behavior as mobile; scaling only adjusts layout size.</div>
+            </div>
+            <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Backup & Restore</div>
             <button className="fpill" onClick={exportProgress}><Download size={14}/>Export Backup JSON</button>
             <label className="fpill import-backup-pill" style={{ cursor: 'pointer', WebkitTapHighlightColor: 'transparent', outline: 'none' }}><Upload size={14}/>Import Backup JSON
@@ -3296,7 +3323,7 @@ export default function MCUViewer() {
         </button>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
+      <main ref={mainRef} className={`app-scroll-shell scroll-unified${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
