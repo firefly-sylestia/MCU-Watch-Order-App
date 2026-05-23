@@ -1258,12 +1258,12 @@ export default function MCUViewer() {
 
   const scrollToListTop = useCallback(() => {
     const container = mainRef.current;
+    const scrollBehavior = performanceMode ? 'auto' : 'smooth';
     if (container && container.scrollHeight > container.clientHeight + 1) {
-      container.scrollTo({ top: 0, behavior: 'auto' });
-      return;
+      container.scrollTo({ top: 0, behavior: scrollBehavior });
     }
-    window.scrollTo({ top: 0, behavior: 'auto' });
-  }, []);
+    window.scrollTo({ top: 0, behavior: scrollBehavior });
+  }, [performanceMode]);
 
   const scrollTo = id => {
     const el = phaseRefs.current[id];

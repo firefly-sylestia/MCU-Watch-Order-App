@@ -2308,3 +2308,99 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   color:inherit !important;
   filter:none !important;
 }
+
+/* === 2026 Cinematic Background + Calendar + Floating Controls Redesign === */
+.app-container,
+main.app-scroll-shell,
+main.app-scroll-shell > div {
+  background:
+    radial-gradient(1200px 520px at -10% -10%, color-mix(in srgb, var(--theme-accent) 26%, transparent), transparent 58%),
+    radial-gradient(900px 420px at 110% 2%, color-mix(in srgb, var(--theme-accent-alt) 24%, transparent), transparent 62%),
+    radial-gradient(740px 320px at 50% 100%, color-mix(in srgb, var(--theme-accent) 12%, transparent), transparent 72%),
+    linear-gradient(156deg, color-mix(in srgb, var(--theme-bg) 95%, #020617) 0%, color-mix(in srgb, var(--theme-surface) 62%, var(--theme-bg)) 56%, color-mix(in srgb, var(--theme-bg) 92%, #0b1120) 100%) !important;
+}
+
+.phase-rows-full,
+.rrow,
+.calendar-section,
+.calendar-row,
+.filters-open,
+.settings-menu,
+.analytics-shell,
+.hero-carousel-shell {
+  background: linear-gradient(148deg, color-mix(in srgb, var(--theme-surface) 90%, transparent), color-mix(in srgb, var(--theme-bg) 70%, transparent)) !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 82%, transparent) !important;
+  box-shadow: 0 16px 34px rgba(2, 8, 23, 0.24), inset 0 1px 0 rgba(255,255,255,0.08) !important;
+}
+
+.calendar-section {
+  border-radius: 28px !important;
+  padding: 20px !important;
+}
+
+.calendar-row {
+  grid-template-columns: 118px 62px minmax(0,1fr) !important;
+  min-height: 110px !important;
+  border-radius: 18px !important;
+  padding: 14px !important;
+  margin-bottom: 10px;
+}
+
+.calendar-group-header {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 16%, var(--theme-surface)), color-mix(in srgb, var(--theme-accent-alt) 14%, var(--theme-surface))) !important;
+  color: var(--theme-text-primary) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 36%, var(--theme-border)) !important;
+  box-shadow: 0 10px 24px rgba(15,23,42,0.18);
+}
+
+.calendar-badge {
+  min-height: 22px;
+  padding: 0 9px;
+  font-size: 10px;
+  letter-spacing: .07em;
+}
+
+.floating-controls {
+  z-index: 10020 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateZ(0);
+}
+
+.bottom-action-dock {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--theme-surface) 93%, transparent), color-mix(in srgb, var(--theme-bg) 72%, transparent)) !important;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border)) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 18px 38px rgba(2,8,23,.33) !important;
+}
+
+.go-top-fab {
+  z-index: 10030 !important;
+  bottom: 20px !important;
+}
+
+@media (max-width: 767px) {
+  .go-top-fab { bottom: 84px !important; }
+}
+
+[data-color-mode="light"] .app-container,
+[data-color-mode="light"] main.app-scroll-shell,
+[data-color-mode="light"] main.app-scroll-shell > div {
+  background:
+    radial-gradient(820px 420px at 0% 0%, color-mix(in srgb, var(--theme-accent) 14%, #ffffff), transparent 56%),
+    radial-gradient(920px 430px at 100% 0%, color-mix(in srgb, var(--theme-accent-alt) 16%, #ffffff), transparent 60%),
+    linear-gradient(160deg, #f7f9fc 0%, #edf2f9 44%, #e7eef7 100%) !important;
+}
+
+[data-color-mode="light"] .phase-rows-full,
+[data-color-mode="light"] .rrow,
+[data-color-mode="light"] .calendar-section,
+[data-color-mode="light"] .calendar-row,
+[data-color-mode="light"] .filters-open,
+[data-color-mode="light"] .settings-menu,
+[data-color-mode="light"] .analytics-shell,
+[data-color-mode="light"] .hero-carousel-shell {
+  background: linear-gradient(150deg, #ffffff 0%, color-mix(in srgb, var(--theme-surface) 80%, #ffffff) 100%) !important;
+  border-color: color-mix(in srgb, var(--theme-border) 74%, #ffffff) !important;
+  box-shadow: 0 12px 26px rgba(15,23,42,0.12), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+}
