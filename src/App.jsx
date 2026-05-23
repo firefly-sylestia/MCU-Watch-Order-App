@@ -998,7 +998,7 @@ export default function MCUViewer() {
       observer.observe(node);
     });
     return () => observer.disconnect();
-  }, [browseMode, viewMode, phaseKeys.length, filtersOpen]);
+  }, [browseMode, viewMode, filtersOpen]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -1028,7 +1028,7 @@ export default function MCUViewer() {
       window.removeEventListener('scroll', queueUpdate);
       window.removeEventListener('resize', queueUpdate);
     };
-  }, [browseMode, viewMode, phaseKeys.length]);
+  }, [browseMode, viewMode]);
   const heroIntervalRef = useRef(null);
   const heroRailRef = useRef(null);
   const heroActiveCardRef = useRef(null);
