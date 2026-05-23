@@ -31,7 +31,7 @@
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
 .performance-mode *{animation:none !important}
 
-[data-animate]{opacity:0;transform:translate3d(0,12px,0) scale(.985);transition:opacity .6s var(--ease-out),transform .7s var(--ease-out);transition-delay:var(--reveal-delay,0ms);will-change:transform,opacity}
+[data-animate]{opacity:0;transform:translate3d(0,12px,0) scale(.985);transition:opacity .56s var(--ease-out),transform .68s var(--ease-out);transition-delay:var(--reveal-delay,0ms);will-change:transform,opacity}
 [data-animate].is-inview{opacity:1;transform:translate3d(0,0,0) scale(1)}
 [data-animate="fade-up"]{transform:translate3d(0,14px,0)}
 [data-animate="slide-left"]{transform:translate3d(-20px,8px,0)}
@@ -39,10 +39,18 @@
 [data-animate="scale-in"]{transform:translate3d(0,10px,0) scale(.94)}
 [data-animate="section-rise"]{transform:translate3d(0,22px,0)}
 
-.hero-backdrop-image{transform:translateY(calc(var(--scroll-parallax, 0px) * -.2)) scale(var(--hero-parallax-scale,1.02));transition:transform 420ms var(--ease-out),opacity 280ms var(--ease-out),filter 380ms var(--ease-out)}
+.hero-backdrop-image{transform:translateY(calc(var(--scroll-parallax, 0px) * -.2)) scale(var(--hero-parallax-scale,1.02));transition:transform 520ms ease-in-out,opacity 320ms var(--ease-out),filter 420ms ease-in-out}
 
 .hero-carousel-card{transition:transform .35s var(--ease-out),box-shadow .35s var(--ease-out),filter .35s var(--ease-out)}
 .hero-carousel-card:hover{transform:translateY(-3px) scale(1.01)}
+.hero-carousel-shell[data-progress-section]{--section-progress:0}
+.hero-carousel-shell[data-progress-section] .hero-carousel-track{transform:translateY(calc((1 - var(--section-progress, 0)) * 8px));transition:transform 420ms ease-in-out}
+
+[data-progress-section]{--section-progress:0}
+[data-progress-section] .phase-header-card{
+  transform:translateY(calc((1 - var(--section-progress, 0)) * 10px)) scale(calc(0.985 + (var(--section-progress, 0) * 0.015)));
+  transition:transform 380ms ease-in-out;
+}
 
 .fpill,.theme-btn,.dock-btn,.bottom-action-bar,.hero-carousel-nav{transition:transform .18s ease, box-shadow .2s ease, filter .2s ease}
 .fpill:hover,.theme-btn:hover,.dock-btn:hover,.bottom-action-bar:hover,.hero-carousel-nav:hover{transform:translateY(-1px);box-shadow:0 8px 20px color-mix(in srgb,var(--theme-accent) 18%, transparent)}

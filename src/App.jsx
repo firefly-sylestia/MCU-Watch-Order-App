@@ -985,18 +985,50 @@ export default function MCUViewer() {
     if (!animatedNodes.length) return undefined;
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
-        if (entry.isIntersecting || entry.intersectionRatio > 0.16) {
+        const replayMode = entry.target.getAttribute('data-replay') === 'true';
+        if (entry.isIntersecting || entry.intersectionRatio > 0.05) {
           entry.target.classList.add('is-inview');
-          observer.unobserve(entry.target);
+          if (!replayMode) observer.unobserve(entry.target);
+        } else if (replayMode) {
+          entry.target.classList.remove('is-inview');
         }
       });
-    }, { threshold: 0.16, rootMargin: '0px 0px -8% 0px' });
+    }, { threshold: [0, 0.05, 0.15], rootMargin: '0px 0px -20% 0px' });
     animatedNodes.forEach((node, index) => {
       node.style.setProperty('--reveal-delay', `${Math.min(index * 28, 240)}ms`);
       observer.observe(node);
     });
     return () => observer.disconnect();
   }, [browseMode, viewMode, phaseKeys.length, filtersOpen]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    let rafId = 0;
+    const sections = Array.from(document.querySelectorAll('[data-progress-section]'));
+    if (!sections.length) return undefined;
+    const updateProgress = () => {
+      const vh = window.innerHeight || 1;
+      sections.forEach((section) => {
+        const rect = section.getBoundingClientRect();
+        const total = rect.height + vh;
+        const traveled = vh - rect.top;
+        const progress = Math.max(0, Math.min(1, traveled / total));
+        section.style.setProperty('--section-progress', progress.toFixed(4));
+      });
+      rafId = 0;
+    };
+    const onScroll = () => {
+      if (!rafId) rafId = window.requestAnimationFrame(updateProgress);
+    };
+    updateProgress();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (rafId) window.cancelAnimationFrame(rafId);
+    };
+  }, [browseMode, viewMode, phaseKeys.length]);
   const heroIntervalRef = useRef(null);
   const heroRailRef = useRef(null);
   const heroActiveCardRef = useRef(null);
@@ -3010,7 +3042,7 @@ export default function MCUViewer() {
       </header>
 
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {browseMode === 'home' && <section className="hero-carousel-shell" aria-label={activeUniverse.heroLabel} data-animate="section-rise">
+      {browseMode === 'home' && <section className="hero-carousel-shell" aria-label={activeUniverse.heroLabel} data-animate="section-rise" data-progress-section data-replay="true">
         {heroPosters.length > 0 && (
           <>
             <button className="hero-carousel-nav prev" type="button" aria-label="Previous featured poster" onClick={goToPrevHero}>‹</button>
@@ -3294,7 +3326,7 @@ export default function MCUViewer() {
             const summaryOpen = expandedPhase === pid;
 
             return (
-              <section key={pid} className="section-up" data-phase={pid} data-animate="section-rise"
+              <section key={pid} className="section-up" data-phase={pid} data-animate="section-rise" data-progress-section
                 ref={el => { phaseRefs.current[pid] = el; }}
                 style={{ marginBottom: 36, scrollMarginTop: 'var(--sticky-offset)', position: 'relative' }}>
                 {isCelebrating && (
