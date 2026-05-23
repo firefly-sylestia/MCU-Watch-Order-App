@@ -3642,38 +3642,62 @@ export default function MCUViewer() {
                 <button key={tab.id} className="fpill" onClick={() => setAnalyticsTab(tab.id)} style={{ borderColor: analyticsTab === tab.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{tab.label}</button>
               ))}
             </div>
-            {analyticsTab === 'overview' && <div style={{ display: 'grid', gridTemplateColumns: isDesktopViewport ? 'repeat(3,minmax(0,1fr))' : 'repeat(2,minmax(0,1fr))', gap: 14, marginBottom: 16 }}>
-              <div className="glass-panel" style={{ padding: '14px 14px 16px', borderRadius: 12, border: '1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border))' }}><div style={{ color: T.textMuted, fontSize: 11, letterSpacing: 1.2 }}>PRIMARY · TOTAL WATCHED</div><div style={{ fontSize: 28, fontWeight: 800, marginTop: 4 }}>{Math.round(totalWatchedHours * 10) / 10}h</div></div>
-              <div style={{ padding: '8px 0', borderBottom: `1px solid ${T.surfaceBorder}` }}><div style={{ color: T.textMuted, fontSize: 11, letterSpacing: 1.2 }}>SUPPORTING · WATCHED ITEMS</div><div style={{ fontSize: 22, fontWeight: 700, marginTop: 2 }}>{totalWatched}</div></div>
-              {isDesktopViewport && <div style={{ padding: '8px 0', borderBottom: `1px solid ${T.surfaceBorder}` }}><div style={{ color: T.textMuted, fontSize: 11, letterSpacing: 1.2 }}>OPTIONAL · RE-WATCHES</div><div style={{ fontSize: 22, fontWeight: 700, marginTop: 2 }}>{Object.values(rewatchCount).reduce((a, b) => a + (Number(b) || 0), 0)}</div></div>}
-            </div>}
-            {analyticsTab === 'overview' && <div style={{ marginBottom: 14, padding: '8px 2px' }}>
-              <div style={{ color: T.textMuted, fontSize: 11, marginBottom: 10, letterSpacing: 1.3 }}>PHASE BREAKDOWN</div>
-              <div style={{ display: 'grid', gap: 10 }}>
-                {phaseStats.map(stat => (
-                  <div key={stat.phase} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 14, paddingBottom: 8, borderBottom: `1px solid color-mix(in srgb, var(--theme-border) 72%, transparent)` }}>
-                    <strong style={{ fontWeight: 700 }}>Phase {stat.phase}</strong>
-                    <span style={{ color: T.textMuted }}>{stat.watched}/{stat.total} <span style={{ marginLeft: 8, padding: '2px 7px', borderRadius: 999, border: `1px solid ${T.surfaceBorder}`, fontSize: 11 }}>{stat.total ? Math.round((stat.watched / stat.total) * 100) : 0}%</span></span>
-                  </div>
-                ))}
+            {analyticsTab === 'overview' && <section className="analytics-overview">
+              <div className={`analytics-metric-grid ${isDesktopViewport ? 'desktop' : 'mobile'}`}>
+                <article className="analytics-metric-card is-primary">
+                  <div className="analytics-metric-label">TOTAL WATCHED HOURS</div>
+                  <div className="analytics-metric-value">{Math.round(totalWatchedHours * 10) / 10}h</div>
+                  <div className="analytics-metric-meta">Immersion time across your MCU journey.</div>
+                </article>
+                <article className="analytics-metric-card">
+                  <div className="analytics-metric-label">WATCHED TITLES</div>
+                  <div className="analytics-metric-value">{totalWatched}</div>
+                  <div className="analytics-metric-meta">Completed movies and shows in your active list.</div>
+                </article>
+                {isDesktopViewport && <article className="analytics-metric-card">
+                  <div className="analytics-metric-label">REWATCH SESSIONS</div>
+                  <div className="analytics-metric-value">{Object.values(rewatchCount).reduce((a, b) => a + (Number(b) || 0), 0)}</div>
+                  <div className="analytics-metric-meta">Times you revisited watched entries.</div>
+                </article>}
               </div>
-            </div>}
-            {analyticsTab === 'export' && <>
-            <div className="glass-panel ui-panel" style={{ marginBottom: 12, padding: 14, borderRadius: 14, display: 'grid', gap: 12 }}>
-              <div>
-                <div className="ui-section-header" style={{ marginBottom: 4 }}>Quick Export</div>
-                <div style={{ color: T.textMuted, fontSize: 12 }}>One-tap share cards. Open Advanced Export for card type, themes, preview, and analysis sections.</div>
+              <div className="analytics-progress-card">
+                <div className="analytics-progress-head">
+                  <div className="analytics-progress-title">Phase Completion</div>
+                  <div className="analytics-progress-sub">Track completion performance by saga phase.</div>
+                </div>
+                <div className="analytics-progress-list">
+                  {phaseStats.map(stat => {
+                    const percent = stat.total ? Math.round((stat.watched / stat.total) * 100) : 0;
+                    return (
+                      <article key={stat.phase} className="analytics-progress-row">
+                        <header>
+                          <strong>Phase {stat.phase}</strong>
+                          <span>{stat.watched}/{stat.total}</span>
+                        </header>
+                        <div className="analytics-progress-track" aria-label={`Phase ${stat.phase} completion ${percent}%`} role="img">
+                          <div className="analytics-progress-fill" style={{ width: `${percent}%` }} />
+                        </div>
+                        <footer>{percent}% complete</footer>
+                      </article>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="ui-btn-group ui-sticky-mobile-footer" style={{ marginBottom: 0, position: 'sticky', bottom: 0, zIndex: 4, background: 'var(--surface-overlay)', borderRadius: 14, border: '1px solid var(--border-soft)', padding: '8px 0' }}>
-                <button className="fpill ui-touch-btn" onClick={shareAnalysisCard}><Upload size={14}/>Share Analysis Card</button>
-                <button className="fpill ui-touch-btn" onClick={shareUnifiedCard}><Upload size={14}/>Share Recap Card</button>
-                <span style={{ color: T.textMuted, fontSize: 12, alignSelf: 'center' }}>Progress + recent watched history in one share image.</span>
-                <button className="fpill ui-touch-btn" onClick={() => { setAnalyticsTab('advanced-export'); setExportComposerOpen(true); }}><SlidersH size={14}/>Open Advanced Export</button>
+            </section>}
+            {analyticsTab === 'export' && <section className="export-premium-quick">
+              <header>
+                <h3>Quick Export</h3>
+                <p>Beautiful one-tap cards with modernized export visuals.</p>
+              </header>
+              <div className="export-quick-grid">
+                <button className="fpill ui-touch-btn export-action" onClick={shareAnalysisCard}><Upload size={14}/>Share Analysis Card</button>
+                <button className="fpill ui-touch-btn export-action" onClick={shareUnifiedCard}><Upload size={14}/>Share Recap Card</button>
+                <button className="fpill ui-touch-btn export-action is-strong" onClick={() => { setAnalyticsTab('advanced-export'); setExportComposerOpen(true); }}><SlidersH size={14}/>Open Advanced Export</button>
               </div>
-            </div>
-            </>}
+              <small>Progress + recent history in premium share-ready image cards.</small>
+            </section>}
             {analyticsTab === 'advanced-export' && <>
-            <div className="glass-panel ui-panel ui-control-row export-card-studio" style={{ marginBottom: 10, padding: 14 }}>
+            <div className="glass-panel ui-panel ui-control-row export-card-studio export-card-studio-redesign" style={{ marginBottom: 10, padding: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                 <div>
                   <div className="ui-section-header" style={{ marginBottom: 2 }}>Advanced Export Studio</div>
@@ -3738,15 +3762,6 @@ export default function MCUViewer() {
               </div>
             </div>
             </>}
-            <div className="glass-panel ui-panel ui-control-row" style={{ marginBottom: 10, padding: 10 }}>
-              <div className="ui-section-header">Review Card Theme</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 6 }}>
-                {EXPORT_THEME_OPTIONS.map(opt => (
-                  <button key={opt.id} className="fpill review-theme-pill" onClick={() => setReviewCardTheme(opt.id)} style={{ justifyContent:'center', flexDirection: 'column', gap: 2, padding:'6px 8px', fontSize:11, borderColor: reviewCardTheme === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}><span>{opt.label}</span><span style={{ fontSize: 9, color: T.textMuted }}>{opt.desc}</span></button>
-                ))}
-              </div>
-              {reviewShareStatus.message && <div style={{ fontSize: 12, color: reviewShareStatus.type === 'error' ? 'var(--theme-danger)' : 'var(--theme-success)' }}>{reviewShareStatus.message}</div>}
-            </div>
             {analyticsTab === 'reviews' && <div style={{ display: 'grid', gap: 12, maxHeight: '58vh', overflow: 'auto', paddingRight: 4 }}>
               {historyItems.length === 0 && <div style={{ color: T.textMuted, padding: 16 }}>No watched history yet. Mark an item watched to start your analysis log.</div>}
               {historyItems.map(item => (
