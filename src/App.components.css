@@ -1015,6 +1015,54 @@ main{--content-max:1360px !important}
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.74);
 }
 
+/* Header alignment cleanup + simplified brand treatment */
+.header-brand{
+  justify-items:center !important;
+  text-align:center !important;
+  width: min(100%, 560px);
+  margin-inline: auto;
+}
+.header-brand-topline,
+.header-brand-chip{
+  display:none !important;
+}
+.header-title-mcu{
+  margin-inline:auto;
+}
+.header-title-sub{
+  width:100%;
+  text-align:center;
+  margin-left:0;
+}
+
+/* Minimal accent pass in additional places */
+.phase-header-card{
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 28%, var(--theme-border)) !important;
+  box-shadow: 0 10px 22px rgba(2,8,23,.18), inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+.bottom-action-dock{
+  border-color: color-mix(in srgb, var(--theme-accent) 26%, var(--theme-border)) !important;
+}
+.calendar-group-header{
+  border-color: color-mix(in srgb, var(--theme-accent) 32%, var(--theme-border));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+}
+
+/* Light mode accent detail improvements */
+[data-color-mode="light"] .phase-header-card{
+  background: linear-gradient(160deg, #ffffff, color-mix(in srgb, var(--theme-surface) 93%, #fff)) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 28%, #d9e1ef) !important;
+  box-shadow: 0 10px 22px rgba(15,23,42,.08), inset 0 1px 0 rgba(255,255,255,.95) !important;
+}
+[data-color-mode="light"] .bottom-action-dock{
+  background: color-mix(in srgb, var(--theme-surface) 94%, #ffffff) !important;
+  box-shadow: 0 8px 16px rgba(15,23,42,.08);
+}
+[data-color-mode="light"] .calendar-group-header{
+  background: color-mix(in srgb, var(--theme-surface) 95%, #ffffff);
+  border-color: color-mix(in srgb, var(--theme-accent) 30%, #dbe4f3);
+}
+
 /* DC badge/button familiar look: white text + dc blue bg */
 .dc-universe .header-title-mcu{
   color:#ffffff !important;
