@@ -850,6 +850,11 @@ export default function MCUViewer() {
   const [typeFilter,     setTypeFilter]     = useState(initialUiState.typeFilter);
   const [activePhase,    setActivePhase]    = useState(initialUiState.activePhase);
   const activeUniverse = UNIVERSE_META[universe] || UNIVERSE_META.mcu;
+  const themedChoices = useMemo(() => THEME_CHOICES.map(choice => ({
+    ...choice,
+    displayLabel: universe === 'dc' ? (choice.dcLabel || choice.label) : choice.label,
+    displaySwatch: universe === 'dc' ? (choice.dcSwatch || choice.swatch) : choice.swatch,
+  })), [universe]);
   const [uiModeState, dispatchUiMode] = useReducer((state, action) => ({ ...state, ...action }), { sortOpen: false, phaseOpen: false, filterStatusOpen: false, dockStatusOpen: false, filtersOpen: initialUiState.filtersOpen });
   const { sortOpen, phaseOpen, filterStatusOpen, dockStatusOpen, filtersOpen } = uiModeState;
   const setSortOpen = (next) => dispatchUiMode({ sortOpen: typeof next === 'function' ? next(uiModeState.sortOpen) : next });
@@ -3018,13 +3023,13 @@ export default function MCUViewer() {
         </div>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Theme</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6, marginTop: 8 }}>
-          {THEME_CHOICES.map(({ id: t, label, swatch }) => (
+          {themedChoices.map(({ id: t, displayLabel, displaySwatch }) => (
             <button key={t} className="fpill filter-pill type-pill"
-              style={{ justifyContent: 'center', gap: 6, fontSize: 11, borderColor: themeMode === t ? swatch : 'var(--theme-border)', boxShadow: themeMode === t ? `0 0 0 1px ${swatch}, 0 0 10px ${swatch}44` : 'none', background: themeMode === t ? `${swatch}18` : 'var(--theme-surface)', color: themeMode === t ? swatch : 'var(--theme-text)' }}
+              style={{ justifyContent: 'center', gap: 6, fontSize: 11, borderColor: themeMode === t ? displaySwatch : 'var(--theme-border)', boxShadow: themeMode === t ? `0 0 0 1px ${displaySwatch}, 0 0 10px ${displaySwatch}44` : 'none', background: themeMode === t ? `${displaySwatch}18` : 'var(--theme-surface)', color: themeMode === t ? displaySwatch : 'var(--theme-text)' }}
               onClick={() => setThemeMode(t)}
             >
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: swatch, flexShrink: 0, display: 'inline-block' }} />
-              {label}
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: displaySwatch, flexShrink: 0, display: 'inline-block' }} />
+              {displayLabel}
             </button>
           ))}
         </div>
@@ -3143,12 +3148,16 @@ export default function MCUViewer() {
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <header className="hexbg" style={{ position: 'relative', zIndex: 'var(--overlay-z-base)', background: universe === 'dc' ? 'linear-gradient(180deg, rgba(20,44,88,.95), rgba(10,22,43,.88))' : 'transparent', borderBottom: universe === 'dc' ? '1px solid rgba(59,130,246,.35)' : 'none', flexShrink: 0 }}>
         <div className="header-inner" style={{ width: '100%', maxWidth: 1480, margin: '0 auto', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 26px) 30px 16px', transition: 'padding 0.2s ease' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
+          <div className="header-controls-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} onClick={() => { setBrandTapCount(c => c + 1); setTimeout(() => setBrandTapCount(0), 550); }} onDoubleClick={() => setUniverse(prev => prev === 'mcu' ? 'dc' : 'mcu')} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900, cursor: 'pointer', userSelect: 'none', WebkitUserSelect: 'none' }}>
               <div className="header-title-mcu" style={{ color: universe === 'dc' ? '#9ac5ff' : undefined }}>{activeUniverse.title}</div>
               <div className="header-title-sub">{activeUniverse.subtitle}</div>
+              <div className="header-tagline">
+                {universe === 'dc'
+                  ? (darkMode ? 'In Brightest Day, In Blackest Night' : 'Truth, Justice, and a Better Tomorrow')
+                  : (darkMode ? 'Whatever It Takes' : 'Part of the Journey is the End')}
+              </div>
             </div>
-            
           </div>
         </div>
       </header>
@@ -3407,7 +3416,7 @@ export default function MCUViewer() {
 
           {viewMode === 'calendar' ? (
             <section data-motion="section" className='curvy-panel calendar-section motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
-              <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
+              <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', color: 'var(--theme-text-primary)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
               <div style={{ marginBottom: 12, color: T.textMuted, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.2 }}>Grouped by month / quarter / year</div>
               {Object.entries(calendarItems.grouped).map(([group, entries]) => (
                 <div key={group}>
