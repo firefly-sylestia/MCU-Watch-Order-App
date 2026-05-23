@@ -185,16 +185,16 @@ body {
 
 /* ── Typography Roles ─────────────────────────────────────────────────────────────── */
 h1, h2, h3, h4, h5, h6 {
-  font-weight: 560;
+  font-weight: 600;
   color: var(--text-h);
-  letter-spacing: 0.028em;
-  font-family: var(--font-ui);
-  text-transform: none;
+  letter-spacing: 0.04em;
+  font-family: var(--font-display);
+  text-transform: uppercase;
 }
 
-h1 { font-size: clamp(1.5rem, 4.2vw, 2.15rem); }
-h2 { font-size: clamp(1.12rem, 2.9vw, 1.5rem); }
-h3 { font-size: clamp(0.98rem, 2.2vw, 1.18rem); }
+h1 { font-size: clamp(1.75rem, 5vw, 2.5rem); }
+h2 { font-size: clamp(1.25rem, 3.5vw, 1.75rem); }
+h3 { font-size: clamp(1rem, 2.5vw, 1.25rem); }
 
 p {
   margin: 0;
@@ -684,24 +684,4 @@ a:hover {
 
 .lenis-ready body {
   scroll-behavior: auto;
-}
-
-/* ===== 2026 Typography modernization ===== */
-:root{
-  --font-display:"Bebas Neue","Rajdhani","Outfit",system-ui,sans-serif;
-  --font-ui:"Rajdhani","Outfit",system-ui,sans-serif;
-  --font-body:"Outfit","Rajdhani",system-ui,sans-serif;
-  --font-marvel-display:var(--font-display);
-  --font-marvel-ui:var(--font-ui);
-  --font-marvel-body:var(--font-body);
-  --text-scale:1;
-}
-
-body{font-family:var(--font-body);font-weight:500;letter-spacing:.005em}
-h1,h2,h3,h4,h5,h6{font-family:var(--font-display);font-weight:560;letter-spacing:.03em}
-button,[role="button"],input,select,textarea{font-family:var(--font-ui);font-weight:600;letter-spacing:.015em}
-.meta-muted,.detail-export-kicker,.header-tagline{font-family:var(--font-ui);letter-spacing:.05em}
-
-.fpill,.wbtn,.status-pill,.theme-btn,.sopt,.dock-btn,.fab-primary,.bottom-action-bar,.title-btn{
-  transition:transform 130ms var(--ease-out), background-color 180ms var(--ease-out), border-color 180ms var(--ease-out), box-shadow 180ms var(--ease-out), color 180ms var(--ease-out);
 }
