@@ -44,21 +44,43 @@ export const THEME_PALETTES = {
 
 export const getActiveThemeVars = (themeMode, darkMode) => {
   const p = THEME_PALETTES[themeMode] || THEME_PALETTES.classic;
-  const lightUnifiedBase = '#f1ece3';
-  const darkUnifiedBase = '#1A1D23';
-  const darkUnifiedElevated = '#272D36';
+  const lightUnifiedBase = '#F6F2EC';
+  const darkUnifiedBase = '#0E121A';
+  const darkUnifiedElevated = '#1A2230';
   const lightSurface = `color-mix(in srgb, ${p.lightSurface} 72%, ${lightUnifiedBase})`;
   const lightSurfaceHover = `color-mix(in srgb, ${p.lightSurfaceHover} 68%, ${lightUnifiedBase})`;
   const lightCompCard = `color-mix(in srgb, ${p.lightCompCard} 74%, ${lightUnifiedBase})`;
   const darkSurface = `color-mix(in srgb, ${p.darkSurface} 58%, ${darkUnifiedBase})`;
   const darkSurfaceHover = `color-mix(in srgb, ${p.darkSurfaceHover} 60%, ${darkUnifiedElevated})`;
   const darkCompCard = `color-mix(in srgb, ${p.darkCompCard} 56%, ${darkUnifiedElevated})`;
+  const textPrimary = darkMode ? '#F3F6FF' : '#121826';
+  const textSecondary = darkMode ? '#B6C0D4' : '#3A475D';
+  const textMuted = darkMode ? '#8C98B0' : '#5E6A80';
+  const textInverse = darkMode ? '#0D1119' : '#FCFEFF';
+  const bgBase = darkMode
+    ? `linear-gradient(160deg, ${darkUnifiedBase} 0%, #101826 38%, #151F2F 72%, #1A2230 100%)`
+    : `linear-gradient(155deg, #fdfaf5 0%, #f7f2e8 36%, #f4eee4 100%)`;
   return {
     '--theme-accent': p.accent,
     '--theme-accent-alt': p.accentAlt,
     '--theme-accent-glow': darkMode ? `color-mix(in srgb, ${p.accent} 42%, transparent)` : `color-mix(in srgb, ${p.accent} 24%, transparent)`,
+    '--theme-bg': darkMode ? darkUnifiedBase : lightUnifiedBase,
+    '--theme-bg-gradient': bgBase,
     '--theme-surface': darkMode ? darkSurface : lightSurface,
     '--theme-surface-hover': darkMode ? darkSurfaceHover : lightSurfaceHover,
     '--comp-card-bg': darkMode ? darkCompCard : lightCompCard,
+    '--theme-text': textPrimary,
+    '--theme-text-primary': textPrimary,
+    '--theme-text-secondary': textSecondary,
+    '--theme-text-muted': textMuted,
+    '--theme-text-inverse': textInverse,
+    '--theme-border': darkMode ? 'rgba(166,185,220,0.24)' : 'rgba(34,48,74,0.20)',
+    '--theme-border-strong': darkMode ? 'rgba(206,220,250,0.36)' : 'rgba(34,48,74,0.32)',
+    '--theme-success': darkMode ? '#50d18d' : '#0F8A4B',
+    '--theme-success-soft': darkMode ? 'rgba(80,209,141,0.16)' : 'rgba(15,138,75,0.12)',
+    '--theme-warning': darkMode ? '#FFD166' : '#9B5C00',
+    '--theme-warning-soft': darkMode ? 'rgba(255,209,102,0.18)' : 'rgba(155,92,0,0.12)',
+    '--theme-danger': darkMode ? '#FF5B6E' : '#BA1F34',
+    '--theme-danger-soft': darkMode ? 'rgba(255,91,110,0.18)' : 'rgba(186,31,52,0.12)',
   };
 };

@@ -57,16 +57,16 @@
   --accent-glow-2: rgba(154, 134, 255, 0.30);
   
   /* Surface Colors */
-  --bg: #171A1F;
+  --bg: var(--theme-bg, #171A1F);
   --bg-elevated: rgba(49, 56, 68, 0.92);
   --bg-card: rgba(35, 40, 48, 0.9);
   --bg-glass: rgba(39, 45, 54, 0.76);
   
   /* Text Colors */
-  --text: #F2F4F7;
-  --text-h: #F2F4F7;
-  --text-dim: #C7CCD4;
-  --text-muted: #98A1AE;
+  --text: var(--theme-text, #F2F4F7);
+  --text-h: var(--theme-text-primary, #F2F4F7);
+  --text-dim: var(--theme-text-secondary, #C7CCD4);
+  --text-muted: var(--theme-text-muted, #98A1AE);
   --text-disabled: #6E7682;
 
   /* Layered surface depth */
@@ -79,7 +79,7 @@
   --row-top-tint-soft: color-mix(in srgb, var(--theme-accent-alt, #9a86ff) 12%, transparent);
   
   /* Borders & Surfaces */
-  --border: rgba(255, 255, 255, 0.06);
+  --border: var(--theme-border, rgba(255, 255, 255, 0.06));
   --border-hover: rgba(255, 255, 255, 0.12);
   --border-active: rgba(255, 255, 255, 0.18);
   
@@ -133,6 +133,14 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+[data-color-mode="dark"] {
+  color-scheme: dark;
+}
+
+[data-color-mode="light"] {
+  color-scheme: light;
 }
 
 /* Text safety utilities */
