@@ -1010,6 +1010,7 @@ export default function MCUViewer() {
     if (typeof window === 'undefined' || reduceMotion) return undefined;
     const motionTargets = Array.from(document.querySelectorAll('.motion-reveal'));
     if (!motionTargets.length || typeof IntersectionObserver !== 'function') return undefined;
+    document.body.dataset.motionReady = 'true';
     const seen = new WeakSet();
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
@@ -1022,7 +1023,12 @@ export default function MCUViewer() {
     }, { threshold: 0.18, rootMargin: '0px 0px -20% 0px' });
     motionTargets.forEach(el => observer.observe(el));
 
+    let ticking = false;
     const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(() => {
+        ticking = false;
       const vh = window.innerHeight || 900;
       document.querySelectorAll('.section-progress').forEach((el) => {
         const rect = el.getBoundingClientRect();
@@ -1031,12 +1037,14 @@ export default function MCUViewer() {
         const progress = Math.max(0, Math.min(1, (start - rect.top) / (start - end || 1)));
         el.style.setProperty('--section-progress', progress.toFixed(4));
       });
+      });
     };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
     return () => {
       observer.disconnect();
+      delete document.body.dataset.motionReady;
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
     };

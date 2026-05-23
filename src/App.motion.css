@@ -31,7 +31,7 @@
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
         .performance-mode *{animation:none !important}
 
-        .motion-reveal{
+        body[data-motion-ready="true"] .motion-reveal{
           opacity:0;
           transform:translate3d(0,18px,0) scale(.992);
           transition:opacity 520ms var(--ease-out),transform 520ms var(--ease-out),filter 520ms var(--ease-out);
@@ -39,7 +39,7 @@
           filter:saturate(.92);
           will-change:opacity,transform;
         }
-        .motion-reveal.is-visible{
+        body[data-motion-ready="true"] .motion-reveal.is-visible{
           opacity:1;
           transform:translate3d(0,0,0) scale(1);
           filter:saturate(1);
@@ -59,11 +59,11 @@
         .motion-stagger > *:nth-child(5){--stagger-delay:260ms}
 
         @media (max-width: 1024px){
-          .motion-reveal{transform:translate3d(0,14px,0) scale(.996);transition-duration:460ms}
+          body[data-motion-ready="true"] .motion-reveal{transform:translate3d(0,14px,0) scale(.996);transition-duration:460ms}
           .section-progress{--parallax-shift:calc((var(--section-progress) - .5) * 8px)}
         }
         @media (max-width: 640px){
-          .motion-reveal{transform:translate3d(0,10px,0) scale(.998);transition-duration:380ms}
+          body[data-motion-ready="true"] .motion-reveal{transform:translate3d(0,10px,0) scale(.998);transition-duration:380ms}
           .section-progress{--parallax-shift:calc((var(--section-progress) - .5) * 4px)}
         }
         @media (prefers-reduced-motion: reduce){

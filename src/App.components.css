@@ -2032,7 +2032,7 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 [data-color-mode="light"] main.app-scroll-shell.scroll-performance .fpill,
 [data-color-mode="light"] main.app-scroll-shell.scroll-performance .theme-btn,
 [data-color-mode="light"] main.app-scroll-shell.scroll-performance .wbtn,
-[data-color-mode="light"] main.app-scroll-shell.scroll-performance .status-pill{
+[data-color-mode="light"] main.app-scroll-shell.scroll-performance .status-pill:not([class*="status-shade-"]){
   background:color-mix(in srgb,var(--theme-surface) 96%, #ffffff) !important;
   border-color:color-mix(in srgb,var(--theme-border) 82%, #ffffff) !important;
 }
@@ -2041,7 +2041,7 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 [data-color-mode="dark"] main.app-scroll-shell.scroll-performance .fpill,
 [data-color-mode="dark"] main.app-scroll-shell.scroll-performance .theme-btn,
 [data-color-mode="dark"] main.app-scroll-shell.scroll-performance .wbtn,
-[data-color-mode="dark"] main.app-scroll-shell.scroll-performance .status-pill{
+[data-color-mode="dark"] main.app-scroll-shell.scroll-performance .status-pill:not([class*="status-shade-"]){
   background:color-mix(in srgb,var(--theme-surface) 94%, #0b1220) !important;
   border-color:color-mix(in srgb,var(--theme-border) 88%, #0b1220) !important;
 }
