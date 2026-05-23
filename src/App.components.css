@@ -2308,3 +2308,21 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   color:inherit !important;
   filter:none !important;
 }
+
+/* Header modernization: compact identity + quick toggles */
+.header-quick-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.header-quick-btn{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 12px;border-radius:999px;border:1px solid color-mix(in srgb,var(--theme-accent) 34%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 82%, transparent);color:var(--theme-text);font:700 11px/1 var(--font-marvel-ui);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .16s ease}
+.header-quick-btn:hover{transform:translateY(-1px);border-color:var(--theme-accent);color:var(--theme-accent);background:color-mix(in srgb,var(--theme-accent) 12%, var(--theme-surface))}
+.header-quick-btn:focus-visible{outline:2px solid color-mix(in srgb,var(--theme-accent) 56%, transparent);outline-offset:2px}
+
+/* DC specific redesign and proper blue-family visual identity */
+.dc-universe .hexbg{background-image:radial-gradient(circle,rgba(96,165,250,.23) 1px,transparent 1px)}
+.dc-universe .header-brand{background:linear-gradient(150deg,rgba(10,26,56,.92),rgba(12,38,84,.82) 58%,rgba(29,78,216,.28));border-color:rgba(125,211,252,.45);box-shadow:0 18px 40px rgba(2,18,45,.45),inset 0 1px 0 rgba(191,219,254,.25)}
+.dc-universe .header-brand-chip{border-color:rgba(147,197,253,.55);background:rgba(8,29,67,.7);color:#dbeafe}
+.dc-universe .header-title-sub{color:#dbeafe;letter-spacing:.2em}
+.dc-universe .header-quick-btn{border-color:rgba(125,211,252,.45);background:rgba(8,29,67,.75);color:#e0f2fe}
+.dc-universe .header-quick-btn:hover{border-color:#93c5fd;color:#ffffff;background:rgba(29,78,216,.38)}
+[data-color-mode="light"].dc-universe .header-brand{background:linear-gradient(165deg,#eff6ff,#dbeafe 58%,#bfdbfe);border-color:rgba(37,99,235,.28);box-shadow:0 12px 22px rgba(30,64,175,.14), inset 0 1px 0 rgba(255,255,255,.9)}
+[data-color-mode="light"].dc-universe .header-brand-chip{background:rgba(255,255,255,.84);color:#1e3a8a;border-color:rgba(59,130,246,.32)}
+[data-color-mode="light"].dc-universe .header-title-sub{color:#1e3a8a}
+[data-color-mode="light"].dc-universe .header-quick-btn{background:rgba(255,255,255,.85);color:#1e3a8a;border-color:rgba(59,130,246,.35)}

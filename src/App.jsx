@@ -13,7 +13,7 @@ import { usePosterCache } from './hooks/usePosterCache';
 import { useOverlayNavigation } from './hooks/useOverlayNavigation';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { HeaderShell, HeroBackdrop, HeroCarousel, FloatingQuickControls, FilterBar, PhaseList, SettingsPanel, DetailModal } from './components/sections/AppSections';
-import { THEME_CHOICES, getActiveThemeVars } from './constants/themeSettings';
+import { getThemeChoicesByUniverse, getActiveThemeVars } from './constants/themeSettings';
 import './App.layout.css';
 import './App.components.css';
 import './App.motion.css';
@@ -2832,7 +2832,8 @@ export default function MCUViewer() {
   };
 
   // ─── Per-theme accent + distinctive surface tints ─────────────────────────
-  const activeThemeVars = getActiveThemeVars(themeMode, darkMode);
+  const activeThemeVars = getActiveThemeVars(universe, themeMode, darkMode);
+  const themeChoices = getThemeChoicesByUniverse(universe);
 
   const cssThemeVars = {
     '--theme-bg': darkMode ? '#06060f' : '#e2dbcf',
@@ -3018,7 +3019,7 @@ export default function MCUViewer() {
         </div>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Theme</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6, marginTop: 8 }}>
-          {THEME_CHOICES.map(({ id: t, label, swatch }) => (
+          {themeChoices.map(({ id: t, label, swatch }) => (
             <button key={t} className="fpill filter-pill type-pill"
               style={{ justifyContent: 'center', gap: 6, fontSize: 11, borderColor: themeMode === t ? swatch : 'var(--theme-border)', boxShadow: themeMode === t ? `0 0 0 1px ${swatch}, 0 0 10px ${swatch}44` : 'none', background: themeMode === t ? `${swatch}18` : 'var(--theme-surface)', color: themeMode === t ? swatch : 'var(--theme-text)' }}
               onClick={() => setThemeMode(t)}
@@ -3145,10 +3146,17 @@ export default function MCUViewer() {
         <div className="header-inner" style={{ width: '100%', maxWidth: 1480, margin: '0 auto', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 26px) 30px 16px', transition: 'padding 0.2s ease' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} onClick={() => { setBrandTapCount(c => c + 1); setTimeout(() => setBrandTapCount(0), 550); }} onDoubleClick={() => setUniverse(prev => prev === 'mcu' ? 'dc' : 'mcu')} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900, cursor: 'pointer', userSelect: 'none', WebkitUserSelect: 'none' }}>
+              <div className="header-brand-topline">
+                <span className="header-brand-chip">{universe === 'dc' ? 'Earth-1' : 'Earth-616'}</span>
+                <span className="header-brand-chip">{darkMode ? (universe === 'dc' ? 'Gotham Night' : 'Night Mode') : (universe === 'dc' ? 'Metropolis Day' : 'Day Mode')}</span>
+              </div>
               <div className="header-title-mcu" style={{ color: universe === 'dc' ? '#9ac5ff' : undefined }}>{activeUniverse.title}</div>
               <div className="header-title-sub">{activeUniverse.subtitle}</div>
             </div>
-            
+            <div className="header-quick-controls">
+              <button className="header-quick-btn" type="button" onClick={() => setDarkMode(v => !v)}>{darkMode ? '🌙 Night' : '☀️ Day'}</button>
+              <button className="header-quick-btn" type="button" onClick={() => setUniverse(prev => prev === 'mcu' ? 'dc' : 'mcu')}>{universe === 'dc' ? 'Switch to Marvel' : 'Switch to DC'}</button>
+            </div>
           </div>
         </div>
       </header>

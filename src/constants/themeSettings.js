@@ -7,7 +7,7 @@
  * 3) Keep keys unchanged (e.g. --theme-accent) so UI keeps consuming them automatically.
  */
 
-export const THEME_CHOICES = [
+export const MARVEL_THEME_CHOICES = [
   { id: 'classic', label: 'Iron Man', swatch: '#d4372f' },
   { id: 'cosmic', label: 'Capt. Marvel', swatch: '#4d7bff' },
   { id: 'vibranium', label: 'Black Panther', swatch: '#7e5dff' },
@@ -42,8 +42,46 @@ export const THEME_PALETTES = {
   hela: { accent: '#49a561', accentAlt: '#d0d500', darkSurface: 'rgba(3,11,9,0.92)', lightSurface: 'rgba(242,248,244,0.96)', darkSurfaceHover: 'rgba(20,45,39,0.94)', lightSurfaceHover: 'rgba(231,243,235,0.97)', darkCompCard: 'rgba(13,34,28,0.88)', lightCompCard: 'rgba(246,251,247,0.95)' },
 };
 
-export const getActiveThemeVars = (themeMode, darkMode) => {
-  const p = THEME_PALETTES[themeMode] || THEME_PALETTES.classic;
+export const DC_THEME_CHOICES = [
+  { id: 'classic', label: 'Superman', swatch: '#2563eb' },
+  { id: 'cosmic', label: 'Green Lantern', swatch: '#10b981' },
+  { id: 'vibranium', label: 'Wonder Woman', swatch: '#d4af37' },
+  { id: 'quantum', label: 'The Flash', swatch: '#ef4444' },
+  { id: 'mystic', label: 'Zatanna', swatch: '#8b5cf6' },
+  { id: 'web-slinger', label: 'Nightwing', swatch: '#38bdf8' },
+  { id: 'god-of-thunder', label: 'Shazam', swatch: '#f59e0b' },
+  { id: 'scarlet-witch', label: 'Harley Quinn', swatch: '#ec4899' },
+  { id: 'winter-soldier', label: 'Batman', swatch: '#94a3b8' },
+  { id: 'captain-america', label: 'Aquaman', swatch: '#0ea5e9' },
+  { id: 'daredevil', label: 'Red Hood', swatch: '#b91c1c' },
+  { id: 'panther-tech', label: 'Cyborg', swatch: '#22d3ee' },
+  { id: 'marvel-red', label: 'Apokolips', swatch: '#f97316' },
+  { id: 'hela', label: 'Poison Ivy', swatch: '#22c55e' },
+];
+
+export const getThemeChoicesByUniverse = (universe) => universe === 'dc' ? DC_THEME_CHOICES : MARVEL_THEME_CHOICES;
+
+export const getActiveThemeVars = (universe, themeMode, darkMode) => {
+  let p = THEME_PALETTES[themeMode] || THEME_PALETTES.classic;
+
+  const dcPaletteOverrides = {
+    classic: { accent: '#2563eb', accentAlt: '#93c5fd' },
+    cosmic: { accent: '#10b981', accentAlt: '#86efac' },
+    vibranium: { accent: '#d4af37', accentAlt: '#fde68a' },
+    quantum: { accent: '#ef4444', accentAlt: '#fca5a5' },
+    mystic: { accent: '#8b5cf6', accentAlt: '#c4b5fd' },
+    'web-slinger': { accent: '#38bdf8', accentAlt: '#bae6fd' },
+    'god-of-thunder': { accent: '#f59e0b', accentAlt: '#fcd34d' },
+    'scarlet-witch': { accent: '#ec4899', accentAlt: '#f9a8d4' },
+    'winter-soldier': { accent: '#94a3b8', accentAlt: '#64748b' },
+    'captain-america': { accent: '#0ea5e9', accentAlt: '#7dd3fc' },
+    daredevil: { accent: '#b91c1c', accentAlt: '#f87171' },
+    'panther-tech': { accent: '#22d3ee', accentAlt: '#67e8f9' },
+    'marvel-red': { accent: '#f97316', accentAlt: '#fdba74' },
+    hela: { accent: '#22c55e', accentAlt: '#86efac' },
+  };
+  if (universe === 'dc') p = { ...p, ...(dcPaletteOverrides[themeMode] || dcPaletteOverrides.classic) };
+
   const lightUnifiedBase = '#f1ece3';
   const darkUnifiedBase = '#1A1D23';
   const darkUnifiedElevated = '#272D36';
