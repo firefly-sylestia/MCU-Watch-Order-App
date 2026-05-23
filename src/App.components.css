@@ -2308,3 +2308,161 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   color:inherit !important;
   filter:none !important;
 }
+/* ===== 2026 UI modernization pass: marvel-inspired adaptive theme ===== */
+:root {
+  --font-display: "Bebas Neue", "Oswald", "Rajdhani", system-ui, sans-serif;
+  --font-ui: "Manrope", "Outfit", "Inter", system-ui, sans-serif;
+  --font-body: "Manrope", "Outfit", system-ui, sans-serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+
+  --app-bg:
+    radial-gradient(circle at 14% 10%, color-mix(in srgb, var(--theme-accent, #7cffda) 14%, transparent), transparent 38%),
+    radial-gradient(circle at 86% 16%, color-mix(in srgb, #ef4444 22%, transparent), transparent 32%),
+    radial-gradient(circle at 50% 88%, color-mix(in srgb, var(--theme-accent-alt, #9a86ff) 13%, transparent), transparent 42%),
+    linear-gradient(156deg, #0c0f15 0%, #111622 42%, #131b2a 100%);
+
+  --panel-bg: color-mix(in srgb, var(--theme-surface, #1d2434) 84%, transparent);
+  --panel-bg-hover: color-mix(in srgb, var(--theme-surface-hover, #232d42) 88%, transparent);
+  --panel-border: color-mix(in srgb, var(--theme-border, rgba(255,255,255,.12)) 80%, rgba(255,255,255,.18));
+  --panel-border-strong: color-mix(in srgb, var(--theme-accent, #7cffda) 42%, var(--theme-border, rgba(255,255,255,.12)));
+  --panel-shadow: 0 14px 32px rgba(2, 6, 23, .34);
+  --panel-shadow-lift: 0 22px 38px rgba(2, 6, 23, .42);
+
+  --interactive-duration: 170ms;
+  --interactive-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body,
+.app-container {
+  background: var(--app-bg) !important;
+}
+
+.app-container::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: .08;
+  background-image: linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: radial-gradient(circle at center, #000 20%, transparent 90%);
+  z-index: 0;
+}
+
+.header-brand,
+.phase-rows-full,
+.filters-open,
+.settings-menu,
+.sidebar-menu,
+.rrow,
+.detail-card,
+.ui-panel,
+.glass-panel {
+  border-color: var(--panel-border) !important;
+  background: var(--panel-bg) !important;
+  box-shadow: var(--panel-shadow);
+}
+
+.rrow:hover,
+.header-brand:hover,
+.phase-rows-full:hover {
+  border-color: var(--panel-border-strong) !important;
+  box-shadow: var(--panel-shadow-lift) !important;
+}
+
+/* Unified button redesign with clear hover/focus/press feedback */
+.fpill,
+.wbtn,
+.theme-btn,
+.status-pill,
+.lmode-btn,
+.detail-btn {
+  border: 1px solid var(--panel-border) !important;
+  background: linear-gradient(165deg, color-mix(in srgb, var(--theme-surface, #1d2434) 90%, transparent), color-mix(in srgb, var(--theme-bg, #0b1220) 74%, transparent)) !important;
+  color: var(--theme-text, var(--text)) !important;
+  border-radius: 999px !important;
+  transition: transform var(--interactive-duration) var(--interactive-ease),
+    border-color var(--interactive-duration) var(--interactive-ease),
+    box-shadow var(--interactive-duration) var(--interactive-ease),
+    background var(--interactive-duration) var(--interactive-ease),
+    color var(--interactive-duration) var(--interactive-ease) !important;
+}
+
+.fpill:hover,
+.wbtn:hover,
+.theme-btn:hover,
+.status-pill:hover,
+.lmode-btn:hover,
+.detail-btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--panel-border-strong) !important;
+  background: var(--panel-bg-hover) !important;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--theme-accent) 22%, transparent);
+  color: var(--theme-text-primary, var(--theme-text, var(--text))) !important;
+}
+
+.fpill:active,
+.wbtn:active,
+.theme-btn:active,
+.status-pill:active,
+.lmode-btn:active,
+.detail-btn:active {
+  transform: translateY(1px) scale(.98);
+}
+
+.fpill:focus-visible,
+.wbtn:focus-visible,
+.theme-btn:focus-visible,
+.status-pill:focus-visible,
+.lmode-btn:focus-visible,
+.detail-btn:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-accent) 62%, transparent), 0 0 0 6px color-mix(in srgb, var(--theme-accent-alt) 24%, transparent) !important;
+}
+
+.status-pill[aria-pressed="true"],
+.fpill[aria-pressed="true"],
+.wbtn[aria-pressed="true"] {
+  color: var(--theme-accent) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 62%, var(--theme-border)) !important;
+  background: color-mix(in srgb, var(--theme-accent) 18%, var(--theme-surface)) !important;
+}
+
+.title-btn .title-main,
+.header-title-sub,
+.header-tagline,
+.meta-muted,
+.meta-chip,
+.sopt,
+input,
+select,
+textarea,
+button {
+  font-family: var(--font-ui) !important;
+  letter-spacing: .015em;
+}
+
+.header-title-mcu {
+  font-family: var(--font-display) !important;
+  letter-spacing: .14em !important;
+  border-radius: 12px !important;
+  background: linear-gradient(180deg, #ff6959 0%, #c91f28 60%, #7f1017 100%) !important;
+  border: 1px solid color-mix(in srgb, #ff9f95 55%, #ffffff) !important;
+}
+
+[data-color-mode="light"] {
+  --app-bg:
+    radial-gradient(circle at 14% 10%, color-mix(in srgb, var(--theme-accent, #0ea5e9) 11%, transparent), transparent 38%),
+    radial-gradient(circle at 84% 14%, color-mix(in srgb, #ef4444 10%, transparent), transparent 32%),
+    linear-gradient(160deg, #f8fafc 0%, #ecf2f9 48%, #e8eef6 100%);
+  --panel-bg: color-mix(in srgb, var(--theme-surface, #ffffff) 94%, #ffffff);
+  --panel-bg-hover: color-mix(in srgb, var(--theme-surface-hover, #f0f4fa) 90%, #ffffff);
+  --panel-border: color-mix(in srgb, var(--theme-border, rgba(15,23,42,.14)) 85%, #ffffff);
+  --panel-shadow: 0 10px 24px rgba(15, 23, 42, .12);
+  --panel-shadow-lift: 0 16px 30px rgba(15, 23, 42, .16);
+}
