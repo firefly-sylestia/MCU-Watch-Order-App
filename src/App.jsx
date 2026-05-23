@@ -979,56 +979,6 @@ export default function MCUViewer() {
   const settingsRef= useRef(null);
   const sidebarRef = useRef(null);
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof IntersectionObserver !== 'function') return undefined;
-    const animatedNodes = Array.from(document.querySelectorAll('[data-animate]'));
-    if (!animatedNodes.length) return undefined;
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        const replayMode = entry.target.getAttribute('data-replay') === 'true';
-        if (entry.isIntersecting || entry.intersectionRatio > 0.05) {
-          entry.target.classList.add('is-inview');
-          if (!replayMode) observer.unobserve(entry.target);
-        } else if (replayMode) {
-          entry.target.classList.remove('is-inview');
-        }
-      });
-    }, { threshold: [0, 0.05, 0.15], rootMargin: '0px 0px -20% 0px' });
-    animatedNodes.forEach((node, index) => {
-      node.style.setProperty('--reveal-delay', `${Math.min(index * 28, 240)}ms`);
-      observer.observe(node);
-    });
-    return () => observer.disconnect();
-  }, [browseMode, viewMode, phaseKeys.length, filtersOpen]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-    let rafId = 0;
-    const sections = Array.from(document.querySelectorAll('[data-progress-section]'));
-    if (!sections.length) return undefined;
-    const updateProgress = () => {
-      const vh = window.innerHeight || 1;
-      sections.forEach((section) => {
-        const rect = section.getBoundingClientRect();
-        const total = rect.height + vh;
-        const traveled = vh - rect.top;
-        const progress = Math.max(0, Math.min(1, traveled / total));
-        section.style.setProperty('--section-progress', progress.toFixed(4));
-      });
-      rafId = 0;
-    };
-    const onScroll = () => {
-      if (!rafId) rafId = window.requestAnimationFrame(updateProgress);
-    };
-    updateProgress();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-      if (rafId) window.cancelAnimationFrame(rafId);
-    };
-  }, [browseMode, viewMode, phaseKeys.length]);
   const heroIntervalRef = useRef(null);
   const heroRailRef = useRef(null);
   const heroActiveCardRef = useRef(null);
@@ -1467,6 +1417,57 @@ export default function MCUViewer() {
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
     [items, listMode, coreIds]
   );
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof IntersectionObserver !== 'function') return undefined;
+    const animatedNodes = Array.from(document.querySelectorAll('[data-animate]'));
+    if (!animatedNodes.length) return undefined;
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const replayMode = entry.target.getAttribute('data-replay') === 'true';
+        if (entry.isIntersecting || entry.intersectionRatio > 0.05) {
+          entry.target.classList.add('is-inview');
+          if (!replayMode) observer.unobserve(entry.target);
+        } else if (replayMode) {
+          entry.target.classList.remove('is-inview');
+        }
+      });
+    }, { threshold: [0, 0.05, 0.15], rootMargin: '0px 0px -20% 0px' });
+    animatedNodes.forEach((node, index) => {
+      node.style.setProperty('--reveal-delay', `${Math.min(index * 28, 240)}ms`);
+      observer.observe(node);
+    });
+    return () => observer.disconnect();
+  }, [browseMode, viewMode, phaseKeys.length, filtersOpen]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    let rafId = 0;
+    const sections = Array.from(document.querySelectorAll('[data-progress-section]'));
+    if (!sections.length) return undefined;
+    const updateProgress = () => {
+      const vh = window.innerHeight || 1;
+      sections.forEach((section) => {
+        const rect = section.getBoundingClientRect();
+        const total = rect.height + vh;
+        const traveled = vh - rect.top;
+        const progress = Math.max(0, Math.min(1, traveled / total));
+        section.style.setProperty('--section-progress', progress.toFixed(4));
+      });
+      rafId = 0;
+    };
+    const onScroll = () => {
+      if (!rafId) rafId = window.requestAnimationFrame(updateProgress);
+    };
+    updateProgress();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (rafId) window.cancelAnimationFrame(rafId);
+    };
+  }, [browseMode, viewMode, phaseKeys.length]);
 
 
   useEffect(() => {
