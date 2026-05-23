@@ -8,20 +8,20 @@
  */
 
 export const THEME_CHOICES = [
-  { id: 'classic', label: 'Iron Man', swatch: '#d4372f' },
-  { id: 'cosmic', label: 'Capt. Marvel', swatch: '#4d7bff' },
-  { id: 'vibranium', label: 'Black Panther', swatch: '#7e5dff' },
-  { id: 'quantum', label: 'Ant-Man', swatch: '#ff5da8' },
-  { id: 'mystic', label: 'Dr. Strange', swatch: '#9f66ff' },
-  { id: 'web-slinger', label: 'Spider-Man', swatch: '#df3f4c' },
-  { id: 'god-of-thunder', label: 'Thor', swatch: '#3ca6ff' },
-  { id: 'scarlet-witch', label: 'Scarlet Witch', swatch: '#c61b59' },
-  { id: 'winter-soldier', label: 'Winter Soldier', swatch: '#8fa0b8' },
-  { id: 'captain-america', label: 'Captain America', swatch: '#3b5fa4' },
-  { id: 'daredevil', label: 'Daredevil', swatch: '#bf0615' },
-  { id: 'panther-tech', label: 'Panther Tech', swatch: '#6bb0bf' },
-  { id: 'marvel-red', label: 'Marvel Red', swatch: '#e23636' },
-  { id: 'hela', label: 'Hela', swatch: '#49a561' },
+  { id: 'classic', label: 'Iron Man', dcLabel: 'Superman', swatch: '#d4372f', dcSwatch: '#2f7fff' },
+  { id: 'cosmic', label: 'Capt. Marvel', dcLabel: 'Blue Beetle', swatch: '#4d7bff', dcSwatch: '#3d8cff' },
+  { id: 'vibranium', label: 'Black Panther', dcLabel: 'Nightwing', swatch: '#7e5dff', dcSwatch: '#4aa4ff' },
+  { id: 'quantum', label: 'Ant-Man', dcLabel: 'The Flash', swatch: '#ff5da8', dcSwatch: '#ff3b3b' },
+  { id: 'mystic', label: 'Dr. Strange', dcLabel: 'Zatanna', swatch: '#9f66ff', dcSwatch: '#6c63ff' },
+  { id: 'web-slinger', label: 'Spider-Man', dcLabel: 'Red Hood', swatch: '#df3f4c', dcSwatch: '#d64b4b' },
+  { id: 'god-of-thunder', label: 'Thor', dcLabel: 'Aquaman', swatch: '#3ca6ff', dcSwatch: '#1ea7a0' },
+  { id: 'scarlet-witch', label: 'Scarlet Witch', dcLabel: 'Raven', swatch: '#c61b59', dcSwatch: '#6a3cc9' },
+  { id: 'winter-soldier', label: 'Winter Soldier', dcLabel: 'Batman', swatch: '#8fa0b8', dcSwatch: '#64748b' },
+  { id: 'captain-america', label: 'Captain America', dcLabel: 'Wonder Woman', swatch: '#3b5fa4', dcSwatch: '#355f9f' },
+  { id: 'daredevil', label: 'Daredevil', dcLabel: 'Harley Quinn', swatch: '#bf0615', dcSwatch: '#d42b6a' },
+  { id: 'panther-tech', label: 'Panther Tech', dcLabel: 'Cyborg', swatch: '#6bb0bf', dcSwatch: '#35a4c6' },
+  { id: 'marvel-red', label: 'Marvel Red', dcLabel: 'Shazam', swatch: '#e23636', dcSwatch: '#d97706' },
+  { id: 'hela', label: 'Hela', dcLabel: 'Green Lantern', swatch: '#49a561', dcSwatch: '#2ea44f' },
 ];
 
 // Edit palette values below. Keep all variable names exactly as-is.
