@@ -3684,22 +3684,20 @@ export default function MCUViewer() {
                 </div>
               </div>
             </section>}
-            {analyticsTab === 'export' && <>
-            <div className="glass-panel ui-panel" style={{ marginBottom: 12, padding: 14, borderRadius: 14, display: 'grid', gap: 12 }}>
-              <div>
-                <div className="ui-section-header" style={{ marginBottom: 4 }}>Quick Export</div>
-                <div style={{ color: T.textMuted, fontSize: 12 }}>One-tap share cards. Open Advanced Export for card type, themes, preview, and analysis sections.</div>
+            {analyticsTab === 'export' && <section className="export-premium-quick">
+              <header>
+                <h3>Quick Export</h3>
+                <p>Beautiful one-tap cards with modernized export visuals.</p>
+              </header>
+              <div className="export-quick-grid">
+                <button className="fpill ui-touch-btn export-action" onClick={shareAnalysisCard}><Upload size={14}/>Share Analysis Card</button>
+                <button className="fpill ui-touch-btn export-action" onClick={shareUnifiedCard}><Upload size={14}/>Share Recap Card</button>
+                <button className="fpill ui-touch-btn export-action is-strong" onClick={() => { setAnalyticsTab('advanced-export'); setExportComposerOpen(true); }}><SlidersH size={14}/>Open Advanced Export</button>
               </div>
-              <div className="ui-btn-group ui-sticky-mobile-footer" style={{ marginBottom: 0, position: 'sticky', bottom: 0, zIndex: 4, background: 'var(--surface-overlay)', borderRadius: 14, border: '1px solid var(--border-soft)', padding: '8px 0' }}>
-                <button className="fpill ui-touch-btn" onClick={shareAnalysisCard}><Upload size={14}/>Share Analysis Card</button>
-                <button className="fpill ui-touch-btn" onClick={shareUnifiedCard}><Upload size={14}/>Share Recap Card</button>
-                <span style={{ color: T.textMuted, fontSize: 12, alignSelf: 'center' }}>Progress + recent watched history in one share image.</span>
-                <button className="fpill ui-touch-btn" onClick={() => { setAnalyticsTab('advanced-export'); setExportComposerOpen(true); }}><SlidersH size={14}/>Open Advanced Export</button>
-              </div>
-            </div>
-            </>}
+              <small>Progress + recent history in premium share-ready image cards.</small>
+            </section>}
             {analyticsTab === 'advanced-export' && <>
-            <div className="glass-panel ui-panel ui-control-row export-card-studio" style={{ marginBottom: 10, padding: 14 }}>
+            <div className="glass-panel ui-panel ui-control-row export-card-studio export-card-studio-redesign" style={{ marginBottom: 10, padding: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                 <div>
                   <div className="ui-section-header" style={{ marginBottom: 2 }}>Advanced Export Studio</div>
@@ -3764,15 +3762,6 @@ export default function MCUViewer() {
               </div>
             </div>
             </>}
-            <div className="glass-panel ui-panel ui-control-row" style={{ marginBottom: 10, padding: 10 }}>
-              <div className="ui-section-header">Review Card Theme</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 6 }}>
-                {EXPORT_THEME_OPTIONS.map(opt => (
-                  <button key={opt.id} className="fpill review-theme-pill" onClick={() => setReviewCardTheme(opt.id)} style={{ justifyContent:'center', flexDirection: 'column', gap: 2, padding:'6px 8px', fontSize:11, borderColor: reviewCardTheme === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}><span>{opt.label}</span><span style={{ fontSize: 9, color: T.textMuted }}>{opt.desc}</span></button>
-                ))}
-              </div>
-              {reviewShareStatus.message && <div style={{ fontSize: 12, color: reviewShareStatus.type === 'error' ? 'var(--theme-danger)' : 'var(--theme-success)' }}>{reviewShareStatus.message}</div>}
-            </div>
             {analyticsTab === 'reviews' && <div style={{ display: 'grid', gap: 12, maxHeight: '58vh', overflow: 'auto', paddingRight: 4 }}>
               {historyItems.length === 0 && <div style={{ color: T.textMuted, padding: 16 }}>No watched history yet. Mark an item watched to start your analysis log.</div>}
               {historyItems.map(item => (
