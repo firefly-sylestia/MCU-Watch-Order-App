@@ -3195,6 +3195,33 @@ export default function MCUViewer() {
               })}
             </div>
             <button className="hero-carousel-nav next" type="button" aria-label="Next featured poster" onClick={goToNextHero}>›</button>
+            <div className="hero-carousel-controls" aria-label="Carousel controls">
+              <div className="hero-carousel-progress" role="status" aria-live="polite">
+                <span>{String((heroIndex % heroPosters.length) + 1).padStart(2, '0')}</span>
+                <i />
+                <span>{String(heroPosters.length).padStart(2, '0')}</span>
+              </div>
+              <div className="hero-carousel-dots" role="tablist" aria-label="Featured posters">
+                {heroPosters.slice(0, 10).map((src, idx) => {
+                  const isDotActive = src === activeHeroSrc;
+                  return (
+                    <button
+                      key={`hero-dot-${src}`}
+                      type="button"
+                      role="tab"
+                      aria-selected={isDotActive}
+                      aria-label={`Go to featured poster ${idx + 1}`}
+                      className={`hero-carousel-dot ${isDotActive ? 'is-active' : ''}`}
+                      onClick={() => {
+                        pauseHeroAutoSlide(2800);
+                        heroForceRecenterRef.current = true;
+                        setHeroIndex(idx);
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            </div>
           </>
         )}
 
