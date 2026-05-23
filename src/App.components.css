@@ -2045,3 +2045,24 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   background:color-mix(in srgb,var(--theme-surface) 94%, #0b1220) !important;
   border-color:color-mix(in srgb,var(--theme-border) 88%, #0b1220) !important;
 }
+
+/* Restored active-status color indication on expanded title tiles */
+.rrow{--status-accent:var(--theme-accent)}
+.rrow.row-status-watched{--status-accent:#ef4444}
+.rrow.row-status-watching{--status-accent:#8b5cf6}
+.rrow.row-status-plan-to-watch{--status-accent:#3b82f6}
+.rrow.row-status-on-hold{--status-accent:#f59e0b}
+.rrow.row-status-dropped{--status-accent:#f97316}
+.rrow.row-status-unwatched{--status-accent:color-mix(in srgb,var(--theme-text-muted) 72%, var(--theme-border))}
+
+.rrow.curvy-selected{
+  border-left-color:var(--status-accent) !important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--status-accent) 42%, transparent) !important;
+  background:color-mix(in srgb,var(--status-accent) 8%, var(--theme-surface)) !important;
+}
+.rrow.curvy-selected .title-main{color:color-mix(in srgb,var(--status-accent) 72%, var(--theme-text)) !important}
+.rrow.curvy-selected .title-chevron{color:var(--status-accent) !important;opacity:.9 !important}
+
+[data-color-mode="light"] .rrow.curvy-selected{
+  background:color-mix(in srgb,var(--status-accent) 10%, #fff) !important;
+}
