@@ -2998,6 +2998,39 @@ export default function MCUViewer() {
               <button className='fpill settings-toggle-pill' type='button' onClick={() => setPerformanceMode(v => !v)} style={{ minWidth: 72, justifyContent: 'center', borderColor: performanceMode ? 'var(--theme-accent)' : 'var(--theme-border)', background: performanceMode ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}>{performanceMode ? 'On' : 'Off'}</button>
             </label>
             <div style={{ fontSize: 11, color: T.textMuted, lineHeight: 1.35, marginTop: -4 }}>Leave off for full UI motion; turn on only if your device needs reduced effects.</div>
+            <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
+            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Desktop Text Scaling</div>
+            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Layers size={14} /> Enable scaling</span>
+              <button
+                className='fpill settings-toggle-pill'
+                type='button'
+                onClick={() => setTextScaleEnabled(v => !v)}
+                style={{ minWidth: 72, justifyContent: 'center', borderColor: textScaleEnabled ? 'var(--theme-accent)' : 'var(--theme-border)', background: textScaleEnabled ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}
+              >
+                {textScaleEnabled ? 'On' : 'Off'}
+              </button>
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,minmax(0,1fr))', gap: 6 }}>
+              {DESKTOP_TEXT_SCALES.map(scale => {
+                const active = desktopTextScale === scale;
+                return (
+                  <button
+                    key={`desktop-scale-${scale}`}
+                    className='fpill'
+                    type='button'
+                    onClick={() => setDesktopTextScale(scale)}
+                    disabled={!textScaleEnabled}
+                    style={{ justifyContent: 'center', borderColor: active ? 'var(--theme-accent)' : 'var(--theme-border)', color: active ? 'var(--theme-accent)' : 'var(--theme-text)', opacity: textScaleEnabled ? 1 : 0.55 }}
+                  >
+                    {Math.round(scale * 100)}%
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ fontSize: 11, color: T.textMuted, lineHeight: 1.35 }}>
+              Desktop UI scale currently {Math.round((textScaleEnabled ? effectiveUiScale : 1) * 100)}%. Mobile scrolling behavior is unchanged.
+            </div>
             <div style={{ fontSize: 10, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase', marginTop: 2, display: 'inline-flex', alignItems: 'center', gap: 6 }}><Film size={12} /> Bg size</div>
             <input type='range' min={100} max={112} step={1} value={heroBackdropScale} onChange={(e) => setHeroBackdropScale(Number(e.target.value))} aria-label='Carousel background size' />
             <div style={{ fontSize: 10, color: T.textMuted }}>{heroBackdropScale}%</div>
