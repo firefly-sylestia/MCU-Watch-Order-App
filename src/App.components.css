@@ -2045,3 +2045,146 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   background:color-mix(in srgb,var(--theme-surface) 94%, #0b1220) !important;
   border-color:color-mix(in srgb,var(--theme-border) 88%, #0b1220) !important;
 }
+
+/* Restored active-status color indication on expanded title tiles */
+.rrow{--status-accent:var(--theme-accent)}
+.rrow.row-status-watched{--status-accent:#ef4444}
+.rrow.row-status-watching{--status-accent:#8b5cf6}
+.rrow.row-status-plan-to-watch{--status-accent:#3b82f6}
+.rrow.row-status-on-hold{--status-accent:#f59e0b}
+.rrow.row-status-dropped{--status-accent:#f97316}
+.rrow.row-status-unwatched{--status-accent:color-mix(in srgb,var(--theme-text-muted) 72%, var(--theme-border))}
+
+.rrow.curvy-selected{
+  border-left-color:var(--status-accent) !important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--status-accent) 42%, transparent) !important;
+  background:color-mix(in srgb,var(--status-accent) 8%, var(--theme-surface)) !important;
+}
+.rrow.curvy-selected .title-main{color:color-mix(in srgb,var(--status-accent) 72%, var(--theme-text)) !important}
+.rrow.curvy-selected .title-chevron{color:var(--status-accent) !important;opacity:.9 !important}
+
+[data-color-mode="light"] .rrow.curvy-selected{
+  background:color-mix(in srgb,var(--status-accent) 10%, #fff) !important;
+}
+
+/* Status dropdown: restore clear status color buttons with unified dark/light readability */
+.status-menu-item{
+  border:1px solid color-mix(in srgb,var(--theme-border) 82%, transparent) !important;
+  background:color-mix(in srgb,var(--theme-surface) 94%, transparent) !important;
+  color:var(--theme-text-secondary) !important;
+  transition:background-color .16s ease,border-color .16s ease,color .16s ease,transform .12s ease !important;
+}
+.status-menu-item:hover{transform:translateY(-1px)}
+
+.status-menu-item.status-menu-watched{--menu-accent:#ef4444}
+.status-menu-item.status-menu-watching{--menu-accent:#8b5cf6}
+.status-menu-item.status-menu-plan-to-watch{--menu-accent:#3b82f6}
+.status-menu-item.status-menu-on-hold{--menu-accent:#f59e0b}
+.status-menu-item.status-menu-dropped{--menu-accent:#f97316}
+.status-menu-item[class*="status-menu-"]:not(.status-menu-unwatched):hover{
+  border-color:color-mix(in srgb,var(--menu-accent) 52%, var(--theme-border)) !important;
+  background:color-mix(in srgb,var(--menu-accent) 12%, var(--theme-surface)) !important;
+  color:var(--menu-accent) !important;
+}
+.status-menu-item.is-current{
+  border-color:color-mix(in srgb,var(--menu-accent) 64%, var(--theme-border)) !important;
+  background:color-mix(in srgb,var(--menu-accent) 18%, var(--theme-surface)) !important;
+  color:var(--menu-accent) !important;
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--menu-accent) 24%, transparent) !important;
+}
+[data-color-mode="light"] .status-menu-item{
+  background:#fff !important;
+  color:#334155 !important;
+}
+
+/* Final active-state correction: use filled accent backgrounds (not text-only) */
+.status-menu-item.is-current{
+  color:#fff7ed !important;
+  background:linear-gradient(145deg,#be123c 0%,#9f1239 54%,#7a0f33 100%) !important;
+  border-color:color-mix(in srgb,#fb7185 62%, var(--theme-border)) !important;
+  box-shadow:0 8px 16px rgba(159,18,57,.26),0 0 0 1px rgba(251,113,133,.28) !important;
+}
+.status-menu-item.is-current svg,.status-menu-item.is-current span{color:inherit !important}
+
+.status-menu-bookmark{
+  border:1px solid color-mix(in srgb,var(--theme-border) 82%, transparent) !important;
+  background:color-mix(in srgb,var(--theme-surface) 94%, transparent) !important;
+  color:var(--theme-text-secondary) !important;
+  transition:background-color .16s ease,border-color .16s ease,color .16s ease,transform .12s ease,box-shadow .16s ease !important;
+}
+.status-menu-bookmark:hover{transform:translateY(-1px)}
+.status-menu-bookmark[data-active="true"]{
+  background:linear-gradient(145deg,#38bdf8 0%, #0ea5e9 54%, #0284c7 100%) !important;
+  border-color:#38bdf8 !important;
+  color:#f0f9ff !important;
+  box-shadow:0 8px 16px rgba(2,132,199,.26),0 0 0 1px rgba(56,189,248,.3) !important;
+}
+.status-menu-bookmark[data-active="true"] svg{color:inherit !important}
+
+.bookmark-marvel-btn[data-bookmarked="true"],
+[data-color-mode="light"] .bookmark-marvel-btn[data-bookmarked="true"],
+[data-color-mode="dark"] .bookmark-marvel-btn[data-bookmarked="true"],
+.rrow.curvy-selected .bookmark-marvel-btn[data-bookmarked="true"],
+[data-color-mode="light"] .rrow.curvy-selected .bookmark-marvel-btn[data-bookmarked="true"]{
+  background:linear-gradient(145deg,#38bdf8 0%, #0ea5e9 52%, #0369a1 100%) !important;
+  border-color:#38bdf8 !important;
+  color:#f0f9ff !important;
+  box-shadow:0 10px 18px rgba(3,105,161,.34),0 0 0 1px rgba(125,211,252,.35) !important;
+}
+
+/* Home tile action buttons: restore clear filled active backgrounds (light + dark) */
+.row-actions .wbtn.status-pill.status-marvel-pill.status-shade-watched{
+  background:linear-gradient(145deg,#be123c 0%,#9f1239 54%,#7a0f33 100%) !important;
+  border-color:#fb7185 !important;
+  color:#fff1f2 !important;
+  box-shadow:0 10px 18px rgba(159,18,57,.3),0 0 0 1px rgba(251,113,133,.3) !important;
+}
+.row-actions .wbtn.status-pill.status-marvel-pill.status-shade-watching{
+  background:linear-gradient(145deg,#8b5cf6 0%,#7c3aed 54%,#6d28d9 100%) !important;
+  border-color:#a78bfa !important;
+  color:#f5f3ff !important;
+}
+.row-actions .wbtn.status-pill.status-marvel-pill.status-shade-plan-to-watch{
+  background:linear-gradient(145deg,#3b82f6 0%,#2563eb 54%,#1d4ed8 100%) !important;
+  border-color:#93c5fd !important;
+  color:#eff6ff !important;
+}
+.row-actions .wbtn.status-pill.status-marvel-pill.status-shade-on-hold{
+  background:linear-gradient(145deg,#f59e0b 0%,#d97706 54%,#b45309 100%) !important;
+  border-color:#fcd34d !important;
+  color:#fffbeb !important;
+}
+.row-actions .wbtn.status-pill.status-marvel-pill.status-shade-dropped{
+  background:linear-gradient(145deg,#f97316 0%,#ef4444 54%,#b91c1c 100%) !important;
+  border-color:#fdba74 !important;
+  color:#fff7ed !important;
+}
+
+.row-actions .wbtn.status-toggle.notwatched-marvel-btn[aria-label*="unwatched"]{
+  background:linear-gradient(145deg,#be123c 0%,#9f1239 54%,#7a0f33 100%) !important;
+  border-color:#fb7185 !important;
+  color:#fff1f2 !important;
+  box-shadow:0 8px 16px rgba(159,18,57,.28),0 0 0 1px rgba(251,113,133,.28) !important;
+}
+
+/* Bookmark active remains light-blue by request (home tiles) */
+.row-actions .wbtn.bookmark-marvel-btn[data-bookmarked="true"]{
+  background:linear-gradient(145deg,#38bdf8 0%, #0ea5e9 52%, #0369a1 100%) !important;
+  border-color:#7dd3fc !important;
+  color:#f0f9ff !important;
+  box-shadow:0 10px 18px rgba(3,105,161,.34),0 0 0 1px rgba(125,211,252,.35) !important;
+}
+
+/* Hotfix: ensure HOME LIST mini bookmark action is visibly light-blue when active */
+.rrow .row-actions .wbtn.bookmark-marvel-btn[data-bookmarked="true"],
+[data-color-mode="light"] .rrow .row-actions .wbtn.bookmark-marvel-btn[data-bookmarked="true"],
+[data-color-mode="dark"] .rrow .row-actions .wbtn.bookmark-marvel-btn[data-bookmarked="true"]{
+  background:linear-gradient(145deg,#38bdf8 0%, #0ea5e9 52%, #0369a1 100%) !important;
+  border-color:#7dd3fc !important;
+  color:#f0f9ff !important;
+  box-shadow:0 10px 18px rgba(3,105,161,.34),0 0 0 1px rgba(125,211,252,.35) !important;
+}
+.rrow .row-actions .wbtn.bookmark-marvel-btn[data-bookmarked="true"] svg{
+  color:inherit !important;
+  filter:none !important;
+}
