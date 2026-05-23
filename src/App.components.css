@@ -2391,3 +2391,35 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   border-color:color-mix(in srgb,var(--theme-accent) 30%, #cfbaa1) !important;
   box-shadow:0 7px 14px rgba(88,53,16,.12), inset 0 1px 0 rgba(255,255,255,.9) !important;
 }
+
+/* Premium analytics overview redesign */
+.analytics-overview{display:grid;gap:16px;margin-bottom:14px}
+.analytics-metric-grid{display:grid;gap:12px}
+.analytics-metric-grid.desktop{grid-template-columns:repeat(3,minmax(0,1fr))}
+.analytics-metric-grid.mobile{grid-template-columns:repeat(2,minmax(0,1fr))}
+.analytics-metric-card{position:relative;overflow:hidden;padding:16px;border-radius:18px;background:linear-gradient(155deg,color-mix(in srgb,var(--theme-surface) 90%, transparent),color-mix(in srgb,var(--theme-bg) 40%, transparent));border:1px solid color-mix(in srgb,var(--theme-border) 78%, transparent);box-shadow:0 12px 26px rgba(0,0,0,.16);transition:transform .24s ease,box-shadow .24s ease,border-color .24s ease}
+.analytics-metric-card::after{content:'';position:absolute;inset:auto -12% -55% auto;width:130px;height:130px;background:radial-gradient(circle,color-mix(in srgb,var(--theme-accent) 34%, transparent),transparent 64%);pointer-events:none}
+.analytics-metric-card:hover{transform:translateY(-2px);box-shadow:0 16px 30px rgba(0,0,0,.22);border-color:color-mix(in srgb,var(--theme-accent) 45%, var(--theme-border))}
+.analytics-metric-card.is-primary{background:linear-gradient(148deg,color-mix(in srgb,var(--theme-accent) 18%, var(--theme-surface)),color-mix(in srgb,var(--theme-bg) 60%, var(--theme-surface)))}
+.analytics-metric-label{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;font-weight:800;color:var(--theme-text-muted)}
+.analytics-metric-value{margin-top:6px;font-size:clamp(22px,3vw,30px);line-height:1;font-weight:850;color:var(--theme-text)}
+.analytics-metric-meta{margin-top:8px;font-size:12px;color:var(--theme-text-muted)}
+.analytics-progress-card{padding:16px;border-radius:20px;background:linear-gradient(164deg,color-mix(in srgb,var(--theme-surface) 92%, transparent),color-mix(in srgb,var(--theme-bg) 45%, transparent));border:1px solid color-mix(in srgb,var(--theme-border) 78%, transparent);box-shadow:0 14px 28px rgba(0,0,0,.18)}
+.analytics-progress-head{display:grid;gap:4px;margin-bottom:12px}
+.analytics-progress-title{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:850;color:var(--theme-text-muted)}
+.analytics-progress-sub{font-size:13px;color:var(--theme-text-muted)}
+.analytics-progress-list{display:grid;gap:10px}
+.analytics-progress-row{display:grid;gap:8px;padding:10px 12px;border-radius:14px;background:color-mix(in srgb,var(--theme-surface) 74%, transparent);border:1px solid color-mix(in srgb,var(--theme-border) 70%, transparent)}
+.analytics-progress-row header{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--theme-text)}
+.analytics-progress-row footer{font-size:11px;color:var(--theme-text-muted)}
+.analytics-progress-track{height:8px;border-radius:999px;background:color-mix(in srgb,var(--theme-border) 45%, transparent);overflow:hidden}
+.analytics-progress-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--theme-accent),color-mix(in srgb,var(--theme-accent-alt) 68%, #fff));box-shadow:0 0 14px color-mix(in srgb,var(--theme-accent) 38%, transparent);transition:width .45s cubic-bezier(.2,.8,.2,1)}
+[data-color-mode="light"] .analytics-metric-card,[data-color-mode="light"] .analytics-progress-card{box-shadow:0 12px 22px rgba(15,23,42,.12),inset 0 1px 0 rgba(255,255,255,.75)}
+[data-color-mode="light"] .analytics-metric-card{background:linear-gradient(155deg,color-mix(in srgb,var(--theme-surface) 96%, #fff),color-mix(in srgb,var(--theme-bg) 8%, #fff))}
+[data-color-mode="light"] .analytics-progress-card{background:linear-gradient(164deg,color-mix(in srgb,var(--theme-surface) 97%, #fff),color-mix(in srgb,var(--theme-bg) 8%, #fff))}
+@media (max-width:780px){
+  .analytics-metric-grid.mobile{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){
+  .analytics-metric-card,.analytics-progress-fill{transition:none}
+}
