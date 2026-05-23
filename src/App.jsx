@@ -1258,11 +1258,11 @@ export default function MCUViewer() {
 
   const scrollToListTop = useCallback(() => {
     const container = mainRef.current;
-    if (container && container.scrollHeight > container.clientHeight + 1) {
-      container.scrollTo({ top: 0, behavior: 'auto' });
-      return;
+    if (container) {
+      container.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    window.scrollTo({ top: 0, behavior: 'auto' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setScrollCheckpoint(0);
   }, []);
 
   const scrollTo = id => {
