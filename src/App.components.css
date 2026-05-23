@@ -2391,3 +2391,13 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   border-color:color-mix(in srgb,var(--theme-accent) 30%, #cfbaa1) !important;
   box-shadow:0 7px 14px rgba(88,53,16,.12), inset 0 1px 0 rgba(255,255,255,.9) !important;
 }
+
+
+/* semantic parity pass */
+.status-marvel-pill{background:linear-gradient(135deg,var(--status-danger), color-mix(in srgb,var(--status-danger) 70%, #7a0f33)) !important;border-color:var(--status-danger) !important;color:var(--text-primary) !important}
+.status-pill.status-shade-unwatched,.status-menu-item.status-menu-unwatched{background:var(--surface-card) !important;border-color:var(--border-subtle) !important;color:var(--text-secondary) !important}
+.rrow .meta-chip,.poster-skeleton,.filter-dropdown,.bookmark-marvel-btn,.notwatched-marvel-btn,.go-top-fab{background:var(--surface-elevated-1) !important;border-color:var(--border-subtle) !important;color:var(--text-secondary) !important}
+.header-brand,.curvy-panel,.phase-rows-full,.filters-open,.settings-menu,.analytics-shell,.glass-panel{background:var(--surface-elevated-2) !important;border-color:var(--border-strong) !important}
+.fpill,.theme-btn,.wbtn,.status-pill,.dock-btn,.fab-primary,.bottom-action-bar{background:var(--surface-elevated-1) !important;border-color:var(--border-subtle) !important;color:var(--text-primary) !important}
+.fpill:hover,.theme-btn:hover,.wbtn:hover,.status-pill:hover,.dock-btn:hover,.fab-primary:hover,.bottom-action-bar:hover{background:var(--interactive-bg-hover) !important}
+.app-container{background:linear-gradient(170deg,var(--bg-subtle),var(--bg-base)) !important}

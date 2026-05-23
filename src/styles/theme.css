@@ -1,0 +1,7 @@
+:root {
+  --surface-elevated-1: color-mix(in srgb, var(--surface-card) 88%, transparent);
+  --surface-elevated-2: color-mix(in srgb, var(--surface-card) 94%, var(--bg-base));
+  --surface-elevated-3: color-mix(in srgb, var(--surface-card) 82%, var(--bg-raised));
+}
+[data-color-mode='dark'] { --bg-base:#06060f; --bg-subtle:#0b1020; --bg-raised:#151c2b; --surface-card:color-mix(in srgb,var(--theme-surface,#141b2a) 86%,#0b1020); --surface-overlay:color-mix(in srgb,var(--theme-surface-hover,#1a2234) 82%,#0b1020); --text-primary:#f4f8ff; --text-secondary:#d6deed; --text-muted:#a9b6cb; --border-subtle:rgba(255,255,255,.12); --border-strong:rgba(255,255,255,.22); --interactive-bg:color-mix(in srgb,var(--theme-accent) 12%,var(--surface-card)); --interactive-bg-hover:color-mix(in srgb,var(--theme-accent) 18%,var(--surface-overlay)); --status-positive:#38bdf8; --status-danger:#fb7185; }
+[data-color-mode='light'] { --bg-base:#ece5d9; --bg-subtle:#f3ede3; --bg-raised:#fff9f0; --surface-card:color-mix(in srgb,var(--theme-surface,#f8f9fb) 90%,#fff); --surface-overlay:color-mix(in srgb,var(--theme-surface-hover,#eceff3) 88%,#fff); --text-primary:#121a2a; --text-secondary:#243248; --text-muted:#4f5c70; --border-subtle:rgba(15,23,42,.14); --border-strong:rgba(15,23,42,.24); --interactive-bg:color-mix(in srgb,var(--theme-accent) 10%,var(--surface-card)); --interactive-bg-hover:color-mix(in srgb,var(--theme-accent) 16%,var(--surface-overlay)); --status-positive:#0284c7; --status-danger:#be123c; }

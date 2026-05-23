@@ -60,5 +60,25 @@ export const getActiveThemeVars = (themeMode, darkMode) => {
     '--theme-surface': darkMode ? darkSurface : lightSurface,
     '--theme-surface-hover': darkMode ? darkSurfaceHover : lightSurfaceHover,
     '--comp-card-bg': darkMode ? darkCompCard : lightCompCard,
+    '--bg-base': darkMode ? '#06060f' : '#ece5d9',
+    '--bg-raised': darkMode ? '#151c2b' : '#fff9f0',
+    '--surface-card': darkMode ? darkCompCard : lightCompCard,
+    '--surface-overlay': darkMode ? darkSurfaceHover : lightSurfaceHover,
+    '--text-primary': darkMode ? '#f4f8ff' : '#121a2a',
+    '--text-secondary': darkMode ? '#d6deed' : '#243248',
+    '--text-muted': darkMode ? '#a9b6cb' : '#4f5c70',
+    '--border-subtle': darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(15,23,42,0.14)',
+    '--border-strong': darkMode ? 'rgba(255,255,255,0.22)' : 'rgba(15,23,42,0.24)',
+    '--interactive-bg': darkMode
+      ? `color-mix(in srgb, ${p.accent} 12%, ${darkCompCard})`
+      : `color-mix(in srgb, ${p.accent} 10%, ${lightCompCard})`,
+    '--interactive-bg-hover': darkMode
+      ? `color-mix(in srgb, ${p.accent} 18%, ${darkSurfaceHover})`
+      : `color-mix(in srgb, ${p.accent} 16%, ${lightSurfaceHover})`,
+    '--status-positive': darkMode ? '#38bdf8' : '#0284c7',
+    '--status-danger': darkMode ? '#fb7185' : '#be123c',
+    '--surface-elevated-1': `color-mix(in srgb, ${darkMode ? darkCompCard : lightCompCard} 88%, transparent)`,
+    '--surface-elevated-2': `color-mix(in srgb, ${darkMode ? darkCompCard : lightCompCard} 94%, ${darkMode ? '#06060f' : '#ece5d9'})`,
+    '--surface-elevated-3': `color-mix(in srgb, ${darkMode ? darkCompCard : lightCompCard} 82%, ${darkMode ? '#151c2b' : '#fff9f0'})`,
   };
 };
