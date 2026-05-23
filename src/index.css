@@ -685,3 +685,165 @@ a:hover {
 .lenis-ready body {
   scroll-behavior: auto;
 }
+/* === 2026 Modern Marvel-inspired premium theming (minimal, no glow) === */
+:root {
+  color-scheme: light;
+
+  /* Semantic brand */
+  --color-primary: #b4232a;
+  --color-secondary: #1f3d7a;
+  --color-accent: #ca8a04;
+  --color-success: #1f8f55;
+  --color-warning: #b96a06;
+  --color-danger: #b4232a;
+
+  /* Surfaces */
+  --color-bg-base: #f3f5f8;
+  --color-bg-elevated: #ffffff;
+  --color-bg-muted: #e8edf3;
+
+  /* Text */
+  --color-text-primary: #111827;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
+  --color-text-inverse: #f8fafc;
+
+  /* Borders + focus */
+  --color-border-soft: #d3dbe6;
+  --color-border-strong: #9aa8bc;
+  --color-focus-ring: #1d4ed8;
+
+  /* spacing/radius/elevation */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px;
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px;
+  --elevation-surface-1: 0 2px 8px rgba(15, 23, 42, 0.08);
+  --elevation-surface-2: 0 10px 24px rgba(15, 23, 42, 0.12);
+  --elevation-surface-3: 0 18px 36px rgba(15, 23, 42, 0.16);
+
+  /* compatibility aliases */
+  --bg: var(--color-bg-base);
+  --bg-elevated: var(--color-bg-elevated);
+  --bg-card: var(--color-bg-elevated);
+  --bg-glass: var(--color-bg-elevated);
+  --text: var(--color-text-primary);
+  --text-h: var(--color-text-primary);
+  --text-dim: var(--color-text-secondary);
+  --text-muted: var(--color-text-muted);
+  --text-disabled: #94a3b8;
+  --border: var(--color-border-soft);
+  --border-hover: var(--color-border-strong);
+  --border-active: #64748b;
+  --accent: var(--color-primary);
+  --accent-2: var(--color-secondary);
+  --accent-glow: transparent;
+  --accent-glow-2: transparent;
+  --ambient-glow: transparent;
+  --shadow-glow: none;
+}
+
+[data-theme="dark"],
+[data-color-mode="dark"] {
+  color-scheme: dark;
+  --color-primary: #ef4444;
+  --color-secondary: #60a5fa;
+  --color-accent: #fbbf24;
+  --color-success: #34d399;
+  --color-warning: #f59e0b;
+  --color-danger: #f87171;
+
+  --color-bg-base: #0b1220;
+  --color-bg-elevated: #111a2c;
+  --color-bg-muted: #1a263b;
+
+  --color-text-primary: #e5e7eb;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #0b1220;
+
+  --color-border-soft: #29374f;
+  --color-border-strong: #3f5372;
+  --color-focus-ring: #93c5fd;
+
+  --bg: var(--color-bg-base);
+  --bg-elevated: var(--color-bg-elevated);
+  --bg-card: var(--color-bg-elevated);
+  --bg-glass: var(--color-bg-elevated);
+  --text: var(--color-text-primary);
+  --text-h: var(--color-text-primary);
+  --text-dim: var(--color-text-secondary);
+  --text-muted: var(--color-text-muted);
+  --text-disabled: #64748b;
+  --border: var(--color-border-soft);
+  --border-hover: var(--color-border-strong);
+  --border-active: #64748b;
+  --accent: var(--color-primary);
+  --accent-2: var(--color-secondary);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-color-mode="light"]) {
+    color-scheme: dark;
+    --color-bg-base: #0b1220;
+    --color-bg-elevated: #111a2c;
+    --color-bg-muted: #1a263b;
+    --color-text-primary: #e5e7eb;
+    --color-text-secondary: #cbd5e1;
+    --color-text-muted: #94a3b8;
+    --color-border-soft: #29374f;
+    --color-border-strong: #3f5372;
+    --color-focus-ring: #93c5fd;
+    --bg: var(--color-bg-base);
+    --bg-elevated: var(--color-bg-elevated);
+    --bg-card: var(--color-bg-elevated);
+    --bg-glass: var(--color-bg-elevated);
+    --text: var(--color-text-primary);
+    --text-h: var(--color-text-primary);
+    --text-dim: var(--color-text-secondary);
+    --text-muted: var(--color-text-muted);
+    --border: var(--color-border-soft);
+    --border-hover: var(--color-border-strong);
+  }
+}
+
+/* Global consistent component theming */
+body, .app-container { background: var(--bg) !important; color: var(--text) !important; }
+.card, .glass-panel, .ui-panel, .phase-rows-full, .calendar-row, .modal-content, .dropdown-pop, .dropdown-pop-up {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--elevation-surface-1) !important;
+}
+button, .fpill, .wbtn, .theme-btn, .status-pill, .bottom-action-bar, .fab-primary {
+  border: 1px solid var(--border) !important;
+  background: var(--bg-elevated) !important;
+  color: var(--text) !important;
+  transition: background-color 180ms ease, border-color 180ms ease, transform 120ms ease, color 180ms ease;
+}
+button:hover, .fpill:hover, .wbtn:hover, .theme-btn:hover, .status-pill:hover {
+  border-color: var(--border-hover) !important;
+  background: var(--color-bg-muted) !important;
+}
+button:active, .fpill:active, .wbtn:active, .theme-btn:active, .status-pill:active { transform: translateY(1px); }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible {
+  outline: 2px solid var(--color-focus-ring) !important;
+  outline-offset: 2px;
+}
+input, select, textarea, .search-input {
+  background: var(--bg-elevated) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+}
+input::placeholder, textarea::placeholder { color: var(--text-muted) !important; }
+a { color: var(--color-secondary); }
+a:hover { color: var(--color-primary); }
+
+/* remove glow/highlight effects */
+* { text-shadow: none !important; }
+.hero .base, .icon, .ticks::before, .sweep::after { filter: none !important; box-shadow: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
