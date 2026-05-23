@@ -2308,3 +2308,67 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   color:inherit !important;
   filter:none !important;
 }
+
+/* Unified modern background redesign: list, calendar, phase rail, sidebar, settings, analytics */
+:root {
+  --ui-bg-orb-1: color-mix(in srgb, var(--theme-accent) 20%, transparent);
+  --ui-bg-orb-2: color-mix(in srgb, var(--theme-accent-alt) 18%, transparent);
+  --ui-panel-glass: color-mix(in srgb, var(--theme-surface) 84%, transparent);
+}
+
+.phase-selector-rail,
+.phase-rows-full,
+.calendar-shell-redesign,
+.sidebar-menu,
+.settings-menu-redesign,
+.analytics-shell-redesign {
+  background:
+    radial-gradient(circle at 8% 0%, var(--ui-bg-orb-1), transparent 44%),
+    radial-gradient(circle at 100% 6%, var(--ui-bg-orb-2), transparent 42%),
+    linear-gradient(155deg, color-mix(in srgb, var(--theme-surface) 90%, transparent), color-mix(in srgb, var(--theme-bg) 82%, transparent));
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border));
+  box-shadow: 0 20px 52px rgba(2,8,23,.34), inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.phase-selector-rail {
+  border-radius: 20px;
+  padding: 12px;
+  backdrop-filter: blur(14px) saturate(130%);
+}
+
+.rrow,
+.calendar-row-redesign {
+  background:
+    linear-gradient(140deg, color-mix(in srgb, var(--theme-surface) 88%, transparent), color-mix(in srgb, var(--theme-bg) 72%, transparent));
+  border: 1px solid color-mix(in srgb, var(--theme-border) 72%, transparent);
+  border-radius: 18px;
+}
+.rrow:hover,
+.calendar-row-redesign:hover {
+  background:
+    linear-gradient(142deg, color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface)), color-mix(in srgb, var(--theme-accent-alt) 12%, var(--theme-surface)));
+}
+
+.calendar-shell-redesign .calendar-group-header {
+  background: color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface));
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 32%, var(--theme-border));
+  border-radius: 999px;
+  padding: 8px 12px;
+}
+
+.floating-controls {
+  transition: opacity 220ms var(--ease-out), transform 220ms var(--ease-out), visibility 0s linear 220ms;
+}
+
+[data-color-mode="light"] .phase-selector-rail,
+[data-color-mode="light"] .phase-rows-full,
+[data-color-mode="light"] .calendar-shell-redesign,
+[data-color-mode="light"] .sidebar-menu,
+[data-color-mode="light"] .settings-menu-redesign,
+[data-color-mode="light"] .analytics-shell-redesign {
+  background:
+    radial-gradient(circle at 7% 0%, color-mix(in srgb, var(--theme-accent) 14%, transparent), transparent 46%),
+    radial-gradient(circle at 99% 4%, color-mix(in srgb, var(--theme-accent-alt) 12%, transparent), transparent 44%),
+    linear-gradient(160deg, color-mix(in srgb, #ffffff 92%, var(--theme-surface)), color-mix(in srgb, #f4f8ff 88%, var(--theme-bg)));
+  box-shadow: 0 18px 42px rgba(15,23,42,.12), inset 0 1px 0 rgba(255,255,255,.9);
+}

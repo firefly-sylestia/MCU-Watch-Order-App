@@ -932,6 +932,7 @@ export default function MCUViewer() {
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [selectedIds,    setSelectedIds]    = useState(() => new Set());
   const [scrollCheckpoint, setScrollCheckpoint] = useState(initialUiState.scrollTop);
+  const [quickControlsHidden, setQuickControlsHidden] = useState((initialUiState.scrollTop || 0) > 12);
   const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
 
   useEffect(() => {
@@ -1218,11 +1219,13 @@ export default function MCUViewer() {
       return canScrollMain ? el.scrollTop : window.scrollY;
     };
     const onScroll = () => {
+      const currentTop = getCurrentScrollTop();
+      setQuickControlsHidden(currentTop > 12);
       isScrolling.current = true;
       clearTimeout(isScrolling._t);
       clearTimeout(scrollSaveTimer);
       isScrolling._t = setTimeout(() => { isScrolling.current = false; }, 150);
-      scrollSaveTimer = setTimeout(() => setScrollCheckpoint(getCurrentScrollTop()), 220);
+      scrollSaveTimer = setTimeout(() => setScrollCheckpoint(currentTop), 220);
     };
     el?.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -1259,10 +1262,10 @@ export default function MCUViewer() {
   const scrollToListTop = useCallback(() => {
     const container = mainRef.current;
     if (container && container.scrollHeight > container.clientHeight + 1) {
-      container.scrollTo({ top: 0, behavior: 'auto' });
+      container.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    window.scrollTo({ top: 0, behavior: 'auto' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   const scrollTo = id => {
@@ -3332,7 +3335,7 @@ export default function MCUViewer() {
           </div>
         )}
       </div>
-      <div className="floating-controls" style={detailItem || analyticsOpen || settingsOpen || sidebarOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
+      <div className="floating-controls" style={detailItem || analyticsOpen || settingsOpen || sidebarOpen || quickControlsHidden ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
         <button
           type="button"
           className="fab-primary"
@@ -3415,14 +3418,14 @@ export default function MCUViewer() {
           )}
 
           {viewMode === 'calendar' ? (
-            <section data-motion="section" className='curvy-panel calendar-section motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
+            <section data-motion="section" className='curvy-panel calendar-section calendar-shell-redesign motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
               <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', color: 'var(--theme-text-primary)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
               <div style={{ marginBottom: 12, color: T.textMuted, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.2 }}>Grouped by month / quarter / year</div>
               {Object.entries(calendarItems.grouped).map(([group, entries]) => (
                 <div key={group}>
                   <div className="calendar-group-header">{group}</div>
                   {entries.map(({ item, rawDate, label, releaseStatus, hasRealDate }) => (
-                    <div key={`${group}-${item.id}`} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
+                    <div key={`${group}-${item.id}`} className='rrow calendar-row calendar-row-redesign' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)' }}>
                       <div style={{ fontSize: 11, color: releaseStatus === 'upcoming' ? 'var(--theme-warning)' : T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
                       <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
                       <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left', textShadow: '0 1px 2px color-mix(in srgb, var(--theme-bg) 35%, transparent)' }}>
