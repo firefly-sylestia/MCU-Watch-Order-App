@@ -2391,3 +2391,24 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   border-color:color-mix(in srgb,var(--theme-accent) 30%, #cfbaa1) !important;
   box-shadow:0 7px 14px rgba(88,53,16,.12), inset 0 1px 0 rgba(255,255,255,.9) !important;
 }
+
+/* Analytics overview premium redesign */
+.analytics-overview-redesign{display:grid;gap:16px;margin-bottom:14px}
+.analytics-kpi-grid{display:grid;gap:12px}
+.analytics-kpi-card{position:relative;display:grid;gap:8px;padding:16px;border-radius:18px;border:1px solid color-mix(in srgb,var(--theme-border) 68%,transparent);background:linear-gradient(155deg,color-mix(in srgb,var(--theme-surface) 92%,transparent),color-mix(in srgb,var(--theme-surface-hover) 68%,transparent));transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease}
+.analytics-kpi-card:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--theme-accent) 42%,var(--theme-border));box-shadow:0 14px 34px rgba(0,0,0,.18)}
+.analytics-kpi-card.is-primary{background:linear-gradient(155deg,color-mix(in srgb,var(--theme-accent) 22%,var(--theme-surface)),color-mix(in srgb,var(--theme-accent-alt) 12%,var(--theme-surface)))}
+.analytics-kpi-label{text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:var(--theme-text-muted);font-weight:700}
+.analytics-kpi-value{font-size:clamp(1.45rem,3.2vw,2rem);line-height:1;font-weight:850}
+.analytics-kpi-meta{font-size:12px;color:var(--theme-text-muted)}
+.analytics-progress-card{padding:16px;border-radius:20px;border:1px solid color-mix(in srgb,var(--theme-border) 72%,transparent);background:linear-gradient(170deg,color-mix(in srgb,var(--theme-surface) 94%,transparent),color-mix(in srgb,var(--theme-bg) 18%,transparent));display:grid;gap:12px}
+.analytics-progress-head h3{margin:2px 0 0;font-size:1.05rem}
+.analytics-progress-list{display:grid;gap:10px}
+.analytics-progress-row{display:grid;gap:6px;padding:8px 0}
+.analytics-progress-row-top{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:13px}
+.analytics-progress-row-top span{color:var(--theme-text-muted)}
+.analytics-progress-row-top em{font-style:normal;margin-left:8px;padding:2px 8px;border-radius:999px;border:1px solid color-mix(in srgb,var(--theme-accent) 40%,var(--theme-border));color:var(--theme-text)}
+.analytics-progress-track{height:8px;border-radius:999px;background:color-mix(in srgb,var(--theme-border) 36%,transparent);overflow:hidden}
+.analytics-progress-track span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--theme-accent),var(--theme-accent-alt));transition:width .45s cubic-bezier(.22,.61,.36,1)}
+[data-color-mode="light"] .analytics-kpi-card{box-shadow:0 8px 20px rgba(15,23,42,.08)}
+[data-color-mode="light"] .analytics-kpi-card:hover{box-shadow:0 14px 28px rgba(15,23,42,.12)}

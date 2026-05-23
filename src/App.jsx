@@ -3642,22 +3642,46 @@ export default function MCUViewer() {
                 <button key={tab.id} className="fpill" onClick={() => setAnalyticsTab(tab.id)} style={{ borderColor: analyticsTab === tab.id ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{tab.label}</button>
               ))}
             </div>
-            {analyticsTab === 'overview' && <div style={{ display: 'grid', gridTemplateColumns: isDesktopViewport ? 'repeat(3,minmax(0,1fr))' : 'repeat(2,minmax(0,1fr))', gap: 14, marginBottom: 16 }}>
-              <div className="glass-panel" style={{ padding: '14px 14px 16px', borderRadius: 12, border: '1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border))' }}><div style={{ color: T.textMuted, fontSize: 11, letterSpacing: 1.2 }}>PRIMARY · TOTAL WATCHED</div><div style={{ fontSize: 28, fontWeight: 800, marginTop: 4 }}>{Math.round(totalWatchedHours * 10) / 10}h</div></div>
-              <div style={{ padding: '8px 0', borderBottom: `1px solid ${T.surfaceBorder}` }}><div style={{ color: T.textMuted, fontSize: 11, letterSpacing: 1.2 }}>SUPPORTING · WATCHED ITEMS</div><div style={{ fontSize: 22, fontWeight: 700, marginTop: 2 }}>{totalWatched}</div></div>
-              {isDesktopViewport && <div style={{ padding: '8px 0', borderBottom: `1px solid ${T.surfaceBorder}` }}><div style={{ color: T.textMuted, fontSize: 11, letterSpacing: 1.2 }}>OPTIONAL · RE-WATCHES</div><div style={{ fontSize: 22, fontWeight: 700, marginTop: 2 }}>{Object.values(rewatchCount).reduce((a, b) => a + (Number(b) || 0), 0)}</div></div>}
-            </div>}
-            {analyticsTab === 'overview' && <div style={{ marginBottom: 14, padding: '8px 2px' }}>
-              <div style={{ color: T.textMuted, fontSize: 11, marginBottom: 10, letterSpacing: 1.3 }}>PHASE BREAKDOWN</div>
-              <div style={{ display: 'grid', gap: 10 }}>
-                {phaseStats.map(stat => (
-                  <div key={stat.phase} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 14, paddingBottom: 8, borderBottom: `1px solid color-mix(in srgb, var(--theme-border) 72%, transparent)` }}>
-                    <strong style={{ fontWeight: 700 }}>Phase {stat.phase}</strong>
-                    <span style={{ color: T.textMuted }}>{stat.watched}/{stat.total} <span style={{ marginLeft: 8, padding: '2px 7px', borderRadius: 999, border: `1px solid ${T.surfaceBorder}`, fontSize: 11 }}>{stat.total ? Math.round((stat.watched / stat.total) * 100) : 0}%</span></span>
-                  </div>
-                ))}
+            {analyticsTab === 'overview' && <section className="analytics-overview-redesign">
+              <div className="analytics-kpi-grid" style={{ gridTemplateColumns: isDesktopViewport ? 'repeat(3,minmax(0,1fr))' : 'repeat(2,minmax(0,1fr))' }}>
+                <article className="analytics-kpi-card is-primary">
+                  <span className="analytics-kpi-label">Total watched hours</span>
+                  <strong className="analytics-kpi-value">{Math.round(totalWatchedHours * 10) / 10}h</strong>
+                  <span className="analytics-kpi-meta">Premium pace tracking</span>
+                </article>
+                <article className="analytics-kpi-card">
+                  <span className="analytics-kpi-label">Watched entries</span>
+                  <strong className="analytics-kpi-value">{totalWatched}</strong>
+                  <span className="analytics-kpi-meta">Across current filter</span>
+                </article>
+                {isDesktopViewport && <article className="analytics-kpi-card">
+                  <span className="analytics-kpi-label">Rewatch sessions</span>
+                  <strong className="analytics-kpi-value">{Object.values(rewatchCount).reduce((a, b) => a + (Number(b) || 0), 0)}</strong>
+                  <span className="analytics-kpi-meta">Momentum signal</span>
+                </article>}
               </div>
-            </div>}
+              <div className="analytics-progress-card">
+                <div className="analytics-progress-head">
+                  <div>
+                    <div className="analytics-kpi-label">Phase completion deck</div>
+                    <h3>Progress by MCU phase</h3>
+                  </div>
+                </div>
+                <div className="analytics-progress-list">
+                  {phaseStats.map(stat => {
+                    const pct = stat.total ? Math.round((stat.watched / stat.total) * 100) : 0;
+                    return (
+                    <div key={stat.phase} className="analytics-progress-row">
+                      <div className="analytics-progress-row-top">
+                        <strong>Phase {stat.phase}</strong>
+                        <span>{stat.watched}/{stat.total} <em>{pct}%</em></span>
+                      </div>
+                      <div className="analytics-progress-track"><span style={{ width: `${pct}%` }} /></div>
+                    </div>
+                  )})}
+                </div>
+              </div>
+            </section>}
             {analyticsTab === 'export' && <>
             <div className="glass-panel ui-panel" style={{ marginBottom: 12, padding: 14, borderRadius: 14, display: 'grid', gap: 12 }}>
               <div>
