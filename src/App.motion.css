@@ -30,3 +30,43 @@
         .progress-gradient{background:var(--phase-gradient, linear-gradient(90deg,var(--theme-accent), var(--theme-accent-alt)));background-size:200% 100%;animation:gradientPulse 3s ease-in-out infinite alternate}
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
         .performance-mode *{animation:none !important}
+
+        .motion-reveal{
+          opacity:0;
+          transform:translate3d(0,18px,0) scale(.992);
+          transition:opacity 520ms var(--ease-out),transform 520ms var(--ease-out),filter 520ms var(--ease-out);
+          transition-delay:var(--stagger-delay,0ms);
+          filter:saturate(.92);
+          will-change:opacity,transform;
+        }
+        .motion-reveal.is-visible{
+          opacity:1;
+          transform:translate3d(0,0,0) scale(1);
+          filter:saturate(1);
+        }
+        .section-progress{
+          --section-progress:0;
+          --parallax-shift:calc((var(--section-progress) - .5) * 12px);
+        }
+        .section-progress .phase-header-card{
+          transform:translate3d(0,var(--parallax-shift),0);
+          transition:transform 180ms ease-out;
+        }
+        .motion-stagger > *:nth-child(1){--stagger-delay:20ms}
+        .motion-stagger > *:nth-child(2){--stagger-delay:80ms}
+        .motion-stagger > *:nth-child(3){--stagger-delay:140ms}
+        .motion-stagger > *:nth-child(4){--stagger-delay:200ms}
+        .motion-stagger > *:nth-child(5){--stagger-delay:260ms}
+
+        @media (max-width: 1024px){
+          .motion-reveal{transform:translate3d(0,14px,0) scale(.996);transition-duration:460ms}
+          .section-progress{--parallax-shift:calc((var(--section-progress) - .5) * 8px)}
+        }
+        @media (max-width: 640px){
+          .motion-reveal{transform:translate3d(0,10px,0) scale(.998);transition-duration:380ms}
+          .section-progress{--parallax-shift:calc((var(--section-progress) - .5) * 4px)}
+        }
+        @media (prefers-reduced-motion: reduce){
+          .motion-reveal,.motion-reveal.is-visible{opacity:1;transform:none;transition:none;filter:none}
+          .section-progress .phase-header-card{transform:none;transition:none}
+        }

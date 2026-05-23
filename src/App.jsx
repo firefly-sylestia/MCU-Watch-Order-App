@@ -888,6 +888,7 @@ export default function MCUViewer() {
   const [posterExportState, setPosterExportState] = useState({ active: false, done: 0, total: 0, message: '' });
   const [posterExportFailures, setPosterExportFailures] = useState({});
   const [settingsOpen,   setSettingsOpen]   = useState(false);
+  const [replayMotion] = useState(false);
   const [showAllFiltersOverride, setShowAllFiltersOverride] = useState(false);
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
@@ -1003,6 +1004,43 @@ export default function MCUViewer() {
   }, [scrollTuning]);
 
   const overlayActive = Boolean(settingsOpen || analyticsOpen || detailItem || sidebarOpen);
+  const reduceMotion = useMemo(() => (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches), []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || reduceMotion) return undefined;
+    const motionTargets = Array.from(document.querySelectorAll('.motion-reveal'));
+    if (!motionTargets.length || typeof IntersectionObserver !== 'function') return undefined;
+    const seen = new WeakSet();
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const el = entry.target;
+        if (!entry.isIntersecting) return;
+        if (!replayMotion && seen.has(el)) return;
+        el.classList.add('is-visible');
+        seen.add(el);
+      });
+    }, { threshold: 0.18, rootMargin: '0px 0px -20% 0px' });
+    motionTargets.forEach(el => observer.observe(el));
+
+    const onScroll = () => {
+      const vh = window.innerHeight || 900;
+      document.querySelectorAll('.section-progress').forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        const start = vh * 0.85;
+        const end = -rect.height * 0.2;
+        const progress = Math.max(0, Math.min(1, (start - rect.top) / (start - end || 1)));
+        el.style.setProperty('--section-progress', progress.toFixed(4));
+      });
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, [reduceMotion, replayMotion]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -3243,7 +3281,7 @@ export default function MCUViewer() {
           )}
 
           {viewMode === 'calendar' ? (
-            <section className='curvy-panel calendar-section' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
+            <section className='curvy-panel calendar-section motion-reveal section-progress' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
               <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
               <div style={{ marginBottom: 12, color: T.textMuted, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.2 }}>Grouped by month / quarter / year</div>
               {Object.entries(calendarItems.grouped).map(([group, entries]) => (
@@ -3275,7 +3313,7 @@ export default function MCUViewer() {
             const summaryOpen = expandedPhase === pid;
 
             return (
-              <section key={pid} className="section-up" data-phase={pid}
+              <section key={pid} className="section-up motion-reveal section-progress" data-phase={pid}
                 ref={el => { phaseRefs.current[pid] = el; }}
                 style={{ marginBottom: 36, scrollMarginTop: 'var(--sticky-offset)', position: 'relative' }}>
                 {isCelebrating && (
@@ -3283,7 +3321,7 @@ export default function MCUViewer() {
                 )}
 
                 {/* Phase divider */}
-                <div className="curvy-panel phase-header-card" style={{ '--phase-color': ph.color, border: `1px solid ${T.surfaceBorder}` }}>
+                <div className="curvy-panel phase-header-card motion-stagger motion-reveal" style={{ '--phase-color': ph.color, border: `1px solid ${T.surfaceBorder}` }}>
                   <WatermarkOverlay surface="card" theme={darkMode ? 'dark' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['title', 'progress']} />
                   <div className="phase-title-wrap">
                     <div className="phase-title" style={{ color: ph.color }}>
@@ -3319,7 +3357,7 @@ export default function MCUViewer() {
                 </div>
 
                 {summaryOpen && (
-                  <div className="fade-in curvy-panel" style={{ '--phase-color': ph.color, background: `color-mix(in srgb, ${T.phaseSummaryBg} 72%, transparent)`, border: `1px solid ${T.phaseSummaryBorder}`, borderRadius: 12, padding: '12px 14px 12px 18px', marginBottom: 10, fontSize: 14, color: T.textMuted, lineHeight: 1.6, fontFamily: 'var(--font-marvel-display)', letterSpacing: 0.2 }}>
+                  <div className="fade-in curvy-panel motion-reveal" style={{ '--phase-color': ph.color, background: `color-mix(in srgb, ${T.phaseSummaryBg} 72%, transparent)`, border: `1px solid ${T.phaseSummaryBorder}`, borderRadius: 12, padding: '12px 14px 12px 18px', marginBottom: 10, fontSize: 14, color: T.textMuted, lineHeight: 1.6, fontFamily: 'var(--font-marvel-display)', letterSpacing: 0.2 }}>
                     {ph.summary}
                   </div>
                 )}
