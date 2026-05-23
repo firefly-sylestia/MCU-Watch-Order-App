@@ -861,6 +861,7 @@ export default function MCUViewer() {
   const setPhaseOpen = (next) => dispatchUiMode({ phaseOpen: typeof next === 'function' ? next(uiModeState.phaseOpen) : next });
   const [statusDropdown, setStatusDropdown] = useState(null);
   const [fabMenuOpen, setFabMenuOpen] = useState(true);
+  const [quickActionsDismissed, setQuickActionsDismissed] = useState(false);
   const [browseMode, setBrowseMode] = useState('home');
   const setFilterStatusOpen = (next) => dispatchUiMode({ filterStatusOpen: typeof next === 'function' ? next(uiModeState.filterStatusOpen) : next });
   const setDockStatusOpen = (next) => dispatchUiMode({ dockStatusOpen: typeof next === 'function' ? next(uiModeState.dockStatusOpen) : next });
@@ -1222,7 +1223,11 @@ export default function MCUViewer() {
       clearTimeout(isScrolling._t);
       clearTimeout(scrollSaveTimer);
       isScrolling._t = setTimeout(() => { isScrolling.current = false; }, 150);
-      scrollSaveTimer = setTimeout(() => setScrollCheckpoint(getCurrentScrollTop()), 220);
+      scrollSaveTimer = setTimeout(() => {
+        const nextTop = getCurrentScrollTop();
+        setScrollCheckpoint(nextTop);
+        if (!quickActionsDismissed && nextTop > 28) setQuickActionsDismissed(true);
+      }, 220);
     };
     el?.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -1258,11 +1263,10 @@ export default function MCUViewer() {
 
   const scrollToListTop = useCallback(() => {
     const container = mainRef.current;
-    if (container && container.scrollHeight > container.clientHeight + 1) {
-      container.scrollTo({ top: 0, behavior: 'auto' });
-      return;
-    }
-    window.scrollTo({ top: 0, behavior: 'auto' });
+    if (container) container.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (document?.documentElement) document.documentElement.scrollTop = 0;
+    if (document?.body) document.body.scrollTop = 0;
   }, []);
 
   const scrollTo = id => {
@@ -3332,7 +3336,7 @@ export default function MCUViewer() {
           </div>
         )}
       </div>
-      <div className="floating-controls" style={detailItem || analyticsOpen || settingsOpen || sidebarOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
+      <div className="floating-controls" style={detailItem || analyticsOpen || settingsOpen || sidebarOpen || quickActionsDismissed ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
         <button
           type="button"
           className="fab-primary"
@@ -3415,14 +3419,14 @@ export default function MCUViewer() {
           )}
 
           {viewMode === 'calendar' ? (
-            <section data-motion="section" className='curvy-panel calendar-section motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
+            <section data-motion="section" className='curvy-panel calendar-section motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, borderRadius: 20, padding: 18 }}>
               <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', color: 'var(--theme-text-primary)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
               <div style={{ marginBottom: 12, color: T.textMuted, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.2 }}>Grouped by month / quarter / year</div>
               {Object.entries(calendarItems.grouped).map(([group, entries]) => (
                 <div key={group}>
                   <div className="calendar-group-header">{group}</div>
                   {entries.map(({ item, rawDate, label, releaseStatus, hasRealDate }) => (
-                    <div key={`${group}-${item.id}`} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
+                    <div key={`${group}-${item.id}`} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)' }}>
                       <div style={{ fontSize: 11, color: releaseStatus === 'upcoming' ? 'var(--theme-warning)' : T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
                       <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
                       <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left', textShadow: '0 1px 2px color-mix(in srgb, var(--theme-bg) 35%, transparent)' }}>

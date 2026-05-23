@@ -2308,3 +2308,65 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   color:inherit !important;
   filter:none !important;
 }
+
+/* ===== 2026 UI background redesign pass: adaptive Marvel/DC surfaces ===== */
+:root {
+  --bg-aurora: radial-gradient(120% 120% at 6% -4%, color-mix(in srgb,var(--theme-accent) 22%, transparent), transparent 58%), radial-gradient(120% 120% at 92% 0%, color-mix(in srgb,var(--theme-accent-alt) 24%, transparent), transparent 54%), linear-gradient(165deg, color-mix(in srgb,var(--theme-bg) 92%, #04070f), color-mix(in srgb,var(--theme-surface) 76%, #0c1321));
+  --panel-modern: linear-gradient(150deg, color-mix(in srgb,var(--theme-surface) 94%, rgba(255,255,255,0.02)), color-mix(in srgb,var(--theme-bg) 86%, rgba(12,17,31,0.45)));
+}
+
+[data-color-mode="light"] {
+  --bg-aurora: radial-gradient(120% 120% at 6% -4%, color-mix(in srgb,var(--theme-accent) 12%, #ffffff), transparent 62%), radial-gradient(120% 120% at 96% 0%, color-mix(in srgb,var(--theme-accent-alt) 14%, #ffffff), transparent 58%), linear-gradient(160deg, #ffffff 0%, color-mix(in srgb,var(--theme-surface) 88%, #f8fafc) 60%, #eef3ff 100%);
+  --panel-modern: linear-gradient(145deg, color-mix(in srgb,#ffffff 92%, var(--theme-surface)), color-mix(in srgb,#f8fafc 88%, var(--theme-bg)));
+}
+
+.list-mode-switch,
+.sidebar-menu,
+.settings-menu,
+.analytics-shell,
+.phase-selector-rail,
+.calendar-section,
+.rrow,
+.floating-controls .bottom-action-dock {
+  background-image: var(--panel-modern) !important;
+  backdrop-filter: blur(12px) saturate(130%);
+  -webkit-backdrop-filter: blur(12px) saturate(130%);
+}
+
+.phase-selector-rail,
+.sidebar-menu,
+.settings-menu,
+.analytics-shell,
+.calendar-section,
+.floating-controls .bottom-action-dock {
+  border: 1px solid color-mix(in srgb,var(--theme-border) 74%, rgba(255,255,255,0.18)) !important;
+  box-shadow: 0 14px 34px rgba(2, 8, 23, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.calendar-section {
+  border-radius: 22px !important;
+  overflow: hidden;
+}
+
+.calendar-group-header {
+  background: linear-gradient(90deg, color-mix(in srgb,var(--theme-accent) 14%, transparent), color-mix(in srgb,var(--theme-accent-alt) 16%, transparent));
+  border: 1px solid color-mix(in srgb,var(--theme-border) 68%, transparent);
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin: 14px 0 10px;
+}
+
+.calendar-row {
+  border-radius: 14px !important;
+  border: 1px solid color-mix(in srgb,var(--theme-border) 64%, transparent);
+  margin: 8px 0;
+}
+
+.rrow {
+  border-color: color-mix(in srgb,var(--theme-border) 80%, rgba(255,255,255,0.14)) !important;
+}
+
+.floating-controls {
+  transition: opacity .2s ease, transform .2s ease, visibility .2s;
+}
+
