@@ -611,7 +611,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   const hideWatchToggle = releaseStatus === 'upcoming';
   return (
     <div>
-      <div className={`rrow type-${item.type} ${isExpanded ? 'curvy-selected' : ''}`} style={{ opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow, ...(isWatched ? { background: 'color-mix(in srgb, var(--theme-watched-bg) 62%, transparent)' } : {}) }}>
+      <div className={`rrow type-${item.type} row-status-${item.status} ${isExpanded ? 'curvy-selected' : ''}`} style={{ opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow, ...(isWatched ? { background: 'color-mix(in srgb, var(--theme-watched-bg) 62%, transparent)' } : {}) }}>
         <div className={`row-index ${isWatched ? 'is-watched' : ''}`}>
           {bulkSelectMode ? (
             <input
@@ -947,6 +947,8 @@ export default function MCUViewer() {
       if (next) {
         setSettingsOpen(false);
         setAnalyticsOpen(false);
+        setStatusDropdown(null);
+        setDockStatusOpen(false);
       }
       return next;
     });
@@ -957,6 +959,8 @@ export default function MCUViewer() {
       if (next) {
         setSidebarOpen(false);
         setAnalyticsOpen(false);
+        setStatusDropdown(null);
+        setDockStatusOpen(false);
       }
       return next;
     });
@@ -964,6 +968,8 @@ export default function MCUViewer() {
   const openAnalyticsPanel = useCallback(() => {
     setSidebarOpen(false);
     setSettingsOpen(false);
+    setStatusDropdown(null);
+    setDockStatusOpen(false);
     setAnalyticsOpen(true);
   }, []);
   const [desktopTextScale, setDesktopTextScale] = useState(initialUiState.desktopTextScale);
