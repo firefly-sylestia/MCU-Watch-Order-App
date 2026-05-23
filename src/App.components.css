@@ -2398,10 +2398,10 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   gap: 4px !important;
 }
 .title-btn .title-main{
-  font-family: var(--font-title, "Sora", "Plus Jakarta Sans", "Inter", system-ui, sans-serif) !important;
-  font-size: clamp(13.5px, 1.02vw, 17px) !important;
+  font-family: var(--font-ui) !important;
+  font-size: clamp(13px, 0.98vw, 16px) !important;
   line-height: 1.28 !important;
-  font-weight: 620 !important;
+  font-weight: 600 !important;
   letter-spacing: 0.008em !important;
   -webkit-line-clamp: 2;
 }
@@ -2413,5 +2413,5 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 }
 @media (max-width: 767px){
   .title-btn{min-height:56px !important;}
-  .title-btn .title-main{font-size:clamp(13px,3.7vw,15px) !important;line-height:1.24 !important;}
+  .title-btn .title-main{font-size:clamp(12.5px,3.55vw,14.5px) !important;line-height:1.24 !important;}
 }
