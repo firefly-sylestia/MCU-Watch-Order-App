@@ -3158,14 +3158,6 @@ export default function MCUViewer() {
                   : (darkMode ? 'Whatever It Takes' : 'Part of the Journey is the End')}
               </div>
             </div>
-            <div className="header-mode-switches">
-              <div className="header-mode-chip" role="button" tabIndex={0} aria-label="Toggle day and night mode"
-                onClick={() => setDarkMode(d => !d)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDarkMode(d => !d); } }}>
-                {darkMode ? <Moon size={13} /> : <Sun size={13} />}
-                {darkMode ? 'Night Mode' : 'Day Mode'}
-              </div>
-            </div>
           </div>
         </div>
       </header>
