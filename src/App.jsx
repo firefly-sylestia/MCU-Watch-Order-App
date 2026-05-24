@@ -46,6 +46,7 @@ const Tv        = p => <Icon {...p}><rect x="2" y="7" width="20" height="15" rx=
 const Zap       = p => <Icon {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></Icon>;
 const ChevDown  = p => <Icon {...p}><path d="m6 9 6 6 6-6"/></Icon>;
 const ChevRight = p => <Icon {...p}><path d="m9 6 6 6-6 6"/></Icon>;
+const ArrowUpDown = p => <Icon {...p}><path d="m7 7 5-5 5 5"/><path d="M12 2v20"/><path d="m17 17-5 5-5-5"/></Icon>;
 const Check     = p => <Icon {...p}><path d="M20 6 9 17l-5-5"/></Icon>;
 const Clock     = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></Icon>;
 const Heart     = p => <Icon {...p}><path d="M12 20.8s-7.4-4.7-9.4-8.7C1 9.3 2.8 5.2 6.2 5.2c2.2 0 3.6 1.2 4.5 2.6.9-1.4 2.3-2.6 4.5-2.6 3.4 0 5.2 4.1 3.6 6.9-2 4-9.4 8.7-9.4 8.7z"/></Icon>;
