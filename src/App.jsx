@@ -667,9 +667,11 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   const TypeIcon = typeMeta.Icon;
   const RowStatusIcon = statusMeta.Icon;
   const hideWatchToggle = releaseStatus === 'upcoming';
+  const phaseColor = ph?.color || 'var(--theme-accent)';
+  const phaseGlow = ph?.glow || 'color-mix(in srgb, var(--theme-accent) 35%, transparent)';
   return (
     <div>
-      <div className={`rrow type-${item.type} row-status-${item.status} ${isExpanded ? 'curvy-selected' : ''}`} style={{ opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow, ...(isWatched ? { background: 'color-mix(in srgb, var(--theme-watched-bg) 62%, transparent)' } : {}) }}>
+      <div className={`rrow type-${item.type} row-status-${item.status} ${isExpanded ? 'curvy-selected' : ''}`} style={{ opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': phaseColor, '--phase-glow': phaseGlow, ...(isWatched ? { background: 'color-mix(in srgb, var(--theme-watched-bg) 62%, transparent)' } : {}) }}>
         <div className={`row-index ${isWatched ? 'is-watched' : ''}`}>
           {bulkSelectMode ? (
             <input
@@ -3595,7 +3597,7 @@ export default function MCUViewer() {
               ))}
             </section>
           ) : phaseKeys.map(pid => {
-            const ph = currentPhases.find(p => p.id === pid);
+            const ph = currentPhases.find(p => p.id === pid) || { id: pid, name: `Phase ${pid}`, color: 'var(--theme-accent)', glow: 'color-mix(in srgb, var(--theme-accent) 35%, transparent)', tagline: 'Story Arc', summary: 'This phase groups related entries in your current universe.' };
             const rows = grouped[pid];
             const done = rows.filter(r => r.status === 'watched').length;
             const phasePct = rows.length ? Math.round((done / rows.length) * 100) : 0;
