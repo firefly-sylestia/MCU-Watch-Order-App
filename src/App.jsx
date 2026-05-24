@@ -28,6 +28,9 @@ import {
 } from './data/mcuData';
 import { DC_RAW, DC_PHASES, DC_CORE_IDS } from './data/dcData';
 import { UNIVERSE_META } from './constants/universeSwitch';
+import { TIMELINE_MODES, TIMELINE_MODE_IDS, CHARACTER_POV_TITLE_SETS, STORY_ORDER_OVERRIDES } from './data/timelineModes';
+import { AFTER_CREDITS, AFTER_CREDITS_DEFAULT, DIRECTOR_DATA } from './data/afterCreditsData';
+import { TRAILER_DATA, trailerEmbedUrl } from './data/trailerData';
 
 // ─── Icon primitives ────────────────────────────────────────────────────────
 const Icon = ({ children, size = 16, style = {} }) => (
@@ -131,7 +134,7 @@ const fuzzyIncludes = (haystack, needle) => {
   return false;
 };
 
-const matchesSearch = (item, query) => {
+const matchesSearch = (item, query, extras = {}) => {
   const q = normalizeSearchText(query);
   if (!q) return true;
   const corpus = normalizeSearchText([
@@ -143,6 +146,9 @@ const matchesSearch = (item, query) => {
     item.type,
     item.status,
     item.phase ? `phase ${item.phase}` : '',
+    extras.director || '',
+    ...(extras.connectsTo || []),
+    extras.timelineLabel || '',
   ].filter(Boolean).join(' '));
   return fuzzyIncludes(corpus, q);
 };
@@ -181,7 +187,7 @@ const UI_STATE_DEFAULTS = {
   filtersOpen: false,
   viewMode: 'list',
   densityMode: 'comfortable',
-  timelineMode: 'sacred',
+  timelineMode: 'release',
   autoHideStatuses: false,
   performanceMode: true,
   desktopTextScale: 1,
@@ -196,7 +202,7 @@ const VALID_PHASES = new Set([0, ...PHASES.map(phase => phase.id), ...DC_PHASES.
 const VALID_TYPES = new Set([null, ...Object.keys(TYPE_META)]);
 const VALID_STATUSES = new Set([null, ...Object.keys(STATUS_META)]);
 const VALID_DENSITY_MODES = new Set(['comfortable', 'compact']);
-const VALID_TIMELINE_MODES = new Set(['sacred', 'studio', 'whatif']);
+const VALID_TIMELINE_MODES = TIMELINE_MODE_IDS;
 const VALID_DESKTOP_TEXT_SCALES = new Set(DESKTOP_TEXT_SCALES);
 const AUTO_HIDDEN_STATUSES = HIDDEN_FILTER_STATUSES;
 
@@ -907,9 +913,10 @@ export default function MCUViewer() {
     displayLabel: universe === 'dc' ? (choice.dcLabel || choice.label) : choice.label,
     displaySwatch: universe === 'dc' ? (choice.dcSwatch || choice.swatch) : choice.swatch,
   })), [universe]);
-  const [uiModeState, dispatchUiMode] = useReducer((state, action) => ({ ...state, ...action }), { sortOpen: false, phaseOpen: false, filterStatusOpen: false, dockStatusOpen: false, filtersOpen: initialUiState.filtersOpen });
-  const { sortOpen, phaseOpen, filterStatusOpen, dockStatusOpen, filtersOpen } = uiModeState;
+  const [uiModeState, dispatchUiMode] = useReducer((state, action) => ({ ...state, ...action }), { sortOpen: false, phaseOpen: false, filterStatusOpen: false, dockStatusOpen: false, filtersOpen: initialUiState.filtersOpen, timelineOpen: false });
+  const { sortOpen, phaseOpen, filterStatusOpen, dockStatusOpen, filtersOpen, timelineOpen } = uiModeState;
   const setSortOpen = (next) => dispatchUiMode({ sortOpen: typeof next === 'function' ? next(uiModeState.sortOpen) : next });
+  const setTimelineOpen = (next) => dispatchUiMode({ timelineOpen: typeof next === 'function' ? next(uiModeState.timelineOpen) : next });
   const setPhaseOpen = (next) => dispatchUiMode({ phaseOpen: typeof next === 'function' ? next(uiModeState.phaseOpen) : next });
   const [statusDropdown, setStatusDropdown] = useState(null);
   const [fabMenuOpen, setFabMenuOpen] = useState(true);
@@ -943,6 +950,7 @@ export default function MCUViewer() {
   const [metaCache,      setMetaCache]      = useState({});
   const [detailLoading,  setDetailLoading]  = useState(false);
   const [detailPosterFailed, setDetailPosterFailed] = useState(false);
+  const [trailerOpen, setTrailerOpen] = useState(false);
   const { posterCache, setPosterCache, localPosterMap, setLocalPosterMap } = usePosterCache();
   const [posterFetchState, setPosterFetchState] = useState({ active: false, done: 0, total: 0, message: '' });
   const [heroCarouselCache, setHeroCarouselCache] = useState({ signature: '', posters: [] });
@@ -997,21 +1005,7 @@ export default function MCUViewer() {
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   const closeAnalytics = useCallback(() => setAnalyticsOpen(false), []);
-  const closeDetail = useCallback(() => setDetailItem(null), []);
-  const handleInAppBack = useCallback(() => {
-    if (browseMode === 'search') {
-      if (search) setSearch('');
-      setBrowseMode('home');
-      return;
-    }
-    if (browseMode === 'phase') {
-      if (activePhase !== 0) {
-        setActivePhase(0);
-        return;
-      }
-      setBrowseMode('home');
-    }
-  }, [browseMode, search, activePhase]);
+  const closeDetail = useCallback(() => { setDetailItem(null); setTrailerOpen(false); }, []);
   const toggleSidebarPanel = useCallback(() => {
     setSidebarOpen(prev => {
       const next = !prev;
@@ -1048,6 +1042,7 @@ export default function MCUViewer() {
   const headerMinimized = false;
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
+  const timelineRef = useRef(null);
   const phaseRef   = useRef(null);
   const obsRef     = useRef(null);  const isScrolling= useRef(false);
   const mainRef    = useRef(null);
@@ -1319,7 +1314,7 @@ export default function MCUViewer() {
   }, []);
 
   useEffect(() => {
-    const fn = e => { if (sortRef.current && !sortRef.current.contains(e.target)) setSortOpen(false); };
+    const fn = e => { if (sortRef.current && !sortRef.current.contains(e.target)) setSortOpen(false); if (timelineRef.current && !timelineRef.current.contains(e.target)) setTimelineOpen(false); };
     document.addEventListener('mousedown', fn);
     return () => document.removeEventListener('mousedown', fn);
   }, []);
@@ -1553,16 +1548,28 @@ export default function MCUViewer() {
       if (statusFilter && i.status !== statusFilter) return false;
       if (typeFilter && i.type !== typeFilter) return false;
       if (activePhase && i.phase !== activePhase) return false;
-      if (timelineMode === 'studio' && i.order % 2 === 0) return true;
-      if (timelineMode === 'whatif' && i.type !== 'short') return true;
+      if (timelineMode === 'loki' && !CHARACTER_POV_TITLE_SETS.loki.has(i.title)) return false;
+      if (timelineMode === 'wanda' && !CHARACTER_POV_TITLE_SETS.wanda.has(i.title)) return false;
+      if (timelineMode === 'multiverse') {
+        const isMultiverse = /what if|multiverse|loki|deadpool|friendly neighborhood|x-men/i.test(i.title + ' ' + (i.desc || ''));
+        if (!isMultiverse) return false;
+      }
       if (genreFilter !== 'all' && i.type !== genreFilter) return false;
-      return matchesSearch(i, search);
+      const after = AFTER_CREDITS[i.title] || AFTER_CREDITS_DEFAULT;
+      const timelineLabel = TIMELINE_MODES.find(m => m.id === timelineMode)?.label || '';
+      return matchesSearch(i, search, { director: DIRECTOR_DATA[i.title] || '', connectsTo: after.connectsTo || [], timelineLabel });
     }).sort((a, b) => {
       if (sortBy === 'title') return a.title.localeCompare(b.title);
       if (sortBy === 'year') return a.year - b.year;
       if (sortBy === 'runtime') return (a.episodes || (a.type === 'film' ? 2.3 : 6)) - (b.episodes || (b.type === 'film' ? 2.3 : 6));
       if (sortBy === 'watched') return (b.watchedDate || '').localeCompare(a.watchedDate || '');
       if (sortBy === 'status') return (STATUS_SORT_ORDER[a.status] ?? 99) - (STATUS_SORT_ORDER[b.status] ?? 99);
+      if (sortBy === 'order' && timelineMode === 'release') return a.year - b.year || a.order - b.order;
+      if (sortBy === 'order' && timelineMode === 'chronological') {
+        const ao = STORY_ORDER_OVERRIDES.get(a.title) ?? a.order + 100;
+        const bo = STORY_ORDER_OVERRIDES.get(b.title) ?? b.order + 100;
+        return ao - bo || a.order - b.order;
+      }
       return a.order - b.order;
     });
     const g = {};
@@ -1573,6 +1580,16 @@ export default function MCUViewer() {
 
 
 
+
+  const getAfterCreditsMeta = useCallback((item) => {
+    const base = AFTER_CREDITS[item?.title] || AFTER_CREDITS_DEFAULT;
+    if (!item) return base;
+    const releaseSorted = [...items].sort((a,b)=> (a.year-b.year) || (a.order-b.order));
+    const idx = releaseSorted.findIndex(x => x.id === item.id);
+    const nextTitle = idx >= 0 ? releaseSorted[idx + 1]?.title : null;
+    const connectsTo = base.connectsTo?.length ? base.connectsTo : (nextTitle ? [nextTitle] : []);
+    return { ...base, connectsTo };
+  }, [items]);
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
     [items, listMode, coreIds]
@@ -3329,6 +3346,21 @@ export default function MCUViewer() {
               <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             <button className="filters-trigger" onClick={() => { const keys = Object.keys(SORT_LABELS); const idx = keys.indexOf(sortBy); setSortBy(keys[(idx + 1) % keys.length]); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${sortBy === 'order' ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: sortBy === 'order' ? 'var(--theme-accent)' : T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}><ArrowUpDown size={13} />{SORT_LABELS[sortBy]}</button>
+            <div ref={timelineRef} style={{ position: 'relative' }}>
+              <button className="filters-trigger" onClick={() => setTimelineOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid color-mix(in srgb, var(--theme-accent) 42%, var(--theme-border))`, background: 'linear-gradient(135deg, color-mix(in srgb, #ed1d24 22%, var(--theme-surface)) 0%, color-mix(in srgb, #0063e5 18%, var(--theme-surface)) 100%)', color: 'var(--theme-text)', cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.2, boxShadow: '0 10px 20px rgba(0,0,0,.18)' }}>
+                <Layers size={13} /> {TIMELINE_MODES.find(m => m.id === timelineMode)?.label || 'Timeline'} <ChevDown size={11} style={{ transform: timelineOpen ? 'rotate(180deg)' : 'none' }}/>
+              </button>
+              {timelineOpen && (
+                <div className="dropdown-pop filter-dropdown" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1450, minWidth: 300, padding: 8, background: 'linear-gradient(160deg, color-mix(in srgb, #ed1d24 10%, var(--theme-surface)) 0%, color-mix(in srgb, #0b0f2d 78%, var(--theme-surface)) 52%, color-mix(in srgb, #ffd447 10%, var(--theme-surface)) 100%)' }}>
+                  {TIMELINE_MODES.map(mode => (
+                    <button key={mode.id} className={`sopt ${timelineMode === mode.id ? 'picked' : ''}`} style={{ width: '100%', textAlign: 'left', marginBottom: 4, borderRadius: 10, border: timelineMode === mode.id ? '1px solid color-mix(in srgb, var(--theme-accent) 60%, transparent)' : '1px solid transparent' }} onClick={() => { setTimelineMode(mode.id); setTimelineOpen(false); }}>
+                      <div style={{ fontWeight: 700 }}>{mode.label}</div><div style={{ fontSize: 11, opacity: 0.8 }}>{mode.description}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {renderPhaseSelector()}
             <button className="glass-grad quick-continue-btn" onClick={() => nextUnwatched && openDetail(nextUnwatched)} style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 380, background: 'color-mix(in srgb, var(--theme-surface) 70%, transparent)', backdropFilter: 'blur(12px) saturate(130%)', WebkitBackdropFilter: 'blur(12px) saturate(130%)', cursor: nextUnwatched ? 'pointer' : 'default' }}>
               <span style={{ fontSize: 10, letterSpacing: 1.6, color: T.textMuted, textTransform: 'uppercase' }}>Continue</span>
@@ -3346,21 +3378,6 @@ export default function MCUViewer() {
         {filtersOpen && (
           <div className="filters-open" style={{ padding: '0 48px 12px', maxWidth: 1400, margin: '0 auto' }}>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', overflow: 'visible' }}>
-              {/* Sort */}
-              <div ref={sortRef} style={{ position: 'relative' }}>
-                <button className="fpill filter-pill sort-pill" onClick={() => { const keys = Object.keys(SORT_LABELS); const idx = keys.indexOf(sortBy); setSortBy(keys[(idx + 1) % keys.length]); }}
-                  style={{ color: 'var(--theme-accent)', borderColor: 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'transparent', fontFamily: 'var(--font-marvel-ui)', fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
-                  {SORT_LABELS[sortBy]}
-                  <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-                </button>
-                {sortOpen && (
-                  <div className="dropdown-pop filter-dropdown" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1400, minWidth: 220 }}>
-                    {Object.entries(SORT_LABELS).map(([k, v]) => (
-                      <div key={k} className={`sopt ${sortBy === k ? 'picked' : ''}`} onClick={() => { setSortBy(k); setSortOpen(false); }}>{v}</div>
-                    ))}
-                  </div>
-                )}
-              </div>
               {/* Type pills */}
               {['film', 'series', 'short'].map(t => {
                 const m = TYPE_META[t];
@@ -3653,9 +3670,13 @@ export default function MCUViewer() {
                     <span>{detailItem.title}</span>
                   </div>
                 ) : (
-                  <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : posterSrc(detailItem)} onError={() => setDetailPosterFailed(true)} alt={`${detailItem.title} poster`} />
+                  <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : posterSrc(detailItem)} onError={() => setDetailPosterFailed(true)} alt={`${detailItem.title} poster`} onClick={() => { if (TRAILER_DATA[detailItem.title]?.youtubeId) setTrailerOpen(true); }} style={{ cursor: TRAILER_DATA[detailItem.title]?.youtubeId ? 'pointer' : 'default' }} />
                 )}
-              </div>
+              
+                {!!TRAILER_DATA[detailItem.title]?.youtubeId && (
+                  <button className="fpill" style={{ position: 'absolute', left: 12, bottom: 12, zIndex: 3, background: 'color-mix(in srgb, #ed1d24 22%, var(--theme-surface))', borderColor: 'color-mix(in srgb, #ed1d24 52%, var(--theme-border))' }} onClick={() => setTrailerOpen(true)}><PlayCircle size={13}/>Play Trailer</button>
+                )}
+</div>
 
               <div className="detail-export-content">
                 <div className="detail-sticky-actions">
@@ -3697,12 +3718,15 @@ export default function MCUViewer() {
                 </section>
 
                 <section className="detail-export-panel intel">
-                  <div className="detail-export-panel-head"><span>WATCH INTEL</span></div>
+                  <div className="detail-export-panel-head"><span>WATCH INTEL + AFTER-CREDITS NAVIGATOR</span></div>
                   <div className="detail-intel-list">
                     <div><strong>Release</strong><span>{formatReleaseDate(releaseInfoFor(detailItem).date, detailItem.year, releaseInfoFor(detailItem).label, releaseStatusFor(detailItem))}</span></div>
                     <div><strong>Prerequisite</strong><span>{detailItem.prereq}</span></div>
                     <div><strong>Status</strong><span>{STATUS_META[detailItem.status]?.label}</span></div>
-                    <div><strong>Director</strong><span>{detailData?.Director && detailData.Director !== 'N/A' ? detailData.Director : 'Director data coming soon'}</span></div>
+                    <div><strong>Post-credit scenes</strong><span>{getAfterCreditsMeta(detailItem).count ?? 'Unknown'}</span></div>
+                    <div><strong>Watch now?</strong><span>{getAfterCreditsMeta(detailItem).advice === 'must' ? 'Must watch now' : (getAfterCreditsMeta(detailItem).advice === 'can-skip' ? 'Can skip now' : 'Check later')}</span></div>
+                    <div><strong>Connects to</strong><span>{getAfterCreditsMeta(detailItem).connectsTo.length ? getAfterCreditsMeta(detailItem).connectsTo.join(', ') : 'No explicit setup tracked'}</span></div>
+                    <div><strong>Director</strong><span>{detailData?.Director && detailData.Director !== 'N/A' ? detailData.Director : (DIRECTOR_DATA[detailItem.title] || 'Director data coming soon')}</span></div>
                     <div><strong>Cast</strong><span>{detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</span></div>
                   </div>
                 </section>
@@ -3720,6 +3744,20 @@ export default function MCUViewer() {
                   <button className="fpill glass-panel detail-btn" onClick={() => exportPosterForItem(detailItem)}><Download size={14}/> Export Details Card</button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {trailerOpen && detailItem && TRAILER_DATA[detailItem.title]?.youtubeId && (
+        <div className="detail-backdrop" onClick={() => setTrailerOpen(false)} role="dialog" aria-label="Trailer player">
+          <div className="detail-card glass-panel" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 980, width: 'calc(100% - 24px)', padding: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <strong style={{ fontSize: 14 }}>{detailItem.title} · Trailer</strong>
+              <button className="fpill" onClick={() => setTrailerOpen(false)}><X size={12}/>Close</button>
+            </div>
+            <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--theme-border)' }}>
+              <iframe title={`${detailItem.title} trailer`} src={trailerEmbedUrl(TRAILER_DATA[detailItem.title].youtubeId)} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
             </div>
           </div>
         </div>
