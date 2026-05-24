@@ -1368,6 +1368,14 @@ export default function MCUViewer() {
   }, []);
 
   const scrollToListTop = useCallback(() => {
+    const smoothState = desktopSmoothScrollStateRef.current;
+    if (smoothState?.raf) cancelAnimationFrame(smoothState.raf);
+    if (smoothState) {
+      smoothState.raf = null;
+      smoothState.velocity = 0;
+      smoothState.lastTs = 0;
+    }
+    setScrollCheckpoint(0);
     const container = mainRef.current;
     if (container && container.scrollHeight > container.clientHeight + 1) {
       container.scrollTo({ top: 0, behavior: 'auto' });
@@ -1638,6 +1646,9 @@ export default function MCUViewer() {
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
     [items, listMode, coreIds]
   );
+  const bookmarkedItems = useMemo(() => activeItems.filter((item) => Boolean(bookmarks[item.id])), [activeItems, bookmarks]);
+  const savedWatchedItems = useMemo(() => bookmarkedItems.filter((item) => item.status === 'watched'), [bookmarkedItems]);
+  const savedWatchLaterItems = useMemo(() => bookmarkedItems.filter((item) => ['plan-to-watch', 'watching', 'on-hold'].includes(item.status)), [bookmarkedItems]);
 
 
   useEffect(() => {
@@ -3622,7 +3633,46 @@ export default function MCUViewer() {
                 </div>
               ))}
             </section>
-          ) : phaseKeys.map(pid => {
+          ) : (
+            <>
+          <section data-motion="section" className="saved-library-shell motion-section motion-pop" style={{ border: `1px solid ${T.surfaceBorder}` }}>
+            <div className="saved-library-head">
+              <div>
+                <div className="saved-library-kicker">Bookmarks</div>
+                <h3>Saved Watch Hub</h3>
+              </div>
+              <span className="saved-library-count">{bookmarkedItems.length} saved</span>
+            </div>
+            {bookmarkedItems.length ? (
+              <div className="saved-library-grid">
+                <article>
+                  <header>Watched</header>
+                  <div className="saved-library-list">
+                    {savedWatchedItems.length ? savedWatchedItems.map((item) => (
+                      <button key={`saved-watched-${item.id}`} className="saved-description-card" onClick={() => openDetail(item)}>
+                        <span className="saved-description-title">{item.title}</span>
+                        <span className="saved-description-meta">{item.year} · {getSafeTypeMeta(item.type).label}</span>
+                        <span className="saved-description-copy line-clamp-2">{item.desc || 'Saved in watched bookmarks.'}</span>
+                      </button>
+                    )) : <p className="saved-library-empty">No watched bookmarks yet.</p>}
+                  </div>
+                </article>
+                <article>
+                  <header>Watch Later</header>
+                  <div className="saved-library-list">
+                    {savedWatchLaterItems.length ? savedWatchLaterItems.map((item) => (
+                      <button key={`saved-later-${item.id}`} className="saved-description-card" onClick={() => openDetail(item)}>
+                        <span className="saved-description-title">{item.title}</span>
+                        <span className="saved-description-meta">{STATUS_META[item.status]?.label || 'Watchlist'} · {item.year}</span>
+                        <span className="saved-description-copy line-clamp-2">{item.desc || 'Queued for later viewing.'}</span>
+                      </button>
+                    )) : <p className="saved-library-empty">Nothing in watch later right now.</p>}
+                  </div>
+                </article>
+              </div>
+            ) : <p className="saved-library-empty">Bookmark titles from the list to build your watched and watch later library.</p>}
+          </section>
+          {phaseKeys.map(pid => {
             const ph = currentPhases.find(p => p.id === pid);
             const rows = grouped[pid];
             const done = rows.filter(r => r.status === 'watched').length;
@@ -3721,6 +3771,8 @@ export default function MCUViewer() {
               </section>
             );
           })}
+            </>
+          )}
 
           <div data-motion="section" className="motion-section motion-pop" style={{ textAlign: 'center', marginTop: 44, fontFamily: 'var(--font-marvel-ui)', fontSize: 11, color: 'var(--theme-text-muted)', letterSpacing: 2.2, fontWeight: 700 }}>
             Made with ♥️ by Marvel Fan
