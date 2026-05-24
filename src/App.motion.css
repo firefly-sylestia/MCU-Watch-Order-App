@@ -30,26 +30,6 @@
         .progress-gradient{background:var(--phase-gradient, linear-gradient(90deg,var(--theme-accent), var(--theme-accent-alt)));background-size:200% 100%;animation:gradientPulse 3s ease-in-out infinite alternate}
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
         .performance-mode *{animation:none !important}
-        /* Keep critical overlay feedback alive in performance mode */
-        .performance-mode .detail-backdrop{animation:detailOverlayInPerf 120ms ease-out both !important}
-        .performance-mode .detail-card,
-        .performance-mode .detail-export-shell{animation:detailCardInPerf 160ms cubic-bezier(.2,.78,.2,1) both !important}
-        .performance-mode .detail-export-content > *{animation:detailItemInPerf 180ms ease-out both !important}
-        .performance-mode .detail-export-content > *:nth-child(2){animation-delay:20ms !important}
-        .performance-mode .detail-export-content > *:nth-child(3){animation-delay:40ms !important}
-        .performance-mode .fpill,
-        .performance-mode .wbtn,
-        .performance-mode .status-pill,
-        .performance-mode .meta-chip{transition:transform 120ms ease, background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease, color 120ms ease}
-        .performance-mode .fpill:hover,
-        .performance-mode .wbtn:hover,
-        .performance-mode .status-pill:hover{transform:translateY(-1px)}
-        .performance-mode .fpill:active,
-        .performance-mode .wbtn:active,
-        .performance-mode .status-pill:active{transform:scale(.985)}
-        @keyframes detailOverlayInPerf{from{opacity:0}to{opacity:1}}
-        @keyframes detailCardInPerf{from{opacity:0;transform:translateY(10px) scale(.992)}to{opacity:1;transform:translateY(0) scale(1)}}
-        @keyframes detailItemInPerf{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 /* Modernized scroll trigger + section progress motion system */
 .motion-section {
   --section-progress: 0;
