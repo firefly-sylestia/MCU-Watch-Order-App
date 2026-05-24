@@ -3616,6 +3616,7 @@ export default function MCUViewer() {
           ) : phaseKeys.map(pid => {
             const ph = currentPhases.find(p => p.id === pid);
             const rows = grouped[pid];
+            if (!ph || !rows?.length) return null;
             const done = rows.filter(r => r.status === 'watched').length;
             const phasePct = rows.length ? Math.round((done / rows.length) * 100) : 0;
             const isCelebrating = celebPhase === pid;
@@ -3762,20 +3763,40 @@ export default function MCUViewer() {
                 <section className="detail-export-panel story">
                   <div className="detail-export-panel-head">
                     <span>STORY BRIEF</span>
-                    <button
-                      className="fpill glass-panel detail-btn"
-                      style={{ padding: '4px 10px', fontSize: 10, borderRadius: 999 }}
-                      onClick={async () => {
-                        if (detailPlotState.active === 'primary') {
-                          if (!detailPlotState.secondary) await fetchSecondaryPlotForDetail();
-                          setDetailPlotState(prev => ({ ...prev, active: 'secondary' }));
-                        } else {
-                          setDetailPlotState(prev => ({ ...prev, active: 'primary' }));
-                        }
-                      }}
-                    >
-                      <SwitchIcon size={11} /> {detailPlotState.active === 'primary' ? 'TMDB' : (detailPlotState.loadingSecondary ? 'Loading…' : 'OMDb')}
-                    </button>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      <button
+                        className="fpill glass-panel detail-btn"
+                        aria-label={spoilerSafe ? 'Disable spoiler safe mode' : 'Enable spoiler safe mode'}
+                        title={spoilerSafe ? 'Spoiler safe on' : 'Spoiler safe off'}
+                        onClick={() => setSpoilerSafeMode(v => !v)}
+                        style={{
+                          padding: '4px 9px',
+                          minWidth: 34,
+                          justifyContent: 'center',
+                          borderRadius: 999,
+                          borderColor: spoilerSafe ? 'var(--theme-warning)' : 'var(--theme-border)',
+                          background: spoilerSafe ? 'var(--theme-warning-soft)' : 'var(--theme-surface)',
+                          color: spoilerSafe ? 'var(--theme-warning)' : 'var(--theme-text-secondary)',
+                          transition: 'all 0.16s ease'
+                        }}
+                      >
+                        <EyeOff size={11} />
+                      </button>
+                      <button
+                        className="fpill glass-panel detail-btn"
+                        style={{ padding: '4px 10px', fontSize: 10, borderRadius: 999 }}
+                        onClick={async () => {
+                          if (detailPlotState.active === 'primary') {
+                            if (!detailPlotState.secondary) await fetchSecondaryPlotForDetail();
+                            setDetailPlotState(prev => ({ ...prev, active: 'secondary' }));
+                          } else {
+                            setDetailPlotState(prev => ({ ...prev, active: 'primary' }));
+                          }
+                        }}
+                      >
+                        <SwitchIcon size={11} /> {detailPlotState.active === 'primary' ? 'TMDB' : (detailPlotState.loadingSecondary ? 'Loading…' : 'OMDb')}
+                      </button>
+                    </div>
                   </div>
                   <p style={{ filter: spoilerSafe ? 'blur(5px)' : 'none', transition: 'filter 0.18s ease' }}>
                     {detailPlotState.active === 'secondary'
@@ -3799,9 +3820,6 @@ export default function MCUViewer() {
                 </section>
 
                 <div className="detail-export-actions">
-                  <button className="fpill glass-panel detail-btn" onClick={() => setSpoilerSafeMode(v => !v)} style={{ background: spoilerSafe ? 'var(--theme-warning-soft)' : undefined, borderColor: spoilerSafe ? 'var(--theme-warning)' : undefined }}>
-                    Spoiler Safe: {spoilerSafe ? 'On' : 'Off'}
-                  </button>
                   <button
                     className={`fpill glass-panel detail-btn ${myLikes[detailItem.id] ? 'is-active' : ''}`}
                     onClick={() => setMyLikes(prev => ({ ...prev, [detailItem.id]: !prev[detailItem.id] }))}
