@@ -1583,13 +1583,11 @@ export default function MCUViewer() {
 
   const getAfterCreditsMeta = useCallback((item) => {
     const base = AFTER_CREDITS[item?.title] || AFTER_CREDITS_DEFAULT;
-    if (!item) return base;
-    const releaseSorted = [...items].sort((a,b)=> (a.year-b.year) || (a.order-b.order));
-    const idx = releaseSorted.findIndex(x => x.id === item.id);
-    const nextTitle = idx >= 0 ? releaseSorted[idx + 1]?.title : null;
-    const connectsTo = base.connectsTo?.length ? base.connectsTo : (nextTitle ? [nextTitle] : []);
-    return { ...base, connectsTo };
-  }, [items]);
+    return {
+      ...base,
+      connectsTo: Array.isArray(base.connectsTo) ? base.connectsTo : [],
+    };
+  }, []);
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
     [items, listMode, coreIds]
@@ -3750,13 +3748,16 @@ export default function MCUViewer() {
       )}
 
       {trailerOpen && detailItem && TRAILER_DATA[detailItem.title]?.youtubeId && (
-        <div className="detail-backdrop" onClick={() => setTrailerOpen(false)} role="dialog" aria-label="Trailer player">
-          <div className="detail-card glass-panel" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 980, width: 'calc(100% - 24px)', padding: 12 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <strong style={{ fontSize: 14 }}>{detailItem.title} · Trailer</strong>
-              <button className="fpill" onClick={() => setTrailerOpen(false)}><X size={12}/>Close</button>
+        <div className="detail-backdrop trailer-backdrop" onClick={() => setTrailerOpen(false)} role="dialog" aria-label="Trailer player">
+          <div className="detail-card glass-panel trailer-shell" onClick={(e) => e.stopPropagation()}>
+            <div className="trailer-head">
+              <div>
+                <div className="trailer-eyebrow">Official trailer</div>
+                <strong className="trailer-title">{detailItem.title}</strong>
+              </div>
+              <button className="fpill trailer-close" onClick={() => setTrailerOpen(false)}><X size={12}/>Close</button>
             </div>
-            <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--theme-border)' }}>
+            <div className="trailer-frame">
               <iframe title={`${detailItem.title} trailer`} src={trailerEmbedUrl(TRAILER_DATA[detailItem.title].youtubeId)} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
             </div>
           </div>

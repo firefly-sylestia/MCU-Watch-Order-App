@@ -2440,3 +2440,31 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 [data-color-mode="light"] .export-premium-quick,[data-color-mode="light"] .export-card-studio-redesign{box-shadow:0 12px 24px rgba(15,23,42,.12),inset 0 1px 0 rgba(255,255,255,.84)}
 @media (max-width:900px){.export-quick-grid{grid-template-columns:minmax(0,1fr)}}
 @media (prefers-reduced-motion:reduce){.export-action,.export-card-studio-redesign .fpill{transition:none}}
+
+.trailer-backdrop{
+  background: radial-gradient(circle at 14% 10%, color-mix(in srgb,var(--theme-accent) 22%, transparent), transparent 46%), rgba(0,0,0,.74);
+  animation: fadeIn .18s ease;
+}
+.trailer-shell{
+  max-width: 1080px;
+  width: min(1080px, calc(100% - 22px));
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb,var(--theme-accent) 34%, var(--theme-border));
+  background: color-mix(in srgb,var(--theme-surface) 88%, transparent);
+  box-shadow: 0 30px 65px rgba(2,8,23,.5);
+}
+.trailer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.trailer-eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--theme-text-secondary);font-weight:700}
+.trailer-title{font-size:clamp(17px,2.5vw,24px);line-height:1.15;color:var(--theme-text)}
+.trailer-close{min-height:36px}
+.trailer-frame{
+  position:relative;width:100%;padding-top:56.25%;overflow:hidden;
+  border-radius:14px;border:1px solid color-mix(in srgb,var(--theme-border) 88%, transparent);
+  background:color-mix(in srgb,var(--theme-bg) 70%, #000);
+}
+.trailer-frame::after{content:'';position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+[data-color-mode="light"] .trailer-backdrop{background:radial-gradient(circle at 18% 8%, color-mix(in srgb,var(--theme-accent) 16%, #fff), transparent 46%), rgba(15,23,42,.5)}
+[data-color-mode="light"] .trailer-shell{background:color-mix(in srgb,var(--theme-surface) 96%, #fff);box-shadow:0 24px 46px rgba(15,23,42,.16)}
+
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
