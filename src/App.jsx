@@ -3100,8 +3100,49 @@ export default function MCUViewer() {
   const heroBackdropBackgroundSize = isDesktopViewport
     ? `${Math.max(heroBackdropScale - 16, 112)}% auto`
     : `auto ${Math.max(heroBackdropScale - 8, 96)}%`;
+  const [routePath, setRoutePath] = useState(() => (typeof window === 'undefined' ? '/home' : window.location.pathname || '/home'));
+  useEffect(() => {
+    const onPopState = () => setRoutePath(window.location.pathname || '/home');
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+  const navigateTo = useCallback((path) => {
+    if (typeof window === 'undefined') return;
+    if (window.location.pathname !== path) window.history.pushState({}, '', path);
+    setRoutePath(path);
+  }, []);
+  const savedHubItems = useMemo(() => activeItems.filter(i => bookmarks[i.id] || i.status === 'watched'), [activeItems, bookmarks]);
+  const [savedHubExpanded, setSavedHubExpanded] = useState(null);
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}${routePath === '/saved' ? ' saved-hub-route' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+      <div className="route-switcher">
+        <button className="fpill" onClick={() => navigateTo('/home')}>Home</button>
+        <button className="fpill" onClick={() => navigateTo('/search')}>Search</button>
+        <button className="fpill" onClick={() => navigateTo('/saved')}>S.H.I.E.L.D. Vault</button>
+      </div>
+      {routePath === '/saved' && (
+        <section className="saved-hub-shell">
+          <h2>S.H.I.E.L.D. Vault</h2>
+          <p>All bookmarks and watched titles in one Marvel-inspired command center.</p>
+          <div className="saved-hub-grid">
+            {savedHubItems.map(item => (
+              <article key={`hub-${item.id}`} className="saved-hub-card">
+                <button className="saved-hub-title" onClick={() => setSavedHubExpanded(prev => prev === item.id ? null : item.id)}>
+                  <strong>{item.title}</strong>
+                  <span>{bookmarks[item.id] ? 'Bookmarked' : 'Watched'}</span>
+                </button>
+                <div className="saved-hub-meta">Watched: {item.watchedDate ? new Date(item.watchedDate).toLocaleString() : 'Not watched yet'}</div>
+                {savedHubExpanded === item.id && (
+                  <div className="saved-hub-review">
+                    <div>Rating: {Number(myRating[item.id] || 0).toFixed(1)}/10</div>
+                    <textarea value={reviews[item.id] || ''} onChange={(e) => setReviews(prev => ({ ...prev, [item.id]: e.target.value }))} placeholder="Write your review..." rows={3} />
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
       
 
 
