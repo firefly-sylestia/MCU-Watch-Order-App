@@ -2448,6 +2448,10 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 }
 .trailer-backdrop.is-landscape{
   padding:0;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 .trailer-shell{
   max-width: 1320px;
@@ -2464,16 +2468,18 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   max-width:min(1600px,100vw);
 }
 .trailer-backdrop.is-landscape .trailer-shell{
-  position:fixed;
-  left:50%;
-  top:50%;
-  width:min(100dvh,1080px);
-  max-width:min(100dvh,1080px);
-  max-height:min(100dvw,1920px);
-  border-radius:16px;
-  transform:translate(-50%,-50%) rotate(90deg);
-  transform-origin:center center;
+  position:relative;
+  left:auto;
+  top:auto;
   margin:0;
+  width:min(98dvh,1320px);
+  max-width:min(98dvh,1320px);
+  max-height:min(96dvw,980px);
+  border-radius:16px;
+  transform:rotate(90deg) !important;
+  transform-origin:center center;
+  will-change:transform;
+  animation:modalRotateIn 220ms var(--ease-out, ease) both;
 }
 .trailer-shell.is-expanded{max-width:min(1600px,99vw);padding:12px}
 .trailer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
@@ -2486,7 +2492,7 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   border-radius:14px;border:1px solid color-mix(in srgb,var(--theme-border) 88%, transparent);
   background:color-mix(in srgb,var(--theme-bg) 70%, #000);
 }
-.trailer-frame.is-landscape{padding-top:min(46%,86vh)}
+.trailer-frame.is-landscape{padding-top:min(43%,88vh)}
 .trailer-shell.is-expanded .trailer-frame{padding-top:min(56.25%,76vh)}
 .trailer-shell.is-expanded .trailer-frame.is-landscape{padding-top:min(42%,96vh)}
 .trailer-landscape-tip{position:absolute;top:10px;left:10px;z-index:2;padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--theme-accent) 22%, var(--theme-surface));border:1px solid color-mix(in srgb,var(--theme-accent) 52%, var(--theme-border));font:700 10px/1 var(--font-marvel-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--theme-text)}
@@ -2494,8 +2500,9 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 [data-color-mode="light"] .trailer-backdrop.is-landscape{background:radial-gradient(circle at 20% 12%, color-mix(in srgb,var(--theme-accent) 16%, #fff), transparent 44%), rgba(15,23,42,.45)}
 @media (max-width:900px){
   .trailer-backdrop.is-landscape .trailer-shell{
-    width:min(98dvh,760px);
-    max-width:min(98dvh,760px);
+    width:min(96dvh,880px);
+    max-width:min(96dvh,880px);
+    max-height:min(95dvw,700px);
     padding:10px;
   }
   .trailer-backdrop.is-landscape .trailer-frame{
@@ -2524,3 +2531,5 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 
 @keyframes overlayFadeIn{from{opacity:0}to{opacity:1}}
 @keyframes modalRiseIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+@keyframes modalRotateIn{from{opacity:0;transform:rotate(90deg) scale(.975)}to{opacity:1;transform:rotate(90deg) scale(1)}}
