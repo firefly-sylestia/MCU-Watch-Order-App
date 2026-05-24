@@ -3790,7 +3790,9 @@ export default function MCUViewer() {
             </div>
             <div className={`trailer-frame ${trailerLandscape ? 'is-landscape' : ''}`} ref={trailerShellRef}>
               {trailerLandscape && <div className="trailer-landscape-tip">Landscape mode enabled</div>}
-              <iframe title={`${detailItem.title} trailer`} src={trailerEmbedUrl(TRAILER_DATA[detailItem.title].youtubeId)} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
+              <div className={`trailer-video-viewport ${trailerLandscape ? 'is-landscape' : ''}`}>
+                <iframe title={`${detailItem.title} trailer`} src={trailerEmbedUrl(TRAILER_DATA[detailItem.title].youtubeId)} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
+              </div>
             </div>
 
           </div>
