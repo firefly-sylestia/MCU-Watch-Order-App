@@ -2868,11 +2868,20 @@ export default function MCUViewer() {
       if (!detailItem) return;
       const requestId = detailRequestRef.current + 1;
       detailRequestRef.current = requestId;
+
+      const fallback = {
+        Plot: metaCache[detailItem.id]?.plot || detailItem.desc,
+        Year: String(detailItem.year),
+        Released: metaCache[detailItem.id]?.released || '',
+        Actors: metaCache[detailItem.id]?.cast || '',
+        imdbRating: metaCache[detailItem.id]?.rating || 'N/A'
+      };
+      const localFirstData = normalizeDetailData({ item: detailItem, fallback });
+      setDetailData(localFirstData);
       setDetailLoading(true);
-      setDetailData(null);
-      setDetailPosterFailed(false);
-      setDetailPlotState({ active: 'primary', primary: detailItem.desc, secondary: '', loadingSecondary: false, secondaryProvider: 'OMDb' });
-      const fallback = { Plot: metaCache[detailItem.id]?.plot || detailItem.desc, Year: String(detailItem.year), Released: metaCache[detailItem.id]?.released || '', Actors: metaCache[detailItem.id]?.cast || '', imdbRating: metaCache[detailItem.id]?.rating || 'N/A' };
+
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      if (detailRequestRef.current !== requestId) return;
 
       try {
         const [tmdbPoster, tmdbDetails] = await Promise.all([
@@ -2902,7 +2911,7 @@ export default function MCUViewer() {
         }));
       } catch {
         if (detailRequestRef.current !== requestId) return;
-        setDetailData(normalizeDetailData({ item: detailItem, fallback }));
+        setDetailData(localFirstData);
       } finally {
         if (detailRequestRef.current === requestId) setDetailLoading(false);
       }
@@ -3142,9 +3151,9 @@ export default function MCUViewer() {
                 onClick={() => { setListMode(mode.id); setExpandedItem(null); setExpandedPhase(null); setSidebarOpen(false); }}
                 style={{
                   justifyContent: 'space-between',
-                  borderColor: isActive ? mode.color : 'var(--theme-border)',
-                  background: isActive ? `${mode.color}18` : 'var(--theme-surface)',
-                  color: isActive ? mode.color : 'var(--theme-text)',
+                  borderColor: isActive ? (mode?.color || 'var(--theme-accent)') : 'var(--theme-border)',
+                  background: isActive ? `${mode?.color || 'var(--theme-accent)'}18` : 'var(--theme-surface)',
+                  color: isActive ? (mode?.color || 'var(--theme-accent)') : 'var(--theme-text)',
                 }}
               >
                 <span>{mode.label}</span>
@@ -3762,20 +3771,42 @@ export default function MCUViewer() {
                 <section className="detail-export-panel story">
                   <div className="detail-export-panel-head">
                     <span>STORY BRIEF</span>
-                    <button
-                      className="fpill glass-panel detail-btn"
-                      style={{ padding: '4px 10px', fontSize: 10, borderRadius: 999 }}
-                      onClick={async () => {
-                        if (detailPlotState.active === 'primary') {
-                          if (!detailPlotState.secondary) await fetchSecondaryPlotForDetail();
-                          setDetailPlotState(prev => ({ ...prev, active: 'secondary' }));
-                        } else {
-                          setDetailPlotState(prev => ({ ...prev, active: 'primary' }));
-                        }
-                      }}
-                    >
-                      <SwitchIcon size={11} /> {detailPlotState.active === 'primary' ? 'TMDB' : (detailPlotState.loadingSecondary ? 'Loading…' : 'OMDb')}
-                    </button>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      <button
+                        className="fpill glass-panel detail-btn"
+                        style={{ padding: '4px 10px', fontSize: 10, borderRadius: 999 }}
+                        onClick={async () => {
+                          if (detailPlotState.active === 'primary') {
+                            if (!detailPlotState.secondary) await fetchSecondaryPlotForDetail();
+                            setDetailPlotState(prev => ({ ...prev, active: 'secondary' }));
+                          } else {
+                            setDetailPlotState(prev => ({ ...prev, active: 'primary' }));
+                          }
+                        }}
+                      >
+                        <SwitchIcon size={11} /> {detailPlotState.active === 'primary' ? 'TMDB' : (detailPlotState.loadingSecondary ? 'Loading…' : 'OMDb')}
+                      </button>
+                      <button
+                        className="fpill glass-panel detail-btn"
+                        aria-label={spoilerSafe ? 'Disable spoiler safe mode' : 'Enable spoiler safe mode'}
+                        title={spoilerSafe ? 'Spoiler Safe: On' : 'Spoiler Safe: Off'}
+                        onClick={() => setSpoilerSafeMode(v => !v)}
+                        style={{
+                          width: 32,
+                          height: 32,
+                          minWidth: 32,
+                          padding: 0,
+                          borderRadius: 999,
+                          justifyContent: 'center',
+                          background: spoilerSafe ? 'var(--theme-warning-soft)' : 'var(--control-solid-bg)',
+                          borderColor: spoilerSafe ? 'var(--theme-warning)' : 'var(--theme-border)',
+                          color: spoilerSafe ? 'var(--theme-warning)' : 'var(--theme-text-muted)',
+                          transition: 'all 180ms var(--ease-out)',
+                        }}
+                      >
+                        <EyeOff size={12} />
+                      </button>
+                    </div>
                   </div>
                   <p style={{ filter: spoilerSafe ? 'blur(5px)' : 'none', transition: 'filter 0.18s ease' }}>
                     {detailPlotState.active === 'secondary'
