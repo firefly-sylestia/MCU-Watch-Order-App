@@ -2455,20 +2455,25 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   border: 1px solid color-mix(in srgb,var(--theme-accent) 34%, var(--theme-border));
   background: color-mix(in srgb,var(--theme-surface) 88%, transparent);
   box-shadow: 0 30px 65px rgba(2,8,23,.5);
+  transition:max-width .24s ease,padding .24s ease;
 }
+.trailer-shell.is-landscape{max-width:min(1560px,98vw)}
+.trailer-shell.is-expanded{max-width:min(1600px,99vw);padding:12px}
 .trailer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
 .trailer-eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--theme-text-secondary);font-weight:700}
 .trailer-title{font-size:clamp(17px,2.5vw,24px);line-height:1.15;color:var(--theme-text)}
 .trailer-close{min-height:36px}
 .trailer-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .trailer-frame{
-  position:relative;width:100%;padding-top:min(56.25%,64vh);overflow:hidden;
+  position:relative;width:100%;padding-top:min(56.25%,68vh);overflow:hidden;
   border-radius:14px;border:1px solid color-mix(in srgb,var(--theme-border) 88%, transparent);
   background:color-mix(in srgb,var(--theme-bg) 70%, #000);
 }
-.trailer-frame.is-landscape{padding-top:min(52%,76vh)}
-.trailer-frame.is-landscape iframe{transform:rotate(90deg) scale(1.02);transform-origin:center center}
+.trailer-frame.is-landscape{padding-top:min(46%,82vh)}
+.trailer-shell.is-expanded .trailer-frame{padding-top:min(56.25%,76vh)}
+.trailer-shell.is-expanded .trailer-frame.is-landscape{padding-top:min(46%,88vh)}
 .trailer-landscape-tip{position:absolute;top:10px;left:10px;z-index:2;padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--theme-accent) 22%, var(--theme-surface));border:1px solid color-mix(in srgb,var(--theme-accent) 52%, var(--theme-border));font:700 10px/1 var(--font-marvel-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--theme-text)}
+.trailer-expanded-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;flex-wrap:wrap}
 .detail-export-shell{animation:detailCardReveal .34s var(--ease-out, ease) both}
 .detail-export-content > *{animation:detailContentIn .42s var(--ease-out, ease) both}
 .detail-export-content > *:nth-child(2){animation-delay:.04s}
