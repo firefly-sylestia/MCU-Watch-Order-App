@@ -1385,18 +1385,6 @@ export default function MCUViewer() {
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
 
-  const closeSavedHub = useCallback(() => {
-    setSavedHubOpen(false);
-    if (!phaseKeys.length) {
-      setSearch('');
-      setStatusFilter(null);
-      setWatchedOnly(false);
-      setTypeFilter(null);
-      setActivePhase(0);
-    }
-    scrollToListTop();
-  }, [phaseKeys.length, scrollToListTop]);
-
   const scrollTo = id => {
     const el = phaseRefs.current[id];
     const container = mainRef.current;
@@ -1644,6 +1632,18 @@ export default function MCUViewer() {
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
   }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap]);
+
+  const closeSavedHub = useCallback(() => {
+    setSavedHubOpen(false);
+    if (!phaseKeys.length) {
+      setSearch('');
+      setStatusFilter(null);
+      setWatchedOnly(false);
+      setTypeFilter(null);
+      setActivePhase(0);
+    }
+    scrollToListTop();
+  }, [phaseKeys.length, scrollToListTop]);
 
 
 
