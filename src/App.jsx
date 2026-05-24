@@ -28,6 +28,7 @@ import {
 } from './data/mcuData';
 import { DC_RAW, DC_PHASES, DC_CORE_IDS } from './data/dcData';
 import { UNIVERSE_META } from './constants/universeSwitch';
+import FeatureLab from './components/FeatureLab';
 
 // ─── Icon primitives ────────────────────────────────────────────────────────
 const Icon = ({ children, size = 16, style = {} }) => (
@@ -3285,6 +3286,10 @@ export default function MCUViewer() {
             </div>
           </div>
         </section>
+      )}
+
+      {browseMode === 'home' && (
+        <FeatureLab items={filtered} themeMuted={T.textMuted} />
       )}
 
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
