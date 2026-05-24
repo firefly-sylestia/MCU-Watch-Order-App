@@ -80,6 +80,8 @@ const TYPE_META = {
   short:  { label: 'Short',  Icon: Zap,  color: '#a06cd5' },
 };
 
+const FALLBACK_TYPE_META = { label: 'Title', Icon: Layers, color: 'var(--theme-text-secondary)' };
+
 const STATUS_META = {
   watched:        { label: 'Completed',      color: '#e11d48', Icon: Check,      bg: 'rgba(225,29,72,0.12)'  },
   'plan-to-watch':{ label: 'Watchlist',      color: '#3b82f6', Icon: Bookmark,   bg: 'rgba(59,130,246,0.12)' },
@@ -205,6 +207,9 @@ const VALID_DENSITY_MODES = new Set(['comfortable', 'compact']);
 const VALID_TIMELINE_MODES = TIMELINE_MODE_IDS;
 const VALID_DESKTOP_TEXT_SCALES = new Set(DESKTOP_TEXT_SCALES);
 const AUTO_HIDDEN_STATUSES = HIDDEN_FILTER_STATUSES;
+
+const getSafeTypeMeta = (type) => TYPE_META[type] || FALLBACK_TYPE_META;
+const getSafeStatusMeta = (status) => STATUS_META[status] || STATUS_META.unwatched;
 
 const readSavedUiState = () => {
   if (typeof window === 'undefined') return UI_STATE_DEFAULTS;
@@ -3664,8 +3669,8 @@ export default function MCUViewer() {
                         idx={idx}
                         ph={ph}
                         T={T}
-                        typeMeta={TYPE_META[item.type]}
-                        statusMeta={STATUS_META[item.status]}
+                        typeMeta={getSafeTypeMeta(item.type)}
+                        statusMeta={getSafeStatusMeta(item.status)}
                         releaseStatus={itemReleaseStatus}
                         releaseStatusText={releaseStatusLabel(itemReleaseStatus)}
                         releaseStatusStyleObj={releaseStatusStyle(itemReleaseStatus)}
