@@ -2539,3 +2539,50 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 
 @keyframes overlayFadeIn{from{opacity:0}to{opacity:1}}
 @keyframes modalRiseIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+
+/* Interaction stability pass: reduce click flicker on tiles and quick actions */
+.rrow,
+.rrow .title-btn,
+.row-actions .wbtn,
+.floating-controls .dock-btn,
+.quick-continue-btn,
+.filters-trigger,
+.fpill {
+  -webkit-tap-highlight-color: transparent;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Keep interaction feedback subtle without layout jank */
+.fpill:active,
+.theme-btn:active,
+.wbtn:active,
+.filters-trigger:active,
+.phase-chip:active,
+.row-actions .wbtn:active,
+.floating-controls .dock-btn:active {
+  transform: translateZ(0) scale(0.995) !important;
+}
+
+/* Hover effects only where hover exists (prevents mobile tap flicker) */
+@media (hover: none) and (pointer: coarse) {
+  .rrow:hover,
+  .phase-selector-rail .marvel-phase-btn:hover,
+  .fpill.marvel-btn:hover,
+  .theme-btn.marvel-btn:hover,
+  .filters-trigger:hover,
+  .phase-chip:hover,
+  .status-marvel-pill:hover,
+  .marvel-mini-btn:hover {
+    transform: translateZ(0) !important;
+    filter: none !important;
+    box-shadow: inherit !important;
+  }
+
+  .row-actions .wbtn,
+  .floating-controls .dock-btn,
+  .filters-trigger {
+    transition: background-color 140ms var(--ease-out), border-color 140ms var(--ease-out), color 140ms var(--ease-out) !important;
+  }
+}
