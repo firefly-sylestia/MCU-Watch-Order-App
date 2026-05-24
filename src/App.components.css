@@ -2447,7 +2447,9 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   animation: fadeIn .18s ease;
 }
 .trailer-backdrop.is-landscape{
-  padding:0;
+  padding:max(env(safe-area-inset-top), 8px) max(env(safe-area-inset-right), 8px) max(env(safe-area-inset-bottom), 8px) max(env(safe-area-inset-left), 8px);
+  display:grid;
+  place-items:center;
 }
 .trailer-shell{
   max-width: 1320px;
@@ -2464,14 +2466,12 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   max-width:min(1600px,100vw);
 }
 .trailer-backdrop.is-landscape .trailer-shell{
-  position:fixed;
-  left:50%;
-  top:50%;
-  width:min(100dvh,1080px);
-  max-width:min(100dvh,1080px);
-  max-height:min(100dvw,1920px);
+  position:relative;
+  width:min(calc(100dvh - 16px),1080px);
+  max-width:min(calc(100dvh - 16px),1080px);
+  max-height:calc(100dvw - 16px);
   border-radius:16px;
-  transform:translate(-50%,-50%) rotate(90deg);
+  transform:rotate(90deg);
   transform-origin:center center;
   margin:0;
 }
@@ -2494,8 +2494,9 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 [data-color-mode="light"] .trailer-backdrop.is-landscape{background:radial-gradient(circle at 20% 12%, color-mix(in srgb,var(--theme-accent) 16%, #fff), transparent 44%), rgba(15,23,42,.45)}
 @media (max-width:900px){
   .trailer-backdrop.is-landscape .trailer-shell{
-    width:min(98dvh,760px);
-    max-width:min(98dvh,760px);
+    width:min(calc(100dvh - 12px),760px);
+    max-width:min(calc(100dvh - 12px),760px);
+    max-height:calc(100dvw - 12px);
     padding:10px;
   }
   .trailer-backdrop.is-landscape .trailer-frame{
