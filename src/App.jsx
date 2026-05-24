@@ -1684,6 +1684,17 @@ export default function MCUViewer() {
     const watched = phaseItems.filter(i => i.status === 'watched').length;
     return { phase: ph.id, watched, total: phaseItems.length };
   }).filter(p => p.total > 0), [activeItems]);
+  const bookmarkedItems = useMemo(() => (
+    activeItems
+      .filter(item => Boolean(bookmarks[item.id]))
+      .sort((a, b) => {
+        const aAt = a.statusChangedAt || a.watchedDate || '';
+        const bAt = b.statusChangedAt || b.watchedDate || '';
+        return String(bAt).localeCompare(String(aAt));
+      })
+  ), [activeItems, bookmarks]);
+  const bookmarkedWatched = useMemo(() => bookmarkedItems.filter(item => item.status === 'watched'), [bookmarkedItems]);
+  const bookmarkedWatchLater = useMemo(() => bookmarkedItems.filter(item => item.status !== 'watched'), [bookmarkedItems]);
 
 
   useEffect(() => {
@@ -3592,6 +3603,42 @@ export default function MCUViewer() {
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
+          {bookmarkedItems.length > 0 && (
+            <section data-motion="section" className="bookmark-hub motion-section motion-pop" style={{ marginBottom: 28, border: `1px solid ${T.surfaceBorder}`, borderRadius: 16, padding: '16px 16px 12px', background: 'color-mix(in srgb, var(--theme-surface) 82%, transparent)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
+                <h3 style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 2.1, textTransform: 'uppercase', color: 'var(--theme-text-primary)', fontSize: 13 }}>
+                  <Bookmark size={14} /> Saved Collection
+                </h3>
+                <span style={{ color: 'var(--theme-text-muted)', fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase' }}>{bookmarkedItems.length} Titles</span>
+              </div>
+              <div className="bookmark-grid">
+                {[{ title: 'Watched', items: bookmarkedWatched, accent: 'var(--theme-success)', empty: 'No watched bookmarks yet.' }, { title: 'Watch Later', items: bookmarkedWatchLater, accent: 'var(--theme-accent)', empty: 'Save titles to build your watch later shelf.' }].map((group) => (
+                  <div key={group.title} className="bookmark-group">
+                    <div className="bookmark-group-head" style={{ '--bookmark-accent': group.accent }}>
+                      <strong>{group.title}</strong>
+                      <span>{group.items.length}</span>
+                    </div>
+                    {group.items.length === 0 ? (
+                      <div className="bookmark-empty">{group.empty}</div>
+                    ) : (
+                      <div style={{ display: 'grid', gap: 8 }}>
+                        {group.items.slice(0, 6).map(item => (
+                          <button key={`bookmark-${item.id}`} type="button" className="bookmark-card" onClick={() => openDetail(item)}>
+                            <LazyPoster className="bookmark-mini-poster" src={posterSrc(item)} alt={`${item.title} poster`} loadingMode="lazy" />
+                            <div style={{ minWidth: 0 }}>
+                              <div className="bookmark-title">{item.title}</div>
+                              <div className="bookmark-meta">{item.year} · {getSafeTypeMeta(item.type).label} · Phase {item.phase}</div>
+                              <p className="bookmark-desc">{item.desc || 'No summary available yet.'}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
