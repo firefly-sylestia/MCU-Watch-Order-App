@@ -275,6 +275,29 @@ const WatermarkOverlay = ({ label = 'MCU', surface = 'card', theme = 'dark', vie
   }
   return <div style={style}>{label}</div>;
 };
+
+const normalizeSearchText = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+const isSubsequence = (needle, haystack) => {
+  if (!needle) return true;
+  let j = 0;
+  for (let i = 0; i < haystack.length && j < needle.length; i += 1) {
+    if (haystack[i] === needle[j]) j += 1;
+  }
+  return j === needle.length;
+};
+const hasNearTypoMatch = (token, words) => {
+  if (!token || token.length < 4) return false;
+  return words.some((word) => {
+    if (!word || Math.abs(word.length - token.length) > 1) return false;
+    let mismatches = 0;
+    const max = Math.max(word.length, token.length);
+    for (let i = 0; i < max; i += 1) {
+      if (word[i] !== token[i]) mismatches += 1;
+      if (mismatches > 1) return false;
+    }
+    return true;
+  });
+};
 const waitForExportFont = async (fontFamily) => {
   if (typeof document === 'undefined' || !document.fonts) return;
   try {
@@ -1502,15 +1525,28 @@ export default function MCUViewer() {
     [items, listMode, coreIds]
   );
   const searchResults = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const query = normalizeSearchText(search);
     if (!query) return [];
-    const pool = activePhase ? activeItems.filter(item => item.phase === activePhase) : activeItems;
-    return pool.filter(item =>
-      item.title.toLowerCase().includes(query) ||
-      item.prereq.toLowerCase().includes(query) ||
-      (item.notes || '').toLowerCase().includes(query)
-    );
-  }, [search, activeItems, activePhase]);
+    const tokens = query.split(' ').filter(Boolean);
+    return activeItems.filter(item => {
+      const details = normalizeSearchText([
+        item.title,
+        item.prereq,
+        item.notes,
+        item.overview,
+        item.tagline,
+        TYPE_META[item.type]?.label,
+        item.year,
+        `phase ${item.phase}`,
+      ].filter(Boolean).join(' '));
+      const words = details.split(' ');
+      return tokens.every(token =>
+        details.includes(token) ||
+        isSubsequence(token, details) ||
+        hasNearTypoMatch(token, words)
+      );
+    });
+  }, [search, activeItems]);
 
 
   useEffect(() => {
@@ -3224,7 +3260,7 @@ export default function MCUViewer() {
       )}
 
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 60, marginTop: 16 }}>
+      {!searchOpen && <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 60, marginTop: 16 }}>
         {/* Toggle row — always visible */}
         <div style={{ maxWidth: 1480, margin: '0 auto', padding: '0 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
@@ -3239,6 +3275,19 @@ export default function MCUViewer() {
               )}
               <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
+            <div ref={sortRef} style={{ position: 'relative' }}>
+              <button className="fpill filter-pill sort-pill" onClick={() => setSortOpen(o => !o)} style={{ minHeight: 38 }}>
+                {SORT_LABELS[sortBy]}
+                <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+              </button>
+              {sortOpen && (
+                <div className="dropdown-pop filter-dropdown" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1400, minWidth: 220 }}>
+                  {Object.entries(SORT_LABELS).map(([k, v]) => (
+                    <div key={k} className={`sopt ${sortBy === k ? 'picked' : ''}`} onClick={() => { setSortBy(k); setSortOpen(false); }}>{v}</div>
+                  ))}
+                </div>
+              )}
+            </div>
             {renderPhaseSelector()}
             <button className="glass-grad quick-continue-btn" onClick={() => nextUnwatched && openDetail(nextUnwatched)} style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 380, background: 'color-mix(in srgb, var(--theme-surface) 70%, transparent)', backdropFilter: 'blur(12px) saturate(130%)', WebkitBackdropFilter: 'blur(12px) saturate(130%)', cursor: nextUnwatched ? 'pointer' : 'default' }}>
               <span style={{ fontSize: 10, letterSpacing: 1.6, color: T.textMuted, textTransform: 'uppercase' }}>Continue</span>
@@ -3255,21 +3304,6 @@ export default function MCUViewer() {
         {filtersOpen && (
           <div className="filters-open" style={{ padding: '0 48px 12px', maxWidth: 1400, margin: '0 auto' }}>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', overflow: 'visible' }}>
-              {/* Sort */}
-              <div ref={sortRef} style={{ position: 'relative' }}>
-                <button className="fpill filter-pill sort-pill" onClick={() => setSortOpen(o => !o)}
-                  style={{ color: 'var(--theme-accent)', borderColor: 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'transparent', fontFamily: 'var(--font-marvel-ui)', fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
-                  {`Filters > ${SORT_LABELS[sortBy]}`}
-                  <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-                </button>
-                {sortOpen && (
-                  <div className="dropdown-pop filter-dropdown" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1400, minWidth: 220 }}>
-                    {Object.entries(SORT_LABELS).map(([k, v]) => (
-                      <div key={k} className={`sopt ${sortBy === k ? 'picked' : ''}`} onClick={() => { setSortBy(k); setSortOpen(false); }}>{v}</div>
-                    ))}
-                  </div>
-                )}
-              </div>
               {/* Type pills */}
               {['film', 'series', 'short'].map(t => {
                 const m = TYPE_META[t];
@@ -3338,8 +3372,8 @@ export default function MCUViewer() {
             </div>
           </div>
         )}
-      </div>
-      <div className="floating-controls" style={detailItem || analyticsOpen || settingsOpen || sidebarOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
+      </div>}
+      <div className="floating-controls" style={detailItem || analyticsOpen || settingsOpen || sidebarOpen || searchOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
         <button
           type="button"
           className="fab-primary"
@@ -3407,7 +3441,7 @@ export default function MCUViewer() {
           className="go-top-fab"
           onClick={scrollToListTop}
           aria-label="Go to top"
-          style={scrollCheckpoint > 420 ? undefined : { opacity: 0, pointerEvents: 'none', transform: 'translateY(8px)' }}
+          style={searchOpen || scrollCheckpoint <= 420 ? { opacity: 0, pointerEvents: 'none', transform: 'translateY(8px)' } : undefined}
         >
           <ChevDown size={14} style={{ transform: 'rotate(180deg)' }} /> Top
         </button>
@@ -3419,7 +3453,7 @@ export default function MCUViewer() {
             <section className="curvy-panel search-page-shell motion-section motion-pop" style={{ border: `1px solid ${T.surfaceBorder}`, borderRadius: 16, padding: 18 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 14 }}>
                 <button className="fpill" onClick={() => setSearchOpen(false)}><ArrowLeft size={12}/>Back</button>
-                <div style={{ fontFamily: 'var(--font-marvel-ui)', letterSpacing: 2, color: T.textMuted, fontSize: 12 }}>Dedicated Search</div>
+                <div style={{ fontFamily: 'var(--font-marvel-ui)', letterSpacing: 2, color: T.textMuted, fontSize: 12 }}>Global Search</div>
               </div>
               <div style={{ position: 'relative', marginBottom: 14 }}>
                 <Search size={13} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
@@ -3432,7 +3466,7 @@ export default function MCUViewer() {
                     <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
                     <div style={{ display: 'grid', gap: 4 }}>
                       <div style={{ fontWeight: 700, color: 'var(--theme-text-primary)' }}>{item.title}</div>
-                      <div style={{ fontSize: 11, color: T.textMuted }}>Phase {item.phase} · {TYPE_META[item.type]?.label} · {item.year}</div>
+                      <div style={{ fontSize: 11, color: T.textMuted }}>{TYPE_META[item.type]?.label} · {item.year}</div>
                     </div>
                   </button>
                 ))}
