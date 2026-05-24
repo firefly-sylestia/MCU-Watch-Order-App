@@ -1638,6 +1638,18 @@ export default function MCUViewer() {
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
     [items, listMode, coreIds]
   );
+  const bookmarkedItems = useMemo(
+    () => activeItems.filter(item => Boolean(bookmarks[item.id])),
+    [activeItems, bookmarks]
+  );
+  const watchedItemsHome = useMemo(
+    () => activeItems.filter(item => item.status === 'watched').sort((a, b) => (b.watchedDate || '').localeCompare(a.watchedDate || '')),
+    [activeItems]
+  );
+  const watchLaterItems = useMemo(
+    () => activeItems.filter(item => item.status === 'plan-to-watch' || Boolean(bookmarks[item.id])),
+    [activeItems, bookmarks]
+  );
 
 
   useEffect(() => {
@@ -3596,6 +3608,59 @@ export default function MCUViewer() {
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
             </div>
+          )}
+
+          {(bookmarkedItems.length > 0 || watchedItemsHome.length > 0 || watchLaterItems.length > 0) && (
+            <section className="bookmark-home-shell motion-section motion-pop" data-motion="section">
+              <div className="bookmark-home-head">
+                <h3>Bookmarks & Continue Watching</h3>
+                <p>Saved titles from your home feed with quick status context.</p>
+              </div>
+              <div className="bookmark-home-grid">
+                {[{
+                  id: 'saved',
+                  title: 'Saved',
+                  items: bookmarkedItems.slice(0, 6),
+                  empty: 'No saved titles yet.',
+                }, {
+                  id: 'watch-later',
+                  title: 'Watch Later',
+                  items: watchLaterItems.slice(0, 6),
+                  empty: 'Mark titles as plan-to-watch to see them here.',
+                }, {
+                  id: 'watched',
+                  title: 'Watched',
+                  items: watchedItemsHome.slice(0, 6),
+                  empty: 'Your completed titles will appear here.',
+                }].map(block => (
+                  <article key={block.id} className="bookmark-panel">
+                    <div className="bookmark-panel-title">{block.title}</div>
+                    {!block.items.length ? <div className="bookmark-empty">{block.empty}</div> : (
+                      <div className="bookmark-card-list">
+                        {block.items.map(item => {
+                          const statusMeta = getSafeStatusMeta(item.status);
+                          const TypeIcon = getSafeTypeMeta(item.type).Icon;
+                          const StatusIcon = statusMeta.Icon;
+                          return (
+                            <button type="button" key={`${block.id}-${item.id}`} className="bookmark-card" onClick={() => openDetail(item)}>
+                              <LazyPoster className="bookmark-card-poster" src={posterSrc(item)} alt={`${item.title} poster`} loadingMode="lazy" />
+                              <div className="bookmark-card-body">
+                                <div className="bookmark-card-title">{item.title}</div>
+                                <div className="bookmark-card-meta">
+                                  <span><TypeIcon size={11} /> {getSafeTypeMeta(item.type).label}</span>
+                                  <span><StatusIcon size={11} /> {statusMeta.label}</span>
+                                </div>
+                                <div className="bookmark-card-desc">{item.desc}</div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
+            </section>
           )}
 
           {viewMode === 'calendar' ? (
