@@ -3772,7 +3772,7 @@ export default function MCUViewer() {
       )}
 
       {trailerOpen && detailItem && TRAILER_DATA[detailItem.title]?.youtubeId && (
-        <div className="detail-backdrop trailer-backdrop" onClick={() => { setTrailerOpen(false); setTrailerExpanded(false); setTrailerLandscape(false); }} role="dialog" aria-label="Trailer player">
+        <div className={`detail-backdrop trailer-backdrop ${trailerLandscape ? 'is-landscape' : ''}`} onClick={() => { setTrailerOpen(false); setTrailerExpanded(false); setTrailerLandscape(false); }} role="dialog" aria-label="Trailer player">
           <div className={`detail-card glass-panel trailer-shell ${trailerLandscape ? 'is-landscape' : ''} ${trailerExpanded ? 'is-expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
             {!trailerExpanded && <div className="trailer-head">
               <div>
