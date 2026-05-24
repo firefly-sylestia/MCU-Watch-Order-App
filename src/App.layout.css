@@ -102,6 +102,10 @@
         .filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
         .fab-primary{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:10px 14px;border:1px solid color-mix(in srgb,var(--theme-accent) 35%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 84%, transparent);color:var(--theme-text);font-family:var(--font-marvel-ui);letter-spacing:1px;font-size:12px}
         .fab-primary:hover{border-color:var(--theme-accent);color:var(--theme-accent)}
+.floating-controls.minimized .fab-primary{padding:0 12px;min-width:44px;gap:0;justify-content:center}
+.floating-controls.minimized .fab-primary-label{max-width:0;opacity:0;margin:0;overflow:hidden;transform:translateX(4px)}
+.floating-controls .fab-primary-label{display:inline-block;max-width:130px;opacity:1;overflow:hidden;white-space:nowrap;transition:max-width .18s var(--ease-out),opacity .16s var(--ease-out),transform .18s var(--ease-out)}
+.floating-controls.minimized .fab-primary svg:last-child{transform:scale(.92)}
         .bottom-action-bar{border-radius:999px;padding:10px 14px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
         main::-webkit-scrollbar{width:4px}
         main::-webkit-scrollbar-track{background:transparent}

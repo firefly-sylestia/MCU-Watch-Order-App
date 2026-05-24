@@ -1003,6 +1003,7 @@ export default function MCUViewer() {
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const sortMenuRef = useRef(null);
   const [scrollCheckpoint, setScrollCheckpoint] = useState(initialUiState.scrollTop);
+  const quickActionsMinimized = scrollCheckpoint > 220 && !fabMenuOpen;
   const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
 
   useEffect(() => {
@@ -3493,7 +3494,7 @@ export default function MCUViewer() {
           </div>
         )}
       </div>}
-      <div className="floating-controls" style={detailItem || trailerOpen || analyticsOpen || settingsOpen || sidebarOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
+      <div className={`floating-controls${quickActionsMinimized ? ' minimized' : ''}`} style={detailItem || trailerOpen || analyticsOpen || settingsOpen || sidebarOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
         <button
           type="button"
           className="fab-primary"
@@ -3504,7 +3505,7 @@ export default function MCUViewer() {
             boxShadow: '0 16px 34px rgba(0,0,0,.30)',
           }}
         >
-          <Zap size={14} /> Quick Actions <ChevDown size={12} style={{ transform: fabMenuOpen ? 'rotate(180deg)' : 'none' }} />
+          <Zap size={14} /> <span className="fab-primary-label">Quick Actions</span> <ChevDown size={12} style={{ transform: fabMenuOpen ? 'rotate(180deg)' : 'none' }} />
         </button>
 
         {/* ━━ JUMP NEXT BUTTON ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
