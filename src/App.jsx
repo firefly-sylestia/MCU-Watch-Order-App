@@ -975,7 +975,6 @@ export default function MCUViewer() {
   const [spoilerSafeMode, setSpoilerSafeMode] = useState(true);
   const [autoHideStatuses, setAutoHideStatuses] = useState(initialUiState.autoHideStatuses);
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
-  const [savedHubOpen, setSavedHubOpen] = useState(false);
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
   const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
@@ -1369,14 +1368,6 @@ export default function MCUViewer() {
   }, []);
 
   const scrollToListTop = useCallback(() => {
-    const smoothState = desktopSmoothScrollStateRef.current;
-    if (smoothState?.raf) cancelAnimationFrame(smoothState.raf);
-    if (smoothState) {
-      smoothState.raf = null;
-      smoothState.velocity = 0;
-      smoothState.lastTs = 0;
-    }
-    setScrollCheckpoint(0);
     const container = mainRef.current;
     if (container && container.scrollHeight > container.clientHeight + 1) {
       container.scrollTo({ top: 0, behavior: 'auto' });
@@ -1647,9 +1638,6 @@ export default function MCUViewer() {
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
     [items, listMode, coreIds]
   );
-  const bookmarkedItems = useMemo(() => activeItems.filter((item) => Boolean(bookmarks[item.id])), [activeItems, bookmarks]);
-  const savedWatchedItems = useMemo(() => bookmarkedItems.filter((item) => item.status === 'watched'), [bookmarkedItems]);
-  const savedWatchLaterItems = useMemo(() => bookmarkedItems.filter((item) => ['plan-to-watch', 'watching', 'on-hold'].includes(item.status)), [bookmarkedItems]);
 
 
   useEffect(() => {
@@ -3604,63 +3592,13 @@ export default function MCUViewer() {
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
-          <div className="saved-library-trigger-wrap">
-            <button
-              type="button"
-              className="saved-library-trigger"
-              onClick={() => setSavedHubOpen((prev) => !prev)}
-              aria-expanded={savedHubOpen}
-              aria-label={savedHubOpen ? 'Close saved watch hub page' : 'Open saved watch hub page'}
-            >
-              <Bookmark size={13} />
-              {savedHubOpen ? 'Back to Timeline' : `Saved Watch Hub (${bookmarkedItems.length})`}
-            </button>
-          </div>
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
             </div>
           )}
 
-          {savedHubOpen ? (
-            <section data-motion="section" className="saved-library-page motion-section motion-pop" style={{ border: `1px solid ${T.surfaceBorder}` }}>
-              <div className="saved-library-head">
-                <div>
-                  <div className="saved-library-kicker">Bookmarks</div>
-                  <h3>Saved Watch Hub</h3>
-                </div>
-                <span className="saved-library-count">{bookmarkedItems.length} saved</span>
-              </div>
-              {bookmarkedItems.length ? (
-                <div className="saved-library-grid">
-                  <article>
-                    <header>Watched</header>
-                    <div className="saved-library-list">
-                      {savedWatchedItems.length ? savedWatchedItems.map((item) => (
-                        <button key={`saved-watched-${item.id}`} className="saved-description-card" onClick={() => openDetail(item)}>
-                          <span className="saved-description-title">{item.title}</span>
-                          <span className="saved-description-meta">{item.year} · {getSafeTypeMeta(item.type).label}</span>
-                          <span className="saved-description-copy line-clamp-2">{item.desc || 'Saved in watched bookmarks.'}</span>
-                        </button>
-                      )) : <p className="saved-library-empty">No watched bookmarks yet.</p>}
-                    </div>
-                  </article>
-                  <article>
-                    <header>Watch Later</header>
-                    <div className="saved-library-list">
-                      {savedWatchLaterItems.length ? savedWatchLaterItems.map((item) => (
-                        <button key={`saved-later-${item.id}`} className="saved-description-card" onClick={() => openDetail(item)}>
-                          <span className="saved-description-title">{item.title}</span>
-                          <span className="saved-description-meta">{STATUS_META[item.status]?.label || 'Watchlist'} · {item.year}</span>
-                          <span className="saved-description-copy line-clamp-2">{item.desc || 'Queued for later viewing.'}</span>
-                        </button>
-                      )) : <p className="saved-library-empty">Nothing in watch later right now.</p>}
-                    </div>
-                  </article>
-                </div>
-              ) : <p className="saved-library-empty">Bookmark titles from the list to build your watched and watch later library.</p>}
-            </section>
-          ) : viewMode === 'calendar' ? (
+          {viewMode === 'calendar' ? (
             <section data-motion="section" className='curvy-panel calendar-section motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
               <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', color: 'var(--theme-text-primary)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
               <div style={{ marginBottom: 12, color: T.textMuted, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.2 }}>Grouped by month / quarter / year</div>
