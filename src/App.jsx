@@ -38,6 +38,7 @@ const Icon = ({ children, size = 16, style = {} }) => (
   </svg>
 );
 const Search    = p => <Icon {...p}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></Icon>;
+const ArrowUpDown = p => <Icon {...p}><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/><path d="M12 4v16"/></Icon>;
 const Eye       = p => <Icon {...p}><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></Icon>;
 const EyeOff    = p => <Icon {...p}><path d="m3 3 18 18"/><path d="M10.5 10.5a2 2 0 0 0 3 3"/><path d="M9.9 4.2A10.9 10.9 0 0 1 12 4c6.5 0 10 8 10 8a17.6 17.6 0 0 1-3.2 4.2"/><path d="M6.6 6.6A17.5 17.5 0 0 0 2 12s3.5 8 10 8a10.7 10.7 0 0 0 5.4-1.4"/></Icon>;
 const RatingGem = p => <Icon {...p}><path d="M12 2 21 9 12 22 3 9 12 2Z"/></Icon>;
@@ -1467,6 +1468,45 @@ export default function MCUViewer() {
   };
 
   const { filtered, grouped, phaseKeys } = useMemo(() => {
+    const normalizeSearch = (value = '') => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const levenshteinDistance = (a = '', b = '') => {
+      if (!a) return b.length;
+      if (!b) return a.length;
+      const matrix = Array.from({ length: a.length + 1 }, (_, rowIndex) =>
+        Array.from({ length: b.length + 1 }, (_, colIndex) => (rowIndex === 0 ? colIndex : colIndex === 0 ? rowIndex : 0))
+      );
+      for (let rowIndex = 1; rowIndex <= a.length; rowIndex += 1) {
+        for (let colIndex = 1; colIndex <= b.length; colIndex += 1) {
+          const cost = a[rowIndex - 1] === b[colIndex - 1] ? 0 : 1;
+          matrix[rowIndex][colIndex] = Math.min(
+            matrix[rowIndex - 1][colIndex] + 1,
+            matrix[rowIndex][colIndex - 1] + 1,
+            matrix[rowIndex - 1][colIndex - 1] + cost
+          );
+        }
+      }
+      return matrix[a.length][b.length];
+    };
+    const matchesSearch = (item, rawTerm) => {
+      const cleanedTerm = rawTerm.trim().toLowerCase();
+      if (!cleanedTerm) return true;
+      const normalizedTerm = normalizeSearch(cleanedTerm);
+      const haystacks = [
+        item.title || '',
+        item.prereq || '',
+        item.note || '',
+        item.overview || '',
+        item.releaseStatus || '',
+        TYPE_META[item.type]?.label || '',
+        String(item.year || ''),
+      ].map(v => String(v).toLowerCase());
+      if (haystacks.some(text => text.includes(cleanedTerm))) return true;
+      const normalizedHaystacks = haystacks.map(normalizeSearch).filter(Boolean);
+      if (normalizedHaystacks.some(text => text.includes(normalizedTerm))) return true;
+      const words = normalizedHaystacks.flatMap(text => text.split(/\s+/).filter(Boolean));
+      const maxDistance = normalizedTerm.length <= 4 ? 1 : normalizedTerm.length <= 8 ? 2 : 3;
+      return words.some(word => Math.abs(word.length - normalizedTerm.length) <= maxDistance && levenshteinDistance(word, normalizedTerm) <= maxDistance);
+    };
     const f = items.filter(i => {
       if (listMode === 'core' && !coreIds.has(i.id)) return false;
       if (showAllFiltersOverride) return true;
@@ -1474,12 +1514,11 @@ export default function MCUViewer() {
       if (watchedOnly && i.status !== 'watched') return false;
       if (statusFilter && i.status !== statusFilter) return false;
       if (typeFilter && i.type !== typeFilter) return false;
-      if (activePhase && i.phase !== activePhase) return false;
+      if (browseMode !== 'search' && activePhase && i.phase !== activePhase) return false;
       if (timelineMode === 'studio' && i.order % 2 === 0) return true;
       if (timelineMode === 'whatif' && i.type !== 'short') return true;
       if (genreFilter !== 'all' && i.type !== genreFilter) return false;
-      const searchTerm = search.toLowerCase();
-      return i.title.toLowerCase().includes(searchTerm) || i.prereq.toLowerCase().includes(searchTerm);
+      return matchesSearch(i, search);
     }).sort((a, b) => {
       if (sortBy === 'title') return a.title.localeCompare(b.title);
       if (sortBy === 'year') return a.year - b.year;
@@ -1492,7 +1531,7 @@ export default function MCUViewer() {
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap, browseMode]);
 
 
 
@@ -2900,8 +2939,7 @@ export default function MCUViewer() {
 
   // Count active filters for the collapsed bar badge
   const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
-  const filterTriggerLabel = sortBy === 'order' ? 'Filters > Chronological' : `Filters > ${SORT_LABELS[sortBy] || 'Custom'}`;
-
+  
   const renderPhaseSelector = () => (
     <div ref={phaseRef} className="phase-selector-rail">
       <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} onClick={() => { setActivePhase(0); if (browseMode !== 'phase') setBrowseMode('phase'); }}>
@@ -3217,18 +3255,18 @@ export default function MCUViewer() {
         <section className="search-page-shell" style={{ maxWidth: 1480, margin: '8px auto 14px', padding: '0 16px' }}>
           <div className="search-page-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
             <div>
-              <div style={{ fontSize: 11, letterSpacing: 1.8, textTransform: 'uppercase', color: T.textMuted }}>Dedicated Search</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: T.text }}>Find any title instantly</div>
+              <div style={{ fontSize: 11, letterSpacing: 1.8, textTransform: 'uppercase', color: T.textMuted }}>S.H.I.E.L.D. Intel Search</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: T.text }}>Scan the timeline for any mission</div>
             </div>
             <button className="fpill" onClick={() => setBrowseMode('home')}><ChevDown size={14}/> Back to Home</button>
           </div>
           <div className="search-page-panel" style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 18, padding: 14, background: 'color-mix(in srgb, var(--theme-surface) 84%, transparent)' }}>
             <div style={{ position: 'relative' }}>
               <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
-              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search title, prerequisite, release notes..." aria-label="Search titles" style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650 }} />
+              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search titles, characters, plot details, years, or even typos..." aria-label="Search titles" style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650 }} />
             </div>
             <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.4 }}>{search ? `${filtered.length} matches` : 'Type to begin searching'}</div>
+              <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.4 }}>{search ? `${filtered.length} matches across the multiverse` : 'Search by title, details, or misspellings'}</div>
               {search && <button className="fpill" onClick={() => setSearch('')}><Trash2 size={12}/> Clear Search</button>}
             </div>
           </div>
@@ -3236,7 +3274,7 @@ export default function MCUViewer() {
       )}
 
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 60, marginTop: 16 }}>
+      {browseMode !== 'search' && <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 60, marginTop: 16 }}>
         {/* Toggle row — always visible */}
         <div style={{ maxWidth: 1480, margin: '0 auto', padding: '0 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
@@ -3245,13 +3283,17 @@ export default function MCUViewer() {
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: `1px solid ${filtersOpen ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: filtersOpen ? 'var(--theme-accent)' : T.textMuted, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 2, transition: 'all 0.18s' }}
             >
               <SlidersH size={13} />
-              {filterTriggerLabel}
+              Filters
               {activeFilterCount > 0 && (
                 <span className="filters-count-badge" aria-label={`${activeFilterCount} active filters`}>{activeFilterCount}</span>
               )}
               <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             {renderPhaseSelector()}
+            <button className="filters-trigger" onClick={() => setSortOpen(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 10, border: `1px solid ${T.filterBorder}`, background: 'transparent', color: T.text, fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.2 }}>
+              <ArrowUpDown size={13} />
+              {SORT_LABELS[sortBy]}
+            </button>
             <button className="glass-grad quick-continue-btn" onClick={() => nextUnwatched && openDetail(nextUnwatched)} style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 380, background: 'color-mix(in srgb, var(--theme-surface) 70%, transparent)', backdropFilter: 'blur(12px) saturate(130%)', WebkitBackdropFilter: 'blur(12px) saturate(130%)', cursor: nextUnwatched ? 'pointer' : 'default' }}>
               <span style={{ fontSize: 10, letterSpacing: 1.6, color: T.textMuted, textTransform: 'uppercase' }}>Continue</span>
               <span style={{ fontSize: 12, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</span>
@@ -3351,7 +3393,7 @@ export default function MCUViewer() {
             </div>
           </div>
         )}
-      </div>
+      </div>}
       <div className="floating-controls" style={detailItem || analyticsOpen || settingsOpen || sidebarOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
         <button
           type="button"
