@@ -1,0 +1,45 @@
+export const AFTER_CREDITS = {
+  'Iron Man': { count: 1, advice: 'must', connectsTo: ['The Incredible Hulk'] },
+  'The Incredible Hulk': { count: 1, advice: 'can-skip', connectsTo: ['Iron Man 2'] },
+  'Iron Man 2': { count: 1, advice: 'must', connectsTo: ['Thor'] },
+  'Thor': { count: 1, advice: 'must', connectsTo: ['The Avengers'] },
+  'The Avengers': { count: 1, advice: 'must', connectsTo: ['Thor: The Dark World'] },
+  'Thor: The Dark World': { count: 2, advice: 'must', connectsTo: ['Guardians of the Galaxy', 'Thor: Ragnarok'] },
+  'Thor: Ragnarok': { count: 2, advice: 'must', connectsTo: ['Avengers: Infinity War'] },
+  'Avengers: Infinity War': { count: 1, advice: 'must', connectsTo: ['Captain Marvel', 'Avengers: Endgame'] },
+  'Avengers: Endgame': { count: 0, advice: 'can-skip', connectsTo: ['Loki S1'] },
+  'Spider-Man: No Way Home': { count: 2, advice: 'must', connectsTo: ['Doctor Strange: Multiverse of Madness'] },
+  'Doctor Strange: Multiverse of Madness': { count: 2, advice: 'must', connectsTo: ['Doctor Strange sequel', 'Incursions arc'] },
+  'Thor: Love and Thunder': { count: 2, advice: 'must', connectsTo: ['Thor 5 (TBA)', 'Hercules arc'] },
+  'Black Panther: Wakanda Forever': { count: 2, advice: 'must', connectsTo: ['Thunderbolts*', 'Future Wakanda arc'] },
+  'Ant-Man & the Wasp: Quantumania': { count: 2, advice: 'must', connectsTo: ['Loki S2', 'Avengers: Doomsday'] },
+  'Guardians of the Galaxy Vol. 3': { count: 2, advice: 'must', connectsTo: ['Future Guardians lineup'] },
+  'The Marvels': { count: 2, advice: 'must', connectsTo: ["X-Men '97 S1", 'Young Avengers setup'] },
+  'Deadpool & Wolverine': { count: 1, advice: 'can-skip', connectsTo: ['Multiverse Saga'] },
+};
+
+export const AFTER_CREDITS_DEFAULT = { count: null, advice: 'unknown', connectsTo: [] };
+
+export const DIRECTOR_DATA = {
+  'Iron Man': 'Jon Favreau',
+  'The Incredible Hulk': 'Louis Leterrier',
+  'Iron Man 2': 'Jon Favreau',
+  'Thor': 'Kenneth Branagh',
+  'The Avengers': 'Joss Whedon',
+  'Thor: The Dark World': 'Alan Taylor',
+  'Guardians of the Galaxy': 'James Gunn',
+  'Thor: Ragnarok': 'Taika Waititi',
+  'Avengers: Infinity War': 'Anthony Russo, Joe Russo',
+  'Avengers: Endgame': 'Anthony Russo, Joe Russo',
+  'Spider-Man: No Way Home': 'Jon Watts',
+  'Doctor Strange: Multiverse of Madness': 'Sam Raimi',
+  'Thor: Love and Thunder': 'Taika Waititi',
+  'Black Panther: Wakanda Forever': 'Ryan Coogler',
+  'Ant-Man & the Wasp: Quantumania': 'Peyton Reed',
+  'Guardians of the Galaxy Vol. 3': 'James Gunn',
+  'The Marvels': 'Nia DaCosta',
+  'Deadpool & Wolverine': 'Shawn Levy',
+  'Captain America: The First Avenger': 'Joe Johnston',
+  'Captain America: The Winter Soldier': 'Anthony Russo, Joe Russo',
+  'Captain America: Civil War': 'Anthony Russo, Joe Russo'
+};
