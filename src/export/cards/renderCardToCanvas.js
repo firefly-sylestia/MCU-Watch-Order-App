@@ -237,28 +237,38 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
     const mode = getColorMode(settings);
     const palette = getModePalette(theme, mode);
     const item = data.item;
+    const safeRating = clampTenPoint(data.rating);
     const img = await loadPosterWithFallback({ primarySrc: settings.posterSrc(item), fallbackText: item.title });
-    drawCardBackdrop(ctx, { width: 1600, height: 2200 }, theme, img, Math.max(bgOpacity, 54));
-    drawRoundedPanel(ctx, { x: 56, y: 56, w: 1488, h: 2088, radius: 72, fill: palette.card, stroke: palette.cardBorder, lineWidth: 4 });
+    drawCardBackdrop(ctx, { width: 1600, height: 2200 }, theme, img, Math.max(bgOpacity, 56));
 
-    const posterX = 118, posterY = 140, posterW = 548, posterH = 820;
-    drawRoundedPanel(ctx, { x: posterX - 14, y: posterY - 14, w: posterW + 28, h: posterH + 28, radius: 42, fill: palette.panel, stroke: withAlpha(theme.gold, 0.34), lineWidth: 3 });
-    ctx.save(); ctx.beginPath(); ctx.roundRect(posterX, posterY, posterW, posterH, 32); ctx.clip(); drawCoverImage(ctx, img, posterX, posterY, posterW, posterH); ctx.restore();
+    drawRoundedPanel(ctx, { x: 46, y: 46, w: 1508, h: 2108, radius: 88, fill: withAlpha(theme.accent, mode === 'light' ? 0.07 : 0.16), stroke: withAlpha(theme.accent2, 0.5), lineWidth: 4 });
+    drawRoundedPanel(ctx, { x: 72, y: 72, w: 1456, h: 2056, radius: 66, fill: palette.card, stroke: withAlpha(theme.gold, mode === 'light' ? 0.3 : 0.26), lineWidth: 3 });
 
-    drawRoundedPanel(ctx, { x: 704, y: 140, w: 776, h: 820, radius: 40, fill: palette.panel, stroke: palette.chipStroke });
-    ctx.fillStyle = withAlpha(theme.accent, 0.95); ctx.font = `900 ${Math.round(28 * scale)}px ${fontFamily}`; ctx.fillText('MOVIE REVIEW SPOTLIGHT', 754, 196);
-    fitTitleText(ctx, { text: item.title, x: 754, y: 292, maxWidth: 674, preferredSize: 74 * scale, minSize: 38 * scale, fontFamily, maxLines: 3, color: palette.textPrimary, weight: 900 });
-    drawPremiumStars(ctx, { x: 754, y: 404, size: Math.round(58 * scale), rating10: clampTenPoint(data.rating), active: theme.gold, fontFamily });
-    ctx.fillStyle = palette.textPrimary; ctx.font = `900 ${Math.round(56 * scale)}px ${fontFamily}`; ctx.fillText(`${clampTenPoint(data.rating).toFixed(1)}/10`, 754, 500);
-    drawBadge(ctx, { x: 754, y: 546, label: 'Phase', value: String(item.phase || '—'), color: theme.accent, fontFamily, scale, w: 160 });
-    drawBadge(ctx, { x: 940, y: 546, label: 'Year', value: String(item.year || '—'), color: theme.accent2, fontFamily, scale, w: 180 });
-    drawBadge(ctx, { x: 1144, y: 546, label: 'By', value: data.reviewer || 'Reviewer', color: theme.gold, fontFamily, scale, w: 304 });
+    const posterX = 118; const posterY = 190; const posterW = 540; const posterH = 816;
+    drawRoundedPanel(ctx, { x: posterX - 18, y: posterY - 20, w: posterW + 36, h: posterH + 40, radius: 38, fill: withAlpha(theme.accent2, 0.14), stroke: withAlpha(theme.accent2, 0.42), lineWidth: 3 });
+    ctx.save(); ctx.beginPath(); ctx.roundRect(posterX, posterY, posterW, posterH, 28); ctx.clip(); drawCoverImage(ctx, img, posterX, posterY, posterW, posterH); ctx.restore();
 
-    drawRoundedPanel(ctx, { x: 118, y: 1010, w: 1362, h: 980, radius: 46, fill: palette.panelSoft, stroke: palette.chipStroke });
-    ctx.fillStyle = palette.textSecondary; ctx.font = `900 ${Math.round(33 * scale)}px ${fontFamily}`; ctx.fillText('REVIEW NOTES', 172, 1092);
-    ctx.fillStyle = palette.textPrimary; ctx.font = `640 ${Math.round(58 * scale)}px ${fontFamily}`;
-    drawWrappedText(ctx, data.reviewText || 'Drop your review to capture this watch in your timeline.', 172, 1174, 1248, Math.round(54 * scale), 11);
-    drawThemeStamp(ctx, { x: 124, y: 1930, theme, fontFamily, scale });
+    drawRoundedPanel(ctx, { x: 700, y: 190, w: 760, h: 370, radius: 34, fill: palette.panel, stroke: palette.chipStroke });
+    ctx.fillStyle = withAlpha(theme.accent, 0.96); ctx.font = `900 ${Math.round(26 * scale)}px ${fontFamily}`; ctx.fillText('MARVEL CINEMATIC REVIEW // UI CARD', 744, 244);
+    fitTitleText(ctx, { text: item.title, x: 744, y: 332, maxWidth: 668, preferredSize: 68 * scale, minSize: 32 * scale, fontFamily, maxLines: 3, color: palette.textPrimary, weight: 900 });
+
+    drawRoundedPanel(ctx, { x: 700, y: 580, w: 760, h: 426, radius: 34, fill: palette.panelSoft, stroke: palette.chipStroke });
+    ctx.fillStyle = palette.textSecondary; ctx.font = `820 ${Math.round(23 * scale)}px ${fontFamily}`; ctx.fillText('RATING MODULE', 744, 630);
+    drawPremiumStars(ctx, { x: 744, y: 698, size: Math.round(56 * scale), rating10: safeRating, active: theme.gold, fontFamily });
+    ctx.fillStyle = palette.textPrimary; ctx.font = `900 ${Math.round(74 * scale)}px ${fontFamily}`; ctx.fillText(`${safeRating.toFixed(1)}`, 744, 790);
+    ctx.fillStyle = palette.textMuted; ctx.font = `760 ${Math.round(28 * scale)}px ${fontFamily}`; ctx.fillText('/10 OVERALL SCORE', 930, 790);
+
+    drawBadge(ctx, { x: 744, y: 822, label: 'Phase', value: String(item.phase || '—'), color: theme.accent, fontFamily, scale, w: 204 });
+    drawBadge(ctx, { x: 964, y: 822, label: 'Year', value: String(item.year || '—'), color: theme.accent2, fontFamily, scale, w: 204 });
+    drawBadge(ctx, { x: 1184, y: 822, label: 'Reviewer', value: data.reviewer || 'You', color: theme.gold, fontFamily, scale, w: 250 });
+
+    drawRoundedPanel(ctx, { x: 118, y: 1048, w: 1342, h: 952, radius: 40, fill: palette.panel, stroke: palette.chipStroke });
+    drawRoundedPanel(ctx, { x: 148, y: 1108, w: 1282, h: 824, radius: 28, fill: mode === 'light' ? 'rgba(255,255,255,0.84)' : 'rgba(4,8,18,0.42)', stroke: withAlpha(theme.accent, 0.26) });
+    ctx.fillStyle = withAlpha(theme.accent2, 0.95); ctx.font = `900 ${Math.round(34 * scale)}px ${fontFamily}`; ctx.fillText('TACTICAL REVIEW NOTES', 166, 1090);
+    ctx.fillStyle = palette.textPrimary; ctx.font = `650 ${Math.round(54 * scale)}px ${fontFamily}`;
+    drawWrappedText(ctx, data.reviewText || 'Log your verdict: acting, action craft, villain impact, and rewatch value.', 186, 1194, 1228, Math.round(54 * scale), 10);
+
+    drawThemeStamp(ctx, { x: 126, y: 2032, theme, fontFamily, scale });
     drawWatermark(ctx, { width: 1600, height: 2200 }, fontFamily, theme);
   } else if (type === 'analysis') {
     canvas.width = 1080; canvas.height = 1350;
@@ -267,43 +277,48 @@ export const renderCardToCanvas = async ({ type, data, settings = {} }) => {
     const scale = (settings?.textScale || 1) * fontScale;
     const mode = getColorMode(settings);
     const palette = getModePalette(theme, mode);
-    drawCardBackdrop(ctx, { width: 1080, height: 1350 }, theme, null, bgOpacity);
-    drawRoundedPanel(ctx, { x: 34, y: 34, w: 1012, h: 1282, radius: 56, fill: palette.card, stroke: palette.cardBorder, lineWidth: 4 });
-
-    ctx.fillStyle = withAlpha(theme.accent, 0.95); ctx.font = `900 ${Math.round(24 * scale)}px ${fontFamily}`; ctx.fillText('ANALYTICS SNAPSHOT', 82, 110);
-    fitTitleText(ctx, { text: 'Watch momentum report', x: 82, y: 182, maxWidth: 720, preferredSize: 56 * scale, minSize: 32 * scale, fontFamily, maxLines: 1, color: palette.textPrimary, weight: 900 });
-    drawThemeStamp(ctx, { x: 600, y: 74, theme, fontFamily, scale });
-
     const sections = { completion: true, hours: true, streak: true, phaseBreakdown: true, recentMomentum: true, topRated: true, ...(settings?.sections || {}) };
-    drawRoundedPanel(ctx, { x: 74, y: 226, w: 932, h: 262, radius: 34, fill: palette.panel, stroke: palette.chipStroke });
-    ctx.fillStyle = palette.textMuted; ctx.font = `700 ${Math.round(20 * scale)}px ${fontFamily}`; ctx.fillText('Completion', 110, 274);
-    ctx.fillStyle = palette.textPrimary; ctx.font = `950 ${Math.round(154 * scale)}px ${fontFamily}`; ctx.fillText(sections.completion === false ? 'MCU' : `${Number(data.pct || 0)}%`, 102, 426);
-    if (sections.completion !== false) drawProgressBar(ctx, { x: 112, y: 444, w: 848, h: 24, pct: data.pct, accent: theme.accent, accent2: theme.accent2 });
 
-    const badgeRows = [
-      { enabled: sections.completion !== false, label: 'Completed', value: `${data.totalWatched || 0}/${data.totalItems || 0}`, color: theme.accent, w: 274 },
-      { enabled: sections.hours !== false, label: 'Watch Hours', value: `${Math.round(data.totalWatchedHours || 0)}h`, color: theme.gold, w: 256 },
-      { enabled: sections.streak !== false, label: 'Current Streak', value: `${data.streak || 0} days`, color: theme.accent2, w: 330 },
-    ].filter(row => row.enabled);
-    let badgeX = 74; badgeRows.forEach(row => { drawBadge(ctx, { x: badgeX, y: 520, label: row.label, value: row.value, color: row.color, fontFamily, scale, w: row.w }); badgeX += row.w + 20; });
+    drawCardBackdrop(ctx, { width: 1080, height: 1350 }, theme, null, bgOpacity);
+    drawRoundedPanel(ctx, { x: 28, y: 28, w: 1024, h: 1294, radius: 58, fill: withAlpha(theme.accent, mode === 'light' ? 0.08 : 0.18), stroke: withAlpha(theme.accent2, 0.46), lineWidth: 3 });
+    drawRoundedPanel(ctx, { x: 48, y: 48, w: 984, h: 1254, radius: 42, fill: palette.card, stroke: withAlpha(theme.gold, mode === 'light' ? 0.26 : 0.22), lineWidth: 2 });
 
-    ctx.fillStyle = palette.textSecondary; ctx.font = `850 ${Math.round(30 * scale)}px ${fontFamily}`; ctx.fillText(`Current phase focus: ${data.currentPhase || '—'}`, 82, 676);
+    ctx.fillStyle = withAlpha(theme.accent, 0.95); ctx.font = `900 ${Math.round(24 * scale)}px ${fontFamily}`; ctx.fillText('MARVEL OPERATIONS DASHBOARD', 88, 106);
+    fitTitleText(ctx, { text: 'Cinematic Timeline Intelligence', x: 88, y: 176, maxWidth: 640, preferredSize: 50 * scale, minSize: 30 * scale, fontFamily, maxLines: 1, color: palette.textPrimary, weight: 900 });
+    drawThemeStamp(ctx, { x: 588, y: 72, theme, fontFamily, scale });
+
+    drawRoundedPanel(ctx, { x: 76, y: 216, w: 928, h: 284, radius: 28, fill: palette.panel, stroke: palette.chipStroke });
+    ctx.fillStyle = palette.textMuted; ctx.font = `760 ${Math.round(20 * scale)}px ${fontFamily}`; ctx.fillText('MISSION COMPLETION', 108, 258);
+    ctx.fillStyle = palette.textPrimary; ctx.font = `940 ${Math.round(146 * scale)}px ${fontFamily}`; ctx.fillText(sections.completion === false ? 'MCU' : `${Number(data.pct || 0)}%`, 96, 418);
+    if (sections.completion !== false) drawProgressBar(ctx, { x: 108, y: 442, w: 864, h: 26, pct: data.pct, accent: theme.accent, accent2: theme.accent2 });
+
+    const badges = [
+      { enabled: sections.completion !== false, label: 'Completed', value: `${data.totalWatched || 0}/${data.totalItems || 0}`, color: theme.accent, w: 290 },
+      { enabled: sections.hours !== false, label: 'Watch Hours', value: `${Math.round(data.totalWatchedHours || 0)}h`, color: theme.gold, w: 270 },
+      { enabled: sections.streak !== false, label: 'Streak', value: `${data.streak || 0} days`, color: theme.accent2, w: 290 },
+    ].filter(Boolean).filter((row) => row.enabled);
+    let badgeX = 76; badges.forEach((row) => { drawBadge(ctx, { x: badgeX, y: 530, label: row.label, value: row.value, color: row.color, fontFamily, scale, w: row.w }); badgeX += row.w + 14; });
+
+    drawRoundedPanel(ctx, { x: 76, y: 640, w: 928, h: 486, radius: 28, fill: palette.panelSoft, stroke: palette.chipStroke });
+    ctx.fillStyle = palette.textSecondary; ctx.font = `850 ${Math.round(28 * scale)}px ${fontFamily}`; ctx.fillText(`Active phase command: ${data.currentPhase || '—'}`, 104, 690);
     const rows = sections.phaseBreakdown === false ? [] : (Array.isArray(data.phaseStats) ? data.phaseStats : []);
-    rows.slice(0, sections.topRated === false ? 9 : 7).forEach((row, idx) => {
-      const y = 744 + idx * 64;
+    rows.slice(0, 6).forEach((row, idx) => {
+      const y = 740 + idx * 62;
       const rowPct = row.total ? (row.watched / row.total) * 100 : 0;
-      drawRoundedPanel(ctx, { x: 78, y: y - 38, w: 926, h: 50, radius: 18, fill: idx % 2 ? palette.panelSoft : palette.panel, stroke: palette.chipStroke });
-      ctx.fillStyle = palette.textPrimary; ctx.font = `800 ${Math.round(25 * scale)}px ${fontFamily}`; ctx.fillText(`Phase ${row.phase}`, 102, y - 4);
-      drawProgressBar(ctx, { x: 286, y: y - 24, w: 500, h: 16, pct: rowPct, accent: theme.accent, accent2: theme.accent2 });
-      ctx.fillStyle = palette.textMuted; ctx.font = `800 ${Math.round(23 * scale)}px ${fontFamily}`; ctx.fillText(`${row.watched}/${row.total}`, 828, y - 4);
+      drawRoundedPanel(ctx, { x: 98, y: y - 34, w: 884, h: 48, radius: 16, fill: idx % 2 ? palette.panel : withAlpha(theme.accent2, 0.1), stroke: palette.chipStroke });
+      ctx.fillStyle = palette.textPrimary; ctx.font = `790 ${Math.round(22 * scale)}px ${fontFamily}`; ctx.fillText(`PHASE ${row.phase}`, 124, y - 2);
+      drawProgressBar(ctx, { x: 288, y: y - 20, w: 484, h: 14, pct: rowPct, accent: theme.accent, accent2: theme.accent2 });
+      ctx.fillStyle = palette.textMuted; ctx.font = `760 ${Math.round(20 * scale)}px ${fontFamily}`; ctx.fillText(`${row.watched}/${row.total}`, 820, y - 2);
     });
-    if (sections.recentMomentum !== false) drawBadge(ctx, { x: 82, y: 1164, label: 'Recent Logs', value: `${data.recentCount || 0}`, color: theme.accent2, fontFamily, scale, w: 246 });
+
+    if (sections.recentMomentum !== false) drawBadge(ctx, { x: 76, y: 1148, label: 'Recent Logs', value: `${data.recentCount || 0}`, color: theme.accent2, fontFamily, scale, w: 258 });
     if (sections.topRated !== false && Array.isArray(data.topRatedItems) && data.topRatedItems.length) {
-      ctx.fillStyle = palette.textSecondary; ctx.font = `900 ${Math.round(26 * scale)}px ${fontFamily}`; ctx.fillText('Top rated this streak', 356, 1194);
+      drawRoundedPanel(ctx, { x: 352, y: 1148, w: 652, h: 136, radius: 22, fill: palette.panel, stroke: palette.chipStroke });
+      ctx.fillStyle = palette.textSecondary; ctx.font = `860 ${Math.round(24 * scale)}px ${fontFamily}`; ctx.fillText('TOP RATED MISSIONS', 378, 1188);
       data.topRatedItems.slice(0, 3).forEach((item, idx) => {
         const rating = clampTenPoint(data.ratings?.[item.id] || item.rating || 0);
-        ctx.fillStyle = palette.textPrimary; ctx.font = `780 ${Math.round(22 * scale)}px ${fontFamily}`; ctx.fillText(`${idx + 1}. ${item.title}`.slice(0, 44), 356, 1228 + idx * 34);
-        ctx.fillStyle = theme.gold; ctx.fillText(`${rating.toFixed(1)}★`, 850, 1228 + idx * 34);
+        ctx.fillStyle = palette.textPrimary; ctx.font = `730 ${Math.round(20 * scale)}px ${fontFamily}`; ctx.fillText(`${idx + 1}. ${item.title}`.slice(0, 44), 378, 1220 + idx * 30);
+        ctx.fillStyle = theme.gold; ctx.fillText(`${rating.toFixed(1)}★`, 896, 1220 + idx * 30);
       });
     }
     drawWatermark(ctx, { width: 1080, height: 1350 }, fontFamily, theme);
