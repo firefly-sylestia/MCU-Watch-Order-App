@@ -22,3 +22,9 @@ export const TRAILER_DATA = {
 };
 
 export const trailerEmbedUrl = (youtubeId) => `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`;
+
+
+export const TRAILER_ALIASES = {
+  'Captain America: Brave New World': 'Captain America: Civil War',
+  'Thunderbolts*': 'The Avengers',
+};
