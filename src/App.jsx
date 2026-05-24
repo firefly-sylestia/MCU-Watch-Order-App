@@ -67,6 +67,9 @@ const Layers    = p => <Icon {...p}><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m
 const PlayCircle = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4V8z"/></Icon>;
 const PauseCircle = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M10 9v6M14 9v6"/></Icon>;
 const XCircle   = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></Icon>;
+const Maximize2 = p => <Icon {...p}><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></Icon>;
+const Minimize2 = p => <Icon {...p}><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></Icon>;
+const Expand = p => <Icon {...p}><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="m21 3-7 7"/><path d="m3 21 7-7"/></Icon>;
 const SlidersH  = p => <Icon {...p}><line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><circle cx="12" cy="4" r="2"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><circle cx="10" cy="12" r="2"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><circle cx="14" cy="20" r="2"/></Icon>;
 const UserCircle = p => <Icon {...p}><circle cx="12" cy="8" r="4"/><path d="M4 20c1.9-3.4 5-5 8-5s6.1 1.6 8 5"/></Icon>;
 const Menu = p => <Icon {...p}><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></Icon>;
@@ -951,6 +954,7 @@ export default function MCUViewer() {
   const [detailLoading,  setDetailLoading]  = useState(false);
   const [detailPosterFailed, setDetailPosterFailed] = useState(false);
   const [trailerOpen, setTrailerOpen] = useState(false);
+  const [trailerWide, setTrailerWide] = useState(false);
   const { posterCache, setPosterCache, localPosterMap, setLocalPosterMap } = usePosterCache();
   const [posterFetchState, setPosterFetchState] = useState({ active: false, done: 0, total: 0, message: '' });
   const [heroCarouselCache, setHeroCarouselCache] = useState({ signature: '', posters: [] });
@@ -1006,6 +1010,7 @@ export default function MCUViewer() {
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   const closeAnalytics = useCallback(() => setAnalyticsOpen(false), []);
   const closeDetail = useCallback(() => { setDetailItem(null); setTrailerOpen(false); }, []);
+  const trailerShellRef = useRef(null);
   const toggleSidebarPanel = useCallback(() => {
     setSidebarOpen(prev => {
       const next = !prev;
@@ -2024,8 +2029,14 @@ export default function MCUViewer() {
       Actors: (trustTmdbYear ? tmdb?.Actors : '') || fallback.Actors || metaCache[item.id]?.cast || '',
       imdbRating: (trustOmdbYear ? omdb?.rating : '') || (trustTmdbYear ? tmdb?.imdbRating : '') || fallback.imdbRating || metaCache[item.id]?.rating || 'N/A',
       Director: (trustTmdbYear ? tmdb?.Director : '') || fallback.Director || metaCache[item.id]?.director || '',
+      imdbID: omdb?.imdbID || '',
     };
   };
+  const imdbUrlForItem = useCallback((item, info) => {
+    if (info?.imdbID) return `https://www.imdb.com/title/${info.imdbID}/`;
+    const query = encodeURIComponent(`${item.title} ${item.year}`);
+    return `https://www.imdb.com/find/?q=${query}&s=tt`;
+  }, []);
 
   const fetchOmdbInfo = async (item) => {
     const q = encodeURIComponent(cleanLookupTitle(item.title));
@@ -2039,6 +2050,7 @@ export default function MCUViewer() {
           released: payload?.released || '',
           plot: payload?.plot || '',
           year: payload?.year || '',
+          imdbID: payload?.imdbID || '',
         };
       }
     } catch {}
@@ -2050,6 +2062,7 @@ export default function MCUViewer() {
         released: data?.Released && data.Released !== 'N/A' ? data.Released : '',
         plot: data?.Plot && data.Plot !== 'N/A' ? data.Plot : '',
         year: data?.Year && data.Year !== 'N/A' ? data.Year : '',
+        imdbID: data?.imdbID || '',
       };
     } catch {}
     return { rating: '', released: '', plot: '', year: '' };
@@ -3738,6 +3751,12 @@ export default function MCUViewer() {
                 </section>
 
                 <div className="detail-export-actions">
+                  <button className="fpill glass-panel detail-btn" onClick={async () => {
+                    const imdbUrl = imdbUrlForItem(detailItem, detailData);
+                    await Share.share({ title: `${detailItem.title} · IMDb`, text: `IMDb page for ${detailItem.title}`, url: imdbUrl });
+                  }}>
+                    <Upload size={12}/> Share IMDb Link
+                  </button>
                   <button className="fpill glass-panel detail-btn" onClick={() => setSpoilerSafeMode(v => !v)} style={{ background: spoilerSafe ? 'var(--theme-warning-soft)' : undefined, borderColor: spoilerSafe ? 'var(--theme-warning)' : undefined }}>
                     Spoiler Safe: {spoilerSafe ? 'On' : 'Off'}
                   </button>
@@ -3757,13 +3776,25 @@ export default function MCUViewer() {
 
       {trailerOpen && detailItem && TRAILER_DATA[detailItem.title]?.youtubeId && (
         <div className="detail-backdrop trailer-backdrop" onClick={() => setTrailerOpen(false)} role="dialog" aria-label="Trailer player">
-          <div className="detail-card glass-panel trailer-shell" onClick={(e) => e.stopPropagation()}>
+          <div ref={trailerShellRef} className={`detail-card glass-panel trailer-shell ${trailerWide ? 'is-wide' : ''}`} onClick={(e) => e.stopPropagation()}>
             <div className="trailer-head">
               <div>
                 <div className="trailer-eyebrow">Official trailer</div>
                 <strong className="trailer-title">{detailItem.title}</strong>
               </div>
+              <div className="trailer-actions">
+                <button className="fpill trailer-close" onClick={async () => {
+                  const el = trailerShellRef.current;
+                  if (!el) return;
+                  if (!document.fullscreenElement) await el.requestFullscreen?.();
+                  else await document.exitFullscreen?.();
+                }}><Expand size={12}/>Fullscreen</button>
+                <button className="fpill trailer-close" onClick={async () => {
+                  if (screen.orientation?.lock) await screen.orientation.lock('landscape').catch(() => {});
+                }}><Maximize2 size={12}/>Landscape</button>
+                <button className="fpill trailer-close" onClick={() => setTrailerWide(v => !v)}>{trailerWide ? <Minimize2 size={12}/> : <Maximize2 size={12}/>}{trailerWide ? 'Compact' : 'Enlarge'}</button>
               <button className="fpill trailer-close" onClick={() => setTrailerOpen(false)}><X size={12}/>Close</button>
+              </div>
             </div>
             <div className="trailer-frame">
               <iframe title={`${detailItem.title} trailer`} src={trailerEmbedUrl(TRAILER_DATA[detailItem.title].youtubeId)} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
