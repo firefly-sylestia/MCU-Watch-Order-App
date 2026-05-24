@@ -2900,6 +2900,7 @@ export default function MCUViewer() {
 
   // Count active filters for the collapsed bar badge
   const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
+  const filterTriggerLabel = sortBy === 'order' ? 'Filters > Chronological' : `Filters > ${SORT_LABELS[sortBy] || 'Custom'}`;
 
   const renderPhaseSelector = () => (
     <div ref={phaseRef} className="phase-selector-rail">
@@ -3212,6 +3213,28 @@ export default function MCUViewer() {
         </div>
       )}
 
+      {browseMode === 'search' && (
+        <section className="search-page-shell" style={{ maxWidth: 1480, margin: '8px auto 14px', padding: '0 16px' }}>
+          <div className="search-page-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontSize: 11, letterSpacing: 1.8, textTransform: 'uppercase', color: T.textMuted }}>Dedicated Search</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: T.text }}>Find any title instantly</div>
+            </div>
+            <button className="fpill" onClick={() => setBrowseMode('home')}><ChevDown size={14}/> Back to Home</button>
+          </div>
+          <div className="search-page-panel" style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 18, padding: 14, background: 'color-mix(in srgb, var(--theme-surface) 84%, transparent)' }}>
+            <div style={{ position: 'relative' }}>
+              <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
+              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search title, prerequisite, release notes..." aria-label="Search titles" style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650 }} />
+            </div>
+            <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.4 }}>{search ? `${filtered.length} matches` : 'Type to begin searching'}</div>
+              {search && <button className="fpill" onClick={() => setSearch('')}><Trash2 size={12}/> Clear Search</button>}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 60, marginTop: 16 }}>
         {/* Toggle row — always visible */}
@@ -3222,7 +3245,7 @@ export default function MCUViewer() {
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: `1px solid ${filtersOpen ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: filtersOpen ? 'var(--theme-accent)' : T.textMuted, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 2, transition: 'all 0.18s' }}
             >
               <SlidersH size={13} />
-              Filters
+              {filterTriggerLabel}
               {activeFilterCount > 0 && (
                 <span className="filters-count-badge" aria-label={`${activeFilterCount} active filters`}>{activeFilterCount}</span>
               )}
@@ -3233,13 +3256,10 @@ export default function MCUViewer() {
               <span style={{ fontSize: 10, letterSpacing: 1.6, color: T.textMuted, textTransform: 'uppercase' }}>Continue</span>
               <span style={{ fontSize: 12, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</span>
             </button>
-            {/* Search always visible */}
-            <div style={{ position: 'relative', flex: '1 1 220px', minWidth: 170, maxWidth: isDesktopViewport ? 320 : '100%' }}>
-              <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search title or prerequisite"
-                aria-label="Search titles"
-                style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 72%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 999, padding: '9px 14px 9px 32px', color: T.inputColor, fontSize: 14, fontWeight: 650, letterSpacing: 0.3, textShadow: '0 1px 2px color-mix(in srgb,var(--theme-bg) 28%, transparent)', backdropFilter: 'blur(12px) saturate(128%)', WebkitBackdropFilter: 'blur(12px) saturate(128%)' }} />
-            </div>
+            <button className="filters-trigger" onClick={() => setBrowseMode('search')} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${T.filterBorder}`, background: 'transparent', color: T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}>
+              <Search size={13} />
+              Search Library
+            </button>
             <div className='filter-row-actions' style={{ marginLeft: 0, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-start', minWidth: 0 }} />
           </div>
         </div>
