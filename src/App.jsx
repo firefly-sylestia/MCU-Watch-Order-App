@@ -2868,11 +2868,20 @@ export default function MCUViewer() {
       if (!detailItem) return;
       const requestId = detailRequestRef.current + 1;
       detailRequestRef.current = requestId;
+
+      const fallback = {
+        Plot: metaCache[detailItem.id]?.plot || detailItem.desc,
+        Year: String(detailItem.year),
+        Released: metaCache[detailItem.id]?.released || '',
+        Actors: metaCache[detailItem.id]?.cast || '',
+        imdbRating: metaCache[detailItem.id]?.rating || 'N/A'
+      };
+      const localFirstData = normalizeDetailData({ item: detailItem, fallback });
+      setDetailData(localFirstData);
       setDetailLoading(true);
-      setDetailData(null);
-      setDetailPosterFailed(false);
-      setDetailPlotState({ active: 'primary', primary: detailItem.desc, secondary: '', loadingSecondary: false, secondaryProvider: 'OMDb' });
-      const fallback = { Plot: metaCache[detailItem.id]?.plot || detailItem.desc, Year: String(detailItem.year), Released: metaCache[detailItem.id]?.released || '', Actors: metaCache[detailItem.id]?.cast || '', imdbRating: metaCache[detailItem.id]?.rating || 'N/A' };
+
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      if (detailRequestRef.current !== requestId) return;
 
       try {
         const [tmdbPoster, tmdbDetails] = await Promise.all([
@@ -2902,7 +2911,7 @@ export default function MCUViewer() {
         }));
       } catch {
         if (detailRequestRef.current !== requestId) return;
-        setDetailData(normalizeDetailData({ item: detailItem, fallback }));
+        setDetailData(localFirstData);
       } finally {
         if (detailRequestRef.current === requestId) setDetailLoading(false);
       }
