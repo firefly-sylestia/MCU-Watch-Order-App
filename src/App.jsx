@@ -815,7 +815,7 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
       window.removeEventListener('resize', schedule);
       if (rafId) window.cancelAnimationFrame(rafId);
     };
-  }, [fabMenuOpen]);
+  }, []);
 
   const estimatedRowHeight = 132;
   const estimatedTotalHeight = rows.length * estimatedRowHeight;
