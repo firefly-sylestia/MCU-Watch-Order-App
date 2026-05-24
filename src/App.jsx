@@ -30,6 +30,7 @@ import { DC_RAW, DC_PHASES, DC_CORE_IDS } from './data/dcData';
 import { UNIVERSE_META } from './constants/universeSwitch';
 import { TIMELINE_MODES, TIMELINE_MODE_IDS, CHARACTER_POV_TITLE_SETS, STORY_ORDER_OVERRIDES } from './data/timelineModes';
 import { AFTER_CREDITS, AFTER_CREDITS_DEFAULT, DIRECTOR_DATA } from './data/afterCreditsData';
+import { TRAILER_DATA, trailerEmbedUrl } from './data/trailerData';
 
 // ─── Icon primitives ────────────────────────────────────────────────────────
 const Icon = ({ children, size = 16, style = {} }) => (
@@ -949,6 +950,7 @@ export default function MCUViewer() {
   const [metaCache,      setMetaCache]      = useState({});
   const [detailLoading,  setDetailLoading]  = useState(false);
   const [detailPosterFailed, setDetailPosterFailed] = useState(false);
+  const [trailerOpen, setTrailerOpen] = useState(false);
   const { posterCache, setPosterCache, localPosterMap, setLocalPosterMap } = usePosterCache();
   const [posterFetchState, setPosterFetchState] = useState({ active: false, done: 0, total: 0, message: '' });
   const [heroCarouselCache, setHeroCarouselCache] = useState({ signature: '', posters: [] });
@@ -1003,7 +1005,7 @@ export default function MCUViewer() {
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   const closeAnalytics = useCallback(() => setAnalyticsOpen(false), []);
-  const closeDetail = useCallback(() => setDetailItem(null), []);
+  const closeDetail = useCallback(() => { setDetailItem(null); setTrailerOpen(false); }, []);
   const toggleSidebarPanel = useCallback(() => {
     setSidebarOpen(prev => {
       const next = !prev;
@@ -3656,9 +3658,13 @@ export default function MCUViewer() {
                     <span>{detailItem.title}</span>
                   </div>
                 ) : (
-                  <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : posterSrc(detailItem)} onError={() => setDetailPosterFailed(true)} alt={`${detailItem.title} poster`} />
+                  <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : posterSrc(detailItem)} onError={() => setDetailPosterFailed(true)} alt={`${detailItem.title} poster`} onClick={() => { if (TRAILER_DATA[detailItem.title]?.youtubeId) setTrailerOpen(true); }} style={{ cursor: TRAILER_DATA[detailItem.title]?.youtubeId ? 'pointer' : 'default' }} />
                 )}
-              </div>
+              
+                {!!TRAILER_DATA[detailItem.title]?.youtubeId && (
+                  <button className="fpill" style={{ position: 'absolute', left: 12, bottom: 12, zIndex: 3, background: 'color-mix(in srgb, #ed1d24 22%, var(--theme-surface))', borderColor: 'color-mix(in srgb, #ed1d24 52%, var(--theme-border))' }} onClick={() => setTrailerOpen(true)}><PlayCircle size={13}/>Play Trailer</button>
+                )}
+</div>
 
               <div className="detail-export-content">
                 <div className="detail-sticky-actions">
@@ -3726,6 +3732,20 @@ export default function MCUViewer() {
                   <button className="fpill glass-panel detail-btn" onClick={() => exportPosterForItem(detailItem)}><Download size={14}/> Export Details Card</button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {trailerOpen && detailItem && TRAILER_DATA[detailItem.title]?.youtubeId && (
+        <div className="detail-backdrop" onClick={() => setTrailerOpen(false)} role="dialog" aria-label="Trailer player">
+          <div className="detail-card glass-panel" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 980, width: 'calc(100% - 24px)', padding: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <strong style={{ fontSize: 14 }}>{detailItem.title} · Trailer</strong>
+              <button className="fpill" onClick={() => setTrailerOpen(false)}><X size={12}/>Close</button>
+            </div>
+            <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--theme-border)' }}>
+              <iframe title={`${detailItem.title} trailer`} src={trailerEmbedUrl(TRAILER_DATA[detailItem.title].youtubeId)} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
             </div>
           </div>
         </div>
