@@ -3388,11 +3388,11 @@ export default function MCUViewer() {
               </div>}
             </div>
             <div ref={timelineRef} style={{ position: 'relative' }}>
-              <button className="filters-trigger" onClick={() => setTimelineOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid color-mix(in srgb, var(--theme-accent) 42%, var(--theme-border))`, background: 'linear-gradient(135deg, color-mix(in srgb, #ed1d24 22%, var(--theme-surface)) 0%, color-mix(in srgb, #0063e5 18%, var(--theme-surface)) 100%)', color: 'var(--theme-text)', cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.2, boxShadow: '0 10px 20px rgba(0,0,0,.18)' }}>
+              <button className="filters-trigger redesigned-sort-btn" onClick={() => setTimelineOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${timelineMode === 'release' ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: timelineMode === 'release' ? 'var(--theme-accent)' : T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}>
                 <Layers size={13} /> {TIMELINE_MODES.find(m => m.id === timelineMode)?.label || 'Timeline'} <ChevDown size={11} style={{ transform: timelineOpen ? 'rotate(180deg)' : 'none' }}/>
               </button>
               {timelineOpen && (
-                <div className="dropdown-pop filter-dropdown" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1450, minWidth: 300, padding: 8, background: 'linear-gradient(160deg, color-mix(in srgb, #ed1d24 10%, var(--theme-surface)) 0%, color-mix(in srgb, #0b0f2d 78%, var(--theme-surface)) 52%, color-mix(in srgb, #ffd447 10%, var(--theme-surface)) 100%)' }}>
+                <div className="dropdown-pop filter-dropdown redesigned-sort-menu" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1450, minWidth: 300 }}>
                   {TIMELINE_MODES.map(mode => (
                     <button key={mode.id} className={`sopt ${timelineMode === mode.id ? 'picked' : ''}`} style={{ width: '100%', textAlign: 'left', marginBottom: 4, borderRadius: 10, border: timelineMode === mode.id ? '1px solid color-mix(in srgb, var(--theme-accent) 60%, transparent)' : '1px solid transparent' }} onClick={() => { setTimelineMode(mode.id); setTimelineOpen(false); }}>
                       <div style={{ fontWeight: 700 }}>{mode.label}</div><div style={{ fontSize: 11, opacity: 0.8 }}>{mode.description}</div>
