@@ -67,6 +67,7 @@ const SlidersH  = p => <Icon {...p}><line x1="21" y1="4" x2="14" y2="4"/><line x
 const UserCircle = p => <Icon {...p}><circle cx="12" cy="8" r="4"/><path d="M4 20c1.9-3.4 5-5 8-5s6.1 1.6 8 5"/></Icon>;
 const Menu = p => <Icon {...p}><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></Icon>;
 const SwitchIcon = p => <Icon {...p}><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 8a9 9 0 0 0-15-3"/><path d="M3 16a9 9 0 0 0 15 3"/></Icon>;
+const ArrowUpDown = p => <Icon {...p}><path d="m7 3-4 4 4 4"/><path d="M3 7h14"/><path d="m17 21 4-4-4-4"/><path d="M21 17H7"/></Icon>;
 const X         = p => <Icon {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></Icon>;
 
 
