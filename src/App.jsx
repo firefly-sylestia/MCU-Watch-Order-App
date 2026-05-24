@@ -1368,12 +1368,22 @@ export default function MCUViewer() {
   }, []);
 
   const scrollToListTop = useCallback(() => {
+    const smoothState = desktopSmoothScrollStateRef.current;
+    if (smoothState?.raf) cancelAnimationFrame(smoothState.raf);
+    if (smoothState) {
+      smoothState.raf = null;
+      smoothState.velocity = 0;
+      smoothState.lastTs = 0;
+    }
+
     const container = mainRef.current;
     if (container && container.scrollHeight > container.clientHeight + 1) {
       container.scrollTo({ top: 0, behavior: 'auto' });
+      setScrollCheckpoint(0);
       return;
     }
     window.scrollTo({ top: 0, behavior: 'auto' });
+    setScrollCheckpoint(0);
   }, []);
 
   const scrollTo = id => {
@@ -1638,6 +1648,18 @@ export default function MCUViewer() {
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
     [items, listMode, coreIds]
   );
+
+  const bookmarkHubItems = useMemo(() => (
+    activeItems
+      .filter(item => Boolean(bookmarks[item.id]) || item.status === 'watched' || item.status === 'plan-to-watch')
+      .sort((a, b) => {
+        const aScore = (bookmarks[a.id] ? 3 : 0) + (a.status === 'watched' ? 2 : a.status === 'plan-to-watch' ? 1 : 0);
+        const bScore = (bookmarks[b.id] ? 3 : 0) + (b.status === 'watched' ? 2 : b.status === 'plan-to-watch' ? 1 : 0);
+        if (bScore !== aScore) return bScore - aScore;
+        return a.order - b.order;
+      })
+      .slice(0, 10)
+  ), [activeItems, bookmarks]);
 
 
   useEffect(() => {
@@ -3592,6 +3614,36 @@ export default function MCUViewer() {
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
+          {bookmarkHubItems.length > 0 && (
+            <section className="bookmark-hub motion-section motion-pop" data-motion="section">
+              <div className="bookmark-hub-head">
+                <h3>Bookmarks & Watch Later</h3>
+                <p>Quick access cards for your saved, watched, and plan-to-watch titles.</p>
+              </div>
+              <div className="bookmark-hub-grid">
+                {bookmarkHubItems.map(item => {
+                  const statusMeta = getSafeStatusMeta(item.status);
+                  const isSaved = Boolean(bookmarks[item.id]);
+                  return (
+                    <article key={`bookmark-hub-${item.id}`} className="bookmark-hub-card">
+                      <div className="bookmark-hub-card-top">
+                        <span className="bookmark-hub-title">{item.title}</span>
+                        <span className="bookmark-hub-status" style={{ color: statusMeta.color, background: statusMeta.bg }}>
+                          {statusMeta.label}
+                        </span>
+                      </div>
+                      <p className="bookmark-hub-desc">{item.desc || 'No description available yet.'}</p>
+                      <div className="bookmark-hub-actions">
+                        <button type="button" className="bookmark-hub-btn" onClick={() => setDetailItem(item)}>Open details</button>
+                        <button type="button" className="bookmark-hub-btn ghost" onClick={() => toggleBookmark(item.id)}>{isSaved ? 'Unsave' : 'Save'}</button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
