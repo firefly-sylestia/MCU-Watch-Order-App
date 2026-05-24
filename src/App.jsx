@@ -1065,6 +1065,7 @@ export default function MCUViewer() {
   }, [scrollTuning]);
 
   const overlayActive = Boolean(settingsOpen || analyticsOpen || detailItem || sidebarOpen);
+  const blockHomeInteractions = Boolean(settingsOpen || sidebarOpen);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -3198,7 +3199,7 @@ export default function MCUViewer() {
       </SettingsMenu>
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <header className="hexbg" style={{ position: 'relative', zIndex: 'var(--overlay-z-base)', background: universe === 'dc' ? 'linear-gradient(180deg, rgba(20,44,88,.95), rgba(10,22,43,.88))' : 'transparent', borderBottom: universe === 'dc' ? '1px solid rgba(59,130,246,.35)' : 'none', flexShrink: 0 }}>
+      <header className="hexbg" style={{ position: 'relative', zIndex: 'var(--overlay-z-base)', background: universe === 'dc' ? 'linear-gradient(180deg, rgba(20,44,88,.95), rgba(10,22,43,.88))' : 'transparent', borderBottom: universe === 'dc' ? '1px solid rgba(59,130,246,.35)' : 'none', flexShrink: 0, pointerEvents: blockHomeInteractions ? 'none' : 'auto' }}>
         <div className="header-inner" style={{ width: '100%', maxWidth: 1480, margin: '0 auto', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 26px) 30px 16px', transition: 'padding 0.2s ease' }}>
           <div className="header-controls-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
             <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} onClick={() => { setBrandTapCount(c => c + 1); setTimeout(() => setBrandTapCount(0), 550); }} onDoubleClick={() => setUniverse(prev => prev === 'mcu' ? 'dc' : 'mcu')} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900, cursor: 'pointer', userSelect: 'none', WebkitUserSelect: 'none' }}>
@@ -3478,7 +3479,7 @@ export default function MCUViewer() {
         </button>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
+      <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
