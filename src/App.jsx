@@ -1385,6 +1385,18 @@ export default function MCUViewer() {
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
 
+  const closeSavedHub = useCallback(() => {
+    setSavedHubOpen(false);
+    if (!phaseKeys.length) {
+      setSearch('');
+      setStatusFilter(null);
+      setWatchedOnly(false);
+      setTypeFilter(null);
+      setActivePhase(0);
+    }
+    scrollToListTop();
+  }, [phaseKeys.length, scrollToListTop]);
+
   const scrollTo = id => {
     const el = phaseRefs.current[id];
     const container = mainRef.current;
@@ -1647,13 +1659,10 @@ export default function MCUViewer() {
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
     [items, listMode, coreIds]
   );
-  const savedHubItems = useMemo(
-    () => (listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items),
-    [items, listMode, coreIds]
-  );
+  const savedHubItems = useMemo(() => items, [items]);
   const bookmarkedItems = useMemo(() => savedHubItems.filter((item) => Boolean(bookmarks[item.id])), [savedHubItems, bookmarks]);
   const savedWatchedItems = useMemo(() => bookmarkedItems.filter((item) => item.status === 'watched'), [bookmarkedItems]);
-  const savedWatchLaterItems = useMemo(() => bookmarkedItems.filter((item) => ['plan-to-watch', 'watching', 'on-hold'].includes(item.status)), [bookmarkedItems]);
+  const savedWatchLaterItems = useMemo(() => bookmarkedItems.filter((item) => ['plan-to-watch', 'watching', 'on-hold', 'unwatched'].includes(item.status)), [bookmarkedItems]);
 
 
   useEffect(() => {
@@ -3612,7 +3621,7 @@ export default function MCUViewer() {
             <button
               type="button"
               className="saved-library-trigger"
-              onClick={() => setSavedHubOpen((prev) => !prev)}
+              onClick={() => (savedHubOpen ? closeSavedHub() : setSavedHubOpen(true))}
               aria-expanded={savedHubOpen}
               aria-label={savedHubOpen ? 'Close saved watch hub page' : 'Open saved watch hub page'}
             >
@@ -3636,7 +3645,7 @@ export default function MCUViewer() {
                 <span className="saved-library-count">{bookmarkedItems.length} saved</span>
               </div>
               <div className="saved-library-page-actions">
-                <button type="button" className="saved-library-trigger" onClick={() => setSavedHubOpen(false)} aria-label="Back to timeline page">
+                <button type="button" className="saved-library-trigger" onClick={closeSavedHub} aria-label="Back to timeline page">
                   <ChevRight size={13} style={{ transform: 'rotate(180deg)' }} />
                   Back to Timeline
                 </button>
