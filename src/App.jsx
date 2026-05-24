@@ -952,6 +952,7 @@ export default function MCUViewer() {
   const [detailPosterFailed, setDetailPosterFailed] = useState(false);
   const [trailerOpen, setTrailerOpen] = useState(false);
   const [trailerLandscape, setTrailerLandscape] = useState(false);
+  const [trailerExpanded, setTrailerExpanded] = useState(false);
   const trailerShellRef = useRef(null);
   const { posterCache, setPosterCache, localPosterMap, setLocalPosterMap } = usePosterCache();
   const [posterFetchState, setPosterFetchState] = useState({ active: false, done: 0, total: 0, message: '' });
@@ -2602,6 +2603,12 @@ export default function MCUViewer() {
     };
     run();
   }, [universe]);
+  useEffect(() => {
+    if (!trailerOpen) {
+      setTrailerExpanded(false);
+      setTrailerLandscape(false);
+    }
+  }, [trailerOpen]);
   const refreshPosterForItem = async (item) => {
     if (localPosterSrc(item)) {
       setPosterFetchState({ active: false, done: 0, total: 0, message: `${item.title} uses a local poster override.` });
@@ -2632,6 +2639,81 @@ export default function MCUViewer() {
     const src = localPosterSrc(item) || posterCache[item.id];
     const filename = posterExportName(item, 'png').replace(/\.\w+$/, '-details-card.png');
     try {
+      if (share) {
+        const exportFontFamily = EXPORT_FONT_FAMILIES[exportFont] || EXPORT_FONT_FAMILIES.inter;
+        await waitForExportFont(exportFontFamily);
+        const scale = Math.min(exportTextScale * (exportFont === 'marvel' ? 1.12 : 1), 1.7);
+        const canvas = document.createElement('canvas');
+        canvas.width = 1400;
+        canvas.height = 1900;
+        const ctx = canvas.getContext('2d');
+        const rootStyles = getComputedStyle(document.documentElement);
+        const cardBg = rootStyles.getPropertyValue('--detail-shell-bg').trim() || '#151923';
+        const panelBg = rootStyles.getPropertyValue('--detail-panel-bg').trim() || '#1f2430';
+        const textPrimary = rootStyles.getPropertyValue('--text-primary').trim() || '#f8fafc';
+        const textSecondary = rootStyles.getPropertyValue('--text-secondary').trim() || '#cbd5e1';
+        const accent = rootStyles.getPropertyValue('--theme-accent').trim() || '#7dd3fc';
+        const glow = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        glow.addColorStop(0, 'rgba(3,7,18,0.55)');
+        glow.addColorStop(1, 'rgba(3,7,18,0.9)');
+        if (src) {
+          const bg = new Image();
+          bg.crossOrigin = 'anonymous';
+          bg.src = src;
+          await new Promise((resolve, reject) => { bg.onload = resolve; bg.onerror = reject; });
+          ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+        } else {
+          ctx.fillStyle = '#0b1020';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        drawRoundedPanel(ctx, { x: 70, y: 80, w: 1260, h: 1740, radius: 42, fill: cardBg, stroke: 'rgba(255,255,255,0.14)' });
+
+        if (src) {
+          const poster = new Image(); poster.crossOrigin = 'anonymous'; poster.src = src;
+          await new Promise((resolve, reject) => { poster.onload = resolve; poster.onerror = reject; });
+          ctx.save(); ctx.beginPath(); ctx.roundRect(120, 145, 360, 530, 24); ctx.clip(); ctx.drawImage(poster, 120, 145, 360, 530); ctx.restore();
+        }
+        ctx.fillStyle = textSecondary;
+        ctx.font = `900 ${Math.round(24 * scale)}px ${exportFontFamily}`;
+        ctx.fillText('MCU DETAILS CARD', 530, 160);
+        ctx.fillStyle = textPrimary;
+        ctx.font = `900 ${Math.round(66 * scale)}px ${exportFontFamily}`;
+        drawWrappedText(ctx, item.title, 530, 245, 740, Math.round(74 * scale), 3);
+        ctx.font = `800 ${Math.round(26 * scale)}px ${exportFontFamily}`;
+        ctx.fillStyle = textSecondary;
+        ctx.fillText(`Phase ${item.phase} • ${item.year} • ${TYPE_META[item.type]?.label || item.type}`, 530, 458);
+
+        drawRoundedPanel(ctx, { x: 120, y: 730, w: 1140, h: 470, radius: 28, fill: panelBg, stroke: 'rgba(255,255,255,0.1)' });
+        ctx.fillStyle = accent;
+        ctx.font = `850 ${Math.round(24 * scale)}px ${exportFontFamily}`;
+        ctx.fillText('STORY BRIEF', 154, 798);
+        ctx.fillStyle = textPrimary;
+        ctx.font = `600 ${Math.round(32 * scale)}px ${exportFontFamily}`;
+        drawWrappedText(ctx, spoilerSafeMode ? 'Spoiler-safe mode enabled for shared card.' : (detailPlotState.primary || detailData?.Plot || item.desc), 154, 858, 1060, Math.round(46 * scale), 7);
+
+        drawRoundedPanel(ctx, { x: 120, y: 1240, w: 1140, h: 500, radius: 28, fill: panelBg, stroke: 'rgba(255,255,255,0.1)' });
+        ctx.fillStyle = accent;
+        ctx.font = `850 ${Math.round(24 * scale)}px ${exportFontFamily}`;
+        ctx.fillText('WATCH INTEL + AFTER-CREDITS NAVIGATOR', 154, 1310);
+        ctx.fillStyle = textSecondary;
+        ctx.font = `700 ${Math.round(25 * scale)}px ${exportFontFamily}`;
+        const releaseLine = `Release: ${formatReleaseDate(releaseInfoFor(item).date, item.year, releaseInfoFor(item).label, releaseStatusFor(item))}`;
+        drawWrappedText(ctx, releaseLine, 154, 1370, 1060, Math.round(39 * scale), 2);
+        drawWrappedText(ctx, `Prerequisite: ${item.prereq}`, 154, 1460, 1060, Math.round(39 * scale), 2);
+        drawWrappedText(ctx, `Director: ${detailData?.Director && detailData.Director !== 'N/A' ? detailData.Director : (DIRECTOR_DATA[item.title] || 'Director data coming soon')}`, 154, 1548, 1060, Math.round(39 * scale), 2);
+        drawWrappedText(ctx, `Cast: ${detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[item.title] || ['Cast data coming soon']).join(', ')}`, 154, 1636, 1060, Math.round(39 * scale), 3);
+
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
+        const outputFilename = filename.replace('-details-card.png', '-shared-details-card.png');
+        if (Capacitor.isNativePlatform()) {
+          const base64 = await blobToBase64(blob);
+          await Filesystem.writeFile({ path: `mcu-posters/${outputFilename}`, data: base64, directory: Directory.Documents, recursive: true });
+        } else triggerDownload(blob, outputFilename);
+        setPosterExportState({ active: false, done: 1, total: 1, message: `Shared-ready details card for ${item.title}.` });
+        return;
+      }
       const info = releaseInfoFor(item);
       const status = releaseStatusFor(item);
       const description = spoilerSafeMode
@@ -3780,15 +3862,11 @@ export default function MCUViewer() {
               </div>
               <div className="trailer-actions">
                 <button className="fpill trailer-close" onClick={() => setTrailerLandscape(v => !v)}><SwitchIcon size={12}/>{trailerLandscape ? 'Portrait' : 'Landscape'}</button>
-                <button className="fpill trailer-close" onClick={async () => {
-                  try {
-                    if (trailerShellRef.current?.requestFullscreen) await trailerShellRef.current.requestFullscreen();
-                  } catch {}
-                }}><PlayCircle size={12}/>Enlarge</button>
+                <button className="fpill trailer-close" onClick={() => setTrailerExpanded(v => !v)}><PlayCircle size={12}/>{trailerExpanded ? 'Compact' : 'Enlarge'}</button>
                 <button className="fpill trailer-close" onClick={() => setTrailerOpen(false)}><X size={12}/>Close</button>
               </div>
             </div>
-            <div className={`trailer-frame ${trailerLandscape ? 'is-landscape' : ''}`} ref={trailerShellRef}>
+            <div className={`trailer-frame ${trailerLandscape ? 'is-landscape' : ''} ${trailerExpanded ? 'is-expanded' : ''}`} ref={trailerShellRef}>
               {trailerLandscape && <div className="trailer-landscape-tip">Landscape mode enabled</div>}
               <iframe title={`${detailItem.title} trailer`} src={trailerEmbedUrl(TRAILER_DATA[detailItem.title].youtubeId)} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
             </div>
