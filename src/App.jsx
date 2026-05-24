@@ -1042,6 +1042,7 @@ export default function MCUViewer() {
   const headerMinimized = false;
   const phaseRefs  = useRef({});
   const sortRef    = useRef(null);
+  const timelineRef = useRef(null);
   const phaseRef   = useRef(null);
   const obsRef     = useRef(null);  const isScrolling= useRef(false);
   const mainRef    = useRef(null);
