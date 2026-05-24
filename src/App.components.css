@@ -2447,10 +2447,10 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   animation: fadeIn .18s ease;
 }
 .trailer-backdrop.is-landscape{
-  padding:0;
+  padding:max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
   overflow:hidden;
   display:flex;
-  align-items:center;
+  align-items:stretch;
   justify-content:center;
 }
 .trailer-shell{
@@ -2462,24 +2462,23 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   border: 1px solid color-mix(in srgb,var(--theme-accent) 34%, var(--theme-border));
   background: color-mix(in srgb,var(--theme-surface) 88%, transparent);
   box-shadow: 0 30px 65px rgba(2,8,23,.5);
-  transition:max-width .24s ease,padding .24s ease;
+  transition:max-width .24s ease,padding .24s ease,border-radius .24s ease;
 }
 .trailer-shell.is-landscape{
-  max-width:min(1600px,100vw);
+  max-width:none;
 }
 .trailer-backdrop.is-landscape .trailer-shell{
   position:relative;
-  left:auto;
-  top:auto;
   margin:0;
-  width:min(99.2dvh,1540px);
-  max-width:min(99.2dvh,1540px);
-  max-height:min(98dvw,1120px);
-  border-radius:16px;
-  transform:rotate(90deg) !important;
-  transform-origin:center center;
-  will-change:transform;
-  animation:modalRotateIn 220ms var(--ease-out, ease) both;
+  width:100%;
+  max-width:100%;
+  height:100%;
+  max-height:100%;
+  border-radius:20px;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  animation:modalRiseIn 220ms var(--ease-out, ease) both;
 }
 .trailer-shell.is-expanded{max-width:min(1600px,99vw);padding:12px}
 .trailer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
@@ -2492,22 +2491,15 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   border-radius:14px;border:1px solid color-mix(in srgb,var(--theme-border) 88%, transparent);
   background:color-mix(in srgb,var(--theme-bg) 70%, #000);
 }
-.trailer-frame.is-landscape{padding-top:min(40%,92vh)}
+.trailer-frame.is-landscape{padding-top:0;flex:1;min-height:0;height:100%}
 .trailer-shell.is-expanded .trailer-frame{padding-top:min(56.25%,76vh)}
-.trailer-shell.is-expanded .trailer-frame.is-landscape{padding-top:min(42%,96vh)}
+.trailer-shell.is-expanded .trailer-frame.is-landscape{padding-top:0;height:100%}
 .trailer-landscape-tip{position:absolute;top:10px;left:10px;z-index:2;padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--theme-accent) 22%, var(--theme-surface));border:1px solid color-mix(in srgb,var(--theme-accent) 52%, var(--theme-border));font:700 10px/1 var(--font-marvel-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--theme-text)}
 .trailer-expanded-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;flex-wrap:wrap}
 [data-color-mode="light"] .trailer-backdrop.is-landscape{background:radial-gradient(circle at 20% 12%, color-mix(in srgb,var(--theme-accent) 16%, #fff), transparent 44%), rgba(15,23,42,.45)}
 @media (max-width:900px){
-  .trailer-backdrop.is-landscape .trailer-shell{
-    width:min(98dvh,980px);
-    max-width:min(98dvh,980px);
-    max-height:min(97dvw,780px);
-    padding:10px;
-  }
-  .trailer-backdrop.is-landscape .trailer-frame{
-    border-radius:12px;
-  }
+  .trailer-backdrop.is-landscape .trailer-shell{border-radius:14px;padding:8px}
+  .trailer-backdrop.is-landscape .trailer-frame{border-radius:12px}
 }
 @media (prefers-reduced-motion:reduce){
   .trailer-shell,
