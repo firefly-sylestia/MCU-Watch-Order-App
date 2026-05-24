@@ -1031,6 +1031,14 @@ export default function MCUViewer() {
     setSettingsOpen(false);
     setAnalyticsOpen(true);
   }, []);
+  const handleInAppBack = useCallback(() => {
+    if (browseMode === 'search' || browseMode === 'phase') {
+      setBrowseMode('home');
+      return true;
+    }
+    return false;
+  }, [browseMode]);
+
   const [desktopTextScale, setDesktopTextScale] = useState(initialUiState.desktopTextScale);
   const [textScaleEnabled, setTextScaleEnabled] = useState(initialUiState.textScaleEnabled);
   const { isDesktopViewport } = useResponsiveLayout();
