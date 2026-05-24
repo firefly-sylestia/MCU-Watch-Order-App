@@ -815,7 +815,7 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
       window.removeEventListener('resize', schedule);
       if (rafId) window.cancelAnimationFrame(rafId);
     };
-  }, []);
+  }, [fabMenuOpen]);
 
   const estimatedRowHeight = 132;
   const estimatedTotalHeight = rows.length * estimatedRowHeight;
@@ -925,6 +925,7 @@ export default function MCUViewer() {
   const setPhaseOpen = (next) => dispatchUiMode({ phaseOpen: typeof next === 'function' ? next(uiModeState.phaseOpen) : next });
   const [statusDropdown, setStatusDropdown] = useState(null);
   const [fabMenuOpen, setFabMenuOpen] = useState(true);
+  const [fabMinimized, setFabMinimized] = useState(false);
   const [browseMode, setBrowseMode] = useState('home');
   const setFilterStatusOpen = (next) => dispatchUiMode({ filterStatusOpen: typeof next === 'function' ? next(uiModeState.filterStatusOpen) : next });
   const setDockStatusOpen = (next) => dispatchUiMode({ dockStatusOpen: typeof next === 'function' ? next(uiModeState.dockStatusOpen) : next });
@@ -1310,16 +1311,29 @@ export default function MCUViewer() {
   useEffect(() => {
     const el = mainRef.current;
     let scrollSaveTimer;
+    let previousTop = 0;
     const getCurrentScrollTop = () => {
       const canScrollMain = el && el.scrollHeight > el.clientHeight + 1;
       return canScrollMain ? el.scrollTop : window.scrollY;
     };
+    previousTop = getCurrentScrollTop();
     const onScroll = () => {
+      const currentTop = getCurrentScrollTop();
+      const delta = currentTop - previousTop;
+      if (currentTop < 120) {
+        setFabMinimized(false);
+      } else if (delta > 7) {
+        setFabMinimized(true);
+        if (fabMenuOpen) setFabMenuOpen(false);
+      } else if (delta < -10) {
+        setFabMinimized(false);
+      }
+      previousTop = currentTop;
       isScrolling.current = true;
       clearTimeout(isScrolling._t);
       clearTimeout(scrollSaveTimer);
       isScrolling._t = setTimeout(() => { isScrolling.current = false; }, 150);
-      scrollSaveTimer = setTimeout(() => setScrollCheckpoint(getCurrentScrollTop()), 220);
+      scrollSaveTimer = setTimeout(() => setScrollCheckpoint(currentTop), 220);
     };
     el?.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -1328,7 +1342,7 @@ export default function MCUViewer() {
       el?.removeEventListener('scroll', onScroll);
       window.removeEventListener('scroll', onScroll);
     };
-  }, []);
+  }, [fabMenuOpen]);
 
   useEffect(() => {
     // Phase selection is a filter, so do not rewrite it from scroll position.
@@ -3493,7 +3507,7 @@ export default function MCUViewer() {
           </div>
         )}
       </div>}
-      <div className="floating-controls" style={detailItem || trailerOpen || analyticsOpen || settingsOpen || sidebarOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
+      <div className={`floating-controls${fabMinimized ? ' is-minimized' : ''}`} style={detailItem || trailerOpen || analyticsOpen || settingsOpen || sidebarOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
         <button
           type="button"
           className="fab-primary"
@@ -3504,7 +3518,7 @@ export default function MCUViewer() {
             boxShadow: '0 16px 34px rgba(0,0,0,.30)',
           }}
         >
-          <Zap size={14} /> Quick Actions <ChevDown size={12} style={{ transform: fabMenuOpen ? 'rotate(180deg)' : 'none' }} />
+          <Zap size={14} /> <span className="fab-primary-label">Quick Actions</span> <ChevDown size={12} style={{ transform: fabMenuOpen ? 'rotate(180deg)' : 'none' }} />
         </button>
 
         {/* ━━ JUMP NEXT BUTTON ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
