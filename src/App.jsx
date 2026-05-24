@@ -197,6 +197,12 @@ const VALID_TYPES = new Set([null, ...Object.keys(TYPE_META)]);
 const VALID_STATUSES = new Set([null, ...Object.keys(STATUS_META)]);
 const VALID_DENSITY_MODES = new Set(['comfortable', 'compact']);
 const VALID_TIMELINE_MODES = new Set(['sacred', 'studio', 'whatif']);
+const TIMELINE_MODE_OPTIONS = [
+  { id: 'sacred', label: 'Release Order' },
+  { id: 'studio', label: 'Chronological Story' },
+  { id: 'whatif', label: 'Branching Multiverse' },
+];
+const SPOILER_LEVELS = ['none', 'mild', 'full'];
 const VALID_DESKTOP_TEXT_SCALES = new Set(DESKTOP_TEXT_SCALES);
 const AUTO_HIDDEN_STATUSES = HIDDEN_FILTER_STATUSES;
 
@@ -954,7 +960,7 @@ export default function MCUViewer() {
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
   const [themeMode,      setThemeMode]      = useState('panther-tech');
-  const [spoilerSafeMode, setSpoilerSafeMode] = useState(true);
+  const [spoilerLevel, setSpoilerLevel] = useState('none');
   const [autoHideStatuses, setAutoHideStatuses] = useState(initialUiState.autoHideStatuses);
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
@@ -1899,7 +1905,20 @@ export default function MCUViewer() {
     e.preventDefault();
   }, [pauseHeroAutoSlide]);
 
-  const spoilerSafe = useMemo(() => spoilerSafeMode, [spoilerSafeMode]);
+  const spoilerSafe = useMemo(() => spoilerLevel !== 'full', [spoilerLevel]);
+  const spoilerBlurAmount = spoilerLevel === 'none' ? 7 : spoilerLevel === 'mild' ? 3 : 0;
+  const spoilerLabel = spoilerLevel === 'none' ? 'No spoilers' : spoilerLevel === 'mild' ? 'Mild context' : 'Full lore';
+  const featureSpotlight = useMemo(() => {
+    const active = items.filter(i => i.status === 'watched' || i.status === 'watching');
+    const recent = active.slice(-3).map(i => i.title).join(' • ');
+    return {
+      postCreditCount: detailItem?.type === 'film' ? 2 : 1,
+      mustWatch: detailItem?.essential ? 'Must watch now' : 'Can skip now',
+      tvaTag: detailItem?.title?.includes('Loki') ? 'TVA Critical' : 'Multiverse Adjacent',
+      recommendations: active.slice(0, 3).map(i => i.title),
+      recent,
+    };
+  }, [items, detailItem]);
 
   const memoryScore = useMemo(() => Math.max(0, Math.min(100, Math.round((totalWatched / Math.max(1, activeItems.length)) * 100) - (spoilerSafe ? 10 : 0))), [totalWatched, activeItems.length, spoilerSafe]);
   const TMDB_DIRECT_KEY = import.meta.env.VITE_TMDB_API_KEY || '65eda48cf5803f22304fd21f4f06a35e';
@@ -3118,7 +3137,11 @@ export default function MCUViewer() {
             </label>
             <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><EyeOff size={14} /> Spoiler Safe</span>
-              <button className='fpill settings-toggle-pill' type='button' onClick={() => setSpoilerSafeMode(v => !v)} style={{ minWidth: 72, justifyContent: 'center', borderColor: spoilerSafeMode ? 'var(--theme-accent)' : 'var(--theme-border)', background: spoilerSafeMode ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}>{spoilerSafeMode ? 'On' : 'Off'}</button>
+              <select className='fpill settings-toggle-pill' value={spoilerLevel} onChange={(e) => setSpoilerLevel(e.target.value)} style={{ minWidth: 140, justifyContent: 'center', borderColor: 'var(--theme-accent)', background: 'var(--theme-surface)' }}>
+                <option value="none">No spoilers</option>
+                <option value="mild">Mild context</option>
+                <option value="full">Full lore</option>
+              </select>
             </label>
             <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Zap size={14} /> Performance Mode</span>
@@ -3481,6 +3504,34 @@ export default function MCUViewer() {
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
+          <section className="glass-panel motion-section motion-pop" style={{ border: `1px solid ${T.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 16, display: 'grid', gap: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, letterSpacing: 1.2 }}>Multiverse Timeline Modes</h3>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {TIMELINE_MODE_OPTIONS.map((mode) => (
+                  <button key={mode.id} className="fpill" onClick={() => setTimelineMode(mode.id)} style={{ borderColor: timelineMode === mode.id ? 'var(--theme-accent)' : 'var(--theme-border)', background: timelineMode === mode.id ? 'color-mix(in srgb, var(--theme-accent) 16%, var(--theme-surface))' : 'var(--theme-surface)' }}>{mode.label}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px,1fr))', gap: 10 }}>
+              <article className="glass-panel" style={{ padding: 12, borderRadius: 12 }}>
+                <strong>After-Credits Navigator</strong>
+                <div style={{ color: T.textMuted, marginTop: 6, fontSize: 13 }}>Scenes: {featureSpotlight.postCreditCount} · {featureSpotlight.mustWatch}</div>
+              </article>
+              <article className="glass-panel" style={{ padding: 12, borderRadius: 12 }}>
+                <strong>Variant Tracker</strong>
+                <div style={{ color: T.textMuted, marginTop: 6, fontSize: 13 }}>{featureSpotlight.tvaTag} · Seen in progress badge enabled</div>
+              </article>
+              <article className="glass-panel" style={{ padding: 12, borderRadius: 12 }}>
+                <strong>Connection Graph + Entry Paths</strong>
+                <div style={{ color: T.textMuted, marginTop: 6, fontSize: 13 }}>Path: Spider‑Man / Cosmic / Street / Magic</div>
+              </article>
+              <article className="glass-panel" style={{ padding: 12, borderRadius: 12 }}>
+                <strong>If you loved X, watch Y</strong>
+                <div style={{ color: T.textMuted, marginTop: 6, fontSize: 13 }}>{featureSpotlight.recommendations.length ? featureSpotlight.recommendations.join(' → ') : 'Mark titles watched to unlock lore recommendations'}</div>
+              </article>
+            </div>
+          </section>
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
@@ -3664,7 +3715,7 @@ export default function MCUViewer() {
                       <SwitchIcon size={11} /> {detailPlotState.active === 'primary' ? 'TMDB' : (detailPlotState.loadingSecondary ? 'Loading…' : 'OMDb')}
                     </button>
                   </div>
-                  <p style={{ filter: spoilerSafe ? 'blur(5px)' : 'none', transition: 'filter 0.18s ease' }}>
+                  <p style={{ filter: `blur(${spoilerBlurAmount}px)`, transition: 'filter 0.18s ease' }}>
                     {detailPlotState.active === 'secondary'
                       ? (detailPlotState.secondary || detailItem.desc)
                       : (detailPlotState.primary || detailData?.Plot || detailItem.desc)}
@@ -3683,8 +3734,8 @@ export default function MCUViewer() {
                 </section>
 
                 <div className="detail-export-actions">
-                  <button className="fpill glass-panel detail-btn" onClick={() => setSpoilerSafeMode(v => !v)} style={{ background: spoilerSafe ? 'var(--theme-warning-soft)' : undefined, borderColor: spoilerSafe ? 'var(--theme-warning)' : undefined }}>
-                    Spoiler Safe: {spoilerSafe ? 'On' : 'Off'}
+                  <button className="fpill glass-panel detail-btn" onClick={() => setSpoilerLevel((current) => SPOILER_LEVELS[(SPOILER_LEVELS.indexOf(current) + 1) % SPOILER_LEVELS.length])} style={{ background: spoilerLevel !== 'full' ? 'var(--theme-warning-soft)' : undefined, borderColor: spoilerLevel !== 'full' ? 'var(--theme-warning)' : undefined }}>
+                    Spoiler Layer: {spoilerLabel}
                   </button>
                   <button
                     className={`fpill glass-panel detail-btn ${myLikes[detailItem.id] ? 'is-active' : ''}`}
