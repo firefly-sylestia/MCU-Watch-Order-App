@@ -927,6 +927,13 @@ export default function MCUViewer() {
   const [fabMenuOpen, setFabMenuOpen] = useState(true);
   const [fabMinimized, setFabMinimized] = useState(false);
   const [browseMode, setBrowseMode] = useState('home');
+  const [appPage, setAppPage] = useState(() => {
+    if (typeof window === 'undefined') return 'home';
+    const path = window.location.pathname.toLowerCase();
+    if (path.includes('/saved')) return 'saved';
+    if (path.includes('/search')) return 'search';
+    return 'home';
+  });
   const setFilterStatusOpen = (next) => dispatchUiMode({ filterStatusOpen: typeof next === 'function' ? next(uiModeState.filterStatusOpen) : next });
   const setDockStatusOpen = (next) => dispatchUiMode({ dockStatusOpen: typeof next === 'function' ? next(uiModeState.dockStatusOpen) : next });
   const setFiltersOpen = (next) => dispatchUiMode({ filtersOpen: typeof next === 'function' ? next(uiModeState.filtersOpen) : next });
@@ -1055,6 +1062,21 @@ export default function MCUViewer() {
     }
     return false;
   }, [browseMode]);
+
+  useEffect(() => {
+    const onPop = () => {
+      const path = window.location.pathname.toLowerCase();
+      setAppPage(path.includes('/saved') ? 'saved' : path.includes('/search') ? 'search' : 'home');
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  const navigateToPage = useCallback((next) => {
+    const path = next === 'saved' ? '/saved' : next === 'search' ? '/search' : '/home';
+    if (window.location.pathname !== path) window.history.pushState({}, '', path);
+    setAppPage(next);
+  }, []);
 
   const [desktopTextScale, setDesktopTextScale] = useState(initialUiState.desktopTextScale);
   const [textScaleEnabled, setTextScaleEnabled] = useState(initialUiState.textScaleEnabled);
@@ -2229,6 +2251,7 @@ export default function MCUViewer() {
   const historyItems = useMemo(() => [...activeItems]
     .filter(i => i.watchedDate || rewatchCount[i.id] || myRating[i.id] || reviews[i.id])
     .sort((a, b) => (b.watchedDate || b.statusChangedAt || '').localeCompare(a.watchedDate || a.statusChangedAt || '')), [activeItems, myRating, reviews, rewatchCount]);
+  const savedHubItems = useMemo(() => historyItems.filter(item => bookmarks[item.id]), [historyItems, bookmarks]);
 
   const clampTenPoint = (value) => Math.max(0, Math.min(10, Number.isFinite(value) ? value : 0));
   const setReviewRating = (id, rating) => setMyRating(prev => ({ ...prev, [id]: clampTenPoint(Number(rating)) }));
@@ -3592,6 +3615,28 @@ export default function MCUViewer() {
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+            <div className="glass-panel" style={{ display: 'inline-flex', gap: 8, padding: 8, borderRadius: 999 }}>
+              <button className="fpill" onClick={() => navigateToPage('home')} style={{ borderColor: appPage === 'home' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>Home</button>
+              <button className="fpill" onClick={() => { navigateToPage('search'); setBrowseMode('search'); }} style={{ borderColor: appPage === 'search' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>Search</button>
+              <button className="fpill" onClick={() => navigateToPage('saved')} style={{ borderColor: appPage === 'saved' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>S.H.I.E.L.D. Vault</button>
+            </div>
+          </div>
+          {appPage === 'saved' ? (
+            <section className="glass-panel" style={{ padding: 18, borderRadius: 20, display: 'grid', gap: 14 }}>
+              <h2 style={{ margin: 0, fontFamily: 'var(--font-marvel-display)' }}>S.H.I.E.L.D. Vault</h2>
+              {savedHubItems.map(item => {
+                const isOpen = expandedItem === item.id;
+                const watchedStamp = item.watchedDate ? new Date(item.watchedDate) : null;
+                return <article key={item.id} className="glass-panel" style={{ borderRadius: 14, padding: 12, display: 'grid', gap: 8 }}>
+                  <button className="fpill" onClick={() => setExpandedItem(isOpen ? null : item.id)} style={{ justifyContent: 'space-between' }}><span>{item.title}</span><span>{getSafeStatusMeta(item.status).label}</span></button>
+                  {isOpen && <><div style={{ fontSize: 12, color: T.textMuted }}>{watchedStamp ? `${watchedStamp.toLocaleDateString()} · ${watchedStamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · ${watchedStamp.toLocaleDateString([], { weekday: 'long' })}` : 'Not watched yet'}</div><textarea value={reviews[item.id] || ''} onChange={(e) => setReviews(prev => ({ ...prev, [item.id]: e.target.value }))} placeholder="Review card note…" rows={3} style={{ width: '100%', resize: 'vertical', borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: 10 }} /><button className="fpill" onClick={() => shareReviewCard(item)}><Upload size={12}/>Share Review Card</button></>}
+                </article>;
+              })}
+              {savedHubItems.length === 0 && <div style={{ color: T.textMuted }}>No bookmarks yet.</div>}
+            </section>
+          ) : (
+          <>
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
@@ -3725,6 +3770,8 @@ export default function MCUViewer() {
           <div data-motion="section" className="motion-section motion-pop" style={{ textAlign: 'center', marginTop: 44, fontFamily: 'var(--font-marvel-ui)', fontSize: 11, color: 'var(--theme-text-muted)', letterSpacing: 2.2, fontWeight: 700 }}>
             Made with ♥️ by Marvel Fan
           </div>
+          </>
+          )}
         </div>
       </main>
 
