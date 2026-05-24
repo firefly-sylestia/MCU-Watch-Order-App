@@ -726,6 +726,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
               className="wbtn status-toggle notwatched-marvel-btn row-watch-toggle"
             ><RowStatusIcon size={12} /></button>
           )}
+
         </div>
         
       </div>
@@ -953,6 +954,7 @@ export default function MCUViewer() {
   const [trailerOpen, setTrailerOpen] = useState(false);
   const [trailerLandscape, setTrailerLandscape] = useState(false);
   const [trailerExpanded, setTrailerExpanded] = useState(false);
+  const [selectedTrailerIdx, setSelectedTrailerIdx] = useState(0);
   const trailerShellRef = useRef(null);
   const { posterCache, setPosterCache, localPosterMap, setLocalPosterMap } = usePosterCache();
   const [posterFetchState, setPosterFetchState] = useState({ active: false, done: 0, total: 0, message: '' });
@@ -1008,7 +1010,7 @@ export default function MCUViewer() {
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   const closeAnalytics = useCallback(() => setAnalyticsOpen(false), []);
-  const closeDetail = useCallback(() => { setDetailItem(null); setTrailerOpen(false); setTrailerExpanded(false); setTrailerLandscape(false); }, []);
+  const closeDetail = useCallback(() => { setDetailItem(null); setTrailerOpen(false); setTrailerExpanded(false); setTrailerLandscape(false); setSelectedTrailerIdx(0); }, []);
   const openImdbForItem = useCallback((item, data) => {
     const imdbId = data?.imdbID || data?.imdbId || '';
     const fallback = `https://www.imdb.com/find/?q=${encodeURIComponent(`${item.title} ${item.year || ''}`.trim())}`;
@@ -3364,12 +3366,12 @@ export default function MCUViewer() {
               <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             <button className="filters-trigger" onClick={() => { const keys = Object.keys(SORT_LABELS); const idx = keys.indexOf(sortBy); setSortBy(keys[(idx + 1) % keys.length]); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${sortBy === 'order' ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: sortBy === 'order' ? 'var(--theme-accent)' : T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}><ArrowUpDown size={13} />{SORT_LABELS[sortBy]}</button>
-            <div ref={timelineRef} style={{ position: 'relative' }}>
-              <button className="filters-trigger" onClick={() => setTimelineOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid color-mix(in srgb, var(--theme-accent) 42%, var(--theme-border))`, background: 'linear-gradient(135deg, color-mix(in srgb, #ed1d24 22%, var(--theme-surface)) 0%, color-mix(in srgb, #0063e5 18%, var(--theme-surface)) 100%)', color: 'var(--theme-text)', cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.2, boxShadow: '0 10px 20px rgba(0,0,0,.18)' }}>
+            <div ref={timelineRef} className="timeline-menu-wrap">
+              <button className="filters-trigger timeline-trigger" onClick={() => setTimelineOpen(v => !v)}>
                 <Layers size={13} /> {TIMELINE_MODES.find(m => m.id === timelineMode)?.label || 'Timeline'} <ChevDown size={11} style={{ transform: timelineOpen ? 'rotate(180deg)' : 'none' }}/>
               </button>
               {timelineOpen && (
-                <div className="dropdown-pop filter-dropdown" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1450, minWidth: 300, padding: 8, background: 'linear-gradient(160deg, color-mix(in srgb, #ed1d24 10%, var(--theme-surface)) 0%, color-mix(in srgb, #0b0f2d 78%, var(--theme-surface)) 52%, color-mix(in srgb, #ffd447 10%, var(--theme-surface)) 100%)' }}>
+                <div className="dropdown-pop filter-dropdown timeline-dropdown" style={{ position: 'absolute', top: 'calc(100% + 10px)', left: 0, zIndex: 1450, minWidth: 320, padding: 10 }}>
                   {TIMELINE_MODES.map(mode => (
                     <button key={mode.id} className={`sopt ${timelineMode === mode.id ? 'picked' : ''}`} style={{ width: '100%', textAlign: 'left', marginBottom: 4, borderRadius: 10, border: timelineMode === mode.id ? '1px solid color-mix(in srgb, var(--theme-accent) 60%, transparent)' : '1px solid transparent' }} onClick={() => { setTimelineMode(mode.id); setTimelineOpen(false); }}>
                       <div style={{ fontWeight: 700 }}>{mode.label}</div><div style={{ fontSize: 11, opacity: 0.8 }}>{mode.description}</div>
@@ -3774,15 +3776,27 @@ export default function MCUViewer() {
         </div>
       )}
 
-      {trailerOpen && detailItem && getTrailerByTitle(detailItem.title)?.youtubeId && (
+      {trailerOpen && detailItem && getTrailerByTitle(detailItem.title)?.videos?.length && (() => {
+        const trailerEntry = getTrailerByTitle(detailItem.title);
+        const trailerVideos = trailerEntry?.videos || [];
+        const activeTrailer = trailerVideos[Math.min(selectedTrailerIdx, trailerVideos.length - 1)] || trailerVideos[0];
+        return (
         <div className={`detail-backdrop trailer-backdrop ${trailerLandscape ? 'is-landscape' : ''}`} onClick={() => { setTrailerOpen(false); setTrailerExpanded(false); setTrailerLandscape(false); }} role="dialog" aria-label="Trailer player">
           <div className={`detail-card glass-panel trailer-shell ${trailerLandscape ? 'is-landscape' : ''} ${trailerExpanded ? 'is-expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
             {!trailerExpanded && <div className="trailer-head">
               <div>
-                <div className="trailer-eyebrow">Official trailer</div>
+                <div className="trailer-eyebrow">{activeTrailer?.kind === 'teaser' ? 'Official teaser' : 'Official trailer'}</div>
                 <strong className="trailer-title">{detailItem.title}</strong>
               </div>
               <div className="trailer-actions">
+                {trailerVideos.length > 1 && (
+                  <label className="trailer-select-wrap">
+                    <span>Video</span>
+                    <select className="trailer-select" value={selectedTrailerIdx} onChange={(e) => setSelectedTrailerIdx(Number(e.target.value))}>
+                      {trailerVideos.map((video, idx) => <option key={`${video.youtubeId}-${idx}`} value={idx}>{video.label}</option>)}
+                    </select>
+                  </label>
+                )}
                 <button className="fpill trailer-close" onClick={() => setTrailerLandscape(v => !v)}><SwitchIcon size={12}/>{trailerLandscape ? 'Portrait' : 'Landscape'}</button>
                 <button className="fpill trailer-close" onClick={() => setTrailerExpanded(true)}><PlayCircle size={12}/>Enlarge</button>
                 <button className="fpill trailer-close" onClick={() => setTrailerOpen(false)}><X size={12}/>Close</button>
@@ -3790,7 +3804,7 @@ export default function MCUViewer() {
             </div>}
             <div className={`trailer-frame ${trailerLandscape ? 'is-landscape' : ''}`} ref={trailerShellRef}>
               {trailerLandscape && <div className="trailer-landscape-tip">Landscape mode enabled</div>}
-              <iframe title={`${detailItem.title} trailer`} src={trailerEmbedUrl(getTrailerByTitle(detailItem.title).youtubeId)} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
+              <iframe title={`${detailItem.title} ${activeTrailer?.label || 'trailer'}`} src={trailerEmbedUrl(activeTrailer?.youtubeId)} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
             </div>
             {trailerExpanded && <div className="trailer-expanded-actions">
               <button className="fpill trailer-close" onClick={() => setTrailerLandscape(v => !v)}><SwitchIcon size={12}/>{trailerLandscape ? 'Portrait' : 'Landscape'}</button>
@@ -3799,7 +3813,8 @@ export default function MCUViewer() {
             </div>}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {analyticsOpen && (
         <div className="detail-backdrop analytics-backdrop" onClick={closeAnalytics} role="dialog" aria-label="Analysis history">
