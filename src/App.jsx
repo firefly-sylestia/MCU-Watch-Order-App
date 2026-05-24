@@ -951,6 +951,8 @@ export default function MCUViewer() {
   const [detailLoading,  setDetailLoading]  = useState(false);
   const [detailPosterFailed, setDetailPosterFailed] = useState(false);
   const [trailerOpen, setTrailerOpen] = useState(false);
+  const [trailerLandscape, setTrailerLandscape] = useState(false);
+  const trailerShellRef = useRef(null);
   const { posterCache, setPosterCache, localPosterMap, setLocalPosterMap } = usePosterCache();
   const [posterFetchState, setPosterFetchState] = useState({ active: false, done: 0, total: 0, message: '' });
   const [heroCarouselCache, setHeroCarouselCache] = useState({ signature: '', posters: [] });
@@ -1006,6 +1008,11 @@ export default function MCUViewer() {
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   const closeAnalytics = useCallback(() => setAnalyticsOpen(false), []);
   const closeDetail = useCallback(() => { setDetailItem(null); setTrailerOpen(false); }, []);
+  const openImdbForItem = useCallback((item, data) => {
+    const imdbId = data?.imdbID || data?.imdbId || '';
+    const fallback = `https://www.imdb.com/find/?q=${encodeURIComponent(`${item.title} ${item.year || ''}`.trim())}`;
+    window.open(imdbId ? `https://www.imdb.com/title/${imdbId}/` : fallback, '_blank', 'noopener,noreferrer');
+  }, []);
   const toggleSidebarPanel = useCallback(() => {
     setSidebarOpen(prev => {
       const next = !prev;
@@ -2620,15 +2627,18 @@ export default function MCUViewer() {
     }
   };
 
-  const exportPosterForItem = async (item) => {
+  const exportPosterForItem = async (item, options = {}) => {
+    const { share = false } = options;
     const src = localPosterSrc(item) || posterCache[item.id];
     const filename = posterExportName(item, 'png').replace(/\.\w+$/, '-details-card.png');
     try {
       const info = releaseInfoFor(item);
       const status = releaseStatusFor(item);
-      const description = detailPlotState.active === 'secondary'
-        ? (detailPlotState.secondary || detailData?.Plot || item.desc)
-        : (detailPlotState.primary || detailData?.Plot || item.desc);
+      const description = spoilerSafeMode
+        ? 'Spoiler-safe mode is enabled for this exported details card. Story beats are intentionally hidden.'
+        : (detailPlotState.active === 'secondary'
+          ? (detailPlotState.secondary || detailData?.Plot || item.desc)
+          : (detailPlotState.primary || detailData?.Plot || item.desc));
       const canvas = document.createElement('canvas');
       canvas.width = 1400;
       canvas.height = 2000;
@@ -2707,13 +2717,14 @@ export default function MCUViewer() {
       ctx.font = `800 24px ${exportFontFamily}`;
       ctx.fillText('Made with MCU Viewing Order', 112, 1858);
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
+      const outputFilename = share ? filename.replace('-details-card.png', '-shared-details-card.png') : filename;
       if (Capacitor.isNativePlatform()) {
         const base64 = await blobToBase64(blob);
-        await Filesystem.writeFile({ path: `mcu-posters/${filename}`, data: base64, directory: Directory.Documents, recursive: true });
+        await Filesystem.writeFile({ path: `mcu-posters/${outputFilename}`, data: base64, directory: Directory.Documents, recursive: true });
       } else {
-        triggerDownload(blob, filename);
+        triggerDownload(blob, outputFilename);
       }
-      setPosterExportState({ active: false, done: 1, total: 1, message: `Exported details card for ${item.title}.` });
+      setPosterExportState({ active: false, done: 1, total: 1, message: `${share ? 'Shared-ready' : 'Exported'} details card for ${item.title}.` });
     } catch {
       setPosterExportState({ active: false, done: 1, total: 1, message: `Could not export details card for ${item.title}.` });
     }
@@ -3453,7 +3464,7 @@ export default function MCUViewer() {
           </div>
         )}
       </div>}
-      <div className="floating-controls" style={detailItem || analyticsOpen || settingsOpen || sidebarOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
+      <div className="floating-controls" style={detailItem || trailerOpen || analyticsOpen || settingsOpen || sidebarOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
         <button
           type="button"
           className="fab-primary"
@@ -3521,7 +3532,7 @@ export default function MCUViewer() {
           className="go-top-fab"
           onClick={scrollToListTop}
           aria-label="Go to top"
-          style={scrollCheckpoint > 420 ? undefined : { opacity: 0, pointerEvents: 'none', transform: 'translateY(8px)' }}
+          style={(detailItem || trailerOpen || analyticsOpen || settingsOpen || sidebarOpen || scrollCheckpoint <= 420) ? { opacity: 0, pointerEvents: 'none', transform: 'translateY(8px)' } : undefined}
         >
           <ChevDown size={14} style={{ transform: 'rotate(180deg)' }} /> Top
         </button>
@@ -3695,6 +3706,10 @@ export default function MCUViewer() {
                   <span>{TYPE_META[detailItem.type]?.label}</span>
                   {(detailData?.imdbRating && detailData.imdbRating !== 'N/A') && <span>★ {detailData.imdbRating}/10</span>}
                 </div>
+                <div className="detail-export-actions-inline">
+                  <button className="fpill glass-panel detail-btn" onClick={() => openImdbForItem(detailItem, detailData)}><Info size={12}/>Open IMDb</button>
+                  <button className="fpill glass-panel detail-btn" onClick={() => exportPosterForItem(detailItem, { share: true })}><Upload size={12}/>Share Exact Card</button>
+                </div>
                 {detailLoading && <div className="detail-export-loading">Loading metadata…</div>}
                 {!detailLoading && !detailData && <div className="detail-export-loading">Showing local data.</div>}
 
@@ -3763,10 +3778,19 @@ export default function MCUViewer() {
                 <div className="trailer-eyebrow">Official trailer</div>
                 <strong className="trailer-title">{detailItem.title}</strong>
               </div>
-              <button className="fpill trailer-close" onClick={() => setTrailerOpen(false)}><X size={12}/>Close</button>
+              <div className="trailer-actions">
+                <button className="fpill trailer-close" onClick={() => setTrailerLandscape(v => !v)}><SwitchIcon size={12}/>{trailerLandscape ? 'Portrait' : 'Landscape'}</button>
+                <button className="fpill trailer-close" onClick={async () => {
+                  try {
+                    if (trailerShellRef.current?.requestFullscreen) await trailerShellRef.current.requestFullscreen();
+                  } catch {}
+                }}><PlayCircle size={12}/>Enlarge</button>
+                <button className="fpill trailer-close" onClick={() => setTrailerOpen(false)}><X size={12}/>Close</button>
+              </div>
             </div>
-            <div className="trailer-frame">
-              <iframe title={`${detailItem.title} trailer`} src={trailerEmbedUrl(TRAILER_DATA[detailItem.title].youtubeId)} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
+            <div className={`trailer-frame ${trailerLandscape ? 'is-landscape' : ''}`} ref={trailerShellRef}>
+              {trailerLandscape && <div className="trailer-landscape-tip">Landscape mode enabled</div>}
+              <iframe title={`${detailItem.title} trailer`} src={trailerEmbedUrl(TRAILER_DATA[detailItem.title].youtubeId)} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
             </div>
           </div>
         </div>
