@@ -998,6 +998,20 @@ export default function MCUViewer() {
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   const closeAnalytics = useCallback(() => setAnalyticsOpen(false), []);
   const closeDetail = useCallback(() => setDetailItem(null), []);
+  const handleInAppBack = useCallback(() => {
+    if (browseMode === 'search') {
+      if (search) setSearch('');
+      setBrowseMode('home');
+      return;
+    }
+    if (browseMode === 'phase') {
+      if (activePhase !== 0) {
+        setActivePhase(0);
+        return;
+      }
+      setBrowseMode('home');
+    }
+  }, [browseMode, search, activePhase]);
   const toggleSidebarPanel = useCallback(() => {
     setSidebarOpen(prev => {
       const next = !prev;
@@ -1055,7 +1069,18 @@ export default function MCUViewer() {
 
 
 
-  useOverlayNavigation({ sidebarOpen, settingsOpen, detailItem, analyticsOpen, onCloseDetail: closeDetail, onCloseAnalytics: closeAnalytics, onCloseSettings: closeSettings, onCloseSidebar: closeSidebar });
+  useOverlayNavigation({
+    sidebarOpen,
+    settingsOpen,
+    detailItem,
+    analyticsOpen,
+    onCloseDetail: closeDetail,
+    onCloseAnalytics: closeAnalytics,
+    onCloseSettings: closeSettings,
+    onCloseSidebar: closeSidebar,
+    hasInAppBackStep: browseMode === 'search' || browseMode === 'phase',
+    onInAppBack: handleInAppBack,
+  });
 
   const currentPhases = universe === 'dc' ? DC_PHASES : PHASES;
 
