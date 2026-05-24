@@ -28,6 +28,8 @@ import {
 } from './data/mcuData';
 import { DC_RAW, DC_PHASES, DC_CORE_IDS } from './data/dcData';
 import { UNIVERSE_META } from './constants/universeSwitch';
+import { TIMELINE_MODES, TIMELINE_MODE_IDS, CHARACTER_POV_TITLE_SETS, STORY_ORDER_OVERRIDES } from './data/timelineModes';
+import { AFTER_CREDITS, AFTER_CREDITS_DEFAULT } from './data/afterCreditsData';
 
 // ─── Icon primitives ────────────────────────────────────────────────────────
 const Icon = ({ children, size = 16, style = {} }) => (
@@ -181,7 +183,7 @@ const UI_STATE_DEFAULTS = {
   filtersOpen: false,
   viewMode: 'list',
   densityMode: 'comfortable',
-  timelineMode: 'sacred',
+  timelineMode: 'release',
   autoHideStatuses: false,
   performanceMode: true,
   desktopTextScale: 1,
@@ -196,7 +198,7 @@ const VALID_PHASES = new Set([0, ...PHASES.map(phase => phase.id), ...DC_PHASES.
 const VALID_TYPES = new Set([null, ...Object.keys(TYPE_META)]);
 const VALID_STATUSES = new Set([null, ...Object.keys(STATUS_META)]);
 const VALID_DENSITY_MODES = new Set(['comfortable', 'compact']);
-const VALID_TIMELINE_MODES = new Set(['sacred', 'studio', 'whatif']);
+const VALID_TIMELINE_MODES = TIMELINE_MODE_IDS;
 const VALID_DESKTOP_TEXT_SCALES = new Set(DESKTOP_TEXT_SCALES);
 const AUTO_HIDDEN_STATUSES = HIDDEN_FILTER_STATUSES;
 
@@ -1528,8 +1530,12 @@ export default function MCUViewer() {
       if (statusFilter && i.status !== statusFilter) return false;
       if (typeFilter && i.type !== typeFilter) return false;
       if (activePhase && i.phase !== activePhase) return false;
-      if (timelineMode === 'studio' && i.order % 2 === 0) return true;
-      if (timelineMode === 'whatif' && i.type !== 'short') return true;
+      if (timelineMode === 'loki' && !CHARACTER_POV_TITLE_SETS.loki.has(i.title)) return false;
+      if (timelineMode === 'wanda' && !CHARACTER_POV_TITLE_SETS.wanda.has(i.title)) return false;
+      if (timelineMode === 'multiverse') {
+        const isMultiverse = /what if|multiverse|loki|deadpool|friendly neighborhood|x-men/i.test(i.title + ' ' + (i.desc || ''));
+        if (!isMultiverse) return false;
+      }
       if (genreFilter !== 'all' && i.type !== genreFilter) return false;
       return matchesSearch(i, search);
     }).sort((a, b) => {
@@ -1538,6 +1544,12 @@ export default function MCUViewer() {
       if (sortBy === 'runtime') return (a.episodes || (a.type === 'film' ? 2.3 : 6)) - (b.episodes || (b.type === 'film' ? 2.3 : 6));
       if (sortBy === 'watched') return (b.watchedDate || '').localeCompare(a.watchedDate || '');
       if (sortBy === 'status') return (STATUS_SORT_ORDER[a.status] ?? 99) - (STATUS_SORT_ORDER[b.status] ?? 99);
+      if (sortBy === 'order' && timelineMode === 'release') return a.year - b.year || a.order - b.order;
+      if (sortBy === 'order' && timelineMode === 'chronological') {
+        const ao = STORY_ORDER_OVERRIDES.get(a.title) ?? a.order + 100;
+        const bo = STORY_ORDER_OVERRIDES.get(b.title) ?? b.order + 100;
+        return ao - bo || a.order - b.order;
+      }
       return a.order - b.order;
     });
     const g = {};
@@ -1548,6 +1560,8 @@ export default function MCUViewer() {
 
 
 
+
+  const getAfterCreditsMeta = useCallback((item) => AFTER_CREDITS[item?.title] || AFTER_CREDITS_DEFAULT, []);
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
     [items, listMode, coreIds]
@@ -3394,6 +3408,11 @@ export default function MCUViewer() {
                   <button className="fpill" disabled={!selectedIds.size} onClick={() => applyBulkStatus('unwatched')} style={{ padding: '7px 12px', opacity: selectedIds.size ? 1 : 0.5 }}><EyeOff size={10}/>Unwatched</button>
                 </>
               )}
+              <div style={{ position: 'relative' }}>
+                <button className="fpill" onClick={() => { const order = TIMELINE_MODES.map(m => m.id); const idx = order.indexOf(timelineMode); setTimelineMode(order[(idx + 1) % order.length]); }}>
+                  <Layers size={10} />{TIMELINE_MODES.find(m => m.id === timelineMode)?.label || 'Timeline'}
+                </button>
+              </div>
               {/* Reset */}
               {activeFilterCount > 0 && (
                 <button className="fpill" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', padding: '7px 12px' }}
@@ -3672,11 +3691,14 @@ export default function MCUViewer() {
                 </section>
 
                 <section className="detail-export-panel intel">
-                  <div className="detail-export-panel-head"><span>WATCH INTEL</span></div>
+                  <div className="detail-export-panel-head"><span>WATCH INTEL + AFTER-CREDITS NAVIGATOR</span></div>
                   <div className="detail-intel-list">
                     <div><strong>Release</strong><span>{formatReleaseDate(releaseInfoFor(detailItem).date, detailItem.year, releaseInfoFor(detailItem).label, releaseStatusFor(detailItem))}</span></div>
                     <div><strong>Prerequisite</strong><span>{detailItem.prereq}</span></div>
                     <div><strong>Status</strong><span>{STATUS_META[detailItem.status]?.label}</span></div>
+                    <div><strong>Post-credit scenes</strong><span>{getAfterCreditsMeta(detailItem).count ?? 'Unknown'}</span></div>
+                    <div><strong>Watch now?</strong><span>{getAfterCreditsMeta(detailItem).advice === 'must' ? 'Must watch now' : (getAfterCreditsMeta(detailItem).advice === 'skip' ? 'Can skip now' : 'Check later')}</span></div>
+                    <div><strong>Connects to</strong><span>{getAfterCreditsMeta(detailItem).connectsTo.length ? getAfterCreditsMeta(detailItem).connectsTo.join(', ') : 'No explicit setup tracked'}</span></div>
                     <div><strong>Director</strong><span>{detailData?.Director && detailData.Director !== 'N/A' ? detailData.Director : 'Director data coming soon'}</span></div>
                     <div><strong>Cast</strong><span>{detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</span></div>
                   </div>
