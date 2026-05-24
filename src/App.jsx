@@ -3830,9 +3830,6 @@ export default function MCUViewer() {
                 </section>
 
                 <div className="detail-export-actions">
-                  <button className="fpill glass-panel detail-btn" onClick={() => setSpoilerSafeMode(v => !v)} style={{ background: spoilerSafe ? 'var(--theme-warning-soft)' : undefined, borderColor: spoilerSafe ? 'var(--theme-warning)' : undefined }}>
-                    Spoiler Safe: {spoilerSafe ? 'On' : 'Off'}
-                  </button>
                   <button
                     className={`fpill glass-panel detail-btn ${myLikes[detailItem.id] ? 'is-active' : ''}`}
                     onClick={() => setMyLikes(prev => ({ ...prev, [detailItem.id]: !prev[detailItem.id] }))}
