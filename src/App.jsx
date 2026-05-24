@@ -154,6 +154,20 @@ const LIST_MODES = [
 // ─── OMDB ratings key (for ratings only — posters use TMDB) ─────────────────
 const OMDB_RATINGS_KEY = '2c971c17';
 
+
+const SPOILER_LEVELS = [
+  { id: 'none', label: 'No spoilers' },
+  { id: 'mild', label: 'Mild context' },
+  { id: 'full', label: 'Full lore mode' },
+];
+
+const CHARACTER_ENTRY_PATHS = [
+  { id: 'spider', label: 'Spider-Man Lover', tags: ['Spider-Man', 'Street-level', 'School stakes'] },
+  { id: 'cosmic', label: 'Cosmic Fan', tags: ['Guardians', 'Captain Marvel', 'Celestials'] },
+  { id: 'street', label: 'Street-level Fan', tags: ['Daredevil', 'Echo', 'Hawkeye'] },
+  { id: 'magic', label: 'Magic Fan', tags: ['Doctor Strange', 'Wanda', 'Loki'] },
+];
+
 const CACHE_KEYS = {
   poster: 'mcu-poster-cache-v1',
   meta: 'mcu-meta-cache-v1',
@@ -959,6 +973,8 @@ export default function MCUViewer() {
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
+  const [spoilerLevel, setSpoilerLevel] = useState('none');
+  const [selectedEntryPath, setSelectedEntryPath] = useState('spider');
   const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
   const [scrollTuning] = useState({ desktopMultiplier: 5, desktopDeltaCap: 7, mobileMultiplier: 5, mobileDeltaCap: 7 });
   const [genreFilter] = useState('all');
@@ -1650,6 +1666,21 @@ export default function MCUViewer() {
       progressObserver.disconnect();
     };
   }, [allowMotionReplay, viewMode, phaseKeys.length]);
+
+  const multiverseTimelineModes = useMemo(() => ([
+    { id: 'release', label: 'Release Order', description: 'Follow theatrical and Disney+ release cadence.' },
+    { id: 'chrono', label: 'Chronological Story', description: 'Sacred timeline story sequence.' },
+    { id: 'character', label: 'Character POV', description: 'Focus on one hero arc at a time.' },
+    { id: 'branch', label: 'Branching Multiverse', description: 'What If... style branch view.' },
+  ]), []);
+
+  const connectionNodes = useMemo(() => ([
+    { node: 'Infinity Stones', strength: 'Core event', phase: 'Infinity Saga' },
+    { node: 'Ten Rings', strength: 'Major setup', phase: 'Multiverse Saga' },
+    { node: 'Darkhold', strength: 'Direct consequence', phase: 'Multiverse Saga' },
+  ]), []);
+
+  const selectedPathMeta = CHARACTER_ENTRY_PATHS.find(p => p.id === selectedEntryPath) || CHARACTER_ENTRY_PATHS[0];
 
   const stickyPhaseProgress = useMemo(() => {
     if (activePhase === 0) return { label: 'All Phases', done: totalWatched, total: activeItems.length, pct };
@@ -3283,6 +3314,43 @@ export default function MCUViewer() {
               <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.4 }}>{search ? `${filtered.length} matches` : 'Type to begin searching'}</div>
               {search && <button className="fpill" onClick={() => setSearch('')}><Trash2 size={12}/> Clear Search</button>}
             </div>
+          </div>
+        </section>
+      )}
+
+      {browseMode !== 'search' && (
+        <section style={{ maxWidth: 1480, margin: '10px auto 0', padding: '0 16px' }}>
+          <div className="feature-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 12 }}>
+            <article className="feature-card" style={{ border: `1px solid ${T.surfaceBorder}`, borderRadius: 16, padding: 14, background: 'var(--theme-overlay-surface)' }}>
+              <h3 style={{ margin: '0 0 8px', fontSize: 14 }}>Multiverse Timeline Modes</h3>
+              <div style={{ display: 'grid', gap: 6 }}>
+                {multiverseTimelineModes.map(mode => <button key={mode.id} className="fpill" style={{ justifyContent:'space-between' }}><span>{mode.label}</span><span style={{color:T.textMuted,fontSize:11}}>{mode.description}</span></button>)}
+              </div>
+            </article>
+            <article className="feature-card" style={{ border: `1px solid ${T.surfaceBorder}`, borderRadius: 16, padding: 14, background: 'var(--theme-overlay-surface)' }}>
+              <h3 style={{ margin: '0 0 8px', fontSize: 14 }}>After-Credits Navigator</h3>
+              <div style={{ fontSize: 12, color: T.textMuted, lineHeight: 1.5 }}>Post-credit count • Must watch now • Connects-to graph shown in detail cards.</div>
+            </article>
+            <article className="feature-card" style={{ border: `1px solid ${T.surfaceBorder}`, borderRadius: 16, padding: 14, background: 'var(--theme-overlay-surface)' }}>
+              <h3 style={{ margin: '0 0 8px', fontSize: 14 }}>Spoiler-Safe Intelligence</h3>
+              <input type="range" min={0} max={2} step={1} value={SPOILER_LEVELS.findIndex(l=>l.id===spoilerLevel)} onChange={(e)=>setSpoilerLevel(SPOILER_LEVELS[Number(e.target.value)].id)} />
+              <div style={{ fontSize: 12, marginTop: 8 }}>Mode: <strong>{SPOILER_LEVELS.find(l=>l.id===spoilerLevel)?.label}</strong></div>
+            </article>
+            <article className="feature-card" style={{ border: `1px solid ${T.surfaceBorder}`, borderRadius: 16, padding: 14, background: 'var(--theme-overlay-surface)' }}>
+              <h3 style={{ margin: '0 0 8px', fontSize: 14 }}>MCU Connection Graph</h3>
+              <ul style={{ margin: 0, paddingLeft: 16, fontSize: 12 }}>
+                {connectionNodes.map((n) => <li key={n.node}>{n.node} — {n.strength} ({n.phase})</li>)}
+              </ul>
+            </article>
+            <article className="feature-card" style={{ border: `1px solid ${T.surfaceBorder}`, borderRadius: 16, padding: 14, background: 'var(--theme-overlay-surface)' }}>
+              <h3 style={{ margin: '0 0 8px', fontSize: 14 }}>Character Entry Points</h3>
+              <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>{CHARACTER_ENTRY_PATHS.map((p)=> <button key={p.id} className="fpill" onClick={()=>setSelectedEntryPath(p.id)} style={{ borderColor: selectedEntryPath===p.id ? 'var(--theme-accent)' : undefined }}>{p.label}</button>)}</div>
+              <div style={{ marginTop: 8, fontSize: 12, color: T.textMuted }}>{selectedPathMeta.tags.join(' • ')}</div>
+            </article>
+            <article className="feature-card" style={{ border: `1px solid ${T.surfaceBorder}`, borderRadius: 16, padding: 14, background: 'var(--theme-overlay-surface)' }}>
+              <h3 style={{ margin: '0 0 8px', fontSize: 14 }}>If You Loved X, Watch Y</h3>
+              <div style={{ fontSize: 12, color: T.textMuted }}>Lore-aware recommendation uses shared characters, unresolved plots, and tone continuity.</div>
+            </article>
           </div>
         </section>
       )}
