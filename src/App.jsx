@@ -2111,6 +2111,7 @@ export default function MCUViewer() {
           bgOpacity: exportSettings.bgOpacity,
           density: exportSettings.density,
           sections: exportSettings.sections,
+          colorMode: darkMode ? 'dark' : 'light',
           namingStrategy: ({ type: cardType, data: cardData }) => {
             if (cardType === 'progress') return `mcu-progress-card-${Date.now()}.png`;
             if (cardType === 'analysis') return 'mcu-analysis-card.png';
@@ -2190,6 +2191,7 @@ export default function MCUViewer() {
             bgOpacity: exportSettings.bgOpacity,
             density: exportSettings.density,
             sections: exportSettings.sections,
+            colorMode: darkMode ? 'dark' : 'light',
             previewScale: 0.42,
           },
         });
