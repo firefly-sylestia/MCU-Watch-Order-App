@@ -951,6 +951,8 @@ export default function MCUViewer() {
   const [detailLoading,  setDetailLoading]  = useState(false);
   const [detailPosterFailed, setDetailPosterFailed] = useState(false);
   const [trailerOpen, setTrailerOpen] = useState(false);
+  const [trailerLandscape, setTrailerLandscape] = useState(false);
+  const trailerShellRef = useRef(null);
   const { posterCache, setPosterCache, localPosterMap, setLocalPosterMap } = usePosterCache();
   const [posterFetchState, setPosterFetchState] = useState({ active: false, done: 0, total: 0, message: '' });
   const [heroCarouselCache, setHeroCarouselCache] = useState({ signature: '', posters: [] });
@@ -1006,6 +1008,11 @@ export default function MCUViewer() {
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   const closeAnalytics = useCallback(() => setAnalyticsOpen(false), []);
   const closeDetail = useCallback(() => { setDetailItem(null); setTrailerOpen(false); }, []);
+  const openImdbForItem = useCallback((item, data) => {
+    const imdbId = data?.imdbID || data?.imdbId || '';
+    const fallback = `https://www.imdb.com/find/?q=${encodeURIComponent(`${item.title} ${item.year || ''}`.trim())}`;
+    window.open(imdbId ? `https://www.imdb.com/title/${imdbId}/` : fallback, '_blank', 'noopener,noreferrer');
+  }, []);
   const toggleSidebarPanel = useCallback(() => {
     setSidebarOpen(prev => {
       const next = !prev;
@@ -3695,6 +3702,10 @@ export default function MCUViewer() {
                   <span>{TYPE_META[detailItem.type]?.label}</span>
                   {(detailData?.imdbRating && detailData.imdbRating !== 'N/A') && <span>★ {detailData.imdbRating}/10</span>}
                 </div>
+                <div className="detail-export-actions-inline">
+                  <button className="fpill glass-panel detail-btn" onClick={() => openImdbForItem(detailItem, detailData)}><Info size={12}/>Open IMDb</button>
+                  <button className="fpill glass-panel detail-btn" onClick={() => shareReviewCard(detailItem)}><Upload size={12}/>Share Card</button>
+                </div>
                 {detailLoading && <div className="detail-export-loading">Loading metadata…</div>}
                 {!detailLoading && !detailData && <div className="detail-export-loading">Showing local data.</div>}
 
@@ -3763,10 +3774,18 @@ export default function MCUViewer() {
                 <div className="trailer-eyebrow">Official trailer</div>
                 <strong className="trailer-title">{detailItem.title}</strong>
               </div>
-              <button className="fpill trailer-close" onClick={() => setTrailerOpen(false)}><X size={12}/>Close</button>
+              <div className="trailer-actions">
+                <button className="fpill trailer-close" onClick={() => setTrailerLandscape(v => !v)}><SwitchIcon size={12}/>{trailerLandscape ? 'Portrait' : 'Landscape'}</button>
+                <button className="fpill trailer-close" onClick={async () => {
+                  try {
+                    if (trailerShellRef.current?.requestFullscreen) await trailerShellRef.current.requestFullscreen();
+                  } catch {}
+                }}><PlayCircle size={12}/>Enlarge</button>
+                <button className="fpill trailer-close" onClick={() => setTrailerOpen(false)}><X size={12}/>Close</button>
+              </div>
             </div>
-            <div className="trailer-frame">
-              <iframe title={`${detailItem.title} trailer`} src={trailerEmbedUrl(TRAILER_DATA[detailItem.title].youtubeId)} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
+            <div className={`trailer-frame ${trailerLandscape ? 'is-landscape' : ''}`} ref={trailerShellRef}>
+              <iframe title={`${detailItem.title} trailer`} src={trailerEmbedUrl(TRAILER_DATA[detailItem.title].youtubeId)} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
             </div>
           </div>
         </div>
