@@ -30,6 +30,14 @@
         .progress-gradient{background:var(--phase-gradient, linear-gradient(90deg,var(--theme-accent), var(--theme-accent-alt)));background-size:200% 100%;animation:gradientPulse 3s ease-in-out infinite alternate}
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
         .performance-mode *{animation:none !important}
+.performance-mode .detail-backdrop,
+.performance-mode .detail-card,
+.performance-mode .detail-export-shell,
+.performance-mode .detail-export-content > *{animation-play-state:running !important}
+.performance-mode .detail-backdrop{animation:overlayFadeIn 130ms var(--ease-out, ease) both !important}
+.performance-mode .detail-card{animation:modalRiseIn 170ms var(--ease-out, ease) both !important}
+.performance-mode .detail-export-shell{animation:detailCardReveal .24s var(--ease-out, ease) both !important}
+.performance-mode .detail-export-content > *{animation:detailContentIn .3s var(--ease-out, ease) both !important}
 /* Modernized scroll trigger + section progress motion system */
 .motion-section {
   --section-progress: 0;
