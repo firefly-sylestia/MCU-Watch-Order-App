@@ -22,3 +22,17 @@ export const TRAILER_DATA = {
 };
 
 export const trailerEmbedUrl = (youtubeId) => `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`;
+
+
+export const getTrailerByTitle = (title = '') => {
+  const direct = TRAILER_DATA[title];
+  if (direct?.youtubeId) return direct;
+  const normalized = title
+    .replace(/\sS\d+.*$/i, '')
+    .replace(/\sEps?\s.*$/i, '')
+    .replace(/\sEp\s.*$/i, '')
+    .replace(/\s&\sS\d+.*$/i, '')
+    .replace(/:\sSlingshot.*$/i, '')
+    .trim();
+  return TRAILER_DATA[normalized] || null;
+};

@@ -29,7 +29,8 @@
         @starting-style{.hero-backdrop-image:not(.is-exiting){opacity:0;transform:scale(1.004);filter:blur(2.6px) saturate(1) contrast(1) brightness(0.82)}}
         .progress-gradient{background:var(--phase-gradient, linear-gradient(90deg,var(--theme-accent), var(--theme-accent-alt)));background-size:200% 100%;animation:gradientPulse 3s ease-in-out infinite alternate}
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
-        .performance-mode *{animation:none !important}
+        .performance-mode .sweep::after,.performance-mode .progress-gradient,.performance-mode .snap-blip{animation:none !important}
+.performance-mode .motion-section,.performance-mode .phase-rows-full .phase-row-virtualized{transition-duration:220ms !important}
 /* Modernized scroll trigger + section progress motion system */
 .motion-section {
   --section-progress: 0;
