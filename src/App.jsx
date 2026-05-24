@@ -1466,6 +1466,34 @@ export default function MCUViewer() {
     });
   };
 
+  const normalizeSearchText = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  const levenshteinDistance = (a, b) => {
+    if (!a) return b.length;
+    if (!b) return a.length;
+    const dp = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+    for (let j = 1; j <= b.length; j += 1) dp[0][j] = j;
+    for (let i = 1; i <= a.length; i += 1) {
+      for (let j = 1; j <= b.length; j += 1) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+      }
+    }
+    return dp[a.length][b.length];
+  };
+  const matchesSearch = (item, rawSearch) => {
+    const query = normalizeSearchText(rawSearch);
+    if (!query) return true;
+    const haystack = normalizeSearchText([item.title, item.prereq, item.notes, item.releaseDate, item.type, item.status, item.year, item.phase].filter(Boolean).join(' '));
+    if (haystack.includes(query)) return true;
+    const queryTokens = query.split(' ').filter(Boolean);
+    const hayTokens = haystack.split(' ').filter(Boolean);
+    return queryTokens.every((token) => hayTokens.some((word) => {
+      if (word.includes(token) || token.includes(word)) return true;
+      if (token.length < 4 || word.length < 4) return false;
+      return levenshteinDistance(token, word) <= 1;
+    }));
+  };
+
   const { filtered, grouped, phaseKeys } = useMemo(() => {
     const f = items.filter(i => {
       if (listMode === 'core' && !coreIds.has(i.id)) return false;
@@ -1478,8 +1506,7 @@ export default function MCUViewer() {
       if (timelineMode === 'studio' && i.order % 2 === 0) return true;
       if (timelineMode === 'whatif' && i.type !== 'short') return true;
       if (genreFilter !== 'all' && i.type !== genreFilter) return false;
-      const searchTerm = search.toLowerCase();
-      return i.title.toLowerCase().includes(searchTerm) || i.prereq.toLowerCase().includes(searchTerm);
+      return matchesSearch(i, search);
     }).sort((a, b) => {
       if (sortBy === 'title') return a.title.localeCompare(b.title);
       if (sortBy === 'year') return a.year - b.year;
@@ -2900,7 +2927,7 @@ export default function MCUViewer() {
 
   // Count active filters for the collapsed bar badge
   const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
-  const filterTriggerLabel = sortBy === 'order' ? 'Filters > Chronological' : `Filters > ${SORT_LABELS[sortBy] || 'Custom'}`;
+  const filterTriggerLabel = 'Filters';
 
   const renderPhaseSelector = () => (
     <div ref={phaseRef} className="phase-selector-rail">
@@ -3217,15 +3244,15 @@ export default function MCUViewer() {
         <section className="search-page-shell" style={{ maxWidth: 1480, margin: '8px auto 14px', padding: '0 16px' }}>
           <div className="search-page-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
             <div>
-              <div style={{ fontSize: 11, letterSpacing: 1.8, textTransform: 'uppercase', color: T.textMuted }}>Dedicated Search</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: T.text }}>Find any title instantly</div>
+              <div style={{ fontSize: 11, letterSpacing: 2.2, textTransform: 'uppercase', color: T.textMuted }}>S.H.I.E.L.D. Archive Search</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: T.text }}>Locate any Marvel entry in seconds</div>
             </div>
             <button className="fpill" onClick={() => setBrowseMode('home')}><ChevDown size={14}/> Back to Home</button>
           </div>
           <div className="search-page-panel" style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 18, padding: 14, background: 'color-mix(in srgb, var(--theme-surface) 84%, transparent)' }}>
             <div style={{ position: 'relative' }}>
               <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
-              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search title, prerequisite, release notes..." aria-label="Search titles" style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650 }} />
+              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search titles, details, release info, status... (typo friendly)" aria-label="Search titles" style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650 }} />
             </div>
             <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.4 }}>{search ? `${filtered.length} matches` : 'Type to begin searching'}</div>
@@ -3236,7 +3263,7 @@ export default function MCUViewer() {
       )}
 
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 60, marginTop: 16 }}>
+      {browseMode !== 'search' && <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 60, marginTop: 16 }}>
         {/* Toggle row — always visible */}
         <div style={{ maxWidth: 1480, margin: '0 auto', padding: '0 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
@@ -3250,6 +3277,12 @@ export default function MCUViewer() {
                 <span className="filters-count-badge" aria-label={`${activeFilterCount} active filters`}>{activeFilterCount}</span>
               )}
               <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+            </button>
+            <button className="filters-trigger"
+              onClick={() => setSortBy('order')}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${sortBy === 'order' ? 'color-mix(in srgb, var(--theme-accent) 56%, var(--theme-border))' : T.filterBorder}`, background: sortBy === 'order' ? 'color-mix(in srgb, var(--theme-accent) 12%, transparent)' : 'transparent', color: sortBy === 'order' ? 'var(--theme-accent)' : T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}>
+              <ArrowUpDown size={13} />
+              Chronological
             </button>
             {renderPhaseSelector()}
             <button className="glass-grad quick-continue-btn" onClick={() => nextUnwatched && openDetail(nextUnwatched)} style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 380, background: 'color-mix(in srgb, var(--theme-surface) 70%, transparent)', backdropFilter: 'blur(12px) saturate(130%)', WebkitBackdropFilter: 'blur(12px) saturate(130%)', cursor: nextUnwatched ? 'pointer' : 'default' }}>
@@ -3351,7 +3384,7 @@ export default function MCUViewer() {
             </div>
           </div>
         )}
-      </div>
+      </div>}
       <div className="floating-controls" style={detailItem || analyticsOpen || settingsOpen || sidebarOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
         <button
           type="button"
@@ -3428,13 +3461,29 @@ export default function MCUViewer() {
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
-          {phaseKeys.length === 0 && (
+          {browseMode === 'search' && (
+            <section className="curvy-panel" style={{ border: `1px solid ${T.surfaceBorder}`, borderRadius: 20, padding: 16, background: 'color-mix(in srgb, var(--theme-surface) 70%, transparent)' }}>
+              {!search ? (
+                <div style={{ textAlign: 'center', padding: '34px 0', color: T.textMuted, letterSpacing: 0.6 }}>Start typing to search across titles, metadata, status, release info, and prerequisites.</div>
+              ) : filtered.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '34px 0', color: T.textMuted, letterSpacing: 0.6 }}>No matches found. Try broader keywords or a nearby spelling.</div>
+              ) : (
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {filtered.map((item, idx) => (
+                    <MemoizedTitleRow key={item.id} item={item} idx={idx} openDetail={openDetail} toggleWatched={toggleWatched} toggleExpanded={toggleExpanded} expandedItem={expandedItem} posterSrc={posterSrc} ph={currentPhases.find((p) => p.id === item.phase) || { color: 'var(--theme-accent)', glow: 'transparent' }} T={T} detailItem={detailItem} releaseStatusFor={releaseStatusFor} releaseInfoFor={releaseInfoFor} statusTone={statusTone} statusFilter={statusFilter} />
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+
+          {browseMode !== 'search' && phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
             </div>
           )}
 
-          {viewMode === 'calendar' ? (
+          {browseMode !== 'search' && (viewMode === 'calendar' ? (
             <section data-motion="section" className='curvy-panel calendar-section motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
               <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', color: 'var(--theme-text-primary)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
               <div style={{ marginBottom: 12, color: T.textMuted, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.2 }}>Grouped by month / quarter / year</div>
@@ -3556,7 +3605,7 @@ export default function MCUViewer() {
                 </div>
               </section>
             );
-          })}
+          }))}
 
           <div data-motion="section" className="motion-section motion-pop" style={{ textAlign: 'center', marginTop: 44, fontFamily: 'var(--font-marvel-ui)', fontSize: 11, color: 'var(--theme-text-muted)', letterSpacing: 2.2, fontWeight: 700 }}>
             Made with ♥️ by Marvel Fan
