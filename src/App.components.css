@@ -2449,6 +2449,9 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 .trailer-backdrop.is-landscape{
   padding:0;
   overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 .trailer-shell{
   max-width: 1320px;
@@ -2465,16 +2468,17 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   max-width:min(1600px,100vw);
 }
 .trailer-backdrop.is-landscape .trailer-shell{
-  position:fixed;
-  left:50%;
-  top:50%;
+  position:relative;
+  left:auto;
+  top:auto;
   margin:0;
-  width:min(96dvh,1180px);
-  max-width:min(96dvh,1180px);
-  max-height:min(96dvw,900px);
+  width:min(92dvh,1120px);
+  max-width:min(92dvh,1120px);
+  max-height:min(92dvw,860px);
   border-radius:16px;
-  transform:translate(-50%,-50%) rotate(90deg);
-  transform-origin:center;
+  transform:rotate(90deg);
+  transform-origin:center center;
+  animation:none;
 }
 .trailer-shell.is-expanded{max-width:min(1600px,99vw);padding:12px}
 .trailer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
@@ -2487,7 +2491,7 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   border-radius:14px;border:1px solid color-mix(in srgb,var(--theme-border) 88%, transparent);
   background:color-mix(in srgb,var(--theme-bg) 70%, #000);
 }
-.trailer-frame.is-landscape{padding-top:min(46%,84vh)}
+.trailer-frame.is-landscape{padding-top:min(46%,82vh)}
 .trailer-shell.is-expanded .trailer-frame{padding-top:min(56.25%,76vh)}
 .trailer-shell.is-expanded .trailer-frame.is-landscape{padding-top:min(42%,96vh)}
 .trailer-landscape-tip{position:absolute;top:10px;left:10px;z-index:2;padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--theme-accent) 22%, var(--theme-surface));border:1px solid color-mix(in srgb,var(--theme-accent) 52%, var(--theme-border));font:700 10px/1 var(--font-marvel-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--theme-text)}
@@ -2495,9 +2499,9 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 [data-color-mode="light"] .trailer-backdrop.is-landscape{background:radial-gradient(circle at 20% 12%, color-mix(in srgb,var(--theme-accent) 16%, #fff), transparent 44%), rgba(15,23,42,.45)}
 @media (max-width:900px){
   .trailer-backdrop.is-landscape .trailer-shell{
-    width:min(96dvh,780px);
-    max-width:min(96dvh,780px);
-    max-height:min(94dvw,620px);
+    width:min(92dvh,760px);
+    max-width:min(92dvh,760px);
+    max-height:min(92dvw,600px);
     padding:10px;
   }
   .trailer-backdrop.is-landscape .trailer-frame{
