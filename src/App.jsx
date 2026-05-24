@@ -80,6 +80,8 @@ const TYPE_META = {
   short:  { label: 'Short',  Icon: Zap,  color: '#a06cd5' },
 };
 
+const FALLBACK_TYPE_META = { label: 'Title', Icon: Layers, color: 'var(--theme-text-secondary)' };
+
 const STATUS_META = {
   watched:        { label: 'Completed',      color: '#e11d48', Icon: Check,      bg: 'rgba(225,29,72,0.12)'  },
   'plan-to-watch':{ label: 'Watchlist',      color: '#3b82f6', Icon: Bookmark,   bg: 'rgba(59,130,246,0.12)' },
@@ -205,6 +207,9 @@ const VALID_DENSITY_MODES = new Set(['comfortable', 'compact']);
 const VALID_TIMELINE_MODES = TIMELINE_MODE_IDS;
 const VALID_DESKTOP_TEXT_SCALES = new Set(DESKTOP_TEXT_SCALES);
 const AUTO_HIDDEN_STATUSES = HIDDEN_FILTER_STATUSES;
+
+const getSafeTypeMeta = (type) => TYPE_META[type] || FALLBACK_TYPE_META;
+const getSafeStatusMeta = (status) => STATUS_META[status] || STATUS_META.unwatched;
 
 const readSavedUiState = () => {
   if (typeof window === 'undefined') return UI_STATE_DEFAULTS;
@@ -2700,7 +2705,7 @@ export default function MCUViewer() {
       drawWrappedText(ctx, item.title, 550, 244, 700, Math.round(68 * scale), 3);
       ctx.font = `750 ${Math.round(30 * scale)}px ${exportFontFamily}`;
       ctx.fillStyle = '#bfdbfe';
-      ctx.fillText(`${item.year} • Phase ${item.phase} • ${TYPE_META[item.type]?.label || item.type}`, 550, 468, 700);
+      ctx.fillText(`${item.year} • Phase ${item.phase} • ${getSafeTypeMeta(item.type).label || item.type}`, 550, 468, 700);
       drawPremiumStars(ctx, { x: 550, y: 550, size: Math.round(42 * scale), rating10: ratingNum, active: '#ffd35c', fontFamily: exportFontFamily });
       ctx.fillStyle = '#ffd35c';
       ctx.font = `900 ${Math.round(42 * scale)}px ${exportFontFamily}`;
@@ -3143,7 +3148,7 @@ export default function MCUViewer() {
         <div style={{ marginTop: 10, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 10, display: 'grid', gap: 6, background: T.surfaceBg }}>
           <div style={{ fontSize: 11, letterSpacing: 1.6, color: T.textMuted }}>CONTINUE WATCHING</div>
           <div style={{ fontSize: 14, color: 'var(--theme-text)' }}>{nextUnwatched ? nextUnwatched.title : 'You are all caught up.'}</div>
-          {nextUnwatched && <div style={{ fontSize: 12, color: T.textMuted }}>Phase {nextUnwatched.phase} · {TYPE_META[nextUnwatched.type]?.label}</div>}
+          {nextUnwatched && <div style={{ fontSize: 12, color: T.textMuted }}>Phase {nextUnwatched.phase} · {getSafeTypeMeta(nextUnwatched.type).label}</div>}
         </div>
         <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
           {currentPhases.map(ph => <button key={ph.id} className="fpill" onClick={() => { setSidebarOpen(false); setActivePhase(ph.id); scrollToListTop(); }} style={{ justifyContent: 'space-between' }}><span>{ph.name}</span><ChevRight size={13} /></button>)}
@@ -3421,7 +3426,7 @@ export default function MCUViewer() {
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', overflow: 'visible' }}>
               {/* Type pills */}
               {['film', 'series', 'short'].map(t => {
-                const m = TYPE_META[t];
+                const m = getSafeTypeMeta(t);
                 const on = typeFilter === t;
                 return (
                   <button key={t} className="fpill filter-pill type-pill"
@@ -3584,7 +3589,7 @@ export default function MCUViewer() {
                       <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left', textShadow: '0 1px 2px color-mix(in srgb, var(--theme-bg) 35%, transparent)' }}>
                         {item.title}
                         <div style={{ fontSize: 11, color: T.textMuted, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                          <span>Phase {item.phase} · {TYPE_META[item.type]?.label}</span>
+                          <span>Phase {item.phase} · {getSafeTypeMeta(item.type).label}</span>
                           <span className={`calendar-badge ${releaseStatus}`}>{releaseStatus}</span>
                           <span className="calendar-badge certainty">{hasRealDate ? 'Exact Date' : getReleaseCertainty({ hasRealDate, releaseStatus })}</span>
                         </div>
@@ -3664,8 +3669,8 @@ export default function MCUViewer() {
                         idx={idx}
                         ph={ph}
                         T={T}
-                        typeMeta={TYPE_META[item.type]}
-                        statusMeta={STATUS_META[item.status]}
+                        typeMeta={getSafeTypeMeta(item.type)}
+                        statusMeta={getSafeStatusMeta(item.status)}
                         releaseStatus={itemReleaseStatus}
                         releaseStatusText={releaseStatusLabel(itemReleaseStatus)}
                         releaseStatusStyleObj={releaseStatusStyle(itemReleaseStatus)}
@@ -3727,7 +3732,7 @@ export default function MCUViewer() {
                 <h2 className="detail-export-title">{detailItem.title}</h2>
                 <div className="detail-export-meta">
                   <span>Phase {detailItem.phase}</span>
-                  <span>{TYPE_META[detailItem.type]?.label}</span>
+                  <span>{getSafeTypeMeta(detailItem.type).label}</span>
                   {(detailData?.imdbRating && detailData.imdbRating !== 'N/A') && <span>★ {detailData.imdbRating}/10</span>}
                 </div>
                 <div className="detail-export-actions-inline">
@@ -3770,7 +3775,7 @@ export default function MCUViewer() {
                   <div className="detail-intel-list">
                     <div><strong>Release</strong><span>{formatReleaseDate(releaseInfoFor(detailItem).date, detailItem.year, releaseInfoFor(detailItem).label, releaseStatusFor(detailItem))}</span></div>
                     <div><strong>Prerequisite</strong><span>{detailItem.prereq}</span></div>
-                    <div><strong>Status</strong><span>{STATUS_META[detailItem.status]?.label}</span></div>
+                    <div><strong>Status</strong><span>{getSafeStatusMeta(detailItem.status).label}</span></div>
                     <div><strong>Post-credit scenes</strong><span>{getAfterCreditsMeta(detailItem).count ?? 'Unknown'}</span></div>
                     <div><strong>Watch now?</strong><span>{getAfterCreditsMeta(detailItem).advice === 'must' ? 'Must watch now' : (getAfterCreditsMeta(detailItem).advice === 'can-skip' ? 'Can skip now' : 'Check later')}</span></div>
                     <div><strong>Connects to</strong><span>{getAfterCreditsMeta(detailItem).connectsTo.length ? getAfterCreditsMeta(detailItem).connectsTo.join(', ') : 'No explicit setup tracked'}</span></div>

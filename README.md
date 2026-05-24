@@ -32,6 +32,29 @@ The app ships as both a web app (Vite + React) and a native Android app
 
 ---
 
+## Stability and data-safety guardrails
+
+The app now includes defensive metadata fallbacks to prevent startup/render
+crashes when a data entry has missing or unknown enum-like fields.
+
+### Covered safeguards
+
+- Safe title-type metadata resolver (fallback label/icon/color)
+- Safe watch-status metadata resolver (fallback to `unwatched` semantics)
+- Row list rendering uses safe resolvers instead of direct map dereferencing
+- Detail and summary surfaces also use the same safe resolvers for consistency
+
+### Why this matters
+
+If a title object is malformed (for example, `type` not in `film|series|short`
+or an unknown `status`), the app keeps rendering with graceful defaults instead
+of throwing runtime errors like:
+
+- `Cannot read properties of undefined (reading 'color')`
+- `Cannot read properties of undefined (reading 'Icon')`
+
+---
+
 ## Watch status controls
 
 Each row has two status actions:
