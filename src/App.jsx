@@ -952,6 +952,7 @@ export default function MCUViewer() {
   const [detailPosterFailed, setDetailPosterFailed] = useState(false);
   const [trailerOpen, setTrailerOpen] = useState(false);
   const [trailerLandscape, setTrailerLandscape] = useState(false);
+  const [trailerExpanded, setTrailerExpanded] = useState(false);
   const trailerShellRef = useRef(null);
   const { posterCache, setPosterCache, localPosterMap, setLocalPosterMap } = usePosterCache();
   const [posterFetchState, setPosterFetchState] = useState({ active: false, done: 0, total: 0, message: '' });
@@ -1007,7 +1008,7 @@ export default function MCUViewer() {
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   const closeAnalytics = useCallback(() => setAnalyticsOpen(false), []);
-  const closeDetail = useCallback(() => { setDetailItem(null); setTrailerOpen(false); }, []);
+  const closeDetail = useCallback(() => { setDetailItem(null); setTrailerOpen(false); setTrailerExpanded(false); setTrailerLandscape(false); }, []);
   const openImdbForItem = useCallback((item, data) => {
     const imdbId = data?.imdbID || data?.imdbId || '';
     const fallback = `https://www.imdb.com/find/?q=${encodeURIComponent(`${item.title} ${item.year || ''}`.trim())}`;
@@ -2644,9 +2645,9 @@ export default function MCUViewer() {
       canvas.height = 2000;
       const ctx = canvas.getContext('2d');
       const grd = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      grd.addColorStop(0, '#06111f');
-      grd.addColorStop(0.52, '#111a38');
-      grd.addColorStop(1, '#35103b');
+      grd.addColorStop(0, '#0b1224');
+      grd.addColorStop(0.44, '#121f3b');
+      grd.addColorStop(1, '#22122f');
       ctx.fillStyle = grd;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       const ratingNum = clampTenPoint(Number(detailData?.imdbRating || metaCache[item.id]?.rating || 0));
@@ -2666,13 +2667,13 @@ export default function MCUViewer() {
         ctx.fillStyle = veil;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
-      drawRoundedPanel(ctx, { x: 44, y: 48, w: 1312, h: 1904, radius: 58, fill: 'rgba(7,13,31,0.78)', stroke: 'rgba(125,211,252,0.28)', lineWidth: 4 });
-      drawRoundedPanel(ctx, { x: 82, y: 88, w: 1236, h: 1824, radius: 42, fill: 'rgba(255,255,255,0.045)', stroke: 'rgba(255,255,255,0.14)' });
+      drawRoundedPanel(ctx, { x: 44, y: 48, w: 1312, h: 1904, radius: 58, fill: 'rgba(10,18,36,0.86)', stroke: 'rgba(125,211,252,0.34)', lineWidth: 4 });
+      drawRoundedPanel(ctx, { x: 82, y: 88, w: 1236, h: 1824, radius: 42, fill: 'rgba(255,255,255,0.03)', stroke: 'rgba(255,255,255,0.16)' });
       const exportFontFamily = EXPORT_FONT_FAMILIES[exportFont] || EXPORT_FONT_FAMILIES.inter;
       await waitForExportFont(exportFontFamily);
       const scale = Math.min(exportTextScale * (exportFont === 'marvel' ? 1.18 : 1), 1.9);
       if (img) {
-        drawRoundedPanel(ctx, { x: 112, y: 130, w: 394, h: 574, radius: 34, fill: 'rgba(255,255,255,0.13)', stroke: 'rgba(255,211,92,0.36)', lineWidth: 3 });
+        drawRoundedPanel(ctx, { x: 112, y: 130, w: 394, h: 574, radius: 34, fill: 'rgba(255,255,255,0.12)', stroke: 'rgba(125,211,252,0.42)', lineWidth: 3 });
         ctx.save();
         ctx.beginPath();
         ctx.roundRect(126, 144, 366, 546, 26);
@@ -2680,7 +2681,7 @@ export default function MCUViewer() {
         ctx.drawImage(img, 126, 144, 366, 546);
         ctx.restore();
       }
-      ctx.fillStyle = '#7dd3fc';
+      ctx.fillStyle = '#93c5fd';
       ctx.font = `900 ${Math.round(28 * scale)}px ${exportFontFamily}`;
       ctx.fillText('MCU DETAILS CARD', 550, 164);
       ctx.fillStyle = '#fff';
@@ -2693,15 +2694,15 @@ export default function MCUViewer() {
       ctx.fillStyle = '#ffd35c';
       ctx.font = `900 ${Math.round(42 * scale)}px ${exportFontFamily}`;
       ctx.fillText(`${ratingNum ? ratingNum.toFixed(1) : '—'}/10`, 550, 626, 700);
-      drawRoundedPanel(ctx, { x: 112, y: 778, w: 1176, h: 530, radius: 36, fill: 'rgba(255,255,255,0.085)', stroke: 'rgba(255,255,255,0.16)' });
-      ctx.fillStyle = '#7dd3fc';
+      drawRoundedPanel(ctx, { x: 112, y: 778, w: 1176, h: 530, radius: 36, fill: 'rgba(255,255,255,0.06)', stroke: 'rgba(147,197,253,0.35)' });
+      ctx.fillStyle = '#93c5fd';
       ctx.font = `900 ${Math.round(28 * scale)}px ${exportFontFamily}`;
       ctx.fillText('STORY BRIEF', 150, 858);
       ctx.fillStyle = '#edf6ff';
       ctx.font = `650 ${Math.round(34 * scale)}px ${exportFontFamily}`;
       drawWrappedText(ctx, description, 150, 924, 1100, Math.round(48 * scale), 7);
-      drawRoundedPanel(ctx, { x: 112, y: 1350, w: 1176, h: 374, radius: 36, fill: 'rgba(255,255,255,0.07)', stroke: 'rgba(255,255,255,0.14)' });
-      ctx.fillStyle = '#f0abfc';
+      drawRoundedPanel(ctx, { x: 112, y: 1350, w: 1176, h: 374, radius: 36, fill: 'rgba(255,255,255,0.055)', stroke: 'rgba(196,181,253,0.34)' });
+      ctx.fillStyle = '#c4b5fd';
       ctx.font = `900 ${Math.round(26 * scale)}px ${exportFontFamily}`;
       ctx.fillText('WATCH INTEL', 150, 1424);
       ctx.fillStyle = '#d3ddf6';
@@ -2709,7 +2710,7 @@ export default function MCUViewer() {
       ctx.fillText(`Release: ${formatReleaseDate(info.date, item.year, info.label, status)}`, 150, 1494, 1080);
       drawWrappedText(ctx, `Prerequisite: ${item.prereq}`, 150, 1552, 1080, Math.round(40 * scale), 2);
       const cast = detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[item.title] || ['Cast data coming soon']).join(', ');
-      ctx.fillStyle = '#7dd3fc';
+      ctx.fillStyle = '#93c5fd';
       ctx.fillText('Cast', 150, 1658);
       ctx.fillStyle = '#d3ddf6';
       drawWrappedText(ctx, cast, 250, 1658, 980, Math.round(38 * scale), 3);
@@ -3707,6 +3708,9 @@ export default function MCUViewer() {
                   {(detailData?.imdbRating && detailData.imdbRating !== 'N/A') && <span>★ {detailData.imdbRating}/10</span>}
                 </div>
                 <div className="detail-export-actions-inline">
+                  {!!TRAILER_DATA[detailItem.title]?.youtubeId && (
+                    <button className="fpill glass-panel detail-btn" onClick={() => setTrailerOpen(true)}><PlayCircle size={12}/>Watch Trailer</button>
+                  )}
                   <button className="fpill glass-panel detail-btn" onClick={() => openImdbForItem(detailItem, detailData)}><Info size={12}/>Open IMDb</button>
                   <button className="fpill glass-panel detail-btn" onClick={() => exportPosterForItem(detailItem, { share: true })}><Upload size={12}/>Share Exact Card</button>
                 </div>
@@ -3771,27 +3775,28 @@ export default function MCUViewer() {
       )}
 
       {trailerOpen && detailItem && TRAILER_DATA[detailItem.title]?.youtubeId && (
-        <div className="detail-backdrop trailer-backdrop" onClick={() => setTrailerOpen(false)} role="dialog" aria-label="Trailer player">
-          <div className="detail-card glass-panel trailer-shell" onClick={(e) => e.stopPropagation()}>
-            <div className="trailer-head">
+        <div className={`detail-backdrop trailer-backdrop ${trailerLandscape ? 'is-landscape' : ''}`} onClick={() => { setTrailerOpen(false); setTrailerExpanded(false); setTrailerLandscape(false); }} role="dialog" aria-label="Trailer player">
+          <div className={`detail-card glass-panel trailer-shell ${trailerLandscape ? 'is-landscape' : ''} ${trailerExpanded ? 'is-expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
+            {!trailerExpanded && <div className="trailer-head">
               <div>
                 <div className="trailer-eyebrow">Official trailer</div>
                 <strong className="trailer-title">{detailItem.title}</strong>
               </div>
               <div className="trailer-actions">
                 <button className="fpill trailer-close" onClick={() => setTrailerLandscape(v => !v)}><SwitchIcon size={12}/>{trailerLandscape ? 'Portrait' : 'Landscape'}</button>
-                <button className="fpill trailer-close" onClick={async () => {
-                  try {
-                    if (trailerShellRef.current?.requestFullscreen) await trailerShellRef.current.requestFullscreen();
-                  } catch {}
-                }}><PlayCircle size={12}/>Enlarge</button>
+                <button className="fpill trailer-close" onClick={() => setTrailerExpanded(true)}><PlayCircle size={12}/>Enlarge</button>
                 <button className="fpill trailer-close" onClick={() => setTrailerOpen(false)}><X size={12}/>Close</button>
               </div>
-            </div>
+            </div>}
             <div className={`trailer-frame ${trailerLandscape ? 'is-landscape' : ''}`} ref={trailerShellRef}>
               {trailerLandscape && <div className="trailer-landscape-tip">Landscape mode enabled</div>}
               <iframe title={`${detailItem.title} trailer`} src={trailerEmbedUrl(TRAILER_DATA[detailItem.title].youtubeId)} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
             </div>
+            {trailerExpanded && <div className="trailer-expanded-actions">
+              <button className="fpill trailer-close" onClick={() => setTrailerLandscape(v => !v)}><SwitchIcon size={12}/>{trailerLandscape ? 'Portrait' : 'Landscape'}</button>
+              <button className="fpill trailer-close" onClick={() => setTrailerExpanded(false)}><PlayCircle size={12}/>Back</button>
+              <button className="fpill trailer-close" onClick={() => setTrailerOpen(false)}><X size={12}/>Close</button>
+            </div>}
           </div>
         </div>
       )}
