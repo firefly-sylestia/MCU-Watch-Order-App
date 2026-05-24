@@ -3470,9 +3470,40 @@ export default function MCUViewer() {
                 <div style={{ textAlign: 'center', padding: '34px 0', color: T.textMuted, letterSpacing: 0.6 }}>No matches found. Try broader keywords or a nearby spelling.</div>
               ) : (
                 <div style={{ display: 'grid', gap: 10 }}>
-                  {filtered.map((item, idx) => (
-                    <MemoizedTitleRow key={item.id} item={item} idx={idx} openDetail={openDetail} toggleWatched={toggleWatched} toggleExpanded={toggleExpanded} expandedItem={expandedItem} posterSrc={posterSrc} ph={currentPhases.find((p) => p.id === item.phase) || { color: 'var(--theme-accent)', glow: 'transparent' }} T={T} detailItem={detailItem} releaseStatusFor={releaseStatusFor} releaseInfoFor={releaseInfoFor} statusTone={statusTone} statusFilter={statusFilter} />
-                  ))}
+                  {filtered.map((item, idx) => {
+                    const itemReleaseStatus = releaseStatusFor(item);
+                    const itemReleaseInfo = releaseInfoFor(item);
+                    return (
+                      <MemoizedTitleRow
+                        key={item.id}
+                        item={item}
+                        idx={idx}
+                        ph={currentPhases.find((p) => p.id === item.phase) || { color: 'var(--theme-accent)', glow: 'transparent' }}
+                        T={T}
+                        typeMeta={TYPE_META[item.type]}
+                        statusMeta={STATUS_META[item.status]}
+                        releaseStatus={itemReleaseStatus}
+                        releaseStatusText={releaseStatusLabel(itemReleaseStatus)}
+                        releaseStatusStyleObj={releaseStatusStyle(itemReleaseStatus)}
+                        releaseLabel={formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}
+                        poster={posterSrc(item)}
+                        genres={inferGenres(item)}
+                        isExpanded={expandedItem === item.id}
+                        isWatched={item.status === 'watched'}
+                        isBookmarked={Boolean(bookmarks[item.id])}
+                        statusDropdown={statusDropdown}
+                        rating={metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
+                        onOpenDetail={openDetail}
+                        onSetStatus={setStatusDirect}
+                        onToggleBookmark={toggleBookmark}
+                        onOpenStatus={openStatusDropdown}
+                        bulkSelectMode={bulkSelectMode}
+                        isSelected={selectedIds.has(item.id)}
+                        onToggleSelected={toggleSelected}
+                        isDesktopViewport={isDesktopViewport}
+                      />
+                    );
+                  })}
                 </div>
               )}
             </section>
