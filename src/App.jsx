@@ -909,9 +909,10 @@ export default function MCUViewer() {
     displayLabel: universe === 'dc' ? (choice.dcLabel || choice.label) : choice.label,
     displaySwatch: universe === 'dc' ? (choice.dcSwatch || choice.swatch) : choice.swatch,
   })), [universe]);
-  const [uiModeState, dispatchUiMode] = useReducer((state, action) => ({ ...state, ...action }), { sortOpen: false, phaseOpen: false, filterStatusOpen: false, dockStatusOpen: false, filtersOpen: initialUiState.filtersOpen });
-  const { sortOpen, phaseOpen, filterStatusOpen, dockStatusOpen, filtersOpen } = uiModeState;
+  const [uiModeState, dispatchUiMode] = useReducer((state, action) => ({ ...state, ...action }), { sortOpen: false, phaseOpen: false, filterStatusOpen: false, dockStatusOpen: false, filtersOpen: initialUiState.filtersOpen, timelineOpen: false });
+  const { sortOpen, phaseOpen, filterStatusOpen, dockStatusOpen, filtersOpen, timelineOpen } = uiModeState;
   const setSortOpen = (next) => dispatchUiMode({ sortOpen: typeof next === 'function' ? next(uiModeState.sortOpen) : next });
+  const setTimelineOpen = (next) => dispatchUiMode({ timelineOpen: typeof next === 'function' ? next(uiModeState.timelineOpen) : next });
   const setPhaseOpen = (next) => dispatchUiMode({ phaseOpen: typeof next === 'function' ? next(uiModeState.phaseOpen) : next });
   const [statusDropdown, setStatusDropdown] = useState(null);
   const [fabMenuOpen, setFabMenuOpen] = useState(true);
@@ -1296,7 +1297,7 @@ export default function MCUViewer() {
   }, []);
 
   useEffect(() => {
-    const fn = e => { if (sortRef.current && !sortRef.current.contains(e.target)) setSortOpen(false); };
+    const fn = e => { if (sortRef.current && !sortRef.current.contains(e.target)) setSortOpen(false); if (timelineRef.current && !timelineRef.current.contains(e.target)) setTimelineOpen(false); };
     document.addEventListener('mousedown', fn);
     return () => document.removeEventListener('mousedown', fn);
   }, []);
@@ -1561,7 +1562,15 @@ export default function MCUViewer() {
 
 
 
-  const getAfterCreditsMeta = useCallback((item) => AFTER_CREDITS[item?.title] || AFTER_CREDITS_DEFAULT, []);
+  const getAfterCreditsMeta = useCallback((item) => {
+    const base = AFTER_CREDITS[item?.title] || AFTER_CREDITS_DEFAULT;
+    if (!item) return base;
+    const releaseSorted = [...items].sort((a,b)=> (a.year-b.year) || (a.order-b.order));
+    const idx = releaseSorted.findIndex(x => x.id === item.id);
+    const nextTitle = idx >= 0 ? releaseSorted[idx + 1]?.title : null;
+    const connectsTo = base.connectsTo?.length ? base.connectsTo : (nextTitle ? [nextTitle] : []);
+    return { ...base, connectsTo };
+  }, [items]);
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
     [items, listMode, coreIds]
@@ -3318,6 +3327,21 @@ export default function MCUViewer() {
               <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             <button className="filters-trigger" onClick={() => { const keys = Object.keys(SORT_LABELS); const idx = keys.indexOf(sortBy); setSortBy(keys[(idx + 1) % keys.length]); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${sortBy === 'order' ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: sortBy === 'order' ? 'var(--theme-accent)' : T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}><ArrowUpDown size={13} />{SORT_LABELS[sortBy]}</button>
+            <div ref={timelineRef} style={{ position: 'relative' }}>
+              <button className="filters-trigger" onClick={() => setTimelineOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid color-mix(in srgb, var(--theme-accent) 42%, var(--theme-border))`, background: 'linear-gradient(135deg, color-mix(in srgb, #ed1d24 22%, var(--theme-surface)) 0%, color-mix(in srgb, #0063e5 18%, var(--theme-surface)) 100%)', color: 'var(--theme-text)', cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.2, boxShadow: '0 10px 20px rgba(0,0,0,.18)' }}>
+                <Layers size={13} /> {TIMELINE_MODES.find(m => m.id === timelineMode)?.label || 'Timeline'} <ChevDown size={11} style={{ transform: timelineOpen ? 'rotate(180deg)' : 'none' }}/>
+              </button>
+              {timelineOpen && (
+                <div className="dropdown-pop filter-dropdown" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1450, minWidth: 300, padding: 8, background: 'linear-gradient(160deg, color-mix(in srgb, #ed1d24 10%, var(--theme-surface)) 0%, color-mix(in srgb, #0b0f2d 78%, var(--theme-surface)) 52%, color-mix(in srgb, #ffd447 10%, var(--theme-surface)) 100%)' }}>
+                  {TIMELINE_MODES.map(mode => (
+                    <button key={mode.id} className={`sopt ${timelineMode === mode.id ? 'picked' : ''}`} style={{ width: '100%', textAlign: 'left', marginBottom: 4, borderRadius: 10, border: timelineMode === mode.id ? '1px solid color-mix(in srgb, var(--theme-accent) 60%, transparent)' : '1px solid transparent' }} onClick={() => { setTimelineMode(mode.id); setTimelineOpen(false); }}>
+                      <div style={{ fontWeight: 700 }}>{mode.label}</div><div style={{ fontSize: 11, opacity: 0.8 }}>{mode.description}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {renderPhaseSelector()}
             <button className="glass-grad quick-continue-btn" onClick={() => nextUnwatched && openDetail(nextUnwatched)} style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 380, background: 'color-mix(in srgb, var(--theme-surface) 70%, transparent)', backdropFilter: 'blur(12px) saturate(130%)', WebkitBackdropFilter: 'blur(12px) saturate(130%)', cursor: nextUnwatched ? 'pointer' : 'default' }}>
               <span style={{ fontSize: 10, letterSpacing: 1.6, color: T.textMuted, textTransform: 'uppercase' }}>Continue</span>
@@ -3335,21 +3359,6 @@ export default function MCUViewer() {
         {filtersOpen && (
           <div className="filters-open" style={{ padding: '0 48px 12px', maxWidth: 1400, margin: '0 auto' }}>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', overflow: 'visible' }}>
-              {/* Sort */}
-              <div ref={sortRef} style={{ position: 'relative' }}>
-                <button className="fpill filter-pill sort-pill" onClick={() => { const keys = Object.keys(SORT_LABELS); const idx = keys.indexOf(sortBy); setSortBy(keys[(idx + 1) % keys.length]); }}
-                  style={{ color: 'var(--theme-accent)', borderColor: 'color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'transparent', fontFamily: 'var(--font-marvel-ui)', fontSize: 'clamp(14px, 2.2vw, 16px)', letterSpacing: 2 }}>
-                  {SORT_LABELS[sortBy]}
-                  <ChevDown size={12} style={{ opacity: 0.6, transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-                </button>
-                {sortOpen && (
-                  <div className="dropdown-pop filter-dropdown" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1400, minWidth: 220 }}>
-                    {Object.entries(SORT_LABELS).map(([k, v]) => (
-                      <div key={k} className={`sopt ${sortBy === k ? 'picked' : ''}`} onClick={() => { setSortBy(k); setSortOpen(false); }}>{v}</div>
-                    ))}
-                  </div>
-                )}
-              </div>
               {/* Type pills */}
               {['film', 'series', 'short'].map(t => {
                 const m = TYPE_META[t];
@@ -3408,11 +3417,6 @@ export default function MCUViewer() {
                   <button className="fpill" disabled={!selectedIds.size} onClick={() => applyBulkStatus('unwatched')} style={{ padding: '7px 12px', opacity: selectedIds.size ? 1 : 0.5 }}><EyeOff size={10}/>Unwatched</button>
                 </>
               )}
-              <div style={{ position: 'relative' }}>
-                <button className="fpill" onClick={() => { const order = TIMELINE_MODES.map(m => m.id); const idx = order.indexOf(timelineMode); setTimelineMode(order[(idx + 1) % order.length]); }}>
-                  <Layers size={10} />{TIMELINE_MODES.find(m => m.id === timelineMode)?.label || 'Timeline'}
-                </button>
-              </div>
               {/* Reset */}
               {activeFilterCount > 0 && (
                 <button className="fpill" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', padding: '7px 12px' }}
