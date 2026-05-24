@@ -28,6 +28,7 @@ import {
 } from './data/mcuData';
 import { DC_RAW, DC_PHASES, DC_CORE_IDS } from './data/dcData';
 import { UNIVERSE_META } from './constants/universeSwitch';
+import { TIMELINE_MODES, AFTER_CREDITS_META, CHARACTER_POV_IDS, MULTIVERSE_KEYWORDS } from './data/multiverseData';
 
 // ─── Icon primitives ────────────────────────────────────────────────────────
 const Icon = ({ children, size = 16, style = {} }) => (
@@ -181,7 +182,7 @@ const UI_STATE_DEFAULTS = {
   filtersOpen: false,
   viewMode: 'list',
   densityMode: 'comfortable',
-  timelineMode: 'sacred',
+  timelineMode: 'release',
   autoHideStatuses: false,
   performanceMode: true,
   desktopTextScale: 1,
@@ -196,7 +197,7 @@ const VALID_PHASES = new Set([0, ...PHASES.map(phase => phase.id), ...DC_PHASES.
 const VALID_TYPES = new Set([null, ...Object.keys(TYPE_META)]);
 const VALID_STATUSES = new Set([null, ...Object.keys(STATUS_META)]);
 const VALID_DENSITY_MODES = new Set(['comfortable', 'compact']);
-const VALID_TIMELINE_MODES = new Set(['sacred', 'studio', 'whatif']);
+const VALID_TIMELINE_MODES = new Set(TIMELINE_MODES.map(mode => mode.id));
 const VALID_DESKTOP_TEXT_SCALES = new Set(DESKTOP_TEXT_SCALES);
 const AUTO_HIDDEN_STATUSES = HIDDEN_FILTER_STATUSES;
 
@@ -1519,6 +1520,22 @@ export default function MCUViewer() {
     });
   };
 
+
+  const timelineRankFor = useCallback((item, mode) => {
+    if (mode === 'release') return item.year * 1000 + item.order;
+    if (mode === 'chronological') return item.order;
+    if (mode === 'loki-journey') return CHARACTER_POV_IDS['loki-journey'].has(item.id) ? item.order - 1000 : item.order + 1000;
+    if (mode === 'wanda-arc') return CHARACTER_POV_IDS['wanda-arc'].has(item.id) ? item.order - 1000 : item.order + 1000;
+    if (mode === 'multiverse-map') {
+      const text = `${item.title} ${item.desc}`.toLowerCase();
+      const score = MULTIVERSE_KEYWORDS.some(k => text.includes(k)) ? -600 : 0;
+      return item.order + score;
+    }
+    return item.order;
+  }, []);
+
+  const afterCreditsFor = useCallback((item) => AFTER_CREDITS_META[item.title] || { count: 0, urgency: 'can-skip', connectsTo: [] }, []);
+
   const { filtered, grouped, phaseKeys } = useMemo(() => {
     const f = items.filter(i => {
       if (listMode === 'core' && !coreIds.has(i.id)) return false;
@@ -1528,8 +1545,6 @@ export default function MCUViewer() {
       if (statusFilter && i.status !== statusFilter) return false;
       if (typeFilter && i.type !== typeFilter) return false;
       if (activePhase && i.phase !== activePhase) return false;
-      if (timelineMode === 'studio' && i.order % 2 === 0) return true;
-      if (timelineMode === 'whatif' && i.type !== 'short') return true;
       if (genreFilter !== 'all' && i.type !== genreFilter) return false;
       return matchesSearch(i, search);
     }).sort((a, b) => {
@@ -1538,13 +1553,13 @@ export default function MCUViewer() {
       if (sortBy === 'runtime') return (a.episodes || (a.type === 'film' ? 2.3 : 6)) - (b.episodes || (b.type === 'film' ? 2.3 : 6));
       if (sortBy === 'watched') return (b.watchedDate || '').localeCompare(a.watchedDate || '');
       if (sortBy === 'status') return (STATUS_SORT_ORDER[a.status] ?? 99) - (STATUS_SORT_ORDER[b.status] ?? 99);
-      return a.order - b.order;
+      return timelineRankFor(a, timelineMode) - timelineRankFor(b, timelineMode);
     });
     const g = {};
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap, timelineRankFor]);
 
 
 
@@ -3194,6 +3209,14 @@ export default function MCUViewer() {
             <div style={{ fontSize: 11, letterSpacing: 2, color: 'var(--theme-danger)', textTransform: 'uppercase' }}>Danger Zone</div>
             {posterFetchState.message && <div style={{ fontSize: 11, color: T.textMuted }}>{posterFetchState.message}</div>}
             <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setShowCompleted(false); setActivePhase(0); }}><Trash2 size={14}/>Reset Filters</button>
+            <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
+              <div style={{ fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', color: T.textMuted, fontFamily: 'var(--font-marvel-ui)' }}>Multiverse Timeline Modes</div>
+              <div className="ui-btn-group" style={{ flexWrap: 'wrap' }}>
+                {TIMELINE_MODES.map(mode => (
+                  <button key={mode.id} className="fpill" onClick={() => setTimelineMode(mode.id)} style={timelineMode === mode.id ? { borderColor: 'var(--theme-accent)', color: 'var(--theme-accent)', background: 'color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface))' } : {}} title={mode.desc}>{mode.label}</button>
+                ))}
+              </div>
+            </div>
             <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={clearPosterMetaCache}><Trash2 size={14}/>Clear Poster/Meta Cache</button>
             <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={clearAvatarActionCache}><Trash2 size={14}/>Clear Avatar/Actions Cache</button>
       </SettingsMenu>
@@ -3677,6 +3700,9 @@ export default function MCUViewer() {
                     <div><strong>Release</strong><span>{formatReleaseDate(releaseInfoFor(detailItem).date, detailItem.year, releaseInfoFor(detailItem).label, releaseStatusFor(detailItem))}</span></div>
                     <div><strong>Prerequisite</strong><span>{detailItem.prereq}</span></div>
                     <div><strong>Status</strong><span>{STATUS_META[detailItem.status]?.label}</span></div>
+                    <div><strong>Post-Credit Scenes</strong><span>{afterCreditsFor(detailItem).count || 'Unknown'}</span></div>
+                    <div><strong>After-Credits Navigator</strong><span>{afterCreditsFor(detailItem).urgency === 'must' ? 'Must watch now' : 'Can skip now'}</span></div>
+                    <div><strong>Connects to</strong><span>{afterCreditsFor(detailItem).connectsTo.length ? afterCreditsFor(detailItem).connectsTo.join(', ') : 'No major setup tagged'}</span></div>
                     <div><strong>Director</strong><span>{detailData?.Director && detailData.Director !== 'N/A' ? detailData.Director : 'Director data coming soon'}</span></div>
                     <div><strong>Cast</strong><span>{detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</span></div>
                   </div>
