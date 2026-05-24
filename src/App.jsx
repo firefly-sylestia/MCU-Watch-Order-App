@@ -1064,7 +1064,18 @@ export default function MCUViewer() {
 
 
 
-  useOverlayNavigation({ sidebarOpen, settingsOpen, detailItem, analyticsOpen, onCloseDetail: closeDetail, onCloseAnalytics: closeAnalytics, onCloseSettings: closeSettings, onCloseSidebar: closeSidebar });
+  useOverlayNavigation({
+    sidebarOpen,
+    settingsOpen,
+    detailItem,
+    analyticsOpen,
+    onCloseDetail: closeDetail,
+    onCloseAnalytics: closeAnalytics,
+    onCloseSettings: closeSettings,
+    onCloseSidebar: closeSidebar,
+    hasInAppBackStep: browseMode === 'search' || browseMode === 'phase',
+    onInAppBack: handleInAppBack,
+  });
 
   const currentPhases = universe === 'dc' ? DC_PHASES : PHASES;
 
