@@ -2512,8 +2512,7 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 .trailer-frame.is-landscape{padding-top:min(46%,86vh)}
 .trailer-shell.is-expanded .trailer-frame{padding-top:min(56.25%,76vh)}
 .trailer-shell.is-expanded .trailer-frame.is-landscape{padding-top:min(42%,96vh)}
-.trailer-landscape-tip{position:absolute;top:10px;left:10px;z-index:2;padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--theme-accent) 22%, var(--theme-surface));border:1px solid color-mix(in srgb,var(--theme-accent) 52%, var(--theme-border));font:700 10px/1 var(--font-marvel-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--theme-text)}
-.trailer-expanded-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;flex-wrap:wrap}
+.trailer-expanded-actions{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
 .trailer-variant-select{
   margin-top:10px;border:1px solid color-mix(in srgb,var(--theme-border) 80%, transparent);
   border-radius:12px;padding:8px 10px;background:color-mix(in srgb,var(--theme-surface) 85%, transparent);
