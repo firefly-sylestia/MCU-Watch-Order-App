@@ -752,7 +752,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
 const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
   open,
   darkMode,
-  performanceSettings,
+  performanceSettings = PERFORMANCE_DEFAULT,
   pillBorder,
   surfaceBorder,
   onToggle,
@@ -779,7 +779,7 @@ const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
 const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
   open,
   darkMode,
-  performanceSettings,
+  performanceSettings = PERFORMANCE_DEFAULT,
   onClose,
   children,
 }, ref) {
@@ -3210,7 +3210,7 @@ export default function MCUViewer() {
         </div>
       </SidebarMenu>
 
-      <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} performanceMode={performanceSettings.reduceMotion} onClose={closeSettings}>
+      <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} performanceSettings={performanceSettings} onClose={closeSettings}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Profile</div>
             <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 6 }}>
