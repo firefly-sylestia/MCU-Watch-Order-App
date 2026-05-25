@@ -1,12 +1,34 @@
 :root {
-  --feature-gap: 0.75rem;
+  --feature-gap: clamp(0.7rem, 1.4vw, 1rem);
   --feature-radius: 18px;
+  --feature-surface-padding: clamp(0.9rem, 1.2vw, 1.1rem);
 }
 .glass-surface {
   border: 1px solid var(--theme-overlay-border);
   background: var(--theme-overlay-surface);
   border-radius: var(--feature-radius);
-  backdrop-filter: blur(12px);
-  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+  backdrop-filter: blur(12px) saturate(120%);
+  box-shadow: 0 8px 24px rgba(2, 8, 23, 0.18);
+  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
 }
-@media (prefers-reduced-motion: reduce) { .glass-surface { transition: none; } }
+
+[data-color-mode="light"] .glass-surface {
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.1);
+  border-color: color-mix(in srgb, var(--theme-overlay-border) 75%, #ffffff);
+}
+
+.ui-interactive-feedback {
+  transition: transform 140ms var(--ease-out), filter 140ms var(--ease-out), box-shadow 160ms var(--ease-out);
+}
+
+.ui-interactive-feedback:hover { filter: brightness(1.03); }
+.ui-interactive-feedback:active { transform: translateY(1px) scale(0.995); }
+.ui-interactive-feedback:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--theme-accent) 68%, transparent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-surface,
+  .ui-interactive-feedback { transition: none; }
+}
