@@ -1887,6 +1887,28 @@ main{--content-max:1560px !important}
 }
 .compact-dropdown-sheet .sopt > div:first-child{font-size:12px}
 .compact-dropdown-sheet .sopt > div:last-child{font-size:10px !important;opacity:.78}
+.centered-open-dropdown{
+  margin-inline:auto;
+}
+.modern-option-card{
+  background:color-mix(in srgb,var(--theme-surface) 76%, var(--theme-bg));
+  border:1px solid color-mix(in srgb,var(--theme-border) 86%, transparent) !important;
+  border-radius:16px !important;
+  min-height:58px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:2px;
+  transition:transform .16s ease, border-color .16s ease, background-color .16s ease;
+}
+.modern-option-card:hover{
+  transform:translateY(-1px);
+  border-color:color-mix(in srgb,var(--theme-accent) 44%, var(--theme-border)) !important;
+}
+.modern-option-card.picked{
+  background:color-mix(in srgb,var(--theme-accent) 14%, var(--theme-surface)) !important;
+  border-color:color-mix(in srgb,var(--theme-accent) 56%, var(--theme-border)) !important;
+}
 [data-color-mode="light"] .modern-control-sheet{
   background:color-mix(in srgb,var(--theme-surface) 98%, #fff) !important;
   box-shadow:0 14px 36px rgba(15,23,42,.16) !important;
