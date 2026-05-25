@@ -2734,3 +2734,50 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 .analytics-metric-meta,.analytics-progress-sub,.detail-export-panel p,textarea{max-width:var(--content-measure);line-height:var(--lh-reading)}
 textarea{font-size:var(--type-body)}
 .detail-export-meta span,.calendar-badge,.calendar-group-header{font-size:var(--type-metadata);letter-spacing:.04em}
+
+/* === Token-driven spacing/typography modernization === */
+:root {
+  --spec-space-xs: var(--ui-space-1);
+  --spec-space-sm: var(--ui-space-2);
+  --spec-space-md: var(--ui-space-3);
+  --spec-space-lg: var(--ui-space-4);
+  --spec-radius-sm: var(--ui-radius-sm);
+  --spec-radius-md: var(--ui-radius-md);
+  --spec-radius-lg: var(--ui-radius-lg);
+  --spec-h-compact: 32px;
+  --spec-h-regular: 38px;
+  --spec-h-large: 44px;
+}
+
+/* list rows */
+.phase-rows-full{padding:var(--spec-space-sm);border-radius:var(--spec-radius-lg)}
+.rrow{gap:var(--spec-space-md);padding:var(--spec-space-md);min-height:96px;border-radius:var(--spec-radius-md)}
+
+/* filter bar and filter controls */
+.filters-open{padding:var(--spec-space-sm);border-radius:var(--spec-radius-lg)}
+.filter-row-actions,.filter-bar{gap:var(--spec-space-sm)}
+.fpill,.phase-chip,.dock-btn{min-height:var(--spec-h-regular);padding-inline:var(--spec-space-md);border-radius:999px;font-size:var(--type-caption);line-height:var(--lh-body)}
+.phase-chip{padding-block:var(--spec-space-xs)!important;min-height:var(--spec-h-large)!important}
+
+/* cards */
+.curvy-panel,.feature-title-card,.header-brand,.dock-status-dropdown{border-radius:var(--spec-radius-lg)}
+.hero-carousel-meta,.dock-status-item,.status-block{border-radius:var(--spec-radius-md)}
+.dock-status-item{min-height:var(--spec-h-regular);padding:var(--spec-space-sm) var(--spec-space-md);font-size:var(--type-caption)}
+
+/* modal + settings panel */
+.settings-menu{padding:var(--spec-space-md)!important;gap:var(--spec-space-sm);border-radius:var(--spec-radius-lg)!important}
+.settings-shell .fpill{min-height:var(--spec-h-large)}
+.sidebar-menu{padding:calc(var(--spec-space-lg) * 3) var(--spec-space-md) var(--spec-space-lg);border-radius:var(--spec-radius-lg)}
+
+/* unified interaction feedback */
+.fpill,.dock-btn,.phase-chip,.wbtn,.dock-status-item,.header-brand,.rrow{transition:background-color 180ms var(--ease-out),border-color 180ms var(--ease-out),box-shadow 200ms var(--ease-out),transform 140ms var(--ease-out),color 180ms var(--ease-out)}
+.fpill:focus-visible,.dock-btn:focus-visible,.phase-chip:focus-visible,.wbtn:focus-visible,.dock-status-item:focus-visible{outline:2px solid color-mix(in srgb,var(--theme-accent) 62%, transparent);outline-offset:2px}
+
+/* typography consistency */
+.rrow .title-btn,.dock-status-head,.settings-menu .sopt{font-size:var(--type-subheading);line-height:var(--lh-heading)}
+.rrow .meta-muted,.dock-status-item,.status-block,.settings-menu .fpill{font-size:var(--type-metadata);line-height:var(--lh-body)}
+
+@media (max-width: 900px){
+  .rrow{min-height:84px;gap:var(--spec-space-sm);padding:var(--spec-space-sm)}
+  .settings-menu{padding:var(--spec-space-sm)!important}
+}
