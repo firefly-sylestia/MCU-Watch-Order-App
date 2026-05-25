@@ -1266,7 +1266,7 @@ export default function MCUViewer() {
 
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !isDesktopViewport || overlayActive || performanceSettings.reduceMotion) return;
+    if (typeof window === 'undefined' || !isDesktopViewport || overlayActive) return;
     const container = mainRef.current;
     const canAnimate = window.matchMedia?.('(prefers-reduced-motion: no-preference)').matches ?? true;
     if (!container || !canAnimate) return;
@@ -1331,7 +1331,7 @@ export default function MCUViewer() {
       state.velocity = 0;
       state.lastTs = 0;
     };
-  }, [isDesktopViewport, overlayActive, performanceSettings.reduceMotion]);
+  }, [isDesktopViewport, overlayActive]);
 
   useEffect(() => {
     const el = mainRef.current;
@@ -1886,7 +1886,7 @@ export default function MCUViewer() {
 
   useEffect(() => {
     if (!previousHeroSrc) return undefined;
-    const timer = window.setTimeout(() => setPreviousHeroSrc(''), performanceSettings.reduceMotion ? 140 : 220);
+    const timer = window.setTimeout(() => setPreviousHeroSrc(''), 220);
     return () => window.clearTimeout(timer);
   }, [previousHeroSrc, darkMode]);
 
@@ -1979,12 +1979,12 @@ export default function MCUViewer() {
       const card = heroActiveCardRef.current;
       if (rail && card) {
         const targetLeft = card.offsetLeft - (rail.clientWidth - card.clientWidth) / 2;
-        rail.scrollTo({ left: Math.max(0, targetLeft), behavior: performanceSettings.reduceMotion ? 'auto' : 'smooth' });
+        rail.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
       }
-      window.setTimeout(() => { heroProgrammaticScrollRef.current = false; heroForceRecenterRef.current = false; }, performanceSettings.reduceMotion ? 120 : 520);
+      window.setTimeout(() => { heroProgrammaticScrollRef.current = false; heroForceRecenterRef.current = false; }, 520);
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [heroIndex, activeHeroSrc, visibleHeroPosters, performanceSettings.reduceMotion]);
+  }, [heroIndex, activeHeroSrc, visibleHeroPosters]);
 
   const goToNextHero = useCallback(() => {
     if (!heroPosters.length) return;
@@ -3125,7 +3125,7 @@ export default function MCUViewer() {
     ? `${Math.max(heroBackdropScale - 16, 112)}% auto`
     : `auto ${Math.max(heroBackdropScale - 8, 96)}%`;
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceSettings.reduceMotion || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
 
 
@@ -3145,7 +3145,7 @@ export default function MCUViewer() {
           />
         )}
         <div className="hero-backdrop-blend" />
-        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '6%' : '3%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '5%' : '2.5%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: performanceSettings.cinematicBackdrop ? (darkMode ? 0.12 : 0.06) : 0, transition: 'opacity 0.95s ease-in-out', animation: performanceSettings.reduceMotion ? 'none' : 'cinematicIn 0.8s ease both' }} />
+        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '6%' : '3%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '5%' : '2.5%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: performanceSettings.cinematicBackdrop ? (darkMode ? 0.12 : 0.06) : 0, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
       </div>
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
@@ -3254,7 +3254,7 @@ export default function MCUViewer() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 6 }}>
                 {[['cinematic','Cinematic'],['balanced','Balanced'],['battery','Battery']].map(([id,label]) => <button key={id} className='fpill' type='button' onClick={() => applyPerformancePreset(id)} style={{ justifyContent: 'center', borderColor: performanceSettings.preset===id ? 'var(--theme-accent)' : 'var(--theme-border)', color: performanceSettings.preset===id ? 'var(--theme-accent)' : 'var(--theme-text)' }}>{label}</button>)}
               </div>
-              {[['reduceMotion','Reduce motion'],['glassEffects','Glass blur effects'],['cinematicBackdrop','Cinematic backdrop'],['trailerLandscapeEnhancements','Landscape trailer enhancements']].map(([key,label]) => (
+              {[['glassEffects','Glass blur effects'],['cinematicBackdrop','Cinematic backdrop'],['trailerLandscapeEnhancements','Landscape trailer enhancements']].map(([key,label]) => (
                 <button key={key} className='fpill settings-toggle-pill' type='button' onClick={() => updatePerformanceSetting(key)} style={{ justifyContent: 'space-between', borderColor: performanceSettings[key] ? 'var(--theme-accent)' : 'var(--theme-border)' }}>
                   <span>{label}</span><strong>{performanceSettings[key] ? 'On' : 'Off'}</strong>
                 </button>
@@ -3623,7 +3623,7 @@ export default function MCUViewer() {
         </button>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} className={`app-scroll-shell${performanceSettings.reduceMotion ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
+      <main ref={mainRef} className='app-scroll-shell' style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
