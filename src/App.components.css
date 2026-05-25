@@ -2490,10 +2490,10 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   position:fixed;
   left:50%;
   top:50%;
-  width:min(100dvh,1080px);
-  max-width:min(100dvh,1080px);
-  max-height:min(100dvw,1920px);
-  border-radius:16px;
+  width:min(100dvh,1320px);
+  max-width:min(100dvh,1320px);
+  max-height:min(100dvw,2200px);
+  border-radius:18px;
   transform:translate(-50%,-50%) rotate(90deg);
   transform-origin:center center;
   margin:0;
@@ -2509,10 +2509,10 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   border-radius:14px;border:1px solid color-mix(in srgb,var(--theme-border) 88%, transparent);
   background:color-mix(in srgb,var(--theme-bg) 70%, #000);
 }
-.trailer-frame.is-landscape{padding-top:min(46%,86vh)}
+.trailer-frame.is-landscape{padding-top:min(52%,92vh)}
 .trailer-shell.is-expanded .trailer-frame{padding-top:min(56.25%,76vh)}
-.trailer-shell.is-expanded .trailer-frame.is-landscape{padding-top:min(42%,96vh)}
-.trailer-landscape-tip{position:absolute;top:10px;left:10px;z-index:2;padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--theme-accent) 22%, var(--theme-surface));border:1px solid color-mix(in srgb,var(--theme-accent) 52%, var(--theme-border));font:700 10px/1 var(--font-marvel-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--theme-text)}
+.trailer-shell.is-expanded .trailer-frame.is-landscape{padding-top:min(48%,100vh)}
+.trailer-landscape-tip{position:absolute;top:10px;left:10px;z-index:2;padding:6px 12px;border-radius:999px;background:color-mix(in srgb,var(--theme-accent) 20%, var(--theme-surface));border:1px solid color-mix(in srgb,var(--theme-accent) 48%, var(--theme-border));font:700 10px/1 var(--font-marvel-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--theme-text);box-shadow:0 6px 14px rgba(2,8,23,.24)}
 .trailer-expanded-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;flex-wrap:wrap}
 .trailer-variant-select{
   margin-top:10px;border:1px solid color-mix(in srgb,var(--theme-border) 80%, transparent);
@@ -2522,8 +2522,8 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 [data-color-mode="light"] .trailer-backdrop.is-landscape{background:radial-gradient(circle at 20% 12%, color-mix(in srgb,var(--theme-accent) 16%, #fff), transparent 44%), rgba(15,23,42,.45)}
 @media (max-width:900px){
   .trailer-backdrop.is-landscape .trailer-shell{
-    width:min(98dvh,760px);
-    max-width:min(98dvh,760px);
+    width:min(98dvh,980px);
+    max-width:min(98dvh,980px);
     padding:10px;
   }
   .trailer-backdrop.is-landscape .trailer-frame{
