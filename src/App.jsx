@@ -191,7 +191,7 @@ const UI_STATE_DEFAULTS = {
   densityMode: 'comfortable',
   timelineMode: 'release',
   autoHideStatuses: false,
-  performanceMode: true,
+  performanceProfile: 'balanced',
   desktopTextScale: 1,
   textScaleEnabled: true,
   scrollTop: 0,
@@ -232,7 +232,7 @@ const readSavedUiState = () => {
       densityMode: VALID_DENSITY_MODES.has(saved.densityMode) ? saved.densityMode : UI_STATE_DEFAULTS.densityMode,
       timelineMode: VALID_TIMELINE_MODES.has(saved.timelineMode) ? saved.timelineMode : UI_STATE_DEFAULTS.timelineMode,
       autoHideStatuses: typeof saved.autoHideStatuses === 'boolean' ? saved.autoHideStatuses : UI_STATE_DEFAULTS.autoHideStatuses,
-      performanceMode: typeof saved.performanceMode === 'boolean' ? saved.performanceMode : UI_STATE_DEFAULTS.performanceMode,
+      performanceProfile: ['cinematic','balanced','battery'].includes(saved.performanceProfile) ? saved.performanceProfile : (typeof saved.performanceMode === 'boolean' ? (saved.performanceMode ? 'battery' : 'cinematic') : UI_STATE_DEFAULTS.performanceProfile),
       desktopTextScale: VALID_DESKTOP_TEXT_SCALES.has(Number(saved.desktopTextScale)) ? Number(saved.desktopTextScale) : UI_STATE_DEFAULTS.desktopTextScale,
       textScaleEnabled: typeof saved.textScaleEnabled === 'boolean' ? saved.textScaleEnabled : UI_STATE_DEFAULTS.textScaleEnabled,
       scrollTop: Number.isFinite(Number(saved.scrollTop)) ? Math.max(0, Number(saved.scrollTop)) : UI_STATE_DEFAULTS.scrollTop,
@@ -977,7 +977,9 @@ export default function MCUViewer() {
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
-  const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
+  const [performanceProfile, setPerformanceProfile] = useState(initialUiState.performanceProfile);
+  const performanceMode = performanceProfile !== 'cinematic';
+  const motionPreference = performanceProfile === 'cinematic' ? 'full' : performanceProfile === 'balanced' ? 'reduced' : 'minimal';
   const [scrollTuning] = useState({ desktopMultiplier: 5, desktopDeltaCap: 7, mobileMultiplier: 5, mobileDeltaCap: 7 });
   const [genreFilter] = useState('all');
   const [myLikes,        setMyLikes]        = useState({});
@@ -1669,12 +1671,12 @@ export default function MCUViewer() {
       densityMode,
       timelineMode,
       autoHideStatuses,
-      performanceMode,
+      performanceProfile,
       desktopTextScale,
       textScaleEnabled,
       scrollTop,
     }));
-  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
+  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceProfile, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
   const totalWatched = useMemo(() => activeItems.filter(i => i.status === 'watched').length, [activeItems]);
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
@@ -3222,11 +3224,19 @@ export default function MCUViewer() {
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><EyeOff size={14} /> Spoiler Safe</span>
               <button className='fpill settings-toggle-pill' type='button' onClick={() => setSpoilerSafeMode(v => !v)} style={{ minWidth: 72, justifyContent: 'center', borderColor: spoilerSafeMode ? 'var(--theme-accent)' : 'var(--theme-border)', background: spoilerSafeMode ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}>{spoilerSafeMode ? 'On' : 'Off'}</button>
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Zap size={14} /> Performance Mode</span>
-              <button className='fpill settings-toggle-pill' type='button' onClick={() => setPerformanceMode(v => !v)} style={{ minWidth: 72, justifyContent: 'center', borderColor: performanceMode ? 'var(--theme-accent)' : 'var(--theme-border)', background: performanceMode ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}>{performanceMode ? 'On' : 'Off'}</button>
-            </label>
-            <div style={{ fontSize: 11, color: T.textMuted, lineHeight: 1.35, marginTop: -4 }}>Leave off for full UI motion; turn on only if your device needs reduced effects.</div>
+            <div style={{ display: 'grid', gap: 10, padding: '12px', borderRadius: 14, border: `1px solid ${T.surfaceBorder}`, background: 'color-mix(in srgb, var(--theme-surface) 92%, transparent)', boxShadow: darkMode ? '0 10px 24px rgba(0,0,0,.2)' : '0 10px 24px rgba(26,41,65,.08)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, color: T.text, fontWeight: 600 }}><Zap size={15} /> Experience Mode</span>
+                <span className='fpill' style={{ padding: '4px 10px', fontSize: 10, letterSpacing: 0.5, borderColor: 'var(--theme-border)', background: 'var(--theme-surface-elevated)' }}>{motionPreference}</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 8 }}>
+                {[{ id: 'cinematic', title: 'Cinematic', note: 'Full polish & motion' }, { id: 'balanced', title: 'Balanced', note: 'Smoother with restraint' }, { id: 'battery', title: 'Battery', note: 'Lowest visual load' }].map(mode => {
+                  const active = performanceProfile === mode.id;
+                  return <button key={mode.id} className='fpill' type='button' onClick={() => setPerformanceProfile(mode.id)} style={{ height: 68, alignItems: 'flex-start', justifyContent: 'center', flexDirection: 'column', gap: 4, padding: '10px 11px', borderColor: active ? 'var(--theme-accent)' : 'var(--theme-border)', background: active ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}><span style={{ fontSize: 12, fontWeight: 700, color: active ? 'var(--theme-accent)' : 'var(--theme-text)' }}>{mode.title}</span><span style={{ fontSize: 10, color: T.textMuted, lineHeight: 1.2, textAlign: 'left' }}>{mode.note}</span></button>;
+                })}
+              </div>
+              <div style={{ fontSize: 11, color: T.textMuted, lineHeight: 1.4 }}>Cinematic keeps modern transitions and blur. Balanced trims heavy effects. Battery minimizes animation and translucent layers for sustained responsiveness.</div>
+            </div>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Desktop Text Scaling</div>
             <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
