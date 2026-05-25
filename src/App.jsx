@@ -14,6 +14,7 @@ import { useOverlayNavigation } from './hooks/useOverlayNavigation';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
 import { THEME_CHOICES, getActiveThemeVars } from './constants/themeSettings';
+import { buildSemanticThemeVars, UI_PARITY_TOKENS } from './constants/ui';
 import './App.layout.css';
 import './App.components.css';
 import './App.motion.css';
@@ -2990,29 +2991,30 @@ export default function MCUViewer() {
   // ─── Per-theme accent + distinctive surface tints ─────────────────────────
   const activeThemeVars = getActiveThemeVars(themeMode, darkMode);
 
+  const semanticThemeVars = buildSemanticThemeVars(darkMode);
+
   const cssThemeVars = {
-    '--theme-bg': darkMode ? '#06060f' : '#e2dbcf',
+    ...semanticThemeVars,
     '--theme-border': darkMode ? '#1b1b33' : '#c8beaf',
-    '--theme-text': darkMode ? '#d8e3f5' : '#1a2030',
-    '--theme-text-muted': darkMode ? '#a9b6cb' : '#4f5c70',
     '--theme-text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
     '--font-marvel-display': 'var(--font-display)',
     '--font-marvel-ui': 'var(--font-ui)',
     '--font-marvel-body': 'var(--font-body)',
-    '--theme-success': darkMode
-      ? 'color-mix(in srgb, var(--theme-accent) 82%, #dbeafe)'
-      : 'color-mix(in srgb, var(--theme-accent) 74%, #1e3a8a)',
+    '--ui-space-1': UI_PARITY_TOKENS.spacing.xs,
+    '--ui-space-2': UI_PARITY_TOKENS.spacing.sm,
+    '--ui-space-3': UI_PARITY_TOKENS.spacing.md,
+    '--ui-space-4': UI_PARITY_TOKENS.spacing.lg,
+    '--ui-radius-sm': UI_PARITY_TOKENS.radius.sm,
+    '--ui-radius-md': UI_PARITY_TOKENS.radius.md,
+    '--ui-radius-lg': UI_PARITY_TOKENS.radius.lg,
+    '--motion-fast': UI_PARITY_TOKENS.motion.fast,
+    '--motion-base': UI_PARITY_TOKENS.motion.base,
+    '--motion-slow': UI_PARITY_TOKENS.motion.slow,
     '--theme-success-soft': darkMode
       ? 'color-mix(in srgb, var(--theme-accent) 16%, transparent)'
       : 'color-mix(in srgb, var(--theme-accent) 12%, #f8f9fb)',
-    '--theme-warning': 'var(--theme-accent-alt)',
     '--theme-warning-soft': darkMode ? 'rgba(232,184,75,0.16)' : 'rgba(232,184,75,0.12)',
-    '--theme-danger': '#d16a6a',
     '--theme-danger-soft': darkMode ? 'rgba(209,106,106,0.16)' : 'rgba(209,106,106,0.12)',
-    '--theme-text-primary': darkMode ? '#f4f8ff' : '#121a2a',
-    '--text-primary': darkMode ? '#f4f8ff' : '#121a2a',
-    '--text-secondary': darkMode ? '#d6deed' : '#243248',
-    '--text-muted': darkMode ? '#a9b6cb' : '#4f5c70',
     '--text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
     '--theme-text-secondary': darkMode ? `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 40%, #e9f1ff)` : `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 52%, #1f2f46)`,
     '--theme-overlay-surface': darkMode
