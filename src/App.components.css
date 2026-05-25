@@ -1891,14 +1891,14 @@ main{--content-max:1560px !important}
   margin-inline:auto;
 }
 .modern-option-card{
-  background:color-mix(in srgb,var(--theme-surface) 76%, var(--theme-bg));
+  background:color-mix(in srgb,var(--theme-surface) 84%, var(--theme-bg));
   border:1px solid color-mix(in srgb,var(--theme-border) 86%, transparent) !important;
-  border-radius:16px !important;
-  min-height:58px;
+  border-radius:12px !important;
+  min-height:42px;
   display:flex;
   flex-direction:column;
   justify-content:center;
-  gap:2px;
+  gap:0;
   transition:transform .16s ease, border-color .16s ease, background-color .16s ease;
 }
 .modern-option-card:hover{
@@ -1908,6 +1908,19 @@ main{--content-max:1560px !important}
 .modern-option-card.picked{
   background:color-mix(in srgb,var(--theme-accent) 14%, var(--theme-surface)) !important;
   border-color:color-mix(in srgb,var(--theme-accent) 56%, var(--theme-border)) !important;
+}
+@media (max-width: 767px){
+  .mobile-safe-dropdown{
+    position:fixed !important;
+    left:14px !important;
+    right:14px !important;
+    transform:none !important;
+    width:auto !important;
+    max-width:none !important;
+    top:auto !important;
+    max-height:min(44vh, 260px) !important;
+    z-index:1600 !important;
+  }
 }
 [data-color-mode="light"] .modern-control-sheet{
   background:color-mix(in srgb,var(--theme-surface) 98%, #fff) !important;
