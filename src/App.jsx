@@ -2178,6 +2178,45 @@ export default function MCUViewer() {
   const estRuntimeHours = Math.round(((filmCount * 2.3) + (seriesCount * 6.0)) * 10) / 10;
   const remainingHours = Math.max(0, Math.round((estRuntimeHours * (1 - pct / 100)) * 10) / 10);
 
+
+
+  const activitySections = useMemo(() => {
+    const favorites = activeItems.filter(item => Boolean(myLikes[item.id]));
+    const rewatch = activeItems.filter(item => Number(rewatchCount[item.id] || 0) > 0);
+    const reviewed = activeItems.filter(item => String(reviews[item.id] || '').trim().length > 0);
+    const bookmarked = activeItems.filter(item => Boolean(bookmarks[item.id]));
+    return { favorites, rewatch, reviewed, bookmarked };
+  }, [activeItems, myLikes, rewatchCount, reviews, bookmarks]);
+
+  const activityStats = useMemo(() => {
+    const favoritesCount = activitySections.favorites.length;
+    const rewatchTotal = activitySections.rewatch.reduce((sum, item) => sum + Number(rewatchCount[item.id] || 0), 0);
+    const reviewedCount = activitySections.reviewed.length;
+    const bookmarkCount = activitySections.bookmarked.length;
+    const momentum = favoritesCount + reviewedCount + bookmarkCount + rewatchTotal;
+    return { favoritesCount, rewatchTotal, reviewedCount, bookmarkCount, momentum };
+  }, [activitySections, rewatchCount]);
+
+  const jumpToActivity = useCallback((sectionKey) => {
+    const filtersBySection = {
+      favorites: () => ({ search: '', statusFilter: null, watchedOnly: false, autoHideStatuses: false }),
+      rewatch: () => ({ search: '', statusFilter: null, watchedOnly: false, autoHideStatuses: false }),
+      reviewed: () => ({ search: '', statusFilter: null, watchedOnly: false, autoHideStatuses: false }),
+      bookmarked: () => ({ search: '', statusFilter: null, watchedOnly: false, autoHideStatuses: false }),
+    };
+    const apply = filtersBySection[sectionKey];
+    if (apply) {
+      const nextFilters = apply();
+      setSearch(nextFilters.search);
+      setStatusFilter(nextFilters.statusFilter);
+      setWatchedOnly(nextFilters.watchedOnly);
+      setAutoHideStatuses(nextFilters.autoHideStatuses);
+    }
+
+    const target = activitySections[sectionKey]?.[0];
+    if (target) openDetail(target);
+    else window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activitySections, openDetail]);
   const getReleaseCertainty = useCallback((entry) => {
     if (entry.hasRealDate) return 'Exact Date';
     if (entry.releaseStatus === 'TBA') return 'TBA';
