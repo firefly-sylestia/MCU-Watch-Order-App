@@ -1651,6 +1651,8 @@ export default function MCUViewer() {
     });
   };
 
+  const combinedItems = useMemo(() => [...items, ...customEntries], [items, customEntries]);
+
   const { filtered, grouped, phaseKeys } = useMemo(() => {
     const f = combinedItems.filter(i => {
       if (listMode === 'core' && !coreIds.has(i.id)) return false;
@@ -1700,7 +1702,6 @@ export default function MCUViewer() {
       connectsTo: Array.isArray(base.connectsTo) ? base.connectsTo : [],
     };
   }, []);
-  const combinedItems = useMemo(() => [...items, ...customEntries], [items, customEntries]);
   const activeItems = useMemo(
     () => listMode === 'core' ? combinedItems.filter(i => coreIds.has(i.id) || String(i.id).startsWith('custom-')) : combinedItems,
     [combinedItems, listMode, coreIds]
