@@ -2641,6 +2641,50 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   -webkit-backdrop-filter: none !important;
 }
 
+/* Unified interaction state system (modernized) */
+:root{
+  --ctl-hit-min:40px;
+  --ctl-focus-ring:0 0 0 2px color-mix(in srgb,var(--theme-surface) 65%, transparent),0 0 0 4px color-mix(in srgb,var(--theme-accent) 68%, transparent);
+  --ctl-hover-bg:color-mix(in srgb,var(--theme-surface-hover) 74%, var(--theme-surface));
+  --ctl-active-bg:color-mix(in srgb,var(--theme-accent) 18%, var(--theme-surface));
+  --ctl-selected-bg:color-mix(in srgb,var(--theme-accent) 20%, var(--theme-surface));
+  --ctl-disabled-opacity:.48;
+}
+.fpill,.wbtn,.status-pill,.dock-btn,.filters-trigger,.dock-status-item,.sopt,.bottom-action-bar,.theme-btn{
+  min-height:var(--ctl-hit-min);
+  min-width:var(--ctl-hit-min);
+  position:relative;
+}
+.fpill:hover,.wbtn:hover,.status-pill:hover,.dock-btn:hover,.filters-trigger:hover,.dock-status-item:hover,.sopt:hover,.bottom-action-bar:hover,.theme-btn:hover{
+  background:var(--ctl-hover-bg);
+}
+.fpill:focus-visible,.wbtn:focus-visible,.status-pill:focus-visible,.dock-btn:focus-visible,.filters-trigger:focus-visible,.dock-status-item:focus-visible,.sopt:focus-visible,.bottom-action-bar:focus-visible,.theme-btn:focus-visible{
+  outline:none;
+  box-shadow:var(--ctl-focus-ring) !important;
+  z-index:2;
+}
+.fpill:active,.wbtn:active,.status-pill:active,.dock-btn:active,.filters-trigger:active,.dock-status-item:active,.sopt:active,.bottom-action-bar:active,.theme-btn:active{
+  background:var(--ctl-active-bg);
+  transform:translateY(1px) scale(.985);
+}
+.fpill[aria-pressed="true"],.wbtn[aria-pressed="true"],.status-pill[aria-pressed="true"],.dock-btn[aria-pressed="true"],.dock-status-item.active,.sopt.picked{
+  background:var(--ctl-selected-bg);
+  border-color:color-mix(in srgb,var(--theme-accent) 58%, var(--theme-border)) !important;
+}
+.fpill:disabled,.wbtn:disabled,.status-pill:disabled,.dock-btn:disabled,.filters-trigger:disabled,.dock-status-item:disabled,.sopt:disabled,.bottom-action-bar:disabled,.theme-btn:disabled{
+  opacity:var(--ctl-disabled-opacity);
+  pointer-events:none;
+}
+
+/* Tile action hit-area increase + spacing consistency */
+.rrow{padding-block:10px !important}
+.title-btn{min-height:112px;padding:10px 8px !important}
+.row-actions{gap:8px !important}
+.row-actions .wbtn,.row-actions .wbtn.status-pill,.row-actions .wbtn.status-toggle,.row-actions .wbtn.bookmark-marvel-btn{
+  min-width:40px !important;
+  min-height:40px !important;
+}
+
 /* elevation usage */
 .header-brand,
 .analytics-shell,

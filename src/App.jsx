@@ -72,6 +72,7 @@ const UserCircle = p => <Icon {...p}><circle cx="12" cy="8" r="4"/><path d="M4 2
 const Menu = p => <Icon {...p}><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></Icon>;
 const SwitchIcon = p => <Icon {...p}><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 8a9 9 0 0 0-15-3"/><path d="M3 16a9 9 0 0 0 15 3"/></Icon>;
 const X         = p => <Icon {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></Icon>;
+const Sparkles  = p => <Icon {...p}><path d="M12 2l1.8 4.2L18 8l-4.2 1.8L12 14l-1.8-4.2L6 8l4.2-1.8L12 2z"/><path d="M5 14l.9 2.1L8 17l-2.1.9L5 20l-.9-2.1L2 17l2.1-.9L5 14z"/><path d="M19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9L19 14z"/></Icon>;
 
 
 const TYPE_META = {
@@ -90,6 +91,22 @@ const STATUS_META = {
   dropped:        { label: 'Dropped',        color: '#ef4444', Icon: XCircle,    bg: 'rgba(239,68,68,0.12)'  },
   unwatched:      { label: 'Unwatched',      color: 'var(--theme-text-secondary)', Icon: EyeOff, bg: 'transparent' },
 };
+const TIMELINE_MODE_META = {
+  release: { Icon: Layers, shortLabel: 'Release Order' },
+  chronological: { Icon: ArrowUpDown, shortLabel: 'Chronological' },
+  multiverse: { Icon: Sparkles, shortLabel: 'Multiverse Saga' },
+  loki: { Icon: Clock, shortLabel: 'Loki POV' },
+  wanda: { Icon: Star, shortLabel: 'Wanda POV' },
+  portal: { Icon: Zap, shortLabel: 'Portal Arcs' },
+};
+const DOCK_STATUS_OPTIONS = [
+  { key: 'all', label: 'All Statuses', Icon: Layers },
+  { key: 'watched', label: 'Watched', Icon: Check },
+  { key: 'watching', label: 'Watching', Icon: PlayCircle },
+  { key: 'on-hold', label: 'On Hold', Icon: PauseCircle },
+  { key: 'dropped', label: 'Dropped', Icon: XCircle },
+  { key: 'plan-to-watch', label: 'Plan to Watch', Icon: Clock },
+];
 
 const SORT_LABELS = { order: 'Chronological', year: 'By Year', title: 'Alphabetical', runtime: 'Runtime', watched: 'Recently Watched', status: 'By Status' };
 const HIDDEN_FILTER_STATUSES = new Set(['watched', 'dropped']);
@@ -3415,16 +3432,33 @@ export default function MCUViewer() {
               </div>}
             </div>
             <div ref={timelineRef} style={{ position: 'relative' }}>
+              {(() => {
+                const activeMode = TIMELINE_MODES.find(m => m.id === timelineMode);
+                const modeMeta = TIMELINE_MODE_META[timelineMode] || TIMELINE_MODE_META.release;
+                const ActiveTimelineIcon = modeMeta.Icon;
+                return (
               <button className="filters-trigger" onClick={() => setTimelineOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid color-mix(in srgb, var(--theme-accent) 42%, var(--theme-border))`, background: 'linear-gradient(135deg, color-mix(in srgb, #ed1d24 22%, var(--theme-surface)) 0%, color-mix(in srgb, #0063e5 18%, var(--theme-surface)) 100%)', color: 'var(--theme-text)', cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.2, boxShadow: '0 10px 20px rgba(0,0,0,.18)' }}>
-                <Layers size={13} /> {TIMELINE_MODES.find(m => m.id === timelineMode)?.label || 'Timeline'} <ChevDown size={11} style={{ transform: timelineOpen ? 'rotate(180deg)' : 'none' }}/>
+                <ActiveTimelineIcon size={13} />
+                {activeMode?.label || 'Timeline'}
+                <ChevDown size={11} style={{ transform: timelineOpen ? 'rotate(180deg)' : 'none' }}/>
               </button>
+                );
+              })()}
               {timelineOpen && (
                 <div className="dropdown-pop filter-dropdown redesigned-sort-menu" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1450, minWidth: 300 }}>
-                  {TIMELINE_MODES.map(mode => (
+                  {TIMELINE_MODES.map(mode => {
+                    const timelineMeta = TIMELINE_MODE_META[mode.id] || TIMELINE_MODE_META.release;
+                    const ModeIcon = timelineMeta.Icon;
+                    return (
                     <button key={mode.id} className={`sopt ${timelineMode === mode.id ? 'picked' : ''}`} style={{ width: '100%', textAlign: 'left', marginBottom: 4, borderRadius: 10, border: timelineMode === mode.id ? '1px solid color-mix(in srgb, var(--theme-accent) 60%, transparent)' : '1px solid transparent' }} onClick={() => { setTimelineMode(mode.id); setTimelineOpen(false); }}>
-                      <div style={{ fontWeight: 700 }}>{mode.label}</div><div style={{ fontSize: 11, opacity: 0.8 }}>{mode.description}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700 }}>
+                        <ModeIcon size={13} />
+                        <span>{mode.label}</span>
+                      </div>
+                      <div style={{ fontSize: 11, opacity: 0.8, paddingLeft: 21 }}>{timelineMeta.shortLabel} · {mode.description}</div>
                     </button>
-                  ))}
+                  );
+                  })}
                 </div>
               )}
             </div>
@@ -3559,19 +3593,23 @@ export default function MCUViewer() {
             <div className="dropdown-pop-up dock-status-dropdown" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, minWidth: 220, zIndex: 1400, color: 'var(--theme-text)' }}>
               <div className="dock-status-head">Quick status filter</div>
               <div className="dock-status-grid">
-                {[
-                  { key: 'all', label: 'All Statuses', Icon: Layers, active: !statusFilter && !watchedOnly, onClick: () => { setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setDockStatusOpen(false); } },
-                  { key: 'watched', label: 'Watched', Icon: Check, active: watchedOnly, onClick: () => { setWatchedOnly(true); setStatusFilter(null); setAutoHideStatuses(false); setDockStatusOpen(false); } },
-                  { key: 'watching', label: 'Watching', Icon: PlayCircle, active: statusFilter === 'watching', onClick: () => { setStatusFilter('watching'); setWatchedOnly(false); setDockStatusOpen(false); } },
-                  { key: 'on-hold', label: 'On Hold', Icon: PauseCircle, active: statusFilter === 'on-hold', onClick: () => { setStatusFilter('on-hold'); setWatchedOnly(false); setDockStatusOpen(false); } },
-                  { key: 'dropped', label: 'Dropped', Icon: XCircle, active: statusFilter === 'dropped', onClick: () => { setStatusFilter('dropped'); setWatchedOnly(false); setDockStatusOpen(false); } },
-                  { key: 'plan-to-watch', label: 'Plan to Watch', Icon: Clock, active: statusFilter === 'plan-to-watch', onClick: () => { setStatusFilter('plan-to-watch'); setWatchedOnly(false); setDockStatusOpen(false); } },
-                ].map(opt => (
-                  <button key={opt.key} type="button" className={`dock-status-item ${opt.active ? 'active' : ''}`} onClick={opt.onClick} aria-pressed={opt.active}>
+                {DOCK_STATUS_OPTIONS.map((opt) => {
+                  const active = (opt.key === 'all' && !statusFilter && !watchedOnly)
+                    || (opt.key === 'watched' && watchedOnly)
+                    || (opt.key !== 'all' && opt.key !== 'watched' && statusFilter === opt.key);
+                  const onClick = () => {
+                    if (opt.key === 'all') { setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); }
+                    else if (opt.key === 'watched') { setWatchedOnly(true); setStatusFilter(null); setAutoHideStatuses(false); }
+                    else { setStatusFilter(opt.key); setWatchedOnly(false); }
+                    setDockStatusOpen(false);
+                  };
+                  return (
+                  <button key={opt.key} type="button" className={`dock-status-item ${active ? 'active' : ''}`} onClick={onClick} aria-pressed={active} aria-label={`${opt.label} status filter`}>
                     <opt.Icon size={14} />
                     <span>{opt.label}</span>
                   </button>
-                ))}
+                );
+                })}
               </div>
             </div>
           )}
