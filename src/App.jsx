@@ -639,6 +639,8 @@ const areTitleRowPropsEqual = (prev, next) => (
   && prev.isSelected === next.isSelected
   && prev.statusLabelOverride === next.statusLabelOverride
   && prev.isDesktopViewport === next.isDesktopViewport
+  && prev.director === next.director
+  && prev.userNote === next.userNote
 );
 
 const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
@@ -668,14 +670,19 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   onToggleSelected,
   statusLabelOverride = null,
   isDesktopViewport = false,
+  director = '',
+  userNote = '',
 }) {
   const StatusIcon = statusMeta.Icon;
   const TypeIcon = typeMeta.Icon;
   const RowStatusIcon = statusMeta.Icon;
   const hideWatchToggle = releaseStatus === 'upcoming';
+  const timelinePosition = `Phase ${item.phase} • #${idx + 1}`;
+  const progressCue = item.status === 'watching' ? 'In Progress' : item.status === 'plan-to-watch' ? 'Queued' : item.status === 'watched' ? 'Completed' : item.status === 'on-hold' ? 'On Hold' : item.status === 'dropped' ? 'Dropped' : 'Not Started';
+  const metadataSummary = [director ? 'Director' : null, genres?.length ? 'Tags' : null, userNote ? 'Note' : null].filter(Boolean).join(' • ') || 'No metadata';
   return (
     <div>
-      <div className={`rrow type-${item.type} row-status-${item.status} ${isExpanded ? 'curvy-selected' : ''}`} style={{ opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow, ...(isWatched ? { background: 'color-mix(in srgb, var(--theme-watched-bg) 62%, transparent)' } : {}) }}>
+      <div className={`rrow type-${item.type} row-status-${item.status} ${isExpanded ? 'curvy-selected' : ''}`} style={{ opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow }}>
         <div className={`row-index ${isWatched ? 'is-watched' : ''}`}>
           {bulkSelectMode ? (
             <input
@@ -696,13 +703,20 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             <ChevRight size={10} className="title-chevron" />
           </div>
           <div className="title-row-mid release-meta-grid">
-            {item.episodes && <span className="meta-chip meta-chip-xs truncate-single-line">{item.episodes} EP</span>}
             <span className="meta-chip meta-chip-type truncate-single-line" style={{ color: typeMeta.color }}><TypeIcon size={8} />{typeMeta.label}</span>
-            <span className="meta-chip meta-chip-sm truncate-single-line">{item.year || releaseLabel}</span>
-            <span className="meta-chip meta-chip-release meta-chip-xxs truncate-single-line" style={{ color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
-            {!item.essential && <span className="meta-chip meta-chip-xs truncate-single-line">OPT</span>}
+            <span className="meta-chip meta-chip-sm truncate-single-line">{timelinePosition}</span>
+            <span className="meta-chip meta-chip-release meta-chip-xxs truncate-single-line" style={{ color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{progressCue}</span>
+            {item.episodes && <span className="meta-chip meta-chip-xs truncate-single-line">{item.episodes} EP</span>}
           </div>
-          <div className="meta-muted line-clamp-2 overflow-wrap-anywhere title-subline" style={TITLE_ROW_STATIC.genreMeta}>GENRES: {genres.join(' • ').toUpperCase()}</div>
+          <details className="row-metadata">
+            <summary className="row-metadata__summary">{metadataSummary}</summary>
+            <div className="row-metadata__content">
+              {director ? <p><strong>Director:</strong> {director}</p> : null}
+              {genres?.length ? <p><strong>Tags:</strong> {genres.join(', ')}</p> : null}
+              {userNote ? <p><strong>Notes:</strong> {userNote}</p> : <p><strong>Notes:</strong> None</p>}
+              <p><strong>Release:</strong> {item.year || releaseLabel} · {releaseStatusText}</p>
+            </div>
+          </details>
         </button>
 
         <div className={`row-actions ${isDesktopViewport ? 'is-desktop' : ''}`}>
@@ -3714,6 +3728,8 @@ export default function MCUViewer() {
                         isSelected={selectedIds.has(item.id)}
                         onToggleSelected={toggleSelected}
                         isDesktopViewport={isDesktopViewport}
+                        director={metaCache[item.id]?.director || DIRECTOR_DATA[item.title] || ''}
+                        userNote={reviews[item.id] || ''}
                       />
                     );
                   }}/>
