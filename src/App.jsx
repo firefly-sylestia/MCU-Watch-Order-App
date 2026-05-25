@@ -662,6 +662,9 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   onOpenDetail,
   onSetStatus,
   onToggleBookmark,
+  onToggleLike,
+  onAddRewatch,
+  onAddReview,
   onOpenStatus,
   bulkSelectMode = false,
   isSelected = false,
@@ -721,6 +724,9 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             <ChevDown size={10} className={`row-status-chevron ${statusDropdown === item.id ? 'is-open' : ''}`} />
           </button>
           <button className={`wbtn bookmark-marvel-btn ${isDesktopViewport ? 'is-desktop' : ''}`} aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} data-bookmarked={isBookmarked}><Bookmark size={11} /></button>
+          <button className="wbtn" title="Favorite" aria-label={`Favorite ${item.title}`} onClick={() => onToggleLike(item.id)} style={{ borderColor: 'var(--theme-border)', color: 'var(--theme-accent)' }}><Heart size={11} /></button>
+          <button className="wbtn" title="Add to rewatch queue" aria-label={`Add ${item.title} to rewatch queue`} onClick={() => onAddRewatch(item.id)} style={{ borderColor: 'var(--theme-border)', color: 'var(--theme-warning)' }}><Clock size={11} /></button>
+          <button className="wbtn" title="Add quick review note" aria-label={`Add review note for ${item.title}`} onClick={() => onAddReview(item.id)} style={{ borderColor: 'var(--theme-border)', color: 'var(--theme-accent-alt)' }}><RatingGem size={11} /></button>
           {!hideWatchToggle && (
             <button
               aria-label={isWatched ? `Mark ${item.title} as unwatched` : `Mark ${item.title} as watched`}
@@ -3141,6 +3147,14 @@ export default function MCUViewer() {
                 <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Quick Phases</div>
         <button className="fpill marvel-btn" onClick={openAnalyticsPanel} style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}>Analytics</button>
+        <div style={{ marginTop: 10, display: 'grid', gap: 6 }}>
+          {[
+            { key: 'favorites', label: `Favorites (${activityStats.favoritesCount})` },
+            { key: 'rewatch', label: `Rewatch Queue (${activityStats.rewatchTotal})` },
+            { key: 'reviewed', label: `Reviewed (${activityStats.reviewedCount})` },
+            { key: 'bookmarked', label: `Bookmarked (${activityStats.bookmarkCount})` },
+          ].map(link => <button key={link.key} className="fpill" onClick={() => { jumpToActivity(link.key); setSidebarOpen(false); }} style={{ justifyContent: 'space-between' }}><span>{link.label}</span><ChevRight size={12} /></button>)}
+        </div>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Viewing List</div>
         <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
           {LIST_MODES.map(mode => {
@@ -3593,6 +3607,26 @@ export default function MCUViewer() {
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
+          <section className="curvy-panel motion-section motion-pop" style={{ border: `1px solid ${T.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 18, background: 'color-mix(in srgb, var(--theme-surface) 88%, transparent)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ fontSize: 11, letterSpacing: 1.8, color: T.textMuted, textTransform: 'uppercase' }}>My Activity</div>
+                <h3 style={{ margin: '4px 0 0', fontSize: 22 }}>Intentional progress</h3>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 6, minWidth: 220 }}>
+                <div className="meta-chip">🔥 {watchStreak} day streak</div><div className="meta-chip">⭐ {activityStats.momentum} momentum</div><div className="meta-chip">📝 {activityStats.reviewedCount} reviews</div>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 10, marginTop: 12 }}>
+              {[
+                { key: 'favorites', icon: '❤️', label: 'Favorites', items: activitySections.favorites },
+                { key: 'rewatch', icon: '🔁', label: 'Rewatch Queue', items: activitySections.rewatch },
+                { key: 'reviewed', icon: '✍️', label: 'Reviewed', items: activitySections.reviewed },
+                { key: 'bookmarked', icon: '🔖', label: 'Bookmarked', items: activitySections.bookmarked },
+              ].map(section => <button key={section.key} onClick={() => jumpToActivity(section.key)} style={{ textAlign: 'left', border: `1px solid ${T.surfaceBorder}`, borderRadius: 12, background: 'var(--theme-surface)', padding: 12, color: 'var(--theme-text)', cursor: 'pointer', transition: 'transform 160ms ease, border-color 160ms ease' }} onMouseEnter={(e)=>{e.currentTarget.style.transform='translateY(-1px)';}} onMouseLeave={(e)=>{e.currentTarget.style.transform='translateY(0)';}}><div style={{ fontSize: 12, color: T.textMuted }}>{section.icon} {section.label}</div><div style={{ fontSize: 24, fontWeight: 800, marginTop: 4 }}>{section.items.length}</div><div style={{ fontSize: 12, marginTop: 6, color: T.textMuted }}>{section.items.slice(0,2).map(i=>i.title).join(' • ') || 'No items yet'}</div></button>)}
+            </div>
+          </section>
+
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
@@ -3709,6 +3743,9 @@ export default function MCUViewer() {
                         onOpenDetail={openDetail}
                         onSetStatus={setStatusDirect}
                         onToggleBookmark={toggleBookmark}
+                        onToggleLike={(id) => setMyLikes(prev => ({ ...prev, [id]: !prev[id] }))}
+                        onAddRewatch={(id) => setRewatchCount(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }))}
+                        onAddReview={(id) => setReviews(prev => ({ ...prev, [id]: prev[id] || "Quick note added." }))}
                         onOpenStatus={openStatusDropdown}
                         bulkSelectMode={bulkSelectMode}
                         isSelected={selectedIds.has(item.id)}
