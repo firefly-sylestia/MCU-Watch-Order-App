@@ -2858,14 +2858,6 @@ textarea{font-size:var(--type-body)}
   right:auto !important;
 }
 
-.dropdown-pop,
-.dropdown-pop-up,
-.filter-dropdown,
-.modern-control-sheet,
-.locked-dropdown{
-  transform-origin:top center !important;
-}
-
 @media (min-width: 1024px){
   .feature-analytics,
   .detail-drawer{
