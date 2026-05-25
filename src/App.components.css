@@ -2852,3 +2852,54 @@ textarea{font-size:var(--type-body)}
   --state-active-text:#141821;
   --state-active-glow:0 0 0 1px color-mix(in srgb,var(--marvel-red) 42%, transparent),0 8px 15px rgba(15,23,42,.12);
 }
+
+/* === Final state-clarity pass: cover remaining active/inactive controls === */
+:root{
+  --ui-state-gap: 8px;
+  --ui-state-radius: 12px;
+}
+
+.filter-pill,.settings-toggle-pill,.status-menu-bookmark,.row-watch-toggle,.marvel-phase-btn,.dock-status-item{
+  border-width:1.2px;
+  border-style:solid;
+  border-color:var(--state-idle-border);
+  border-radius:var(--ui-state-radius);
+}
+
+.filter-pill,.settings-toggle-pill,.status-menu-bookmark,.row-watch-toggle,.dock-status-item{
+  background:var(--state-idle-bg) !important;
+  color:var(--state-idle-text) !important;
+}
+
+.marvel-phase-btn[data-active="true"],
+.status-menu-bookmark[data-active="true"],
+.row-watch-toggle[aria-pressed="true"],
+.settings-toggle-pill[aria-pressed="true"],
+.dock-status-item.active,
+.filter-pill[aria-pressed="true"],
+.filter-pill.active{
+  background:var(--state-active-bg) !important;
+  border-color:var(--state-active-border) !important;
+  color:var(--state-active-text) !important;
+  box-shadow:var(--state-active-glow) !important;
+}
+
+.marvel-phase-btn[data-active="true"] .phase-chip-label,
+.marvel-phase-btn[data-active="true"] .phase-chip-count,
+.row-watch-toggle[aria-pressed="true"] svg,
+.status-menu-bookmark[data-active="true"] svg,
+.dock-status-item.active svg{color:inherit !important}
+
+.filter-pill:hover,.settings-toggle-pill:hover,.status-menu-bookmark:hover,.row-watch-toggle:hover,.marvel-phase-btn:hover,.dock-status-item:hover{
+  transform:translateY(-1px);
+}
+
+[data-color-mode="light"] .filter-pill,
+[data-color-mode="light"] .settings-toggle-pill,
+[data-color-mode="light"] .status-menu-bookmark,
+[data-color-mode="light"] .row-watch-toggle,
+[data-color-mode="light"] .marvel-phase-btn,
+[data-color-mode="light"] .dock-status-item{
+  background:linear-gradient(160deg,#fff,#f4f7fb) !important;
+  color:#1f2937 !important;
+}
