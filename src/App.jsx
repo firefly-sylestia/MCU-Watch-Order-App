@@ -175,6 +175,7 @@ const CACHE_KEYS = {
   userActionsReviews: 'mcu-user-actions-reviews-v1',
   uiState: 'mcu-ui-state-v1',
   heroCarousel: 'mcu-hero-carousel-cache-v1',
+  customEntries: 'mcu-custom-entries-v1',
 };
 
 
@@ -243,6 +244,15 @@ const readSavedUiState = () => {
   }
 };
 
+
+const CUSTOM_ENTRY_TEMPLATE = {
+  title: '',
+  year: new Date().getFullYear(),
+  phase: 1,
+  type: 'series',
+  desc: '',
+  releaseDate: '',
+};
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const calculateWatchStreak = (items) => {
@@ -905,6 +915,8 @@ export default function MCUViewer() {
 
 
   const [items,          setItems]          = useState(RAW);
+  const [customEntries, setCustomEntries] = useState([]);
+  const [customEntryDraft, setCustomEntryDraft] = useState(CUSTOM_ENTRY_TEMPLATE);
   const [listMode,       setListMode]       = useState(initialUiState.listMode);
   const [search,         setSearch]         = useState(initialUiState.search);
   const [sortBy,         setSortBy]         = useState(initialUiState.sortBy);
@@ -1014,6 +1026,16 @@ export default function MCUViewer() {
     setExpandedItem(null);
     setHeroIndex(0);
   }, [universe]);
+
+
+  useEffect(() => {
+    const saved = readStorageJSON(CACHE_KEYS.customEntries, []);
+    if (Array.isArray(saved)) setCustomEntries(saved);
+  }, []);
+
+  useEffect(() => {
+    safeLocalStorageSetItem(CACHE_KEYS.customEntries, JSON.stringify(customEntries));
+  }, [customEntries]);
 
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
@@ -1586,6 +1608,30 @@ export default function MCUViewer() {
     setBulkSelectMode(false);
   };
 
+
+  const addCustomEntry = useCallback(() => {
+    if (!customEntryDraft.title.trim()) return;
+    const newId = `custom-${Date.now()}`;
+    setCustomEntries(prev => ([...prev, {
+      id: newId,
+      title: customEntryDraft.title.trim(),
+      year: Number(customEntryDraft.year) || new Date().getFullYear(),
+      phase: Number(customEntryDraft.phase) || 1,
+      order: 999 + prev.length,
+      type: customEntryDraft.type,
+      desc: customEntryDraft.desc.trim() || 'Custom catalog entry',
+      releaseDate: customEntryDraft.releaseDate || '',
+      status: 'unwatched',
+      essential: false,
+      isCustom: true,
+    }]));
+    setCustomEntryDraft(CUSTOM_ENTRY_TEMPLATE);
+  }, [customEntryDraft]);
+
+  const removeCustomEntry = useCallback((id) => {
+    setCustomEntries(prev => prev.filter(item => item.id !== id));
+  }, []);
+
   const markPhaseWatched = (phaseId, newStatus) => {
     setItems(prev => {
       const n = prev.map(i => {
@@ -1606,7 +1652,7 @@ export default function MCUViewer() {
   };
 
   const { filtered, grouped, phaseKeys } = useMemo(() => {
-    const f = items.filter(i => {
+    const f = combinedItems.filter(i => {
       if (listMode === 'core' && !coreIds.has(i.id)) return false;
       if (showAllFiltersOverride) return true;
       if (listMode === 'core' && essentialOnly && !i.essential) return false;
@@ -1642,7 +1688,7 @@ export default function MCUViewer() {
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap]);
+  }, [combinedItems, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap]);
 
 
 
@@ -1654,9 +1700,10 @@ export default function MCUViewer() {
       connectsTo: Array.isArray(base.connectsTo) ? base.connectsTo : [],
     };
   }, []);
+  const combinedItems = useMemo(() => [...items, ...customEntries], [items, customEntries]);
   const activeItems = useMemo(
-    () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
-    [items, listMode, coreIds]
+    () => listMode === 'core' ? combinedItems.filter(i => coreIds.has(i.id) || String(i.id).startsWith('custom-')) : combinedItems,
+    [combinedItems, listMode, coreIds]
   );
 
 
@@ -3903,6 +3950,25 @@ export default function MCUViewer() {
               <div>
                 <h2 style={{ fontSize: 30, marginBottom: 4 }}>Analysis</h2>
                 <div style={{ color: T.textMuted, fontSize: 13 }}>Concise progress insights: phase counts, watch percentage, and streak.</div>
+
+                <div className="settings-block" style={{ marginTop: 14, border: `1px solid ${T.border}`, borderRadius: 12, padding: 12, background: T.panelBg }}>
+                  <div style={{ fontWeight: 800, marginBottom: 8 }}>Database Expansion Lab</div>
+                  <div style={{ color: T.textMuted, fontSize: 12, marginBottom: 10 }}>Unique upgrades: add fan-edits, variants, regional cuts, podcasts, or creator commentary entries.</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 90px', gap: 8 }}>
+                    <input value={customEntryDraft.title} onChange={(e) => setCustomEntryDraft(prev => ({ ...prev, title: e.target.value }))} placeholder="Custom title" style={{ borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: '8px 10px' }} />
+                    <input value={customEntryDraft.year} onChange={(e) => setCustomEntryDraft(prev => ({ ...prev, year: e.target.value }))} placeholder="Year" style={{ borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: '8px 10px' }} />
+                    <button onClick={addCustomEntry} className="btn" style={{ minHeight: 36 }}>Add</button>
+                  </div>
+                  <textarea value={customEntryDraft.desc} onChange={(e) => setCustomEntryDraft(prev => ({ ...prev, desc: e.target.value }))} placeholder="Why this entry is unique" rows={2} style={{ width: '100%', marginTop: 8, borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: '8px 10px' }} />
+                  <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {customEntries.slice(-6).map(entry => (
+                      <button key={entry.id} onClick={() => removeCustomEntry(entry.id)} className="btn" style={{ borderRadius: 999, padding: '6px 10px' }}>
+                        {entry.title} ×
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
               </div>
               <button className="fpill" onClick={closeAnalytics}>Close</button>
             </div>
