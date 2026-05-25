@@ -2734,3 +2734,58 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 .analytics-metric-meta,.analytics-progress-sub,.detail-export-panel p,textarea{max-width:var(--content-measure);line-height:var(--lh-reading)}
 textarea{font-size:var(--type-body)}
 .detail-export-meta span,.calendar-badge,.calendar-group-header{font-size:var(--type-metadata);letter-spacing:.04em}
+
+/* 2026 mobile-first hierarchy + modal modernization */
+.rrow{
+  grid-template-columns:28px 72px minmax(0,1fr) !important;
+  grid-template-areas:'index poster title' 'actions actions actions' !important;
+  gap:12px !important;
+  padding:14px !important;
+  border:1px solid color-mix(in srgb,var(--theme-border) 72%, transparent) !important;
+}
+.rrow > .row-index{grid-area:index}
+.rrow > .poster{grid-area:poster}
+.rrow > .title-btn{grid-area:title;min-height:96px !important;padding:2px 0 !important;gap:10px !important;text-align:left}
+.rrow > .row-hierarchy-actions{grid-area:actions;display:grid !important;grid-template-columns:1fr repeat(3,minmax(44px,auto));gap:10px !important;align-items:center}
+.row-hierarchy-status{display:flex !important;flex-wrap:wrap;gap:8px !important}
+.row-hierarchy-prerequisite{font-size:11px !important;letter-spacing:.06em !important;opacity:.9}
+.row-hierarchy-actions .wbtn,
+.row-hierarchy-actions .status-pill{min-height:44px !important;min-width:44px !important;border-radius:12px !important}
+.row-hierarchy-actions .row-status-btn{justify-content:space-between;padding:0 12px !important;width:100%;min-width:0 !important}
+.row-hierarchy-actions .rating-marvel-pill{min-height:44px;display:flex;align-items:center;padding:0 12px;border:1px solid var(--border-soft);border-radius:12px;background:color-mix(in srgb,var(--theme-surface) 84%, transparent)}
+.rrow .title-btn:focus-visible,
+.row-hierarchy-actions .wbtn:focus-visible,
+.row-hierarchy-actions .status-pill:focus-visible,
+.detail-btn:focus-visible,
+.trailer-close:focus-visible,
+.trailer-variant-select:focus-visible{outline:none !important;box-shadow:0 0 0 3px color-mix(in srgb,var(--theme-accent) 55%, transparent),0 0 0 1px var(--theme-accent) inset !important}
+
+.detail-card{width:min(960px,95vw) !important;padding:14px !important;border-radius:20px !important}
+.modal-layout-overview,.modal-layout-trailer,.modal-layout-after-credits,.modal-layout-actions{border:1px solid var(--border-soft);border-radius:14px;padding:12px;background:color-mix(in srgb,var(--theme-surface) 90%, transparent)}
+.modal-layout-actions{display:grid !important;grid-template-columns:1fr 1fr;gap:10px}
+.trailer-shell .trailer-actions,.trailer-expanded-actions{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.trailer-shell .trailer-close{min-height:44px !important;justify-content:center}
+.trailer-shell .trailer-variant-select{min-height:44px;border-radius:12px;border:1px solid var(--border-soft);background:var(--surface-elevated);color:var(--theme-text);padding:0 12px}
+.trailer-frame{border-radius:12px;overflow:hidden;border:1px solid color-mix(in srgb,var(--theme-accent) 32%, var(--theme-border))}
+
+[data-color-mode="light"] .rrow,
+[data-color-mode="light"] .modal-layout-overview,
+[data-color-mode="light"] .modal-layout-trailer,
+[data-color-mode="light"] .modal-layout-after-credits,
+[data-color-mode="light"] .modal-layout-actions{
+  background:linear-gradient(155deg,#fff,color-mix(in srgb,var(--theme-surface) 95%, #fff)) !important;
+  border-color:color-mix(in srgb,var(--theme-border) 78%, #fff) !important;
+}
+
+@media (min-width: 900px){
+  .rrow{grid-template-columns:28px 78px minmax(0,1fr) minmax(190px,auto) !important;grid-template-areas:'index poster title actions' !important;align-items:start}
+  .rrow > .row-hierarchy-actions{grid-template-columns:1fr;gap:8px !important}
+  .modal-layout-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width: 640px){
+  .rrow{padding:12px !important;gap:10px !important}
+  .rrow > .title-btn{min-height:88px !important}
+  .row-hierarchy-prerequisite{font-size:10px !important}
+  .detail-card{width:96vw !important;max-height:92vh !important}
+  .modal-layout-actions{grid-template-columns:1fr}
+}

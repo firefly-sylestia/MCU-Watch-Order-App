@@ -695,17 +695,17 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             <span className="title-main">{item.title}</span>
             <ChevRight size={10} className="title-chevron" />
           </div>
-          <div className="title-row-mid release-meta-grid">
+          <div className="title-row-mid release-meta-grid row-hierarchy-status">
             {item.episodes && <span className="meta-chip meta-chip-xs truncate-single-line">{item.episodes} EP</span>}
             <span className="meta-chip meta-chip-type truncate-single-line" style={{ color: typeMeta.color }}><TypeIcon size={8} />{typeMeta.label}</span>
             <span className="meta-chip meta-chip-sm truncate-single-line">{item.year || releaseLabel}</span>
             <span className="meta-chip meta-chip-release meta-chip-xxs truncate-single-line" style={{ color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
             {!item.essential && <span className="meta-chip meta-chip-xs truncate-single-line">OPT</span>}
           </div>
-          <div className="meta-muted line-clamp-2 overflow-wrap-anywhere title-subline" style={TITLE_ROW_STATIC.genreMeta}>GENRES: {genres.join(' • ').toUpperCase()}</div>
+          <div className="meta-muted line-clamp-2 overflow-wrap-anywhere title-subline row-hierarchy-prerequisite" style={TITLE_ROW_STATIC.genreMeta}>PREREQ: {item.prereq || NO_PREREQ}</div>
         </button>
 
-        <div className={`row-actions ${isDesktopViewport ? 'is-desktop' : ''}`}>
+        <div className={`row-actions row-hierarchy-actions ${isDesktopViewport ? 'is-desktop' : ''}`}>
           <div className="row-meta-line truncate-single-line rating-marvel-pill">★ {rating || '—'}</div>
           <button
             aria-label={`Open status menu for ${item.title}`}
@@ -3769,7 +3769,7 @@ export default function MCUViewer() {
                 {detailLoading && <div className="detail-export-loading">Loading metadata…</div>}
                 {!detailLoading && !detailData && <div className="detail-export-loading">Showing local data.</div>}
 
-                <section className="detail-export-panel story">
+                <section className="detail-export-panel story modal-layout-overview">
                   <div className="detail-export-panel-head">
                     <span>STORY BRIEF</span>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
@@ -3816,7 +3816,7 @@ export default function MCUViewer() {
                   </p>
                 </section>
 
-                <section className="detail-export-panel intel">
+                <section className="detail-export-panel intel modal-layout-after-credits">
                   <div className="detail-export-panel-head"><span>WATCH INTEL + AFTER-CREDITS NAVIGATOR</span></div>
                   <div className="detail-intel-list">
                     <div><strong>Release</strong><span>{formatReleaseDate(releaseInfoFor(detailItem).date, detailItem.year, releaseInfoFor(detailItem).label, releaseStatusFor(detailItem))}</span></div>
@@ -3830,7 +3830,7 @@ export default function MCUViewer() {
                   </div>
                 </section>
 
-                <div className="detail-export-actions">
+                <div className="detail-export-actions modal-layout-actions">
                   <button
                     className={`fpill glass-panel detail-btn ${myLikes[detailItem.id] ? 'is-active' : ''}`}
                     onClick={() => setMyLikes(prev => ({ ...prev, [detailItem.id]: !prev[detailItem.id] }))}
@@ -3847,7 +3847,7 @@ export default function MCUViewer() {
 
       {trailerOpen && detailItem && selectedTrailer?.youtubeId && (
         <div className={`detail-backdrop trailer-backdrop ${trailerLandscape ? 'is-landscape' : ''}`} onClick={() => { setTrailerOpen(false); setTrailerExpanded(false); setTrailerLandscape(false); }} role="dialog" aria-label="Trailer player">
-          <div className={`detail-card glass-panel trailer-shell ${trailerLandscape ? 'is-landscape' : ''} ${trailerExpanded ? 'is-expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
+          <div className={`detail-card glass-panel trailer-shell modal-layout-trailer ${trailerLandscape ? 'is-landscape' : ''} ${trailerExpanded ? 'is-expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
             {!trailerExpanded && <div className="trailer-head">
               <div>
                 <div className="trailer-eyebrow">Official media</div>
