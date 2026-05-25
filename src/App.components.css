@@ -94,7 +94,7 @@
         .sidebar-menu{position:fixed;top:0;left:0;bottom:0;width:min(344px,86vw);padding:90px 16px 24px;background:linear-gradient(170deg, color-mix(in srgb,var(--theme-surface) 82%, transparent), color-mix(in srgb,var(--theme-bg) 86%, transparent));backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%);border-right:1px solid color-mix(in srgb,var(--theme-accent) 24%, var(--theme-border));transform:var(--sidebar-transform);transition:transform 0.24s cubic-bezier(.22,.9,.24,1);z-index:9996;overflow-y:auto;overflow-x:hidden;box-shadow:0 24px 56px rgba(0,0,0,.45);border-radius:22px;isolation:isolate}
 .settings-shell{position:fixed;inset:0;z-index:10001;display:flex;justify-content:center;align-items:stretch;pointer-events:none}
         .settings-backdrop{position:fixed;inset:0;background:rgba(2,6,18,.36);border:none;z-index:9990;backdrop-filter:blur(1px)}
-.settings-menu{position:relative;z-index:10002;min-width:0;width:100vw;max-height:100dvh;border-radius:0;border:1px solid color-mix(in srgb,var(--theme-border) 62%, transparent);background:color-mix(in srgb,var(--theme-surface) 92%, var(--theme-bg));backdrop-filter:blur(14px) saturate(142%);-webkit-backdrop-filter:blur(14px) saturate(142%);box-shadow:var(--shadow-elevated);padding:14px;display:grid;gap:8px;overflow:auto;color:var(--theme-text);overscroll-behavior:contain;overflow-x:hidden;pointer-events:auto}
+.settings-menu{position:relative;z-index:10002;min-width:0;width:min(960px,calc(100vw - clamp(16px,4vw,48px)));max-height:100dvh;border-radius:18px;border:1px solid color-mix(in srgb,var(--theme-border) 62%, transparent);background:color-mix(in srgb,var(--theme-surface) 92%, var(--theme-bg));backdrop-filter:blur(14px) saturate(142%);-webkit-backdrop-filter:blur(14px) saturate(142%);box-shadow:var(--shadow-elevated);padding:14px;display:grid;gap:8px;overflow:auto;color:var(--theme-text);overscroll-behavior:contain;overflow-x:hidden;pointer-events:auto}
         .settings-menu .fpill{min-width:0}
         .settings-toggle-pill{font-weight:700;letter-spacing:.8px}
         .import-backup-pill:focus-within,.import-backup-pill:focus-visible{outline:none !important;box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 42%, transparent)}
@@ -2903,3 +2903,9 @@ textarea{font-size:var(--type-body)}
   background:linear-gradient(160deg,#fff,#f4f7fb) !important;
   color:#1f2937 !important;
 }
+
+
+/* Overlay alignment fixes (desktop + modal surfaces) */
+.settings-shell{padding:clamp(8px,2vw,24px);align-items:flex-start;}
+.settings-menu,.analytics-shell,.analytics-shell-redesign,.detail-card{margin-inline:auto;left:auto !important;right:auto !important;}
+@media (max-width: 767px){.settings-shell{padding:0;align-items:stretch}.settings-menu{width:100% !important;border-radius:0 !important}}

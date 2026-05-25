@@ -61,7 +61,7 @@
 
         .section-up{content-visibility:visible;contain-intrinsic-size:auto}
         .app-scroll-shell{min-width:100%;max-width:100%;overflow-x:hidden;overscroll-behavior-x:none}
-        main.app-scroll-shell{scrollbar-gutter:stable both-edges;overscroll-behavior-y:contain}
+        main.app-scroll-shell{scrollbar-gutter:stable;overscroll-behavior-y:contain}
 
 
         .row-meta-line{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
