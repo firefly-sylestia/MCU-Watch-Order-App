@@ -1018,6 +1018,25 @@ export default function MCUViewer() {
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   const closeAnalytics = useCallback(() => setAnalyticsOpen(false), []);
+  const closeTrailer = useCallback(() => {
+    setTrailerOpen(false);
+    setTrailerExpanded(false);
+    setTrailerLandscape(false);
+  }, []);
+  const handleTrailerLandscapeToggle = useCallback(() => {
+    setTrailerLandscape((prev) => {
+      const next = !prev;
+      if (next) setTrailerExpanded(true);
+      return next;
+    });
+  }, []);
+  const handleTrailerBack = useCallback(() => {
+    if (trailerLandscape) {
+      closeTrailer();
+      return;
+    }
+    setTrailerExpanded(false);
+  }, [closeTrailer, trailerLandscape]);
   const closeDetail = useCallback(() => { setDetailItem(null); setTrailerOpen(false); setTrailerExpanded(false); setTrailerLandscape(false); setTrailerVariantIndex(0); }, []);
   const openImdbForItem = useCallback((item, data) => {
     const imdbId = data?.imdbID || data?.imdbId || '';
@@ -3846,7 +3865,7 @@ export default function MCUViewer() {
       )}
 
       {trailerOpen && detailItem && selectedTrailer?.youtubeId && (
-        <div className={`detail-backdrop trailer-backdrop ${trailerLandscape ? 'is-landscape' : ''}`} onClick={() => { setTrailerOpen(false); setTrailerExpanded(false); setTrailerLandscape(false); }} role="dialog" aria-label="Trailer player">
+        <div className={`detail-backdrop trailer-backdrop ${trailerLandscape ? 'is-landscape' : ''}`} onClick={closeTrailer} role="dialog" aria-label="Trailer player">
           <div className={`detail-card glass-panel trailer-shell ${trailerLandscape ? 'is-landscape' : ''} ${trailerExpanded ? 'is-expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
             {!trailerExpanded && <div className="trailer-head">
               <div>
@@ -3859,9 +3878,9 @@ export default function MCUViewer() {
                 )}
               </div>
               <div className="trailer-actions">
-                <button className="fpill trailer-close" onClick={() => setTrailerLandscape(v => !v)}><SwitchIcon size={12}/>{trailerLandscape ? 'Portrait' : 'Landscape'}</button>
+                <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle}><SwitchIcon size={12}/>{trailerLandscape ? 'Portrait' : 'Landscape'}</button>
                 <button className="fpill trailer-close" onClick={() => setTrailerExpanded(true)}><PlayCircle size={12}/>Enlarge</button>
-                <button className="fpill trailer-close" onClick={() => setTrailerOpen(false)}><X size={12}/>Close</button>
+                <button className="fpill trailer-close" onClick={closeTrailer}><X size={12}/>Close</button>
               </div>
             </div>}
             <div className={`trailer-frame ${trailerLandscape ? 'is-landscape' : ''}`} ref={trailerShellRef}>
@@ -3869,9 +3888,9 @@ export default function MCUViewer() {
               <iframe title={`${detailItem.title} trailer`} src={trailerEmbedUrl(selectedTrailer.youtubeId)} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
             </div>
             {trailerExpanded && <div className="trailer-expanded-actions">
-              <button className="fpill trailer-close" onClick={() => setTrailerLandscape(v => !v)}><SwitchIcon size={12}/>{trailerLandscape ? 'Portrait' : 'Landscape'}</button>
-              <button className="fpill trailer-close" onClick={() => setTrailerExpanded(false)}><PlayCircle size={12}/>Back</button>
-              <button className="fpill trailer-close" onClick={() => setTrailerOpen(false)}><X size={12}/>Close</button>
+              <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle}><SwitchIcon size={12}/>{trailerLandscape ? 'Portrait' : 'Landscape'}</button>
+              <button className="fpill trailer-close" onClick={handleTrailerBack}><PlayCircle size={12}/>{trailerLandscape ? 'Back & Close' : 'Back'}</button>
+              <button className="fpill trailer-close" onClick={closeTrailer}><X size={12}/>Close</button>
             </div>}
           </div>
         </div>
