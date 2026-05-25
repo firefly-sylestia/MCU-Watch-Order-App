@@ -1,12 +1,24 @@
 @import './_shared.css';
-.feature-header,.timeline-controls,.progress-section,.feature-title-card,.detail-drawer,.feature-settings,.feature-analytics { margin: var(--feature-gap) 0; }
-.feature-header{padding:1rem;display:flex;justify-content:space-between;gap:1rem;align-items:flex-start}
-.feature-header__title{margin:0;font-size:clamp(1.1rem,2vw,1.35rem)}
-.feature-header__subtitle{margin:.35rem 0 0;color:var(--text-muted)}
-.timeline-controls,.progress-section,.feature-settings,.feature-analytics{padding:.85rem 1rem}
-.feature-title-card{padding:0;border-radius:14px;transition:transform 180ms ease, box-shadow 180ms ease}
-.feature-title-card:hover{transform:translateY(-1px)}
-.detail-drawer{position:relative;opacity:.96}
-.detail-drawer.is-open{opacity:1}
-.feature-settings,.feature-analytics{display:none}
-.feature-settings.is-open,.feature-analytics.is-open{display:block}
+
+.feature-header .header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--feature-space-2);
+}
+
+.feature-header button,
+.feature-header .chip {
+  border-radius: 999px;
+  transition: transform 150ms var(--feature-ease), filter 180ms var(--feature-ease);
+}
+
+.feature-header button:is(:hover, :focus-visible),
+.feature-header .chip:is(:hover, :focus-visible) {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.feature-header button:active,
+.feature-header .chip:active {
+  transform: translateY(0) scale(0.98);
+}

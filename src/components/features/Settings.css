@@ -1,12 +1,18 @@
 @import './_shared.css';
-.feature-header,.timeline-controls,.progress-section,.feature-title-card,.detail-drawer,.feature-settings,.feature-analytics { margin: var(--feature-gap) 0; }
-.feature-header{padding:1rem;display:flex;justify-content:space-between;gap:1rem;align-items:flex-start}
-.feature-header__title{margin:0;font-size:clamp(1.1rem,2vw,1.35rem)}
-.feature-header__subtitle{margin:.35rem 0 0;color:var(--text-muted)}
-.timeline-controls,.progress-section,.feature-settings,.feature-analytics{padding:.85rem 1rem}
-.feature-title-card{padding:0;border-radius:14px;transition:transform 180ms ease, box-shadow 180ms ease}
-.feature-title-card:hover{transform:translateY(-1px)}
-.detail-drawer{position:relative;opacity:.96}
-.detail-drawer.is-open{opacity:1}
-.feature-settings,.feature-analytics{display:none}
-.feature-settings.is-open,.feature-analytics.is-open{display:block}
+
+.feature-settings {
+  border-radius: var(--feature-radius-lg);
+  background: linear-gradient(180deg, var(--feature-surface), color-mix(in srgb, var(--feature-surface) 70%, var(--theme-bg) 30%));
+}
+
+.feature-settings input,
+.feature-settings select,
+.feature-settings button {
+  transition: border-color 180ms var(--feature-ease), box-shadow 180ms var(--feature-ease), transform 140ms var(--feature-ease);
+}
+
+.feature-settings input:focus-visible,
+.feature-settings select:focus-visible,
+.feature-settings button:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent) 28%, transparent);
+}

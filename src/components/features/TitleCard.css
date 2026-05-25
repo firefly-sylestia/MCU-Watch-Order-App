@@ -1,12 +1,13 @@
 @import './_shared.css';
-.feature-header,.timeline-controls,.progress-section,.feature-title-card,.detail-drawer,.feature-settings,.feature-analytics { margin: var(--feature-gap) 0; }
-.feature-header{padding:1rem;display:flex;justify-content:space-between;gap:1rem;align-items:flex-start}
-.feature-header__title{margin:0;font-size:clamp(1.1rem,2vw,1.35rem)}
-.feature-header__subtitle{margin:.35rem 0 0;color:var(--text-muted)}
-.timeline-controls,.progress-section,.feature-settings,.feature-analytics{padding:.85rem 1rem}
-.feature-title-card{padding:0;border-radius:14px;transition:transform 180ms ease, box-shadow 180ms ease}
-.feature-title-card:hover{transform:translateY(-1px)}
-.detail-drawer{position:relative;opacity:.96}
-.detail-drawer.is-open{opacity:1}
-.feature-settings,.feature-analytics{display:none}
-.feature-settings.is-open,.feature-analytics.is-open{display:block}
+
+.feature-title-card {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--theme-card-bg) 86%, transparent), var(--theme-card-bg));
+}
+
+.feature-title-card .title-card {
+  border-radius: var(--feature-radius-sm);
+}
+
+.feature-title-card .title-card:is(:hover, :focus-within) {
+  transform: translateY(-2px);
+}
