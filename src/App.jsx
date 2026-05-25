@@ -191,6 +191,7 @@ const UI_STATE_DEFAULTS = {
   viewMode: 'list',
   densityMode: 'comfortable',
   timelineMode: 'release',
+  runtimePreference: 'balanced',
   autoHideStatuses: false,
   performanceMode: true,
   desktopTextScale: 1,
@@ -232,6 +233,7 @@ const readSavedUiState = () => {
       viewMode: VALID_VIEW_MODES.has(saved.viewMode) ? saved.viewMode : UI_STATE_DEFAULTS.viewMode,
       densityMode: VALID_DENSITY_MODES.has(saved.densityMode) ? saved.densityMode : UI_STATE_DEFAULTS.densityMode,
       timelineMode: VALID_TIMELINE_MODES.has(saved.timelineMode) ? saved.timelineMode : UI_STATE_DEFAULTS.timelineMode,
+      runtimePreference: ['short', 'balanced', 'epic'].includes(saved.runtimePreference) ? saved.runtimePreference : UI_STATE_DEFAULTS.runtimePreference,
       autoHideStatuses: typeof saved.autoHideStatuses === 'boolean' ? saved.autoHideStatuses : UI_STATE_DEFAULTS.autoHideStatuses,
       performanceMode: typeof saved.performanceMode === 'boolean' ? saved.performanceMode : UI_STATE_DEFAULTS.performanceMode,
       desktopTextScale: VALID_DESKTOP_TEXT_SCALES.has(Number(saved.desktopTextScale)) ? Number(saved.desktopTextScale) : UI_STATE_DEFAULTS.desktopTextScale,
@@ -978,6 +980,9 @@ export default function MCUViewer() {
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
+  const [runtimePreference, setRuntimePreference] = useState(initialUiState.runtimePreference || 'balanced');
+  const [recommendationPins, setRecommendationPins] = useState(() => readStorageJSON('mcu-recommendation-pins-v1', []));
+  const [recommendationSnooze, setRecommendationSnooze] = useState(() => readStorageJSON('mcu-recommendation-snooze-v1', {}));
   const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
   const [scrollTuning] = useState({ desktopMultiplier: 5, desktopDeltaCap: 7, mobileMultiplier: 5, mobileDeltaCap: 7 });
   const [genreFilter] = useState('all');
@@ -1625,6 +1630,31 @@ export default function MCUViewer() {
     return { filtered: f, grouped: g, phaseKeys: pk };
   }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap]);
 
+  const recommendationPanel = useMemo(() => {
+    const now = Date.now();
+    const snoozed = new Set(Object.entries(recommendationSnooze).filter(([, until]) => Number(until) > now).map(([id]) => Number(id)));
+    const base = items.filter(i => (i.status === 'unwatched' || i.status === 'plan-to-watch') && !snoozed.has(i.id));
+    const inTimeline = base.filter(i => {
+      if (timelineMode === 'loki') return CHARACTER_POV_TITLE_SETS.loki.has(i.title);
+      if (timelineMode === 'wanda') return CHARACTER_POV_TITLE_SETS.wanda.has(i.title);
+      return true;
+    });
+    const candidates = (inTimeline.length ? inTimeline : base).sort((a, b) => a.order - b.order);
+    const latestWatched = [...items].filter(i => i.watchedDate).sort((a, b) => (b.watchedDate || '').localeCompare(a.watchedDate || ''))[0];
+    const runtimeScore = (item) => {
+      const est = item.episodes || (item.type === 'film' ? 2.4 : 6.5);
+      if (runtimePreference === 'short') return est;
+      if (runtimePreference === 'epic') return -est;
+      return Math.abs(est - 3.2);
+    };
+    const pinned = candidates.find(i => recommendationPins.includes(i.id));
+    const continuity = pinned || candidates[0];
+    const shortPick = [...candidates].sort((a, b) => runtimeScore(a) - runtimeScore(b)).find(i => i.id !== continuity?.id);
+    const arcPick = [...candidates].find(i => latestWatched && (i.phase === latestWatched.phase || i.type === latestWatched.type) && i.id !== continuity?.id && i.id !== shortPick?.id) || candidates.find(i => i.id !== continuity?.id && i.id !== shortPick?.id);
+    const toCard = (item, reason) => item ? ({ item, reason }) : null;
+    return [toCard(continuity, 'best continuity pick'), toCard(shortPick, runtimePreference === 'short' ? 'short option (matched preference)' : 'short option'), toCard(arcPick, 'character arc option')].filter(Boolean);
+  }, [items, timelineMode, runtimePreference, recommendationPins, recommendationSnooze]);
+
 
 
 
@@ -1669,13 +1699,17 @@ export default function MCUViewer() {
       viewMode,
       densityMode,
       timelineMode,
+      runtimePreference,
       autoHideStatuses,
       performanceMode,
       desktopTextScale,
       textScaleEnabled,
       scrollTop,
     }));
-  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
+  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, runtimePreference, autoHideStatuses, performanceMode, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
+
+  useEffect(() => { safeLocalStorageSetItem('mcu-recommendation-pins-v1', JSON.stringify(recommendationPins)); }, [recommendationPins]);
+  useEffect(() => { safeLocalStorageSetItem('mcu-recommendation-snooze-v1', JSON.stringify(recommendationSnooze)); }, [recommendationSnooze]);
   const totalWatched = useMemo(() => activeItems.filter(i => i.status === 'watched').length, [activeItems]);
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
@@ -3407,7 +3441,7 @@ export default function MCUViewer() {
               <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             <div ref={sortMenuRef} style={{ position: 'relative' }}>
-              <button className="filters-trigger" onClick={() => setSortMenuOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${sortBy === 'order' ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: sortBy === 'order' ? 'var(--theme-accent)' : T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}><ArrowUpDown size={13} />Sort: {SORT_LABELS[sortBy]}<ChevDown size={11} style={{ transform: sortMenuOpen ? 'rotate(180deg)' : 'none' }}/></button>
+              <button className="filters-trigger" onClick={() => setSortMenuOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${sortBy !== 'order' ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: sortBy !== 'order' ? 'var(--theme-accent)' : T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}><ArrowUpDown size={13} />Sort: {SORT_LABELS[sortBy]}<ChevDown size={11} style={{ transform: sortMenuOpen ? 'rotate(180deg)' : 'none' }}/></button>
               {sortMenuOpen && <div className="dropdown-pop filter-dropdown redesigned-sort-menu" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1450, minWidth: 240 }}>
                 {Object.entries(SORT_LABELS).map(([key, label]) => (
                   <button key={key} className={`sopt ${sortBy === key ? 'picked' : ''}`} onClick={() => { setSortBy(key); setSortMenuOpen(false); }} style={{ width: '100%', textAlign: 'left' }}>
@@ -3454,6 +3488,7 @@ export default function MCUViewer() {
                 const on = typeFilter === t;
                 return (
                   <button key={t} className="fpill filter-pill type-pill"
+                    aria-pressed={on}
                     style={on ? { borderColor: m.color + '88', background: m.color + '14', color: m.color } : {}}
                     onClick={() => setTypeFilter(on ? null : t)}>
                     <m.Icon size={10} />{m.label}
@@ -3462,12 +3497,14 @@ export default function MCUViewer() {
               })}
               {(listMode === 'core' || listMode === 'extended') && (
                 <button className="fpill"
+                  aria-pressed={essentialOnly}
                   style={essentialOnly ? { borderColor: 'color-mix(in srgb, var(--theme-warning) 50%, transparent)', background: 'var(--theme-warning-soft)', color: 'var(--theme-warning)' } : {}}
                   onClick={() => setEssOnly(o => !o)}>
                   <Star size={10} />Must-Watch
                 </button>
               )}
               <button className="fpill"
+                aria-pressed={showAllFiltersOverride}
                 style={showAllFiltersOverride ? { borderColor: 'var(--theme-accent)', background: 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))', color: 'var(--theme-accent)' } : {}}
                 onClick={() => setShowAllFiltersOverride(v => !v)}>
                 <Eye size={10} />Show All
@@ -3475,6 +3512,7 @@ export default function MCUViewer() {
               {/* Status filter */}
               <div style={{ position: 'relative' }}>
                 <button className="fpill"
+                  aria-pressed={Boolean(watchedOnly || statusFilter)}
                   style={watchedOnly || statusFilter ? { borderColor: 'color-mix(in srgb, var(--theme-success) 50%, transparent)', background: 'var(--theme-success-soft)', color: 'var(--theme-success)' } : {}}
                   onClick={() => setFilterStatusOpen(v => !v)}
                   >
@@ -3493,8 +3531,8 @@ export default function MCUViewer() {
                 )}
               </div>
               {/* Bulk actions */}
-              <button className="fpill"
-                style={bulkSelectMode ? { borderColor: 'var(--theme-accent)', background: 'color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface))', color: 'var(--theme-accent)' } : {}}
+                <button className="fpill"
+                  style={bulkSelectMode ? { borderColor: 'var(--theme-accent)', background: 'color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface))', color: 'var(--theme-accent)' } : {}}
                 onClick={() => { setBulkSelectMode(v => !v); clearBulkSelection(); }}>
                 <Check size={10} />{bulkSelectMode ? `Selecting ${selectedIds.size}` : 'Select'}
               </button>
@@ -3509,7 +3547,7 @@ export default function MCUViewer() {
               {/* Reset */}
               {activeFilterCount > 0 && (
                 <button className="fpill" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', padding: '7px 12px' }}
-                  onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setSortBy('order'); }}>
+                  onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setSortBy('order'); setTimelineMode('release'); setGenreFilter('all'); setActivePhase(0); setShowAllFiltersOverride(false); }}>
                   <Trash2 size={10} /> Clear
                 </button>
               )}
@@ -3593,6 +3631,27 @@ export default function MCUViewer() {
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
+          <section className="curvy-panel motion-pop" style={{ border: `1px solid ${T.surfaceBorder}`, borderRadius: 14, padding: 14, marginBottom: 16, background: 'color-mix(in srgb, var(--theme-surface) 88%, transparent)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <h3 style={{ margin: 0, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1.6 }}>Next Up Recommendations</h3>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {['short', 'balanced', 'epic'].map(pref => <button key={pref} className="fpill" aria-pressed={runtimePreference === pref} style={runtimePreference === pref ? { borderColor: 'var(--theme-accent)', color: 'var(--theme-accent)', background: 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' } : {}} onClick={() => setRuntimePreference(pref)}>{pref}</button>)}
+              </div>
+            </div>
+            <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
+              {recommendationPanel.map((rec, idx) => (
+                <article key={rec.item.id} style={{ border: `1px solid ${T.surfaceBorder}`, borderRadius: 12, padding: 12, background: idx === 0 ? 'color-mix(in srgb, var(--theme-accent) 10%, var(--theme-surface))' : 'transparent' }}>
+                  <div style={{ fontSize: 11, letterSpacing: 1.3, textTransform: 'uppercase', color: T.textMuted }}>{rec.reason}</div>
+                  <button className="title-btn" onClick={() => openDetail(rec.item)} style={{ marginTop: 6, fontWeight: 700 }}>{rec.item.title}</button>
+                  <div style={{ marginTop: 6, fontSize: 12, color: T.textMuted }}>Timeline-aware for <strong>{TIMELINE_MODES.find(m => m.id === timelineMode)?.label || 'selected mode'}</strong> · status {getSafeStatusMeta(rec.item.status).label.toLowerCase()}.</div>
+                  <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                    <button className="fpill" onClick={() => setRecommendationPins(prev => prev.includes(rec.item.id) ? prev.filter(id => id !== rec.item.id) : [...prev, rec.item.id])}><Bookmark size={10} />{recommendationPins.includes(rec.item.id) ? 'Unpin' : 'Pin'}</button>
+                    <button className="fpill" onClick={() => setRecommendationSnooze(prev => ({ ...prev, [rec.item.id]: Date.now() + 1000 * 60 * 60 * 24 }))}><Pause size={10} />Snooze 24h</button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
