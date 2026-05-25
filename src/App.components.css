@@ -2143,6 +2143,21 @@ main.app-scroll-shell.scroll-performance .status-pill{
   -webkit-backdrop-filter:none !important;
 }
 
+.theme-switch.profile-cinematic .rrow,
+.theme-switch.profile-cinematic .fpill{
+  transition-duration: 260ms;
+}
+
+.theme-switch.profile-balanced .rrow,
+.theme-switch.profile-balanced .fpill{
+  transition-duration: 190ms;
+}
+
+.theme-switch.profile-efficient .rrow,
+.theme-switch.profile-efficient .fpill{
+  transition-duration: 120ms;
+}
+
 main.app-scroll-shell.scroll-performance .rrow,
 main.app-scroll-shell.scroll-performance .rrow .meta-chip,
 main.app-scroll-shell.scroll-performance .row-actions .wbtn,
