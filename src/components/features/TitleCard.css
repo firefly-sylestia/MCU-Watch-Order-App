@@ -10,3 +10,13 @@
 .detail-drawer.is-open{opacity:1}
 .feature-settings,.feature-analytics{display:none}
 .feature-settings.is-open,.feature-analytics.is-open{display:block}
+
+/* Ensure card/detail/analytics surfaces stay centered on mobile */
+@media (max-width: 767px) {
+  .feature-title-card,
+  .detail-drawer,
+  .feature-analytics {
+    width: min(100%, calc(100vw - 24px));
+    margin-inline: auto;
+  }
+}
