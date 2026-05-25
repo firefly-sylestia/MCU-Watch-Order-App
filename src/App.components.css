@@ -485,6 +485,7 @@
 
 /* Final readability + sizing refinements */
 .analytics-shell-redesign{margin:0 auto !important;left:auto !important;right:auto !important}
+.detail-card,.analytics-shell,.settings-menu,.filters-open{margin-inline:auto !important}
 .analytics-shell,.analytics-shell *{color:var(--theme-text)}
 .analytics-shell .meta-muted,.analytics-shell [style*='color: var(--theme-text-muted)']{color:var(--theme-text-muted) !important}
 
@@ -1889,6 +1890,9 @@ main{--content-max:1560px !important}
 .compact-dropdown-sheet .sopt > div:last-child{font-size:10px !important;opacity:.78}
 .centered-open-dropdown{
   margin-inline:auto;
+  left:50% !important;
+  right:auto !important;
+  transform:translateX(calc(-50% - 1px)) !important;
 }
 .modern-option-card{
   background:color-mix(in srgb,var(--theme-surface) 88%, var(--theme-bg));
