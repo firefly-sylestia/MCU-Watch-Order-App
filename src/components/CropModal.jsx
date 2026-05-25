@@ -116,18 +116,18 @@ export default function CropModal({ src, onConfirm, onCancel, theme, cropTarget 
 
   return (
     <div
-      style={{ position: "fixed", inset: 0, zIndex: 20000, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, animation: "modalBackdropFade 220ms var(--ease-ios)" }}
+      style={{ position: "fixed", inset: 0, zIndex: 20000, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "center", justifyContent: "center", padding: "var(--ui-space-4)", animation: "modalBackdropFade 220ms var(--ease-ios)" }}
       onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
     >
-      <div style={{ background: theme?.cardBg || "#1c1c1e", borderRadius: 18, padding: 14, width: "100%", maxWidth: 480, display: "flex", flexDirection: "column", gap: 10, boxShadow: theme?.cardShadow || "0 24px 64px rgba(0,0,0,0.6)", border: `1px solid ${theme?.cardBorder || "rgba(255,255,255,0.14)"}`, animation: "modalContentSpring 380ms var(--ease-spring)" }}>
+      <div style={{ background: theme?.cardBg || "#1c1c1e", borderRadius: "var(--ui-radius-lg)", padding: "var(--ui-space-3)", width: "100%", maxWidth: 480, display: "flex", flexDirection: "column", gap: "var(--ui-space-2)", boxShadow: theme?.cardShadow || "0 24px 64px rgba(0,0,0,0.6)", border: `1px solid ${theme?.cardBorder || "rgba(255,255,255,0.14)"}`, animation: "modalContentSpring 380ms var(--ease-spring)" }}>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h3 style={{ color: theme?.textPrimary || "#fff", fontSize: 16, fontWeight: 700, margin: 0 }}>{title}</h3>
-          <button onClick={onCancel} aria-label="Close" style={{ background: "rgba(255,255,255,0.1)", border: "none", color: theme?.textPrimary || "#fff", borderRadius: "50%", width: 30, height: 30, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+          <button onClick={onCancel} aria-label="Close" style={{ background: "rgba(255,255,255,0.1)", border: "none", color: theme?.textPrimary || "#fff", borderRadius: "50%", width: 32, height: 32, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
         </div>
 
         <div
-          style={{ position: "relative", display: "flex", justifyContent: "center", background: "linear-gradient(160deg, rgba(5,8,18,0.95), rgba(12,16,28,0.9))", borderRadius: 12, overflow: "hidden", userSelect: "none", touchAction: "none", minHeight: 80 }}
+          style={{ position: "relative", display: "flex", justifyContent: "center", background: "linear-gradient(160deg, rgba(5,8,18,0.95), rgba(12,16,28,0.9))", borderRadius: "var(--ui-radius-md)", overflow: "hidden", userSelect: "none", touchAction: "none", minHeight: 80 }}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerUp}
@@ -150,9 +150,9 @@ export default function CropModal({ src, onConfirm, onCancel, theme, cropTarget 
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={onCancel} style={{ flex: 1, padding: "12px", background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 12, color: theme?.textPrimary || "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
-          <button onClick={confirmCrop} style={{ flex: 2, padding: "12px", background: `linear-gradient(135deg, ${theme?.accent || "#0a84ff"}, ${theme?.accent2 || "#2dd4bf"})`, border: "none", borderRadius: 12, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>✓ Apply Crop</button>
+        <div style={{ display: "flex", gap: "var(--ui-space-1)" }}>
+          <button onClick={onCancel} style={{ flex: 1, padding: "10px 14px", background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "var(--ui-radius-md)", color: theme?.textPrimary || "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
+          <button onClick={confirmCrop} style={{ flex: 2, padding: "10px 14px", background: `linear-gradient(135deg, ${theme?.accent || "#0a84ff"}, ${theme?.accent2 || "#2dd4bf"})`, border: "none", borderRadius: "var(--ui-radius-md)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>✓ Apply Crop</button>
         </div>
 
       </div>
