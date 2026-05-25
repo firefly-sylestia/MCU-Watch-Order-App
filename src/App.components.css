@@ -2781,3 +2781,71 @@ textarea{font-size:var(--type-body)}
   .rrow{min-height:84px;gap:var(--spec-space-sm);padding:var(--spec-space-sm)}
   .settings-menu{padding:var(--spec-space-sm)!important}
 }
+
+
+/* Unified interactive state system — Marvel-inspired adaptive controls */
+:root{
+  --ui-state-inactive-bg: color-mix(in srgb, var(--theme-surface) 82%, transparent);
+  --ui-state-inactive-border: color-mix(in srgb, var(--theme-border) 76%, transparent);
+  --ui-state-inactive-text: var(--theme-text-secondary);
+  --ui-state-active-bg: linear-gradient(135deg, color-mix(in srgb, #ed1d24 72%, var(--theme-accent) 28%), color-mix(in srgb, #9f0712 76%, var(--theme-accent-alt) 24%));
+  --ui-state-active-border: color-mix(in srgb, #ff4d55 65%, var(--theme-accent) 35%);
+  --ui-state-active-text: #fff7f7;
+  --ui-state-active-glow: 0 0 0 1px color-mix(in srgb, #ff6268 55%, transparent), 0 12px 26px rgba(159,7,18,0.35);
+}
+
+.fpill,.wbtn,.theme-btn,.status-pill,.dock-btn,.filters-trigger,.phase-chip,.lmode-btn,.ntab,.sopt{
+  transition: background-color var(--interactive-duration) var(--interactive-ease), color var(--interactive-duration) var(--interactive-ease), border-color var(--interactive-duration) var(--interactive-ease), box-shadow var(--interactive-duration) var(--interactive-ease), transform 120ms var(--interactive-ease), opacity var(--interactive-duration) var(--interactive-ease);
+}
+
+.fpill,.wbtn,.theme-btn,.status-pill,.dock-btn,.filters-trigger,.phase-chip,.lmode-btn,.sopt{
+  background: var(--ui-state-inactive-bg);
+  border-color: var(--ui-state-inactive-border);
+  color: var(--ui-state-inactive-text);
+}
+
+.fpill[aria-pressed="true"],.fpill.active,.fpill.picked,
+.wbtn[aria-pressed="true"],.wbtn.active,
+.theme-btn[aria-pressed="true"],.theme-btn.active,
+.status-pill[aria-pressed="true"],.status-pill.active,
+.dock-btn[aria-pressed="true"],.dock-btn.active,
+.filters-trigger[aria-expanded="true"],
+.phase-chip[aria-pressed="true"],.phase-chip.active,
+.lmode-btn.active,
+.ntab.on,
+.sopt.picked,.dropdown-item.active{
+  background: var(--ui-state-active-bg) !important;
+  border-color: var(--ui-state-active-border) !important;
+  color: var(--ui-state-active-text) !important;
+  box-shadow: var(--ui-state-active-glow);
+}
+
+.fpill[aria-pressed="false"],.wbtn[aria-pressed="false"],.theme-btn[aria-pressed="false"],.status-pill[aria-pressed="false"],.phase-chip[aria-pressed="false"]{
+  opacity: .88;
+}
+
+.fpill:hover,.wbtn:hover,.theme-btn:hover,.status-pill:hover,.dock-btn:hover,.filters-trigger:hover,.phase-chip:hover,.lmode-btn:hover,.ntab:hover,.sopt:hover{
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--theme-accent) 40%, var(--ui-state-inactive-border));
+  color: var(--theme-text);
+}
+
+.fpill:active,.wbtn:active,.theme-btn:active,.status-pill:active,.dock-btn:active,.filters-trigger:active,.phase-chip:active,.lmode-btn:active,.ntab:active,.sopt:active{
+  transform: translateY(0) scale(.98);
+}
+
+[data-color-mode="light"]{
+  --ui-state-inactive-bg: color-mix(in srgb, #ffffff 90%, var(--theme-surface) 10%);
+  --ui-state-inactive-border: color-mix(in srgb, #f1c9cc 58%, var(--theme-border) 42%);
+  --ui-state-inactive-text: color-mix(in srgb, var(--theme-text) 88%, #4b5563 12%);
+  --ui-state-active-bg: linear-gradient(135deg, #ed1d24, #b00611);
+  --ui-state-active-border: #ff5b63;
+  --ui-state-active-text: #fff;
+  --ui-state-active-glow: 0 0 0 1px rgba(237,29,36,.26), 0 10px 20px rgba(176,6,17,.22);
+}
+
+[data-color-mode="dark"]{
+  --ui-state-inactive-bg: color-mix(in srgb, var(--theme-surface) 78%, #0b1120 22%);
+  --ui-state-inactive-border: color-mix(in srgb, var(--theme-border) 72%, #1f2937 28%);
+  --ui-state-inactive-text: color-mix(in srgb, var(--theme-text-secondary) 90%, #9ca3af 10%);
+}
