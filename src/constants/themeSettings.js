@@ -1,10 +1,5 @@
 /**
  * Theme settings are centralized here so you can edit palettes without touching App logic.
- *
- * HOW TO CUSTOMIZE:
- * 1) Pick a theme in THEME_CHOICES (shown in settings UI).
- * 2) In THEME_PALETTES, edit that theme's color values.
- * 3) Keep keys unchanged (e.g. --theme-accent) so UI keeps consuming them automatically.
  */
 
 export const THEME_CHOICES = [
@@ -24,7 +19,6 @@ export const THEME_CHOICES = [
   { id: 'hela', label: 'Hela', dcLabel: 'Green Lantern', swatch: '#49a561', dcSwatch: '#2ea44f' },
 ];
 
-// Edit palette values below. Keep all variable names exactly as-is.
 export const THEME_PALETTES = {
   classic: { accent: '#A63232', accentAlt: '#F2AE30', darkSurface: 'rgba(28,10,9,0.90)', lightSurface: 'rgba(255,246,244,0.96)', darkSurfaceHover: 'rgba(44,14,12,0.94)', lightSurfaceHover: 'rgba(255,236,232,0.97)', darkCompCard: 'rgba(26,9,8,0.88)', lightCompCard: 'rgba(255,248,246,0.95)' },
   cosmic: { accent: '#4d7bff', accentAlt: '#ffb94a', darkSurface: 'rgba(7,12,32,0.90)', lightSurface: 'rgba(243,247,255,0.96)', darkSurfaceHover: 'rgba(10,16,44,0.94)', lightSurfaceHover: 'rgba(232,240,255,0.97)', darkCompCard: 'rgba(6,11,30,0.88)', lightCompCard: 'rgba(245,249,255,0.95)' },
@@ -44,21 +38,13 @@ export const THEME_PALETTES = {
 
 export const getActiveThemeVars = (themeMode, darkMode) => {
   const p = THEME_PALETTES[themeMode] || THEME_PALETTES.classic;
-  const lightUnifiedBase = '#f1ece3';
-  const darkUnifiedBase = '#1A1D23';
-  const darkUnifiedElevated = '#272D36';
-  const lightSurface = `color-mix(in srgb, ${p.lightSurface} 72%, ${lightUnifiedBase})`;
-  const lightSurfaceHover = `color-mix(in srgb, ${p.lightSurfaceHover} 68%, ${lightUnifiedBase})`;
-  const lightCompCard = `color-mix(in srgb, ${p.lightCompCard} 74%, ${lightUnifiedBase})`;
-  const darkSurface = `color-mix(in srgb, ${p.darkSurface} 58%, ${darkUnifiedBase})`;
-  const darkSurfaceHover = `color-mix(in srgb, ${p.darkSurfaceHover} 60%, ${darkUnifiedElevated})`;
-  const darkCompCard = `color-mix(in srgb, ${p.darkCompCard} 56%, ${darkUnifiedElevated})`;
+  const mode = darkMode ? 'dark' : 'light';
   return {
     '--theme-accent': p.accent,
     '--theme-accent-alt': p.accentAlt,
     '--theme-accent-glow': darkMode ? `color-mix(in srgb, ${p.accent} 42%, transparent)` : `color-mix(in srgb, ${p.accent} 24%, transparent)`,
-    '--theme-surface': darkMode ? darkSurface : lightSurface,
-    '--theme-surface-hover': darkMode ? darkSurfaceHover : lightSurfaceHover,
-    '--comp-card-bg': darkMode ? darkCompCard : lightCompCard,
+    '--theme-surface': `var(--theme-surface-${mode})`,
+    '--theme-surface-hover': `var(--theme-surface-hover-${mode})`,
+    '--comp-card-bg': `var(--theme-comp-card-${mode})`,
   };
 };
