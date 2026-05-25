@@ -3053,6 +3053,21 @@ export default function MCUViewer() {
 
   // Count active filters for the collapsed bar badge
   const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
+  const hasSearchQuery = Boolean(search.trim());
+  const hasInvalidFilterCombo = phaseKeys.length === 0 && !hasSearchQuery && activeFilterCount >= 3;
+  const clearAllFilters = useCallback(() => {
+    setSearch('');
+    setTypeFilter(null);
+    setStatusFilter(null);
+    setWatchedOnly(false);
+    setEssentialOnly(false);
+    setAutoHideStatuses(false);
+    setSortBy('order');
+    setActivePhase(0);
+  }, [setSearch, setTypeFilter, setStatusFilter, setWatchedOnly, setEssentialOnly, setAutoHideStatuses, setSortBy, setActivePhase]);
+  const openRecommendedNextTitle = useCallback(() => {
+    if (nextUnwatched) openDetail(nextUnwatched);
+  }, [nextUnwatched, openDetail]);
   const trailerDataForDetail = detailItem ? getTrailerByTitle(detailItem.title) : null;
   const trailerOptions = trailerDataForDetail?.options || [];
   const selectedTrailer = trailerOptions[trailerVariantIndex] || trailerOptions[0] || null;
@@ -3594,8 +3609,14 @@ export default function MCUViewer() {
       <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {phaseKeys.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
-              NO RESULTS — ADJUST YOUR FILTERS
+            <div className="modern-empty-state" role="status" aria-live="polite">
+              <div className="modern-empty-state__icon" aria-hidden="true">🧭</div>
+              <h3>{hasInvalidFilterCombo ? 'Filter combo has no timeline path' : hasSearchQuery ? 'No matches found' : 'No titles available in this view'}</h3>
+              <p>{hasInvalidFilterCombo ? 'These filters currently conflict with each other. Reset and try a simpler path.' : hasSearchQuery ? `No titles matched “${search.trim()}”. Try another keyword or reset filters.` : 'Adjust your filters to continue exploring the timeline.'}</p>
+              <div className="modern-empty-state__actions">
+                <button className="fpill" onClick={clearAllFilters}><FilterX size={12}/>Clear filters</button>
+                <button className="fpill" onClick={openRecommendedNextTitle} disabled={!nextUnwatched} style={{ opacity: nextUnwatched ? 1 : 0.58 }}><Sparkles size={12}/>Show recommended next title</button>
+              </div>
             </div>
           )}
 
@@ -3736,8 +3757,17 @@ export default function MCUViewer() {
             <div className="detail-export-grid">
               <div className="detail-poster-frame">
                 {detailPosterFailed ? (
-                  <div className="detail-fallback-poster" style={{ width: '100%', height: '100%' }}>
+                  <div className="detail-fallback-poster offline-poster-fallback" style={{ width: '100%', height: '100%' }}>
                     <span>{detailItem.title}</span>
+                    <small>Poster unavailable offline or failed to load.</small>
+                    <button
+                      className="fpill"
+                      type="button"
+                      onClick={() => { setDetailPosterFailed(false); refreshPoster(detailItem); }}
+                      style={{ marginTop: 10, minHeight: 34, fontSize: 11 }}
+                    >
+                      <RotateCw size={12} />Retry poster load
+                    </button>
                   </div>
                 ) : (
                   <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : posterSrc(detailItem)} onError={() => setDetailPosterFailed(true)} alt={`${detailItem.title} poster`} onClick={() => { if (selectedTrailer?.youtubeId) setTrailerOpen(true); }} style={{ cursor: selectedTrailer?.youtubeId ? 'pointer' : 'default' }} />
@@ -4013,7 +4043,14 @@ export default function MCUViewer() {
             </div>
             </>}
             {analyticsTab === 'reviews' && <div style={{ display: 'grid', gap: 12, maxHeight: '58vh', overflow: 'auto', paddingRight: 4 }}>
-              {historyItems.length === 0 && <div style={{ color: T.textMuted, padding: 16 }}>No watched history yet. Mark an item watched to start your analysis log.</div>}
+              {historyItems.length === 0 && <div className="modern-empty-state" role="status">
+                <div className="modern-empty-state__icon" aria-hidden="true">📘</div>
+                <h3>No saved actions yet</h3>
+                <p>Ratings, rewatches, bookmarks, and reviews will appear here once you interact with a title.</p>
+                <div className="modern-empty-state__actions">
+                  <button className="fpill" onClick={openRecommendedNextTitle} disabled={!nextUnwatched} style={{ opacity: nextUnwatched ? 1 : 0.58 }}><Sparkles size={12}/>Show recommended next title</button>
+                </div>
+              </div>}
               {historyItems.map(item => (
                 <div key={item.id} className="glass-panel" style={{ borderRadius: 14, padding: '16px 16px 14px', display: 'grid', gap: 12, border: '1px solid color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border))', background: 'color-mix(in srgb, var(--theme-surface) 80%, transparent)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'baseline', flexWrap: 'wrap' }}>
