@@ -94,10 +94,14 @@
   --ui-border-strong: color-mix(in srgb, var(--border-active) 70%, var(--border));
   --ui-shadow-1: var(--shadow-sm);
   --ui-shadow-2: var(--shadow-md);
-  --ui-space-1: 6px;
-  --ui-space-2: 10px;
-  --ui-space-3: 14px;
-  --ui-space-4: 18px;
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-5: 24px;
+  --ui-space-6: 32px;
+  --ui-space-7: 40px;
+  --ui-space-8: 48px;
   --ui-radius-sm: 10px;
   --ui-radius-md: 12px;
   --ui-radius-lg: 16px;

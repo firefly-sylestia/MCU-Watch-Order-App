@@ -96,13 +96,13 @@
         .stat-card-label { font-size: clamp(11px, 1.8vw, 14px) !important; }
         .progress-labels { font-size: clamp(11px, 1.8vw, 14px) !important; color:var(--theme-text-muted) !important }
 
-        .floating-controls{position:fixed;right:max(var(--space-4), env(safe-area-inset-right));bottom:max(var(--space-4), env(safe-area-inset-bottom));z-index:9994;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none}
+        .floating-controls{position:fixed;right:max(var(--ui-space-4), env(safe-area-inset-right));bottom:max(var(--ui-space-4), env(safe-area-inset-bottom));z-index:9994;display:flex;flex-direction:column;gap:var(--layout-gap-sm);align-items:flex-end;pointer-events:none}
         .floating-controls>*{pointer-events:auto}
-                .bottom-action-dock{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:8px 10px;border-radius:20px;border:1px solid color-mix(in srgb,var(--theme-accent-alt) 20%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 80%, transparent);backdrop-filter:blur(10px) saturate(145%)}
-        .filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-        .fab-primary{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:10px 14px;border:1px solid color-mix(in srgb,var(--theme-accent) 35%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 84%, transparent);color:var(--theme-text);font-family:var(--font-marvel-ui);letter-spacing:1px;font-size:12px}
+                .bottom-action-dock{display:flex;gap:var(--layout-gap-xs);align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:var(--layout-pad-xs) var(--layout-pad-sm);border-radius:20px;border:1px solid color-mix(in srgb,var(--theme-accent-alt) 20%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 80%, transparent);backdrop-filter:blur(10px) saturate(145%)}
+        .filter-bar{display:flex;gap:var(--layout-gap-xs);align-items:center;flex-wrap:wrap}
+        .fab-primary{display:inline-flex;align-items:center;gap:var(--layout-gap-xs);border-radius:999px;padding:var(--layout-pad-sm) var(--layout-pad-md);border:1px solid color-mix(in srgb,var(--theme-accent) 35%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 84%, transparent);color:var(--theme-text);font-family:var(--font-marvel-ui);letter-spacing:1px;font-size:12px}
         .fab-primary:hover{border-color:var(--theme-accent);color:var(--theme-accent)}
-        .bottom-action-bar{border-radius:999px;padding:10px 14px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+        .bottom-action-bar{border-radius:999px;padding:var(--layout-pad-sm) var(--layout-pad-md);white-space:nowrap;display:inline-flex;align-items:center;gap:var(--ui-space-2)}
         main::-webkit-scrollbar{width:4px}
         main::-webkit-scrollbar-track{background:transparent}
         main::-webkit-scrollbar-thumb{background:var(--theme-scroll-thumb, rgba(255,255,255,0.25));border-radius:4px}
@@ -176,3 +176,28 @@
 /* Unified layout motion/spacing */
 #center{gap:var(--space-lg);padding:var(--space-lg) var(--space-md);animation:none !important;}
 #next-steps>div{padding:var(--space-lg) var(--space-md);}
+
+
+:root {
+  --layout-pad-xs: var(--ui-space-2);
+  --layout-pad-sm: var(--ui-space-3);
+  --layout-pad-md: var(--ui-space-4);
+  --layout-pad-lg: var(--ui-space-5);
+  --layout-gap-xs: var(--ui-space-2);
+  --layout-gap-sm: var(--ui-space-3);
+  --layout-gap-md: var(--ui-space-4);
+  --layout-gap-lg: var(--ui-space-5);
+  --layout-section-space: var(--ui-space-6);
+  --layout-stack-space: var(--ui-space-4);
+}
+
+.layout-stack{display:grid;gap:var(--layout-stack-space)}
+.layout-stack--tight{gap:var(--layout-gap-sm)}
+.layout-stack--cozy{gap:var(--layout-gap-md)}
+.layout-stack--spacious{gap:var(--layout-gap-lg)}
+.layout-panel{padding:var(--layout-pad-md);border-radius:var(--ui-radius-lg)}
+.layout-panel--cozy{padding:var(--layout-pad-lg)}
+.layout-row{display:flex;align-items:center;gap:var(--layout-gap-sm)}
+.layout-row--wrap{flex-wrap:wrap;row-gap:var(--layout-gap-xs)}
+.layout-section{margin-block:var(--layout-section-space)}
+.layout-section--tight{margin-block:var(--layout-gap-md)}
