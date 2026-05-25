@@ -73,6 +73,9 @@ const UserCircle = p => <Icon {...p}><circle cx="12" cy="8" r="4"/><path d="M4 2
 const Menu = p => <Icon {...p}><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></Icon>;
 const SwitchIcon = p => <Icon {...p}><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 8a9 9 0 0 0-15-3"/><path d="M3 16a9 9 0 0 0 15 3"/></Icon>;
 const X         = p => <Icon {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></Icon>;
+const Sparkles  = p => <Icon {...p}><path d="M12 3l1.2 3.3L16.5 7.5l-3.3 1.2L12 12l-1.2-3.3L7.5 7.5l3.3-1.2L12 3z"/><path d="M5 14l.8 2.2L8 17l-2.2.8L5 20l-.8-2.2L2 17l2.2-.8L5 14z"/><path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14z"/></Icon>;
+const FilterX   = p => <Icon {...p}><polygon points="22 3 2 3 10 12.5 10 19 14 21 14 12.5 22 3"/><path d="m16 16 5 5"/><path d="m21 16-5 5"/></Icon>;
+const RotateCw  = p => <Icon {...p}><path d="M21 2v6h-6"/><path d="M21 8a9 9 0 1 0 2.64 6.36"/></Icon>;
 
 
 const TYPE_META = {
