@@ -61,7 +61,7 @@
 
         .section-up{content-visibility:visible;contain-intrinsic-size:auto}
         .app-scroll-shell{min-width:100%;max-width:100%;overflow-x:hidden;overscroll-behavior-x:none}
-        main.app-scroll-shell{scrollbar-gutter:stable both-edges;overscroll-behavior-y:contain}
+        main.app-scroll-shell{scrollbar-gutter:stable;overscroll-behavior-y:contain}
 
 
         .row-meta-line{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -87,6 +87,8 @@
           .filters-open{padding:0 12px 12px !important}
         }
         @media (min-width: 1024px) {
+          main.app-scroll-shell{padding-inline:clamp(14px,1.6vw,28px);}
+          .floating-controls{right:clamp(14px,1.8vw,28px);}
         }
         @media (min-width: 1600px) {
           main{--content-max:1200px !important}
