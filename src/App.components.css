@@ -2916,3 +2916,85 @@ textarea{font-size:var(--type-body)}
   background:linear-gradient(160deg,#fff,#f4f7fb) !important;
   color:#1f2937 !important;
 }
+
+/* Unified gradient accents across theme-aware interactive surfaces */
+:root{
+  --ui-accent-gradient: linear-gradient(145deg,
+    color-mix(in srgb, var(--theme-accent) 16%, transparent) 0%,
+    color-mix(in srgb, var(--theme-accent-alt) 14%, transparent) 100%);
+  --ui-accent-gradient-hover: linear-gradient(145deg,
+    color-mix(in srgb, var(--theme-accent) 24%, transparent) 0%,
+    color-mix(in srgb, var(--theme-accent-alt) 20%, transparent) 100%);
+}
+
+.glass-panel,
+.glass-surface,
+.fpill,
+.wbtn,
+.theme-btn,
+.status-pill,
+.meta-chip,
+.phase-header-card,
+.phase-rows-full,
+.list-panel,
+.calendar-row,
+.analytics-header{
+  position: relative;
+  isolation: isolate;
+}
+
+.glass-panel::before,
+.glass-surface::before,
+.fpill::before,
+.wbtn::before,
+.theme-btn::before,
+.status-pill::before,
+.meta-chip::before,
+.phase-header-card::before,
+.phase-rows-full::before,
+.list-panel::before,
+.calendar-row::before,
+.analytics-header::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  background: var(--ui-accent-gradient);
+  opacity: .82;
+  pointer-events:none;
+  z-index: -1;
+  transition: opacity 180ms ease, background 180ms ease;
+}
+
+.fpill:hover::before,
+.wbtn:hover::before,
+.theme-btn:hover::before,
+.status-pill:hover::before,
+.glass-panel:hover::before,
+.analytics-header:hover::before{
+  background: var(--ui-accent-gradient-hover);
+}
+
+[data-color-mode="light"]{
+  --ui-accent-gradient: linear-gradient(145deg,
+    color-mix(in srgb, var(--theme-accent) 10%, #ffffff) 0%,
+    color-mix(in srgb, var(--theme-accent-alt) 9%, #f4f6fb) 100%);
+  --ui-accent-gradient-hover: linear-gradient(145deg,
+    color-mix(in srgb, var(--theme-accent) 16%, #ffffff) 0%,
+    color-mix(in srgb, var(--theme-accent-alt) 14%, #f4f6fb) 100%);
+}
+
+@media (prefers-reduced-motion: reduce){
+  .glass-panel::before,
+  .glass-surface::before,
+  .fpill::before,
+  .wbtn::before,
+  .theme-btn::before,
+  .status-pill::before,
+  .meta-chip::before,
+  .phase-header-card::before,
+  .phase-rows-full::before,
+  .list-panel::before,
+  .calendar-row::before,
+  .analytics-header::before{transition:none}
+}
