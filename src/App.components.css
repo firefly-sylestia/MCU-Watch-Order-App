@@ -2490,10 +2490,10 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   position:fixed;
   left:50%;
   top:50%;
-  width:min(100dvh,1080px);
-  max-width:min(100dvh,1080px);
-  max-height:min(100dvw,1920px);
-  border-radius:16px;
+  width:min(100dvh - 8px,1280px);
+  max-width:min(100dvh - 8px,1280px);
+  max-height:min(100dvw - 8px,2048px);
+  border-radius:18px;
   transform:translate(-50%,-50%) rotate(90deg);
   transform-origin:center center;
   margin:0;
@@ -2509,9 +2509,9 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   border-radius:14px;border:1px solid color-mix(in srgb,var(--theme-border) 88%, transparent);
   background:color-mix(in srgb,var(--theme-bg) 70%, #000);
 }
-.trailer-frame.is-landscape{padding-top:min(46%,86vh)}
+.trailer-frame.is-landscape{padding-top:min(44%,90vh)}
 .trailer-shell.is-expanded .trailer-frame{padding-top:min(56.25%,76vh)}
-.trailer-shell.is-expanded .trailer-frame.is-landscape{padding-top:min(42%,96vh)}
+.trailer-shell.is-expanded .trailer-frame.is-landscape{padding-top:min(40%,98vh)}
 .trailer-expanded-actions{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
 .trailer-variant-select{
   margin-top:10px;border:1px solid color-mix(in srgb,var(--theme-border) 80%, transparent);
@@ -2521,9 +2521,9 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 [data-color-mode="light"] .trailer-backdrop.is-landscape{background:radial-gradient(circle at 20% 12%, color-mix(in srgb,var(--theme-accent) 16%, #fff), transparent 44%), rgba(15,23,42,.45)}
 @media (max-width:900px){
   .trailer-backdrop.is-landscape .trailer-shell{
-    width:min(98dvh,760px);
-    max-width:min(98dvh,760px);
-    padding:10px;
+    width:min(100dvh - 6px,920px);
+    max-width:min(100dvh - 6px,920px);
+    padding:8px;
   }
   .trailer-backdrop.is-landscape .trailer-frame{
     border-radius:12px;
