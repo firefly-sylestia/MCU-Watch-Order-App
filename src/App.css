@@ -404,3 +404,7 @@ code {
     color: var(--text);
   }
 }
+
+/* Unified cinematic minimal shell */
+.app-container{background:linear-gradient(180deg,color-mix(in srgb,var(--theme-bg) 92%, #000),color-mix(in srgb,var(--theme-bg) 74%, #111)) !important;}
+[data-color-mode="light"] .app-container{background:linear-gradient(180deg,#f7f9fc,#eef2f8) !important;}

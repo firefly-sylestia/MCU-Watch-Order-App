@@ -172,3 +172,7 @@
 .wbtn:disabled,
 .theme-btn:disabled,
 .status-pill:disabled { opacity: .56; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* Unified layout motion/spacing */
+#center{gap:var(--space-lg);padding:var(--space-lg) var(--space-md);animation:none !important;}
+#next-steps>div{padding:var(--space-lg) var(--space-md);}
