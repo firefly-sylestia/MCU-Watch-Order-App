@@ -92,7 +92,7 @@ const STATUS_META = {
   unwatched:      { label: 'Unwatched',      color: 'var(--theme-text-secondary)', Icon: EyeOff, bg: 'transparent' },
 };
 
-const SORT_LABELS = { order: 'Chronological', year: 'By Year', title: 'Alphabetical', runtime: 'Runtime', watched: 'Recently Watched', status: 'By Status' };
+const SORT_LABELS = { order: 'Chronological only', year: 'By Year', title: 'Alphabetical', runtime: 'Runtime', watched: 'Recently Watched', status: 'By Status' };
 const HIDDEN_FILTER_STATUSES = new Set(['watched', 'dropped']);
 const TITLE_ROW_STATIC = {
   titleBtn: { overflow: 'hidden' },
@@ -3422,7 +3422,7 @@ export default function MCUViewer() {
             </button>
             <div ref={sortMenuRef} style={{ position: 'relative' }}>
               <button className="filters-trigger" onClick={() => setSortMenuOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${sortBy === 'order' ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: sortBy === 'order' ? 'var(--theme-accent)' : T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}><ArrowUpDown size={13} />Sort: {SORT_LABELS[sortBy]}<ChevDown size={11} style={{ transform: sortMenuOpen ? 'rotate(180deg)' : 'none' }}/></button>
-              {sortMenuOpen && <div className="dropdown-pop filter-dropdown redesigned-sort-menu" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1450, minWidth: 240 }}>
+              {sortMenuOpen && <div className="dropdown-pop filter-dropdown redesigned-sort-menu modern-control-sheet" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1450, width: 'min(320px, calc(100vw - 32px))', maxHeight: 'min(56vh, 360px)', overflowY: 'auto' }}>
                 {Object.entries(SORT_LABELS).map(([key, label]) => (
                   <button key={key} className={`sopt ${sortBy === key ? 'picked' : ''}`} onClick={() => { setSortBy(key); setSortMenuOpen(false); }} style={{ width: '100%', textAlign: 'left' }}>
                     {label}
@@ -3435,7 +3435,7 @@ export default function MCUViewer() {
                 <Layers size={13} /> {TIMELINE_MODES.find(m => m.id === timelineMode)?.label || 'Timeline'} <ChevDown size={11} style={{ transform: timelineOpen ? 'rotate(180deg)' : 'none' }}/>
               </button>
               {timelineOpen && (
-                <div className="dropdown-pop filter-dropdown redesigned-sort-menu" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1450, minWidth: 300 }}>
+                <div className="dropdown-pop filter-dropdown redesigned-sort-menu modern-control-sheet" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 1450, width: 'min(360px, calc(100vw - 32px))', maxHeight: 'min(62vh, 420px)', overflowY: 'auto' }}>
                   {TIMELINE_MODES.map(mode => (
                     <button key={mode.id} className={`sopt ${timelineMode === mode.id ? 'picked' : ''}`} style={{ width: '100%', textAlign: 'left', marginBottom: 4, borderRadius: 10, border: timelineMode === mode.id ? '1px solid color-mix(in srgb, var(--theme-accent) 60%, transparent)' : '1px solid transparent' }} onClick={() => { setTimelineMode(mode.id); setTimelineOpen(false); }}>
                       <div style={{ fontWeight: 700 }}>{mode.label}</div><div style={{ fontSize: 11, opacity: 0.8 }}>{mode.description}</div>
