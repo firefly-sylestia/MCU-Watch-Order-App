@@ -3929,7 +3929,7 @@ export default function MCUViewer() {
               </div>
             </div>}
             <div className={`trailer-frame ${trailerLandscape ? 'is-landscape' : ''}`} ref={trailerShellRef}>
-              {trailerLandscape && <div className="trailer-landscape-tip">Landscape mode enabled</div>}
+              <div className="trailer-landscape-tip" aria-live="polite">{trailerLandscape ? 'Landscape mode enabled' : 'Portrait mode enabled'}</div>
               <iframe title={`${detailItem.title} trailer`} src={trailerEmbedUrl(selectedTrailer.youtubeId)} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
             </div>
             {trailerExpanded && <div className="trailer-expanded-actions">
