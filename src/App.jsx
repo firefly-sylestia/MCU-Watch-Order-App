@@ -3050,6 +3050,19 @@ export default function MCUViewer() {
     ...activeThemeVars,
   };
   const routeMode = analyticsOpen || settingsOpen ? 'utility' : 'home';
+  const currentScreen = settingsOpen
+    ? 'settings'
+    : analyticsOpen
+      ? 'activity'
+      : browseMode === 'search'
+        ? 'discover'
+        : 'timeline';
+  const primaryNavItems = [
+    { id: 'timeline', label: 'Timeline', Icon: Layers, onSelect: () => { setSettingsOpen(false); setAnalyticsOpen(false); setBrowseMode('phase'); } },
+    { id: 'discover', label: 'Discover', Icon: Search, onSelect: () => { setSettingsOpen(false); setAnalyticsOpen(false); setBrowseMode('search'); } },
+    { id: 'activity', label: 'Activity', Icon: Clock, onSelect: () => { setSettingsOpen(false); setSidebarOpen(false); setAnalyticsOpen(true); } },
+    { id: 'settings', label: 'Settings', Icon: Settings, onSelect: () => { setAnalyticsOpen(false); setSidebarOpen(false); setSettingsOpen(true); } },
+  ];
 
   // Count active filters for the collapsed bar badge
   const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
@@ -3124,6 +3137,56 @@ export default function MCUViewer() {
         <div className="hero-backdrop-blend" />
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '6%' : '3%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '5%' : '2.5%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.12 : 0.06, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
       </div>
+
+      <header className="app-primary-header" role="banner">
+        <div className="app-primary-brand">
+          <h1>MCU Viewing Order</h1>
+          <p>{currentScreen === 'timeline' ? 'Timeline view' : currentScreen === 'discover' ? 'Discover titles' : currentScreen === 'activity' ? 'Recent activity' : 'Settings'}</p>
+        </div>
+        <nav className="app-primary-nav" aria-label="Primary">
+          {primaryNavItems.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`app-nav-btn ${currentScreen === item.id ? 'is-active' : ''}`}
+              onClick={item.onSelect}
+              aria-current={currentScreen === item.id ? 'page' : undefined}
+            >
+              <item.Icon size={14} />
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </nav>
+      </header>
+
+      <section className="app-secondary-controls" aria-label={`${currentScreen} controls`}>
+        {currentScreen === 'timeline' && (
+          <>
+            <button className="filters-trigger" onClick={() => setFiltersOpen(v => !v)}><SlidersH size={13} />Filters</button>
+            <button className="filters-trigger" onClick={() => setSortMenuOpen(v => !v)}><ArrowUpDown size={13} />Sort</button>
+            <button className="filters-trigger" onClick={() => setTimelineOpen(v => !v)}><Layers size={13} />Mode</button>
+          </>
+        )}
+        {currentScreen === 'discover' && (
+          <>
+            <button className="filters-trigger" onClick={() => setBrowseMode('search')}><Search size={13} />Search</button>
+            <button className="filters-trigger" onClick={() => setTypeFilter(typeFilter ? null : 'film')}><Film size={13} />Type</button>
+            <button className="filters-trigger" onClick={() => setStatusFilter(statusFilter ? null : 'watching')}><Clock size={13} />Status</button>
+          </>
+        )}
+        {currentScreen === 'activity' && (
+          <>
+            <button className="filters-trigger" onClick={closeAnalytics}><X size={13} />Close Activity</button>
+            <button className="filters-trigger" onClick={() => setWatchedOnly(v => !v)}><Check size={13} />Watched</button>
+          </>
+        )}
+        {currentScreen === 'settings' && (
+          <>
+            <button className="filters-trigger" onClick={() => setDarkMode(v => !v)}>{darkMode ? <Sun size={13} /> : <Moon size={13} />}{darkMode ? 'Light' : 'Dark'}</button>
+            <button className="filters-trigger" onClick={closeSettings}><X size={13} />Close Settings</button>
+          </>
+        )}
+      </section>
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} settingsOpen={settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
@@ -3517,7 +3580,7 @@ export default function MCUViewer() {
           </div>
         )}
       </div>}
-      <div className={`floating-controls${fabMinimized ? ' is-minimized' : ''}`} style={detailItem || trailerOpen || analyticsOpen || settingsOpen || sidebarOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
+      <div className={`floating-controls${fabMinimized ? ' is-minimized' : ''}`} style={{ opacity: 0, pointerEvents: 'none', visibility: 'hidden' }}>
         <button
           type="button"
           className="fab-primary"

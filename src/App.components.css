@@ -2734,3 +2734,22 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 .analytics-metric-meta,.analytics-progress-sub,.detail-export-panel p,textarea{max-width:var(--content-measure);line-height:var(--lh-reading)}
 textarea{font-size:var(--type-body)}
 .detail-export-meta span,.calendar-badge,.calendar-group-header{font-size:var(--type-metadata);letter-spacing:.04em}
+
+/* Primary + secondary navigation redesign */
+.app-primary-header{position:sticky;top:0;z-index:1200;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:color-mix(in srgb,var(--theme-surface) 88%, transparent);border-bottom:1px solid var(--theme-border);backdrop-filter:blur(8px)}
+.app-primary-brand h1{margin:0;font-size:1rem;line-height:1.2}
+.app-primary-brand p{margin:2px 0 0;color:var(--theme-text-secondary);font-size:.75rem}
+.app-primary-nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.app-nav-btn{min-height:40px;padding:0 12px;border-radius:999px;border:1px solid var(--theme-border);background:var(--theme-surface);color:var(--theme-text);display:inline-flex;align-items:center;gap:6px;font-weight:600;cursor:pointer;transition:all var(--motion-fast)}
+.app-nav-btn:hover,.app-nav-btn:focus-visible{border-color:var(--theme-accent);outline:none;box-shadow:0 0 0 2px color-mix(in srgb,var(--theme-accent) 28%, transparent)}
+.app-nav-btn.is-active{background:color-mix(in srgb,var(--theme-accent) 16%, var(--theme-surface));border-color:color-mix(in srgb,var(--theme-accent) 52%, var(--theme-border));color:var(--theme-accent)}
+.app-secondary-controls{position:sticky;top:66px;z-index:1190;display:flex;gap:8px;padding:10px 16px;background:color-mix(in srgb,var(--theme-bg) 78%, transparent);border-bottom:1px solid var(--theme-border);flex-wrap:wrap}
+.app-secondary-controls .filters-trigger{min-height:40px}
+@media (max-width: 860px){
+  .app-primary-header{padding:10px 12px}
+  .app-primary-nav{position:fixed;left:0;right:0;bottom:0;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--theme-surface) 94%, transparent);border-top:1px solid var(--theme-border);justify-content:space-between;z-index:1300}
+  .app-nav-btn{flex:1;justify-content:center;min-height:46px;padding:0 8px;font-size:.8rem}
+  .app-secondary-controls{top:56px;padding:8px 10px 10px}
+  .app-scroll-shell{padding-bottom:88px}
+}
+@media (prefers-reduced-motion: reduce){.app-nav-btn{transition:none}}
