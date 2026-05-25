@@ -1073,7 +1073,14 @@ export default function MCUViewer() {
     setPerformanceSettings({ preset: presetId, ...preset });
   }, []);
   const updatePerformanceSetting = useCallback((key) => {
-    setPerformanceSettings(prev => ({ ...prev, preset: 'custom', [key]: !prev[key] }));
+    setPerformanceSettings((prev) => {
+      const next = { ...prev, preset: 'custom', [key]: !prev[key] };
+      if (key === 'reduceMotion' && next.reduceMotion === false) {
+        next.cinematicBackdrop = true;
+        next.trailerLandscapeEnhancements = true;
+      }
+      return next;
+    });
   }, []);
 
   const { isDesktopViewport } = useResponsiveLayout();
@@ -3871,8 +3878,8 @@ export default function MCUViewer() {
       )}
 
       {trailerOpen && detailItem && selectedTrailer?.youtubeId && (
-        <div className={`detail-backdrop trailer-backdrop ${trailerLandscape ? 'is-landscape' : ''}`} onClick={() => { setTrailerOpen(false); setTrailerExpanded(false); setTrailerLandscape(false); }} role="dialog" aria-label="Trailer player">
-          <div className={`detail-card glass-panel trailer-shell ${trailerLandscape ? 'is-landscape' : ''} ${trailerExpanded ? 'is-expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
+        <div className={`detail-backdrop trailer-backdrop ${trailerLandscape ? 'is-landscape' : ''} ${performanceSettings.trailerLandscapeEnhancements ? 'is-enhanced' : ''}`} onClick={() => { setTrailerOpen(false); setTrailerExpanded(false); setTrailerLandscape(false); }} role="dialog" aria-label="Trailer player">
+          <div className={`detail-card glass-panel trailer-shell ${trailerLandscape ? 'is-landscape' : ''} ${performanceSettings.trailerLandscapeEnhancements ? 'is-enhanced' : ''} ${trailerExpanded ? 'is-expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
             {!trailerExpanded && <div className="trailer-head">
               <div>
                 <div className="trailer-eyebrow">Official media</div>

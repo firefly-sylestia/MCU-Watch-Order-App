@@ -2473,13 +2473,13 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 .trailer-shell.is-landscape{
   max-width:min(1600px,100vw);
 }
-.trailer-backdrop.is-landscape .trailer-shell{
+.trailer-backdrop.is-landscape.is-enhanced .trailer-shell{
   position:fixed;
   left:50%;
   top:50%;
-  width:min(100dvh,1080px);
-  max-width:min(100dvh,1080px);
-  max-height:min(100dvw,1920px);
+  width:min(94vh,1100px);
+  max-width:min(94vh,1100px);
+  max-height:min(96vw,1920px);
   border-radius:16px;
   transform:translate(-50%,-50%) rotate(90deg);
   transform-origin:center center;
@@ -2506,20 +2506,20 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   border-radius:12px;padding:8px 10px;background:color-mix(in srgb,var(--theme-surface) 85%, transparent);
   color:var(--theme-text);font:700 12px/1 var(--font-marvel-ui);letter-spacing:.04em;
 }
-[data-color-mode="light"] .trailer-backdrop.is-landscape{background:radial-gradient(circle at 20% 12%, color-mix(in srgb,var(--theme-accent) 16%, #fff), transparent 44%), rgba(15,23,42,.45)}
+[data-color-mode="light"] .trailer-backdrop.is-landscape.is-enhanced{background:radial-gradient(circle at 20% 12%, color-mix(in srgb,var(--theme-accent) 16%, #fff), transparent 44%), rgba(15,23,42,.45)}
 @media (max-width:900px){
-  .trailer-backdrop.is-landscape .trailer-shell{
+  .trailer-backdrop.is-landscape.is-enhanced .trailer-shell{
     width:min(98dvh,760px);
     max-width:min(98dvh,760px);
     padding:10px;
   }
-  .trailer-backdrop.is-landscape .trailer-frame{
+  .trailer-backdrop.is-landscape.is-enhanced .trailer-frame{
     border-radius:12px;
   }
 }
 @media (prefers-reduced-motion:reduce){
   .trailer-shell,
-  .trailer-backdrop.is-landscape .trailer-shell{
+  .trailer-backdrop.is-landscape.is-enhanced .trailer-shell{
     transition:none;
   }
 }
