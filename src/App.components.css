@@ -2846,3 +2846,29 @@ textarea{font-size:var(--type-body)}
   .rrow{min-height:84px;gap:var(--spec-space-sm);padding:var(--spec-space-sm)}
   .settings-menu{padding:var(--spec-space-sm)!important}
 }
+
+/* 2026-05 alignment fixes: remove subtle right drift in dropdowns/overlay cards */
+.feature-analytics,
+.detail-drawer,
+.settings-menu,
+.analytics-shell,
+.analytics-shell-redesign{
+  margin-inline:auto !important;
+  left:auto !important;
+  right:auto !important;
+}
+
+.dropdown-pop,
+.dropdown-pop-up,
+.filter-dropdown,
+.modern-control-sheet,
+.locked-dropdown{
+  transform-origin:top center !important;
+}
+
+@media (min-width: 1024px){
+  .feature-analytics,
+  .detail-drawer{
+    width:min(100%, var(--content-max, 1560px));
+  }
+}
