@@ -143,6 +143,42 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-bg-base: #f3f6fb;
+  --color-bg-elevated: rgba(255, 255, 255, 0.94);
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #334155;
+  --color-accent: #2563eb;
+  --color-border-subtle: rgba(15, 23, 42, 0.12);
+  --accent: #2563eb;
+  --accent-2: #7c3aed;
+  --accent-glow: rgba(37, 99, 235, 0.22);
+  --accent-glow-2: rgba(124, 58, 237, 0.2);
+  --bg: #f3f6fb;
+  --bg-elevated: rgba(255, 255, 255, 0.96);
+  --bg-card: rgba(255, 255, 255, 0.92);
+  --bg-glass: rgba(255, 255, 255, 0.86);
+  --text: #0f172a;
+  --text-h: #020617;
+  --text-dim: #334155;
+  --text-muted: #64748b;
+  --text-disabled: #94a3b8;
+  --surface-1: rgba(255, 255, 255, 0.82);
+  --surface-2: rgba(255, 255, 255, 0.92);
+  --surface-3: rgba(255, 255, 255, 0.98);
+  --ambient-glow: rgba(37, 99, 235, 0.06);
+  --edge-highlight: rgba(37, 99, 235, 0.2);
+  --border: rgba(15, 23, 42, 0.12);
+  --border-hover: rgba(15, 23, 42, 0.2);
+  --border-active: rgba(37, 99, 235, 0.34);
+  --shadow-sm: 0 6px 18px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 14px 34px rgba(15, 23, 42, 0.12);
+  --shadow-lg: 0 26px 64px rgba(15, 23, 42, 0.16);
+}
+
 /* Text safety utilities */
 .line-clamp-1,
 .line-clamp-2,
@@ -212,6 +248,7 @@ p {
 
 /* ── Interactive Elements ───────────────────────────────────────────────────── */
 button, [role="button"] {
+  transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
   font-family: var(--font-ui);
   letter-spacing: 0.05em;
   cursor: pointer;
@@ -692,4 +729,18 @@ a:hover {
 
 .lenis-ready body {
   scroll-behavior: auto;
+}
+
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 65%, white);
+  outline-offset: 2px;
+}
+
+button:active {
+  transform: translateY(1px) scale(0.99);
 }
