@@ -2850,3 +2850,125 @@ textarea{font-size:var(--type-body)}
   .rrow{min-height:84px;gap:var(--spec-space-sm);padding:var(--spec-space-sm)}
   .settings-menu{padding:var(--spec-space-sm)!important}
 }
+
+/* === Interaction clarity redesign: active/inactive states + Marvel palette === */
+:root{
+  --marvel-red:#ED1D24;
+  --marvel-red-soft:color-mix(in srgb,var(--marvel-red) 26%, transparent);
+  --marvel-blue:#2E77D0;
+  --marvel-blue-soft:color-mix(in srgb,var(--marvel-blue) 24%, transparent);
+  --state-idle-bg:color-mix(in srgb,var(--theme-surface) 88%, transparent);
+  --state-idle-border:color-mix(in srgb,var(--theme-border) 82%, transparent);
+  --state-idle-text:var(--theme-text-secondary);
+  --state-hover-bg:color-mix(in srgb,var(--theme-surface-hover) 80%, transparent);
+  --state-hover-border:color-mix(in srgb,var(--theme-accent) 40%, var(--theme-border));
+  --state-active-bg:linear-gradient(145deg,color-mix(in srgb,var(--marvel-red) 20%, var(--theme-surface)),color-mix(in srgb,var(--marvel-blue) 14%, var(--theme-bg)));
+  --state-active-border:color-mix(in srgb,var(--marvel-red) 72%, var(--theme-border));
+  --state-active-text:var(--theme-text-primary);
+  --state-active-glow:0 0 0 1px color-mix(in srgb,var(--marvel-red) 38%, transparent),0 10px 18px rgba(237,29,36,.22);
+}
+
+.wbtn,.fpill,.theme-btn,.lmode-btn,.sopt,.ntab{
+  transition:background-color var(--interactive-duration) var(--interactive-ease),
+             border-color var(--interactive-duration) var(--interactive-ease),
+             color var(--interactive-duration) var(--interactive-ease),
+             box-shadow var(--interactive-duration) var(--interactive-ease),
+             transform 120ms var(--interactive-ease);
+}
+
+.wbtn,.fpill,.theme-btn,.lmode-btn,.sopt{
+  background:var(--state-idle-bg);
+  border-color:var(--state-idle-border);
+  color:var(--state-idle-text);
+}
+
+.wbtn:hover,.fpill:hover,.theme-btn:hover,.lmode-btn:hover,.sopt:hover{
+  background:var(--state-hover-bg) !important;
+  border-color:var(--state-hover-border) !important;
+  color:var(--theme-text-primary) !important;
+  transform:translateY(-1px);
+}
+
+.wbtn[aria-pressed="true"],.wbtn.is-active,
+.fpill[aria-pressed="true"],.fpill.active,.fpill.picked,
+.theme-btn[aria-pressed="true"],.theme-btn.active,
+.lmode-btn.active,
+.sopt.picked,.dropdown-item.active,
+.ntab.on{
+  background:var(--state-active-bg) !important;
+  border-color:var(--state-active-border) !important;
+  color:var(--state-active-text) !important;
+  box-shadow:var(--state-active-glow) !important;
+}
+
+.ntab.on::after{background:var(--marvel-red)}
+
+.wbtn:focus-visible,.fpill:focus-visible,.theme-btn:focus-visible,.lmode-btn:focus-visible,.sopt:focus-visible,.ntab:focus-visible{
+  outline:2px solid color-mix(in srgb,var(--marvel-red) 70%, #fff);
+  outline-offset:2px;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .wbtn,.fpill,.theme-btn,.lmode-btn,.sopt,.ntab{transition:none !important}
+}
+
+[data-color-mode="light"]{
+  --state-idle-bg:linear-gradient(160deg,#ffffff,#f6f8fb);
+  --state-idle-border:rgba(15,23,42,.12);
+  --state-idle-text:#334155;
+  --state-hover-bg:linear-gradient(160deg,#ffffff,#eef2f7);
+  --state-active-bg:linear-gradient(145deg,color-mix(in srgb,var(--marvel-red) 22%, #ffffff),color-mix(in srgb,var(--marvel-blue) 15%, #f7f9fc));
+  --state-active-text:#141821;
+  --state-active-glow:0 0 0 1px color-mix(in srgb,var(--marvel-red) 42%, transparent),0 8px 15px rgba(15,23,42,.12);
+}
+
+/* === Final state-clarity pass: cover remaining active/inactive controls === */
+:root{
+  --ui-state-gap: 8px;
+  --ui-state-radius: 12px;
+}
+
+.filter-pill,.settings-toggle-pill,.status-menu-bookmark,.row-watch-toggle,.marvel-phase-btn,.dock-status-item{
+  border-width:1.2px;
+  border-style:solid;
+  border-color:var(--state-idle-border);
+  border-radius:var(--ui-state-radius);
+}
+
+.filter-pill,.settings-toggle-pill,.status-menu-bookmark,.row-watch-toggle,.dock-status-item{
+  background:var(--state-idle-bg) !important;
+  color:var(--state-idle-text) !important;
+}
+
+.marvel-phase-btn[data-active="true"],
+.status-menu-bookmark[data-active="true"],
+.row-watch-toggle[aria-pressed="true"],
+.settings-toggle-pill[aria-pressed="true"],
+.dock-status-item.active,
+.filter-pill[aria-pressed="true"],
+.filter-pill.active{
+  background:var(--state-active-bg) !important;
+  border-color:var(--state-active-border) !important;
+  color:var(--state-active-text) !important;
+  box-shadow:var(--state-active-glow) !important;
+}
+
+.marvel-phase-btn[data-active="true"] .phase-chip-label,
+.marvel-phase-btn[data-active="true"] .phase-chip-count,
+.row-watch-toggle[aria-pressed="true"] svg,
+.status-menu-bookmark[data-active="true"] svg,
+.dock-status-item.active svg{color:inherit !important}
+
+.filter-pill:hover,.settings-toggle-pill:hover,.status-menu-bookmark:hover,.row-watch-toggle:hover,.marvel-phase-btn:hover,.dock-status-item:hover{
+  transform:translateY(-1px);
+}
+
+[data-color-mode="light"] .filter-pill,
+[data-color-mode="light"] .settings-toggle-pill,
+[data-color-mode="light"] .status-menu-bookmark,
+[data-color-mode="light"] .row-watch-toggle,
+[data-color-mode="light"] .marvel-phase-btn,
+[data-color-mode="light"] .dock-status-item{
+  background:linear-gradient(160deg,#fff,#f4f7fb) !important;
+  color:#1f2937 !important;
+}
