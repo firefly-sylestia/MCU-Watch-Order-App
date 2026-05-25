@@ -2605,6 +2605,25 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   --panel-bg-strong: color-mix(in srgb, var(--theme-surface) 94%, transparent);
   --panel-border: 1px solid color-mix(in srgb, var(--theme-border) 78%, transparent);
   --panel-radius: 16px;
+  --ui-accent-soft: color-mix(in srgb, var(--theme-accent) 14%, transparent);
+  --ui-accent-soft-alt: color-mix(in srgb, var(--theme-accent-alt) 12%, transparent);
+  --ui-gradient-surface: linear-gradient(
+    148deg,
+    color-mix(in srgb, var(--theme-surface) 90%, transparent) 0%,
+    color-mix(in srgb, var(--theme-bg) 70%, var(--theme-surface)) 62%,
+    color-mix(in srgb, var(--theme-accent) 7%, var(--theme-surface)) 100%
+  );
+  --ui-gradient-surface-strong: linear-gradient(
+    152deg,
+    color-mix(in srgb, var(--theme-surface) 94%, transparent) 0%,
+    color-mix(in srgb, var(--theme-bg) 60%, var(--theme-surface)) 56%,
+    color-mix(in srgb, var(--theme-accent-alt) 8%, var(--theme-surface)) 100%
+  );
+  --ui-gradient-cta: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--theme-accent) 18%, var(--theme-surface)),
+    color-mix(in srgb, var(--theme-accent-alt) 16%, var(--theme-bg))
+  );
 
   /* single elevation scale */
   --elevation-1: 0 4px 10px rgba(2, 8, 23, 0.12);
@@ -2629,6 +2648,25 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 [data-color-mode="light"] {
   --panel-bg: color-mix(in srgb, var(--theme-surface) 96%, #ffffff);
   --panel-bg-strong: #ffffff;
+  --ui-accent-soft: color-mix(in srgb, var(--theme-accent) 12%, #ffffff);
+  --ui-accent-soft-alt: color-mix(in srgb, var(--theme-accent-alt) 9%, #ffffff);
+  --ui-gradient-surface: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--theme-surface) 97%, #ffffff) 0%,
+    color-mix(in srgb, var(--theme-bg) 8%, #ffffff) 66%,
+    color-mix(in srgb, var(--theme-accent) 8%, #ffffff) 100%
+  );
+  --ui-gradient-surface-strong: linear-gradient(
+    150deg,
+    #ffffff 0%,
+    color-mix(in srgb, var(--theme-bg) 8%, #ffffff) 58%,
+    color-mix(in srgb, var(--theme-accent-alt) 8%, #ffffff) 100%
+  );
+  --ui-gradient-cta: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--theme-accent) 14%, #ffffff),
+    color-mix(in srgb, var(--theme-accent-alt) 12%, #f8fbff)
+  );
   --elevation-1: 0 4px 10px rgba(15, 23, 42, 0.08);
   --elevation-2: 0 10px 20px rgba(15, 23, 42, 0.12);
   --elevation-3: 0 16px 28px rgba(15, 23, 42, 0.16);
@@ -2646,7 +2684,7 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 .filters-open,
 .header-brand,
 .bottom-action-dock {
-  background: var(--panel-bg) !important;
+  background: var(--ui-gradient-surface) !important;
   border: var(--panel-border) !important;
   border-radius: var(--panel-radius) !important;
   box-shadow: var(--elevation-2) !important;
@@ -2677,7 +2715,7 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 .counter {
   border-radius: 999px;
   border: var(--panel-border);
-  background: var(--panel-bg-strong);
+  background: var(--ui-gradient-surface-strong);
   box-shadow: var(--elevation-1);
   transition: background-color var(--motion-medium) var(--motion-curve-standard),
     border-color var(--motion-medium) var(--motion-curve-standard),
@@ -2695,7 +2733,7 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 #next-steps ul a:hover,
 .counter:hover {
   border-color: color-mix(in srgb, var(--theme-accent) 40%, var(--theme-border));
-  box-shadow: var(--elevation-2);
+  box-shadow: var(--elevation-2), 0 0 0 1px color-mix(in srgb, var(--theme-accent) 26%, transparent);
   transform: translateY(-1px);
 }
 
@@ -2821,7 +2859,7 @@ textarea{font-size:var(--type-body)}
 }
 
 .wbtn,.fpill,.theme-btn,.lmode-btn,.sopt{
-  background:var(--state-idle-bg);
+  background:var(--ui-gradient-surface-strong);
   border-color:var(--state-idle-border);
   color:var(--state-idle-text);
 }
@@ -2839,7 +2877,7 @@ textarea{font-size:var(--type-body)}
 .lmode-btn.active,
 .sopt.picked,.dropdown-item.active,
 .ntab.on{
-  background:var(--state-active-bg) !important;
+  background:var(--ui-gradient-cta) !important;
   border-color:var(--state-active-border) !important;
   color:var(--state-active-text) !important;
   box-shadow:var(--state-active-glow) !important;
@@ -2880,7 +2918,7 @@ textarea{font-size:var(--type-body)}
 }
 
 .filter-pill,.settings-toggle-pill,.status-menu-bookmark,.row-watch-toggle,.dock-status-item{
-  background:var(--state-idle-bg) !important;
+  background:var(--ui-gradient-surface-strong) !important;
   color:var(--state-idle-text) !important;
 }
 
@@ -2891,7 +2929,7 @@ textarea{font-size:var(--type-body)}
 .dock-status-item.active,
 .filter-pill[aria-pressed="true"],
 .filter-pill.active{
-  background:var(--state-active-bg) !important;
+  background:var(--ui-gradient-cta) !important;
   border-color:var(--state-active-border) !important;
   color:var(--state-active-text) !important;
   box-shadow:var(--state-active-glow) !important;
