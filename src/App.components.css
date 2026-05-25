@@ -2586,3 +2586,142 @@ main.app-scroll-shell.scroll-performance .theme-btn{
     transition: background-color 140ms var(--ease-out), border-color 140ms var(--ease-out), color 140ms var(--ease-out) !important;
   }
 }
+/* Unified style direction: Cinematic Minimal */
+:root {
+  --panel-bg: color-mix(in srgb, var(--theme-surface) 88%, transparent);
+  --panel-bg-strong: color-mix(in srgb, var(--theme-surface) 94%, transparent);
+  --panel-border: 1px solid color-mix(in srgb, var(--theme-border) 78%, transparent);
+  --panel-radius: 16px;
+
+  /* single elevation scale */
+  --elevation-1: 0 4px 10px rgba(2, 8, 23, 0.12);
+  --elevation-2: 0 10px 20px rgba(2, 8, 23, 0.16);
+  --elevation-3: 0 16px 30px rgba(2, 8, 23, 0.22);
+
+  /* single motion curve family */
+  --motion-curve-standard: cubic-bezier(0.22, 0.9, 0.24, 1);
+  --motion-curve-emphasis: cubic-bezier(0.18, 0.95, 0.25, 1);
+  --motion-fast: 140ms;
+  --motion-medium: 220ms;
+
+  /* spacing rhythm */
+  --space-unit: 8px;
+  --space-xxs: calc(var(--space-unit) * 0.5);
+  --space-xs: var(--space-unit);
+  --space-sm: calc(var(--space-unit) * 1.5);
+  --space-md: calc(var(--space-unit) * 2);
+  --space-lg: calc(var(--space-unit) * 3);
+}
+
+[data-color-mode="light"] {
+  --panel-bg: color-mix(in srgb, var(--theme-surface) 96%, #ffffff);
+  --panel-bg-strong: #ffffff;
+  --elevation-1: 0 4px 10px rgba(15, 23, 42, 0.08);
+  --elevation-2: 0 10px 20px rgba(15, 23, 42, 0.12);
+  --elevation-3: 0 16px 28px rgba(15, 23, 42, 0.16);
+}
+
+/* PANEL SYSTEM — one panel style for cards/containers */
+.glass-panel,
+.curvy-panel,
+.phase-header-card,
+.phase-rows-full,
+.rrow,
+.calendar-row,
+.settings-menu,
+.analytics-shell,
+.filters-open,
+.header-brand,
+.bottom-action-dock {
+  background: var(--panel-bg) !important;
+  border: var(--panel-border) !important;
+  border-radius: var(--panel-radius) !important;
+  box-shadow: var(--elevation-2) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* elevation usage */
+.header-brand,
+.analytics-shell,
+.settings-menu { box-shadow: var(--elevation-3) !important; }
+.rrow:hover,
+.phase-header-card:hover,
+.header-brand:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--elevation-3) !important;
+}
+
+/* controls */
+.fpill,
+.wbtn,
+.theme-btn,
+.status-pill,
+.dock-btn,
+.fab-primary,
+.bottom-action-bar,
+#next-steps ul a,
+.counter {
+  border-radius: 999px;
+  border: var(--panel-border);
+  background: var(--panel-bg-strong);
+  box-shadow: var(--elevation-1);
+  transition: background-color var(--motion-medium) var(--motion-curve-standard),
+    border-color var(--motion-medium) var(--motion-curve-standard),
+    box-shadow var(--motion-medium) var(--motion-curve-standard),
+    transform var(--motion-fast) var(--motion-curve-emphasis);
+}
+
+.fpill:hover,
+.wbtn:hover,
+.theme-btn:hover,
+.status-pill:hover,
+.dock-btn:hover,
+.fab-primary:hover,
+.bottom-action-bar:hover,
+#next-steps ul a:hover,
+.counter:hover {
+  border-color: color-mix(in srgb, var(--theme-accent) 40%, var(--theme-border));
+  box-shadow: var(--elevation-2);
+  transform: translateY(-1px);
+}
+
+.fpill:active,
+.wbtn:active,
+.theme-btn:active,
+.status-pill:active,
+.dock-btn:active,
+.fab-primary:active,
+.bottom-action-bar:active,
+#next-steps ul a:active,
+.counter:active {
+  transform: translateY(1px);
+  box-shadow: var(--elevation-1);
+}
+
+/* overlays/navigation/modals */
+.dropdown-pop,
+.dropdown-pop-up,
+.sidebar-menu,
+.settings-menu,
+.analytics-shell {
+  border: var(--panel-border) !important;
+  box-shadow: var(--elevation-3) !important;
+  transition: opacity var(--motion-medium) var(--motion-curve-standard),
+    transform var(--motion-medium) var(--motion-curve-emphasis);
+}
+
+/* usage rules by component category
+- cards: use var(--panel-bg), --panel-radius, --elevation-2
+- controls: pill radius + --elevation-1; hover lifts to --elevation-2
+- overlays/navigation: --panel-bg-strong + --elevation-3; no blur/glass
+- modals: same as overlays with strongest elevation
+*/
+
+@media (prefers-reduced-motion: reduce){
+  .fpill,.wbtn,.theme-btn,.status-pill,.dock-btn,.fab-primary,.bottom-action-bar,
+  .dropdown-pop,.dropdown-pop-up,.rrow,.phase-header-card,.header-brand {
+    transition: none !important;
+    transform: none !important;
+  }
+}
