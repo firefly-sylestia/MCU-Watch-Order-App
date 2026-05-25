@@ -197,6 +197,7 @@ const UI_STATE_DEFAULTS = {
   textScaleEnabled: true,
   scrollTop: 0,
   exportPrefs: { font: 'inter', textScale: 1.08, detailUseReviewStyle: true },
+  filterPresetId: '',
 };
 
 const VALID_LIST_MODES = new Set(LIST_MODES.map(mode => mode.id));
@@ -237,6 +238,7 @@ const readSavedUiState = () => {
       desktopTextScale: VALID_DESKTOP_TEXT_SCALES.has(Number(saved.desktopTextScale)) ? Number(saved.desktopTextScale) : UI_STATE_DEFAULTS.desktopTextScale,
       textScaleEnabled: typeof saved.textScaleEnabled === 'boolean' ? saved.textScaleEnabled : UI_STATE_DEFAULTS.textScaleEnabled,
       scrollTop: Number.isFinite(Number(saved.scrollTop)) ? Math.max(0, Number(saved.scrollTop)) : UI_STATE_DEFAULTS.scrollTop,
+      filterPresetId: typeof saved.filterPresetId === 'string' ? saved.filterPresetId : UI_STATE_DEFAULTS.filterPresetId,
     };
   } catch {
     return UI_STATE_DEFAULTS;
@@ -930,7 +932,6 @@ export default function MCUViewer() {
   const [browseMode, setBrowseMode] = useState('home');
   const setFilterStatusOpen = (next) => dispatchUiMode({ filterStatusOpen: typeof next === 'function' ? next(uiModeState.filterStatusOpen) : next });
   const setDockStatusOpen = (next) => dispatchUiMode({ dockStatusOpen: typeof next === 'function' ? next(uiModeState.dockStatusOpen) : next });
-  const setFiltersOpen = (next) => dispatchUiMode({ filtersOpen: typeof next === 'function' ? next(uiModeState.filtersOpen) : next });
   const [dropdownPos,    setDropdownPos]    = useState({ x: 0, y: 0 });
   const [darkMode,       setDarkMode]       = useState(false);
   const [expandedItem,   setExpandedItem]   = useState(null);
@@ -978,6 +979,8 @@ export default function MCUViewer() {
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
+  const [filterPresetId, setFilterPresetId] = useState(initialUiState.filterPresetId || '');
+  const [moreFiltersOpen, setMoreFiltersOpen] = useState(false);
   const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
   const [scrollTuning] = useState({ desktopMultiplier: 5, desktopDeltaCap: 7, mobileMultiplier: 5, mobileDeltaCap: 7 });
   const [genreFilter] = useState('all');
@@ -1673,9 +1676,10 @@ export default function MCUViewer() {
       performanceMode,
       desktopTextScale,
       textScaleEnabled,
+      filterPresetId,
       scrollTop,
     }));
-  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
+  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, desktopTextScale, textScaleEnabled, scrollCheckpoint, filterPresetId], 300);
   const totalWatched = useMemo(() => activeItems.filter(i => i.status === 'watched').length, [activeItems]);
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
@@ -3056,7 +3060,22 @@ export default function MCUViewer() {
   const trailerDataForDetail = detailItem ? getTrailerByTitle(detailItem.title) : null;
   const trailerOptions = trailerDataForDetail?.options || [];
   const selectedTrailer = trailerOptions[trailerVariantIndex] || trailerOptions[0] || null;
-  const filterTriggerLabel = 'Filters';
+  const FILTER_PRESETS = [
+    { id: 'unwatched-films', label: 'Only unwatched films', apply: () => { setTypeFilter('film'); setWatchedOnly(false); setStatusFilter('unwatched'); } },
+    { id: 'loki-arc', label: 'Loki arc', apply: () => { setTimelineMode('loki'); setStatusFilter(null); setWatchedOnly(false); } },
+    { id: 'short-runtime', label: 'Short runtime', apply: () => { setSortBy('runtime'); setTypeFilter('short'); setStatusFilter(null); setWatchedOnly(false); } },
+  ];
+  const applyPreset = (presetId) => {
+    const preset = FILTER_PRESETS.find(p => p.id === presetId);
+    if (!preset) return;
+    preset.apply();
+    setFilterPresetId(presetId);
+    setMoreFiltersOpen(false);
+  };
+  const resetFilters = () => {
+    setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false);
+    setAutoHideStatuses(false); setSortBy('order'); setTimelineMode('release'); setFilterPresetId('');
+  };
 
   const renderPhaseSelector = () => (
     <div ref={phaseRef} className="phase-selector-rail">
@@ -3395,16 +3414,11 @@ export default function MCUViewer() {
         {/* Toggle row — always visible */}
         <div style={{ maxWidth: 1480, margin: '0 auto', padding: '0 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
-            <button className="filters-trigger"
-              onClick={() => setFiltersOpen(v => !v)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: `1px solid ${filtersOpen ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: filtersOpen ? 'var(--theme-accent)' : T.textMuted, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 2, transition: 'all 0.18s' }}
-            >
-              <SlidersH size={13} />
-              {filterTriggerLabel}
-              {activeFilterCount > 0 && (
-                <span className="filters-count-badge" aria-label={`${activeFilterCount} active filters`}>{activeFilterCount}</span>
-              )}
-              <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+            <button className="filters-trigger" onClick={() => setBrowseMode('search')} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${search ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}>
+              <Search size={13} /> Search
+            </button>
+            <button className="filters-trigger" onClick={() => { const isOn = watchedOnly && !statusFilter; setWatchedOnly(!isOn); if (!isOn) setStatusFilter(null); setFilterPresetId(''); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${watchedOnly ? 'color-mix(in srgb, var(--theme-success) 50%, var(--theme-border))' : T.filterBorder}`, background: watchedOnly ? 'var(--theme-success-soft)' : 'transparent', color: watchedOnly ? 'var(--theme-success)' : T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}>
+              <Check size={13} /> Watched
             </button>
             <div ref={sortMenuRef} style={{ position: 'relative' }}>
               <button className="filters-trigger" onClick={() => setSortMenuOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${sortBy === 'order' ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: sortBy === 'order' ? 'var(--theme-accent)' : T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}><ArrowUpDown size={13} />Sort: {SORT_LABELS[sortBy]}<ChevDown size={11} style={{ transform: sortMenuOpen ? 'rotate(180deg)' : 'none' }}/></button>
@@ -3436,18 +3450,26 @@ export default function MCUViewer() {
               <span style={{ fontSize: 10, letterSpacing: 1.6, color: T.textMuted, textTransform: 'uppercase' }}>Continue</span>
               <span style={{ fontSize: 12, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</span>
             </button>
-            <button className="filters-trigger" onClick={() => setBrowseMode('search')} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${T.filterBorder}`, background: 'transparent', color: T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}>
-              <Search size={13} />
-              Search Library
+            <button className="filters-trigger" onClick={() => setMoreFiltersOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${moreFiltersOpen ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: moreFiltersOpen ? 'color-mix(in srgb, var(--theme-accent) 10%, var(--theme-surface))' : 'transparent', color: moreFiltersOpen ? 'var(--theme-accent)' : T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3, transition: 'all .2s ease' }}>
+              <SlidersH size={13} /> More Filters
+              {activeFilterCount > 0 && <span className="filters-count-badge" aria-label={`${activeFilterCount} active filters`}>{activeFilterCount}</span>}
+              <ChevDown size={11} style={{ transform: moreFiltersOpen ? 'rotate(180deg)' : 'none', transition: 'transform .2s ease' }} />
             </button>
             <div className='filter-row-actions' style={{ marginLeft: 0, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-start', minWidth: 0 }} />
           </div>
         </div>
 
         {/* Collapsible filter controls */}
-        {filtersOpen && (
+        {moreFiltersOpen && (
           <div className="filters-open" style={{ padding: '0 48px 12px', maxWidth: 1400, margin: '0 auto' }}>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', overflow: 'visible' }}>
+              {FILTER_PRESETS.map((preset) => (
+                <button key={preset.id} className="fpill" onClick={() => applyPreset(preset.id)} style={filterPresetId === preset.id ? { borderColor: 'var(--theme-accent)', background: 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))', color: 'var(--theme-accent)' } : {}}>
+                  <Bookmark size={10} />{preset.label}
+                </button>
+              ))}
+              {filterPresetId && <button className="fpill" onClick={() => applyPreset(filterPresetId)}><Clock size={10} />Restore Last Preset</button>}
+              <button className="fpill" onClick={resetFilters} style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)' }}><Trash2 size={10} />Reset</button>
               {/* Type pills */}
               {['film', 'series', 'short'].map(t => {
                 const m = getSafeTypeMeta(t);
@@ -3507,12 +3529,7 @@ export default function MCUViewer() {
                 </>
               )}
               {/* Reset */}
-              {activeFilterCount > 0 && (
-                <button className="fpill" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', padding: '7px 12px' }}
-                  onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setSortBy('order'); }}>
-                  <Trash2 size={10} /> Clear
-                </button>
-              )}
+              {activeFilterCount > 0 && (<button className="fpill" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', padding: '7px 12px' }} onClick={resetFilters}><Trash2 size={10} /> Clear</button>)}
             </div>
           </div>
         )}
