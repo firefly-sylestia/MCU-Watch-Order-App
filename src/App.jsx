@@ -917,6 +917,7 @@ export default function MCUViewer() {
   const [items,          setItems]          = useState(RAW);
   const [customEntries, setCustomEntries] = useState([]);
   const [customEntryDraft, setCustomEntryDraft] = useState(CUSTOM_ENTRY_TEMPLATE);
+  const [dragCustomId, setDragCustomId] = useState(null);
   const [listMode,       setListMode]       = useState(initialUiState.listMode);
   const [search,         setSearch]         = useState(initialUiState.search);
   const [sortBy,         setSortBy]         = useState(initialUiState.sortBy);
@@ -1030,7 +1031,7 @@ export default function MCUViewer() {
 
   useEffect(() => {
     const saved = readStorageJSON(CACHE_KEYS.customEntries, []);
-    if (Array.isArray(saved)) setCustomEntries(saved);
+    if (Array.isArray(saved)) setCustomEntries(saved.map((item, idx) => ({ ...item, customOrder: Number(item.customOrder) || idx + 1, order: Number(item.order) || 10000 + idx }))); 
   }, []);
 
   useEffect(() => {
@@ -1617,7 +1618,8 @@ export default function MCUViewer() {
       title: customEntryDraft.title.trim(),
       year: Number(customEntryDraft.year) || new Date().getFullYear(),
       phase: Number(customEntryDraft.phase) || 1,
-      order: 999 + prev.length,
+      customOrder: prev.length + 1,
+      order: 10000 + prev.length,
       type: customEntryDraft.type,
       desc: customEntryDraft.desc.trim() || 'Custom catalog entry',
       releaseDate: customEntryDraft.releaseDate || '',
@@ -1630,6 +1632,20 @@ export default function MCUViewer() {
 
   const removeCustomEntry = useCallback((id) => {
     setCustomEntries(prev => prev.filter(item => item.id !== id));
+  }, []);
+
+
+  const moveCustomEntry = useCallback((fromId, toId) => {
+    if (!fromId || !toId || fromId === toId) return;
+    setCustomEntries(prev => {
+      const list = [...prev].sort((a, b) => (a.customOrder ?? 0) - (b.customOrder ?? 0));
+      const from = list.findIndex(item => item.id === fromId);
+      const to = list.findIndex(item => item.id === toId);
+      if (from < 0 || to < 0) return prev;
+      const [moved] = list.splice(from, 1);
+      list.splice(to, 0, moved);
+      return list.map((item, idx) => ({ ...item, customOrder: idx + 1, order: 10000 + idx }));
+    });
   }, []);
 
   const markPhaseWatched = (phaseId, newStatus) => {
@@ -3207,7 +3223,8 @@ export default function MCUViewer() {
                   </div>
                 <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Quick Phases</div>
-        <button className="fpill marvel-btn" onClick={openAnalyticsPanel} style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}>Analytics</button>
+        <button className="fpill marvel-btn" onClick={() => { setBrowseMode('custom-db'); setSidebarOpen(false); }} style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}>Custom Database</button>
+        <button className="fpill" onClick={openAnalyticsPanel} style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}>Analytics</button>
         <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Viewing List</div>
         <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
           {LIST_MODES.map(mode => {
@@ -3453,6 +3470,39 @@ export default function MCUViewer() {
               <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.4 }}>{search ? `${filtered.length} matches` : 'Type to begin searching'}</div>
               {search && <button className="fpill" onClick={() => setSearch('')}><Trash2 size={12}/> Clear Search</button>}
             </div>
+          </div>
+        </section>
+      )}
+
+
+      {browseMode === 'custom-db' && (
+        <section style={{ maxWidth: 1100, margin: '12px auto', padding: '0 16px 16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 10, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontSize: 11, letterSpacing: 1.8, textTransform: 'uppercase', color: T.textMuted }}>Custom Database Studio</div>
+              <div style={{ fontSize: 22, fontWeight: 800 }}>Add unique entries & reorder by hold-drag</div>
+            </div>
+            <button className="fpill" onClick={() => setBrowseMode('home')}><ChevDown size={14}/> Back Home</button>
+          </div>
+          <div style={{ border: `1px solid ${T.surfaceBorder}`, borderRadius: 16, padding: 14, background: T.surfaceBg, display: 'grid', gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px 110px auto', gap: 8 }}>
+              <input value={customEntryDraft.title} onChange={(e) => setCustomEntryDraft(prev => ({ ...prev, title: e.target.value }))} placeholder="Custom title" style={{ borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: '9px 10px' }} />
+              <input value={customEntryDraft.year} onChange={(e) => setCustomEntryDraft(prev => ({ ...prev, year: e.target.value }))} placeholder="Year" style={{ borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: '9px 10px' }} />
+              <select value={customEntryDraft.type} onChange={(e) => setCustomEntryDraft(prev => ({ ...prev, type: e.target.value }))} style={{ borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: '9px 10px' }}><option value="film">Film</option><option value="series">Series</option><option value="short">Short</option></select>
+              <button className="fpill marvel-btn" onClick={addCustomEntry}>Add Entry</button>
+            </div>
+            <textarea value={customEntryDraft.desc} onChange={(e) => setCustomEntryDraft(prev => ({ ...prev, desc: e.target.value }))} placeholder="Describe why this entry matters" rows={2} style={{ borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: '9px 10px', width: '100%' }} />
+          </div>
+          <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
+            {[...customEntries].sort((a,b)=>(a.customOrder??0)-(b.customOrder??0)).map((entry) => (
+              <div key={entry.id} draggable onDragStart={() => setDragCustomId(entry.id)} onDragOver={(e) => e.preventDefault()} onDrop={() => { moveCustomEntry(dragCustomId, entry.id); setDragCustomId(null); }} className="glass-panel" style={{ border: `1px solid ${dragCustomId === entry.id ? 'var(--theme-accent)' : T.surfaceBorder}`, borderRadius: 12, padding: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, transition: 'border-color 180ms ease' }}>
+                <div style={{ display: 'grid', gap: 2 }}>
+                  <strong>{entry.customOrder || 0}. {entry.title}</strong>
+                  <span style={{ color: T.textMuted, fontSize: 12 }}>{entry.year} · {getSafeTypeMeta(entry.type).label} · Hold and drag to reorder</span>
+                </div>
+                <button className="fpill" onClick={() => removeCustomEntry(entry.id)}><Trash2 size={12}/> Remove</button>
+              </div>
+            ))}
           </div>
         </section>
       )}
@@ -3951,24 +4001,6 @@ export default function MCUViewer() {
               <div>
                 <h2 style={{ fontSize: 30, marginBottom: 4 }}>Analysis</h2>
                 <div style={{ color: T.textMuted, fontSize: 13 }}>Concise progress insights: phase counts, watch percentage, and streak.</div>
-
-                <div className="settings-block" style={{ marginTop: 14, border: `1px solid ${T.border}`, borderRadius: 12, padding: 12, background: T.panelBg }}>
-                  <div style={{ fontWeight: 800, marginBottom: 8 }}>Database Expansion Lab</div>
-                  <div style={{ color: T.textMuted, fontSize: 12, marginBottom: 10 }}>Unique upgrades: add fan-edits, variants, regional cuts, podcasts, or creator commentary entries.</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 90px', gap: 8 }}>
-                    <input value={customEntryDraft.title} onChange={(e) => setCustomEntryDraft(prev => ({ ...prev, title: e.target.value }))} placeholder="Custom title" style={{ borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: '8px 10px' }} />
-                    <input value={customEntryDraft.year} onChange={(e) => setCustomEntryDraft(prev => ({ ...prev, year: e.target.value }))} placeholder="Year" style={{ borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: '8px 10px' }} />
-                    <button onClick={addCustomEntry} className="btn" style={{ minHeight: 36 }}>Add</button>
-                  </div>
-                  <textarea value={customEntryDraft.desc} onChange={(e) => setCustomEntryDraft(prev => ({ ...prev, desc: e.target.value }))} placeholder="Why this entry is unique" rows={2} style={{ width: '100%', marginTop: 8, borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor, padding: '8px 10px' }} />
-                  <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {customEntries.slice(-6).map(entry => (
-                      <button key={entry.id} onClick={() => removeCustomEntry(entry.id)} className="btn" style={{ borderRadius: 999, padding: '6px 10px' }}>
-                        {entry.title} ×
-                      </button>
-                    ))}
-                  </div>
-                </div>
 
               </div>
               <button className="fpill" onClick={closeAnalytics}>Close</button>
