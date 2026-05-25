@@ -633,6 +633,9 @@ const areTitleRowPropsEqual = (prev, next) => (
   && prev.isExpanded === next.isExpanded
   && prev.isWatched === next.isWatched
   && prev.isBookmarked === next.isBookmarked
+  && prev.isFavorite === next.isFavorite
+  && prev.rewatchValue === next.rewatchValue
+  && prev.hasReview === next.hasReview
   && prev.statusDropdown === next.statusDropdown
   && prev.rating === next.rating
   && prev.bulkSelectMode === next.bulkSelectMode
@@ -668,6 +671,12 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   onToggleSelected,
   statusLabelOverride = null,
   isDesktopViewport = false,
+  isFavorite = false,
+  rewatchValue = 0,
+  hasReview = false,
+  onToggleFavorite,
+  onQueueRewatch,
+  onOpenReview,
 }) {
   const StatusIcon = statusMeta.Icon;
   const TypeIcon = typeMeta.Icon;
@@ -721,6 +730,9 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             <ChevDown size={10} className={`row-status-chevron ${statusDropdown === item.id ? 'is-open' : ''}`} />
           </button>
           <button className={`wbtn bookmark-marvel-btn ${isDesktopViewport ? 'is-desktop' : ''}`} aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} data-bookmarked={isBookmarked}><Bookmark size={11} /></button>
+          <button className={`wbtn ${isFavorite ? 'bookmark-marvel-btn' : ''}`} aria-label={isFavorite ? 'Remove favorite' : 'Add favorite'} onClick={() => onToggleFavorite(item.id)}><Heart size={11} /></button>
+          <button className="wbtn" aria-label={`Add ${item.title} to rewatch queue`} onClick={() => onQueueRewatch(item.id)} title={`Rewatch queue: ${rewatchValue}`}><Clock size={11} /></button>
+          <button className={`wbtn ${hasReview ? 'bookmark-marvel-btn' : ''}`} aria-label={`Open review for ${item.title}`} onClick={() => onOpenReview(item)}><Info size={11} /></button>
           {!hideWatchToggle && (
             <button
               aria-label={isWatched ? `Mark ${item.title} as unwatched` : `Mark ${item.title} as watched`}
@@ -986,6 +998,7 @@ export default function MCUViewer() {
   const [rewatchCount,   setRewatchCount]   = useState({});
   const [reviews,        setReviews]        = useState({});
   const [bookmarks,      setBookmarks]      = useState({});
+  const [activityFocus, setActivityFocus] = useState('favorites');
   const [reviewCardTheme, setReviewCardTheme] = useState('sacredTimeline');
   const [exportFont, setExportFont] = useState('inter');
   const [exportTextScale, setExportTextScale] = useState(DEFAULT_EXPORT_TEXT_SCALE);
@@ -2230,6 +2243,15 @@ export default function MCUViewer() {
   const historyItems = useMemo(() => [...activeItems]
     .filter(i => i.watchedDate || rewatchCount[i.id] || myRating[i.id] || reviews[i.id])
     .sort((a, b) => (b.watchedDate || b.statusChangedAt || '').localeCompare(a.watchedDate || a.statusChangedAt || '')), [activeItems, myRating, reviews, rewatchCount]);
+  const activitySections = useMemo(() => {
+    const favorites = activeItems.filter(item => Boolean(myLikes[item.id]));
+    const rewatchQueue = activeItems.filter(item => Number(rewatchCount[item.id]) > 0).sort((a, b) => (Number(rewatchCount[b.id]) || 0) - (Number(rewatchCount[a.id]) || 0));
+    const reviewed = activeItems.filter(item => String(reviews[item.id] || '').trim().length > 0);
+    const bookmarkedItems = activeItems.filter(item => Boolean(bookmarks[item.id]));
+    return { favorites, rewatchQueue, reviewed, bookmarkedItems };
+  }, [activeItems, myLikes, rewatchCount, reviews, bookmarks]);
+  const totalActivityActions = activitySections.favorites.length + activitySections.rewatchQueue.length + activitySections.reviewed.length + activitySections.bookmarkedItems.length;
+  const activityMomentum = useMemo(() => historyItems.filter(i => i.watchedDate || i.statusChangedAt).slice(0, 7).length, [historyItems]);
 
   const clampTenPoint = (value) => Math.max(0, Math.min(10, Number.isFinite(value) ? value : 0));
   const setReviewRating = (id, rating) => setMyRating(prev => ({ ...prev, [id]: clampTenPoint(Number(rating)) }));
@@ -3440,6 +3462,16 @@ export default function MCUViewer() {
               <Search size={13} />
               Search Library
             </button>
+            {[
+              { id: 'favorites', label: 'Favorites', Icon: Heart, count: activitySections.favorites.length },
+              { id: 'rewatch', label: 'Rewatch Queue', Icon: Clock, count: activitySections.rewatchQueue.length },
+              { id: 'reviewed', label: 'Reviewed', Icon: Info, count: activitySections.reviewed.length },
+              { id: 'bookmarks', label: 'Bookmarked', Icon: Bookmark, count: activitySections.bookmarkedItems.length },
+            ].map(link => (
+              <button key={link.id} className="filters-trigger" onClick={() => { setActivityFocus(link.id); setBrowseMode('phase'); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', borderRadius: 10, border: `1px solid ${activityFocus === link.id ? 'var(--theme-accent)' : T.filterBorder}`, background: activityFocus === link.id ? 'color-mix(in srgb, var(--theme-accent) 14%, transparent)' : 'transparent', color: T.text, fontSize: 12 }}>
+                <link.Icon size={12} /> {link.label} <span style={{ color: T.textMuted }}>{link.count}</span>
+              </button>
+            ))}
             <div className='filter-row-actions' style={{ marginLeft: 0, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-start', minWidth: 0 }} />
           </div>
         </div>
@@ -3598,6 +3630,23 @@ export default function MCUViewer() {
               NO RESULTS — ADJUST YOUR FILTERS
             </div>
           )}
+          <section data-motion="section" className="curvy-panel motion-section motion-pop" style={{ border: `1px solid ${T.surfaceBorder}`, borderRadius: 14, padding: 14, marginBottom: 14, background: 'color-mix(in srgb, var(--theme-surface) 88%, transparent)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.5, color: T.textMuted }}>My Activity</div>
+                <div style={{ fontWeight: 800, color: T.text }}>Favorites, rewatchs, reviews, and bookmarks</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <span className="fpill"><Heart size={12} />{activitySections.favorites.length} Favorites</span>
+                <span className="fpill"><Clock size={12} />{activitySections.rewatchQueue.length} Rewatch Queue</span>
+                <span className="fpill"><Info size={12} />{activitySections.reviewed.length} Reviewed</span>
+                <span className="fpill"><Bookmark size={12} />{activitySections.bookmarkedItems.length} Bookmarked</span>
+                <span className="fpill">Streak {watchStreak}d</span>
+                <span className="fpill">Momentum {activityMomentum}/7</span>
+              </div>
+            </div>
+            <div style={{ marginTop: 10, color: T.textMuted, fontSize: 12 }}>Total intentional actions: {totalActivityActions}</div>
+          </section>
 
           {viewMode === 'calendar' ? (
             <section data-motion="section" className='curvy-panel calendar-section motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
@@ -3704,11 +3753,17 @@ export default function MCUViewer() {
                         isExpanded={expandedItem === item.id}
                         isWatched={item.status === 'watched'}
                         isBookmarked={Boolean(bookmarks[item.id])}
+                        isFavorite={Boolean(myLikes[item.id])}
+                        rewatchValue={Number(rewatchCount[item.id]) || 0}
+                        hasReview={String(reviews[item.id] || '').trim().length > 0}
                         statusDropdown={statusDropdown}
                         rating={metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
                         onOpenDetail={openDetail}
                         onSetStatus={setStatusDirect}
                         onToggleBookmark={toggleBookmark}
+                        onToggleFavorite={(id) => setMyLikes(prev => ({ ...prev, [id]: !prev[id] }))}
+                        onQueueRewatch={(id) => setRewatchCount(prev => ({ ...prev, [id]: (Number(prev[id]) || 0) + 1 }))}
+                        onOpenReview={(rowItem) => { setAnalyticsTab('reviews'); setAnalyticsOpen(true); openDetail(rowItem); }}
                         onOpenStatus={openStatusDropdown}
                         bulkSelectMode={bulkSelectMode}
                         isSelected={selectedIds.has(item.id)}
