@@ -2490,13 +2490,17 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   position:fixed;
   left:50%;
   top:50%;
-  width:min(100dvh - 8px,1280px);
-  max-width:min(100dvh - 8px,1280px);
-  max-height:min(100dvw - 8px,2048px);
+  width:calc(100dvh - 4px);
+  height:calc(100dvw - 4px);
+  max-width:1400px;
+  max-height:2200px;
   border-radius:18px;
   transform:translate(-50%,-50%) rotate(90deg);
   transform-origin:center center;
   margin:0;
+  padding:8px;
+  display:flex;
+  flex-direction:column;
 }
 .trailer-shell.is-expanded{max-width:min(1600px,99vw);padding:12px}
 .trailer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
@@ -2510,8 +2514,10 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   background:color-mix(in srgb,var(--theme-bg) 70%, #000);
 }
 .trailer-frame.is-landscape{padding-top:min(44%,90vh)}
+.trailer-backdrop.is-landscape .trailer-frame{padding-top:0;height:100%;min-height:0;flex:1}
 .trailer-shell.is-expanded .trailer-frame{padding-top:min(56.25%,76vh)}
 .trailer-shell.is-expanded .trailer-frame.is-landscape{padding-top:min(40%,98vh)}
+.trailer-backdrop.is-landscape .trailer-shell.is-expanded .trailer-frame.is-landscape{padding-top:0;height:100%}
 .trailer-expanded-actions{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
 .trailer-variant-switch{
   margin-top:10px;
@@ -2569,9 +2575,11 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 [data-color-mode="light"] .trailer-backdrop.is-landscape{background:radial-gradient(circle at 20% 12%, color-mix(in srgb,var(--theme-accent) 16%, #fff), transparent 44%), rgba(15,23,42,.45)}
 @media (max-width:900px){
   .trailer-backdrop.is-landscape .trailer-shell{
-    width:min(100dvh - 6px,920px);
-    max-width:min(100dvh - 6px,920px);
-    padding:8px;
+    width:calc(100dvh - 2px);
+    height:calc(100dvw - 2px);
+    max-width:none;
+    max-height:none;
+    padding:6px;
   }
   .trailer-backdrop.is-landscape .trailer-frame{
     border-radius:12px;
