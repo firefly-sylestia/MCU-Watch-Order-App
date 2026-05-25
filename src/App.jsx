@@ -177,6 +177,14 @@ const CACHE_KEYS = {
 };
 
 
+const PERFORMANCE_PRESETS = {
+  cinematic: { reduceMotion: false, glassEffects: true, cinematicBackdrop: true, trailerLandscapeEnhancements: true },
+  balanced: { reduceMotion: false, glassEffects: true, cinematicBackdrop: true, trailerLandscapeEnhancements: true },
+  battery: { reduceMotion: true, glassEffects: false, cinematicBackdrop: true, trailerLandscapeEnhancements: false },
+};
+
+const PERFORMANCE_DEFAULT = { preset: 'balanced', ...PERFORMANCE_PRESETS.balanced };
+
 const UI_STATE_DEFAULTS = {
   listMode: 'core',
   search: '',
@@ -191,7 +199,7 @@ const UI_STATE_DEFAULTS = {
   densityMode: 'comfortable',
   timelineMode: 'release',
   autoHideStatuses: false,
-  performanceMode: true,
+  performanceSettings: PERFORMANCE_DEFAULT,
   desktopTextScale: 1,
   textScaleEnabled: true,
   scrollTop: 0,
@@ -232,7 +240,7 @@ const readSavedUiState = () => {
       densityMode: VALID_DENSITY_MODES.has(saved.densityMode) ? saved.densityMode : UI_STATE_DEFAULTS.densityMode,
       timelineMode: VALID_TIMELINE_MODES.has(saved.timelineMode) ? saved.timelineMode : UI_STATE_DEFAULTS.timelineMode,
       autoHideStatuses: typeof saved.autoHideStatuses === 'boolean' ? saved.autoHideStatuses : UI_STATE_DEFAULTS.autoHideStatuses,
-      performanceMode: typeof saved.performanceMode === 'boolean' ? saved.performanceMode : UI_STATE_DEFAULTS.performanceMode,
+      performanceSettings: saved?.performanceSettings && typeof saved.performanceSettings === 'object' ? { ...PERFORMANCE_DEFAULT, ...saved.performanceSettings } : UI_STATE_DEFAULTS.performanceSettings,
       desktopTextScale: VALID_DESKTOP_TEXT_SCALES.has(Number(saved.desktopTextScale)) ? Number(saved.desktopTextScale) : UI_STATE_DEFAULTS.desktopTextScale,
       textScaleEnabled: typeof saved.textScaleEnabled === 'boolean' ? saved.textScaleEnabled : UI_STATE_DEFAULTS.textScaleEnabled,
       scrollTop: Number.isFinite(Number(saved.scrollTop)) ? Math.max(0, Number(saved.scrollTop)) : UI_STATE_DEFAULTS.scrollTop,
@@ -272,6 +280,7 @@ const calculateWatchStreak = (items) => {
   }
   return streak;
 };
+
 
 const DEFAULT_EXPORT_TEXT_SCALE = 1.22;
 const EXPORT_FONT_FAMILIES = {
@@ -743,7 +752,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
 const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
   open,
   darkMode,
-  performanceMode,
+  performanceSettings,
   pillBorder,
   surfaceBorder,
   onToggle,
@@ -760,7 +769,7 @@ const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
       <button className="theme-btn sidebar-toggle-btn settings-toggle-btn" onClick={onOpenSettings} aria-label="Open settings and profile" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Settings size={18} /></button>
       </div>
       <div className="sidebar-backdrop" data-state={open ? 'open' : 'closed'} onPointerDown={(e) => { e.preventDefault(); onClose?.(); }} />
-      <aside ref={ref} data-state={open ? 'open' : 'closed'} aria-hidden={!open} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
+      <aside ref={ref} data-state={open ? 'open' : 'closed'} aria-hidden={!open} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': performanceSettings.glassEffects ? 'blur(8px)' : 'none' }}>
         {children}
       </aside>
     </>
@@ -770,7 +779,7 @@ const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
 const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
   open,
   darkMode,
-  performanceMode,
+  performanceSettings,
   onClose,
   children,
 }, ref) {
@@ -778,7 +787,7 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
     <>
       <button className="settings-backdrop" data-state={open ? 'open' : 'closed'} aria-label="Close settings menu" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose?.(); }} />
       <div className="settings-shell" data-state={open ? 'open' : 'closed'} role="dialog" aria-modal={open ? 'true' : 'false'} aria-hidden={!open} aria-label="Settings and profile" ref={ref}>
-        <div className="fade-in settings-menu settings-menu-redesign" data-state={open ? 'open' : 'closed'} style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
+        <div className="fade-in settings-menu settings-menu-redesign" data-state={open ? 'open' : 'closed'} style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceSettings.glassEffects ? 'blur(8px)' : 'none' }}>
           <div className="settings-sticky-actions">
             <button className="fpill glass-panel settings-close-sticky" onClick={() => onClose?.()}><X size={14}/>Close</button>
           </div>
@@ -977,7 +986,6 @@ export default function MCUViewer() {
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
-  const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
   const [scrollTuning] = useState({ desktopMultiplier: 5, desktopDeltaCap: 7, mobileMultiplier: 5, mobileDeltaCap: 7 });
   const [genreFilter] = useState('all');
   const [myLikes,        setMyLikes]        = useState({});
@@ -1058,6 +1066,16 @@ export default function MCUViewer() {
 
   const [desktopTextScale, setDesktopTextScale] = useState(initialUiState.desktopTextScale);
   const [textScaleEnabled, setTextScaleEnabled] = useState(initialUiState.textScaleEnabled);
+
+  const [performanceSettings, setPerformanceSettings] = useState(initialUiState.performanceSettings || PERFORMANCE_DEFAULT);
+  const applyPerformancePreset = useCallback((presetId) => {
+    const preset = PERFORMANCE_PRESETS[presetId] || PERFORMANCE_PRESETS.balanced;
+    setPerformanceSettings({ preset: presetId, ...preset });
+  }, []);
+  const updatePerformanceSetting = useCallback((key) => {
+    setPerformanceSettings(prev => ({ ...prev, preset: 'custom', [key]: !prev[key] }));
+  }, []);
+
   const { isDesktopViewport } = useResponsiveLayout();
   const desktopDpiCompensation = isDesktopViewport
     ? Math.min(1, Math.max(0.85, 1 / (window.devicePixelRatio || 1)))
@@ -1241,7 +1259,7 @@ export default function MCUViewer() {
 
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !isDesktopViewport || overlayActive || performanceMode) return;
+    if (typeof window === 'undefined' || !isDesktopViewport || overlayActive || performanceSettings.reduceMotion) return;
     const container = mainRef.current;
     const canAnimate = window.matchMedia?.('(prefers-reduced-motion: no-preference)').matches ?? true;
     if (!container || !canAnimate) return;
@@ -1306,7 +1324,7 @@ export default function MCUViewer() {
       state.velocity = 0;
       state.lastTs = 0;
     };
-  }, [isDesktopViewport, overlayActive, performanceMode]);
+  }, [isDesktopViewport, overlayActive, performanceSettings.reduceMotion]);
 
   useEffect(() => {
     const el = mainRef.current;
@@ -1669,12 +1687,12 @@ export default function MCUViewer() {
       densityMode,
       timelineMode,
       autoHideStatuses,
-      performanceMode,
+      performanceSettings,
       desktopTextScale,
       textScaleEnabled,
       scrollTop,
     }));
-  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
+  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceSettings, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
   const totalWatched = useMemo(() => activeItems.filter(i => i.status === 'watched').length, [activeItems]);
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
@@ -1861,7 +1879,7 @@ export default function MCUViewer() {
 
   useEffect(() => {
     if (!previousHeroSrc) return undefined;
-    const timer = window.setTimeout(() => setPreviousHeroSrc(''), performanceMode ? 140 : 220);
+    const timer = window.setTimeout(() => setPreviousHeroSrc(''), performanceSettings.reduceMotion ? 140 : 220);
     return () => window.clearTimeout(timer);
   }, [previousHeroSrc, darkMode]);
 
@@ -1954,12 +1972,12 @@ export default function MCUViewer() {
       const card = heroActiveCardRef.current;
       if (rail && card) {
         const targetLeft = card.offsetLeft - (rail.clientWidth - card.clientWidth) / 2;
-        rail.scrollTo({ left: Math.max(0, targetLeft), behavior: performanceMode ? 'auto' : 'smooth' });
+        rail.scrollTo({ left: Math.max(0, targetLeft), behavior: performanceSettings.reduceMotion ? 'auto' : 'smooth' });
       }
-      window.setTimeout(() => { heroProgrammaticScrollRef.current = false; heroForceRecenterRef.current = false; }, performanceMode ? 120 : 520);
+      window.setTimeout(() => { heroProgrammaticScrollRef.current = false; heroForceRecenterRef.current = false; }, performanceSettings.reduceMotion ? 120 : 520);
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [heroIndex, activeHeroSrc, visibleHeroPosters, performanceMode]);
+  }, [heroIndex, activeHeroSrc, visibleHeroPosters, performanceSettings.reduceMotion]);
 
   const goToNextHero = useCallback(() => {
     if (!heroPosters.length) return;
@@ -3100,7 +3118,7 @@ export default function MCUViewer() {
     ? `${Math.max(heroBackdropScale - 16, 112)}% auto`
     : `auto ${Math.max(heroBackdropScale - 8, 96)}%`;
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceSettings.reduceMotion || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
 
 
@@ -3120,11 +3138,11 @@ export default function MCUViewer() {
           />
         )}
         <div className="hero-backdrop-blend" />
-        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '6%' : '3%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '5%' : '2.5%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.12 : 0.06, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
+        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '6%' : '3%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '5%' : '2.5%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: performanceSettings.cinematicBackdrop ? (darkMode ? 0.12 : 0.06) : 0, transition: 'opacity 0.95s ease-in-out', animation: performanceSettings.reduceMotion ? 'none' : 'cinematicIn 0.8s ease both' }} />
       </div>
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} settingsOpen={settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
+      <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} settingsOpen={settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceSettings={performanceSettings} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
         <div style={{ marginBottom: 8, fontSize: 11, letterSpacing: 1.8, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)', textTransform: 'uppercase' }}>Navigation Panel</div>
         <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -3192,7 +3210,7 @@ export default function MCUViewer() {
         </div>
       </SidebarMenu>
 
-      <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} performanceMode={performanceMode} onClose={closeSettings}>
+      <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} performanceMode={performanceSettings.reduceMotion} onClose={closeSettings}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Profile</div>
             <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 6 }}>
@@ -3221,11 +3239,20 @@ export default function MCUViewer() {
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><EyeOff size={14} /> Spoiler Safe</span>
               <button className='fpill settings-toggle-pill' type='button' onClick={() => setSpoilerSafeMode(v => !v)} style={{ minWidth: 72, justifyContent: 'center', borderColor: spoilerSafeMode ? 'var(--theme-accent)' : 'var(--theme-border)', background: spoilerSafeMode ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}>{spoilerSafeMode ? 'On' : 'Off'}</button>
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Zap size={14} /> Performance Mode</span>
-              <button className='fpill settings-toggle-pill' type='button' onClick={() => setPerformanceMode(v => !v)} style={{ minWidth: 72, justifyContent: 'center', borderColor: performanceMode ? 'var(--theme-accent)' : 'var(--theme-border)', background: performanceMode ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}>{performanceMode ? 'On' : 'Off'}</button>
-            </label>
-            <div style={{ fontSize: 11, color: T.textMuted, lineHeight: 1.35, marginTop: -4 }}>Leave off for full UI motion; turn on only if your device needs reduced effects.</div>
+            <div style={{ display: 'grid', gap: 8, padding: '10px', border: `1px solid ${T.surfaceBorder}`, borderRadius: 12, background: 'color-mix(in srgb, var(--theme-surface) 92%, transparent)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Zap size={14} /> Performance Profile</span>
+                <span style={{ fontSize: 10, color: T.textMuted, textTransform: 'uppercase', letterSpacing: 1.2 }}>{performanceSettings.preset}</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 6 }}>
+                {[['cinematic','Cinematic'],['balanced','Balanced'],['battery','Battery']].map(([id,label]) => <button key={id} className='fpill' type='button' onClick={() => applyPerformancePreset(id)} style={{ justifyContent: 'center', borderColor: performanceSettings.preset===id ? 'var(--theme-accent)' : 'var(--theme-border)', color: performanceSettings.preset===id ? 'var(--theme-accent)' : 'var(--theme-text)' }}>{label}</button>)}
+              </div>
+              {[['reduceMotion','Reduce motion'],['glassEffects','Glass blur effects'],['cinematicBackdrop','Cinematic backdrop'],['trailerLandscapeEnhancements','Landscape trailer enhancements']].map(([key,label]) => (
+                <button key={key} className='fpill settings-toggle-pill' type='button' onClick={() => updatePerformanceSetting(key)} style={{ justifyContent: 'space-between', borderColor: performanceSettings[key] ? 'var(--theme-accent)' : 'var(--theme-border)' }}>
+                  <span>{label}</span><strong>{performanceSettings[key] ? 'On' : 'Off'}</strong>
+                </button>
+              ))}
+            </div>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Desktop Text Scaling</div>
             <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
@@ -3589,7 +3616,7 @@ export default function MCUViewer() {
         </button>
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
+      <main ref={mainRef} className={`app-scroll-shell${performanceSettings.reduceMotion ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
           {phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
@@ -3863,7 +3890,7 @@ export default function MCUViewer() {
               </div>
             </div>}
             <div className={`trailer-frame ${trailerLandscape ? 'is-landscape' : ''}`} ref={trailerShellRef}>
-              {trailerLandscape && <div className="trailer-landscape-tip">Landscape mode enabled</div>}
+              {trailerLandscape && performanceSettings.trailerLandscapeEnhancements && <div className="trailer-landscape-tip">Landscape mode enabled</div>}
               <iframe title={`${detailItem.title} trailer`} src={trailerEmbedUrl(selectedTrailer.youtubeId)} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
             </div>
             {trailerExpanded && <div className="trailer-expanded-actions">
