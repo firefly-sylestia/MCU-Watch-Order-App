@@ -3060,11 +3060,11 @@ export default function MCUViewer() {
     setTypeFilter(null);
     setStatusFilter(null);
     setWatchedOnly(false);
-    setEssentialOnly(false);
+    setEssOnly(false);
     setAutoHideStatuses(false);
     setSortBy('order');
     setActivePhase(0);
-  }, [setSearch, setTypeFilter, setStatusFilter, setWatchedOnly, setEssentialOnly, setAutoHideStatuses, setSortBy, setActivePhase]);
+  }, [setSearch, setTypeFilter, setStatusFilter, setWatchedOnly, setEssOnly, setAutoHideStatuses, setSortBy, setActivePhase]);
   const openRecommendedNextTitle = useCallback(() => {
     if (nextUnwatched) openDetail(nextUnwatched);
   }, [nextUnwatched, openDetail]);
