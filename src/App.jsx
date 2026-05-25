@@ -12,7 +12,7 @@ import { useHeroBackdrop } from './hooks/useHeroBackdrop';
 import { usePosterCache } from './hooks/usePosterCache';
 import { useOverlayNavigation } from './hooks/useOverlayNavigation';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
-import { HeaderShell, HeroBackdrop, HeroCarousel, FloatingQuickControls, FilterBar, PhaseList, SettingsPanel, DetailModal } from './components/sections/AppSections';
+import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
 import { THEME_CHOICES, getActiveThemeVars } from './constants/themeSettings';
 import './App.layout.css';
 import './App.components.css';
@@ -3082,14 +3082,13 @@ export default function MCUViewer() {
 
   const sectionScaffold = (
     <>
-      <HeaderShell />
-      <HeroBackdrop />
-      <HeroCarousel />
-      <FloatingQuickControls />
-      <FilterBar />
-      <PhaseList />
-      <SettingsPanel />
-      <DetailModal />
+      <Header title="MCU Viewing Order" subtitle="Modernized modular UI shell" />
+      <TimelineControls />
+      <ProgressSection />
+      <TitleCard />
+      <SettingsSection open={settingsOpen} />
+      <Analytics open={analyticsOpen} />
+      <DetailDrawer open={Boolean(detailItem)} />
     </>
   );
 
