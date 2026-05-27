@@ -33,198 +33,27 @@ import { TIMELINE_MODES, TIMELINE_MODE_IDS, CHARACTER_POV_TITLE_SETS, STORY_ORDE
 import { AFTER_CREDITS, AFTER_CREDITS_DEFAULT, DIRECTOR_DATA } from './data/afterCreditsData';
 import { TRAILER_DATA, trailerEmbedUrl, getTrailerByTitle } from './data/trailerData';
 
-// ─── Icon primitives ────────────────────────────────────────────────────────
-const Icon = ({ children, size = 16, style = {} }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size}
-    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
-    {children}
-  </svg>
-);
-const Search    = p => <Icon {...p}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></Icon>;
-const Eye       = p => <Icon {...p}><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></Icon>;
-const EyeOff    = p => <Icon {...p}><path d="m3 3 18 18"/><path d="M10.5 10.5a2 2 0 0 0 3 3"/><path d="M9.9 4.2A10.9 10.9 0 0 1 12 4c6.5 0 10 8 10 8a17.6 17.6 0 0 1-3.2 4.2"/><path d="M6.6 6.6A17.5 17.5 0 0 0 2 12s3.5 8 10 8a10.7 10.7 0 0 0 5.4-1.4"/></Icon>;
-const RatingGem = p => <Icon {...p}><path d="M12 2 21 9 12 22 3 9 12 2Z"/></Icon>;
-const Film      = p => <Icon {...p}><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20"/><path d="M17 2v20"/><path d="M2 7h20"/><path d="M2 17h20"/></Icon>;
-const Tv        = p => <Icon {...p}><rect x="2" y="7" width="20" height="15" rx="2"/><path d="M17 2 12 7 7 2"/></Icon>;
-const Zap       = p => <Icon {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></Icon>;
-const ChevDown  = p => <Icon {...p}><path d="m6 9 6 6 6-6"/></Icon>;
-const ChevRight = p => <Icon {...p}><path d="m9 6 6 6-6 6"/></Icon>;
-const ArrowUpDown = p => <Icon {...p}><path d="m7 7 5-5 5 5"/><path d="M12 2v20"/><path d="m17 17-5 5-5-5"/></Icon>;
-const Check     = p => <Icon {...p}><path d="M20 6 9 17l-5-5"/></Icon>;
-const Clock     = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></Icon>;
-const Heart     = p => <Icon {...p}><path d="M12 20.8s-7.4-4.7-9.4-8.7C1 9.3 2.8 5.2 6.2 5.2c2.2 0 3.6 1.2 4.5 2.6.9-1.4 2.3-2.6 4.5-2.6 3.4 0 5.2 4.1 3.6 6.9-2 4-9.4 8.7-9.4 8.7z"/></Icon>;
-const Pause     = p => <Icon {...p}><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></Icon>;
-const Trash2    = p => <Icon {...p}><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></Icon>;
-const Upload    = p => <Icon {...p}><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M20 16v4H4v-4"/></Icon>;
-const Download  = p => <Icon {...p}><path d="M12 4v12"/><path d="m17 11-5 5-5-5"/><path d="M20 20H4"/></Icon>;
-const Sun       = p => <Icon {...p}><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></Icon>;
-const Star      = p => <Icon {...p}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></Icon>;
-const Moon      = p => <Icon {...p}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></Icon>;
-const Settings  = p => <Icon {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.02.02a2 2 0 1 1-2.83 2.83l-.02-.02A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.03a1.7 1.7 0 0 0-.4-1.1 1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.87.34l-.02.02a2 2 0 1 1-2.83-2.83l.02-.02A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H2.9a2 2 0 1 1 0-4h.03a1.7 1.7 0 0 0 1.1-.4 1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.87l-.02-.02a2 2 0 1 1 2.83-2.83l.02.02A1.7 1.7 0 0 0 9 4.6c.4 0 .78-.2 1-.6.25-.31.39-.7.4-1.1V2.9a2 2 0 1 1 4 0v.03c0 .4.15.79.4 1.1.22.4.6.6 1 .6.67.07 1.34-.16 1.87-.62l.02-.02a2 2 0 1 1 2.83 2.83l-.02.02a1.7 1.7 0 0 0-.34 1.87c0 .4.2.78.6 1 .31.25.7.39 1.1.4h.03a2 2 0 1 1 0 4h-.03a1.7 1.7 0 0 0-1.1.4 1.7 1.7 0 0 0-.6 1z"/></Icon>;
-const Info      = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></Icon>;
-const Bookmark  = p => <Icon {...p}><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"/></Icon>;
-const Layers    = p => <Icon {...p}><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/><path d="m3 16 9 5 9-5"/></Icon>;
-const PlayCircle = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4V8z"/></Icon>;
-const PauseCircle = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M10 9v6M14 9v6"/></Icon>;
-const XCircle   = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></Icon>;
-const SlidersH  = p => <Icon {...p}><line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><circle cx="12" cy="4" r="2"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><circle cx="10" cy="12" r="2"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><circle cx="14" cy="20" r="2"/></Icon>;
-const UserCircle = p => <Icon {...p}><circle cx="12" cy="8" r="4"/><path d="M4 20c1.9-3.4 5-5 8-5s6.1 1.6 8 5"/></Icon>;
-const Menu = p => <Icon {...p}><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></Icon>;
-const SwitchIcon = p => <Icon {...p}><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 8a9 9 0 0 0-15-3"/><path d="M3 16a9 9 0 0 0 15 3"/></Icon>;
-const X         = p => <Icon {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></Icon>;
-
+import { Search, Eye, EyeOff, Film, Tv, Zap, ChevDown, ChevRight, ArrowUpDown, Check, Clock, Heart, Pause, Trash2, Upload, Download, Sun, Star, Moon, Settings, Info, Bookmark, Layers, PlayCircle, PauseCircle, XCircle, SlidersH, UserCircle, Menu, SwitchIcon, X } from './constants/icons';
+import { matchesSearch } from './utils/search';
+import { CACHE_KEYS, DESKTOP_TEXT_SCALES, FALLBACK_TYPE_META, HIDDEN_FILTER_STATUSES, LIST_MODES, MARVEL_UI_LEXICON, SORT_LABELS, STATUS_META as STATUS_META_BASE, TITLE_ROW_STATIC, TYPE_META as TYPE_META_BASE, UI_STATE_DEFAULTS } from './constants/appConfig';
 
 const TYPE_META = {
-  film:   { label: 'Film',   Icon: Film, color: '#d4372f' },
-  series: { label: 'Series', Icon: Tv,   color: '#4a9ede' },
-  short:  { label: 'Short',  Icon: Zap,  color: '#a06cd5' },
+  ...TYPE_META_BASE,
+  film: { ...TYPE_META_BASE.film, Icon: Film },
+  series: { ...TYPE_META_BASE.series, Icon: Tv },
+  short: { ...TYPE_META_BASE.short, Icon: Zap },
 };
 
-const FALLBACK_TYPE_META = { label: 'Title', Icon: Layers, color: 'var(--theme-text-secondary)' };
+const FALLBACK_TYPE_META_WITH_ICON = { ...FALLBACK_TYPE_META, Icon: Layers };
 
 const STATUS_META = {
-  watched:        { label: 'Completed',      color: '#e11d48', Icon: Check,      bg: 'rgba(225,29,72,0.12)'  },
-  'plan-to-watch':{ label: 'Watchlist',      color: '#3b82f6', Icon: Bookmark,   bg: 'rgba(59,130,246,0.12)' },
-  watching:       { label: 'In Progress',    color: '#8b5cf6', Icon: PlayCircle, bg: 'rgba(139,92,246,0.12)' },
-  'on-hold':      { label: 'Paused',         color: '#f59e0b', Icon: PauseCircle,bg: 'rgba(245,158,11,0.12)' },
-  dropped:        { label: 'Dropped',        color: '#ef4444', Icon: XCircle,    bg: 'rgba(239,68,68,0.12)'  },
-  unwatched:      { label: 'Unwatched',      color: 'var(--theme-text-secondary)', Icon: EyeOff, bg: 'transparent' },
-};
-
-const SORT_LABELS = { order: 'Chronological', year: 'By Year', title: 'Alphabetical', runtime: 'Runtime', watched: 'Recently Watched', status: 'By Status' };
-const HIDDEN_FILTER_STATUSES = new Set(['watched', 'dropped']);
-const TITLE_ROW_STATIC = {
-  titleBtn: { overflow: 'hidden' },
-  titleLine: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  genreMeta: { marginTop: 2, fontSize: 10, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1.2 },
-};
-const DESKTOP_TEXT_SCALES = [1, 1.25, 1.5, 1.75, 2];
-// ─── Static data ────────────────────────────────────────────────────────────
-
-const normalizeSearchText = (value = '') => value
-  .toLowerCase()
-  .normalize('NFD')
-  .replace(/[\u0300-\u036f]/g, '')
-  .replace(/[^a-z0-9\s]/g, ' ')
-  .replace(/\s+/g, ' ')
-  .trim();
-
-const fuzzyIncludes = (haystack, needle) => {
-  if (!needle) return true;
-  if (!haystack) return false;
-  if (haystack.includes(needle)) return true;
-  const parts = needle.split(' ').filter(Boolean);
-  if (parts.length > 1) return parts.every(part => haystack.includes(part));
-  const term = parts[0] || needle;
-  if (term.length < 4) return false;
-  for (const token of haystack.split(' ')) {
-    if (!token) continue;
-    if (Math.abs(token.length - term.length) > 1) continue;
-    let edits = 0;
-    let i = 0; let j = 0;
-    while (i < token.length && j < term.length) {
-      if (token[i] === term[j]) { i += 1; j += 1; continue; }
-      edits += 1;
-      if (edits > 1) break;
-      if (token.length > term.length) i += 1;
-      else if (term.length > token.length) j += 1;
-      else { i += 1; j += 1; }
-    }
-    edits += (token.length - i) + (term.length - j);
-    if (edits <= 1) return true;
-  }
-  return false;
-};
-
-const matchesSearch = (item, query, extras = {}) => {
-  const q = normalizeSearchText(query);
-  if (!q) return true;
-  const corpus = normalizeSearchText([
-    item.title,
-    item.prereq,
-    item.desc,
-    item.releaseDate,
-    item.releaseStatus,
-    item.type,
-    item.status,
-    item.phase ? `phase ${item.phase}` : '',
-    extras.director || '',
-    ...(extras.connectsTo || []),
-    extras.timelineLabel || '',
-  ].filter(Boolean).join(' '));
-  return fuzzyIncludes(corpus, q);
-};
-
-const MARVEL_UI_LEXICON = {
-  'Navigation Panel': 'S.H.I.E.L.D. Command Deck',
-  'Marvel Fan': 'Stark Initiative Agent',
-  'Dark': 'Night Ops',
-  'Light': 'Day Ops',
-  'Calendar View': 'Multiverse Calendar',
-  'List View': 'Mission List',
-  'Quick Phases': 'Phase Jump',
-  'Analytics': 'Jarvis Analytics',
-  'Viewing List': 'Mission Archive',
-  'WATCHED': 'MISSIONS CLEARED',
-  'CONTINUE WATCHING': 'CONTINUE MISSION',
-  'Preferences': 'Protocol Settings',
-  'Dark Theme': 'Night Protocol',
-  'Spoiler Safe': 'Spoiler Shield',
-  'Performance Mode': 'Arc Reactor Boost',
-  'Enable scaling': 'Enable HUD scaling',
-  'Backup & Restore': 'Stark Backup Vault',
-  'Danger Zone': 'Red Room Alert',
-  'S.H.I.E.L.D. Intel Search': 'F.R.I.D.A.Y. Intel Search',
-  'Locate any Marvel story node': 'Locate any Marvel timeline node',
-  'Back to Home': 'Return to Helicarrier',
-  'Back to Home Carousel': 'Return to Helicarrier Deck',
-  'Type to begin searching': 'Type to scan the multiverse',
-  'Clear Search': 'Clear Scan',
-};
-
-const LIST_MODES = [
-  { id: 'core',     label: 'MCU',      sublabel: 'Curated List',       color: '#c0392b', desc: '60 curated films & series'           },
-  { id: 'extended', label: 'Extended', sublabel: 'Full Chronological', color: '#4a9ede', desc: 'All entries incl. Netflix, SHIELD & more' },
-];
-
-// ─── OMDB ratings key (for ratings only — posters use TMDB) ─────────────────
-const OMDB_RATINGS_KEY = '2c971c17';
-
-const CACHE_KEYS = {
-  poster: 'mcu-poster-cache-v1',
-  meta: 'mcu-meta-cache-v1',
-  posterExportFailures: 'mcu-poster-export-failures-v1',
-  userActions: 'mcu-user-actions-v1',
-  userActionsLikes: 'mcu-user-actions-likes-v1',
-  userActionsRatings: 'mcu-user-actions-ratings-v1',
-  userActionsRewatch: 'mcu-user-actions-rewatch-v1',
-  userActionsBookmarks: 'mcu-user-actions-bookmarks-v1',
-  userActionsReviews: 'mcu-user-actions-reviews-v1',
-  uiState: 'mcu-ui-state-v1',
-  heroCarousel: 'mcu-hero-carousel-cache-v1',
-};
-
-
-const UI_STATE_DEFAULTS = {
-  listMode: 'core',
-  search: '',
-  sortBy: 'order',
-  essentialOnly: false,
-  watchedOnly: false,
-  statusFilter: null,
-  typeFilter: null,
-  activePhase: 1,
-  filtersOpen: false,
-  viewMode: 'list',
-  densityMode: 'comfortable',
-  timelineMode: 'release',
-  autoHideStatuses: false,
-  performanceMode: true,
-  desktopTextScale: 1,
-  textScaleEnabled: true,
-  scrollTop: 0,
-  exportPrefs: { font: 'inter', textScale: 1.08, detailUseReviewStyle: true },
+  ...STATUS_META_BASE,
+  watched: { ...STATUS_META_BASE.watched, Icon: Check },
+  'plan-to-watch': { ...STATUS_META_BASE['plan-to-watch'], Icon: Bookmark },
+  watching: { ...STATUS_META_BASE.watching, Icon: PlayCircle },
+  'on-hold': { ...STATUS_META_BASE['on-hold'], Icon: PauseCircle },
+  dropped: { ...STATUS_META_BASE.dropped, Icon: XCircle },
+  unwatched: { ...STATUS_META_BASE.unwatched, Icon: EyeOff },
 };
 
 const VALID_LIST_MODES = new Set(LIST_MODES.map(mode => mode.id));
@@ -237,7 +66,7 @@ const VALID_TIMELINE_MODES = TIMELINE_MODE_IDS;
 const VALID_DESKTOP_TEXT_SCALES = new Set(DESKTOP_TEXT_SCALES);
 const AUTO_HIDDEN_STATUSES = HIDDEN_FILTER_STATUSES;
 
-const getSafeTypeMeta = (type) => TYPE_META[type] || FALLBACK_TYPE_META;
+const getSafeTypeMeta = (type) => TYPE_META[type] || FALLBACK_TYPE_META_WITH_ICON;
 const getSafeStatusMeta = (status) => STATUS_META[status] || STATUS_META.unwatched;
 
 const readSavedUiState = () => {
