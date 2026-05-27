@@ -4,6 +4,7 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { Media } from '@capacitor-community/media';
 import CropModal from './components/CropModal';
+import SetupWizard from './components/SetupWizard';
 import { readStorageJSON, readStorageValue, removeStorageValue, safeLocalStorageSetItem, scheduleStorageWrite, pruneObject } from './utils/cacheStorage';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { renderCardToCanvas } from './export/cards/renderCardToCanvas';
@@ -877,6 +878,8 @@ export default function MCUViewer() {
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
+  const [setupOpen, setSetupOpen] = useState(false);
+  const [setupExpanded, setSetupExpanded] = useState(false);
   const [themeMode,      setThemeMode]      = useState('iron-man');
   const [appearanceMode, setAppearanceMode] = useState('glass');
   const [marvelLangMode, setMarvelLangMode] = useState(false);
@@ -2370,6 +2373,20 @@ export default function MCUViewer() {
     } catch {}
   }, []);
 
+
+  useEffect(() => {
+    const setupDone = readStorageValue('mcu-first-setup-v1') === 'done';
+    if (!setupDone) setSetupOpen(true);
+  }, []);
+
+  const openGoogleLogin = useCallback(() => {
+    const clientId = '895654125638-pspr0bqmlpf78cc4gj2132ttrhbmlqn2.apps.googleusercontent.com';
+    const redirect = encodeURIComponent(window.location.origin);
+    const scope = encodeURIComponent('openid email profile');
+    const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirect}&response_type=token&scope=${scope}&prompt=select_account`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }, []);
+
   useEffect(() => { scheduleStorageWrite('mcu-profile-v1', JSON.stringify(profile)); }, [profile]);
   useEffect(() => { scheduleStorageWrite('mcu-uploaded-avatars-v1', JSON.stringify(uploadedAvatars)); }, [uploadedAvatars]);
   useEffect(() => { scheduleStorageWrite('mcu-theme-mode-v1', themeMode); }, [themeMode]);
@@ -2523,11 +2540,12 @@ export default function MCUViewer() {
   };
 
   // ─── Manual build: one title at a time; skips cached metadata ────────────
-  const refreshPostersAndMetadata = async () => {
+  const refreshPostersAndMetadata = async (mode = 'view') => {
     if (posterFetchState.active) return;
-    const targets = filtered.filter(item => !hasCompleteMetadata(item) || (!localPosterSrc(item) && !posterCache[item.id]));
+    const source = mode === 'all' ? items : mode === 'core' ? items.filter(item => coreIds.has(item.id)) : filtered;
+    const targets = source.filter(item => !hasCompleteMetadata(item) || (!localPosterSrc(item) && !posterCache[item.id]));
     if (!targets.length) {
-      setPosterFetchState({ active: false, done: 0, total: 0, message: 'Metadata cache is already complete for this view.' });
+      setPosterFetchState({ active: false, done: 0, total: 0, message: `Metadata cache is already complete for ${mode} selection.` });
       return;
     }
 
@@ -4095,6 +4113,23 @@ export default function MCUViewer() {
           </div>
         </div>
       )}
+
+
+      <SetupWizard
+        open={setupOpen}
+        profile={profile}
+        setProfile={setProfile}
+        onPickPhoto={() => document.getElementById('setup-avatar-upload')?.click()}
+        onGoogleLogin={openGoogleLogin}
+        onFetchCore={() => refreshPostersAndMetadata('core')}
+        onFetchAll={() => refreshPostersAndMetadata('all')}
+        fetchState={posterFetchState}
+        onSkip={() => { safeLocalStorageSetItem('mcu-first-setup-v1', 'done'); setSetupOpen(false); }}
+        onFinish={() => { safeLocalStorageSetItem('mcu-first-setup-v1', 'done'); setSetupOpen(false); }}
+        expanded={setupExpanded}
+        onExpandToggle={() => setSetupExpanded(v => !v)}
+      />
+      <input id="setup-avatar-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => setAvatarCropSrc(String(r.result || '')); r.readAsDataURL(f); e.target.value=''; }} />
 
       {avatarCropSrc && (
         <CropModal
