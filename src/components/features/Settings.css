@@ -32,3 +32,9 @@
 .settings-slider-group span{font-size:11px;color:var(--theme-text-muted);display:inline-flex;gap:6px;align-items:center}
 .settings-guide-list{margin:0;padding-left:18px;display:grid;gap:6px;color:var(--theme-text);font-size:12px;line-height:1.45}
 @media (max-width: 880px){.settings-grid-2{grid-template-columns:1fr}}
+
+.sidebar-redesign{display:grid;gap:12px}
+.sidebar-section{display:grid;gap:8px;padding:12px;border:1px solid color-mix(in srgb,var(--theme-border) 86%, transparent);border-radius:14px;background:color-mix(in srgb,var(--theme-surface) 82%, transparent);box-shadow:0 6px 20px color-mix(in srgb,var(--theme-accent) 9%, transparent)}
+.sidebar-profile{gap:10px}
+.sidebar-eyebrow{font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--theme-text-muted)}
+.settings-toggle-row .fpill{min-width:108px;justify-content:center}
