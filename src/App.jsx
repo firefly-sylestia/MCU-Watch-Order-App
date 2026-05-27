@@ -3934,7 +3934,7 @@ export default function MCUViewer() {
                 )}
               </div>
               <div className="trailer-actions">
-                <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle}><SwitchIcon size={12}/>Rotate View</button>
+                <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle}><SwitchIcon size={12}/>{trailerLandscape ? 'Portrait View' : 'Landscape View'}</button>
                 <button className="fpill trailer-close" onClick={() => setTrailerExpanded(true)}><PlayCircle size={12}/>Enlarge</button>
                 <button className="fpill trailer-close" onClick={closeTrailer}><X size={12}/>Close</button>
               </div>
@@ -3959,8 +3959,8 @@ export default function MCUViewer() {
                   ))}
                 </div>
               )}
-              <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle}><SwitchIcon size={12}/>Rotate View</button>
-              <button className="fpill trailer-close" onClick={handleTrailerBack}><PlayCircle size={12}/>{trailerLandscape ? 'Back & Close' : 'Back'}</button>
+              <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle}><SwitchIcon size={12}/>{trailerLandscape ? 'Portrait View' : 'Landscape View'}</button>
+              <button className="fpill trailer-close" onClick={handleTrailerBack}><PlayCircle size={12}/>Back</button>
               <button className="fpill trailer-close" onClick={closeTrailer}><X size={12}/>Close</button>
             </div>}
           </div>
