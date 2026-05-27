@@ -755,3 +755,34 @@ button:active {
 .theme-switch::after{top:18vh;right:-140px;background:radial-gradient(circle,var(--glow-strong),transparent 70%)}
 .theme-switch[data-theme='minimal']::before,.theme-switch[data-theme='minimal']::after{opacity:.15;filter:blur(4px)}
 .theme-switch[data-theme='pixelated']::before,.theme-switch[data-theme='pixelated']::after{filter:none;background:radial-gradient(circle,var(--glow-soft) 0 38%,transparent 38%)}
+
+
+.theme-switch::selection{background:color-mix(in srgb,var(--accent-1) 35%, transparent)}
+.theme-switch .header-brand,
+.theme-switch .settings-menu,
+.theme-switch .analytics-shell,
+.theme-switch .phase-rows-full,
+.theme-switch .detail-shell,
+.theme-switch .rrow{
+  position:relative;
+  border-radius:var(--radius-lg);
+  overflow:clip;
+}
+.theme-switch .header-brand::after,
+.theme-switch .analytics-shell::after,
+.theme-switch .detail-shell::after{
+  content:'';position:absolute;inset:auto -80px -90px auto;width:210px;height:210px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,var(--glow-soft),transparent 66%);filter:blur(calc(var(--fx-blur) * .45));opacity:.55;
+}
+.theme-switch .phase-rows-full::before{
+  content:'';position:absolute;left:-110px;top:18%;width:240px;height:240px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,var(--glow-strong),transparent 72%);filter:blur(calc(var(--fx-blur) * .5));opacity:.33;
+}
+.theme-switch[data-theme='pixelated'] .header-brand::after,
+.theme-switch[data-theme='pixelated'] .analytics-shell::after,
+.theme-switch[data-theme='pixelated'] .detail-shell::after,
+.theme-switch[data-theme='pixelated'] .phase-rows-full::before{
+  border-radius:0;filter:none;opacity:.22;
+  background:repeating-linear-gradient(90deg,color-mix(in srgb,var(--glow-soft) 80%, transparent) 0 2px,transparent 2px 4px),repeating-linear-gradient(0deg,color-mix(in srgb,var(--glow-soft) 75%, transparent) 0 2px,transparent 2px 4px);
+}
+.theme-switch[data-theme='pixelated']::before,.theme-switch[data-theme='pixelated']::after{opacity:.18}

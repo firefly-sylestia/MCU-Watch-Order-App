@@ -8,3 +8,8 @@
 .appearance-card:hover{transform:translateY(-1px) scale(1.01);border-color:var(--accent-1)}
 .appearance-card:focus-visible{outline:none;box-shadow:0 0 0 2px var(--accent-2),0 0 0 4px color-mix(in srgb,var(--accent-2) 35%, transparent)}
 .appearance-card.is-active{border-color:var(--accent-1);box-shadow:0 0 0 1px var(--accent-1),0 18px 36px var(--glow-soft), inset 0 1px 0 var(--edge-highlight)}
+
+.theme-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+.theme-grid .fpill{border-radius:calc(var(--radius-md) + 2px) !important;padding:10px 8px;min-height:42px;box-shadow:inset 0 1px 0 var(--edge-highlight), 0 8px 22px color-mix(in srgb,var(--glow-soft) 44%, transparent)}
+.theme-grid .fpill:hover{transform:translateY(-1px)}
+@media (max-width: 760px){.theme-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
