@@ -877,6 +877,11 @@ export default function MCUViewer() {
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
+  const [setupOpen, setSetupOpen] = useState(false);
+  const [setupStep, setSetupStep] = useState(0);
+  const [setupFetchScope, setSetupFetchScope] = useState('core');
+  const [setupBusy, setSetupBusy] = useState(false);
+  const [setupMessage, setSetupMessage] = useState('');
   const [themeMode,      setThemeMode]      = useState('iron-man');
   const [appearanceMode, setAppearanceMode] = useState('glass');
   const [marvelLangMode, setMarvelLangMode] = useState(false);
@@ -2348,6 +2353,8 @@ export default function MCUViewer() {
     try {
       const p = readStorageJSON('mcu-profile-v1', {});
       if (p?.pfp || p?.name) setProfile(prev => ({ ...prev, ...p }));
+      const setupDone = readStorageValue('mcu-first-setup-v1', '');
+      if (!setupDone) setSetupOpen(true);
       const avatars = readStorageJSON('mcu-uploaded-avatars-v1', []);
       if (Array.isArray(avatars)) setUploadedAvatars(avatars);
       const t = readStorageValue('mcu-theme-mode-v1', '');
@@ -2368,6 +2375,17 @@ export default function MCUViewer() {
       if (!snapshots.length && migrated.length) scheduleStorageWrite(AUTO_BACKUP_KEY, JSON.stringify(migrated));
       setAutoBackupStamp((migrated[0]?.exportedAt || readStorageValue(LEGACY_AUTO_BACKUP_TS_KEY, '') || ''));
     } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.google?.accounts?.id) return;
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    document.body.appendChild(script);
+    return () => {};
   }, []);
 
   useEffect(() => { scheduleStorageWrite('mcu-profile-v1', JSON.stringify(profile)); }, [profile]);
@@ -2549,6 +2567,52 @@ export default function MCUViewer() {
       await wait(24);
     }
     setPosterFetchState({ active: false, done: targets.length, total: targets.length, message: `Built metadata for ${targets.length} entries.` });
+  };
+
+  const runSetupFetch = async () => {
+    if (setupBusy) return;
+    const targetItems = setupFetchScope === 'all' ? items : items.filter((item) => item.essential);
+    if (!targetItems.length) return;
+    setSetupBusy(true);
+    setSetupMessage(`Fetching ${setupFetchScope === 'all' ? 'expanded' : 'core'} database details and posters…`);
+    let done = 0;
+    for (const item of targetItems) {
+      try {
+        await fetchAndCacheMetadataItem(item);
+      } catch {}
+      done += 1;
+      setSetupMessage(`Fetched ${done}/${targetItems.length}: ${item.title}`);
+    }
+    setSetupBusy(false);
+    setSetupMessage(`Done. Cached ${targetItems.length} titles.`);
+  };
+
+  const finishSetup = (skip = false) => {
+    safeLocalStorageSetItem('mcu-first-setup-v1', '1');
+    setSetupOpen(false);
+    setSetupStep(0);
+    if (skip) setSetupMessage('You can finish setup anytime from Settings.');
+  };
+
+  const handleGoogleLogin = () => {
+    if (!window.google?.accounts?.id) {
+      setSetupMessage('Google login is loading. Try again in a moment.');
+      return;
+    }
+    window.google.accounts.id.initialize({
+      client_id: '895654125638-pspr0bqmlpf78cc4gj2132ttrhbmlqn2.apps.googleusercontent.com',
+      callback: (response) => {
+        const [, payload] = String(response?.credential || '').split('.');
+        if (!payload) return;
+        try {
+          const parsed = JSON.parse(atob(payload));
+          setProfile((prev) => ({ ...prev, name: parsed.name || prev.name, pfp: parsed.picture || prev.pfp }));
+          setSetupMessage(`Connected as ${parsed.name || 'Google user'}.`);
+          setSetupStep(1);
+        } catch {}
+      },
+    });
+    window.google.accounts.id.prompt();
   };
 
 
@@ -4092,6 +4156,46 @@ export default function MCUViewer() {
                 </div>
               ))}
             </div>}
+          </div>
+        </div>
+      )}
+
+      {setupOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 15000, background: 'color-mix(in srgb, var(--theme-bg) 74%, black)', backdropFilter: 'blur(10px)', display: 'grid', placeItems: 'center', padding: 16 }}>
+          <div style={{ width: 'min(720px, 96vw)', borderRadius: 20, border: '1px solid var(--theme-border)', background: 'var(--theme-surface)', boxShadow: '0 28px 72px rgba(0,0,0,0.35)', padding: 20, display: 'grid', gap: 14 }}>
+            <div>
+              <div style={{ fontSize: 12, color: 'var(--theme-text-muted)', letterSpacing: 1.5, textTransform: 'uppercase' }}>First-time setup</div>
+              <h2 style={{ margin: '4px 0 0 0' }}>Set up your profile and content cache</h2>
+            </div>
+            {setupStep === 0 && (
+              <div style={{ display: 'grid', gap: 10 }}>
+                <input value={profile.name} onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))} placeholder='Profile name' style={{ width: '100%', padding: '11px 12px', borderRadius: 12, border: '1px solid var(--theme-border)', background: 'var(--theme-surface-elevated)', color: 'var(--theme-text)' }} />
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <label className='fpill' style={{ cursor: 'pointer' }}><Upload size={14} />Upload photo from gallery
+                    <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => setAvatarCropSrc(String(r.result || '')); r.readAsDataURL(f); }} style={{ display: 'none' }} />
+                  </label>
+                  <button className='fpill' onClick={handleGoogleLogin}><span>Google Login</span></button>
+                </div>
+              </div>
+            )}
+            {setupStep === 1 && (
+              <div style={{ display: 'grid', gap: 10 }}>
+                <div style={{ fontSize: 14, color: 'var(--theme-text-muted)' }}>Choose how much to fetch now (database + posters):</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8 }}>
+                  <button className='fpill' onClick={() => setSetupFetchScope('core')} style={{ justifyContent: 'center', borderColor: setupFetchScope === 'core' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>Core only</button>
+                  <button className='fpill' onClick={() => setSetupFetchScope('all')} style={{ justifyContent: 'center', borderColor: setupFetchScope === 'all' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>All + expanded</button>
+                </div>
+                <button className='fpill' disabled={setupBusy} onClick={runSetupFetch} style={{ justifyContent: 'center' }}>{setupBusy ? 'Fetching…' : 'Fetch details and posters'}</button>
+              </div>
+            )}
+            <div style={{ minHeight: 18, fontSize: 12, color: 'var(--theme-text-muted)' }}>{setupMessage}</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+              <button className='fpill' onClick={() => setSetupStep((v) => Math.max(0, v - 1))} disabled={setupStep === 0 || setupBusy}>Back</button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className='fpill' onClick={() => finishSetup(true)} disabled={setupBusy}>Skip for now</button>
+                {setupStep === 0 ? <button className='fpill' onClick={() => setSetupStep(1)}>Continue</button> : <button className='fpill' onClick={() => finishSetup(false)} disabled={setupBusy}>Finish setup</button>}
+              </div>
+            </div>
           </div>
         </div>
       )}
