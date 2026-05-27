@@ -1,50 +1,73 @@
-/**
- * Theme settings are centralized here so you can edit palettes without touching App logic.
- */
-
-export const THEME_CHOICES = [
-  { id: 'classic', label: 'Iron Man', dcLabel: 'Superman', swatch: '#d4372f', dcSwatch: '#2f7fff' },
-  { id: 'cosmic', label: 'Capt. Marvel', dcLabel: 'Blue Beetle', swatch: '#4d7bff', dcSwatch: '#3d8cff' },
-  { id: 'vibranium', label: 'Black Panther', dcLabel: 'Nightwing', swatch: '#7e5dff', dcSwatch: '#4aa4ff' },
-  { id: 'quantum', label: 'Ant-Man', dcLabel: 'The Flash', swatch: '#ff5da8', dcSwatch: '#ff3b3b' },
-  { id: 'mystic', label: 'Dr. Strange', dcLabel: 'Zatanna', swatch: '#9f66ff', dcSwatch: '#6c63ff' },
-  { id: 'web-slinger', label: 'Spider-Man', dcLabel: 'Red Hood', swatch: '#df3f4c', dcSwatch: '#d64b4b' },
-  { id: 'god-of-thunder', label: 'Thor', dcLabel: 'Aquaman', swatch: '#3ca6ff', dcSwatch: '#1ea7a0' },
-  { id: 'scarlet-witch', label: 'Scarlet Witch', dcLabel: 'Raven', swatch: '#c61b59', dcSwatch: '#6a3cc9' },
-  { id: 'winter-soldier', label: 'Winter Soldier', dcLabel: 'Batman', swatch: '#8fa0b8', dcSwatch: '#64748b' },
-  { id: 'captain-america', label: 'Captain America', dcLabel: 'Wonder Woman', swatch: '#3b5fa4', dcSwatch: '#355f9f' },
-  { id: 'daredevil', label: 'Daredevil', dcLabel: 'Harley Quinn', swatch: '#bf0615', dcSwatch: '#d42b6a' },
-  { id: 'panther-tech', label: 'Panther Tech', dcLabel: 'Cyborg', swatch: '#6bb0bf', dcSwatch: '#35a4c6' },
-  { id: 'marvel-red', label: 'Marvel Red', dcLabel: 'Shazam', swatch: '#e23636', dcSwatch: '#d97706' },
-  { id: 'hela', label: 'Hela', dcLabel: 'Green Lantern', swatch: '#49a561', dcSwatch: '#2ea44f' },
+export const STYLE_MODE_CHOICES = [
+  { id: 'default', label: 'Default' },
+  { id: 'glass', label: 'Glass' },
+  { id: 'pixelated', label: 'Pixelated' },
+  { id: 'neon', label: 'Neon' },
+  { id: 'minimal', label: 'Minimal' },
 ];
 
-export const THEME_PALETTES = {
-  classic: { accent: '#5b8dff', accentAlt: '#7a67ff', darkSurface: 'rgba(28,10,9,0.90)', lightSurface: 'rgba(255,246,244,0.96)', darkSurfaceHover: 'rgba(44,14,12,0.94)', lightSurfaceHover: 'rgba(255,236,232,0.97)', darkCompCard: 'rgba(26,9,8,0.88)', lightCompCard: 'rgba(255,248,246,0.95)' },
-  cosmic: { accent: '#6b8dff', accentAlt: '#71d0ff', darkSurface: 'rgba(7,12,32,0.90)', lightSurface: 'rgba(243,247,255,0.96)', darkSurfaceHover: 'rgba(10,16,44,0.94)', lightSurfaceHover: 'rgba(232,240,255,0.97)', darkCompCard: 'rgba(6,11,30,0.88)', lightCompCard: 'rgba(245,249,255,0.95)' },
-  vibranium: { accent: '#7f7bff', accentAlt: '#4db6ff', darkSurface: 'rgba(13,7,28,0.90)', lightSurface: 'rgba(248,244,255,0.96)', darkSurfaceHover: 'rgba(20,10,42,0.94)', lightSurfaceHover: 'rgba(238,230,255,0.97)', darkCompCard: 'rgba(12,6,26,0.88)', lightCompCard: 'rgba(250,246,255,0.95)' },
-  quantum: { accent: '#ff5da8', accentAlt: '#67f2ff', darkSurface: 'rgba(26,7,18,0.90)', lightSurface: 'rgba(255,243,251,0.96)', darkSurfaceHover: 'rgba(38,9,26,0.94)', lightSurfaceHover: 'rgba(255,230,246,0.97)', darkCompCard: 'rgba(24,6,17,0.88)', lightCompCard: 'rgba(255,246,253,0.95)' },
-  mystic: { accent: '#9f66ff', accentAlt: '#ff7b39', darkSurface: 'rgba(15,7,28,0.90)', lightSurface: 'rgba(250,244,255,0.96)', darkSurfaceHover: 'rgba(22,10,40,0.94)', lightSurfaceHover: 'rgba(240,230,255,0.97)', darkCompCard: 'rgba(14,6,26,0.88)', lightCompCard: 'rgba(252,247,255,0.95)' },
-  'web-slinger': { accent: '#df3f4c', accentAlt: '#2b7bdf', darkSurface: 'rgba(24,7,9,0.90)', lightSurface: 'rgba(255,244,245,0.96)', darkSurfaceHover: 'rgba(36,9,12,0.94)', lightSurfaceHover: 'rgba(255,232,234,0.97)', darkCompCard: 'rgba(22,6,8,0.88)', lightCompCard: 'rgba(255,247,248,0.95)' },
-  'god-of-thunder': { accent: '#3ca6ff', accentAlt: '#f0f6ff', darkSurface: 'rgba(5,12,26,0.90)', lightSurface: 'rgba(243,250,255,0.96)', darkSurfaceHover: 'rgba(7,17,36,0.94)', lightSurfaceHover: 'rgba(226,244,255,0.97)', darkCompCard: 'rgba(4,10,24,0.88)', lightCompCard: 'rgba(245,252,255,0.95)' },
-  'scarlet-witch': { accent: '#c61b59', accentAlt: '#ff7cb5', darkSurface: 'rgba(24,5,12,0.90)', lightSurface: 'rgba(255,242,247,0.96)', darkSurfaceHover: 'rgba(36,6,18,0.94)', lightSurfaceHover: 'rgba(255,228,238,0.97)', darkCompCard: 'rgba(22,4,11,0.88)', lightCompCard: 'rgba(255,245,250,0.95)' },
-  'winter-soldier': { accent: '#8fa0b8', accentAlt: '#4b596f', darkSurface: 'rgba(7,10,16,0.90)', lightSurface: 'rgba(244,247,252,0.96)', darkSurfaceHover: 'rgba(10,14,22,0.94)', lightSurfaceHover: 'rgba(230,237,248,0.97)', darkCompCard: 'rgba(6,9,15,0.88)', lightCompCard: 'rgba(246,249,254,0.95)' },
-  'captain-america': { accent: '#3b5fa4', accentAlt: '#9b3430', darkSurface: 'rgba(23,27,49,0.92)', lightSurface: 'rgba(254,254,254,0.96)', darkSurfaceHover: 'rgba(31,38,64,0.94)', lightSurfaceHover: 'rgba(174,183,194,0.34)', darkCompCard: 'rgba(23,27,49,0.88)', lightCompCard: 'rgba(254,254,254,0.95)' },
-  daredevil: { accent: '#BF0615', accentAlt: '#A61731', darkSurface: 'rgba(64,1,1,0.92)', lightSurface: 'rgba(255,242,243,0.96)', darkSurfaceHover: 'rgba(78,4,4,0.94)', lightSurfaceHover: 'rgba(255,228,230,0.98)', darkCompCard: 'rgba(64,1,1,0.88)', lightCompCard: 'rgba(255,246,247,0.95)' },
-  'panther-tech': { accent: '#6BB0BF', accentAlt: '#3B3F8C', darkSurface: 'rgba(26,27,27,0.92)', lightSurface: 'rgba(243,244,248,0.96)', darkSurfaceHover: 'rgba(38,40,49,0.94)', lightSurfaceHover: 'rgba(232,234,242,0.97)', darkCompCard: 'rgba(26,27,27,0.88)', lightCompCard: 'rgba(246,247,252,0.95)' },
-  'marvel-red': { accent: '#e23636', accentAlt: '#f78f3f', darkSurface: 'rgba(0,0,0,0.92)', lightSurface: 'rgba(255,245,245,0.96)', darkSurfaceHover: 'rgba(18,18,18,0.94)', lightSurfaceHover: 'rgba(255,233,233,0.97)', darkCompCard: 'rgba(14,14,14,0.88)', lightCompCard: 'rgba(255,248,248,0.95)' },
-  hela: { accent: '#49a561', accentAlt: '#d0d500', darkSurface: 'rgba(3,11,9,0.92)', lightSurface: 'rgba(242,248,244,0.96)', darkSurfaceHover: 'rgba(20,45,39,0.94)', lightSurfaceHover: 'rgba(231,243,235,0.97)', darkCompCard: 'rgba(13,34,28,0.88)', lightCompCard: 'rgba(246,251,247,0.95)' },
+export const HERO_THEME_CHOICES = [
+  { id: 'iron-man', label: 'Iron Man', swatch: '#d33a2c' },
+  { id: 'captain-america', label: 'Captain America', swatch: '#2f63d6' },
+  { id: 'black-panther', label: 'Black Panther', swatch: '#6556d8' },
+  { id: 'scarlet-witch', label: 'Scarlet Witch', swatch: '#cf3766' },
+  { id: 'thor', label: 'Thor', swatch: '#30a0e8' },
+  { id: 'dr-strange', label: 'Dr. Strange', swatch: '#ac5be4' },
+  { id: 'spider-man', label: 'Spider-Man', swatch: '#d64247' },
+];
+
+const HERO_ACCENTS = {
+  'iron-man': { primary: '#d33a2c', secondary: '#d6a531', glow: '#ef5f48' },
+  'captain-america': { primary: '#2f63d6', secondary: '#c8454a', glow: '#6896ff' },
+  'black-panther': { primary: '#6556d8', secondary: '#3fb9ff', glow: '#8c7dff' },
+  'scarlet-witch': { primary: '#cf3766', secondary: '#ff7ea7', glow: '#f0628d' },
+  thor: { primary: '#30a0e8', secondary: '#a9d8ff', glow: '#65bcff' },
+  'dr-strange': { primary: '#ac5be4', secondary: '#ff8f4f', glow: '#ca8af5' },
+  'spider-man': { primary: '#d64247', secondary: '#3173da', glow: '#f16b72' },
 };
 
-export const getActiveThemeVars = (themeMode, darkMode) => {
-  const p = THEME_PALETTES[themeMode] || THEME_PALETTES.classic;
-  const mode = darkMode ? 'dark' : 'light';
+const STYLE_SURFACES = {
+  default: { panelBlur: '10px', panelAlphaDark: '0.86', panelAlphaLight: '0.92', radius: '18px', borderStyle: 'solid', glowOpacity: '0.2', shadow1: '0 10px 30px rgba(2,8,23,.24)', shadow2: '0 20px 52px rgba(2,8,23,.30)' },
+  glass: { panelBlur: '18px', panelAlphaDark: '0.58', panelAlphaLight: '0.74', radius: '22px', borderStyle: 'solid', glowOpacity: '0.3', shadow1: '0 16px 36px rgba(2,8,23,.28)', shadow2: '0 28px 68px rgba(2,8,23,.34)' },
+  pixelated: { panelBlur: '0px', panelAlphaDark: '0.9', panelAlphaLight: '0.95', radius: '8px', borderStyle: 'solid', glowOpacity: '0.14', shadow1: '4px 4px 0 rgba(0,0,0,.35)', shadow2: '8px 8px 0 rgba(0,0,0,.42)' },
+  neon: { panelBlur: '12px', panelAlphaDark: '0.82', panelAlphaLight: '0.9', radius: '16px', borderStyle: 'solid', glowOpacity: '0.38', shadow1: '0 10px 30px rgba(0,0,0,.38)', shadow2: '0 20px 56px rgba(0,0,0,.48)' },
+  minimal: { panelBlur: '0px', panelAlphaDark: '0.92', panelAlphaLight: '0.97', radius: '14px', borderStyle: 'solid', glowOpacity: '0.08', shadow1: '0 6px 18px rgba(2,8,23,.14)', shadow2: '0 14px 34px rgba(2,8,23,.20)' },
+};
+
+export const buildThemeTokens = ({ darkMode, heroTheme = 'iron-man', styleMode = 'default' }) => {
+  const hero = HERO_ACCENTS[heroTheme] || HERO_ACCENTS['iron-man'];
+  const style = STYLE_SURFACES[styleMode] || STYLE_SURFACES.default;
+  const baseBg = darkMode ? '#090d18' : '#eef2f8';
+  const elevated = darkMode ? `rgba(17,24,39,${style.panelAlphaDark})` : `rgba(255,255,255,${style.panelAlphaLight})`;
   return {
-    '--theme-accent': p.accent,
-    '--theme-accent-alt': p.accentAlt,
-    '--theme-accent-glow': darkMode ? `color-mix(in srgb, ${p.accent} 42%, transparent)` : `color-mix(in srgb, ${p.accent} 24%, transparent)`,
-    '--theme-surface': `var(--theme-surface-${mode})`,
-    '--theme-surface-hover': `var(--theme-surface-hover-${mode})`,
-    '--comp-card-bg': `var(--theme-comp-card-${mode})`,
+    '--bg-canvas': baseBg,
+    '--bg-elevated': elevated,
+    '--bg-overlay': darkMode ? 'rgba(3,6,16,.62)' : 'rgba(15,23,42,.14)',
+    '--text-primary': darkMode ? '#eef4ff' : '#0f172a',
+    '--text-secondary': darkMode ? '#b7c4dc' : '#334155',
+    '--text-muted': darkMode ? '#8594b2' : '#64748b',
+    '--border-soft': darkMode ? 'rgba(164,179,206,.24)' : 'rgba(51,65,85,.18)',
+    '--border-strong': darkMode ? 'rgba(195,214,240,.44)' : 'rgba(51,65,85,.3)',
+    '--accent-primary': hero.primary,
+    '--accent-secondary': hero.secondary,
+    '--accent-glow': hero.glow,
+    '--state-success': darkMode ? '#4ade80' : '#166534',
+    '--state-warning': darkMode ? '#fbbf24' : '#a16207',
+    '--state-error': darkMode ? '#fb7185' : '#be123c',
+    '--state-info': darkMode ? '#60a5fa' : '#1d4ed8',
+    '--blur-panel': style.panelBlur,
+    '--blur-overlay': darkMode ? '8px' : '6px',
+    '--glow-radius-sm': '16px',
+    '--glow-radius-md': '28px',
+    '--glow-radius-lg': '48px',
+    '--glow-opacity': style.glowOpacity,
+    '--shadow-depth-1': style.shadow1,
+    '--shadow-depth-2': style.shadow2,
+    '--shadow-depth-3': darkMode ? '0 34px 72px rgba(0,0,0,.58)' : '0 30px 64px rgba(15,23,42,.24)',
+    '--radius-sm': '10px','--radius-md': '14px','--radius-lg': style.radius,'--radius-xl': '24px','--radius-pill': '999px',
+    '--edge-highlight': darkMode ? 'rgba(255,255,255,.12)' : 'rgba(255,255,255,.78)',
+    '--edge-stroke': darkMode ? 'rgba(164,179,206,.38)' : 'rgba(30,41,59,.2)',
+    '--duration-fast': '140ms','--duration-normal': '200ms','--duration-slow': '240ms',
+    '--easing-standard': 'cubic-bezier(.2,.8,.2,1)','--easing-emphasized': 'cubic-bezier(.16,1,.3,1)',
   };
 };

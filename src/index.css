@@ -744,3 +744,36 @@ textarea:focus-visible {
 button:active {
   transform: translateY(1px) scale(0.99);
 }
+
+/* Modernized unified theming layer */
+:root {
+  --space-xs: 6px; --space-sm: 10px; --space-md: 14px; --space-lg: 20px; --space-xl: 28px;
+}
+.theme-switch {
+  color: var(--text-primary);
+  --theme-text: var(--text-primary);
+  --theme-surface: var(--bg-elevated);
+  --theme-surface-hover: color-mix(in srgb, var(--bg-elevated) 82%, var(--accent-primary));
+  --theme-border: var(--border-soft);
+}
+.ui-panel,.glass-surface,.feature-header,.timeline-controls,.progress-section,.feature-settings,.feature-analytics,.phase-rows-full,.rrow,.settings-menu,.sidebar-menu {
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid var(--edge-stroke);
+  box-shadow: var(--shadow-depth-1);
+  backdrop-filter: blur(var(--blur-panel));
+}
+.theme-switch::before,.theme-switch::after {content:'';position:fixed;border-radius:999px;pointer-events:none;z-index:0;filter:blur(2px)}
+.theme-switch::before{width:320px;height:320px;left:-80px;top:60px;background:radial-gradient(circle,var(--accent-primary),transparent 70%);opacity:var(--glow-opacity)}
+.theme-switch::after{width:280px;height:280px;right:-60px;top:120px;background:radial-gradient(circle,var(--accent-secondary),transparent 70%);opacity:calc(var(--glow-opacity) - .05)}
+
+[data-style-mode='glass'] .ui-panel,[data-style-mode='glass'] .rrow{background:color-mix(in srgb,var(--bg-elevated) 70%, transparent)!important}
+[data-style-mode='pixelated'] .ui-panel,[data-style-mode='pixelated'] .rrow{border-radius:8px!important;box-shadow:4px 4px 0 rgba(0,0,0,.35)!important;image-rendering:pixelated}
+[data-style-mode='pixelated'] .theme-switch{background-size:16px 16px;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px)}
+[data-style-mode='neon'] .fpill[aria-pressed='true'],[data-style-mode='neon'] .fpill.picked{box-shadow:0 0 0 1px var(--accent-primary),0 0 18px color-mix(in srgb,var(--accent-primary) 60%, transparent)}
+[data-style-mode='minimal'] .ui-panel,[data-style-mode='minimal'] .rrow{box-shadow:none!important;background:var(--bg-elevated)!important}
+
+.fpill:focus-visible,.theme-btn:focus-visible,.wbtn:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible {
+  outline: 2px solid color-mix(in srgb,var(--accent-primary) 70%, #fff);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
