@@ -875,6 +875,10 @@ export default function MCUViewer() {
   const [themeMode,      setThemeMode]      = useState('iron-man');
   const [appearanceMode, setAppearanceMode] = useState('glass');
   const [marvelLangMode, setMarvelLangMode] = useState(false);
+  const tMarvel = useCallback((label) => {
+    if (!marvelLangMode) return label;
+    return MARVEL_UI_LEXICON[label] || label;
+  }, [marvelLangMode]);
   const [spoilerSafeMode, setSpoilerSafeMode] = useState(true);
   const [autoHideStatuses, setAutoHideStatuses] = useState(initialUiState.autoHideStatuses);
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
