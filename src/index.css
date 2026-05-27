@@ -744,3 +744,79 @@ textarea:focus-visible {
 button:active {
   transform: translateY(1px) scale(0.99);
 }
+
+/* === 2026 Theme Redesign: Aurora Glass System === */
+:root {
+  --ui-radius-xs: 10px;
+  --ui-radius-sm: 14px;
+  --ui-radius-md: 18px;
+  --ui-radius-lg: 24px;
+  --ui-space-xs: 6px;
+  --ui-space-sm: 10px;
+  --ui-space-md: 14px;
+  --ui-space-lg: 20px;
+  --ui-space-xl: 28px;
+  --ui-border-soft: color-mix(in srgb, var(--theme-text, #f3f5fa) 14%, transparent);
+  --ui-border-soft-strong: color-mix(in srgb, var(--theme-text, #f3f5fa) 22%, transparent);
+  --ui-accent-glow: color-mix(in srgb, var(--theme-accent, #7cffda) 34%, transparent);
+  --ui-accent-glow-soft: color-mix(in srgb, var(--theme-accent-alt, #9a86ff) 24%, transparent);
+  --ui-shadow-depth-1: 0 8px 26px rgba(1, 6, 20, 0.24), inset 0 1px 0 rgba(255,255,255,0.06);
+  --ui-shadow-depth-2: 0 18px 50px rgba(1, 6, 20, 0.36), inset 0 1px 0 rgba(255,255,255,0.1);
+  --ui-surface-1: linear-gradient(145deg, color-mix(in srgb, var(--theme-surface, #1f2430) 92%, rgba(255,255,255,0.04)), color-mix(in srgb, var(--theme-surface-hover, #2f3645) 88%, rgba(0,0,0,0.06)));
+  --ui-surface-2: linear-gradient(165deg, color-mix(in srgb, var(--theme-surface-hover, #2f3645) 90%, rgba(255,255,255,0.08)), color-mix(in srgb, var(--theme-surface, #1f2430) 88%, rgba(0,0,0,0.1)));
+  --ui-page-gradient: radial-gradient(130% 140% at 16% -10%, color-mix(in srgb, var(--theme-accent, #7cffda) 14%, transparent), transparent 52%),
+    radial-gradient(120% 120% at 92% 2%, color-mix(in srgb, var(--theme-accent-alt, #9a86ff) 12%, transparent), transparent 48%),
+    linear-gradient(180deg, color-mix(in srgb, var(--theme-bg, #12171f) 94%, #06080d), var(--theme-bg, #12171f));
+}
+
+:root[data-theme="light"] {
+  --ui-border-soft: color-mix(in srgb, var(--theme-text, #0f172a) 16%, transparent);
+  --ui-border-soft-strong: color-mix(in srgb, var(--theme-text, #0f172a) 26%, transparent);
+  --ui-shadow-depth-1: 0 8px 20px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255,255,255,0.84);
+  --ui-shadow-depth-2: 0 18px 42px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255,255,255,0.92);
+}
+
+body {
+  background: var(--ui-page-gradient);
+}
+
+.glass-panel,
+.glass-surface,
+.bottom-action-dock,
+.fab-primary,
+.bottom-action-bar,
+.ui-interactive,
+.fpill,
+.wbtn,
+.theme-btn,
+.status-pill {
+  border: 1px solid var(--ui-border-soft) !important;
+  background: var(--ui-surface-1) !important;
+  box-shadow: var(--ui-shadow-depth-1) !important;
+  border-radius: var(--ui-radius-sm) !important;
+}
+
+.glass-panel:hover,
+.glass-surface:hover,
+.bottom-action-dock:hover,
+.fab-primary:hover,
+.ui-interactive:hover,
+.fpill:hover,
+.wbtn:hover,
+.theme-btn:hover,
+.status-pill:hover {
+  border-color: var(--ui-border-soft-strong) !important;
+  box-shadow: var(--ui-shadow-depth-2), 0 0 0 1px var(--ui-accent-glow-soft) !important;
+  transform: translateY(-1px);
+}
+
+.glass-panel:focus-within,
+.glass-surface:focus-within,
+.ui-interactive:focus-visible,
+.fpill:focus-visible,
+.wbtn:focus-visible,
+.theme-btn:focus-visible,
+.status-pill:focus-visible {
+  outline: none !important;
+  box-shadow: var(--ui-shadow-depth-2), 0 0 0 2px var(--ui-accent-glow) !important;
+}
