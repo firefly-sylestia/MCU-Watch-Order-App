@@ -5,7 +5,6 @@ export default function SetupWizard({
   profile,
   setProfile,
   onPickPhoto,
-  onGoogleLogin,
   onFetchCore,
   onFetchAll,
   fetchState,
@@ -35,8 +34,7 @@ export default function SetupWizard({
             />
             <div className="setup-actions-row">
               <button className="fpill" onClick={onPickPhoto}>Upload photo from gallery</button>
-              <button className="fpill" onClick={onGoogleLogin}>Continue with Google</button>
-            </div>
+                          </div>
             <small className="setup-note">You can continue without sign-in and connect syncing later from Settings.</small>
           </section>
 
