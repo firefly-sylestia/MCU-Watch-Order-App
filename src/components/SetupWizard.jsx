@@ -10,8 +10,14 @@ export default function SetupWizard({
   fetchState,
   onSkip,
   onFinish,
-  onExpandToggle,
-  expanded,
+  spoilerSafeMode,
+  setSpoilerSafeMode,
+  performanceMode,
+  setPerformanceMode,
+  marvelLangMode,
+  setMarvelLangMode,
+  posterDataSaver,
+  setPosterDataSaver,
 }) {
   if (!open) return null;
 
@@ -20,7 +26,7 @@ export default function SetupWizard({
       <div className="setup-card">
         <div className="setup-header">
           <h2>Welcome setup</h2>
-          <p>Personalize your profile and preload your library.</p>
+          <p>Personalize your profile, preload your library, and tune performance for this device.</p>
         </div>
 
         <div className="setup-grid">
@@ -34,7 +40,7 @@ export default function SetupWizard({
             />
             <div className="setup-actions-row">
               <button className="fpill" onClick={onPickPhoto}>Upload photo from gallery</button>
-                          </div>
+            </div>
             <small className="setup-note">You can continue without sign-in and connect syncing later from Settings.</small>
           </section>
 
@@ -48,12 +54,14 @@ export default function SetupWizard({
           </section>
 
           <section className="setup-section">
-            <button className="setup-expand-btn" onClick={onExpandToggle}>{expanded ? 'Hide expanded setup options' : 'Show expanded setup options'}</button>
-            {expanded && (
-              <div className="setup-expanded">
-                <p>Advanced setup tunes preload depth and cache behavior for this device.</p>
-              </div>
-            )}
+            <h3>3) Next page tuning</h3>
+            <div className="settings-toggle-grid">
+              <label className="settings-toggle-row"><span>Spoiler Safe</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={spoilerSafeMode} onClick={() => setSpoilerSafeMode(v => !v)}>{spoilerSafeMode ? 'On' : 'Off'}</button></label>
+              <label className="settings-toggle-row"><span>Reduce Motion</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={performanceMode} onClick={() => setPerformanceMode(v => !v)}>{performanceMode ? 'On' : 'Off'}</button></label>
+              <label className="settings-toggle-row"><span>Universe Language</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={marvelLangMode} onClick={() => setMarvelLangMode(v => !v)}>{marvelLangMode ? 'On' : 'Off'}</button></label>
+              <label className="settings-toggle-row"><span>Poster Data Saver</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={posterDataSaver} onClick={() => setPosterDataSaver(v => !v)}>{posterDataSaver ? 'On' : 'Off'}</button></label>
+            </div>
+            <small className="setup-note">Data saver uses smaller poster assets from TMDB to cut home screen data usage.</small>
           </section>
         </div>
 

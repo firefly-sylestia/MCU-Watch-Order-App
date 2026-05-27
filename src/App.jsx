@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, useReducer } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { Media } from '@capacitor-community/media';
 import CropModal from './components/CropModal';
@@ -98,6 +98,7 @@ const UI_STATE_DEFAULTS = {
   timelineMode: 'release',
   autoHideStatuses: false,
   performanceMode: true,
+  posterDataSaver: true,
   desktopTextScale: 1,
   textScaleEnabled: true,
   scrollTop: 0,
@@ -116,6 +117,10 @@ const AUTO_HIDDEN_STATUSES = HIDDEN_FILTER_STATUSES;
 
 const getSafeTypeMeta = (type) => TYPE_META[type] || FALLBACK_TYPE_META;
 const getSafeStatusMeta = (status) => STATUS_META[status] || STATUS_META.unwatched;
+const compressTmdbPosterUrl = (src, enabled) => {
+  if (!enabled || typeof src !== 'string') return src;
+  return src.replace('image.tmdb.org/t/p/w500', 'image.tmdb.org/t/p/w342');
+};
 
 const readSavedUiState = () => {
   if (typeof window === 'undefined') return UI_STATE_DEFAULTS;
@@ -139,6 +144,7 @@ const readSavedUiState = () => {
       timelineMode: VALID_TIMELINE_MODES.has(saved.timelineMode) ? saved.timelineMode : UI_STATE_DEFAULTS.timelineMode,
       autoHideStatuses: typeof saved.autoHideStatuses === 'boolean' ? saved.autoHideStatuses : UI_STATE_DEFAULTS.autoHideStatuses,
       performanceMode: typeof saved.performanceMode === 'boolean' ? saved.performanceMode : UI_STATE_DEFAULTS.performanceMode,
+      posterDataSaver: typeof saved.posterDataSaver === 'boolean' ? saved.posterDataSaver : UI_STATE_DEFAULTS.posterDataSaver,
       desktopTextScale: VALID_DESKTOP_TEXT_SCALES.has(Number(saved.desktopTextScale)) ? Number(saved.desktopTextScale) : UI_STATE_DEFAULTS.desktopTextScale,
       textScaleEnabled: typeof saved.textScaleEnabled === 'boolean' ? saved.textScaleEnabled : UI_STATE_DEFAULTS.textScaleEnabled,
       scrollTop: Number.isFinite(Number(saved.scrollTop)) ? Math.max(0, Number(saved.scrollTop)) : UI_STATE_DEFAULTS.scrollTop,
@@ -876,7 +882,6 @@ export default function MCUViewer() {
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
   const [setupOpen, setSetupOpen] = useState(false);
-  const [setupExpanded, setSetupExpanded] = useState(false);
   const [themeMode,      setThemeMode]      = useState('iron-man');
   const [appearanceMode, setAppearanceMode] = useState('glass');
   const [marvelLangMode, setMarvelLangMode] = useState(false);
@@ -886,6 +891,7 @@ export default function MCUViewer() {
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
   const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
+  const [posterDataSaver, setPosterDataSaver] = useState(initialUiState.posterDataSaver);
   const [scrollTuning] = useState({ desktopMultiplier: 5, desktopDeltaCap: 7, mobileMultiplier: 5, mobileDeltaCap: 7 });
   const [genreFilter] = useState('all');
   const [myLikes,        setMyLikes]        = useState({});
@@ -1320,26 +1326,34 @@ export default function MCUViewer() {
   };
 
   const exportProgress = async () => {
-    const payload = createProgressPayload({
-      items,
-      actions: { likes: myLikes, ratings: myRating, rewatch: rewatchCount, bookmarks, reviews },
-      profile,
-      exportPrefs: { font: exportFont, textScale: exportTextScale },
-    });
-    const content = JSON.stringify(payload, null, 2);
-    if (Capacitor.isNativePlatform()) {
+    try {
+      const payload = createProgressPayload({
+        items,
+        actions: { likes: myLikes, ratings: myRating, rewatch: rewatchCount, bookmarks, reviews },
+        profile,
+        exportPrefs: { font: exportFont, textScale: exportTextScale },
+      });
+      const content = JSON.stringify(payload, null, 2);
       const fileName = `mcu-progress-${Date.now()}.json`;
-      const res = await Filesystem.writeFile({ path: fileName, data: content, directory: Directory.Documents, recursive: true });
-      await Share.share({ title: 'MCU Progress Export', text: 'MCU progress backup JSON', url: res.uri });
-      return;
-    }
-    const blob = new Blob([content], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'mcu-progress.json';
-    a.click();
-    URL.revokeObjectURL(url);
+      if (Capacitor.isNativePlatform()) {
+        const res = await Filesystem.writeFile({
+          path: fileName,
+          data: content,
+          directory: Directory.Documents,
+          encoding: Encoding.UTF8,
+          recursive: true,
+        });
+        await Share.share({ title: 'MCU Progress Export', text: 'MCU progress backup JSON', url: res.uri });
+        return;
+      }
+      const blob = new Blob([content], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 600);
+    } catch {}
   };
 
   const shareProgressCard = async () => {
@@ -1592,11 +1606,12 @@ export default function MCUViewer() {
       timelineMode,
       autoHideStatuses,
       performanceMode,
+      posterDataSaver,
       desktopTextScale,
       textScaleEnabled,
       scrollTop,
     }));
-  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
+  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, posterDataSaver, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
   const totalWatched = useMemo(() => activeItems.filter(i => i.status === 'watched').length, [activeItems]);
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
@@ -1704,9 +1719,10 @@ export default function MCUViewer() {
     if (!mapped) return '';
     return mapped.startsWith('/') ? mapped : `/posters/${mapped}`;
   }, [localPosterMap]);
-  const posterSrc = useCallback((item) => (
-    localPosterSrc(item) || posterCache[item.id] || `https://placehold.co/220x330/1a1f33/f7c4de?text=${encodeURIComponent(item.title+'\n'+item.year)}`
-  ), [localPosterSrc, posterCache]);
+  const posterSrc = useCallback((item) => {
+    const rawSrc = localPosterSrc(item) || posterCache[item.id] || `https://placehold.co/220x330/1a1f33/f7c4de?text=${encodeURIComponent(item.title+'\n'+item.year)}`;
+    return compressTmdbPosterUrl(rawSrc, posterDataSaver);
+  }, [localPosterSrc, posterCache, posterDataSaver]);
 
 
   useEffect(() => {
@@ -3214,15 +3230,11 @@ export default function MCUViewer() {
       </article>
 
       <article className="settings-card">
-        <h3>Backup & Restore</h3>
-        <p className="settings-help">Use manual export/import and Google Drive for cloud backup without account linking.</p>
-        <div className="settings-inline-actions">
-          <button className="fpill" onClick={exportProgress}><Upload size={14} />Export JSON</button>
-          <label className="fpill" style={{ justifyContent: 'center', cursor: 'pointer' }}><Download size={14} />Import JSON
-            <input type="file" accept="application/json" onChange={(e)=> importProgress(e.target.files?.[0])} style={{ display:'none' }} />
-          </label>
-          <a className="fpill settings-drive-link" href="https://drive.google.com/drive/my-drive" target="_blank" rel="noreferrer">Open Drive</a>
-        </div>
+        <h3>{tUniverse('Interface Behavior')}</h3>
+        <label className="settings-toggle-row"><span><EyeOff size={14}/>{tUniverse('Auto-hide Completed')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={autoHideStatuses} onClick={() => setAutoHideStatuses(v => !v)}>{autoHideStatuses ? 'On' : 'Off'}</button></label>
+        <label className="settings-toggle-row"><span><Pause size={14}/>{tUniverse('Reduce Motion')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={performanceMode} onClick={() => setPerformanceMode(v => !v)}>{performanceMode ? 'On' : 'Off'}</button></label>
+        <label className="settings-toggle-row"><span><Film size={14}/>Poster Data Saver</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={posterDataSaver} onClick={() => setPosterDataSaver(v => !v)}>{posterDataSaver ? 'On' : 'Off'}</button></label>
+        <p className="settings-help">Data saver uses lighter TMDB poster sizes in home and list feeds when available.</p>
       </article>
     </section>
 
@@ -3236,20 +3248,6 @@ export default function MCUViewer() {
       <p className="settings-help">Performance mode reduces visual effects for slower devices.</p>
     </section>
 
-
-    <section className="settings-grid-2">
-      <article className="settings-card">
-        <h3>{universe === 'dc' ? 'Universe Naming' : 'Marvel Naming'}</h3>
-        <label className="settings-toggle-row"><span><Star size={14}/>{universe === 'dc' ? 'Heroic Labels' : 'Marvel Language'}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={marvelLangMode} onClick={() => setMarvelLangMode(v => !v)}>{marvelLangMode ? 'On' : 'Off'}</button></label>
-        <p className="settings-help">{universe === 'dc' ? 'Uses in-universe DC flavored terminology in labels.' : 'Uses Marvel flavored terminology in labels.'}</p>
-      </article>
-      <article className="settings-card">
-        <h3>{tUniverse('Interface Behavior')}</h3>
-        <label className="settings-toggle-row"><span><EyeOff size={14}/>{tUniverse('Auto-hide Completed')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={autoHideStatuses} onClick={() => setAutoHideStatuses(v => !v)}>{autoHideStatuses ? 'On' : 'Off'}</button></label>
-        <label className="settings-toggle-row"><span><Pause size={14}/>{tUniverse('Reduce Motion')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={performanceMode} onClick={() => setPerformanceMode(v => !v)}>{performanceMode ? 'On' : 'Off'}</button></label>
-        <p className="settings-help">Reduce motion keeps animation subtle and improves low-end performance.</p>
-      </article>
-    </section>
     <section className="settings-grid-2">
       <article className="settings-card">
         <h3>Visual Tuning</h3>
@@ -3264,9 +3262,12 @@ export default function MCUViewer() {
 
       <article className="settings-card">
         <h3>Backup & Restore</h3>
-        <button className="fpill" onClick={exportProgress}><Download size={14}/>Export Backup JSON</button>
-        <label className="fpill import-backup-pill" style={{ cursor: 'pointer' }}><Upload size={14}/>Import Backup JSON<input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} /></label>
+        <p className="settings-help">Automatic snapshots are saved continuously here. Restore any saved point or export the latest JSON to Google Drive.</p>
         <div style={{ display: 'grid', gap: 6 }}><div className="settings-help">Auto snapshots (latest 5)</div>{autoBackups.slice(0,5).map((shot, idx) => { const preview = buildBackupPreview(shot); return <button key={`${shot.exportedAt}-${idx}`} className="fpill" onClick={() => importProgress(new File([JSON.stringify(shot)], 'mcu-auto-backup.json', { type: 'application/json' }))} style={{ justifyContent: 'space-between' }}><span><Clock size={14}/>Restore {new Date(preview.exportedAt).toLocaleDateString()}</span><span style={{ fontSize: 'var(--type-metadata)', color: T.textMuted }}>{preview.watched}/{preview.total}</span></button>; })}</div>
+        <div className="settings-inline-actions">
+          <button className="fpill" onClick={exportProgress}><Download size={14}/>Export latest JSON</button>
+          <label className="fpill import-backup-pill" style={{ cursor: 'pointer' }}><Upload size={14}/>Import JSON<input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} /></label>
+        </div>
       </article>
     </section>
 
@@ -4110,8 +4111,14 @@ export default function MCUViewer() {
         fetchState={posterFetchState}
         onSkip={() => { safeLocalStorageSetItem('mcu-first-setup-v1', 'done'); setSetupOpen(false); }}
         onFinish={() => { safeLocalStorageSetItem('mcu-first-setup-v1', 'done'); setSetupOpen(false); }}
-        expanded={setupExpanded}
-        onExpandToggle={() => setSetupExpanded(v => !v)}
+        spoilerSafeMode={spoilerSafeMode}
+        setSpoilerSafeMode={setSpoilerSafeMode}
+        performanceMode={performanceMode}
+        setPerformanceMode={setPerformanceMode}
+        marvelLangMode={marvelLangMode}
+        setMarvelLangMode={setMarvelLangMode}
+        posterDataSaver={posterDataSaver}
+        setPosterDataSaver={setPosterDataSaver}
       />
       <input id="setup-avatar-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => setAvatarCropSrc(String(r.result || '')); r.readAsDataURL(f); e.target.value=''; }} />
 
