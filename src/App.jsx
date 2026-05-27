@@ -988,6 +988,7 @@ export default function MCUViewer() {
   const [trailerOpen, setTrailerOpen] = useState(false);
   const [trailerLandscape, setTrailerLandscape] = useState(false);
   const [trailerExpanded, setTrailerExpanded] = useState(false);
+  const [trailerRotateHintVisible, setTrailerRotateHintVisible] = useState(false);
   const [trailerVariantIndex, setTrailerVariantIndex] = useState(0);
   const trailerShellRef = useRef(null);
   const { posterCache, setPosterCache, localPosterMap, setLocalPosterMap } = usePosterCache();
@@ -1052,13 +1053,6 @@ export default function MCUViewer() {
     setTrailerExpanded(false);
     setTrailerLandscape(false);
   }, []);
-  const handleTrailerLandscapeToggle = useCallback(() => {
-    setTrailerLandscape((prev) => {
-      const next = !prev;
-      if (next) setTrailerExpanded(true);
-      return next;
-    });
-  }, []);
   const handleTrailerBack = useCallback(() => {
     if (trailerLandscape) {
       closeTrailer();
@@ -1066,6 +1060,34 @@ export default function MCUViewer() {
     }
     setTrailerExpanded(false);
   }, [closeTrailer, trailerLandscape]);
+  useEffect(() => {
+    if (!trailerOpen) return undefined;
+
+    const syncTrailerOrientation = () => {
+      if (typeof window === 'undefined') return;
+      const isLandscape = window.matchMedia ? window.matchMedia('(orientation: landscape)').matches : window.innerWidth > window.innerHeight;
+      setTrailerLandscape(isLandscape);
+      if (isLandscape) setTrailerExpanded(true);
+    };
+
+    syncTrailerOrientation();
+    window.addEventListener('resize', syncTrailerOrientation);
+    window.addEventListener('orientationchange', syncTrailerOrientation);
+    return () => {
+      window.removeEventListener('resize', syncTrailerOrientation);
+      window.removeEventListener('orientationchange', syncTrailerOrientation);
+    };
+  }, [trailerOpen]);
+
+  useEffect(() => {
+    if (!trailerOpen) {
+      setTrailerRotateHintVisible(false);
+      return undefined;
+    }
+    setTrailerRotateHintVisible(true);
+    const timeoutId = window.setTimeout(() => setTrailerRotateHintVisible(false), 2600);
+    return () => window.clearTimeout(timeoutId);
+  }, [trailerOpen]);
   const closeDetail = useCallback(() => { setDetailItem(null); setTrailerOpen(false); setTrailerExpanded(false); setTrailerLandscape(false); setTrailerVariantIndex(0); }, []);
   const openImdbForItem = useCallback((item, data) => {
     const imdbId = data?.imdbID || data?.imdbId || '';
@@ -3934,7 +3956,6 @@ export default function MCUViewer() {
                 )}
               </div>
               <div className="trailer-actions">
-                <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle}><SwitchIcon size={12}/>Rotate View</button>
                 <button className="fpill trailer-close" onClick={() => setTrailerExpanded(true)}><PlayCircle size={12}/>Enlarge</button>
                 <button className="fpill trailer-close" onClick={closeTrailer}><X size={12}/>Close</button>
               </div>
@@ -3959,10 +3980,14 @@ export default function MCUViewer() {
                   ))}
                 </div>
               )}
-              <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle}><SwitchIcon size={12}/>Rotate View</button>
               <button className="fpill trailer-close" onClick={handleTrailerBack}><PlayCircle size={12}/>{trailerLandscape ? 'Back & Close' : 'Back'}</button>
               <button className="fpill trailer-close" onClick={closeTrailer}><X size={12}/>Close</button>
             </div>}
+            {trailerRotateHintVisible && (
+              <div className="trailer-rotate-toast" role="status" aria-live="polite">
+                Rotate your device for landscape view. The player will adjust automatically.
+              </div>
+            )}
           </div>
         </div>
       )}
