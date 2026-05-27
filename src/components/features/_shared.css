@@ -5,23 +5,24 @@
 }
 
 .glass-surface {
-  border: 1px solid var(--theme-overlay-border, var(--border));
-  background: linear-gradient(180deg, color-mix(in srgb, var(--theme-overlay-surface, var(--surface-2)) 94%, transparent), var(--surface-1));
+  border: none;
+  background:
+    var(--theme-surface-glow),
+    linear-gradient(180deg, color-mix(in srgb, var(--theme-overlay-surface, var(--surface-2)) 94%, transparent), var(--surface-1));
   border-radius: var(--feature-radius);
-  backdrop-filter: blur(12px) saturate(1.08);
+  backdrop-filter: blur(14px) saturate(1.12);
   padding: var(--feature-pad);
-  box-shadow: var(--shadow-sm);
-  transition: border-color 180ms var(--ease-out), background-color 180ms var(--ease-out), transform 180ms var(--ease-out), box-shadow 180ms var(--ease-out);
+  box-shadow: var(--shadow-sm), inset 0 1px 0 color-mix(in srgb, var(--edge-highlight) 75%, transparent);
+  transition: background-color 180ms var(--ease-out), transform 180ms var(--ease-out), box-shadow 180ms var(--ease-out);
 }
 
 .glass-surface:hover {
-  border-color: var(--border-hover);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md), 0 0 0 1px color-mix(in srgb, var(--edge-highlight) 55%, transparent);
 }
 
 .glass-surface:focus-within {
-  border-color: var(--border-active);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent), var(--shadow-md);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 16%, transparent), var(--shadow-md);
 }
 
 @media (prefers-reduced-motion: reduce) { .glass-surface { transition: none; } }
