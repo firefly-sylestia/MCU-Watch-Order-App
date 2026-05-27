@@ -1034,8 +1034,8 @@ export default function MCUViewer() {
     window.__scrollTuning = scrollTuning;
   }, [scrollTuning]);
 
-  const overlayActive = Boolean(settingsOpen || analyticsOpen || detailItem || sidebarOpen);
-  const blockHomeInteractions = Boolean(settingsOpen || sidebarOpen);
+  const overlayActive = Boolean(settingsOpen || analyticsOpen || detailItem || sidebarOpen || setupOpen || avatarCropSrc);
+  const blockHomeInteractions = Boolean(settingsOpen || sidebarOpen || setupOpen || avatarCropSrc);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -2444,7 +2444,7 @@ export default function MCUViewer() {
         setGoogleSyncMsg(`Signed in as ${account.name || account.email}.`);
         loadDataForGoogleAccount(account.sub);
       } catch {
-        setGoogleSyncMsg('Google sign-in failed. Verify authorized redirect URI in Google Cloud console.');
+        setGoogleSyncMsg('Google sign-in failed. Please try again.');
       } finally {
         window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
       }
@@ -3264,7 +3264,7 @@ export default function MCUViewer() {
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Google Account Sync</div>
             <div style={{ fontSize: 12, color: T.textMuted, lineHeight: 1.45, padding: '0 2px' }}>
-              1) Tap Sign in with Google. 2) In Google Cloud console, add <b>{window.location.origin}</b> as an Authorized JavaScript origin and redirect URI.
+              Sign in, then use Save/Load to sync this device backup with your account profile.
               3) Save current data to account. 4) On another device, sign in and load account data.
             </div>
             {!googleAccount?.sub ? (

@@ -20,8 +20,8 @@ export default function SetupWizard({
     <div className="setup-overlay" role="dialog" aria-modal="true" aria-label="First time setup">
       <div className="setup-card">
         <div className="setup-header">
-          <h2>First-time setup</h2>
-          <p>Set up your profile, choose what to fetch, and start watching.</p>
+          <h2>Welcome setup</h2>
+          <p>Personalize your profile and preload your library.</p>
         </div>
 
         <div className="setup-grid">
@@ -37,23 +37,23 @@ export default function SetupWizard({
               <button className="fpill" onClick={onPickPhoto}>Upload photo from gallery</button>
               <button className="fpill" onClick={onGoogleLogin}>Continue with Google</button>
             </div>
-            <small className="setup-note">Google Sign-In opens Gmail account chooser after OAuth is configured in Google Cloud.</small>
+            <small className="setup-note">You can continue without sign-in and connect syncing later from Settings.</small>
           </section>
 
           <section className="setup-section">
-            <h3>2) Fetch data & posters</h3>
+            <h3>2) Library preload</h3>
             <div className="setup-actions-row">
               <button className="fpill" onClick={onFetchCore} disabled={fetchState.active}>Fetch Core Only</button>
               <button className="fpill" onClick={onFetchAll} disabled={fetchState.active}>Fetch All</button>
             </div>
-            <small className="setup-note">{fetchState.message || 'Choose how much data to prefetch from posters + metadata cache.'}</small>
+            <small className="setup-note">{fetchState.message || 'Choose how much content to cache for smoother browsing.'}</small>
           </section>
 
           <section className="setup-section">
             <button className="setup-expand-btn" onClick={onExpandToggle}>{expanded ? 'Hide expanded setup options' : 'Show expanded setup options'}</button>
             {expanded && (
               <div className="setup-expanded">
-                <p>Expanded setup helps preload timeline details, local database cache, and artwork for smoother browsing.</p>
+                <p>Advanced setup tunes preload depth and cache behavior for this device.</p>
               </div>
             )}
           </section>
