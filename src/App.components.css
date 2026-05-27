@@ -2576,45 +2576,62 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 .trailer-backdrop.is-landscape .trailer-shell.is-expanded{position:fixed;}
 .trailer-backdrop.is-landscape .trailer-shell.is-expanded .trailer-frame{height:100%;}
  .trailer-backdrop.is-landscape .trailer-shell.is-expanded .trailer-expanded-actions{
+  --dock-gap: clamp(6px, 1.2vh, 10px);
+  --dock-pad: clamp(4px, 0.9vh, 8px);
+  --dock-pill-h: clamp(30px, 5vh, 38px);
   position:absolute;
-  left:50%;
-  top:8px;
-  transform:translateX(-50%);
+  left:clamp(6px, 1.5vh, 14px);
+  top:50%;
+  transform:translateY(-50%);
   z-index:4;
   margin-top:0;
-  gap:6px;
-  flex-direction:row;
-  align-items:center;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
   justify-content:center;
+  gap:var(--dock-gap);
   flex-wrap:nowrap;
-  max-width:calc(100% - 12px);
+  width:clamp(86px, 12.5vh, 124px);
+  max-height:calc(100% - 20px);
+  overflow:auto;
+  padding:var(--dock-pad);
+  border-radius:16px;
+  background:color-mix(in srgb,var(--theme-surface) 84%, transparent);
+  border:1px solid color-mix(in srgb,var(--theme-border) 80%, transparent);
+  backdrop-filter:blur(4px);
 }
 .trailer-backdrop.is-landscape .trailer-shell.is-expanded .trailer-expanded-actions .fpill{
-  min-height:32px;
-  padding:6px 10px;
+  min-height:var(--dock-pill-h);
+  padding:6px 8px;
+  justify-content:center;
+  width:100%;
   white-space:nowrap;
-  background:color-mix(in srgb,var(--theme-surface) 90%, transparent);
-  border-color:color-mix(in srgb,var(--theme-border) 84%, transparent);
+  font-size:clamp(10px,1.8vh,12px);
+  background:color-mix(in srgb,var(--theme-surface) 92%, transparent);
+  border-color:color-mix(in srgb,var(--theme-border) 86%, transparent);
 }
 .trailer-backdrop.is-landscape .trailer-shell.is-expanded .trailer-variant-switch{
   margin-top:0;
+  width:100%;
   padding:3px;
   gap:4px;
+  flex-direction:column;
   flex-wrap:nowrap;
-  flex-direction:row;
   background:color-mix(in srgb,var(--theme-surface) 92%, transparent);
 }
 .trailer-backdrop.is-landscape .trailer-shell.is-expanded .trailer-variant-chip{
-  width:auto;
-  min-height:32px;
-  padding:6px 9px;
+  width:100%;
+  min-height:var(--dock-pill-h);
+  padding:6px 8px;
   white-space:nowrap;
+  font-size:clamp(10px,1.8vh,12px);
 }
 @media (max-width:900px){
   .trailer-backdrop.is-landscape .trailer-shell.is-expanded .trailer-expanded-actions{
-    top:4px;
-    gap:4px;
-    max-width:calc(100% - 8px);
+    left:6px;
+    width:clamp(78px, 12vh, 108px);
+    max-height:calc(100% - 10px);
+    border-radius:14px;
   }
 }
 
@@ -2644,6 +2661,8 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 .detail-export-actions-inline{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
 
 .trailer-backdrop.is-landscape .trailer-shell.is-expanded .trailer-frame{
+  padding-left:clamp(88px, 13.5vh, 132px);
+  box-sizing:border-box;
   --landscape-video-width-fill: 188%;
   --landscape-video-left-offset: -44%;
   isolation:isolate;
