@@ -258,6 +258,7 @@ const HERO_ROTATION_MS = 10000;
 const HERO_VISIBLE_COUNT = 15;
 const HERO_PRELOAD_AHEAD = 12;
 const loadedHeroPosterSrcs = new Set();
+const SETUP_GOOGLE_CLIENT_ID = '895654125638-pspr0bqmlpf78cc4gj2132ttrhbmlqn2.apps.googleusercontent.com';
 const heroPosterLoadPromises = new Map();
 
 const preloadHeroPoster = (src) => {
@@ -877,6 +878,10 @@ export default function MCUViewer() {
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
+  const [setupOpen, setSetupOpen] = useState(false);
+  const [setupFetchMode, setSetupFetchMode] = useState('core');
+  const [setupExpandedByDefault, setSetupExpandedByDefault] = useState(true);
+  const [setupGoogleStatus, setSetupGoogleStatus] = useState('');
   const [themeMode,      setThemeMode]      = useState('iron-man');
   const [appearanceMode, setAppearanceMode] = useState('glass');
   const [marvelLangMode, setMarvelLangMode] = useState(false);
@@ -2372,6 +2377,10 @@ export default function MCUViewer() {
 
   useEffect(() => { scheduleStorageWrite('mcu-profile-v1', JSON.stringify(profile)); }, [profile]);
   useEffect(() => { scheduleStorageWrite('mcu-uploaded-avatars-v1', JSON.stringify(uploadedAvatars)); }, [uploadedAvatars]);
+  useEffect(() => {
+    const setupDone = readStorageValue('mcu-setup-complete-v1');
+    if (!setupDone) setSetupOpen(true);
+  }, []);
   useEffect(() => { scheduleStorageWrite('mcu-theme-mode-v1', themeMode); }, [themeMode]);
   useEffect(() => { scheduleStorageWrite('mcu-dark-mode-v1', darkMode ? '1' : '0'); }, [darkMode]);
   useEffect(() => { scheduleStorageWrite('mcu-appearance-mode-v1', appearanceMode); }, [appearanceMode]);
@@ -2549,6 +2558,44 @@ export default function MCUViewer() {
       await wait(24);
     }
     setPosterFetchState({ active: false, done: targets.length, total: targets.length, message: `Built metadata for ${targets.length} entries.` });
+  };
+  const refreshPostersAndMetadataForScope = async (scope = 'core') => {
+    if (posterFetchState.active) return;
+    const sourceList = universe === 'dc'
+      ? (scope === 'all' ? DC_RAW : DC_RAW.filter(item => DC_CORE_IDS.has(item.id)))
+      : (scope === 'all' ? RAW : RAW.filter(item => ESSENTIAL_LIST.includes(item.id)));
+    const targets = sourceList.filter(item => !hasCompleteMetadata(item) || (!localPosterSrc(item) && !posterCache[item.id]));
+    if (!targets.length) {
+      setPosterFetchState({ active: false, done: 0, total: 0, message: `Metadata cache is already complete for ${scope === 'all' ? 'all titles' : 'core titles'}.` });
+      return;
+    }
+    setPosterFetchState({ active: true, done: 0, total: targets.length, message: `Building metadata and posters for ${scope === 'all' ? 'all' : 'core'} titles…` });
+    let done = 0;
+    for (let i = 0; i < targets.length; i += 3) {
+      const batch = targets.slice(i, i + 3);
+      for (const item of batch) {
+        try { await fetchAndCacheMetadataItem(item); } catch {}
+        done += 1;
+        setPosterFetchState({ active: true, done, total: targets.length, message: `Cached ${done}/${targets.length}: ${item.title}` });
+      }
+      await wait(24);
+    }
+    setPosterFetchState({ active: false, done: targets.length, total: targets.length, message: `Built metadata for ${targets.length} entries.` });
+  };
+  const startGoogleLogin = () => {
+    setSetupGoogleStatus('Opening Google login…');
+    if (!window?.google?.accounts?.id) {
+      setSetupGoogleStatus('Google SDK is unavailable in this build. Add Google Identity Services script to enable live sign-in.');
+      return;
+    }
+    window.google.accounts.id.initialize({
+      client_id: SETUP_GOOGLE_CLIENT_ID,
+      callback: (response) => {
+        setSetupGoogleStatus('Google account connected.');
+        if (response?.credential) setProfile(p => ({ ...p, name: p.name || 'Google User' }));
+      },
+    });
+    window.google.accounts.id.prompt();
   };
 
 
@@ -4108,6 +4155,29 @@ export default function MCUViewer() {
             setAvatarCropSrc('');
           }}
         />
+      )}
+      {setupOpen && !avatarCropSrc && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 10030, background: 'rgba(4,8,20,0.66)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'grid', placeItems: 'center', padding: 16 }}>
+          <div className="glass-panel" style={{ width: 'min(760px, 96vw)', borderRadius: 18, border: '1px solid var(--theme-border)', padding: 18, display: 'grid', gap: 14, background: 'color-mix(in srgb,var(--theme-surface) 90%, transparent)' }}>
+            <strong style={{ fontSize: 24 }}>First-time setup</strong>
+            <div style={{ color: T.textMuted, fontSize: 13 }}>Setup profile, optionally continue with Google, and fetch database details with posters.</div>
+            <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="Profile name" style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
+            <label className="fpill" style={{ justifyContent: 'center', cursor: 'pointer' }}><Upload size={14} /> Upload photo from gallery
+              <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => setAvatarCropSrc(String(r.result || '')); r.readAsDataURL(f); }} style={{ display: 'none' }} />
+            </label>
+            <button className="fpill" onClick={startGoogleLogin} style={{ justifyContent: 'center' }}>Continue with Google</button>
+            {setupGoogleStatus && <div style={{ fontSize: 12, color: T.textMuted }}>{setupGoogleStatus}</div>}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button className="fpill" onClick={() => setSetupFetchMode('core')} style={{ borderColor: setupFetchMode === 'core' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>Fetch core only</button>
+              <button className="fpill" onClick={() => setSetupFetchMode('all')} style={{ borderColor: setupFetchMode === 'all' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>Fetch all</button>
+              <button className="fpill" onClick={() => setSetupExpandedByDefault(v => !v)} style={{ borderColor: setupExpandedByDefault ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{setupExpandedByDefault ? 'Expanded by default' : 'Collapsed by default'}</button>
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <button className="fpill" onClick={async () => { await refreshPostersAndMetadataForScope(setupFetchMode); setShowAllFiltersOverride(setupExpandedByDefault); safeLocalStorageSetItem('mcu-setup-complete-v1', '1'); setSetupOpen(false); }} style={{ justifyContent: 'center' }}>Finish setup</button>
+              <button className="fpill" onClick={() => { safeLocalStorageSetItem('mcu-setup-complete-v1', '1'); setSetupOpen(false); }} style={{ justifyContent: 'center' }}>Skip for now</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ━━ STATUS DROPDOWN ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
