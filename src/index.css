@@ -763,7 +763,9 @@ button:active {
 .theme-switch .analytics-shell,
 .theme-switch .phase-rows-full,
 .theme-switch .detail-shell,
-.theme-switch .rrow{
+.theme-switch .rrow,
+.theme-switch .calendar-row,
+.theme-switch .curvy-panel{
   position:relative;
   border-radius:var(--radius-lg);
   overflow:clip;
@@ -786,3 +788,21 @@ button:active {
   background:repeating-linear-gradient(90deg,color-mix(in srgb,var(--glow-soft) 80%, transparent) 0 2px,transparent 2px 4px),repeating-linear-gradient(0deg,color-mix(in srgb,var(--glow-soft) 75%, transparent) 0 2px,transparent 2px 4px);
 }
 .theme-switch[data-theme='pixelated']::before,.theme-switch[data-theme='pixelated']::after{opacity:.18}
+
+.theme-switch .rrow::before,
+.theme-switch .calendar-row::before,
+.theme-switch .curvy-panel::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--edge-highlight) 65%, transparent),transparent 26%);
+  opacity:.45;
+}
+.theme-switch .rrow::after,
+.theme-switch .calendar-row::after{
+  content:'';position:absolute;right:-70px;bottom:-80px;width:170px;height:170px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,var(--glow-soft),transparent 68%);
+  filter:blur(calc(var(--fx-blur) * .38));opacity:.4;
+}
+.theme-switch[data-color-mode='light'] .rrow::after,
+.theme-switch[data-color-mode='light'] .calendar-row::after{opacity:.26}
+.theme-switch[data-theme='pixelated'] .rrow::after,
+.theme-switch[data-theme='pixelated'] .calendar-row::after{border-radius:0;filter:none;opacity:.16;background:repeating-linear-gradient(0deg,color-mix(in srgb,var(--glow-soft) 72%, transparent) 0 2px,transparent 2px 4px)}

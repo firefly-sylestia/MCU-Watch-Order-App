@@ -3154,7 +3154,7 @@ export default function MCUViewer() {
         <div className='theme-grid' style={{ marginTop: 8 }}>
           {themedChoices.map(({ id: t, displayLabel, displaySwatch }) => (
             <button key={t} className="fpill filter-pill type-pill"
-              style={{ justifyContent: 'center', gap: 6, fontSize: 11, borderColor: themeMode === t ? displaySwatch : 'var(--theme-border)', boxShadow: themeMode === t ? `0 0 0 1px ${displaySwatch}, 0 0 10px ${displaySwatch}44` : 'none', background: themeMode === t ? `${displaySwatch}18` : 'var(--theme-surface)', color: themeMode === t ? displaySwatch : 'var(--theme-text)' }}
+              style={{ justifyContent: 'center', gap: 6, fontSize: 11, borderColor: themeMode === t ? 'color-mix(in srgb, var(--accent-1) 36%, var(--edge-color))' : 'var(--edge-color)', boxShadow: themeMode === t ? 'inset 0 1px 0 var(--edge-highlight), 0 14px 30px var(--glow-soft)' : 'inset 0 1px 0 var(--edge-highlight), 0 8px 18px color-mix(in srgb,var(--glow-soft) 28%, transparent)', background: themeMode === t ? 'color-mix(in srgb, var(--accent-1) 13%, var(--surface-2))' : 'var(--surface-1)', color: themeMode === t ? 'var(--text-primary)' : 'var(--text-secondary)' }}
               onClick={() => setThemeMode(t)}
             >
               <span style={{ width: 8, height: 8, borderRadius: '50%', background: displaySwatch, flexShrink: 0, display: 'inline-block' }} />
