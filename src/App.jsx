@@ -35,7 +35,7 @@ import { AFTER_CREDITS, AFTER_CREDITS_DEFAULT, DIRECTOR_DATA } from './data/afte
 import { TRAILER_DATA, trailerEmbedUrl, getTrailerByTitle } from './data/trailerData';
 
 import { Search, Eye, EyeOff, Film, Tv, Zap, ChevDown, ChevRight, ArrowUpDown, Check, Clock, Heart, Pause, Trash2, Upload, Download, Sun, Star, Moon, Settings, Info, Bookmark, Layers, PlayCircle, PauseCircle, XCircle, SlidersH, UserCircle, Menu, SwitchIcon, X } from './constants/icons';
-import { MARVEL_UI_LEXICON, LIST_MODES } from './constants/appText';
+import { MARVEL_UI_LEXICON, DC_UI_LEXICON, LIST_MODES } from './constants/appText';
 import { matchesSearch } from './utils/searchUtils';
 
 const TYPE_META = {
@@ -3074,8 +3074,12 @@ export default function MCUViewer() {
       .filter(([, meta]) => Array.isArray(meta?.connectsTo) && meta.connectsTo.includes(detailItem.title))
       .map(([name]) => name)
     : [], [detailItem]);
-  const tMarvel = (label) => (marvelLangMode ? (MARVEL_UI_LEXICON[label] || `✦ ${label}`) : label);
-  const filterTriggerLabel = tMarvel('Filters');
+  const tUniverse = (label) => {
+    if (!marvelLangMode) return label;
+    const lexicon = universe === 'dc' ? DC_UI_LEXICON : MARVEL_UI_LEXICON;
+    return lexicon[label] || `✦ ${label}`;
+  };
+  const filterTriggerLabel = tUniverse('Filters');
 
   const renderPhaseSelector = () => (
     <>
@@ -3169,76 +3173,61 @@ export default function MCUViewer() {
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} settingsOpen={settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
-        <div style={{ marginBottom: 8, fontSize: 11, letterSpacing: 1.8, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)', textTransform: 'uppercase' }}>{tMarvel('Navigation Panel')}</div>
-        <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {profile.pfp ? <img src={profile.pfp} alt="profile" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover' }} /> : <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(145deg,var(--theme-accent),var(--theme-accent-alt))', color: '#fff', display: 'grid', placeItems: 'center' }}><UserCircle size={18} /></div>}
-            <div style={{ fontSize: 12, color: T.textMuted }}>{profile.name || tMarvel('Marvel Fan')}</div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6 }}>
-            <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', color: darkMode ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Moon size={12} />{tMarvel('Dark')}</button>
-            <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', color: !darkMode ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Sun size={12} />{tMarvel('Light')}</button>
-          </div>
-                  </div>
-                <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}>{viewMode === 'list' ? tMarvel('Calendar View') : tMarvel('List View')}</button>
-        <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>{tMarvel('Quick Phases')}</div>
-        <button className="fpill marvel-btn" onClick={openAnalyticsPanel} style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}>{tMarvel('Analytics')}</button>
-        <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>{tMarvel('Viewing List')}</div>
-        <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
-          {LIST_MODES.map(mode => {
-            const isActive = listMode === mode.id;
-            return (
-              <button
-                key={`side-${mode.id}`}
-                className="fpill"
-                onClick={() => { setListMode(mode.id); setExpandedItem(null); setExpandedPhase(null); setSidebarOpen(false); }}
-                style={{
-                  justifyContent: 'space-between',
-                  borderColor: isActive ? (mode?.color || 'var(--theme-accent)') : 'var(--theme-border)',
-                  background: isActive ? `${mode?.color || 'var(--theme-accent)'}18` : 'var(--theme-surface)',
-                  color: isActive ? (mode?.color || 'var(--theme-accent)') : 'var(--theme-text)',
-                }}
-              >
-                <span>{mode.label}</span>
-                {isActive && <Check size={12} />}
-              </button>
-            );
-          })}
-        </div>
-        <div style={{ marginTop: 10, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 10, display: 'grid', gap: 6, background: T.surfaceBg }}>
-          <div style={{ fontSize: 11, letterSpacing: 1.6, color: T.textMuted }}>{tMarvel('WATCHED')}</div>
-          <div style={{ fontSize: 22, fontFamily: 'var(--font-marvel-ui)', color: 'var(--theme-accent)' }}>{totalWatched}/{activeItems.length}</div>
-          <div style={{ fontSize: 12, color: T.textMuted }}>~{Math.round(totalWatchedHours * 10) / 10}h watched · ~{remainingHours}h left</div>
-          <div style={{ fontSize: 12, color: T.textMuted }}>Films: {filmCount} · Series: {seriesCount}</div>
-        </div>
-        <div style={{ marginTop: 10, border: `1px solid ${T.surfaceBorder}`, borderRadius: 10, padding: 10, display: 'grid', gap: 6, background: T.surfaceBg }}>
-          <div style={{ fontSize: 11, letterSpacing: 1.6, color: T.textMuted }}>{tMarvel('CONTINUE WATCHING')}</div>
-          <div style={{ fontSize: 14, color: 'var(--theme-text)' }}>{nextUnwatched ? nextUnwatched.title : 'You are all caught up.'}</div>
-          {nextUnwatched && <div style={{ fontSize: 12, color: T.textMuted }}>Phase {nextUnwatched.phase} · {getSafeTypeMeta(nextUnwatched.type).label}</div>}
-        </div>
-        <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
-          {currentPhases.map(ph => <button key={ph.id} className="fpill" onClick={() => { setSidebarOpen(false); setActivePhase(ph.id); scrollToListTop(); }} style={{ justifyContent: 'space-between' }}><span>{ph.name}</span><ChevRight size={13} /></button>)}
-        </div>
-        <div className='settings-theme-group' style={{ marginTop: 14 }}>
-          <div style={{ fontSize: 11, letterSpacing: 2, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Appearance Mode</div>
-          <div className='appearance-grid'>
-            {APPEARANCE_MODES.map(mode => <button key={mode.id} className={`appearance-card ${appearanceMode===mode.id ? 'is-active' : ''}`} onClick={() => setAppearanceMode(mode.id)}><span>{mode.label}</span><em /></button>)}
-          </div>
-        </div>
-        <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Character Theme</div>
-        <div className='theme-grid' style={{ marginTop: 8 }}>
-          {themedChoices.map(({ id: t, displayLabel, displaySwatch }) => (
-            <button key={t} className="fpill filter-pill type-pill"
-              style={{ justifyContent: 'center', gap: 6, fontSize: 11, borderColor: themeMode === t ? 'color-mix(in srgb, var(--accent-1) 36%, var(--edge-color))' : 'var(--edge-color)', boxShadow: themeMode === t ? 'inset 0 1px 0 var(--edge-highlight), 0 14px 30px var(--glow-soft)' : 'inset 0 1px 0 var(--edge-highlight), 0 8px 18px color-mix(in srgb,var(--glow-soft) 28%, transparent)', background: themeMode === t ? 'color-mix(in srgb, var(--accent-1) 13%, var(--surface-2))' : 'var(--surface-1)', color: themeMode === t ? 'var(--text-primary)' : 'var(--text-secondary)' }}
-              onClick={() => setThemeMode(t)}
-            >
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: displaySwatch, flexShrink: 0, display: 'inline-block' }} />
-              {displayLabel}
-            </button>
-          ))}
-        </div>
-        <div style={{ textAlign: 'center', marginTop: 16, fontFamily: 'var(--font-marvel-ui)', fontSize: 9, color: T.footerText, letterSpacing: 2.5 }}>
-          Made with ♥ by {tMarvel('Marvel Fan')}
+        <div className="sidebar-redesign">
+          <section className="sidebar-panel sidebar-panel--brand">
+            <p className="sidebar-kicker">{universe === 'dc' ? 'Justice Network' : 'Avengers Network'}</p>
+            <h3>{tUniverse('Mission Control')}</h3>
+            <p>{tUniverse('Track progress blurb')}</p>
+            <div className="sidebar-profile-row">
+              {profile.pfp ? <img src={profile.pfp} alt="profile" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} /> : <div className="sidebar-avatar-fallback"><UserCircle size={20} /></div>}
+              <div>
+                <strong>{profile.name || tUniverse('Marvel Fan')}</strong>
+                <span>{universe === 'dc' ? activeUniverse.subtitle : 'Sacred Timeline Keeper'}</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="sidebar-panel">
+            <div className="sidebar-section-title">{tUniverse('Theme & Language')}</div>
+            <div className="sidebar-btn-grid">
+              <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={12} />{tUniverse('Dark')}</button>
+              <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={12} />{tUniverse('Light')}</button>
+            </div>
+            <button className='fpill settings-toggle-pill' type='button' aria-pressed={marvelLangMode} onClick={() => setMarvelLangMode(v => !v)} style={{ justifyContent: 'space-between' }}><span>{tUniverse('Universe Language')}</span><span>{marvelLangMode ? 'On' : 'Off'}</span></button>
+          </section>
+
+          <section className="sidebar-panel">
+            <div className="sidebar-section-title">{tUniverse('View & Navigate')}</div>
+            <div className="sidebar-btn-grid">
+              <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ justifyContent: 'center' }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
+              <button className="fpill" onClick={openAnalyticsPanel} style={{ justifyContent: 'center' }}>{tUniverse('Analytics')}</button>
+            </div>
+            <button className="fpill" onClick={() => { setSidebarOpen(false); toggleSettingsPanel(); }} style={{ width: '100%', justifyContent: 'center' }}><Settings size={13} />{tUniverse('Open Settings')}</button>
+          </section>
+
+          <section className="sidebar-panel">
+            <div className="sidebar-section-title">{tUniverse('Universe Style')}</div>
+            <div className='appearance-grid'>
+              {APPEARANCE_MODES.map(mode => <button key={mode.id} className={`appearance-card ${appearanceMode===mode.id ? 'is-active' : ''}`} onClick={() => setAppearanceMode(mode.id)}><span>{mode.label}</span><em /></button>)}
+            </div>
+            <div className='theme-grid' style={{ marginTop: 8 }}>
+              {themedChoices.map(({ id: t, displayLabel, displaySwatch }) => (
+                <button key={t} className="fpill filter-pill type-pill" style={{ justifyContent: 'center', gap: 6, fontSize: 11, borderColor: themeMode === t ? 'color-mix(in srgb, var(--accent-1) 36%, var(--edge-color))' : 'var(--edge-color)' }} onClick={() => setThemeMode(t)}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: displaySwatch, flexShrink: 0, display: 'inline-block' }} />{displayLabel}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="sidebar-panel">
+            <div className="sidebar-section-title">{tUniverse('Watchlist Mode')}</div>
+            <div style={{ display: 'grid', gap: 6 }}>
+              {LIST_MODES.map(mode => {
+                const isActive = listMode === mode.id;
+                return <button key={`side-${mode.id}`} className="fpill" onClick={() => { setListMode(mode.id); setExpandedItem(null); setExpandedPhase(null); setSidebarOpen(false); }} style={{ justifyContent: 'space-between', borderColor: isActive ? (mode?.color || 'var(--theme-accent)') : 'var(--theme-border)', color: isActive ? (mode?.color || 'var(--theme-accent)') : 'var(--theme-text)' }}><span>{mode.label}</span>{isActive && <Check size={12} />}</button>;
+              })}
+            </div>
+          </section>
         </div>
       </SidebarMenu>
 
@@ -3247,8 +3236,8 @@ export default function MCUViewer() {
     <section className="settings-hero-card">
       <div>
         <p className="settings-eyebrow">Settings Hub</p>
-        <h2>Customize your MCU experience</h2>
-        <p>Unified controls for profile, themes, syncing, backups, and advanced tuning with modern light/dark support.</p>
+        <h2>{universe === 'dc' ? 'Customize your DC experience' : 'Customize your Marvel experience'}</h2>
+        <p>Unified controls for profile, universe themes, sync, backups, and modern accessibility-focused tuning.</p>
       </div>
       <div className="settings-hero-actions">
         <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={13} />Dark</button>
@@ -3297,16 +3286,29 @@ export default function MCUViewer() {
     </section>
 
     <section className="settings-card">
-      <h3>Preferences</h3>
+      <h3>{tUniverse('Preferences')}</h3>
       <div className="settings-toggle-grid">
-        <label className="settings-toggle-row"><span><Star size={14}/>Marvel Language</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={marvelLangMode} onClick={() => setMarvelLangMode(v => !v)}>{marvelLangMode ? 'On' : 'Off'}</button></label>
-        <label className="settings-toggle-row"><span><Moon size={14}/>Dark Theme</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={darkMode} onClick={() => setDarkMode(d => !d)}>{darkMode ? 'On' : 'Off'}</button></label>
-        <label className="settings-toggle-row"><span><EyeOff size={14}/>Spoiler Safe</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={spoilerSafeMode} onClick={() => setSpoilerSafeMode(v => !v)}>{spoilerSafeMode ? 'On' : 'Off'}</button></label>
-        <label className="settings-toggle-row"><span><Zap size={14}/>Performance Mode</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={performanceMode} onClick={() => setPerformanceMode(v => !v)}>{performanceMode ? 'On' : 'Off'}</button></label>
+        <label className="settings-toggle-row"><span><Star size={14}/>{tUniverse('Universe Language')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={marvelLangMode} onClick={() => setMarvelLangMode(v => !v)}>{marvelLangMode ? 'On' : 'Off'}</button></label>
+        <label className="settings-toggle-row"><span><EyeOff size={14}/>{tUniverse('Spoiler Safe')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={spoilerSafeMode} onClick={() => setSpoilerSafeMode(v => !v)}>{spoilerSafeMode ? 'On' : 'Off'}</button></label>
+        <label className="settings-toggle-row"><span><Zap size={14}/>{tUniverse('Performance Mode')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={performanceMode} onClick={() => setPerformanceMode(v => !v)}>{performanceMode ? 'On' : 'Off'}</button></label>
       </div>
       <p className="settings-help">Performance mode reduces visual effects for slower devices.</p>
     </section>
 
+
+    <section className="settings-grid-2">
+      <article className="settings-card">
+        <h3>{universe === 'dc' ? 'Universe Naming' : 'Marvel Naming'}</h3>
+        <label className="settings-toggle-row"><span><Star size={14}/>{universe === 'dc' ? 'Heroic Labels' : 'Marvel Language'}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={marvelLangMode} onClick={() => setMarvelLangMode(v => !v)}>{marvelLangMode ? 'On' : 'Off'}</button></label>
+        <p className="settings-help">{universe === 'dc' ? 'Uses in-universe DC flavored terminology in labels.' : 'Uses Marvel flavored terminology in labels.'}</p>
+      </article>
+      <article className="settings-card">
+        <h3>{tUniverse('Interface Behavior')}</h3>
+        <label className="settings-toggle-row"><span><EyeOff size={14}/>{tUniverse('Auto-hide Completed')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={autoHideStatuses} onClick={() => setAutoHideStatuses(v => !v)}>{autoHideStatuses ? 'On' : 'Off'}</button></label>
+        <label className="settings-toggle-row"><span><Pause size={14}/>{tUniverse('Reduce Motion')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={performanceMode} onClick={() => setPerformanceMode(v => !v)}>{performanceMode ? 'On' : 'Off'}</button></label>
+        <p className="settings-help">Reduce motion keeps animation subtle and improves low-end performance.</p>
+      </article>
+    </section>
     <section className="settings-grid-2">
       <article className="settings-card">
         <h3>Visual Tuning</h3>
@@ -3411,10 +3413,10 @@ export default function MCUViewer() {
         <section className="search-page-shell" style={{ maxWidth: 1480, margin: '8px auto 14px', padding: '0 16px' }}>
           <div className="search-page-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
             <div>
-              <div style={{ fontSize: 11, letterSpacing: 1.8, textTransform: 'uppercase', color: T.textMuted }}>{tMarvel('S.H.I.E.L.D. Intel Search')}</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: T.text }}>{tMarvel('Locate any Marvel story node')}</div>
+              <div style={{ fontSize: 11, letterSpacing: 1.8, textTransform: 'uppercase', color: T.textMuted }}>{tUniverse('S.H.I.E.L.D. Intel Search')}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: T.text }}>{tUniverse('Locate any Marvel story node')}</div>
             </div>
-            <button className="fpill" onClick={() => setBrowseMode('home')}><ChevDown size={14}/> {tMarvel('Back to Home')}</button>
+            <button className="fpill" onClick={() => setBrowseMode('home')}><ChevDown size={14}/> {tUniverse('Back to Home')}</button>
           </div>
           <div className="search-page-panel" style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 18, padding: 14, background: 'color-mix(in srgb, var(--theme-surface) 84%, transparent)' }}>
             <div style={{ position: 'relative' }}>
@@ -3422,8 +3424,8 @@ export default function MCUViewer() {
               <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search titles, characters, phases, status, notes..." aria-label="Search titles" style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650 }} />
             </div>
             <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.4 }}>{search ? `${filtered.length} matches` : tMarvel('Type to begin searching')}</div>
-              {search && <button className="fpill" onClick={() => setSearch('')}><Trash2 size={12}/> {tMarvel('Clear Search')}</button>}
+              <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.4 }}>{search ? `${filtered.length} matches` : tUniverse('Type to begin searching')}</div>
+              {search && <button className="fpill" onClick={() => setSearch('')}><Trash2 size={12}/> {tUniverse('Clear Search')}</button>}
             </div>
           </div>
         </section>
@@ -3763,7 +3765,7 @@ export default function MCUViewer() {
           })}
 
           <div data-motion="section" className="motion-section motion-pop" style={{ textAlign: 'center', marginTop: 44, fontFamily: 'var(--font-marvel-ui)', fontSize: 11, color: 'var(--theme-text-muted)', letterSpacing: 2.2, fontWeight: 700 }}>
-            Made with ♥️ by {tMarvel('Marvel Fan')}
+            Made with ♥️ by {tUniverse('Marvel Fan')}
           </div>
         </div>
       </main>
