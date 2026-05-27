@@ -3156,3 +3156,19 @@ body { background: var(--app-shell-gradient); }
 
 .settings-backdrop{background:transparent !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;}
 
+
+/* Modernized phase + release controls */
+.phase-selector-rail{gap:10px;padding:6px 2px 10px;scrollbar-width:thin}
+.phase-chip{border-radius:14px !important;min-height:44px !important;padding:10px 14px !important;background:color-mix(in srgb,var(--theme-surface) 88%, transparent) !important;border:1px solid color-mix(in srgb,var(--theme-border) 88%, transparent) !important;color:var(--theme-text-secondary);box-shadow:0 4px 14px rgba(2,8,23,.14)}
+.phase-chip:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--theme-accent) 40%, var(--theme-border));}
+.phase-chip[data-active="true"],.marvel-phase-btn[data-active="true"]{background:linear-gradient(135deg,color-mix(in srgb,var(--theme-accent) 18%, var(--theme-surface)),color-mix(in srgb,var(--theme-accent-alt) 10%, var(--theme-surface))) !important;color:var(--theme-text) !important;border-color:color-mix(in srgb,var(--theme-accent) 66%, var(--theme-border)) !important;box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 30%, transparent),0 8px 18px rgba(2,8,23,.2)}
+.phase-chip-label{font-size:12px;font-weight:720;letter-spacing:.02em}
+.phase-chip-count{font-size:11px;opacity:.85}
+
+/* Settings cleanup */
+.settings-sticky-actions{display:none !important}
+.settings-close-row{display:flex;justify-content:flex-end;position:sticky;top:0;padding-bottom:6px;background:linear-gradient(180deg,color-mix(in srgb,var(--theme-surface) 92%, transparent),transparent);z-index:3}
+.settings-close-sticky{border-radius:12px !important}
+.settings-drive-link{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.settings-inline-actions{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:760px){.settings-inline-actions{grid-template-columns:1fr}}
