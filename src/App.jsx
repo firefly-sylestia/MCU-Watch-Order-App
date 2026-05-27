@@ -359,6 +359,12 @@ const requestedPosterSrcs = new Set();
 const posterDecodeStateBySrc = new Map();
 const posterPreloadObserversBySrc = new Map();
 
+const compressedPosterSrc = (src) => {
+  if (!src || typeof src !== 'string') return src;
+  if (src.startsWith('/posters/') && src.endsWith('.jpg')) return `${src}.webp`;
+  return src;
+};
+
 const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poster', eager = false, loadingMode = 'auto' }) {
   const shellRef = useRef(null);
   const [shouldLoadSrc, setShouldLoadSrc] = useState(() => eager || loadedPosterSrcs.has(src));
@@ -401,9 +407,10 @@ const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poste
     setLoaded(true);
   };
 
+  const optimizedSrc = compressedPosterSrc(src);
   return <div ref={shellRef} className={`poster-shell ${loaded ? 'is-loaded' : ''}`}>
     <div className="poster-skeleton" aria-hidden="true" />
-    <img className={`${className} ${loaded ? 'is-loaded' : ''}`} src={shouldLoadSrc ? src : undefined} alt={alt} loading={eager ? 'eager' : loadingMode} decoding="async" fetchpriority={eager ? 'high' : 'auto'} onLoad={handleLoad} />
+    <img className={`${className} ${loaded ? 'is-loaded' : ''}`} src={shouldLoadSrc ? optimizedSrc : undefined} alt={alt} loading={eager ? 'eager' : loadingMode} decoding="async" fetchpriority={eager ? 'high' : 'auto'} onLoad={handleLoad} onError={(e) => { if (optimizedSrc !== src) e.currentTarget.src = src; }} />
   </div>;
 });
 const TMDB_LOOKUP_OVERRIDES = {
@@ -876,7 +883,6 @@ export default function MCUViewer() {
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
   const [setupOpen, setSetupOpen] = useState(false);
-  const [setupExpanded, setSetupExpanded] = useState(false);
   const [themeMode,      setThemeMode]      = useState('iron-man');
   const [appearanceMode, setAppearanceMode] = useState('glass');
   const [marvelLangMode, setMarvelLangMode] = useState(false);
@@ -3140,7 +3146,6 @@ export default function MCUViewer() {
               <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={12} />{tUniverse('Dark')}</button>
               <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={12} />{tUniverse('Light')}</button>
             </div>
-            <button className='fpill settings-toggle-pill' type='button' aria-pressed={marvelLangMode} onClick={() => setMarvelLangMode(v => !v)} style={{ justifyContent: 'space-between' }}><span>{tUniverse('Universe Language')}</span><span>{marvelLangMode ? 'On' : 'Off'}</span></button>
           </section>
 
           <section className="sidebar-panel">
@@ -3239,11 +3244,6 @@ export default function MCUViewer() {
 
     <section className="settings-grid-2">
       <article className="settings-card">
-        <h3>{universe === 'dc' ? 'Universe Naming' : 'Marvel Naming'}</h3>
-        <label className="settings-toggle-row"><span><Star size={14}/>{universe === 'dc' ? 'Heroic Labels' : 'Marvel Language'}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={marvelLangMode} onClick={() => setMarvelLangMode(v => !v)}>{marvelLangMode ? 'On' : 'Off'}</button></label>
-        <p className="settings-help">{universe === 'dc' ? 'Uses in-universe DC flavored terminology in labels.' : 'Uses Marvel flavored terminology in labels.'}</p>
-      </article>
-      <article className="settings-card">
         <h3>{tUniverse('Interface Behavior')}</h3>
         <label className="settings-toggle-row"><span><EyeOff size={14}/>{tUniverse('Auto-hide Completed')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={autoHideStatuses} onClick={() => setAutoHideStatuses(v => !v)}>{autoHideStatuses ? 'On' : 'Off'}</button></label>
         <label className="settings-toggle-row"><span><Pause size={14}/>{tUniverse('Reduce Motion')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={performanceMode} onClick={() => setPerformanceMode(v => !v)}>{performanceMode ? 'On' : 'Off'}</button></label>
@@ -3263,9 +3263,7 @@ export default function MCUViewer() {
       </article>
 
       <article className="settings-card">
-        <h3>Backup & Restore</h3>
-        <button className="fpill" onClick={exportProgress}><Download size={14}/>Export Backup JSON</button>
-        <label className="fpill import-backup-pill" style={{ cursor: 'pointer' }}><Upload size={14}/>Import Backup JSON<input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} /></label>
+        <h3>Backup Snapshots</h3>
         <div style={{ display: 'grid', gap: 6 }}><div className="settings-help">Auto snapshots (latest 5)</div>{autoBackups.slice(0,5).map((shot, idx) => { const preview = buildBackupPreview(shot); return <button key={`${shot.exportedAt}-${idx}`} className="fpill" onClick={() => importProgress(new File([JSON.stringify(shot)], 'mcu-auto-backup.json', { type: 'application/json' }))} style={{ justifyContent: 'space-between' }}><span><Clock size={14}/>Restore {new Date(preview.exportedAt).toLocaleDateString()}</span><span style={{ fontSize: 'var(--type-metadata)', color: T.textMuted }}>{preview.watched}/{preview.total}</span></button>; })}</div>
       </article>
     </section>
@@ -4110,8 +4108,6 @@ export default function MCUViewer() {
         fetchState={posterFetchState}
         onSkip={() => { safeLocalStorageSetItem('mcu-first-setup-v1', 'done'); setSetupOpen(false); }}
         onFinish={() => { safeLocalStorageSetItem('mcu-first-setup-v1', 'done'); setSetupOpen(false); }}
-        expanded={setupExpanded}
-        onExpandToggle={() => setSetupExpanded(v => !v)}
       />
       <input id="setup-avatar-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => setAvatarCropSrc(String(r.result || '')); r.readAsDataURL(f); e.target.value=''; }} />
 

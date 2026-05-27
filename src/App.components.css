@@ -3120,6 +3120,7 @@ body { background: var(--app-shell-gradient); }
 .setup-footer{display:flex;justify-content:flex-end;gap:8px}
 .setup-expand-btn{background:none;border:none;color:var(--theme-accent);font-weight:700;cursor:pointer;padding:0}
 .setup-expanded{margin-top:8px;color:var(--theme-text-secondary)}
+.setup-note-list{margin:8px 0 0;padding-left:18px;display:grid;gap:6px}
 [data-color-mode="light"] .setup-overlay{background:rgba(235,241,250,.66)}
 
 /* 2026 settings + setup modernization */

@@ -10,8 +10,6 @@ export default function SetupWizard({
   fetchState,
   onSkip,
   onFinish,
-  onExpandToggle,
-  expanded,
 }) {
   if (!open) return null;
 
@@ -48,12 +46,15 @@ export default function SetupWizard({
           </section>
 
           <section className="setup-section">
-            <button className="setup-expand-btn" onClick={onExpandToggle}>{expanded ? 'Hide expanded setup options' : 'Show expanded setup options'}</button>
-            {expanded && (
-              <div className="setup-expanded">
-                <p>Advanced setup tunes preload depth and cache behavior for this device.</p>
-              </div>
-            )}
+            <h3>3) Next page setup</h3>
+            <div className="setup-expanded">
+              <p>Tune up settings before you start exploring:</p>
+              <ul className="setup-note-list">
+                <li>Dark / light mode automatically follows your profile preference.</li>
+                <li>Performance mode keeps interactions smooth on lower-end devices.</li>
+                <li>Posters are loaded lazily and prefer compressed variants when available.</li>
+              </ul>
+            </div>
           </section>
         </div>
 
