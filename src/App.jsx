@@ -1511,7 +1511,7 @@ export default function MCUViewer() {
       if (watchedOnly && i.status !== 'watched') return false;
       if (statusFilter && i.status !== statusFilter) return false;
       if (typeFilter && i.type !== typeFilter) return false;
-      if (activePhase && i.phase !== activePhase) return false;
+      if (browseMode !== 'phase' && activePhase && i.phase !== activePhase) return false;
       if (timelineMode === 'loki' && !CHARACTER_POV_TITLE_SETS.loki.has(i.title)) return false;
       if (timelineMode === 'wanda' && !CHARACTER_POV_TITLE_SETS.wanda.has(i.title)) return false;
       if (timelineMode === 'multiverse') {
@@ -1540,7 +1540,7 @@ export default function MCUViewer() {
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, browseMode, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap]);
 
 
 
@@ -2975,13 +2975,23 @@ export default function MCUViewer() {
   const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
   const trailerDataForDetail = detailItem ? getTrailerByTitle(detailItem.title) : null;
   const trailerOptions = trailerDataForDetail?.options || [];
+  const trailerOnlyOptions = trailerOptions.filter(option => option?.type === 'trailer');
+  const teaserOnlyOptions = trailerOptions.filter(option => option?.type === 'teaser');
   const selectedTrailer = trailerOptions[trailerVariantIndex] || trailerOptions[0] || null;
+  const openTrailerByType = useCallback((type) => {
+    const pool = type === 'teaser' ? teaserOnlyOptions : trailerOnlyOptions;
+    const candidate = pool[0] || trailerOptions[0];
+    if (!candidate?.youtubeId) return;
+    const exactIndex = trailerOptions.findIndex(option => option?.youtubeId === candidate.youtubeId);
+    if (exactIndex >= 0) setTrailerVariantIndex(exactIndex);
+    openTrailerPlayer();
+  }, [openTrailerPlayer, teaserOnlyOptions, trailerOnlyOptions, trailerOptions]);
   const tMarvel = (label) => (marvelLangMode ? (MARVEL_UI_LEXICON[label] || `✦ ${label}`) : label);
   const filterTriggerLabel = tMarvel('Filters');
 
   const renderPhaseSelector = () => (
     <div ref={phaseRef} className="phase-selector-rail">
-      <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} onClick={() => { setActivePhase(0); if (browseMode !== 'phase') setBrowseMode('phase'); }}>
+      <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} onClick={() => { setActivePhase(0); if (browseMode !== 'phase') setBrowseMode('phase'); else scrollToListTop(); }}>
         <span className="phase-chip-label">All Phases</span>
       </button>
       {currentPhases.map((ph) => {
@@ -3677,7 +3687,10 @@ export default function MCUViewer() {
                 )}
               
                 {!!selectedTrailer?.youtubeId && (
-                  <button className="fpill" style={{ position: 'absolute', left: 12, bottom: 12, zIndex: 3, background: 'color-mix(in srgb, #ed1d24 22%, var(--theme-surface))', borderColor: 'color-mix(in srgb, #ed1d24 52%, var(--theme-border))' }} onClick={openTrailerPlayer}><PlayCircle size={13}/>Play Media</button>
+                  <div style={{ position: 'absolute', left: 12, bottom: 12, zIndex: 3, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button className="fpill" style={{ background: 'color-mix(in srgb, #ed1d24 22%, var(--theme-surface))', borderColor: 'color-mix(in srgb, #ed1d24 52%, var(--theme-border))' }} onClick={() => openTrailerByType('trailer')}><PlayCircle size={13}/>Trailer</button>
+                    {!!teaserOnlyOptions.length && <button className="fpill" style={{ background: 'color-mix(in srgb, #0ea5e9 20%, var(--theme-surface))', borderColor: 'color-mix(in srgb, #0ea5e9 52%, var(--theme-border))' }} onClick={() => openTrailerByType('teaser')}><PlayCircle size={13}/>Teaser</button>}
+                  </div>
                 )}
 </div>
 
@@ -3694,7 +3707,10 @@ export default function MCUViewer() {
                 </div>
                 <div className="detail-export-actions-inline">
                   {!!selectedTrailer?.youtubeId && (
-                    <button className="fpill glass-panel detail-btn" onClick={openTrailerPlayer}><PlayCircle size={12}/>Watch Trailer</button>
+                    <>
+                      <button className="fpill glass-panel detail-btn" onClick={() => openTrailerByType('trailer')}><PlayCircle size={12}/>Watch Trailer</button>
+                      {!!teaserOnlyOptions.length && (<button className="fpill glass-panel detail-btn" onClick={() => openTrailerByType('teaser')}><PlayCircle size={12}/>Watch Teaser</button>)}
+                    </>
                   )}
                   <button className="fpill glass-panel detail-btn" onClick={() => openImdbForItem(detailItem, detailData)}><Info size={12}/>Open IMDb</button>
                   <button className="fpill glass-panel detail-btn" onClick={() => exportPosterForItem(detailItem, { share: true })}><Upload size={12}/>Share Exact Card</button>
