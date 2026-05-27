@@ -13,6 +13,7 @@ import { usePosterCache } from './hooks/usePosterCache';
 import { useOverlayNavigation } from './hooks/useOverlayNavigation';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
+import FirstTimeSetup from './components/features/FirstTimeSetup';
 import { APPEARANCE_MODES, CHARACTER_THEMES, resolveThemeTokens } from './constants/themeSettings';
 import { buildSemanticThemeVars, UI_PARITY_TOKENS } from './constants/ui';
 import './App.layout.css';
@@ -875,6 +876,7 @@ export default function MCUViewer() {
   const [settingsOpen,   setSettingsOpen]   = useState(false);
   const [showAllFiltersOverride, setShowAllFiltersOverride] = useState(false);
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
+  const [setupDone, setSetupDone] = useState(() => (typeof window !== 'undefined' ? window.localStorage.getItem('mcu-first-setup-v1') === 'done' : false));
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
   const [themeMode,      setThemeMode]      = useState('iron-man');
@@ -921,6 +923,20 @@ export default function MCUViewer() {
     setExpandedItem(null);
     setHeroIndex(0);
   }, [universe]);
+
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.google?.accounts?.id) return;
+    const existing = document.getElementById('google-identity-script');
+    if (existing) return;
+    const script = document.createElement('script');
+    script.id = 'google-identity-script';
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+  }, []);
 
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
@@ -3061,6 +3077,26 @@ export default function MCUViewer() {
   const heroBackdropBackgroundSize = isDesktopViewport
     ? `${Math.max(heroBackdropScale - 16, 112)}% auto`
     : `auto ${Math.max(heroBackdropScale - 8, 96)}%`;
+  const completeFirstSetup = useCallback(() => {
+    setSetupDone(true);
+    safeLocalStorageSetItem('mcu-first-setup-v1', 'done');
+  }, []);
+
+  if (!setupDone) {
+    return (
+      <div style={{ ...cssThemeVars, minHeight: '100dvh', background: 'var(--theme-app-bg)', color: 'var(--theme-text)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+        <FirstTimeSetup
+          darkMode={darkMode}
+          profile={profile}
+          setProfile={setProfile}
+          onContinue={completeFirstSetup}
+          onSkip={completeFirstSetup}
+          onGoogleSuccess={() => {}}
+        />
+      </div>
+    );
+  }
+
   return (
     <div data-scaffold={Boolean(sectionScaffold)} data-theme={appearanceMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
