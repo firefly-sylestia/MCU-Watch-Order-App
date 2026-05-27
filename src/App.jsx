@@ -68,6 +68,12 @@ const DESKTOP_TEXT_SCALES = [1, 1.25, 1.5, 1.75, 2];
 // ─── OMDB ratings key (for ratings only — posters use TMDB) ─────────────────
 const OMDB_RATINGS_KEY = '2c971c17';
 
+const GOOGLE_CLIENT_ID = '895654125638-pspr0bqmlpf78cc4gj2132ttrhbmlqn2.apps.googleusercontent.com';
+const GOOGLE_SCOPES = 'openid email profile';
+const ACCOUNT_SYNC_PREFIX = 'mcu-account-sync-v1:';
+const GOOGLE_SESSION_KEY = 'mcu-google-session-v1';
+
+
 const CACHE_KEYS = {
   poster: 'mcu-poster-cache-v1',
   meta: 'mcu-meta-cache-v1',
@@ -874,6 +880,8 @@ export default function MCUViewer() {
   const [posterExportState, setPosterExportState] = useState({ active: false, done: 0, total: 0, message: '' });
   const [posterExportFailures, setPosterExportFailures] = useState({});
   const [settingsOpen,   setSettingsOpen]   = useState(false);
+  const [googleAccount, setGoogleAccount] = useState(null);
+  const [googleAuthStatus, setGoogleAuthStatus] = useState('Not connected');
   const [showAllFiltersOverride, setShowAllFiltersOverride] = useState(false);
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
@@ -2375,17 +2383,62 @@ export default function MCUViewer() {
 
 
   useEffect(() => {
+    const session = readStorageJSON(GOOGLE_SESSION_KEY, null);
+    if (session?.email) {
+      setGoogleAccount(session);
+      setGoogleAuthStatus(`Connected as ${session.email}`);
+      loadAccountState(session.email);
+    }
+  }, [loadAccountState]);
+
+  useEffect(() => {
     const setupDone = readStorageValue('mcu-first-setup-v1') === 'done';
     if (!setupDone) setSetupOpen(true);
   }, []);
 
-  const openGoogleLogin = useCallback(() => {
-    const clientId = '895654125638-pspr0bqmlpf78cc4gj2132ttrhbmlqn2.apps.googleusercontent.com';
-    const redirect = encodeURIComponent(window.location.origin);
-    const scope = encodeURIComponent('openid email profile');
-    const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirect}&response_type=token&scope=${scope}&prompt=select_account`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+  const loadAccountState = useCallback((email) => {
+    if (!email) return;
+    try {
+      const saved = readStorageJSON(`${ACCOUNT_SYNC_PREFIX}${email}`, null);
+      if (!saved) return;
+      if (saved.profile) setProfile(saved.profile);
+      if (Array.isArray(saved.uploadedAvatars)) setUploadedAvatars(saved.uploadedAvatars);
+      if (saved.actions?.likes) setMyLikes(saved.actions.likes);
+      if (saved.actions?.ratings) setMyRating(saved.actions.ratings);
+      if (saved.actions?.rewatch) setRewatchCount(saved.actions.rewatch);
+      if (saved.actions?.bookmarks) setBookmarks(saved.actions.bookmarks);
+      if (saved.actions?.reviews) setReviews(saved.actions.reviews);
+    } catch {}
   }, []);
+
+  const persistAccountState = useCallback((account = googleAccount) => {
+    if (!account?.email) return;
+    const payload = { profile, uploadedAvatars, actions: { likes: myLikes, ratings: myRating, rewatch: rewatchCount, bookmarks, reviews }, savedAt: new Date().toISOString() };
+    scheduleStorageWrite(`${ACCOUNT_SYNC_PREFIX}${account.email}`, JSON.stringify(payload));
+  }, [googleAccount, profile, uploadedAvatars, myLikes, myRating, rewatchCount, bookmarks, reviews]);
+
+  const openGoogleLogin = useCallback(() => {
+    const launch = () => {
+      const tokenClient = window.google?.accounts?.oauth2?.initTokenClient?.({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: GOOGLE_SCOPES,
+        callback: async (tokenResponse) => {
+          if (!tokenResponse?.access_token) return setGoogleAuthStatus('Google login failed');
+          const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${tokenResponse.access_token}` } });
+          const user = await res.json();
+          const account = { email: user.email, name: user.name, picture: user.picture };
+          setGoogleAccount(account);
+          setGoogleAuthStatus(`Connected as ${user.email}`);
+          scheduleStorageWrite(GOOGLE_SESSION_KEY, JSON.stringify(account));
+          loadAccountState(user.email);
+        },
+      });
+      tokenClient?.requestAccessToken({ prompt: 'select_account' });
+    };
+    if (window.google?.accounts?.oauth2) return launch();
+    const script = document.createElement('script'); script.src = 'https://accounts.google.com/gsi/client'; script.async = true;
+    script.onload = launch; script.onerror = () => setGoogleAuthStatus('Unable to load Google login script'); document.head.appendChild(script);
+  }, [loadAccountState]);
 
   useEffect(() => { scheduleStorageWrite('mcu-profile-v1', JSON.stringify(profile)); }, [profile]);
   useEffect(() => { scheduleStorageWrite('mcu-uploaded-avatars-v1', JSON.stringify(uploadedAvatars)); }, [uploadedAvatars]);
@@ -2394,6 +2447,7 @@ export default function MCUViewer() {
   useEffect(() => { scheduleStorageWrite('mcu-appearance-mode-v1', appearanceMode); }, [appearanceMode]);
   useEffect(() => { scheduleStorageWrite('mcu-marvel-lang-v1', marvelLangMode ? '1' : '0'); }, [marvelLangMode]);
   useEffect(() => { scheduleStorageWrite('mcu-export-prefs-v1', JSON.stringify({ font: exportFont, textScale: exportTextScale })); }, [exportFont, exportTextScale]);
+  useEffect(() => { if (googleAccount?.email) persistAccountState(googleAccount); }, [googleAccount, profile, uploadedAvatars, myLikes, myRating, rewatchCount, bookmarks, reviews, persistAccountState]);
 
   useEffect(() => {
     try {
@@ -3197,6 +3251,14 @@ export default function MCUViewer() {
               </label>
             </div>
             <button className="fpill" onClick={() => setProfile(p => ({ ...p, pfp: '' }))} disabled={!profile.pfp} style={{ justifyContent: 'center', opacity: profile.pfp ? 1 : 0.55 }}><Trash2 size={14}/>Remove Profile Picture</button>
+            <div style={{ marginTop: 6, padding: 10, borderRadius: 12, border: `1px solid ${T.surfaceBorder}`, background: T.surfaceBg, display: 'grid', gap: 8 }}>
+              <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Google Account Sync</div>
+              <div style={{ fontSize: 12, color: T.textMuted, lineHeight: 1.45 }}>1) Tap connect. 2) Pick your Google account. 3) Your profile, avatar, and watch activity auto-save to that account locally on this device. 4) Use export backup for cross-device transfer.</div>
+              <button className="fpill" onClick={openGoogleLogin} style={{ justifyContent: 'center' }}><UserCircle size={14}/>{googleAccount?.email ? 'Switch Google Account' : 'Connect Google Account'}</button>
+              <button className="fpill" onClick={() => persistAccountState()} disabled={!googleAccount?.email} style={{ justifyContent: 'center', opacity: googleAccount?.email ? 1 : 0.55 }}><Download size={14}/>Save Current Data to Account</button>
+              <button className="fpill" onClick={() => { setGoogleAccount(null); setGoogleAuthStatus('Not connected'); removeStorageValue(GOOGLE_SESSION_KEY); }} disabled={!googleAccount?.email} style={{ justifyContent: 'center', opacity: googleAccount?.email ? 1 : 0.55 }}><X size={14}/>Sign Out</button>
+              <div style={{ fontSize: 11, color: T.textMuted }}>{googleAuthStatus}</div>
+            </div>
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>{tMarvel('Preferences')}</div>
             <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
