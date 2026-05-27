@@ -3121,3 +3121,15 @@ body { background: var(--app-shell-gradient); }
 .setup-expand-btn{background:none;border:none;color:var(--theme-accent);font-weight:700;cursor:pointer;padding:0}
 .setup-expanded{margin-top:8px;color:var(--theme-text-secondary)}
 [data-color-mode="light"] .setup-overlay{background:rgba(235,241,250,.66)}
+
+/* 2026 modernization pass: setup + settings layout */
+.settings-shell{position:fixed;inset:0;z-index:10001;display:block;pointer-events:none}
+.settings-shell[data-state='open']{pointer-events:auto}
+.settings-menu.settings-menu-redesign{width:min(1200px,100vw);height:100dvh;max-height:100dvh;overflow:auto;margin-left:auto;border-radius:0;padding:28px 22px 40px;display:grid;align-content:start;gap:12px;background:color-mix(in srgb,var(--theme-bg) 84%, var(--theme-surface));border-left:1px solid var(--theme-border)}
+.settings-backdrop{background:color-mix(in srgb, var(--theme-bg) 38%, #000);backdrop-filter:blur(4px)}
+.settings-sticky-actions{position:sticky;top:0;z-index:3;display:flex;justify-content:flex-end;padding:4px 0 10px;background:linear-gradient(180deg,color-mix(in srgb,var(--theme-bg) 86%, transparent),transparent)}
+
+.setup-overlay{position:fixed;inset:0;z-index:15000;background:color-mix(in srgb,var(--theme-bg) 52%, #000);display:grid;place-items:center;padding:24px;backdrop-filter:blur(8px);overscroll-behavior:contain}
+.setup-card{width:min(760px,100%);max-height:min(92dvh,860px);overflow:auto;background:color-mix(in srgb,var(--theme-surface) 92%, var(--theme-bg));border:1px solid color-mix(in srgb,var(--theme-border) 80%, transparent);border-radius:24px;box-shadow:0 26px 64px rgba(2,8,23,.38);padding:22px;display:grid;gap:16px;color:var(--theme-text)}
+.setup-section h3{margin:0 0 10px;font-size:15px;color:var(--theme-text-primary)}
+.setup-footer .fpill:last-child{background:linear-gradient(140deg,var(--theme-accent),color-mix(in srgb,var(--theme-accent) 66%,#fff));color:#fff;border-color:transparent}

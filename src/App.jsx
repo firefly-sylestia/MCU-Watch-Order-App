@@ -3264,8 +3264,10 @@ export default function MCUViewer() {
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Google Account Sync</div>
             <div style={{ fontSize: 12, color: T.textMuted, lineHeight: 1.45, padding: '0 2px' }}>
-              1) Tap Sign in with Google. 2) In Google Cloud console, add <b>{window.location.origin}</b> as an Authorized JavaScript origin and redirect URI.
-              3) Save current data to account. 4) On another device, sign in and load account data.
+              Sign in and save your current app data to your linked profile. Then sign in on another device and load it.
+            </div>
+            <div style={{ fontSize: 11, color: T.textMuted }}>
+              Google Drive sync needs OAuth credentials/server setup; this app currently stores account-linked snapshots locally.
             </div>
             {!googleAccount?.sub ? (
               <button className="fpill" onClick={openGoogleLogin} style={{ justifyContent: 'center' }}>
