@@ -3243,146 +3243,102 @@ export default function MCUViewer() {
       </SidebarMenu>
 
       <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} performanceMode={performanceMode} onClose={closeSettings}>
-            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Profile</div>
-            <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: `1px solid ${T.inputBorder}`, background: T.inputBg, color: T.inputColor }} />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: 6 }}>
-              {uploadedAvatars.map((src, idx) => (
-                <button key={idx} onClick={() => setProfile(p => ({ ...p, pfp: src }))} title={`Avatar ${idx + 1}`} style={{ border: `1px solid ${T.inputBorder}`, borderRadius: '999px', padding: 2, background: profile.pfp === src ? 'var(--theme-surface-hover)' : 'transparent', cursor: 'pointer' }}>
-                  <img src={src} alt={`Avatar ${idx + 1}`} style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: '50%', objectFit: 'cover' }} />
-                </button>
-              ))}
-              <label title="Upload custom avatar" style={{ border: `1px dashed ${T.inputBorder}`, borderRadius: '999px', padding: 2, display: 'grid', placeItems: 'center', cursor: 'pointer',
-                    willChange: 'transform', minHeight: 44, color: T.textMuted }}>
-                <div style={{ display: 'grid', placeItems: 'center', fontSize: 11, gap: 2 }}>
-                  <Upload size={13} />
-                  <span>Custom +</span>
-                </div>
-                <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const img = String(r.result || ''); setAvatarCropSrc(img); }; r.readAsDataURL(f); }} style={{ display: 'none' }} />
-              </label>
+  <div className="settings-redesign">
+    <section className="settings-hero-card">
+      <div>
+        <p className="settings-eyebrow">Settings Hub</p>
+        <h2>Customize your MCU experience</h2>
+        <p>Unified controls for profile, themes, syncing, backups, and advanced tuning with modern light/dark support.</p>
+      </div>
+      <div className="settings-hero-actions">
+        <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={13} />Dark</button>
+        <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={13} />Light</button>
+      </div>
+    </section>
+
+    <section className="settings-grid-2">
+      <article className="settings-card">
+        <h3>Profile</h3>
+        <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" className="settings-input" />
+        <div className="settings-avatar-grid">
+          {uploadedAvatars.map((src, idx) => (
+            <button key={idx} onClick={() => setProfile(p => ({ ...p, pfp: src }))} title={`Avatar ${idx + 1}`} className="settings-avatar-btn" style={{ background: profile.pfp === src ? 'var(--theme-surface-hover)' : 'transparent' }}>
+              <img src={src} alt={`Avatar ${idx + 1}`} style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: '50%', objectFit: 'cover' }} />
+            </button>
+          ))}
+          <label title="Upload custom avatar" className="settings-avatar-upload">
+            <div style={{ display: 'grid', placeItems: 'center', fontSize: 11, gap: 2 }}>
+              <Upload size={13} />
+              <span>Custom +</span>
             </div>
-            <button className="fpill" onClick={() => setProfile(p => ({ ...p, pfp: '' }))} disabled={!profile.pfp} style={{ justifyContent: 'center', opacity: profile.pfp ? 1 : 0.55 }}><Trash2 size={14}/>Remove Profile Picture</button>
-            <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
-            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Google Account Sync</div>
-            <div style={{ fontSize: 12, color: T.textMuted, lineHeight: 1.45, padding: '0 2px' }}>
-              Sign in, then use Save/Load to sync this device backup with your account profile.
-              3) Save current data to account. 4) On another device, sign in and load account data.
+            <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const img = String(r.result || ''); setAvatarCropSrc(img); }; r.readAsDataURL(f); }} style={{ display: 'none' }} />
+          </label>
+        </div>
+        <button className="fpill" onClick={() => setProfile(p => ({ ...p, pfp: '' }))} disabled={!profile.pfp} style={{ justifyContent: 'center', opacity: profile.pfp ? 1 : 0.55 }}><Trash2 size={14}/>Remove Profile Picture</button>
+      </article>
+
+      <article className="settings-card">
+        <h3>Google Sync</h3>
+        <p className="settings-help">Sign in once, then Save to account on this device and Load on another device.</p>
+        {!googleAccount?.sub ? (
+          <button className="fpill" onClick={openGoogleLogin} style={{ justifyContent: 'center' }}><UserCircle size={14} /> Sign in with Google</button>
+        ) : (
+          <>
+            <div style={{ fontSize: 12, color: T.text }}><b>{googleAccount.name || 'Google User'}</b> · {googleAccount.email}</div>
+            <div className="settings-inline-actions">
+              <button className="fpill" onClick={() => saveDataForGoogleAccount()}><Upload size={14} />Save to Account</button>
+              <button className="fpill" onClick={() => loadDataForGoogleAccount()}><Download size={14} />Load from Account</button>
             </div>
-            {!googleAccount?.sub ? (
-              <button className="fpill" onClick={openGoogleLogin} style={{ justifyContent: 'center' }}>
-                <UserCircle size={14} /> Sign in with Google
-              </button>
-            ) : (
-              <>
-                <div style={{ fontSize: 12, color: T.text }}><b>{googleAccount.name || 'Google User'}</b> · {googleAccount.email}</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  <button className="fpill" onClick={() => saveDataForGoogleAccount()}><Upload size={14} />Save to Account</button>
-                  <button className="fpill" onClick={() => loadDataForGoogleAccount()}><Download size={14} />Load from Account</button>
-                </div>
-                <button className="fpill" onClick={() => { setGoogleAccount(null); removeStorageValue('mcu-google-account-v1'); setGoogleSyncMsg('Signed out locally.'); }} style={{ justifyContent: 'center' }}>
-                  <XCircle size={14} /> Sign out
-                </button>
-              </>
-            )}
-            {!!googleSyncMsg && <div style={{ fontSize: 11, color: T.textMuted }}>{googleSyncMsg}</div>}
-            <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
-            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>{tMarvel('Preferences')}</div>
-            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Star size={14} /> Marvel Easter Egg Language</span>
-              <button
-                className='fpill settings-toggle-pill'
-                type='button'
-                aria-pressed={marvelLangMode}
-                onClick={() => setMarvelLangMode(v => !v)}
-                style={{ minWidth: 90, justifyContent: 'center', borderColor: marvelLangMode ? 'var(--theme-accent)' : 'var(--theme-border)', background: marvelLangMode ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)', transition: 'background var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out)' }}
-              >
-                {marvelLangMode ? 'On' : 'Off'}
-              </button>
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Moon size={14} /> {tMarvel('Dark Theme')}</span>
-              <button className='fpill settings-toggle-pill' type='button' aria-pressed={darkMode} onClick={() => setDarkMode(d => !d)} style={{ minWidth: 72, justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', background: darkMode ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}>{darkMode ? 'On' : 'Off'}</button>
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><EyeOff size={14} /> {tMarvel('Spoiler Safe')}</span>
-              <button className='fpill settings-toggle-pill' type='button' aria-pressed={spoilerSafeMode} onClick={() => setSpoilerSafeMode(v => !v)} style={{ minWidth: 72, justifyContent: 'center', borderColor: spoilerSafeMode ? 'var(--theme-accent)' : 'var(--theme-border)', background: spoilerSafeMode ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}>{spoilerSafeMode ? 'On' : 'Off'}</button>
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Zap size={14} /> {tMarvel('Performance Mode')}</span>
-              <button className='fpill settings-toggle-pill' type='button' aria-pressed={performanceMode} onClick={() => setPerformanceMode(v => !v)} style={{ minWidth: 72, justifyContent: 'center', borderColor: performanceMode ? 'var(--theme-accent)' : 'var(--theme-border)', background: performanceMode ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}>{performanceMode ? 'On' : 'Off'}</button>
-            </label>
-            <div style={{ fontSize: 11, color: T.textMuted, lineHeight: 1.35, marginTop: -4 }}>Leave off for full UI motion; turn on only if your device needs reduced effects.</div>
-            <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
-            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Desktop Text Scaling</div>
-            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: T.text }}><Layers size={14} /> {tMarvel('Enable scaling')}</span>
-              <button
-                className='fpill settings-toggle-pill'
-                type='button'
-                onClick={() => setTextScaleEnabled(v => !v)}
-                style={{ minWidth: 72, justifyContent: 'center', borderColor: textScaleEnabled ? 'var(--theme-accent)' : 'var(--theme-border)', background: textScaleEnabled ? 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))' : 'var(--theme-surface)' }}
-              >
-                {textScaleEnabled ? 'On' : 'Off'}
-              </button>
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,minmax(0,1fr))', gap: 6 }}>
-              {DESKTOP_TEXT_SCALES.map(scale => {
-                const active = desktopTextScale === scale;
-                return (
-                  <button
-                    key={`desktop-scale-${scale}`}
-                    className='fpill'
-                    type='button'
-                    onClick={() => setDesktopTextScale(scale)}
-                    disabled={!textScaleEnabled}
-                    style={{ justifyContent: 'center', borderColor: active ? 'var(--theme-accent)' : 'var(--theme-border)', color: active ? 'var(--theme-accent)' : 'var(--theme-text)', opacity: textScaleEnabled ? 1 : 0.55 }}
-                  >
-                    {Math.round(scale * 100)}%
-                  </button>
-                );
-              })}
-            </div>
-            <div style={{ fontSize: 11, color: T.textMuted, lineHeight: 1.35 }}>
-              Desktop UI scale currently {Math.round((textScaleEnabled ? effectiveUiScale : 1) * 100)}%. Mobile scrolling behavior is unchanged.
-            </div>
-            <div style={{ fontSize: 10, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase', marginTop: 2, display: 'inline-flex', alignItems: 'center', gap: 6 }}><Film size={12} /> Bg size</div>
-            <input type='range' min={100} max={112} step={1} value={heroBackdropScale} onChange={(e) => setHeroBackdropScale(Number(e.target.value))} aria-label='Carousel background size' />
-            <div style={{ fontSize: 10, color: T.textMuted }}>{heroBackdropScale}%</div>
-            <div style={{ fontSize: 10, letterSpacing: 1.4, color: T.textMuted, textTransform: 'uppercase', marginTop: 2 }}>Bg opacity</div>
-            <input type='range' min={75} max={100} step={1} value={Math.round(heroBackdropOpacity * 100)} onChange={(e) => setHeroBackdropOpacity(Number(e.target.value) / 100)} aria-label='Carousel background opacity' />
-            <div style={{ fontSize: 10, color: T.textMuted }}>{Math.round(heroBackdropOpacity * 100)}%</div>
-            <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
-            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>{tMarvel('Backup & Restore')}</div>
-            <button className="fpill" onClick={exportProgress}><Download size={14}/>Export Backup JSON</button>
-            <label className="fpill import-backup-pill" style={{ cursor: 'pointer', WebkitTapHighlightColor: 'transparent', outline: 'none' }}><Upload size={14}/>Import Backup JSON
-              <input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} />
-            </label>
-            <div style={{ display: 'grid', gap: 6 }}><div style={{ fontSize: 'var(--type-metadata)', lineHeight: 'var(--lh-body)', color: T.textMuted }}>Auto snapshots (latest 5)</div>{autoBackups.slice(0,5).map((shot, idx) => { const preview = buildBackupPreview(shot); return <button key={`${shot.exportedAt}-${idx}`} className="fpill" onClick={() => importProgress(new File([JSON.stringify(shot)], 'mcu-auto-backup.json', { type: 'application/json' }))} style={{ justifyContent: 'space-between' }}><span><Clock size={14}/>Restore {new Date(preview.exportedAt).toLocaleDateString()}</span><span style={{ fontSize: 'var(--type-metadata)', lineHeight: 1.3, color: T.textMuted }}>{preview.watched}/{preview.total}</span></button>; })}</div>
-            <button className="fpill" onClick={() => exportFetchedPosters('all')} disabled={posterExportState.active} style={{ opacity: posterExportState.active ? 0.75 : 1 }}><Download size={14}/>{posterExportState.active ? `Exporting ${posterExportState.done}/${posterExportState.total}` : 'Export All Posters'}</button>
-            <button className="fpill" onClick={() => exportFetchedPosters('failed')} disabled={posterExportState.active || !Object.keys(posterExportFailures).length} style={{ opacity: posterExportState.active || !Object.keys(posterExportFailures).length ? 0.55 : 1 }}><Download size={14}/>Export Failed Posters ({Object.keys(posterExportFailures).length})</button>
-            {posterExportState.message && <div style={{ fontSize: 11, color: T.textMuted }}>{posterExportState.message}</div>}
-            
-            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase', marginTop: 4 }}>Export Card Controls</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
-              {[{ id: 'inter', label: 'Inter' }, { id: 'grotesk', label: 'Grotesk' }, { id: 'manrope', label: 'Manrope' }, { id: 'marvel', label: 'Marvel' }].map(opt => (
-                <button key={opt.id} className="fpill" onClick={() => setExportFont(opt.id)} style={{ justifyContent: 'center', fontFamily: EXPORT_FONT_PREVIEW_FAMILY[opt.id] || EXPORT_FONT_PREVIEW_FAMILY.inter, borderColor: exportFont === opt.id ? 'var(--theme-accent)' : 'var(--theme-border)', fontSize: 11 }}>{opt.label}</button>
-              ))}
-            </div>
-            <label style={{ display: 'grid', gap: 4, padding: '4px 0' }}>
-              <span style={{ fontSize: 11, color: T.textMuted }}>Export text scale: {Math.round(exportTextScale * 100)}%</span>
-              <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr) auto', gap: 8, alignItems: 'center' }}>
-                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.max(0.9, Number((v - 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>−</button>
-                <input type='range' min={90} max={240} step={2} value={Math.round(exportTextScale * 100)} onChange={(e) => setExportTextScale(Number(e.target.value) / 100)} />
-                <button className='fpill' type='button' onClick={() => setExportTextScale(v => Math.min(2.4, Number((v + 0.02).toFixed(2))))} style={{ minWidth: 36, justifyContent: 'center', padding: '5px 8px' }}>+</button>
-              </div>
-            </label>
-            <div style={{ fontSize: 'var(--type-caption)', color: T.textMuted, lineHeight: 'var(--lh-body)', maxWidth: 'var(--content-measure)', padding: '0 2px' }}>{metadataStatusText}</div>
-            <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
-            <div style={{ fontSize: 11, letterSpacing: 2, color: 'var(--theme-danger)', textTransform: 'uppercase' }}>{tMarvel('Danger Zone')}</div>
-            {posterFetchState.message && <div style={{ fontSize: 11, color: T.textMuted }}>{posterFetchState.message}</div>}
-            <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setShowCompleted(false); setActivePhase(0); }}><Trash2 size={14}/>Reset Filters</button>
-            <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={clearPosterMetaCache}><Trash2 size={14}/>Clear Poster/Meta Cache</button>
-            <button className="fpill" style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-soft)' }} onClick={clearAvatarActionCache}><Trash2 size={14}/>Clear Avatar/Actions Cache</button>
-      </SettingsMenu>
+            <button className="fpill" onClick={() => { setGoogleAccount(null); removeStorageValue('mcu-google-account-v1'); setGoogleSyncMsg('Signed out locally.'); }} style={{ justifyContent: 'center' }}><XCircle size={14} /> Sign out</button>
+          </>
+        )}
+        {!!googleSyncMsg && <div className="settings-help">{googleSyncMsg}</div>}
+      </article>
+    </section>
+
+    <section className="settings-card">
+      <h3>Preferences</h3>
+      <div className="settings-toggle-grid">
+        <label className="settings-toggle-row"><span><Star size={14}/>Marvel Language</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={marvelLangMode} onClick={() => setMarvelLangMode(v => !v)}>{marvelLangMode ? 'On' : 'Off'}</button></label>
+        <label className="settings-toggle-row"><span><Moon size={14}/>Dark Theme</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={darkMode} onClick={() => setDarkMode(d => !d)}>{darkMode ? 'On' : 'Off'}</button></label>
+        <label className="settings-toggle-row"><span><EyeOff size={14}/>Spoiler Safe</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={spoilerSafeMode} onClick={() => setSpoilerSafeMode(v => !v)}>{spoilerSafeMode ? 'On' : 'Off'}</button></label>
+        <label className="settings-toggle-row"><span><Zap size={14}/>Performance Mode</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={performanceMode} onClick={() => setPerformanceMode(v => !v)}>{performanceMode ? 'On' : 'Off'}</button></label>
+      </div>
+      <p className="settings-help">Performance mode reduces visual effects for slower devices.</p>
+    </section>
+
+    <section className="settings-grid-2">
+      <article className="settings-card">
+        <h3>Visual Tuning</h3>
+        <label className="settings-toggle-row"><span><Layers size={14}/>Desktop text scaling</span><button className='fpill settings-toggle-pill' type='button' onClick={() => setTextScaleEnabled(v => !v)}>{textScaleEnabled ? 'On' : 'Off'}</button></label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,minmax(0,1fr))', gap: 6 }}>
+          {DESKTOP_TEXT_SCALES.map(scale => <button key={`desktop-scale-${scale}`} className='fpill' type='button' onClick={() => setDesktopTextScale(scale)} disabled={!textScaleEnabled} style={{ justifyContent: 'center', opacity: textScaleEnabled ? 1 : 0.55 }}>{Math.round(scale * 100)}%</button>)}
+        </div>
+        <p className="settings-help">Current scale: {Math.round((textScaleEnabled ? effectiveUiScale : 1) * 100)}%</p>
+        <div className="settings-slider-group"><span><Film size={12} /> Background size ({heroBackdropScale}%)</span><input type='range' min={100} max={112} step={1} value={heroBackdropScale} onChange={(e) => setHeroBackdropScale(Number(e.target.value))} /></div>
+        <div className="settings-slider-group"><span>Background opacity ({Math.round(heroBackdropOpacity * 100)}%)</span><input type='range' min={75} max={100} step={1} value={Math.round(heroBackdropOpacity * 100)} onChange={(e) => setHeroBackdropOpacity(Number(e.target.value) / 100)} /></div>
+      </article>
+
+      <article className="settings-card">
+        <h3>Backup & Restore</h3>
+        <button className="fpill" onClick={exportProgress}><Download size={14}/>Export Backup JSON</button>
+        <label className="fpill import-backup-pill" style={{ cursor: 'pointer' }}><Upload size={14}/>Import Backup JSON<input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} /></label>
+        <div style={{ display: 'grid', gap: 6 }}><div className="settings-help">Auto snapshots (latest 5)</div>{autoBackups.slice(0,5).map((shot, idx) => { const preview = buildBackupPreview(shot); return <button key={`${shot.exportedAt}-${idx}`} className="fpill" onClick={() => importProgress(new File([JSON.stringify(shot)], 'mcu-auto-backup.json', { type: 'application/json' }))} style={{ justifyContent: 'space-between' }}><span><Clock size={14}/>Restore {new Date(preview.exportedAt).toLocaleDateString()}</span><span style={{ fontSize: 'var(--type-metadata)', color: T.textMuted }}>{preview.watched}/{preview.total}</span></button>; })}</div>
+      </article>
+    </section>
+
+    <section className="settings-card">
+      <h3>Google Drive Backup Guide</h3>
+      <ol className="settings-guide-list">
+        <li>Tap <b>Export Backup JSON</b> and save the file locally.</li>
+        <li>Open Google Drive app or drive.google.com and upload the JSON file.</li>
+        <li>On a new device, download that same JSON from Drive.</li>
+        <li>Tap <b>Import Backup JSON</b> in this app and choose the downloaded file.</li>
+        <li>Optional: after signing in with Google above, also press <b>Save to Account</b> for quick cross-device profile sync.</li>
+      </ol>
+    </section>
+  </div>
+</SettingsMenu>
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <header className="hexbg" style={{ position: 'relative', zIndex: 'var(--overlay-z-base)', background: universe === 'dc' ? 'linear-gradient(180deg, rgba(20,44,88,.95), rgba(10,22,43,.88))' : 'transparent', borderBottom: universe === 'dc' ? '1px solid rgba(59,130,246,.35)' : 'none', flexShrink: 0, pointerEvents: blockHomeInteractions ? 'none' : 'auto' }}>
