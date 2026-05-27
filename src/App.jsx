@@ -44,7 +44,6 @@ const Icon = ({ children, size = 16, style = {} }) => (
 const Search    = p => <Icon {...p}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></Icon>;
 const Eye       = p => <Icon {...p}><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></Icon>;
 const EyeOff    = p => <Icon {...p}><path d="m3 3 18 18"/><path d="M10.5 10.5a2 2 0 0 0 3 3"/><path d="M9.9 4.2A10.9 10.9 0 0 1 12 4c6.5 0 10 8 10 8a17.6 17.6 0 0 1-3.2 4.2"/><path d="M6.6 6.6A17.5 17.5 0 0 0 2 12s3.5 8 10 8a10.7 10.7 0 0 0 5.4-1.4"/></Icon>;
-const RatingGem = p => <Icon {...p}><path d="M12 2 21 9 12 22 3 9 12 2Z"/></Icon>;
 const Film      = p => <Icon {...p}><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20"/><path d="M17 2v20"/><path d="M2 7h20"/><path d="M2 17h20"/></Icon>;
 const Tv        = p => <Icon {...p}><rect x="2" y="7" width="20" height="15" rx="2"/><path d="M17 2 12 7 7 2"/></Icon>;
 const Zap       = p => <Icon {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></Icon>;
@@ -603,14 +602,6 @@ const triggerDownload = (blob, filename) => {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-};
-
-const inferFileExtFromSrc = (src) => getPosterExtension(src);
-
-const fetchBlob = async (src) => {
-  const response = await fetch(src);
-  if (!response.ok) throw new Error('Poster unavailable');
-  return response.blob();
 };
 
 const blobToBase64 = (blob) => new Promise((resolve, reject) => {
