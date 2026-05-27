@@ -744,3 +744,14 @@ textarea:focus-visible {
 button:active {
   transform: translateY(1px) scale(0.99);
 }
+
+:root{
+  --space-xs:4px;--space-sm:8px;--space-md:12px;--space-lg:16px;--space-xl:24px;
+  --status-success:#22c55e;--status-warning:#f59e0b;--status-danger:#ef4444;
+}
+.theme-switch{position:relative}
+.theme-switch::before,.theme-switch::after{content:'';position:fixed;width:340px;height:340px;border-radius:50%;pointer-events:none;z-index:0;filter:blur(var(--fx-blur));opacity:.5}
+.theme-switch::before{top:-120px;left:-80px;background:radial-gradient(circle,var(--glow-soft),transparent 68%)}
+.theme-switch::after{top:18vh;right:-140px;background:radial-gradient(circle,var(--glow-strong),transparent 70%)}
+.theme-switch[data-theme='minimal']::before,.theme-switch[data-theme='minimal']::after{opacity:.15;filter:blur(4px)}
+.theme-switch[data-theme='pixelated']::before,.theme-switch[data-theme='pixelated']::after{filter:none;background:radial-gradient(circle,var(--glow-soft) 0 38%,transparent 38%)}

@@ -13,7 +13,7 @@ import { usePosterCache } from './hooks/usePosterCache';
 import { useOverlayNavigation } from './hooks/useOverlayNavigation';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
-import { THEME_CHOICES, getActiveThemeVars } from './constants/themeSettings';
+import { APPEARANCE_MODES, CHARACTER_THEMES, resolveThemeTokens } from './constants/themeSettings';
 import { buildSemanticThemeVars, UI_PARITY_TOKENS } from './constants/ui';
 import './App.layout.css';
 import './App.components.css';
@@ -818,7 +818,7 @@ export default function MCUViewer() {
   const [typeFilter,     setTypeFilter]     = useState(initialUiState.typeFilter);
   const [activePhase,    setActivePhase]    = useState(initialUiState.activePhase);
   const activeUniverse = UNIVERSE_META[universe] || UNIVERSE_META.mcu;
-  const themedChoices = useMemo(() => THEME_CHOICES.map(choice => ({
+  const themedChoices = useMemo(() => CHARACTER_THEMES.map(choice => ({
     ...choice,
     displayLabel: universe === 'dc' ? (choice.dcLabel || choice.label) : choice.label,
     displaySwatch: universe === 'dc' ? (choice.dcSwatch || choice.swatch) : choice.swatch,
@@ -877,7 +877,8 @@ export default function MCUViewer() {
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
-  const [themeMode,      setThemeMode]      = useState('classic');
+  const [themeMode,      setThemeMode]      = useState('iron-man');
+  const [appearanceMode, setAppearanceMode] = useState('glass');
   const [marvelLangMode, setMarvelLangMode] = useState(false);
   const [spoilerSafeMode, setSpoilerSafeMode] = useState(true);
   const [autoHideStatuses, setAutoHideStatuses] = useState(initialUiState.autoHideStatuses);
@@ -2350,7 +2351,9 @@ export default function MCUViewer() {
       const avatars = readStorageJSON('mcu-uploaded-avatars-v1', []);
       if (Array.isArray(avatars)) setUploadedAvatars(avatars);
       const t = readStorageValue('mcu-theme-mode-v1', '');
+      const ap = readStorageValue('mcu-appearance-mode-v1', '');
       if (t) setThemeMode(t);
+      if (ap) setAppearanceMode(ap);
       const darkModeSaved = readStorageValue('mcu-dark-mode-v1', '');
       if (darkModeSaved === '1' || darkModeSaved === '0') setDarkMode(darkModeSaved === '1');
       const langModeSaved = readStorageValue('mcu-marvel-lang-v1', '0');
@@ -2371,6 +2374,7 @@ export default function MCUViewer() {
   useEffect(() => { scheduleStorageWrite('mcu-uploaded-avatars-v1', JSON.stringify(uploadedAvatars)); }, [uploadedAvatars]);
   useEffect(() => { scheduleStorageWrite('mcu-theme-mode-v1', themeMode); }, [themeMode]);
   useEffect(() => { scheduleStorageWrite('mcu-dark-mode-v1', darkMode ? '1' : '0'); }, [darkMode]);
+  useEffect(() => { scheduleStorageWrite('mcu-appearance-mode-v1', appearanceMode); }, [appearanceMode]);
   useEffect(() => { scheduleStorageWrite('mcu-marvel-lang-v1', marvelLangMode ? '1' : '0'); }, [marvelLangMode]);
   useEffect(() => { scheduleStorageWrite('mcu-export-prefs-v1', JSON.stringify({ font: exportFont, textScale: exportTextScale })); }, [exportFont, exportTextScale]);
 
@@ -2912,11 +2916,18 @@ export default function MCUViewer() {
   };
 
   // ─── Per-theme accent + distinctive surface tints ─────────────────────────
-  const activeThemeVars = getActiveThemeVars(themeMode, darkMode);
+  const activeThemeVars = resolveThemeTokens({ appearanceMode, characterTheme: themeMode, darkMode });
 
   const semanticThemeVars = buildSemanticThemeVars(darkMode);
 
   const cssThemeVars = {
+    ...activeThemeVars,
+    '--theme-accent': 'var(--accent-1)',
+    '--theme-accent-alt': 'var(--accent-2)',
+    '--theme-surface': 'var(--surface-1)',
+    '--theme-surface-hover': 'var(--surface-2)',
+    '--theme-text': 'var(--text-primary)',
+    '--theme-text-secondary': 'var(--text-secondary)',
     ...semanticThemeVars,
     '--theme-border': darkMode ? '#1b1b33' : '#c8beaf',
     '--theme-text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
@@ -2939,7 +2950,6 @@ export default function MCUViewer() {
     '--theme-warning-soft': darkMode ? 'rgba(232,184,75,0.16)' : 'rgba(232,184,75,0.12)',
     '--theme-danger-soft': darkMode ? 'rgba(209,106,106,0.16)' : 'rgba(209,106,106,0.12)',
     '--text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
-    '--theme-text-secondary': darkMode ? `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 40%, #e9f1ff)` : `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 52%, #1f2f46)`,
     '--theme-overlay-surface': darkMode
       ? `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 14%, rgba(255,255,255,0.06))`
       : `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 10%, rgba(15,23,42,0.04))`,
@@ -3059,7 +3069,7 @@ export default function MCUViewer() {
     ? `${Math.max(heroBackdropScale - 16, 112)}% auto`
     : `auto ${Math.max(heroBackdropScale - 8, 96)}%`;
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={appearanceMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
 
 
@@ -3134,8 +3144,14 @@ export default function MCUViewer() {
         <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
           {currentPhases.map(ph => <button key={ph.id} className="fpill" onClick={() => { setSidebarOpen(false); setActivePhase(ph.id); scrollToListTop(); }} style={{ justifyContent: 'space-between' }}><span>{ph.name}</span><ChevRight size={13} /></button>)}
         </div>
-        <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Theme</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6, marginTop: 8 }}>
+        <div className='settings-theme-group' style={{ marginTop: 14 }}>
+          <div style={{ fontSize: 11, letterSpacing: 2, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Appearance Mode</div>
+          <div className='appearance-grid'>
+            {APPEARANCE_MODES.map(mode => <button key={mode.id} className={`appearance-card ${appearanceMode===mode.id ? 'is-active' : ''}`} onClick={() => setAppearanceMode(mode.id)}><span>{mode.label}</span><em /></button>)}
+          </div>
+        </div>
+        <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Character Theme</div>
+        <div className='theme-grid' style={{ marginTop: 8 }}>
           {themedChoices.map(({ id: t, displayLabel, displaySwatch }) => (
             <button key={t} className="fpill filter-pill type-pill"
               style={{ justifyContent: 'center', gap: 6, fontSize: 11, borderColor: themeMode === t ? displaySwatch : 'var(--theme-border)', boxShadow: themeMode === t ? `0 0 0 1px ${displaySwatch}, 0 0 10px ${displaySwatch}44` : 'none', background: themeMode === t ? `${displaySwatch}18` : 'var(--theme-surface)', color: themeMode === t ? displaySwatch : 'var(--theme-text)' }}
