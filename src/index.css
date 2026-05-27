@@ -744,3 +744,51 @@ textarea:focus-visible {
 button:active {
   transform: translateY(1px) scale(0.99);
 }
+
+/* UI 8.5 theme redesign — gradient depth + glow accents + neutral edges */
+:root {
+  --theme-border: color-mix(in srgb, var(--theme-text-secondary, #9fb0cb) 24%, transparent);
+  --theme-border-strong: color-mix(in srgb, var(--theme-text-secondary, #9fb0cb) 38%, transparent);
+  --ui-border-soft: color-mix(in srgb, var(--theme-text-secondary, #9fb0cb) 22%, transparent);
+  --ui-border-strong: color-mix(in srgb, var(--theme-text-secondary, #9fb0cb) 34%, transparent);
+  --app-gradient-bg: radial-gradient(1200px 480px at 12% -8%, var(--theme-accent-soft-glow, rgba(101,216,255,0.22)), transparent 58%),
+    radial-gradient(980px 420px at 88% -16%, var(--theme-accent-glow, rgba(94,162,255,0.28)), transparent 60%),
+    linear-gradient(165deg, color-mix(in srgb, var(--theme-bg) 96%, #020617), color-mix(in srgb, var(--theme-surface) 84%, var(--theme-bg)) 50%, color-mix(in srgb, var(--theme-bg) 95%, #000));
+}
+
+body {
+  background: var(--app-gradient-bg);
+}
+
+.rrow,
+.fpill,
+.wbtn,
+.theme-btn,
+.dock-btn,
+.settings-menu,
+.sidebar-menu,
+.dock-status-item,
+.status-pill,
+.filters-open,
+.header-brand,
+.phase-chip,
+.hero-carousel-poster {
+  border-color: var(--ui-border-soft) !important;
+}
+
+.rrow:hover,
+.fpill:hover,
+.wbtn:hover,
+.theme-btn:hover,
+.dock-btn:hover,
+.dock-status-item:hover,
+.header-brand:hover,
+.phase-chip:hover {
+  border-color: var(--ui-border-strong) !important;
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--theme-accent-glow, rgba(94,162,255,0.28)) 32%, transparent) !important;
+}
+
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--theme-accent) 62%, white 10%);
+  outline-offset: 2px;
+}
