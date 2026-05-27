@@ -3092,6 +3092,11 @@ export default function MCUViewer() {
           onContinue={completeFirstSetup}
           onSkip={completeFirstSetup}
           onGoogleSuccess={() => {}}
+          metadataStatusText={metadataStatusText}
+          onFetchDetails={handleMetadataBuildClick}
+          settings={{ darkMode, spoilerSafeMode, performanceMode }}
+          onToggleSetting={(key) => { if (key === 'darkMode') setDarkMode(v => !v); if (key === 'spoilerSafeMode') setSpoilerSafeMode(v => !v); if (key === 'performanceMode') setPerformanceMode(v => !v); }}
+          onAvatarFile={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => setAvatarCropSrc(String(r.result || '')); r.readAsDataURL(f); }}
         />
       </div>
     );
@@ -3171,7 +3176,7 @@ export default function MCUViewer() {
           {nextUnwatched && <div style={{ fontSize: 12, color: T.textMuted }}>Phase {nextUnwatched.phase} · {getSafeTypeMeta(nextUnwatched.type).label}</div>}
         </div>
         <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
-          {currentPhases.map(ph => <button key={ph.id} className="fpill" onClick={() => { setSidebarOpen(false); setActivePhase(ph.id); scrollToListTop(); }} style={{ justifyContent: 'space-between' }}><span>{ph.name}</span><ChevRight size={13} /></button>)}
+          {currentPhases.map(ph => <button key={ph.id} className="fpill" onClick={() => { setSidebarOpen(false); setBrowseMode('phase'); setActivePhase(ph.id); }} style={{ justifyContent: 'space-between' }}><span>{ph.name}</span><ChevRight size={13} /></button>)}
         </div>
         <div className='settings-theme-group' style={{ marginTop: 14 }}>
           <div style={{ fontSize: 11, letterSpacing: 2, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Appearance Mode</div>
