@@ -13,7 +13,7 @@ const parseGoogleCredential = (credential) => {
   }
 };
 
-export default function FirstTimeSetup({ darkMode, setDarkMode, profile, setProfile, onContinue, onSkip, onRunPosters, posterState, onRunMetadata, metadataState, spoilerSafeMode, setSpoilerSafeMode, performanceMode, setPerformanceMode }) {
+export default function FirstTimeSetup({ darkMode, setDarkMode, profile, setProfile, onAvatarUploadRequest, onContinue, onSkip, onRunPosters, posterState, onRunMetadata, metadataState, spoilerSafeMode, setSpoilerSafeMode, performanceMode, setPerformanceMode }) {
   const googleBtnRef = useRef(null);
   const fileInputRef = useRef(null);
   const [stepDone, setStepDone] = useState({ profile: false, metadata: false, posters: false });
@@ -41,7 +41,12 @@ export default function FirstTimeSetup({ darkMode, setDarkMode, profile, setProf
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      setProfile(prev => ({ ...prev, pfp: String(reader.result || '') }));
+      const img = String(reader.result || '');
+      if (onAvatarUploadRequest) {
+        onAvatarUploadRequest(img);
+      } else {
+        setProfile(prev => ({ ...prev, pfp: img }));
+      }
       setStepDone(prev => ({ ...prev, profile: true }));
     };
     reader.readAsDataURL(file);

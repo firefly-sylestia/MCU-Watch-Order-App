@@ -2539,9 +2539,10 @@ export default function MCUViewer() {
   };
 
   // ─── Manual build: one title at a time; skips cached metadata ────────────
-  const refreshPostersAndMetadata = async () => {
+  const refreshPostersAndMetadata = async ({ includeAll = false } = {}) => {
     if (posterFetchState.active) return;
-    const targets = filtered.filter(item => !hasCompleteMetadata(item) || (!localPosterSrc(item) && !posterCache[item.id]));
+    const source = includeAll ? items : filtered;
+    const targets = source.filter(item => !hasCompleteMetadata(item) || (!localPosterSrc(item) && !posterCache[item.id]));
     if (!targets.length) {
       setPosterFetchState({ active: false, done: 0, total: 0, message: 'Metadata cache is already complete for this view.' });
       return;
@@ -2699,12 +2700,12 @@ export default function MCUViewer() {
   };
 
   // ─── Build metadata: one title at a time, never automatically on load ───
-  const getMetadataTargets = ({ retryOnly = false, refreshAll = false } = {}) => {
+  const getMetadataTargets = ({ retryOnly = false, refreshAll = false, includeAll = false } = {}) => {
     if (retryOnly && metadataBuild.failedIds.length) {
       const failed = new Set(metadataBuild.failedIds);
       return activeItems.filter(item => failed.has(item.id));
     }
-    const scopeItems = listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items;
+    const scopeItems = includeAll ? items : (listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items);
     return scopeItems.filter(item => {
       if (refreshAll) return true;
       const hasPoster = Boolean(localPosterSrc(item) || posterCache[item.id]);
@@ -3079,6 +3080,8 @@ export default function MCUViewer() {
     : `auto ${Math.max(heroBackdropScale - 8, 96)}%`;
   const completeFirstSetup = useCallback(() => {
     setSetupDone(true);
+    setBrowseMode('home');
+    setActivePhase(0);
     safeLocalStorageSetItem('mcu-first-setup-v1', 'done');
   }, []);
 
@@ -3090,11 +3093,12 @@ export default function MCUViewer() {
           setDarkMode={setDarkMode}
           profile={profile}
           setProfile={setProfile}
+          onAvatarUploadRequest={setAvatarCropSrc}
           onContinue={completeFirstSetup}
           onSkip={completeFirstSetup}
-          onRunPosters={refreshPostersAndMetadata}
+          onRunPosters={() => refreshPostersAndMetadata({ includeAll: true })}
           posterState={posterFetchState}
-          onRunMetadata={() => runMetadataBuild({ refreshAll: false })}
+          onRunMetadata={() => runMetadataBuild({ refreshAll: false, includeAll: true })}
           metadataState={metadataBuild}
           spoilerSafeMode={spoilerSafeMode}
           setSpoilerSafeMode={setSpoilerSafeMode}
