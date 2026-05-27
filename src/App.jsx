@@ -986,8 +986,8 @@ export default function MCUViewer() {
   const [detailLoading,  setDetailLoading]  = useState(false);
   const [detailPosterFailed, setDetailPosterFailed] = useState(false);
   const [trailerOpen, setTrailerOpen] = useState(false);
-  const [trailerLandscape, setTrailerLandscape] = useState(false);
   const [trailerExpanded, setTrailerExpanded] = useState(false);
+  const [trailerRotateHint, setTrailerRotateHint] = useState('');
   const [trailerVariantIndex, setTrailerVariantIndex] = useState(0);
   const trailerShellRef = useRef(null);
   const { posterCache, setPosterCache, localPosterMap, setLocalPosterMap } = usePosterCache();
@@ -1050,23 +1050,16 @@ export default function MCUViewer() {
   const closeTrailer = useCallback(() => {
     setTrailerOpen(false);
     setTrailerExpanded(false);
-    setTrailerLandscape(false);
-  }, []);
-  const handleTrailerLandscapeToggle = useCallback(() => {
-    setTrailerLandscape((prev) => {
-      const next = !prev;
-      if (next) setTrailerExpanded(true);
-      return next;
-    });
   }, []);
   const handleTrailerBack = useCallback(() => {
-    if (trailerLandscape) {
-      closeTrailer();
-      return;
-    }
     setTrailerExpanded(false);
-  }, [closeTrailer, trailerLandscape]);
-  const closeDetail = useCallback(() => { setDetailItem(null); setTrailerOpen(false); setTrailerExpanded(false); setTrailerLandscape(false); setTrailerVariantIndex(0); }, []);
+  }, []);
+  const closeDetail = useCallback(() => { setDetailItem(null); setTrailerOpen(false); setTrailerExpanded(false); setTrailerVariantIndex(0); }, []);
+  const openTrailerPlayer = useCallback(() => {
+    setTrailerOpen(true);
+    setTrailerRotateHint('Rotate your device for fullscreen landscape playback.');
+    window.setTimeout(() => setTrailerRotateHint(''), 2600);
+  }, []);
   const openImdbForItem = useCallback((item, data) => {
     const imdbId = data?.imdbID || data?.imdbId || '';
     const fallback = `https://www.imdb.com/find/?q=${encodeURIComponent(`${item.title} ${item.year || ''}`.trim())}`;
@@ -3804,11 +3797,11 @@ export default function MCUViewer() {
                     <span>{detailItem.title}</span>
                   </div>
                 ) : (
-                  <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : posterSrc(detailItem)} onError={() => setDetailPosterFailed(true)} alt={`${detailItem.title} poster`} onClick={() => { if (selectedTrailer?.youtubeId) setTrailerOpen(true); }} style={{ cursor: selectedTrailer?.youtubeId ? 'pointer' : 'default' }} />
+                  <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : posterSrc(detailItem)} onError={() => setDetailPosterFailed(true)} alt={`${detailItem.title} poster`} onClick={() => { if (selectedTrailer?.youtubeId) openTrailerPlayer(); }} style={{ cursor: selectedTrailer?.youtubeId ? 'pointer' : 'default' }} />
                 )}
               
                 {!!selectedTrailer?.youtubeId && (
-                  <button className="fpill" style={{ position: 'absolute', left: 12, bottom: 12, zIndex: 3, background: 'color-mix(in srgb, #ed1d24 22%, var(--theme-surface))', borderColor: 'color-mix(in srgb, #ed1d24 52%, var(--theme-border))' }} onClick={() => setTrailerOpen(true)}><PlayCircle size={13}/>Play Media</button>
+                  <button className="fpill" style={{ position: 'absolute', left: 12, bottom: 12, zIndex: 3, background: 'color-mix(in srgb, #ed1d24 22%, var(--theme-surface))', borderColor: 'color-mix(in srgb, #ed1d24 52%, var(--theme-border))' }} onClick={openTrailerPlayer}><PlayCircle size={13}/>Play Media</button>
                 )}
 </div>
 
@@ -3825,7 +3818,7 @@ export default function MCUViewer() {
                 </div>
                 <div className="detail-export-actions-inline">
                   {!!selectedTrailer?.youtubeId && (
-                    <button className="fpill glass-panel detail-btn" onClick={() => setTrailerOpen(true)}><PlayCircle size={12}/>Watch Trailer</button>
+                    <button className="fpill glass-panel detail-btn" onClick={openTrailerPlayer}><PlayCircle size={12}/>Watch Trailer</button>
                   )}
                   <button className="fpill glass-panel detail-btn" onClick={() => openImdbForItem(detailItem, detailData)}><Info size={12}/>Open IMDb</button>
                   <button className="fpill glass-panel detail-btn" onClick={() => exportPosterForItem(detailItem, { share: true })}><Upload size={12}/>Share Exact Card</button>
@@ -3910,8 +3903,8 @@ export default function MCUViewer() {
       )}
 
       {trailerOpen && detailItem && selectedTrailer?.youtubeId && (
-        <div className={`detail-backdrop trailer-backdrop ${trailerLandscape ? 'is-landscape' : ''}`} onClick={closeTrailer} role="dialog" aria-label="Trailer player">
-          <div className={`detail-card glass-panel trailer-shell ${trailerLandscape ? 'is-landscape' : ''} ${trailerExpanded ? 'is-expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
+        <div className="detail-backdrop trailer-backdrop" onClick={closeTrailer} role="dialog" aria-label="Trailer player">
+          <div className={`detail-card glass-panel trailer-shell ${trailerExpanded ? 'is-expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
             {!trailerExpanded && <div className="trailer-head">
               <div>
                 <div className="trailer-eyebrow">Official media</div>
@@ -3934,14 +3927,14 @@ export default function MCUViewer() {
                 )}
               </div>
               <div className="trailer-actions">
-                <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle}><SwitchIcon size={12}/>Rotate View</button>
                 <button className="fpill trailer-close" onClick={() => setTrailerExpanded(true)}><PlayCircle size={12}/>Enlarge</button>
                 <button className="fpill trailer-close" onClick={closeTrailer}><X size={12}/>Close</button>
               </div>
             </div>}
-            <div className={`trailer-frame ${trailerLandscape ? 'is-landscape' : ''}`} ref={trailerShellRef}>
+            <div className="trailer-frame" ref={trailerShellRef}>
               <iframe className="trailer-iframe" title={`${detailItem.title} trailer`} src={trailerEmbedUrl(selectedTrailer.youtubeId)} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
             </div>
+            {trailerRotateHint && <div className="trailer-rotate-toast" role="status" aria-live="polite">{trailerRotateHint}</div>}
             {trailerExpanded && <div className="trailer-expanded-actions">
               {trailerOptions.length > 1 && (
                 <div className="trailer-variant-switch trailer-variant-switch-inline" role="tablist" aria-label="Trailer type">
@@ -3959,8 +3952,7 @@ export default function MCUViewer() {
                   ))}
                 </div>
               )}
-              <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle}><SwitchIcon size={12}/>Rotate View</button>
-              <button className="fpill trailer-close" onClick={handleTrailerBack}><PlayCircle size={12}/>{trailerLandscape ? 'Back & Close' : 'Back'}</button>
+              <button className="fpill trailer-close" onClick={handleTrailerBack}><PlayCircle size={12}/>Back</button>
               <button className="fpill trailer-close" onClick={closeTrailer}><X size={12}/>Close</button>
             </div>}
           </div>
