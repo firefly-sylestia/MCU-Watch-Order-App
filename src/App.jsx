@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, useReducer } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { Media } from '@capacitor-community/media';
 import CropModal from './components/CropModal';
@@ -1326,26 +1326,34 @@ export default function MCUViewer() {
   };
 
   const exportProgress = async () => {
-    const payload = createProgressPayload({
-      items,
-      actions: { likes: myLikes, ratings: myRating, rewatch: rewatchCount, bookmarks, reviews },
-      profile,
-      exportPrefs: { font: exportFont, textScale: exportTextScale },
-    });
-    const content = JSON.stringify(payload, null, 2);
-    if (Capacitor.isNativePlatform()) {
+    try {
+      const payload = createProgressPayload({
+        items,
+        actions: { likes: myLikes, ratings: myRating, rewatch: rewatchCount, bookmarks, reviews },
+        profile,
+        exportPrefs: { font: exportFont, textScale: exportTextScale },
+      });
+      const content = JSON.stringify(payload, null, 2);
       const fileName = `mcu-progress-${Date.now()}.json`;
-      const res = await Filesystem.writeFile({ path: fileName, data: content, directory: Directory.Documents, recursive: true });
-      await Share.share({ title: 'MCU Progress Export', text: 'MCU progress backup JSON', url: res.uri });
-      return;
-    }
-    const blob = new Blob([content], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'mcu-progress.json';
-    a.click();
-    URL.revokeObjectURL(url);
+      if (Capacitor.isNativePlatform()) {
+        const res = await Filesystem.writeFile({
+          path: fileName,
+          data: content,
+          directory: Directory.Documents,
+          encoding: Encoding.UTF8,
+          recursive: true,
+        });
+        await Share.share({ title: 'MCU Progress Export', text: 'MCU progress backup JSON', url: res.uri });
+        return;
+      }
+      const blob = new Blob([content], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 600);
+    } catch {}
   };
 
   const shareProgressCard = async () => {
@@ -3254,9 +3262,12 @@ export default function MCUViewer() {
 
       <article className="settings-card">
         <h3>Backup & Restore</h3>
-        <button className="fpill" onClick={exportProgress}><Download size={14}/>Export Backup JSON</button>
-        <label className="fpill import-backup-pill" style={{ cursor: 'pointer' }}><Upload size={14}/>Import Backup JSON<input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} /></label>
+        <p className="settings-help">Automatic snapshots are saved continuously here. Restore any saved point or export the latest JSON to Google Drive.</p>
         <div style={{ display: 'grid', gap: 6 }}><div className="settings-help">Auto snapshots (latest 5)</div>{autoBackups.slice(0,5).map((shot, idx) => { const preview = buildBackupPreview(shot); return <button key={`${shot.exportedAt}-${idx}`} className="fpill" onClick={() => importProgress(new File([JSON.stringify(shot)], 'mcu-auto-backup.json', { type: 'application/json' }))} style={{ justifyContent: 'space-between' }}><span><Clock size={14}/>Restore {new Date(preview.exportedAt).toLocaleDateString()}</span><span style={{ fontSize: 'var(--type-metadata)', color: T.textMuted }}>{preview.watched}/{preview.total}</span></button>; })}</div>
+        <div className="settings-inline-actions">
+          <button className="fpill" onClick={exportProgress}><Download size={14}/>Export latest JSON</button>
+          <label className="fpill import-backup-pill" style={{ cursor: 'pointer' }}><Upload size={14}/>Import JSON<input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} /></label>
+        </div>
       </article>
     </section>
 
