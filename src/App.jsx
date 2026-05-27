@@ -3378,6 +3378,22 @@ export default function MCUViewer() {
                   : (darkMode ? 'Whatever It Takes' : 'Part of the Journey is the End')}
               </div>
             </div>
+            {trailerLandscape && <div className="trailer-landscape-dock" role="toolbar" aria-label="Trailer controls">
+              {trailerOptions.length > 1 && (
+                <button className="fpill trailer-icon-btn" onClick={() => setTrailerVariantIndex((trailerVariantIndex + 1) % trailerOptions.length)} aria-label="Switch trailer variant" title={trailerOptions[trailerVariantIndex]?.label || 'Switch trailer'}>
+                  <Layers size={14}/>
+                </button>
+              )}
+              <button className="fpill trailer-icon-btn" onClick={handleTrailerLandscapeToggle} aria-label="Switch to portrait" title="Portrait">
+                <SwitchIcon size={14}/>
+              </button>
+              <button className="fpill trailer-icon-btn" onClick={handleTrailerBack} aria-label="Back and close" title="Back & Close">
+                <PlayCircle size={14}/>
+              </button>
+              <button className="fpill trailer-icon-btn is-danger" onClick={closeTrailer} aria-label="Close trailer" title="Close">
+                <X size={14}/>
+              </button>
+            </div>}
           </div>
         </div>
       </header>
@@ -3912,8 +3928,8 @@ export default function MCUViewer() {
       {trailerOpen && detailItem && selectedTrailer?.youtubeId && (
         <div className={`detail-backdrop trailer-backdrop ${trailerLandscape ? 'is-landscape' : ''}`} onClick={closeTrailer} role="dialog" aria-label="Trailer player">
           <div className={`detail-card glass-panel trailer-shell ${trailerLandscape ? 'is-landscape' : ''} ${trailerExpanded ? 'is-expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
-            {!trailerExpanded && <div className="trailer-head">
-              <div>
+            {!trailerLandscape && <div className="trailer-head">
+              <div className="trailer-head-main">
                 <div className="trailer-eyebrow">Official media</div>
                 <strong className="trailer-title">{detailItem.title}</strong>
                 {trailerOptions.length > 1 && (
@@ -3934,34 +3950,30 @@ export default function MCUViewer() {
                 )}
               </div>
               <div className="trailer-actions">
-                <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle}><SwitchIcon size={12}/>Rotate View</button>
-                <button className="fpill trailer-close" onClick={() => setTrailerExpanded(true)}><PlayCircle size={12}/>Enlarge</button>
+                <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle}><SwitchIcon size={12}/>{trailerLandscape ? 'Portrait' : 'Landscape'}</button>
+                {!trailerLandscape && !trailerExpanded && <button className="fpill trailer-close" onClick={() => setTrailerExpanded(true)}><PlayCircle size={12}/>Enlarge</button>}
+                <button className="fpill trailer-close" onClick={handleTrailerBack}><PlayCircle size={12}/>{trailerLandscape ? 'Back & Close' : 'Back'}</button>
                 <button className="fpill trailer-close" onClick={closeTrailer}><X size={12}/>Close</button>
               </div>
             </div>}
             <div className={`trailer-frame ${trailerLandscape ? 'is-landscape' : ''}`} ref={trailerShellRef}>
               <iframe className="trailer-iframe" title={`${detailItem.title} trailer`} src={trailerEmbedUrl(selectedTrailer.youtubeId)} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
             </div>
-            {trailerExpanded && <div className="trailer-expanded-actions">
+            {trailerLandscape && <div className="trailer-landscape-dock" role="toolbar" aria-label="Trailer controls">
               {trailerOptions.length > 1 && (
-                <div className="trailer-variant-switch trailer-variant-switch-inline" role="tablist" aria-label="Trailer type">
-                  {trailerOptions.map((option, index) => (
-                    <button
-                      key={`${option.youtubeId}-${index}`}
-                      type="button"
-                      role="tab"
-                      aria-selected={trailerVariantIndex === index}
-                      className={`trailer-variant-chip ${trailerVariantIndex === index ? 'is-active' : ''}`}
-                      onClick={() => setTrailerVariantIndex(index)}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
+                <button className="fpill trailer-icon-btn" onClick={() => setTrailerVariantIndex((trailerVariantIndex + 1) % trailerOptions.length)} aria-label="Switch trailer variant" title={trailerOptions[trailerVariantIndex]?.label || 'Switch trailer'}>
+                  <Layers size={14}/>
+                </button>
               )}
-              <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle}><SwitchIcon size={12}/>Rotate View</button>
-              <button className="fpill trailer-close" onClick={handleTrailerBack}><PlayCircle size={12}/>{trailerLandscape ? 'Back & Close' : 'Back'}</button>
-              <button className="fpill trailer-close" onClick={closeTrailer}><X size={12}/>Close</button>
+              <button className="fpill trailer-icon-btn" onClick={handleTrailerLandscapeToggle} aria-label="Switch to portrait" title="Portrait">
+                <SwitchIcon size={14}/>
+              </button>
+              <button className="fpill trailer-icon-btn" onClick={handleTrailerBack} aria-label="Back and close" title="Back & Close">
+                <PlayCircle size={14}/>
+              </button>
+              <button className="fpill trailer-icon-btn is-danger" onClick={closeTrailer} aria-label="Close trailer" title="Close">
+                <X size={14}/>
+              </button>
             </div>}
           </div>
         </div>
