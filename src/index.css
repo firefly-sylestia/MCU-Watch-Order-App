@@ -744,3 +744,56 @@ textarea:focus-visible {
 button:active {
   transform: translateY(1px) scale(0.99);
 }
+
+/* ── 2026 Theme Redesign: unified glow/gradient system ─────────────────── */
+:root,
+[data-color-mode="dark"],
+[data-color-mode="light"] {
+  --ui-gradient-bg: radial-gradient(120% 140% at 8% -12%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 55%),
+    radial-gradient(120% 140% at 96% -6%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 58%),
+    var(--theme-bg);
+  --ui-panel-bg: var(--theme-gradient-surface);
+  --ui-card-bg: color-mix(in srgb, var(--theme-surface) 84%, transparent);
+  --ui-border-soft: color-mix(in srgb, var(--theme-border) 72%, transparent);
+  --ui-border-softer: color-mix(in srgb, var(--theme-border) 44%, transparent);
+  --ui-shadow-soft: var(--theme-shadow-soft);
+  --ui-shadow-glow: var(--theme-shadow-glow);
+  --ui-focus-ring: 0 0 0 2px color-mix(in srgb, var(--theme-accent) 42%, transparent), 0 0 0 7px color-mix(in srgb, var(--theme-accent) 14%, transparent);
+}
+
+body { background: var(--ui-gradient-bg); }
+
+.glass-panel,
+.bottom-action-dock,
+.fab-primary,
+.bottom-action-bar,
+.ui-interactive,
+.fpill,
+.wbtn,
+.theme-btn,
+.status-pill {
+  border: 1px solid var(--ui-border-softer);
+  box-shadow: var(--ui-shadow-soft);
+  background: var(--ui-card-bg);
+  backdrop-filter: blur(12px) saturate(135%);
+}
+
+.glass-panel:hover,
+.ui-interactive:hover,
+.fpill:hover,
+.wbtn:hover,
+.theme-btn:hover,
+.status-pill:hover {
+  border-color: var(--ui-border-soft);
+  box-shadow: var(--ui-shadow-glow);
+}
+
+.ui-interactive:focus-visible,
+.fpill:focus-visible,
+.wbtn:focus-visible,
+.theme-btn:focus-visible,
+.status-pill:focus-visible,
+.fab-primary:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring), var(--ui-shadow-glow);
+}
