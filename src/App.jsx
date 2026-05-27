@@ -987,6 +987,7 @@ export default function MCUViewer() {
   const [detailPosterFailed, setDetailPosterFailed] = useState(false);
   const [trailerOpen, setTrailerOpen] = useState(false);
   const [trailerLandscape, setTrailerLandscape] = useState(false);
+  const [trailerRotateToast, setTrailerRotateToast] = useState(false);
   const [trailerExpanded, setTrailerExpanded] = useState(false);
   const [trailerVariantIndex, setTrailerVariantIndex] = useState(0);
   const trailerShellRef = useRef(null);
@@ -1051,22 +1052,12 @@ export default function MCUViewer() {
     setTrailerOpen(false);
     setTrailerExpanded(false);
     setTrailerLandscape(false);
-  }, []);
-  const handleTrailerLandscapeToggle = useCallback(() => {
-    setTrailerLandscape((prev) => {
-      const next = !prev;
-      if (next) setTrailerExpanded(true);
-      return next;
-    });
+    setTrailerRotateToast(false);
   }, []);
   const handleTrailerBack = useCallback(() => {
-    if (trailerLandscape) {
-      closeTrailer();
-      return;
-    }
     setTrailerExpanded(false);
-  }, [closeTrailer, trailerLandscape]);
-  const closeDetail = useCallback(() => { setDetailItem(null); setTrailerOpen(false); setTrailerExpanded(false); setTrailerLandscape(false); setTrailerVariantIndex(0); }, []);
+  }, []);
+  const closeDetail = useCallback(() => { setDetailItem(null); setTrailerOpen(false); setTrailerExpanded(false); setTrailerLandscape(false); setTrailerRotateToast(false); setTrailerVariantIndex(0); }, []);
   const openImdbForItem = useCallback((item, data) => {
     const imdbId = data?.imdbID || data?.imdbId || '';
     const fallback = `https://www.imdb.com/find/?q=${encodeURIComponent(`${item.title} ${item.year || ''}`.trim())}`;
@@ -1092,6 +1083,29 @@ export default function MCUViewer() {
       return next;
     });
   }, []);
+
+  useEffect(() => {
+    if (!trailerOpen) return;
+
+    const syncTrailerOrientation = () => {
+      setTrailerLandscape(window.matchMedia('(orientation: landscape)').matches);
+    };
+
+    syncTrailerOrientation();
+    setTrailerRotateToast(true);
+    const toastTimer = window.setTimeout(() => setTrailerRotateToast(false), 2600);
+
+    window.addEventListener('orientationchange', syncTrailerOrientation);
+    window.addEventListener('resize', syncTrailerOrientation);
+
+    return () => {
+      window.clearTimeout(toastTimer);
+      setTrailerRotateToast(false);
+      window.removeEventListener('orientationchange', syncTrailerOrientation);
+      window.removeEventListener('resize', syncTrailerOrientation);
+    };
+  }, [trailerOpen]);
+
   const openAnalyticsPanel = useCallback(() => {
     setSidebarOpen(false);
     setSettingsOpen(false);
@@ -3934,11 +3948,11 @@ export default function MCUViewer() {
                 )}
               </div>
               <div className="trailer-actions">
-                <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle}><SwitchIcon size={12}/>Rotate View</button>
-                <button className="fpill trailer-close" onClick={() => setTrailerExpanded(true)}><PlayCircle size={12}/>Enlarge</button>
+                                <button className="fpill trailer-close" onClick={() => setTrailerExpanded(true)}><PlayCircle size={12}/>Enlarge</button>
                 <button className="fpill trailer-close" onClick={closeTrailer}><X size={12}/>Close</button>
               </div>
             </div>}
+            {trailerRotateToast && <div className="trailer-rotate-toast" role="status" aria-live="polite">Rotate your device — trailer view adapts automatically.</div>}
             <div className={`trailer-frame ${trailerLandscape ? 'is-landscape' : ''}`} ref={trailerShellRef}>
               <iframe className="trailer-iframe" title={`${detailItem.title} trailer`} src={trailerEmbedUrl(selectedTrailer.youtubeId)} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
             </div>
@@ -3959,8 +3973,7 @@ export default function MCUViewer() {
                   ))}
                 </div>
               )}
-              <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle}><SwitchIcon size={12}/>Rotate View</button>
-              <button className="fpill trailer-close" onClick={handleTrailerBack}><PlayCircle size={12}/>{trailerLandscape ? 'Back & Close' : 'Back'}</button>
+                            <button className="fpill trailer-close" onClick={handleTrailerBack}><PlayCircle size={12}/>Back</button>
               <button className="fpill trailer-close" onClick={closeTrailer}><X size={12}/>Close</button>
             </div>}
           </div>

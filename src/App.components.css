@@ -2508,6 +2508,8 @@ main.app-scroll-shell.scroll-performance .theme-btn{
 .trailer-title{font-size:clamp(17px,2.5vw,24px);line-height:1.15;color:var(--theme-text)}
 .trailer-close{min-height:36px}
 .trailer-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.trailer-rotate-toast{align-self:flex-start;margin:0 0 10px;padding:9px 12px;border-radius:12px;font-size:12px;line-height:1.35;font-weight:650;letter-spacing:.01em;color:var(--theme-text);background:color-mix(in srgb,var(--theme-surface) 80%, transparent);border:1px solid color-mix(in srgb,var(--theme-accent) 34%, var(--theme-border));box-shadow:0 8px 20px rgba(2,8,23,.2);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);animation:fadeSlideIn .22s ease}
+[data-color-mode="light"] .trailer-rotate-toast{background:color-mix(in srgb,var(--theme-surface) 94%, #fff);box-shadow:0 8px 18px rgba(15,23,42,.14)}
 .trailer-frame{
   position:relative;width:100%;padding-top:min(56.25%,68vh);overflow:hidden;
   border-radius:14px;border:1px solid color-mix(in srgb,var(--theme-border) 88%, transparent);
