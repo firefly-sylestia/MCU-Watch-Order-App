@@ -4,6 +4,7 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { Media } from '@capacitor-community/media';
 import CropModal from './components/CropModal';
+import SetupFlow from './components/SetupFlow';
 import { readStorageJSON, readStorageValue, removeStorageValue, safeLocalStorageSetItem, scheduleStorageWrite, pruneObject } from './utils/cacheStorage';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { renderCardToCanvas } from './export/cards/renderCardToCanvas';
@@ -79,6 +80,7 @@ const CACHE_KEYS = {
   userActionsReviews: 'mcu-user-actions-reviews-v1',
   uiState: 'mcu-ui-state-v1',
   heroCarousel: 'mcu-hero-carousel-cache-v1',
+  setupDone: 'mcu-setup-done-v1',
 };
 
 
@@ -877,6 +879,10 @@ export default function MCUViewer() {
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
+  const [setupOpen, setSetupOpen] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.localStorage.getItem(CACHE_KEYS.setupDone) !== '1';
+  });
   const [themeMode,      setThemeMode]      = useState('iron-man');
   const [appearanceMode, setAppearanceMode] = useState('glass');
   const [marvelLangMode, setMarvelLangMode] = useState(false);
@@ -2372,6 +2378,10 @@ export default function MCUViewer() {
 
   useEffect(() => { scheduleStorageWrite('mcu-profile-v1', JSON.stringify(profile)); }, [profile]);
   useEffect(() => { scheduleStorageWrite('mcu-uploaded-avatars-v1', JSON.stringify(uploadedAvatars)); }, [uploadedAvatars]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(CACHE_KEYS.setupDone, setupOpen ? '0' : '1');
+  }, [setupOpen]);
   useEffect(() => { scheduleStorageWrite('mcu-theme-mode-v1', themeMode); }, [themeMode]);
   useEffect(() => { scheduleStorageWrite('mcu-dark-mode-v1', darkMode ? '1' : '0'); }, [darkMode]);
   useEffect(() => { scheduleStorageWrite('mcu-appearance-mode-v1', appearanceMode); }, [appearanceMode]);
@@ -2762,6 +2772,35 @@ export default function MCUViewer() {
     }
     runMetadataBuild({ retryOnly: metadataBuild.status === 'error' });
   };
+  const GOOGLE_OAUTH_CLIENT_ID = '895654125638-pspr0bqmlpf78cc4gj2132ttrhbmlqn2.apps.googleusercontent.com';
+  const handleSetupGoogleProfile = useCallback((googleProfile) => {
+    setProfile(prev => ({
+      ...prev,
+      name: googleProfile?.name || prev.name,
+      pfp: googleProfile?.picture || prev.pfp,
+      email: googleProfile?.email || prev.email,
+    }));
+    if (googleProfile?.picture) {
+      setUploadedAvatars(prev => [googleProfile.picture, ...prev.filter(img => img !== googleProfile.picture)].slice(0, 24));
+    }
+  }, []);
+  const openAvatarPicker = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => setAvatarCropSrc(String(reader.result || ''));
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  }, []);
+  const runSetupFetch = useCallback((scope = 'core') => {
+    setListMode(scope === 'all' ? 'all' : 'core');
+    runMetadataBuild({ refreshAll: true });
+  }, [runMetadataBuild, setListMode]);
 
   const metadataButtonLabel = metadataBuild.status === 'running'
     ? 'Pause build'
@@ -4109,6 +4148,20 @@ export default function MCUViewer() {
           }}
         />
       )}
+      <SetupFlow
+        isOpen={setupOpen}
+        darkMode={darkMode}
+        profile={profile}
+        fetchState={metadataBuild}
+        googleClientId={GOOGLE_OAUTH_CLIENT_ID}
+        onProfileNameChange={(name) => setProfile(prev => ({ ...prev, name }))}
+        onPickPhoto={openAvatarPicker}
+        onGoogleProfile={handleSetupGoogleProfile}
+        onSelectFetchScope={(scope) => setListMode(scope === 'all' ? 'all' : 'core')}
+        onFetchNow={runSetupFetch}
+        onSkip={() => setSetupOpen(false)}
+        onFinish={() => setSetupOpen(false)}
+      />
 
       {/* ━━ STATUS DROPDOWN ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       {statusDropdown !== null && (() => {
