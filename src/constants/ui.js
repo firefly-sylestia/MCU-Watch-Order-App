@@ -16,8 +16,9 @@ export const UI_PARITY_TOKENS = {
 
 export const SEMANTIC_COLOR_MATRIX = {
   dark: {
-    background: '#06060f',
-    surface: '#111728',
+    background: '#090d18',
+    surface: '#141b2b',
+    surfaceMuted: '#1b2639',
     emphasis: '#f3f8ff',
     success: '#4ade80',
     warning: '#facc15',
@@ -26,8 +27,9 @@ export const SEMANTIC_COLOR_MATRIX = {
     textSecondary: '#a9b6cb',
   },
   light: {
-    background: '#e2dbcf',
-    surface: '#f4eee3',
+    background: '#eef2fa',
+    surface: '#fbfdff',
+    surfaceMuted: '#f1f5fc',
     emphasis: '#121a2a',
     success: '#15803d',
     warning: '#b45309',
@@ -43,14 +45,19 @@ export const buildSemanticThemeVars = (darkMode) => {
 
   return {
     '--theme-bg': c.background,
+    '--theme-bg-dark': '#090d18',
+    '--theme-bg-light': '#eef2fa',
     '--theme-surface': c.surface,
+    '--theme-surface-muted': c.surfaceMuted,
     '--theme-surface-hover': `color-mix(in srgb, ${c.surface} 82%, ${c.emphasis})`,
-    '--theme-surface-dark': 'color-mix(in srgb, #101827 90%, #06060f)',
-    '--theme-surface-light': 'color-mix(in srgb, #f7f2ea 90%, #e2dbcf)',
-    '--theme-surface-hover-dark': 'color-mix(in srgb, #172033 85%, #f4f8ff)',
-    '--theme-surface-hover-light': 'color-mix(in srgb, #fbf8f2 88%, #1a2030)',
-    '--theme-comp-card-dark': 'color-mix(in srgb, #1f2937 82%, #0f172a)',
-    '--theme-comp-card-light': 'color-mix(in srgb, #ffffff 92%, #e2dbcf)',
+    '--theme-surface-dark': 'color-mix(in srgb, #141b2b 92%, #090d18)',
+    '--theme-surface-light': 'color-mix(in srgb, #fbfdff 94%, #eef2fa)',
+    '--theme-surface-muted-dark': 'color-mix(in srgb, #1b2639 90%, #0b1220)',
+    '--theme-surface-muted-light': 'color-mix(in srgb, #f1f5fc 94%, #eef2fa)',
+    '--theme-surface-hover-dark': 'color-mix(in srgb, #21304a 82%, #f4f8ff)',
+    '--theme-surface-hover-light': 'color-mix(in srgb, #f7faff 86%, #1a2030)',
+    '--theme-comp-card-dark': 'color-mix(in srgb, #1b2639 86%, #0f172a)',
+    '--theme-comp-card-light': 'color-mix(in srgb, #ffffff 96%, #eef2fa)',
     '--theme-text': c.textPrimary,
     '--theme-text-primary': c.textPrimary,
     '--theme-text-secondary': c.textSecondary,
@@ -58,6 +65,8 @@ export const buildSemanticThemeVars = (darkMode) => {
     '--theme-success': c.success,
     '--theme-warning': c.warning,
     '--theme-danger': c.error,
+    '--theme-depth-shadow': darkMode ? '0 20px 48px rgba(4, 8, 18, 0.42)' : '0 16px 40px rgba(36, 56, 89, 0.14)',
+    '--theme-depth-shadow-soft': darkMode ? '0 10px 24px rgba(6, 12, 24, 0.34)' : '0 8px 20px rgba(36, 56, 89, 0.10)',
   };
 };
 

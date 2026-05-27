@@ -744,3 +744,50 @@ textarea:focus-visible {
 button:active {
   transform: translateY(1px) scale(0.99);
 }
+
+/* Theme redesign: unified soft-depth system */
+:root,
+[data-color-mode="dark"],
+[data-color-mode="light"] {
+  --border-soft: color-mix(in srgb, var(--theme-border, rgba(171, 193, 227, 0.2)) 76%, transparent);
+  --border-strong: color-mix(in srgb, var(--theme-border-strong, rgba(171, 193, 227, 0.3)) 82%, transparent);
+  --surface-primary: color-mix(in srgb, var(--theme-surface) 88%, transparent);
+  --surface-elevated: color-mix(in srgb, var(--theme-surface-muted, var(--theme-surface)) 90%, transparent);
+  --shadow-soft: var(--theme-depth-shadow-soft, 0 10px 24px rgba(6, 12, 24, 0.34));
+  --shadow-elevated: var(--theme-depth-shadow, 0 20px 48px rgba(4, 8, 18, 0.42));
+}
+
+.fpill,
+.wbtn,
+.theme-btn,
+.status-pill,
+.glass-panel,
+.bottom-action-dock,
+.fab-primary,
+.bottom-action-bar {
+  border-color: var(--border-soft) !important;
+  box-shadow: var(--shadow-soft);
+  background-image: var(--theme-gradient-soft);
+  background-blend-mode: soft-light;
+}
+
+.fpill:hover,
+.wbtn:hover,
+.theme-btn:hover,
+.status-pill:hover,
+.glass-panel:hover,
+.fab-primary:hover {
+  border-color: var(--border-strong) !important;
+  box-shadow: var(--shadow-elevated), 0 0 0 1px color-mix(in srgb, var(--theme-accent-glow) 20%, transparent);
+}
+
+.fpill[aria-pressed="true"],
+.theme-btn[aria-pressed="true"],
+.status-pill[aria-pressed="true"],
+.fpill.active,
+.fpill.picked,
+.dropdown-item.active,
+.sopt.picked {
+  background-image: var(--theme-gradient) !important;
+  box-shadow: var(--shadow-elevated), 0 0 20px var(--theme-accent-glow);
+}

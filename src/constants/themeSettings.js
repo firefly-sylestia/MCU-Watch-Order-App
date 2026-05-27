@@ -20,20 +20,20 @@ export const THEME_CHOICES = [
 ];
 
 export const THEME_PALETTES = {
-  classic: { accent: '#5b8dff', accentAlt: '#7a67ff', darkSurface: 'rgba(28,10,9,0.90)', lightSurface: 'rgba(255,246,244,0.96)', darkSurfaceHover: 'rgba(44,14,12,0.94)', lightSurfaceHover: 'rgba(255,236,232,0.97)', darkCompCard: 'rgba(26,9,8,0.88)', lightCompCard: 'rgba(255,248,246,0.95)' },
-  cosmic: { accent: '#6b8dff', accentAlt: '#71d0ff', darkSurface: 'rgba(7,12,32,0.90)', lightSurface: 'rgba(243,247,255,0.96)', darkSurfaceHover: 'rgba(10,16,44,0.94)', lightSurfaceHover: 'rgba(232,240,255,0.97)', darkCompCard: 'rgba(6,11,30,0.88)', lightCompCard: 'rgba(245,249,255,0.95)' },
-  vibranium: { accent: '#7f7bff', accentAlt: '#4db6ff', darkSurface: 'rgba(13,7,28,0.90)', lightSurface: 'rgba(248,244,255,0.96)', darkSurfaceHover: 'rgba(20,10,42,0.94)', lightSurfaceHover: 'rgba(238,230,255,0.97)', darkCompCard: 'rgba(12,6,26,0.88)', lightCompCard: 'rgba(250,246,255,0.95)' },
-  quantum: { accent: '#ff5da8', accentAlt: '#67f2ff', darkSurface: 'rgba(26,7,18,0.90)', lightSurface: 'rgba(255,243,251,0.96)', darkSurfaceHover: 'rgba(38,9,26,0.94)', lightSurfaceHover: 'rgba(255,230,246,0.97)', darkCompCard: 'rgba(24,6,17,0.88)', lightCompCard: 'rgba(255,246,253,0.95)' },
-  mystic: { accent: '#9f66ff', accentAlt: '#ff7b39', darkSurface: 'rgba(15,7,28,0.90)', lightSurface: 'rgba(250,244,255,0.96)', darkSurfaceHover: 'rgba(22,10,40,0.94)', lightSurfaceHover: 'rgba(240,230,255,0.97)', darkCompCard: 'rgba(14,6,26,0.88)', lightCompCard: 'rgba(252,247,255,0.95)' },
-  'web-slinger': { accent: '#df3f4c', accentAlt: '#2b7bdf', darkSurface: 'rgba(24,7,9,0.90)', lightSurface: 'rgba(255,244,245,0.96)', darkSurfaceHover: 'rgba(36,9,12,0.94)', lightSurfaceHover: 'rgba(255,232,234,0.97)', darkCompCard: 'rgba(22,6,8,0.88)', lightCompCard: 'rgba(255,247,248,0.95)' },
-  'god-of-thunder': { accent: '#3ca6ff', accentAlt: '#f0f6ff', darkSurface: 'rgba(5,12,26,0.90)', lightSurface: 'rgba(243,250,255,0.96)', darkSurfaceHover: 'rgba(7,17,36,0.94)', lightSurfaceHover: 'rgba(226,244,255,0.97)', darkCompCard: 'rgba(4,10,24,0.88)', lightCompCard: 'rgba(245,252,255,0.95)' },
-  'scarlet-witch': { accent: '#c61b59', accentAlt: '#ff7cb5', darkSurface: 'rgba(24,5,12,0.90)', lightSurface: 'rgba(255,242,247,0.96)', darkSurfaceHover: 'rgba(36,6,18,0.94)', lightSurfaceHover: 'rgba(255,228,238,0.97)', darkCompCard: 'rgba(22,4,11,0.88)', lightCompCard: 'rgba(255,245,250,0.95)' },
-  'winter-soldier': { accent: '#8fa0b8', accentAlt: '#4b596f', darkSurface: 'rgba(7,10,16,0.90)', lightSurface: 'rgba(244,247,252,0.96)', darkSurfaceHover: 'rgba(10,14,22,0.94)', lightSurfaceHover: 'rgba(230,237,248,0.97)', darkCompCard: 'rgba(6,9,15,0.88)', lightCompCard: 'rgba(246,249,254,0.95)' },
-  'captain-america': { accent: '#3b5fa4', accentAlt: '#9b3430', darkSurface: 'rgba(23,27,49,0.92)', lightSurface: 'rgba(254,254,254,0.96)', darkSurfaceHover: 'rgba(31,38,64,0.94)', lightSurfaceHover: 'rgba(174,183,194,0.34)', darkCompCard: 'rgba(23,27,49,0.88)', lightCompCard: 'rgba(254,254,254,0.95)' },
-  daredevil: { accent: '#BF0615', accentAlt: '#A61731', darkSurface: 'rgba(64,1,1,0.92)', lightSurface: 'rgba(255,242,243,0.96)', darkSurfaceHover: 'rgba(78,4,4,0.94)', lightSurfaceHover: 'rgba(255,228,230,0.98)', darkCompCard: 'rgba(64,1,1,0.88)', lightCompCard: 'rgba(255,246,247,0.95)' },
-  'panther-tech': { accent: '#6BB0BF', accentAlt: '#3B3F8C', darkSurface: 'rgba(26,27,27,0.92)', lightSurface: 'rgba(243,244,248,0.96)', darkSurfaceHover: 'rgba(38,40,49,0.94)', lightSurfaceHover: 'rgba(232,234,242,0.97)', darkCompCard: 'rgba(26,27,27,0.88)', lightCompCard: 'rgba(246,247,252,0.95)' },
-  'marvel-red': { accent: '#e23636', accentAlt: '#f78f3f', darkSurface: 'rgba(0,0,0,0.92)', lightSurface: 'rgba(255,245,245,0.96)', darkSurfaceHover: 'rgba(18,18,18,0.94)', lightSurfaceHover: 'rgba(255,233,233,0.97)', darkCompCard: 'rgba(14,14,14,0.88)', lightCompCard: 'rgba(255,248,248,0.95)' },
-  hela: { accent: '#49a561', accentAlt: '#d0d500', darkSurface: 'rgba(3,11,9,0.92)', lightSurface: 'rgba(242,248,244,0.96)', darkSurfaceHover: 'rgba(20,45,39,0.94)', lightSurfaceHover: 'rgba(231,243,235,0.97)', darkCompCard: 'rgba(13,34,28,0.88)', lightCompCard: 'rgba(246,251,247,0.95)' },
+  classic: { accent: '#68a7ff', accentAlt: '#9d88ff' },
+  cosmic: { accent: '#6b8dff', accentAlt: '#6ae1ff' },
+  vibranium: { accent: '#8a82ff', accentAlt: '#4bc8ff' },
+  quantum: { accent: '#ff6ab3', accentAlt: '#65f2ff' },
+  mystic: { accent: '#a775ff', accentAlt: '#ff8d4f' },
+  'web-slinger': { accent: '#ea4a5a', accentAlt: '#4c8fff' },
+  'god-of-thunder': { accent: '#4ab0ff', accentAlt: '#8bd7ff' },
+  'scarlet-witch': { accent: '#db2f74', accentAlt: '#ff86bf' },
+  'winter-soldier': { accent: '#9caec5', accentAlt: '#66758d' },
+  'captain-america': { accent: '#4f77c4', accentAlt: '#c84f55' },
+  daredevil: { accent: '#cb1d2f', accentAlt: '#b9285e' },
+  'panther-tech': { accent: '#71bfcd', accentAlt: '#6170c8' },
+  'marvel-red': { accent: '#f04646', accentAlt: '#ff9b4d' },
+  hela: { accent: '#53b06e', accentAlt: '#d8dd4d' },
 };
 
 export const getActiveThemeVars = (themeMode, darkMode) => {
@@ -42,9 +42,16 @@ export const getActiveThemeVars = (themeMode, darkMode) => {
   return {
     '--theme-accent': p.accent,
     '--theme-accent-alt': p.accentAlt,
-    '--theme-accent-glow': darkMode ? `color-mix(in srgb, ${p.accent} 42%, transparent)` : `color-mix(in srgb, ${p.accent} 24%, transparent)`,
+    '--theme-accent-glow': darkMode ? `color-mix(in srgb, ${p.accent} 40%, transparent)` : `color-mix(in srgb, ${p.accent} 20%, transparent)`,
+    '--theme-accent-glow-soft': darkMode ? `color-mix(in srgb, ${p.accentAlt} 22%, transparent)` : `color-mix(in srgb, ${p.accentAlt} 12%, transparent)`,
     '--theme-surface': `var(--theme-surface-${mode})`,
     '--theme-surface-hover': `var(--theme-surface-hover-${mode})`,
+    '--theme-surface-muted': `var(--theme-surface-muted-${mode})`,
+    '--theme-bg': `var(--theme-bg-${mode})`,
+    '--theme-gradient': `linear-gradient(135deg, color-mix(in srgb, ${p.accent} 30%, transparent), color-mix(in srgb, ${p.accentAlt} 26%, transparent))`,
+    '--theme-gradient-soft': `linear-gradient(180deg, color-mix(in srgb, ${p.accent} 12%, transparent), color-mix(in srgb, ${p.accentAlt} 8%, transparent))`,
+    '--theme-border': darkMode ? 'rgba(171, 193, 227, 0.18)' : 'rgba(77, 98, 133, 0.18)',
+    '--theme-border-strong': darkMode ? 'rgba(197, 216, 245, 0.26)' : 'rgba(77, 98, 133, 0.28)',
     '--comp-card-bg': `var(--theme-comp-card-${mode})`,
   };
 };
