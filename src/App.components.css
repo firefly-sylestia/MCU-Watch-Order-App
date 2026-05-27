@@ -2503,6 +2503,21 @@ main.app-scroll-shell.scroll-performance .theme-btn{
   flex-direction:column;
 }
 .trailer-shell.is-expanded{max-width:min(1600px,99vw);padding:12px}
+.trailer-rotate-toast{
+  margin-top:10px;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid color-mix(in srgb,var(--theme-accent) 34%, var(--theme-border));
+  background:color-mix(in srgb,var(--theme-accent) 12%, var(--theme-surface));
+  color:var(--theme-text);
+  font-size:12px;
+  line-height:1.4;
+  letter-spacing:.01em;
+  animation:fadeIn .2s ease;
+}
+[data-color-mode="light"] .trailer-rotate-toast{
+  background:color-mix(in srgb,var(--theme-accent) 8%, #fff);
+}
 .trailer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
 .trailer-eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--theme-text-secondary);font-weight:700}
 .trailer-title{font-size:clamp(17px,2.5vw,24px);line-height:1.15;color:var(--theme-text)}
