@@ -3169,21 +3169,21 @@ export default function MCUViewer() {
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} settingsOpen={settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
-        <div style={{ marginBottom: 8, fontSize: 11, letterSpacing: 1.8, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)', textTransform: 'uppercase' }}>{tMarvel('Navigation Panel')}</div>
+        <div style={{ marginBottom: 8, fontSize: 11, letterSpacing: 1.8, color: T.textMuted, fontFamily: 'var(--font-marvel-ui)', textTransform: 'uppercase' }}>{universe === 'dc' ? 'Mission Control' : 'Stark Command'}</div>
         <div style={{ marginBottom: 10, display: 'grid', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {profile.pfp ? <img src={profile.pfp} alt="profile" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover' }} /> : <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(145deg,var(--theme-accent),var(--theme-accent-alt))', color: '#fff', display: 'grid', placeItems: 'center' }}><UserCircle size={18} /></div>}
-            <div style={{ fontSize: 12, color: T.textMuted }}>{profile.name || tMarvel('Marvel Fan')}</div>
+            <div style={{ fontSize: 12, color: T.textMuted }}>{profile.name || (universe === 'dc' ? 'DC Watcher' : tMarvel('Marvel Fan'))}</div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6 }}>
-            <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', color: darkMode ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Moon size={12} />{tMarvel('Dark')}</button>
-            <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', color: !darkMode ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Sun size={12} />{tMarvel('Light')}</button>
+            <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', color: darkMode ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Moon size={12} />{universe === 'dc' ? 'Knight Mode' : 'Blip Night'}</button>
+            <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)', color: !darkMode ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Sun size={12} />{universe === 'dc' ? 'Daily Planet' : 'Stark Day'}</button>
           </div>
                   </div>
                 <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}>{viewMode === 'list' ? tMarvel('Calendar View') : tMarvel('List View')}</button>
-        <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>{tMarvel('Quick Phases')}</div>
+        <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>{universe === 'dc' ? 'Story Eras' : tMarvel('Quick Phases')}</div>
         <button className="fpill marvel-btn" onClick={openAnalyticsPanel} style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}>{tMarvel('Analytics')}</button>
-        <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>{tMarvel('Viewing List')}</div>
+        <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>{universe === 'dc' ? 'Viewing Protocol' : tMarvel('Viewing List')}</div>
         <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
           {LIST_MODES.map(mode => {
             const isActive = listMode === mode.id;
@@ -3247,8 +3247,8 @@ export default function MCUViewer() {
     <section className="settings-hero-card">
       <div>
         <p className="settings-eyebrow">Settings Hub</p>
-        <h2>Customize your MCU experience</h2>
-        <p>Unified controls for profile, themes, syncing, backups, and advanced tuning with modern light/dark support.</p>
+        <h2>{universe === 'dc' ? 'Customize your DC experience' : 'Customize your MCU experience'}</h2>
+        <p>Unified controls for profile, themes, accessibility, syncing, backups, and advanced tuning with modern light/dark support.</p>
       </div>
       <div className="settings-hero-actions">
         <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={13} />Dark</button>
@@ -3300,9 +3300,11 @@ export default function MCUViewer() {
       <h3>Preferences</h3>
       <div className="settings-toggle-grid">
         <label className="settings-toggle-row"><span><Star size={14}/>Marvel Language</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={marvelLangMode} onClick={() => setMarvelLangMode(v => !v)}>{marvelLangMode ? 'On' : 'Off'}</button></label>
-        <label className="settings-toggle-row"><span><Moon size={14}/>Dark Theme</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={darkMode} onClick={() => setDarkMode(d => !d)}>{darkMode ? 'On' : 'Off'}</button></label>
         <label className="settings-toggle-row"><span><EyeOff size={14}/>Spoiler Safe</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={spoilerSafeMode} onClick={() => setSpoilerSafeMode(v => !v)}>{spoilerSafeMode ? 'On' : 'Off'}</button></label>
         <label className="settings-toggle-row"><span><Zap size={14}/>Performance Mode</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={performanceMode} onClick={() => setPerformanceMode(v => !v)}>{performanceMode ? 'On' : 'Off'}</button></label>
+        <label className="settings-toggle-row"><span><Heart size={14}/>Auto-hide completed</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={autoHideStatuses} onClick={() => setAutoHideStatuses(v => !v)}>{autoHideStatuses ? 'On' : 'Off'}</button></label>
+        <label className="settings-toggle-row"><span><ArrowUpDown size={14}/>Compact Density</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={densityMode === 'compact'} onClick={() => setDensityMode(v => v === 'compact' ? 'comfortable' : 'compact')}>{densityMode === 'compact' ? 'On' : 'Off'}</button></label>
+        <label className="settings-toggle-row"><span><Clock size={14}/>Timeline by release</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={timelineMode === 'release'} onClick={() => setTimelineMode(v => v === 'release' ? 'chronological' : 'release')}>{timelineMode === 'release' ? 'On' : 'Off'}</button></label>
       </div>
       <p className="settings-help">Performance mode reduces visual effects for slower devices.</p>
     </section>
