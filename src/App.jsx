@@ -2552,15 +2552,8 @@ export default function MCUViewer() {
   };
 
 
-  useEffect(() => {
-    const run = async () => {
-      const targets = (universe === 'dc' ? DC_RAW : RAW).slice(0, 12);
-      for (const item of targets) {
-        try { await fetchAndCacheMetadataItem(item, { forcePoster: true, forceAll: true }); } catch {}
-      }
-    };
-    run();
-  }, [universe]);
+  // Intentionally avoid background metadata/poster warmups on app load.
+  // This keeps startup network/data usage minimal and only fetches on demand.
   const refreshPosterForItem = async (item) => {
     if (localPosterSrc(item)) {
       setPosterFetchState({ active: false, done: 0, total: 0, message: `${item.title} uses a local poster override.` });
@@ -2722,8 +2715,8 @@ export default function MCUViewer() {
       if (metadataBuildRef.current.paused) break;
       setMetadataBuild(prev => ({ ...prev, status: 'running', currentTitle: item.title, done, failedIds: [...failedIds] }));
       try {
-        const tmdbPoster = await fetchTmdbPoster(item);
-        if (tmdbPoster) {
+        const tmdbPoster = localPosterSrc(item) ? '' : await fetchTmdbPoster(item);
+        if (tmdbPoster && !localPosterSrc(item)) {
           setPosterCache(prev => ({ ...prev, [item.id]: tmdbPoster }));
         }
 
@@ -2813,13 +2806,13 @@ export default function MCUViewer() {
 
       try {
         const [tmdbPoster, tmdbDetails] = await Promise.all([
-          fetchTmdbPoster(detailItem),
+          localPosterSrc(detailItem) ? Promise.resolve('') : fetchTmdbPoster(detailItem),
           fetchTmdbDetail(detailItem),
         ]);
 
         if (detailRequestRef.current !== requestId) return;
 
-        if (tmdbPoster) {
+        if (tmdbPoster && !localPosterSrc(detailItem)) {
           setPosterCache(prev => ({ ...prev, [detailItem.id]: tmdbPoster }));
         }
 
