@@ -34,7 +34,7 @@ import { TIMELINE_MODES, TIMELINE_MODE_IDS, CHARACTER_POV_TITLE_SETS, STORY_ORDE
 import { AFTER_CREDITS, AFTER_CREDITS_DEFAULT, DIRECTOR_DATA } from './data/afterCreditsData';
 import { TRAILER_DATA, trailerEmbedUrl, getTrailerByTitle } from './data/trailerData';
 
-import { Search, Eye, EyeOff, Film, Tv, Zap, ChevDown, ChevRight, ArrowUpDown, Check, Clock, Heart, Pause, Trash2, Upload, Download, Sun, Star, Moon, Settings, Info, Bookmark, Layers, PlayCircle, PauseCircle, XCircle, SlidersH, UserCircle, Menu, SwitchIcon, X } from './constants/icons';
+import { Search, Eye, EyeOff, Film, Tv, Zap, ChevDown, ChevRight, ArrowUpDown, Check, Clock, Heart, Pause, Trash2, Upload, Download, Sun, Star, Moon, Settings, Info, Bookmark, Layers, PlayCircle, PauseCircle, XCircle, SlidersH, Menu, SwitchIcon, X } from './constants/icons';
 import { MARVEL_UI_LEXICON, DC_UI_LEXICON, LIST_MODES } from './constants/appText';
 import { matchesSearch } from './utils/searchUtils';
 
@@ -685,9 +685,6 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
       <button className="settings-backdrop" data-state={open ? 'open' : 'closed'} aria-label="Close settings menu" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose?.(); }} />
       <div className="settings-shell" data-state={open ? 'open' : 'closed'} role="dialog" aria-modal={open ? 'true' : 'false'} aria-hidden={!open} aria-label="Settings and profile" ref={ref}>
         <div className="fade-in settings-menu settings-menu-redesign" data-state={open ? 'open' : 'closed'} style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
-          <div className="settings-sticky-actions">
-            <button className="fpill glass-panel settings-close-sticky" onClick={() => onClose?.()}><X size={14}/>Close</button>
-          </div>
           {children}
         </div>
       </div>
@@ -878,8 +875,6 @@ export default function MCUViewer() {
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
-  const [googleAccount, setGoogleAccount] = useState(() => readStorageJSON('mcu-google-account-v1', null));
-  const [googleSyncMsg, setGoogleSyncMsg] = useState('');
   const [setupOpen, setSetupOpen] = useState(false);
   const [setupExpanded, setSetupExpanded] = useState(false);
   const [themeMode,      setThemeMode]      = useState('iron-man');
@@ -2381,75 +2376,6 @@ export default function MCUViewer() {
     if (!setupDone) setSetupOpen(true);
   }, []);
 
-  const snapshotAccountData = useCallback(() => ({
-    profile,
-    uploadedAvatars,
-    myLikes,
-    myRating,
-    rewatchCount,
-    bookmarks,
-    reviews,
-  }), [profile, uploadedAvatars, myLikes, myRating, rewatchCount, bookmarks, reviews]);
-
-  const restoreAccountData = useCallback((payload) => {
-    if (!payload || typeof payload !== 'object') return;
-    setProfile(payload.profile || { name: '', pfp: '' });
-    setUploadedAvatars(Array.isArray(payload.uploadedAvatars) ? payload.uploadedAvatars : []);
-    setMyLikes(payload.myLikes || {});
-    setMyRating(payload.myRating || {});
-    setRewatchCount(payload.rewatchCount || {});
-    setBookmarks(payload.bookmarks || {});
-    setReviews(payload.reviews || {});
-  }, []);
-
-  const saveDataForGoogleAccount = useCallback((accountId = googleAccount?.sub) => {
-    if (!accountId) return;
-    scheduleStorageWrite(`mcu-account-sync-v1-${accountId}`, JSON.stringify({ updatedAt: new Date().toISOString(), data: snapshotAccountData() }));
-    setGoogleSyncMsg('Saved current device data to this Google account profile.');
-  }, [googleAccount?.sub, snapshotAccountData]);
-
-  const loadDataForGoogleAccount = useCallback((accountId = googleAccount?.sub) => {
-    if (!accountId) return;
-    const saved = readStorageJSON(`mcu-account-sync-v1-${accountId}`, null);
-    if (saved?.data) {
-      restoreAccountData(saved.data);
-      setGoogleSyncMsg(`Loaded account data saved on ${new Date(saved.updatedAt || Date.now()).toLocaleString()}.`);
-    } else {
-      setGoogleSyncMsg('No account-linked data found yet. Save your current data first.');
-    }
-  }, [googleAccount?.sub, restoreAccountData]);
-
-  const openGoogleLogin = useCallback(() => {
-    const clientId = '895654125638-pspr0bqmlpf78cc4gj2132ttrhbmlqn2.apps.googleusercontent.com';
-    const redirect = encodeURIComponent(window.location.origin);
-    const scope = encodeURIComponent('openid email profile');
-    const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirect}&response_type=token&scope=${scope}&prompt=select_account`;
-    const popup = window.open(url, '_blank', 'noopener,noreferrer,width=520,height=680');
-    if (!popup) setGoogleSyncMsg('Popup blocked. Please allow popups to continue Google Sign-In.');
-  }, []);
-
-  useEffect(() => {
-    const hash = String(window.location.hash || '');
-    if (!hash.includes('access_token=')) return;
-    const params = new URLSearchParams(hash.replace(/^#/, ''));
-    const token = params.get('access_token');
-    if (!token) return;
-    (async () => {
-      try {
-        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${token}` } });
-        const account = await res.json();
-        if (!account?.sub) throw new Error('Missing Google account ID');
-        setGoogleAccount(account);
-        scheduleStorageWrite('mcu-google-account-v1', JSON.stringify(account));
-        setGoogleSyncMsg(`Signed in as ${account.name || account.email}.`);
-        loadDataForGoogleAccount(account.sub);
-      } catch {
-        setGoogleSyncMsg('Google sign-in failed. Please try again.');
-      } finally {
-        window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-      }
-    })();
-  }, [loadDataForGoogleAccount]);
 
   useEffect(() => { scheduleStorageWrite('mcu-profile-v1', JSON.stringify(profile)); }, [profile]);
   useEffect(() => { scheduleStorageWrite('mcu-uploaded-avatars-v1', JSON.stringify(uploadedAvatars)); }, [uploadedAvatars]);
@@ -3084,7 +3010,7 @@ export default function MCUViewer() {
   const renderPhaseSelector = () => (
     <>
     <div ref={phaseRef} className="phase-selector-rail">
-      <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} onClick={() => { setActivePhase(0); if (browseMode !== 'phase') setBrowseMode('phase'); }}>
+      <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} onClick={() => { setActivePhase(0); setBrowseMode('phase'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
         <span className="phase-chip-label">All Phases</span>
       </button>
       {currentPhases.map((ph) => {
@@ -3097,7 +3023,7 @@ export default function MCUViewer() {
             key={ph.id}
             onClick={() => {
               setActivePhase(ph.id);
-              if (browseMode !== 'phase') setBrowseMode('phase');
+              setBrowseMode('phase');
               requestAnimationFrame(() => scrollTo(ph.id));
             }}
             className="fpill phase-chip marvel-phase-btn"
@@ -3233,6 +3159,7 @@ export default function MCUViewer() {
 
       <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} performanceMode={performanceMode} onClose={closeSettings}>
   <div className="settings-redesign">
+    <button className="fpill settings-close-fab" onClick={closeSettings}><X size={14}/>Close</button>
     <section className="settings-hero-card">
       <div>
         <p className="settings-eyebrow">Settings Hub</p>
@@ -3267,21 +3194,9 @@ export default function MCUViewer() {
       </article>
 
       <article className="settings-card">
-        <h3>Google Sync</h3>
-        <p className="settings-help">Sign in once, then Save to account on this device and Load on another device.</p>
-        {!googleAccount?.sub ? (
-          <button className="fpill" onClick={openGoogleLogin} style={{ justifyContent: 'center' }}><UserCircle size={14} /> Sign in with Google</button>
-        ) : (
-          <>
-            <div style={{ fontSize: 12, color: T.text }}><b>{googleAccount.name || 'Google User'}</b> · {googleAccount.email}</div>
-            <div className="settings-inline-actions">
-              <button className="fpill" onClick={() => saveDataForGoogleAccount()}><Upload size={14} />Save to Account</button>
-              <button className="fpill" onClick={() => loadDataForGoogleAccount()}><Download size={14} />Load from Account</button>
-            </div>
-            <button className="fpill" onClick={() => { setGoogleAccount(null); removeStorageValue('mcu-google-account-v1'); setGoogleSyncMsg('Signed out locally.'); }} style={{ justifyContent: 'center' }}><XCircle size={14} /> Sign out</button>
-          </>
-        )}
-        {!!googleSyncMsg && <div className="settings-help">{googleSyncMsg}</div>}
+        <h3>Google Drive Backup</h3>
+        <p className="settings-help">Use export/import with Drive for simple cross-device backup.</p>
+        <a className="fpill settings-drive-link" href="https://drive.google.com/drive/my-drive" target="_blank" rel="noreferrer" style={{ justifyContent: 'center' }}><Upload size={14} /> Open Google Drive</a>
       </article>
     </section>
 
@@ -3336,8 +3251,7 @@ export default function MCUViewer() {
         <li>Open Google Drive app or drive.google.com and upload the JSON file.</li>
         <li>On a new device, download that same JSON from Drive.</li>
         <li>Tap <b>Import Backup JSON</b> in this app and choose the downloaded file.</li>
-        <li>Optional: after signing in with Google above, also press <b>Save to Account</b> for quick cross-device profile sync.</li>
-      </ol>
+              </ol>
     </section>
   </div>
 </SettingsMenu>
