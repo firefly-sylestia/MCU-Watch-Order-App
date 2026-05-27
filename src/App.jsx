@@ -13,7 +13,7 @@ import { usePosterCache } from './hooks/usePosterCache';
 import { useOverlayNavigation } from './hooks/useOverlayNavigation';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
-import { THEME_CHOICES, getActiveThemeVars } from './constants/themeSettings';
+import { HERO_THEMES, STYLE_MODES, getThemeCssVars } from './constants/themeSettings';
 import { buildSemanticThemeVars, UI_PARITY_TOKENS } from './constants/ui';
 import './App.layout.css';
 import './App.components.css';
@@ -818,7 +818,7 @@ export default function MCUViewer() {
   const [typeFilter,     setTypeFilter]     = useState(initialUiState.typeFilter);
   const [activePhase,    setActivePhase]    = useState(initialUiState.activePhase);
   const activeUniverse = UNIVERSE_META[universe] || UNIVERSE_META.mcu;
-  const themedChoices = useMemo(() => THEME_CHOICES.map(choice => ({
+  const themedChoices = useMemo(() => HERO_THEMES.map(choice => ({
     ...choice,
     displayLabel: universe === 'dc' ? (choice.dcLabel || choice.label) : choice.label,
     displaySwatch: universe === 'dc' ? (choice.dcSwatch || choice.swatch) : choice.swatch,
@@ -877,7 +877,8 @@ export default function MCUViewer() {
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
-  const [themeMode,      setThemeMode]      = useState('classic');
+  const [heroTheme,      setHeroTheme]      = useState('iron-man');
+  const [styleMode,      setStyleMode]      = useState('default');
   const [marvelLangMode, setMarvelLangMode] = useState(false);
   const [spoilerSafeMode, setSpoilerSafeMode] = useState(true);
   const [autoHideStatuses, setAutoHideStatuses] = useState(initialUiState.autoHideStatuses);
@@ -2349,10 +2350,14 @@ export default function MCUViewer() {
       if (p?.pfp || p?.name) setProfile(prev => ({ ...prev, ...p }));
       const avatars = readStorageJSON('mcu-uploaded-avatars-v1', []);
       if (Array.isArray(avatars)) setUploadedAvatars(avatars);
-      const t = readStorageValue('mcu-theme-mode-v1', '');
-      if (t) setThemeMode(t);
+      const t = readStorageValue('ui_hero_theme', '');
+      if (t) setHeroTheme(t);
       const darkModeSaved = readStorageValue('mcu-dark-mode-v1', '');
       if (darkModeSaved === '1' || darkModeSaved === '0') setDarkMode(darkModeSaved === '1');
+      const heroSaved = readStorageValue('ui_hero_theme', '');
+      if (heroSaved) setHeroTheme(heroSaved);
+      const styleSaved = readStorageValue('ui_style_mode', '');
+      if (styleSaved) setStyleMode(styleSaved);
       const langModeSaved = readStorageValue('mcu-marvel-lang-v1', '0');
       setMarvelLangMode(langModeSaved === '1');
       const exportPrefsSaved = readStorageJSON('mcu-export-prefs-v1', null);
@@ -2369,7 +2374,8 @@ export default function MCUViewer() {
 
   useEffect(() => { scheduleStorageWrite('mcu-profile-v1', JSON.stringify(profile)); }, [profile]);
   useEffect(() => { scheduleStorageWrite('mcu-uploaded-avatars-v1', JSON.stringify(uploadedAvatars)); }, [uploadedAvatars]);
-  useEffect(() => { scheduleStorageWrite('mcu-theme-mode-v1', themeMode); }, [themeMode]);
+  useEffect(() => { scheduleStorageWrite('ui_hero_theme', heroTheme); }, [heroTheme]);
+  useEffect(() => { scheduleStorageWrite('ui_style_mode', styleMode); }, [styleMode]);
   useEffect(() => { scheduleStorageWrite('mcu-dark-mode-v1', darkMode ? '1' : '0'); }, [darkMode]);
   useEffect(() => { scheduleStorageWrite('mcu-marvel-lang-v1', marvelLangMode ? '1' : '0'); }, [marvelLangMode]);
   useEffect(() => { scheduleStorageWrite('mcu-export-prefs-v1', JSON.stringify({ font: exportFont, textScale: exportTextScale })); }, [exportFont, exportTextScale]);
@@ -2458,7 +2464,7 @@ export default function MCUViewer() {
       if (event.key === sequence[index]) {
         index += 1;
         if (index === sequence.length) {
-          setThemeMode('mystic');
+          setHeroTheme('mystic');
           index = 0;
         }
       } else {
@@ -2912,7 +2918,7 @@ export default function MCUViewer() {
   };
 
   // ─── Per-theme accent + distinctive surface tints ─────────────────────────
-  const activeThemeVars = getActiveThemeVars(themeMode, darkMode);
+  const activeThemeVars = getThemeCssVars({ heroTheme, styleMode, darkMode });
 
   const semanticThemeVars = buildSemanticThemeVars(darkMode);
 
@@ -3059,7 +3065,7 @@ export default function MCUViewer() {
     ? `${Math.max(heroBackdropScale - 16, 112)}% auto`
     : `auto ${Math.max(heroBackdropScale - 8, 96)}%`;
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={heroTheme} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'} data-style-mode={styleMode}>
       
 
 
@@ -3138,8 +3144,8 @@ export default function MCUViewer() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6, marginTop: 8 }}>
           {themedChoices.map(({ id: t, displayLabel, displaySwatch }) => (
             <button key={t} className="fpill filter-pill type-pill"
-              style={{ justifyContent: 'center', gap: 6, fontSize: 11, borderColor: themeMode === t ? displaySwatch : 'var(--theme-border)', boxShadow: themeMode === t ? `0 0 0 1px ${displaySwatch}, 0 0 10px ${displaySwatch}44` : 'none', background: themeMode === t ? `${displaySwatch}18` : 'var(--theme-surface)', color: themeMode === t ? displaySwatch : 'var(--theme-text)' }}
-              onClick={() => setThemeMode(t)}
+              style={{ justifyContent: 'center', gap: 6, fontSize: 11, borderColor: heroTheme === t ? displaySwatch : 'var(--theme-border)', boxShadow: heroTheme === t ? `0 0 0 1px ${displaySwatch}, 0 0 10px ${displaySwatch}44` : 'none', background: heroTheme === t ? `${displaySwatch}18` : 'var(--theme-surface)', color: heroTheme === t ? displaySwatch : 'var(--theme-text)' }}
+              onClick={() => setHeroTheme(t)}
             >
               <span style={{ width: 8, height: 8, borderRadius: '50%', background: displaySwatch, flexShrink: 0, display: 'inline-block' }} />
               {displayLabel}
@@ -3242,7 +3248,16 @@ export default function MCUViewer() {
             <label className="fpill import-backup-pill" style={{ cursor: 'pointer', WebkitTapHighlightColor: 'transparent', outline: 'none' }}><Upload size={14}/>Import Backup JSON
               <input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} />
             </label>
-            <div style={{ display: 'grid', gap: 6 }}><div style={{ fontSize: 'var(--type-metadata)', lineHeight: 'var(--lh-body)', color: T.textMuted }}>Auto snapshots (latest 5)</div>{autoBackups.slice(0,5).map((shot, idx) => { const preview = buildBackupPreview(shot); return <button key={`${shot.exportedAt}-${idx}`} className="fpill" onClick={() => importProgress(new File([JSON.stringify(shot)], 'mcu-auto-backup.json', { type: 'application/json' }))} style={{ justifyContent: 'space-between' }}><span><Clock size={14}/>Restore {new Date(preview.exportedAt).toLocaleDateString()}</span><span style={{ fontSize: 'var(--type-metadata)', lineHeight: 1.3, color: T.textMuted }}>{preview.watched}/{preview.total}</span></button>; })}</div>
+            <div style={{ display: 'grid', gap: 6 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Style Mode</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8 }}>
+                {STYLE_MODES.map((m) => (
+                  <button key={m.id} className='fpill' type='button' aria-pressed={styleMode === m.id} onClick={() => setStyleMode(m.id)} style={{ justifyContent: 'center', borderColor: styleMode === m.id ? 'var(--accent-primary)' : 'var(--border-soft)', color: styleMode === m.id ? 'var(--accent-primary)' : 'var(--text-primary)' }}>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Hero Theme</div><div style={{ fontSize: 'var(--type-metadata)', lineHeight: 'var(--lh-body)', color: T.textMuted }}>Auto snapshots (latest 5)</div>{autoBackups.slice(0,5).map((shot, idx) => { const preview = buildBackupPreview(shot); return <button key={`${shot.exportedAt}-${idx}`} className="fpill" onClick={() => importProgress(new File([JSON.stringify(shot)], 'mcu-auto-backup.json', { type: 'application/json' }))} style={{ justifyContent: 'space-between' }}><span><Clock size={14}/>Restore {new Date(preview.exportedAt).toLocaleDateString()}</span><span style={{ fontSize: 'var(--type-metadata)', lineHeight: 1.3, color: T.textMuted }}>{preview.watched}/{preview.total}</span></button>; })}</div>
             <button className="fpill" onClick={() => exportFetchedPosters('all')} disabled={posterExportState.active} style={{ opacity: posterExportState.active ? 0.75 : 1 }}><Download size={14}/>{posterExportState.active ? `Exporting ${posterExportState.done}/${posterExportState.total}` : 'Export All Posters'}</button>
             <button className="fpill" onClick={() => exportFetchedPosters('failed')} disabled={posterExportState.active || !Object.keys(posterExportFailures).length} style={{ opacity: posterExportState.active || !Object.keys(posterExportFailures).length ? 0.55 : 1 }}><Download size={14}/>Export Failed Posters ({Object.keys(posterExportFailures).length})</button>
             {posterExportState.message && <div style={{ fontSize: 11, color: T.textMuted }}>{posterExportState.message}</div>}
@@ -3991,6 +4006,15 @@ export default function MCUViewer() {
                 <button className="fpill ui-touch-btn" onClick={shareAdvancedExportCard}><Upload size={14}/>Share Selected Card</button>
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Style Mode</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8 }}>
+                {STYLE_MODES.map((m) => (
+                  <button key={m.id} className='fpill' type='button' aria-pressed={styleMode === m.id} onClick={() => setStyleMode(m.id)} style={{ justifyContent: 'center', borderColor: styleMode === m.id ? 'var(--accent-primary)' : 'var(--border-soft)', color: styleMode === m.id ? 'var(--accent-primary)' : 'var(--text-primary)' }}>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Hero Theme</div>
                 <div style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.4, textTransform: 'uppercase' }}>Card type</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 8 }}>
                   {[{ id: 'analysis', label: 'Analysis', desc: 'Stats + phases' }, { id: 'review', label: 'Detail', desc: 'Featured title' }, { id: 'unified', label: 'Recap', desc: 'Progress + history' }].map(opt => (
@@ -4002,6 +4026,15 @@ export default function MCUViewer() {
                 </div>
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Style Mode</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8 }}>
+                {STYLE_MODES.map((m) => (
+                  <button key={m.id} className='fpill' type='button' aria-pressed={styleMode === m.id} onClick={() => setStyleMode(m.id)} style={{ justifyContent: 'center', borderColor: styleMode === m.id ? 'var(--accent-primary)' : 'var(--border-soft)', color: styleMode === m.id ? 'var(--accent-primary)' : 'var(--text-primary)' }}>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Hero Theme</div>
                 <div style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.4, textTransform: 'uppercase' }}>Theme identity</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 8 }}>
                   {EXPORT_THEME_OPTIONS.map(opt => (
@@ -4013,6 +4046,15 @@ export default function MCUViewer() {
                 </div>
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Style Mode</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8 }}>
+                {STYLE_MODES.map((m) => (
+                  <button key={m.id} className='fpill' type='button' aria-pressed={styleMode === m.id} onClick={() => setStyleMode(m.id)} style={{ justifyContent: 'center', borderColor: styleMode === m.id ? 'var(--accent-primary)' : 'var(--border-soft)', color: styleMode === m.id ? 'var(--accent-primary)' : 'var(--text-primary)' }}>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Hero Theme</div>
                 <div style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.4, textTransform: 'uppercase' }}>Font</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 6 }}>
                   {[{ id: 'inter', label: 'Inter' }, { id: 'grotesk', label: 'Grotesk' }, { id: 'manrope', label: 'Manrope' }, { id: 'marvel', label: 'Marvel' }].map(opt => (
@@ -4033,6 +4075,15 @@ export default function MCUViewer() {
                 <input type='range' min={60} max={82} step={1} value={exportSettings.bgOpacity} onChange={(e) => setExportSettings(prev => ({ ...prev, bgOpacity: Number(e.target.value) }))} />
               </label>
               <div style={{ display: 'grid', gap: 6 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Style Mode</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8 }}>
+                {STYLE_MODES.map((m) => (
+                  <button key={m.id} className='fpill' type='button' aria-pressed={styleMode === m.id} onClick={() => setStyleMode(m.id)} style={{ justifyContent: 'center', borderColor: styleMode === m.id ? 'var(--accent-primary)' : 'var(--border-soft)', color: styleMode === m.id ? 'var(--accent-primary)' : 'var(--text-primary)' }}>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Hero Theme</div>
                 <div style={{ fontSize: 11, color: T.textMuted, letterSpacing: 1.4, textTransform: 'uppercase' }}>Included analysis sections</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 6 }}>
                   {[{ id: 'completion', label: 'Completion %' }, { id: 'phaseBreakdown', label: 'Phase breakdown' }, { id: 'streak', label: 'Streak' }, { id: 'hours', label: 'Total hours' }, { id: 'recentMomentum', label: 'Recent momentum' }, { id: 'topRated', label: 'Top rated' }].map(opt => (

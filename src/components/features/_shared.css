@@ -1,27 +1,31 @@
 :root {
-  --feature-gap: clamp(0.75rem, 1.3vw, 1rem);
-  --feature-radius: clamp(14px, 2vw, 18px);
-  --feature-pad: clamp(0.7rem, 1.5vw, 1rem);
+  --feature-gap: var(--space-4, 16px);
+  --feature-radius: var(--radius-lg, 18px);
+  --feature-pad: var(--space-4, 16px);
 }
 
-.glass-surface {
-  border: 1px solid var(--theme-overlay-border, var(--border));
-  background: linear-gradient(180deg, color-mix(in srgb, var(--theme-overlay-surface, var(--surface-2)) 94%, transparent), var(--surface-1));
+.panel-surface {
+  position: relative;
+  border: 1px solid var(--border-soft);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--bg-elevated) 92%, transparent), color-mix(in srgb, var(--bg-canvas) 84%, transparent));
   border-radius: var(--feature-radius);
-  backdrop-filter: blur(12px) saturate(1.08);
-  padding: var(--feature-pad);
-  box-shadow: var(--shadow-sm);
-  transition: border-color 180ms var(--ease-out), background-color 180ms var(--ease-out), transform 180ms var(--ease-out), box-shadow 180ms var(--ease-out);
+  backdrop-filter: blur(var(--blur-panel)) saturate(1.08);
+  box-shadow: var(--shadow-depth-1);
+  transition: border-color var(--duration-normal) var(--easing-standard), box-shadow var(--duration-normal) var(--easing-standard);
 }
+.panel-surface:hover { border-color: var(--edge-stroke); box-shadow: var(--shadow-depth-2); }
+.panel-surface:focus-within { outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 40%, transparent), var(--shadow-depth-2); }
 
-.glass-surface:hover {
-  border-color: var(--border-hover);
-  box-shadow: var(--shadow-md);
+.glow-orb::before {
+  content: '';
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  top: -80px;
+  right: -80px;
+  pointer-events: none;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent-glow) 64%, transparent), transparent 65%);
+  filter: blur(var(--glow-radius-md));
+  opacity: var(--glow-opacity);
 }
-
-.glass-surface:focus-within {
-  border-color: var(--border-active);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent), var(--shadow-md);
-}
-
-@media (prefers-reduced-motion: reduce) { .glass-surface { transition: none; } }
