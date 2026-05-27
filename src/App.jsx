@@ -3912,7 +3912,7 @@ export default function MCUViewer() {
       {trailerOpen && detailItem && selectedTrailer?.youtubeId && (
         <div className={`detail-backdrop trailer-backdrop ${trailerLandscape ? 'is-landscape' : ''}`} onClick={closeTrailer} role="dialog" aria-label="Trailer player">
           <div className={`detail-card glass-panel trailer-shell ${trailerLandscape ? 'is-landscape' : ''} ${trailerExpanded ? 'is-expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
-            <div className="trailer-head">
+            <div className={`trailer-head ${trailerLandscape ? 'is-landscape' : ''}`}>
               <div className="trailer-head-main">
                 <div className="trailer-eyebrow">Official media</div>
                 <strong className="trailer-title">{detailItem.title}</strong>
@@ -3934,10 +3934,10 @@ export default function MCUViewer() {
                 )}
               </div>
               <div className="trailer-actions">
-                <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle}><SwitchIcon size={12}/>{trailerLandscape ? 'Portrait' : 'Landscape'}</button>
-                {!trailerLandscape && !trailerExpanded && <button className="fpill trailer-close" onClick={() => setTrailerExpanded(true)}><PlayCircle size={12}/>Enlarge</button>}
-                <button className="fpill trailer-close" onClick={handleTrailerBack}><PlayCircle size={12}/>{trailerLandscape ? 'Back & Close' : 'Back'}</button>
-                <button className="fpill trailer-close" onClick={closeTrailer}><X size={12}/>Close</button>
+                <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle} aria-label={trailerLandscape ? 'Switch to portrait' : 'Switch to landscape'}><SwitchIcon size={12}/><span className="trailer-btn-label">{trailerLandscape ? 'Portrait' : 'Landscape'}</span></button>
+                {!trailerLandscape && !trailerExpanded && <button className="fpill trailer-close" onClick={() => setTrailerExpanded(true)} aria-label="Enlarge"><PlayCircle size={12}/><span className="trailer-btn-label">Enlarge</span></button>}
+                <button className="fpill trailer-close" onClick={handleTrailerBack} aria-label={trailerLandscape ? 'Back and close' : 'Back'}><PlayCircle size={12}/><span className="trailer-btn-label">{trailerLandscape ? 'Back' : 'Back'}</span></button>
+                <button className="fpill trailer-close" onClick={closeTrailer} aria-label="Close trailer"><X size={12}/><span className="trailer-btn-label">Close</span></button>
               </div>
             </div>
             <div className={`trailer-frame ${trailerLandscape ? 'is-landscape' : ''}`} ref={trailerShellRef}>
