@@ -13,7 +13,7 @@ import { usePosterCache } from './hooks/usePosterCache';
 import { useOverlayNavigation } from './hooks/useOverlayNavigation';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
-import { THEME_CHOICES, getActiveThemeVars } from './constants/themeSettings';
+import { HERO_THEME_CHOICES, STYLE_MODE_CHOICES, buildThemeTokens } from './constants/themeSettings';
 import { buildSemanticThemeVars, UI_PARITY_TOKENS } from './constants/ui';
 import './App.layout.css';
 import './App.components.css';
@@ -818,11 +818,7 @@ export default function MCUViewer() {
   const [typeFilter,     setTypeFilter]     = useState(initialUiState.typeFilter);
   const [activePhase,    setActivePhase]    = useState(initialUiState.activePhase);
   const activeUniverse = UNIVERSE_META[universe] || UNIVERSE_META.mcu;
-  const themedChoices = useMemo(() => THEME_CHOICES.map(choice => ({
-    ...choice,
-    displayLabel: universe === 'dc' ? (choice.dcLabel || choice.label) : choice.label,
-    displaySwatch: universe === 'dc' ? (choice.dcSwatch || choice.swatch) : choice.swatch,
-  })), [universe]);
+  const themedChoices = HERO_THEME_CHOICES;
   const [uiModeState, dispatchUiMode] = useReducer((state, action) => ({ ...state, ...action }), { sortOpen: false, phaseOpen: false, filterStatusOpen: false, dockStatusOpen: false, filtersOpen: initialUiState.filtersOpen, timelineOpen: false });
   const { sortOpen, phaseOpen, filterStatusOpen, dockStatusOpen, filtersOpen, timelineOpen } = uiModeState;
   const setSortOpen = (next) => dispatchUiMode({ sortOpen: typeof next === 'function' ? next(uiModeState.sortOpen) : next });
@@ -877,7 +873,8 @@ export default function MCUViewer() {
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
-  const [themeMode,      setThemeMode]      = useState('classic');
+  const [themeMode,      setThemeMode]      = useState('iron-man');
+  const [styleMode,      setStyleMode]      = useState('default');
   const [marvelLangMode, setMarvelLangMode] = useState(false);
   const [spoilerSafeMode, setSpoilerSafeMode] = useState(true);
   const [autoHideStatuses, setAutoHideStatuses] = useState(initialUiState.autoHideStatuses);
@@ -2349,8 +2346,10 @@ export default function MCUViewer() {
       if (p?.pfp || p?.name) setProfile(prev => ({ ...prev, ...p }));
       const avatars = readStorageJSON('mcu-uploaded-avatars-v1', []);
       if (Array.isArray(avatars)) setUploadedAvatars(avatars);
-      const t = readStorageValue('mcu-theme-mode-v1', '');
+      const t = readStorageValue('ui_hero_theme', '');
       if (t) setThemeMode(t);
+      const sm = readStorageValue('ui_style_mode', '');
+      if (sm) setStyleMode(sm);
       const darkModeSaved = readStorageValue('mcu-dark-mode-v1', '');
       if (darkModeSaved === '1' || darkModeSaved === '0') setDarkMode(darkModeSaved === '1');
       const langModeSaved = readStorageValue('mcu-marvel-lang-v1', '0');
@@ -2369,7 +2368,8 @@ export default function MCUViewer() {
 
   useEffect(() => { scheduleStorageWrite('mcu-profile-v1', JSON.stringify(profile)); }, [profile]);
   useEffect(() => { scheduleStorageWrite('mcu-uploaded-avatars-v1', JSON.stringify(uploadedAvatars)); }, [uploadedAvatars]);
-  useEffect(() => { scheduleStorageWrite('mcu-theme-mode-v1', themeMode); }, [themeMode]);
+  useEffect(() => { scheduleStorageWrite('ui_hero_theme', themeMode); }, [themeMode]);
+  useEffect(() => { scheduleStorageWrite('ui_style_mode', styleMode); }, [styleMode]);
   useEffect(() => { scheduleStorageWrite('mcu-dark-mode-v1', darkMode ? '1' : '0'); }, [darkMode]);
   useEffect(() => { scheduleStorageWrite('mcu-marvel-lang-v1', marvelLangMode ? '1' : '0'); }, [marvelLangMode]);
   useEffect(() => { scheduleStorageWrite('mcu-export-prefs-v1', JSON.stringify({ font: exportFont, textScale: exportTextScale })); }, [exportFont, exportTextScale]);
@@ -2912,12 +2912,13 @@ export default function MCUViewer() {
   };
 
   // ─── Per-theme accent + distinctive surface tints ─────────────────────────
-  const activeThemeVars = getActiveThemeVars(themeMode, darkMode);
+  const tokenThemeVars = buildThemeTokens({ darkMode, heroTheme: themeMode, styleMode });
 
   const semanticThemeVars = buildSemanticThemeVars(darkMode);
 
   const cssThemeVars = {
     ...semanticThemeVars,
+    ...tokenThemeVars,
     '--theme-border': darkMode ? '#1b1b33' : '#c8beaf',
     '--theme-text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
     '--font-marvel-display': 'var(--font-display)',
@@ -2939,13 +2940,13 @@ export default function MCUViewer() {
     '--theme-warning-soft': darkMode ? 'rgba(232,184,75,0.16)' : 'rgba(232,184,75,0.12)',
     '--theme-danger-soft': darkMode ? 'rgba(209,106,106,0.16)' : 'rgba(209,106,106,0.12)',
     '--text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
-    '--theme-text-secondary': darkMode ? `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 40%, #e9f1ff)` : `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 52%, #1f2f46)`,
+    '--theme-text-secondary': darkMode ? `color-mix(in srgb, var(--accent-secondary) 40%, #e9f1ff)` : `color-mix(in srgb, var(--accent-primary) 52%, #1f2f46)`,
     '--theme-overlay-surface': darkMode
-      ? `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 14%, rgba(255,255,255,0.06))`
-      : `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 10%, rgba(15,23,42,0.04))`,
+      ? `color-mix(in srgb, var(--accent-primary) 14%, rgba(255,255,255,0.06))`
+      : `color-mix(in srgb, var(--accent-secondary) 10%, rgba(15,23,42,0.04))`,
     '--theme-overlay-border': darkMode
-      ? `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 32%, rgba(255,255,255,0.14))`
-      : `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 26%, rgba(15,23,42,0.14))`,
+      ? `color-mix(in srgb, var(--accent-secondary) 32%, rgba(255,255,255,0.14))`
+      : `color-mix(in srgb, var(--accent-primary) 26%, rgba(15,23,42,0.14))`,
     '--overlay-soft': darkMode ? 'rgba(2,6,18,0.3)' : 'rgba(15,23,42,0.09)',
     '--overlay-dark': darkMode ? 'rgba(2,6,18,0.46)' : 'rgba(15,23,42,0.15)',
     '--overlay-strong': darkMode ? 'rgba(2,6,18,0.58)' : 'rgba(15,23,42,0.24)',
@@ -2960,17 +2961,17 @@ export default function MCUViewer() {
     '--app-bg-vignette': darkMode ? 'rgba(2,6,23,0.42)' : 'rgba(2,6,23,0.08)',
     '--app-bg-noise-opacity': darkMode ? '0.06' : '0.03',
     '--theme-app-bg': darkMode
-      ? `radial-gradient(circle at 8% 2%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 40%, transparent), transparent 34%), radial-gradient(circle at 90% 8%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 36%, transparent), transparent 40%), radial-gradient(circle at 50% 120%, rgba(14,165,233,0.22), transparent 52%), linear-gradient(138deg, #02030a 0%, #09071a 30%, #0f1031 58%, #1a1038 100%)`
-      : `radial-gradient(circle at 8% 4%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 15%, #e9e1d5), transparent 34%), radial-gradient(circle at 88% 14%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 13%, #e9e1d5), transparent 40%), linear-gradient(140deg, #e5ddd1 0%, #dfd6c8 44%, #e4dbcf 100%)`,
+      ? `radial-gradient(circle at 8% 2%, color-mix(in srgb, var(--accent-primary) 40%, transparent), transparent 34%), radial-gradient(circle at 90% 8%, color-mix(in srgb, var(--accent-secondary) 36%, transparent), transparent 40%), radial-gradient(circle at 50% 120%, rgba(14,165,233,0.22), transparent 52%), linear-gradient(138deg, #02030a 0%, #09071a 30%, #0f1031 58%, #1a1038 100%)`
+      : `radial-gradient(circle at 8% 4%, color-mix(in srgb, var(--accent-primary) 15%, #e9e1d5), transparent 34%), radial-gradient(circle at 88% 14%, color-mix(in srgb, var(--accent-secondary) 13%, #e9e1d5), transparent 40%), linear-gradient(140deg, #e5ddd1 0%, #dfd6c8 44%, #e4dbcf 100%)`,
     '--comp-overlay-bg': darkMode ? 'rgba(4,8,18,0.56)' : 'rgba(255,255,255,0.58)',
     '--comp-dropdown-bg': darkMode ? 'rgba(9,14,28,0.52)' : 'rgba(255,255,255,0.62)',
     '--theme-header-bg': darkMode
-      ? `linear-gradient(180deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 18%, #0c1022), #06060f)`
-      : `linear-gradient(180deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 9%, #f2ede3), #ece5d9)`,
+      ? `linear-gradient(180deg, color-mix(in srgb, var(--accent-primary) 18%, #0c1022), #06060f)`
+      : `linear-gradient(180deg, color-mix(in srgb, var(--accent-primary) 9%, #f2ede3), #ece5d9)`,
     '--theme-watched-bg': darkMode
-      ? `linear-gradient(100deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 18%, rgba(12,18,34,0.62)), color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 10%, rgba(10,20,32,0.54)))`
-      : `linear-gradient(100deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 14%, #ffffff), color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 8%, #f7f5ef))`,
-    ...activeThemeVars,
+      ? `linear-gradient(100deg, color-mix(in srgb, var(--accent-primary) 18%, rgba(12,18,34,0.62)), color-mix(in srgb, var(--accent-secondary) 10%, rgba(10,20,32,0.54)))`
+      : `linear-gradient(100deg, color-mix(in srgb, var(--accent-primary) 14%, #ffffff), color-mix(in srgb, var(--accent-secondary) 8%, #f7f5ef))`,
+    '--theme-accent': 'var(--accent-primary)','--theme-accent-alt':'var(--accent-secondary)','--theme-accent-glow':'var(--accent-glow)',
   };
   const routeMode = analyticsOpen || settingsOpen ? 'utility' : 'home';
 
@@ -3059,7 +3060,7 @@ export default function MCUViewer() {
     ? `${Math.max(heroBackdropScale - 16, 112)}% auto`
     : `auto ${Math.max(heroBackdropScale - 8, 96)}%`;
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} data-style-mode={styleMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
 
 
@@ -3134,15 +3135,21 @@ export default function MCUViewer() {
         <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
           {currentPhases.map(ph => <button key={ph.id} className="fpill" onClick={() => { setSidebarOpen(false); setActivePhase(ph.id); scrollToListTop(); }} style={{ justifyContent: 'space-between' }}><span>{ph.name}</span><ChevRight size={13} /></button>)}
         </div>
-        <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Theme</div>
+        <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Style Mode</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6, marginTop: 8 }}>
-          {themedChoices.map(({ id: t, displayLabel, displaySwatch }) => (
+          {STYLE_MODE_CHOICES.map(({ id, label }) => (
+            <button key={id} className="fpill" onClick={() => setStyleMode(id)} style={{ justifyContent: 'center', borderColor: styleMode === id ? 'var(--theme-accent)' : 'var(--theme-border)', background: styleMode === id ? 'color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface))' : 'var(--theme-surface)' }}>{label}</button>
+          ))}
+        </div>
+        <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Hero Theme</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6, marginTop: 8 }}>
+          {themedChoices.map(({ id: t, label, swatch }) => (
             <button key={t} className="fpill filter-pill type-pill"
-              style={{ justifyContent: 'center', gap: 6, fontSize: 11, borderColor: themeMode === t ? displaySwatch : 'var(--theme-border)', boxShadow: themeMode === t ? `0 0 0 1px ${displaySwatch}, 0 0 10px ${displaySwatch}44` : 'none', background: themeMode === t ? `${displaySwatch}18` : 'var(--theme-surface)', color: themeMode === t ? displaySwatch : 'var(--theme-text)' }}
+              style={{ justifyContent: 'center', gap: 6, fontSize: 11, borderColor: themeMode === t ? swatch : 'var(--theme-border)', boxShadow: themeMode === t ? `0 0 0 1px ${swatch}, 0 0 10px ${swatch}44` : 'none', background: themeMode === t ? `${swatch}18` : 'var(--theme-surface)', color: themeMode === t ? swatch : 'var(--theme-text)' }}
               onClick={() => setThemeMode(t)}
             >
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: displaySwatch, flexShrink: 0, display: 'inline-block' }} />
-              {displayLabel}
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: swatch, flexShrink: 0, display: 'inline-block' }} />
+              {label}
             </button>
           ))}
         </div>
