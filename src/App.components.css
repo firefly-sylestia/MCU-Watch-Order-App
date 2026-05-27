@@ -3172,3 +3172,62 @@ body { background: var(--app-shell-gradient); }
 .settings-drive-link{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
 .settings-inline-actions{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media (max-width:760px){.settings-inline-actions{grid-template-columns:1fr}}
+
+/* Contributor checklist: allowed spacing/radius tokens only. */
+/* spacing: var(--space-1..8) | radius: var(--radius-sm/md/lg/xl) */
+
+/* Targeted spacing/radius normalization for high-visibility surfaces */
+:root{
+  --section-pad-block: var(--space-4);
+  --section-gap: var(--space-3);
+  --control-gap: var(--space-2);
+}
+
+.header-brand,
+.settings-menu,
+.filters-open,
+.dock-status-dropdown,
+.dock-status-item,
+.dock-status-menu,
+.hero-carousel-shell,
+.hero-carousel-track,
+.hero-carousel-meta{
+  border-radius: var(--radius-lg) !important;
+}
+
+.hero-carousel-poster,
+.hero-backdrop-image,
+.hero-backdrop-blend{
+  border-radius: var(--radius-xl) !important;
+}
+
+.fpill,
+.status-pill,
+.dock-btn,
+.hero-carousel-nav,
+.settings-menu .sopt{
+  border-radius: var(--radius-md) !important;
+}
+
+.phase-rows-full,
+.settings-menu,
+.filters-open,
+.dock-status-menu,
+.hero-carousel-shell{
+  padding-block: var(--section-pad-block) !important;
+}
+
+.filters-open,
+.dock-status-menu,
+.settings-menu,
+.hero-carousel-track{
+  gap: var(--section-gap) !important;
+}
+
+.filter-row-actions,
+.filter-bar,
+.row-actions,
+.dock-status-item,
+.header-brand{
+  gap: var(--control-gap) !important;
+}
