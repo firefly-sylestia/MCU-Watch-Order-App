@@ -877,6 +877,9 @@ export default function MCUViewer() {
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
+  const [setupOpen, setSetupOpen] = useState(() => readStorageValue('mcu-setup-complete-v1', '0') !== '1');
+  const [setupStep, setSetupStep] = useState(0);
+  const [googleAuthStatus, setGoogleAuthStatus] = useState({ connected: false, email: '', name: '' });
   const [themeMode,      setThemeMode]      = useState('iron-man');
   const [appearanceMode, setAppearanceMode] = useState('glass');
   const [marvelLangMode, setMarvelLangMode] = useState(false);
@@ -2378,6 +2381,37 @@ export default function MCUViewer() {
   useEffect(() => { scheduleStorageWrite('mcu-marvel-lang-v1', marvelLangMode ? '1' : '0'); }, [marvelLangMode]);
   useEffect(() => { scheduleStorageWrite('mcu-export-prefs-v1', JSON.stringify({ font: exportFont, textScale: exportTextScale })); }, [exportFont, exportTextScale]);
 
+  useEffect(() => { if (!setupOpen) scheduleStorageWrite('mcu-setup-complete-v1', '1'); }, [setupOpen]);
+
+  const completeSetup = useCallback(() => {
+    setSetupOpen(false);
+    setSidebarOpen(false);
+    setSettingsOpen(false);
+    setAnalyticsOpen(false);
+  }, []);
+
+  const handleGoogleLogin = useCallback(async () => {
+    try {
+      if (!window.google?.accounts?.id) {
+        setGoogleAuthStatus({ connected: false, email: '', name: '' });
+        return;
+      }
+      window.google.accounts.id.initialize({
+        client_id: '895654125638-pspr0bqmlpf78cc4gj2132ttrhbmlqn2.apps.googleusercontent.com',
+        callback: (resp) => {
+          try {
+            const payload = JSON.parse(atob((resp?.credential || '').split('.')[1] || 'e30='));
+            const name = payload?.name || '';
+            const email = payload?.email || '';
+            setGoogleAuthStatus({ connected: true, email, name });
+            if (name) setProfile(prev => ({ ...prev, name }));
+          } catch {}
+        },
+      });
+      window.google.accounts.id.prompt();
+    } catch {}
+  }, []);
+
   useEffect(() => {
     try {
       const saved = readStorageJSON(CACHE_KEYS.userActions, {});
@@ -2783,6 +2817,16 @@ export default function MCUViewer() {
           ? `Done · ${metadataBuild.total} checked`
           : 'Fetches one title at a time';
 
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || window.google?.accounts?.id) return;
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+    return () => { if (script.parentNode) script.parentNode.removeChild(script); };
+  }, []);
   // ─── Detail panel fetch: TMDB for everything, OMDB only for rating ──────
   useEffect(() => {
     const fetchDetail = async () => {
@@ -4092,6 +4136,53 @@ export default function MCUViewer() {
                 </div>
               ))}
             </div>}
+          </div>
+        </div>
+      )}
+
+
+      {setupOpen && (
+        <div className="setup-onboarding-backdrop" role="dialog" aria-modal="true" aria-label="First-time setup">
+          <div className="setup-onboarding-card">
+            <div className="setup-head">First-time Setup</div>
+            <h2>Set up profile & sync your MCU data</h2>
+            <p>Choose your list scope, connect Google login, fetch posters/metadata, and upload a profile photo from gallery.</p>
+            <div className="setup-steps">
+              {['Profile', 'Google Login', 'Data Fetch', 'Finish'].map((label, idx) => (
+                <button key={label} className="fpill" style={{ justifyContent: 'center', borderColor: setupStep === idx ? 'var(--theme-accent)' : 'var(--theme-border)' }} onClick={() => setSetupStep(idx)}>{idx + 1}. {label}</button>
+              ))}
+            </div>
+            {setupStep === 0 && (
+              <div className="setup-panel">
+                <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="Your display name" />
+                <label className="fpill" style={{ width: 'fit-content' }}>
+                  <Upload size={14}/> Upload from gallery
+                  <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => setAvatarCropSrc(String(r.result || '')); r.readAsDataURL(f); }} style={{ display: 'none' }} />
+                </label>
+              </div>
+            )}
+            {setupStep === 1 && (
+              <div className="setup-panel">
+                <button className="fpill" onClick={handleGoogleLogin}><Star size={14}/> Continue with Google</button>
+                <div className="setup-note">{googleAuthStatus.connected ? `Connected as ${googleAuthStatus.name || googleAuthStatus.email}` : 'Google login optional — you can skip and continue.'}</div>
+              </div>
+            )}
+            {setupStep === 2 && (
+              <div className="setup-panel">
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button className="fpill" onClick={() => setListMode('core')} style={{ borderColor: listMode === 'core' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>Core Only</button>
+                  <button className="fpill" onClick={() => setListMode('extended')} style={{ borderColor: listMode === 'extended' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>All (Expanded)</button>
+                </div>
+                <button className="fpill" onClick={() => runMetadataBuild({ refreshAll: listMode !== 'core' })}><Download size={14}/> Fetch database details + posters</button>
+                <div className="setup-note">{metadataStatusText}</div>
+              </div>
+            )}
+            {setupStep === 3 && <div className="setup-note">You can reopen Settings anytime to update profile, fetch data again, or change between Core and Expanded view.</div>}
+            <div className="setup-actions">
+              <button className="fpill" onClick={() => setSetupStep(s => Math.max(0, s - 1))} disabled={setupStep === 0}>Back</button>
+              <button className="fpill" onClick={() => setupStep < 3 ? setSetupStep(s => s + 1) : completeSetup()}>{setupStep < 3 ? 'Next' : 'Finish Setup'}</button>
+              <button className="fpill" onClick={completeSetup}>Skip</button>
+            </div>
           </div>
         </div>
       )}
