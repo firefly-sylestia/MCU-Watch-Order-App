@@ -3006,7 +3006,11 @@ export default function MCUViewer() {
         return (
           <button
             key={ph.id}
-            onClick={() => { setActivePhase(ph.id); scrollToListTop(); }}
+            onClick={() => {
+              setActivePhase(ph.id);
+              if (browseMode !== 'phase') setBrowseMode('phase');
+              requestAnimationFrame(() => scrollTo(ph.id));
+            }}
             className="fpill phase-chip marvel-phase-btn"
             data-active={isActive}>
             <span className="phase-chip-label">{ph.name}</span>
