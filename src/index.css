@@ -744,3 +744,57 @@ textarea:focus-visible {
 button:active {
   transform: translateY(1px) scale(0.99);
 }
+
+/* === Unified Theme Redesign Layer === */
+:root {
+  --border-soft: color-mix(in srgb, var(--theme-border, rgba(255,255,255,0.2)) 58%, transparent);
+  --border-strong: color-mix(in srgb, var(--theme-border, rgba(255,255,255,0.2)) 74%, transparent);
+  --ui-border-soft: var(--border-soft);
+  --ui-panel-1: color-mix(in srgb, var(--theme-surface) 82%, transparent);
+  --ui-panel-2: color-mix(in srgb, var(--theme-surface-hover) 76%, transparent);
+  --ui-shadow-1: 0 8px 24px color-mix(in srgb, #020617 22%, transparent);
+  --ui-shadow-2: 0 18px 42px color-mix(in srgb, #020617 28%, transparent);
+}
+
+[data-color-mode="dark"],
+[data-color-mode="light"] {
+  --interactive-border-default: var(--border-soft);
+  --interactive-border-hover: var(--border-strong);
+  --interactive-active-bg: color-mix(in srgb,var(--theme-accent) 10%, var(--ui-panel-1));
+}
+
+.glass-panel,
+.bottom-action-dock,
+.fab-primary,
+.bottom-action-bar,
+.fpill,
+.wbtn,
+.theme-btn,
+.status-pill {
+  border-color: var(--ui-border-soft) !important;
+  background: var(--ui-panel-1);
+  box-shadow: var(--ui-shadow-1);
+}
+
+.glass-panel,
+.bottom-action-dock {
+  background-image: var(--theme-gradient-soft);
+}
+
+.fpill:hover,
+.wbtn:hover,
+.theme-btn:hover,
+.status-pill:hover,
+.fab-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--ui-shadow-2), 0 0 0 1px color-mix(in srgb, var(--theme-accent-glow) 35%, transparent);
+  background: color-mix(in srgb, var(--ui-panel-2) 82%, transparent);
+}
+
+.fpill:active,
+.wbtn:active,
+.theme-btn:active,
+.status-pill:active,
+.fab-primary:active {
+  transform: translateY(1px);
+}
