@@ -875,6 +875,7 @@ export default function MCUViewer() {
   const [settingsOpen,   setSettingsOpen]   = useState(false);
   const [showAllFiltersOverride, setShowAllFiltersOverride] = useState(false);
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
+  const [setupComplete, setSetupComplete] = useState(() => readStorageValue('mcu-first-setup-v1', '0') === '1');
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
   const [themeMode,      setThemeMode]      = useState('iron-man');
@@ -3054,6 +3055,25 @@ export default function MCUViewer() {
     </>
   );
 
+  const handleFirstTimeSetupSkip = useCallback(() => {
+    safeLocalStorageSetItem('mcu-first-setup-v1', '1');
+    setSetupComplete(true);
+  }, []);
+
+  const handleFirstTimeSetupContinue = useCallback(async () => {
+    setExpandedPhase(activePhase || 0);
+    if (activeItems?.[0]?.id) setExpandedItem(activeItems[0].id);
+    setSettingsOpen(true);
+    setSidebarOpen(false);
+    try {
+      await runMetadataBuild({ refreshAll: true });
+    } catch {
+      // no-op
+    }
+    safeLocalStorageSetItem('mcu-first-setup-v1', '1');
+    setSetupComplete(true);
+  }, [activeItems, activePhase, runMetadataBuild]);
+
   const appThemeBg = routeMode === 'utility'
     ? `linear-gradient(180deg, color-mix(in srgb, var(--theme-surface) 36%, var(--app-bg-base)), var(--app-bg-base))`
     : `radial-gradient(circle at 50% 0%, var(--app-bg-vignette), transparent 58%), var(--theme-app-bg)`;
@@ -3064,6 +3084,22 @@ export default function MCUViewer() {
   return (
     <div data-scaffold={Boolean(sectionScaffold)} data-theme={appearanceMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
+
+      {!setupComplete && (
+        <section className="first-setup-shell" aria-label="First-time setup">
+          <div className="first-setup-card">
+            <span className="first-setup-kicker">Welcome</span>
+            <h1>Set up your profile and fetch full details</h1>
+            <p>We can open profile setup, prefetch all title details, and expand your first section automatically. You can skip this anytime.</p>
+            <div className="first-setup-actions">
+              <button className="fpill marvel-btn" onClick={handleFirstTimeSetupContinue}>Set up now</button>
+              <button className="fpill" onClick={handleFirstTimeSetupSkip}>Skip for now</button>
+            </div>
+            <div className="first-setup-footnote">Google login can be added later from settings.</div>
+          </div>
+        </section>
+      )}
+
 
 
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
