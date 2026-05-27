@@ -1,410 +1,68 @@
-/* ═══════════════════════════════════════════════════════════════════════════
-   MCU VIEWING TRACKER — Application Surface Styles
-   Cinematic timeline interactions and readable depth hierarchy
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* ── Main App Container ─────────────────────────────────────────────────────── */
+/* Modernized application shell */
 .app-container {
   position: relative;
   width: 100%;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: 
-    radial-gradient(circle at 18% 8%, rgba(124, 255, 218, 0.14), transparent 38%),
-    radial-gradient(circle at 82% 22%, rgba(154, 134, 255, 0.12), transparent 42%),
-    radial-gradient(circle at 50% 90%, rgba(124, 255, 218, 0.08), transparent 54%),
-    linear-gradient(160deg, #14161A 0%, #171A1F 34%, #1A1D23 62%, #20242B 100%);
+  background:
+    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 42%),
+    radial-gradient(circle at 88% 15%, color-mix(in srgb, var(--accent-2) 18%, transparent), transparent 44%),
+    linear-gradient(170deg, color-mix(in srgb, var(--bg) 96%, #000) 0%, var(--bg) 42%, color-mix(in srgb, var(--bg-elevated) 62%, var(--bg)) 100%);
   overflow-x: hidden;
 }
 
-/* ── Center Content Area ────────────────────────────────────────────────────── */
 #center {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: clamp(14px, 2.3vw, 24px);
   align-items: center;
   justify-content: center;
   flex: 1;
-  padding: 24px 16px;
-  animation: cinematicIn 600ms var(--ease-out) both;
+  padding: clamp(18px, 3vw, 36px) clamp(14px, 2.2vw, 28px);
+  animation: panelRise 380ms var(--ease-out) both;
 }
 
-@media (min-width: 768px) {
-  #center {
-    padding: 32px 24px;
-    gap: 28px;
-  }
-}
-
-/* ── Brand Crest Section ───────────────────────────────────────────────────────────── */
 .hero {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  animation: floatUp 800ms var(--ease-spring) both;
+  gap: 14px;
 }
 
 .hero .base {
-  width: clamp(120px, 30vw, 180px);
+  width: clamp(128px, 30vw, 178px);
   height: auto;
-  filter: drop-shadow(0 20px 40px rgba(124, 255, 218, 0.25));
-  animation: softFloat 6s var(--ease-smooth) infinite;
+  filter: drop-shadow(0 12px 30px color-mix(in srgb, var(--accent) 22%, transparent));
 }
 
-.hero .framework,
-.hero .vite {
-  position: absolute;
-  height: auto;
-  opacity: 0.9;
-  animation: bounceIn 600ms var(--ease-spring) both;
-}
-
-.hero .framework {
-  top: 15%;
-  height: 24px;
-  transform: perspective(1000px) rotateX(15deg) rotateY(-10deg);
-  animation-delay: 200ms;
-}
-
-.hero .vite {
-  bottom: 15%;
-  height: 22px;
-  transform: perspective(1000px) rotateX(-10deg) rotateY(8deg);
-  animation-delay: 350ms;
-}
-
-/* ── Progress Counter Component ──────────────────────────────────────────────────────── */
 .counter {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
   font-family: var(--mono);
-  color: var(--accent);
-  background: rgba(124, 255, 218, 0.08);
-  border: 1px solid rgba(124, 255, 218, 0.20);
-  cursor: pointer;
-  transform: translate3d(0, 0, 0);
-  transition:
-    transform 280ms var(--ease-spring),
-    background 200ms var(--ease-out),
-    border-color 200ms var(--ease-out),
-    box-shadow 350ms var(--ease-out);
+  color: var(--text-h);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
 .counter:hover {
-  background: rgba(124, 255, 218, 0.12);
-  border-color: rgba(124, 255, 218, 0.35);
-  box-shadow: 0 8px 32px rgba(124, 255, 218, 0.20);
-  transform: translate3d(0, -2px, 0) scale(1.02);
+  border-color: var(--border-active);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 24%, transparent);
+  transform: translateY(-1px);
 }
 
-.counter:active {
-  transform: scale(0.96);
-  transition-duration: 80ms;
+@keyframes panelRise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.counter:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
+@media (prefers-reduced-motion: reduce) {
+  #center { animation: none; }
 }
-
-/* ── Content Rail Section ─────────────────────────────────────────────────────── */
-#next-steps {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 960px;
-  margin: 0 auto;
-  border-top: 1px solid var(--border);
-  animation: fadeInUp 600ms var(--ease-out) 300ms both;
-}
-
-#next-steps > div {
-  padding: 28px 20px;
-}
-
-@media (min-width: 768px) {
-  #next-steps {
-    flex-direction: row;
-  }
-  
-  #next-steps > div {
-    flex: 1;
-    padding: 36px;
-  }
-}
-
-/* ── Reference Rail Section ──────────────────────────────────────────────────── */
-#docs {
-  border-bottom: 1px solid var(--border);
-}
-
-@media (min-width: 768px) {
-  #docs {
-    border-bottom: none;
-    border-right: 1px solid var(--border);
-  }
-}
-
-.icon {
-  width: 28px;
-  height: 28px;
-  margin-bottom: 14px;
-  color: var(--accent);
-  filter: drop-shadow(0 4px 12px var(--accent-glow));
-}
-
-/* ── Resource Links ───────────────────────────────────────────────────────────── */
-#next-steps ul {
-  list-style: none;
-  padding: 0;
-  margin: 24px 0 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-#next-steps ul li {
-  flex: 1 1 calc(50% - 5px);
-}
-
-@media (min-width: 768px) {
-  #next-steps ul li {
-    flex: 0 0 auto;
-  }
-}
-
-#next-steps ul a {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-h);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  text-decoration: none;
-  transform: translate3d(0, 0, 0);
-  transition:
-    transform 280ms var(--ease-spring),
-    background 200ms var(--ease-out),
-    border-color 200ms var(--ease-out),
-    box-shadow 350ms var(--ease-out);
-}
-
-#next-steps ul a:hover {
-  background: var(--bg-elevated);
-  border-color: var(--border-hover);
-  box-shadow: var(--shadow-sm), 0 0 18px var(--accent-glow);
-  transform: translate3d(0, -3px, 0);
-}
-
-#next-steps ul a:active {
-  transform: scale(0.96);
-  transition-duration: 80ms;
-}
-
-.logo {
-  height: 18px;
-  width: auto;
-}
-
-.button-icon {
-  width: 18px;
-  height: 18px;
-  opacity: 0.85;
-}
-
-/* ── Timeline Spacer ───────────────────────────────────────────────────────── */
-#spacer {
-  height: 60px;
-  border-top: 1px solid var(--border);
-}
-
-@media (min-width: 768px) {
-  #spacer {
-    height: 80px;
-  }
-}
-
-/* ── Ticks Decoration ───────────────────────────────────────────────────────── */
-.ticks {
-  position: relative;
-  width: 100%;
-  height: 1px;
-  background: var(--border);
-}
-
-.ticks::before,
-.ticks::after {
-  content: "";
-  position: absolute;
-  top: -4px;
-  border: 5px solid transparent;
-}
-
-.ticks::before {
-  left: 0;
-  border-left-color: var(--accent);
-  filter: drop-shadow(0 0 6px var(--accent-glow));
-}
-
-.ticks::after {
-  right: 0;
-  border-right-color: var(--accent-2);
-  filter: drop-shadow(0 0 6px var(--accent-glow-2));
-}
-
-/* ── Inline Code Tokens ────────────────────────────────────────────────────────────── */
-code {
-  display: inline-flex;
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-family: var(--mono);
-  font-size: 13px;
-  color: var(--accent);
-  background: rgba(124, 255, 218, 0.08);
-  border: 1px solid rgba(124, 255, 218, 0.15);
-}
-
-/* ── Cinematic State Transitions ────────────────────────────────────────────── */
-.cinematic-element,
-.morph-element {
-  transform: translate3d(0, 0, 0);
-  backface-visibility: hidden;
-  will-change: transform, opacity;
-  transition:
-    transform var(--duration-cinematic) var(--ease-cinematic),
-    opacity var(--duration-normal) var(--ease-out),
-    border-radius var(--duration-cinematic) var(--ease-cinematic),
-    background var(--duration-normal) var(--ease-out);
-}
-
-/* ── Entrance Animation Classes ─────────────────────────────────────────────── */
-.enter-cinematic,
-.enter-morph {
-  animation: cinematicIn var(--duration-cinematic) var(--ease-out) both;
-}
-
-.enter-bounce {
-  animation: bounceIn var(--duration-slow) var(--ease-spring) both;
-}
-
-.enter-float {
-  animation: floatUp var(--duration-cinematic) var(--ease-out) both;
-}
-
-.enter-scale {
-  animation: cinematicScale var(--duration-cinematic) var(--ease-spring) both;
-}
-
-/* ── Interactive Hover Behaviors ───────────────────────────────────────────────── */
-.hover-lift {
-  transition:
-    transform var(--duration-normal) var(--ease-spring),
-    box-shadow var(--duration-slow) var(--ease-out);
-}
-
-.hover-lift:hover {
-  transform: translate3d(0, -6px, 0);
-  box-shadow: var(--shadow-lg);
-}
-
-.hover-glow {
-  transition: box-shadow var(--duration-slow) var(--ease-out);
-}
-
-.hover-glow:hover {
-  box-shadow: var(--shadow-glow);
-}
-
-.hover-scale {
-  transition: transform var(--duration-normal) var(--ease-spring);
-}
-
-.hover-scale:hover {
-  transform: scale(1.05);
-}
-
-/* ── Press Interaction States ───────────────────────────────────────────────────────────── */
-.press-shrink:active {
-  transform: scale(0.95);
-  transition-duration: 60ms;
-}
-
-.press-bounce:active {
-  transform: scale(0.92);
-  transition: transform 80ms var(--ease-bounce);
-}
-
-/* ── Arc-Reactor Glow Effects ───────────────────────────────────────────────────────────── */
-.glow-accent {
-  box-shadow: 0 0 20px var(--accent-glow);
-}
-
-.glow-pulse {
-  animation: pulseGlow 3s var(--ease-smooth) infinite;
-}
-
-/* ── Loading Skeleton States ─────────────────────────────────────────────────────────── */
-.skeleton {
-  position: relative;
-  overflow: hidden;
-  background: var(--bg-card);
-  border-radius: 12px;
-}
-
-.skeleton::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(124, 255, 218, 0.08) 50%,
-    transparent 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s var(--ease-smooth) infinite;
-}
-
-/* ── Responsive Typography ──────────────────────────────────────────────────── */
-@media (max-width: 640px) {
-  h1 { font-size: 1.5rem; }
-  h2 { font-size: 1.125rem; }
-  p { font-size: 0.9375rem; }
-}
-
-/* ── Safe Area Padding for Mobile ───────────────────────────────────────────── */
-@supports (padding: env(safe-area-inset-bottom)) {
-  .safe-area-bottom {
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
-  }
-  
-  .safe-area-top {
-    padding-top: max(16px, env(safe-area-inset-top));
-  }
-}
-
-/* ── Dark Mode Enforcement ───────────────────────────────────────────────────────── */
-@media (prefers-color-scheme: light) {
-  :root {
-    color-scheme: dark;
-    background: var(--bg);
-    color: var(--text);
-  }
-}
-
-/* Unified cinematic minimal shell */
-.app-container{background:linear-gradient(180deg,color-mix(in srgb,var(--theme-bg) 92%, #000),color-mix(in srgb,var(--theme-bg) 74%, #111)) !important;}
-[data-color-mode="light"] .app-container{background:linear-gradient(180deg,#f7f9fc,#eef2f8) !important;}
