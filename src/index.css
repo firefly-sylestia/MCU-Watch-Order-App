@@ -744,3 +744,55 @@ textarea:focus-visible {
 button:active {
   transform: translateY(1px) scale(0.99);
 }
+
+/* === UI 8.5 Modernization Layer === */
+:root {
+  --ui-radius-sm: 12px;
+  --ui-radius-md: 16px;
+  --ui-radius-lg: 22px;
+  --ui-space-1: 6px;
+  --ui-space-2: 10px;
+  --ui-space-3: 14px;
+  --ui-space-4: 20px;
+  --theme-border: transparent;
+  --theme-border-muted: transparent;
+  --theme-outline: color-mix(in srgb, var(--theme-accent) 36%, transparent);
+  --theme-bg-gradient: radial-gradient(120% 120% at 10% 0%, color-mix(in srgb, var(--theme-accent) 18%, transparent), transparent 52%), radial-gradient(120% 120% at 90% 0%, color-mix(in srgb, var(--theme-accent-alt) 16%, transparent), transparent 55%), linear-gradient(180deg, color-mix(in srgb, #020617 90%, transparent), #050912);
+  --theme-surface-glass: color-mix(in srgb, var(--theme-surface) 80%, transparent);
+  --theme-surface-glass-hover: color-mix(in srgb, var(--theme-surface-hover) 84%, transparent);
+}
+
+:root[data-theme='light'] {
+  --theme-bg-gradient: radial-gradient(120% 120% at 10% 0%, color-mix(in srgb, var(--theme-accent) 12%, transparent), transparent 50%), radial-gradient(120% 120% at 90% 0%, color-mix(in srgb, var(--theme-accent-alt) 11%, transparent), transparent 54%), linear-gradient(180deg, #f6f8ff, #eef3ff);
+}
+
+body {
+  background: var(--theme-bg-gradient);
+}
+
+.glass-panel,
+.bottom-action-dock,
+.fab-primary,
+.bottom-action-bar {
+  border: 1px solid transparent !important;
+  background: var(--theme-surface-glass) !important;
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--theme-accent-glow) 45%, transparent), 0 2px 0 color-mix(in srgb, #fff 10%, transparent) inset;
+  backdrop-filter: blur(14px) saturate(135%);
+}
+
+.glass-panel:hover,
+.bottom-action-dock:hover,
+.fab-primary:hover,
+.bottom-action-bar:hover {
+  background: var(--theme-surface-glass-hover) !important;
+}
+
+.ui-interactive:focus-visible,
+.fpill:focus-visible,
+.wbtn:focus-visible,
+.theme-btn:focus-visible,
+.status-pill:focus-visible,
+button:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 2px var(--theme-outline), 0 0 0 8px color-mix(in srgb, var(--theme-accent) 14%, transparent);
+}
