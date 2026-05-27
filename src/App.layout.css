@@ -19,7 +19,7 @@
   --chip-bg: color-mix(in srgb,var(--theme-surface) 78%, transparent);
   --chip-bg-hover: color-mix(in srgb,var(--theme-surface-hover) 72%, var(--theme-surface));
   --chip-border: var(--border-soft);
-  --chip-border-active: color-mix(in srgb,var(--theme-accent) 52%, var(--theme-border));
+  --chip-border-active: color-mix(in srgb,var(--theme-border) 86%, rgba(255,255,255,0.12));
   --chip-text: var(--theme-text);
   --chip-text-active: var(--theme-accent);
   --chip-shadow: var(--shadow-soft);
@@ -135,7 +135,7 @@
 [data-color-mode="dark"],
 [data-color-mode="light"] {
   --interactive-border-default: color-mix(in srgb,var(--theme-border) 84%, transparent);
-  --interactive-border-hover: color-mix(in srgb,var(--theme-accent) 42%, var(--theme-border));
+  --interactive-border-hover: color-mix(in srgb,var(--theme-border) 92%, rgba(255,255,255,0.14));
   --interactive-text-default: var(--theme-text);
   --interactive-text-active: var(--theme-accent);
 }
