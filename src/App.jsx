@@ -34,6 +34,8 @@ import { AFTER_CREDITS, AFTER_CREDITS_DEFAULT, DIRECTOR_DATA } from './data/afte
 import { TRAILER_DATA, trailerEmbedUrl, getTrailerByTitle } from './data/trailerData';
 
 import { Search, Eye, EyeOff, Film, Tv, Zap, ChevDown, ChevRight, ArrowUpDown, Check, Clock, Heart, Pause, Trash2, Upload, Download, Sun, Star, Moon, Settings, Info, Bookmark, Layers, PlayCircle, PauseCircle, XCircle, SlidersH, UserCircle, Menu, SwitchIcon, X } from './constants/icons';
+import { MARVEL_UI_LEXICON, LIST_MODES } from './constants/appText';
+import { matchesSearch } from './utils/searchUtils';
 
 const TYPE_META = {
   film:   { label: 'Film',   Icon: Film, color: '#d4372f' },
@@ -61,92 +63,6 @@ const TITLE_ROW_STATIC = {
 };
 const DESKTOP_TEXT_SCALES = [1, 1.25, 1.5, 1.75, 2];
 // ─── Static data ────────────────────────────────────────────────────────────
-
-const normalizeSearchText = (value = '') => value
-  .toLowerCase()
-  .normalize('NFD')
-  .replace(/[\u0300-\u036f]/g, '')
-  .replace(/[^a-z0-9\s]/g, ' ')
-  .replace(/\s+/g, ' ')
-  .trim();
-
-const fuzzyIncludes = (haystack, needle) => {
-  if (!needle) return true;
-  if (!haystack) return false;
-  if (haystack.includes(needle)) return true;
-  const parts = needle.split(' ').filter(Boolean);
-  if (parts.length > 1) return parts.every(part => haystack.includes(part));
-  const term = parts[0] || needle;
-  if (term.length < 4) return false;
-  for (const token of haystack.split(' ')) {
-    if (!token) continue;
-    if (Math.abs(token.length - term.length) > 1) continue;
-    let edits = 0;
-    let i = 0; let j = 0;
-    while (i < token.length && j < term.length) {
-      if (token[i] === term[j]) { i += 1; j += 1; continue; }
-      edits += 1;
-      if (edits > 1) break;
-      if (token.length > term.length) i += 1;
-      else if (term.length > token.length) j += 1;
-      else { i += 1; j += 1; }
-    }
-    edits += (token.length - i) + (term.length - j);
-    if (edits <= 1) return true;
-  }
-  return false;
-};
-
-const matchesSearch = (item, query, extras = {}) => {
-  const q = normalizeSearchText(query);
-  if (!q) return true;
-  const corpus = normalizeSearchText([
-    item.title,
-    item.prereq,
-    item.desc,
-    item.releaseDate,
-    item.releaseStatus,
-    item.type,
-    item.status,
-    item.phase ? `phase ${item.phase}` : '',
-    extras.director || '',
-    ...(extras.connectsTo || []),
-    extras.timelineLabel || '',
-  ].filter(Boolean).join(' '));
-  return fuzzyIncludes(corpus, q);
-};
-
-const MARVEL_UI_LEXICON = {
-  'Navigation Panel': 'S.H.I.E.L.D. Command Deck',
-  'Marvel Fan': 'Stark Initiative Agent',
-  'Dark': 'Night Ops',
-  'Light': 'Day Ops',
-  'Calendar View': 'Multiverse Calendar',
-  'List View': 'Mission List',
-  'Quick Phases': 'Phase Jump',
-  'Analytics': 'Jarvis Analytics',
-  'Viewing List': 'Mission Archive',
-  'WATCHED': 'MISSIONS CLEARED',
-  'CONTINUE WATCHING': 'CONTINUE MISSION',
-  'Preferences': 'Protocol Settings',
-  'Dark Theme': 'Night Protocol',
-  'Spoiler Safe': 'Spoiler Shield',
-  'Performance Mode': 'Arc Reactor Boost',
-  'Enable scaling': 'Enable HUD scaling',
-  'Backup & Restore': 'Stark Backup Vault',
-  'Danger Zone': 'Red Room Alert',
-  'S.H.I.E.L.D. Intel Search': 'F.R.I.D.A.Y. Intel Search',
-  'Locate any Marvel story node': 'Locate any Marvel timeline node',
-  'Back to Home': 'Return to Helicarrier',
-  'Back to Home Carousel': 'Return to Helicarrier Deck',
-  'Type to begin searching': 'Type to scan the multiverse',
-  'Clear Search': 'Clear Scan',
-};
-
-const LIST_MODES = [
-  { id: 'core',     label: 'MCU',      sublabel: 'Curated List',       color: '#c0392b', desc: '60 curated films & series'           },
-  { id: 'extended', label: 'Extended', sublabel: 'Full Chronological', color: '#4a9ede', desc: 'All entries incl. Netflix, SHIELD & more' },
-];
 
 // ─── OMDB ratings key (for ratings only — posters use TMDB) ─────────────────
 const OMDB_RATINGS_KEY = '2c971c17';
