@@ -52,9 +52,19 @@ export const getTrailerByTitle = (title = '') => {
     .replace(/\sEp\s.*$/i, '')
     .replace(/\s&\sS\d+.*$/i, '')
     .replace(/:\sSlingshot.*$/i, '')
+    .replace(/\sS\d+\s*&\s*S\d+.*$/i, '')
+    .replace(/\s*\(.*?\)\s*$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const canonical = (input = '') => normalize(input)
+    .replace(/\band\b/gi, '&')
+    .replace(/\s*&\s*/g, ' & ')
+    .replace(/\s+/g, ' ')
     .trim();
   const normalized = normalize(title);
-  const direct = TRAILER_DATA[title] || TRAILER_DATA[normalized] || null;
+  const canonicalTitle = canonical(title);
+  const canonicalNormalized = canonical(normalized);
+  const direct = TRAILER_DATA[title] || TRAILER_DATA[normalized] || TRAILER_DATA[canonicalTitle] || TRAILER_DATA[canonicalNormalized] || null;
   if (!direct) return null;
   const options = Array.isArray(direct) ? direct : [direct];
   return { options, primary: options[0] };

@@ -2981,6 +2981,14 @@ export default function MCUViewer() {
   const selectedTrailer = trailerOptions[trailerVariantIndex] || trailerOptions[0] || null;
   const trailerOptionIndex = trailerOptions.findIndex(option => /trailer/i.test(option?.label || option?.type || ''));
   const teaserOptionIndex = trailerOptions.findIndex(option => /teaser/i.test(option?.label || option?.type || ''));
+  const hasTrailerOption = trailerOptionIndex >= 0;
+  const hasTeaserOption = teaserOptionIndex >= 0;
+  const postCreditForward = detailItem ? getAfterCreditsMeta(detailItem).connectsTo : [];
+  const postCreditInbound = useMemo(() => detailItem
+    ? Object.entries(AFTER_CREDITS)
+      .filter(([, meta]) => Array.isArray(meta?.connectsTo) && meta.connectsTo.includes(detailItem.title))
+      .map(([name]) => name)
+    : [], [detailItem]);
   const tMarvel = (label) => (marvelLangMode ? (MARVEL_UI_LEXICON[label] || `✦ ${label}`) : label);
   const filterTriggerLabel = tMarvel('Filters');
 
@@ -3717,14 +3725,14 @@ export default function MCUViewer() {
                   {(detailData?.imdbRating && detailData.imdbRating !== 'N/A') && <span>★ {detailData.imdbRating}/10</span>}
                 </div>
                 <div className="detail-export-actions-inline">
-                  {!!selectedTrailer?.youtubeId && (
-                    <button className="fpill glass-panel detail-btn" onClick={openTrailerPlayer}><PlayCircle size={12}/>Watch Trailer</button>
-                  )}
-                  {trailerOptionIndex >= 0 && (
+                  {hasTrailerOption && (
                     <button className="fpill glass-panel detail-btn" onClick={() => { setTrailerVariantIndex(trailerOptionIndex); openTrailerPlayer(); }}><PlayCircle size={12}/>Trailer</button>
                   )}
-                  {teaserOptionIndex >= 0 && (
+                  {hasTeaserOption && (
                     <button className="fpill glass-panel detail-btn" onClick={() => { setTrailerVariantIndex(teaserOptionIndex); openTrailerPlayer(); }}><PlayCircle size={12}/>Teaser</button>
+                  )}
+                  {!hasTrailerOption && !hasTeaserOption && !!selectedTrailer?.youtubeId && (
+                    <button className="fpill glass-panel detail-btn" onClick={openTrailerPlayer}><PlayCircle size={12}/>Watch Media</button>
                   )}
                   <button className="fpill glass-panel detail-btn" onClick={() => openImdbForItem(detailItem, detailData)}><Info size={12}/>Open IMDb</button>
                   <button className="fpill glass-panel detail-btn" onClick={() => exportPosterForItem(detailItem, { share: true })}><Upload size={12}/>Share Exact Card</button>
@@ -3790,6 +3798,31 @@ export default function MCUViewer() {
                     <div><strong>Connects to</strong><span>{getAfterCreditsMeta(detailItem).connectsTo.length ? getAfterCreditsMeta(detailItem).connectsTo.join(', ') : 'No explicit setup tracked'}</span></div>
                     <div><strong>Director</strong><span>{detailData?.Director && detailData.Director !== 'N/A' ? detailData.Director : (DIRECTOR_DATA[detailItem.title] || 'Director data coming soon')}</span></div>
                     <div><strong>Cast</strong><span>{detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</span></div>
+                  </div>
+                </section>
+                <section className="detail-export-panel intel">
+                  <div className="detail-export-panel-head"><span>POST-CREDIT DEPENDENCY GRAPH</span></div>
+                  <div className="detail-intel-list">
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <strong>Outgoing stingers</strong>
+                      <span style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                        <span className="fpill">{detailItem.title}</span>
+                        <span aria-hidden>→</span>
+                        {postCreditForward.length ? postCreditForward.map(node => (
+                          <span key={`forward-${node}`} className="fpill" style={{ background: 'color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface))' }}>{node}</span>
+                        )) : 'No outgoing setup tracked.'}
+                      </span>
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <strong>Incoming stingers</strong>
+                      <span style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                        {postCreditInbound.length ? postCreditInbound.map(node => (
+                          <span key={`incoming-${node}`} className="fpill" style={{ background: 'color-mix(in srgb, var(--theme-accent-alt) 12%, var(--theme-surface))' }}>{node}</span>
+                        )) : 'No incoming setup tracked.'}
+                        <span aria-hidden>→</span>
+                        <span className="fpill">{detailItem.title}</span>
+                      </span>
+                    </div>
                   </div>
                 </section>
 
