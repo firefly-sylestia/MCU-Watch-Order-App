@@ -878,6 +878,8 @@ export default function MCUViewer() {
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
+  const [googleAccount, setGoogleAccount] = useState(() => readStorageJSON('mcu-google-account-v1', null));
+  const [googleSyncMsg, setGoogleSyncMsg] = useState('');
   const [setupOpen, setSetupOpen] = useState(false);
   const [setupExpanded, setSetupExpanded] = useState(false);
   const [themeMode,      setThemeMode]      = useState('iron-man');
@@ -2379,13 +2381,75 @@ export default function MCUViewer() {
     if (!setupDone) setSetupOpen(true);
   }, []);
 
+  const snapshotAccountData = useCallback(() => ({
+    profile,
+    uploadedAvatars,
+    myLikes,
+    myRating,
+    rewatchCount,
+    bookmarks,
+    reviews,
+  }), [profile, uploadedAvatars, myLikes, myRating, rewatchCount, bookmarks, reviews]);
+
+  const restoreAccountData = useCallback((payload) => {
+    if (!payload || typeof payload !== 'object') return;
+    setProfile(payload.profile || { name: '', pfp: '' });
+    setUploadedAvatars(Array.isArray(payload.uploadedAvatars) ? payload.uploadedAvatars : []);
+    setMyLikes(payload.myLikes || {});
+    setMyRating(payload.myRating || {});
+    setRewatchCount(payload.rewatchCount || {});
+    setBookmarks(payload.bookmarks || {});
+    setReviews(payload.reviews || {});
+  }, []);
+
+  const saveDataForGoogleAccount = useCallback((accountId = googleAccount?.sub) => {
+    if (!accountId) return;
+    scheduleStorageWrite(`mcu-account-sync-v1-${accountId}`, JSON.stringify({ updatedAt: new Date().toISOString(), data: snapshotAccountData() }));
+    setGoogleSyncMsg('Saved current device data to this Google account profile.');
+  }, [googleAccount?.sub, snapshotAccountData]);
+
+  const loadDataForGoogleAccount = useCallback((accountId = googleAccount?.sub) => {
+    if (!accountId) return;
+    const saved = readStorageJSON(`mcu-account-sync-v1-${accountId}`, null);
+    if (saved?.data) {
+      restoreAccountData(saved.data);
+      setGoogleSyncMsg(`Loaded account data saved on ${new Date(saved.updatedAt || Date.now()).toLocaleString()}.`);
+    } else {
+      setGoogleSyncMsg('No account-linked data found yet. Save your current data first.');
+    }
+  }, [googleAccount?.sub, restoreAccountData]);
+
   const openGoogleLogin = useCallback(() => {
     const clientId = '895654125638-pspr0bqmlpf78cc4gj2132ttrhbmlqn2.apps.googleusercontent.com';
     const redirect = encodeURIComponent(window.location.origin);
     const scope = encodeURIComponent('openid email profile');
     const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirect}&response_type=token&scope=${scope}&prompt=select_account`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    const popup = window.open(url, '_blank', 'noopener,noreferrer,width=520,height=680');
+    if (!popup) setGoogleSyncMsg('Popup blocked. Please allow popups to continue Google Sign-In.');
   }, []);
+
+  useEffect(() => {
+    const hash = String(window.location.hash || '');
+    if (!hash.includes('access_token=')) return;
+    const params = new URLSearchParams(hash.replace(/^#/, ''));
+    const token = params.get('access_token');
+    if (!token) return;
+    (async () => {
+      try {
+        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${token}` } });
+        const account = await res.json();
+        if (!account?.sub) throw new Error('Missing Google account ID');
+        setGoogleAccount(account);
+        scheduleStorageWrite('mcu-google-account-v1', JSON.stringify(account));
+        setGoogleSyncMsg(`Signed in as ${account.name || account.email}.`);
+        loadDataForGoogleAccount(account.sub);
+      } catch {
+        setGoogleSyncMsg('Google sign-in failed. Verify authorized redirect URI in Google Cloud console.');
+      } finally {
+        window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+      }
+    })();
+  }, [loadDataForGoogleAccount]);
 
   useEffect(() => { scheduleStorageWrite('mcu-profile-v1', JSON.stringify(profile)); }, [profile]);
   useEffect(() => { scheduleStorageWrite('mcu-uploaded-avatars-v1', JSON.stringify(uploadedAvatars)); }, [uploadedAvatars]);
@@ -3197,6 +3261,29 @@ export default function MCUViewer() {
               </label>
             </div>
             <button className="fpill" onClick={() => setProfile(p => ({ ...p, pfp: '' }))} disabled={!profile.pfp} style={{ justifyContent: 'center', opacity: profile.pfp ? 1 : 0.55 }}><Trash2 size={14}/>Remove Profile Picture</button>
+            <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
+            <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>Google Account Sync</div>
+            <div style={{ fontSize: 12, color: T.textMuted, lineHeight: 1.45, padding: '0 2px' }}>
+              1) Tap Sign in with Google. 2) In Google Cloud console, add <b>{window.location.origin}</b> as an Authorized JavaScript origin and redirect URI.
+              3) Save current data to account. 4) On another device, sign in and load account data.
+            </div>
+            {!googleAccount?.sub ? (
+              <button className="fpill" onClick={openGoogleLogin} style={{ justifyContent: 'center' }}>
+                <UserCircle size={14} /> Sign in with Google
+              </button>
+            ) : (
+              <>
+                <div style={{ fontSize: 12, color: T.text }}><b>{googleAccount.name || 'Google User'}</b> · {googleAccount.email}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <button className="fpill" onClick={() => saveDataForGoogleAccount()}><Upload size={14} />Save to Account</button>
+                  <button className="fpill" onClick={() => loadDataForGoogleAccount()}><Download size={14} />Load from Account</button>
+                </div>
+                <button className="fpill" onClick={() => { setGoogleAccount(null); removeStorageValue('mcu-google-account-v1'); setGoogleSyncMsg('Signed out locally.'); }} style={{ justifyContent: 'center' }}>
+                  <XCircle size={14} /> Sign out
+                </button>
+              </>
+            )}
+            {!!googleSyncMsg && <div style={{ fontSize: 11, color: T.textMuted }}>{googleSyncMsg}</div>}
             <hr style={{ border: 0, borderTop: `1px solid ${T.surfaceBorder}`, opacity: 0.6 }} />
             <div style={{ fontSize: 11, letterSpacing: 2, color: T.textMuted, textTransform: 'uppercase' }}>{tMarvel('Preferences')}</div>
             <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 2px' }}>
