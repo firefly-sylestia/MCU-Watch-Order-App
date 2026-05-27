@@ -3917,23 +3917,49 @@ export default function MCUViewer() {
                 <div className="trailer-eyebrow">Official media</div>
                 <strong className="trailer-title">{detailItem.title}</strong>
                 {trailerOptions.length > 1 && (
-                  <select className="trailer-variant-select" value={trailerVariantIndex} onChange={(e) => setTrailerVariantIndex(Number(e.target.value))}>
-                    {trailerOptions.map((option, index) => <option key={`${option.youtubeId}-${index}`} value={index}>{option.label}</option>)}
-                  </select>
+                  <div className="trailer-variant-switch" role="tablist" aria-label="Trailer type">
+                    {trailerOptions.map((option, index) => (
+                      <button
+                        key={`${option.youtubeId}-${index}`}
+                        type="button"
+                        role="tab"
+                        aria-selected={trailerVariantIndex === index}
+                        className={`trailer-variant-chip ${trailerVariantIndex === index ? 'is-active' : ''}`}
+                        onClick={() => setTrailerVariantIndex(index)}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
               <div className="trailer-actions">
-                <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle}><SwitchIcon size={12}/>{trailerLandscape ? 'Portrait' : 'Landscape'}</button>
+                <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle}><SwitchIcon size={12}/>Rotate View</button>
                 <button className="fpill trailer-close" onClick={() => setTrailerExpanded(true)}><PlayCircle size={12}/>Enlarge</button>
                 <button className="fpill trailer-close" onClick={closeTrailer}><X size={12}/>Close</button>
               </div>
             </div>}
             <div className={`trailer-frame ${trailerLandscape ? 'is-landscape' : ''}`} ref={trailerShellRef}>
-              {trailerLandscape && <div className="trailer-landscape-tip">Landscape mode enabled</div>}
-              <iframe title={`${detailItem.title} trailer`} src={trailerEmbedUrl(selectedTrailer.youtubeId)} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
+              <iframe className="trailer-iframe" title={`${detailItem.title} trailer`} src={trailerEmbedUrl(selectedTrailer.youtubeId)} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
             </div>
             {trailerExpanded && <div className="trailer-expanded-actions">
-              <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle}><SwitchIcon size={12}/>{trailerLandscape ? 'Portrait' : 'Landscape'}</button>
+              {trailerOptions.length > 1 && (
+                <div className="trailer-variant-switch trailer-variant-switch-inline" role="tablist" aria-label="Trailer type">
+                  {trailerOptions.map((option, index) => (
+                    <button
+                      key={`${option.youtubeId}-${index}`}
+                      type="button"
+                      role="tab"
+                      aria-selected={trailerVariantIndex === index}
+                      className={`trailer-variant-chip ${trailerVariantIndex === index ? 'is-active' : ''}`}
+                      onClick={() => setTrailerVariantIndex(index)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button className="fpill trailer-close" onClick={handleTrailerLandscapeToggle}><SwitchIcon size={12}/>Rotate View</button>
               <button className="fpill trailer-close" onClick={handleTrailerBack}><PlayCircle size={12}/>{trailerLandscape ? 'Back & Close' : 'Back'}</button>
               <button className="fpill trailer-close" onClick={closeTrailer}><X size={12}/>Close</button>
             </div>}
