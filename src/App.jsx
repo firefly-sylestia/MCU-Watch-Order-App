@@ -3217,9 +3217,9 @@ export default function MCUViewer() {
         <h3>Backup & Restore</h3>
         <p className="settings-help">Use manual export/import and Google Drive for cloud backup without account linking.</p>
         <div className="settings-inline-actions">
-          <button className="fpill" onClick={exportBackupFile}><Upload size={14} />Export JSON</button>
+          <button className="fpill" onClick={exportProgress}><Upload size={14} />Export JSON</button>
           <label className="fpill" style={{ justifyContent: 'center', cursor: 'pointer' }}><Download size={14} />Import JSON
-            <input type="file" accept="application/json" onChange={(e)=> importBackupFile(e.target.files?.[0])} style={{ display:'none' }} />
+            <input type="file" accept="application/json" onChange={(e)=> importProgress(e.target.files?.[0])} style={{ display:'none' }} />
           </label>
           <a className="fpill settings-drive-link" href="https://drive.google.com/drive/my-drive" target="_blank" rel="noreferrer">Open Drive</a>
         </div>
