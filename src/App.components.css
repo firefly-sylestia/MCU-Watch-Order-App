@@ -3121,3 +3121,21 @@ body { background: var(--app-shell-gradient); }
 .setup-expand-btn{background:none;border:none;color:var(--theme-accent);font-weight:700;cursor:pointer;padding:0}
 .setup-expanded{margin-top:8px;color:var(--theme-text-secondary)}
 [data-color-mode="light"] .setup-overlay{background:rgba(235,241,250,.66)}
+
+/* 2026 settings + setup modernization */
+.settings-shell{align-items:stretch !important;justify-content:stretch !important;pointer-events:auto !important;}
+.settings-menu,.settings-menu-redesign{
+  width:100vw !important;
+  min-height:100dvh !important;
+  max-height:100dvh !important;
+  border-radius:0 !important;
+  border-left:none !important;
+  border-right:none !important;
+  padding:clamp(14px,2.4vw,24px) !important;
+}
+.settings-backdrop{background:rgba(4,10,22,.58) !important;backdrop-filter:blur(4px) !important;}
+.setup-overlay{overscroll-behavior:contain;overflow:auto;padding:clamp(12px,2.5vw,24px)}
+.setup-card{max-height:min(92dvh,860px);overflow:auto}
+.setup-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.setup-section:last-child{grid-column:1/-1}
+@media (max-width:820px){.setup-grid{grid-template-columns:minmax(0,1fr)}}
