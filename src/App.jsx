@@ -2918,7 +2918,8 @@ export default function MCUViewer() {
 
   const cssThemeVars = {
     ...semanticThemeVars,
-    '--theme-border': darkMode ? '#1b1b33' : '#c8beaf',
+    '--theme-border': darkMode ? 'rgba(217,223,244,0.16)' : 'rgba(15,23,42,0.18)',
+    '--theme-border-strong': darkMode ? 'rgba(217,223,244,0.28)' : 'rgba(15,23,42,0.28)',
     '--theme-text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
     '--font-marvel-display': 'var(--font-display)',
     '--font-marvel-ui': 'var(--font-ui)',
@@ -3366,7 +3367,7 @@ export default function MCUViewer() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
             <button className="filters-trigger"
               onClick={() => setFiltersOpen(v => !v)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: `1px solid ${filtersOpen ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: filtersOpen ? 'var(--theme-accent)' : T.textMuted, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 2, transition: 'all 0.18s' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: `1px solid ${filtersOpen ? 'var(--theme-border-strong)' : T.filterBorder}`, background: 'transparent', color: filtersOpen ? 'var(--theme-accent)' : T.textMuted, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 2, transition: 'all 0.18s' }}
             >
               <SlidersH size={13} />
               {filterTriggerLabel}
@@ -3376,7 +3377,7 @@ export default function MCUViewer() {
               <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             <div ref={sortMenuRef} style={{ position: 'relative' }}>
-              <button className="filters-trigger" onClick={() => setSortMenuOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${sortBy === 'order' ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: sortBy === 'order' ? 'var(--theme-accent)' : T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}><ArrowUpDown size={13} />Sort: {SORT_LABELS[sortBy]}<ChevDown size={11} style={{ transform: sortMenuOpen ? 'rotate(180deg)' : 'none' }}/></button>
+              <button className="filters-trigger" onClick={() => setSortMenuOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${sortBy === 'order' ? 'var(--theme-border-strong)' : T.filterBorder}`, background: 'transparent', color: sortBy === 'order' ? 'var(--theme-accent)' : T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}><ArrowUpDown size={13} />Sort: {SORT_LABELS[sortBy]}<ChevDown size={11} style={{ transform: sortMenuOpen ? 'rotate(180deg)' : 'none' }}/></button>
               {sortMenuOpen && <div className="dropdown-pop filter-dropdown redesigned-sort-menu" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1450, minWidth: 240 }}>
                 {Object.entries(SORT_LABELS).map(([key, label]) => (
                   <button key={key} className={`sopt ${sortBy === key ? 'picked' : ''}`} onClick={() => { setSortBy(key); setSortMenuOpen(false); }} style={{ width: '100%', textAlign: 'left' }}>
@@ -3386,7 +3387,7 @@ export default function MCUViewer() {
               </div>}
             </div>
             <div ref={timelineRef} style={{ position: 'relative' }}>
-              <button className="filters-trigger" onClick={() => setTimelineOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid color-mix(in srgb, var(--theme-accent) 42%, var(--theme-border))`, background: 'linear-gradient(135deg, color-mix(in srgb, #ed1d24 22%, var(--theme-surface)) 0%, color-mix(in srgb, #0063e5 18%, var(--theme-surface)) 100%)', color: 'var(--theme-text)', cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.2, boxShadow: '0 10px 20px rgba(0,0,0,.18)' }}>
+              <button className="filters-trigger" onClick={() => setTimelineOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid var(--theme-border-strong)`, background: 'linear-gradient(135deg, color-mix(in srgb, #ed1d24 22%, var(--theme-surface)) 0%, color-mix(in srgb, #0063e5 18%, var(--theme-surface)) 100%)', color: 'var(--theme-text)', cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.2, boxShadow: '0 10px 20px rgba(0,0,0,.18)' }}>
                 <Layers size={13} /> {TIMELINE_MODES.find(m => m.id === timelineMode)?.label || 'Timeline'} <ChevDown size={11} style={{ transform: timelineOpen ? 'rotate(180deg)' : 'none' }}/>
               </button>
               {timelineOpen && (
@@ -3492,7 +3493,7 @@ export default function MCUViewer() {
           className="fab-primary"
           onClick={() => setFabMenuOpen(v => !v)}
           style={{
-            borderColor: fabMenuOpen ? 'var(--theme-accent)' : 'color-mix(in srgb,var(--theme-accent) 28%, var(--theme-border))',
+            borderColor: fabMenuOpen ? 'var(--theme-accent)' : 'var(--theme-border)',
             background: fabMenuOpen ? 'color-mix(in srgb,var(--theme-accent) 16%, var(--theme-surface))' : 'color-mix(in srgb,var(--theme-surface) 86%, transparent)',
             boxShadow: '0 16px 34px rgba(0,0,0,.30)',
           }}
@@ -3701,7 +3702,7 @@ export default function MCUViewer() {
       {/* ━━ DETAIL MODAL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       {detailItem && (
         <div className="detail-backdrop" onClick={() => setDetailItem(null)} role="dialog" aria-label="Movie details">
-          <div className="detail-card glass-panel detail-export-shell" onClick={(e) => e.stopPropagation()} style={{ border: '1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border))' }}>
+          <div className="detail-card glass-panel detail-export-shell" onClick={(e) => e.stopPropagation()} style={{ border: '1px solid var(--theme-border)' }}>
             <div className="detail-export-grid">
               <div className="detail-poster-frame">
                 {detailPosterFailed ? (
@@ -3713,7 +3714,7 @@ export default function MCUViewer() {
                 )}
               
                 {!!selectedTrailer?.youtubeId && (
-                  <button className="fpill" style={{ position: 'absolute', left: 12, bottom: 12, zIndex: 3, background: 'color-mix(in srgb, #ed1d24 22%, var(--theme-surface))', borderColor: 'color-mix(in srgb, #ed1d24 52%, var(--theme-border))' }} onClick={openTrailerPlayer}><PlayCircle size={13}/>Play Media</button>
+                  <button className="fpill" style={{ position: 'absolute', left: 12, bottom: 12, zIndex: 3, background: 'color-mix(in srgb, #ed1d24 22%, var(--theme-surface))', borderColor: 'var(--theme-border-strong)' }} onClick={openTrailerPlayer}><PlayCircle size={13}/>Play Media</button>
                 )}
 </div>
 
@@ -3914,7 +3915,7 @@ export default function MCUViewer() {
 
       {analyticsOpen && (
         <div className="detail-backdrop analytics-backdrop" onClick={closeAnalytics} role="dialog" aria-label="Analysis history">
-          <div className="detail-card glass-panel analytics-shell analytics-shell-redesign" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 1080, border: '1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border))', boxShadow: darkMode ? '0 28px 80px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06)' : '0 18px 44px rgba(15,23,42,0.16), inset 0 1px 0 rgba(255,255,255,0.86)' }}>
+          <div className="detail-card glass-panel analytics-shell analytics-shell-redesign" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 1080, border: '1px solid var(--theme-border)', boxShadow: darkMode ? '0 28px 80px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06)' : '0 18px 44px rgba(15,23,42,0.16), inset 0 1px 0 rgba(255,255,255,0.86)' }}>
             <div className="analytics-header" style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 14 }}>
               <div>
                 <h2 style={{ fontSize: 30, marginBottom: 4 }}>Analysis</h2>
