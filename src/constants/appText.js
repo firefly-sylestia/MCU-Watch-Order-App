@@ -1,0 +1,31 @@
+export const MARVEL_UI_LEXICON = {
+  'Navigation Panel': 'S.H.I.E.L.D. Command Deck',
+  'Marvel Fan': 'Stark Initiative Agent',
+  'Dark': 'Night Ops',
+  'Light': 'Day Ops',
+  'Calendar View': 'Multiverse Calendar',
+  'List View': 'Mission List',
+  'Quick Phases': 'Phase Jump',
+  'Analytics': 'Jarvis Analytics',
+  'Viewing List': 'Mission Archive',
+  'WATCHED': 'MISSIONS CLEARED',
+  'CONTINUE WATCHING': 'CONTINUE MISSION',
+  'Preferences': 'Protocol Settings',
+  'Dark Theme': 'Night Protocol',
+  'Spoiler Safe': 'Spoiler Shield',
+  'Performance Mode': 'Arc Reactor Boost',
+  'Enable scaling': 'Enable HUD scaling',
+  'Backup & Restore': 'Stark Backup Vault',
+  'Danger Zone': 'Red Room Alert',
+  'S.H.I.E.L.D. Intel Search': 'F.R.I.D.A.Y. Intel Search',
+  'Locate any Marvel story node': 'Locate any Marvel timeline node',
+  'Back to Home': 'Return to Helicarrier',
+  'Back to Home Carousel': 'Return to Helicarrier Deck',
+  'Type to begin searching': 'Type to scan the multiverse',
+  'Clear Search': 'Clear Scan',
+};
+
+export const LIST_MODES = [
+  { id: 'core', label: 'MCU', sublabel: 'Curated List', color: '#c0392b', desc: '60 curated films & series' },
+  { id: 'extended', label: 'Extended', sublabel: 'Full Chronological', color: '#4a9ede', desc: 'All entries incl. Netflix, SHIELD & more' },
+];
