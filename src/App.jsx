@@ -2970,6 +2970,12 @@ export default function MCUViewer() {
     '--theme-watched-bg': darkMode
       ? `linear-gradient(100deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 18%, rgba(12,18,34,0.62)), color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 10%, rgba(10,20,32,0.54)))`
       : `linear-gradient(100deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 14%, #ffffff), color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 8%, #f7f5ef))`,
+    '--theme-accent-glow': darkMode
+      ? `radial-gradient(circle at 12% 0%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 42%, transparent), transparent 46%), radial-gradient(circle at 92% 8%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 40%, transparent), transparent 44%)`
+      : `radial-gradient(circle at 10% 0%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 18%, transparent), transparent 52%), radial-gradient(circle at 90% 8%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 16%, transparent), transparent 50%)`,
+    '--theme-shell-gradient': darkMode
+      ? `linear-gradient(146deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 16%, #0a1022), color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 10%, #070b17) 45%, #05060e 100%)`
+      : `linear-gradient(146deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 12%, #ffffff), color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 8%, #f7f2e9) 46%, #f4efe6 100%)`,
     ...activeThemeVars,
   };
   const routeMode = analyticsOpen || settingsOpen ? 'utility' : 'home';
@@ -3804,29 +3810,29 @@ export default function MCUViewer() {
                     <div><strong>Cast</strong><span>{detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</span></div>
                   </div>
                 </section>
-                <section className="detail-export-panel intel">
+                <section className="detail-export-panel intel detail-graph-panel">
                   <div className="detail-export-panel-head"><span>POST-CREDIT DEPENDENCY GRAPH</span></div>
-                  <div className="detail-intel-list">
-                    <div style={{ gridColumn: '1 / -1' }}>
+                  <div className="detail-graph-grid">
+                    <article className="detail-graph-flow detail-graph-flow--outgoing">
                       <strong>Outgoing stingers</strong>
-                      <span style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-                        <span className="fpill">{detailItem.title}</span>
-                        <span aria-hidden>→</span>
+                      <div className="detail-graph-track" role="list" aria-label="Outgoing post-credit links">
+                        <span className="detail-graph-node detail-graph-node--origin">{detailItem.title}</span>
+                        <span className="detail-graph-arrow" aria-hidden>→</span>
                         {postCreditForward.length ? postCreditForward.map(node => (
-                          <span key={`forward-${node}`} className="fpill" style={{ background: 'color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface))' }}>{node}</span>
-                        )) : 'No outgoing setup tracked.'}
-                      </span>
-                    </div>
-                    <div style={{ gridColumn: '1 / -1' }}>
+                          <span key={`forward-${node}`} className="detail-graph-node detail-graph-node--forward" role="listitem">{node}</span>
+                        )) : <span className="detail-graph-empty">No outgoing setup tracked.</span>}
+                      </div>
+                    </article>
+                    <article className="detail-graph-flow detail-graph-flow--incoming">
                       <strong>Incoming stingers</strong>
-                      <span style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                      <div className="detail-graph-track" role="list" aria-label="Incoming post-credit links">
                         {postCreditInbound.length ? postCreditInbound.map(node => (
-                          <span key={`incoming-${node}`} className="fpill" style={{ background: 'color-mix(in srgb, var(--theme-accent-alt) 12%, var(--theme-surface))' }}>{node}</span>
-                        )) : 'No incoming setup tracked.'}
-                        <span aria-hidden>→</span>
-                        <span className="fpill">{detailItem.title}</span>
-                      </span>
-                    </div>
+                          <span key={`incoming-${node}`} className="detail-graph-node detail-graph-node--incoming" role="listitem">{node}</span>
+                        )) : <span className="detail-graph-empty">No incoming setup tracked.</span>}
+                        <span className="detail-graph-arrow" aria-hidden>→</span>
+                        <span className="detail-graph-node detail-graph-node--origin">{detailItem.title}</span>
+                      </div>
+                    </article>
                   </div>
                 </section>
 

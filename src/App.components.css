@@ -3049,3 +3049,58 @@ textarea{font-size:var(--type-body)}
   background:linear-gradient(160deg,#fff,#f4f7fb) !important;
   color:#1f2937 !important;
 }
+
+/* === One UI inspired modernization: post-credit graph + unified accents === */
+.detail-export-shell{
+  position:relative;
+  isolation:isolate;
+  background: var(--theme-shell-gradient);
+  border: 1px solid color-mix(in srgb, var(--theme-overlay-border) 72%, transparent);
+}
+.detail-export-shell::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  border-radius:inherit;
+  background: var(--theme-accent-glow);
+  opacity:.72;
+}
+.detail-graph-panel{
+  background: color-mix(in srgb, var(--theme-overlay-surface) 86%, transparent);
+  border-color: color-mix(in srgb, var(--theme-overlay-border) 92%, transparent);
+}
+.detail-graph-grid{display:grid;gap:12px}
+.detail-graph-flow{
+  display:grid;
+  gap:8px;
+  padding:12px;
+  border-radius:16px;
+  border:1px solid color-mix(in srgb,var(--theme-border) 68%, transparent);
+  background: color-mix(in srgb,var(--theme-surface) 72%, transparent);
+}
+.detail-graph-flow strong{font-size:var(--type-metadata);letter-spacing:.08em;text-transform:uppercase;color:var(--theme-text-secondary)}
+.detail-graph-track{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.detail-graph-node{
+  display:inline-flex;align-items:center;min-height:34px;padding:7px 12px;border-radius:12px;
+  border:1px solid color-mix(in srgb,var(--theme-overlay-border) 70%, transparent);
+  background: color-mix(in srgb,var(--theme-surface) 76%, transparent);
+  color:var(--theme-text);font-size:var(--type-caption);line-height:var(--lh-body);
+  transition:transform 140ms var(--ease-out), background-color 180ms var(--ease-out), border-color 180ms var(--ease-out), box-shadow 180ms var(--ease-out);
+}
+.detail-graph-node--origin{font-weight:760;background:color-mix(in srgb,var(--theme-accent) 18%, var(--theme-surface));border-color:color-mix(in srgb,var(--theme-accent) 54%, var(--theme-border))}
+.detail-graph-node--forward{background:color-mix(in srgb,var(--theme-accent) 13%, var(--theme-surface))}
+.detail-graph-node--incoming{background:color-mix(in srgb,var(--theme-accent-alt) 13%, var(--theme-surface))}
+.detail-graph-node:hover{transform:translateY(-1px);box-shadow:0 8px 16px rgba(2,8,23,.16)}
+.detail-graph-arrow{font-size:14px;font-weight:800;color:var(--theme-text-secondary);opacity:.86}
+.detail-graph-empty{font-size:var(--type-caption);color:var(--theme-text-muted)}
+
+[data-color-mode="light"] .detail-graph-flow{
+  background: color-mix(in srgb,var(--theme-surface) 90%, #ffffff);
+}
+[data-color-mode="light"] .detail-graph-node{
+  box-shadow:0 4px 10px rgba(15,23,42,.06);
+}
+@media (prefers-reduced-motion:reduce){
+  .detail-graph-node{transition:none}
+}
