@@ -25,6 +25,30 @@ export const MARVEL_UI_LEXICON = {
   'Clear Search': 'Clear Scan',
 };
 
+export const DC_UI_LEXICON = {
+  'Navigation Panel': 'Watchtower Command',
+  'Marvel Fan': 'Justice League Operative',
+  'Dark': 'Knight Mode',
+  'Light': 'Metropolis Mode',
+  'Calendar View': 'Crisis Calendar',
+  'List View': 'Casefile List',
+  'Analytics': 'Oracle Analytics',
+  'Open Settings': 'Open Command Settings',
+  'Universe Style': 'Legacy Style',
+  'Timeline Style': 'Legacy Style',
+  'Watchlist Mode': 'Casefile Mode',
+  'Settings Hub': 'Command Hub',
+  'Customize your DC experience': 'Customize your DC experience',
+  'Marvel Language': 'DC Language',
+  'Heroic Labels': 'Heroic Labels',
+  'Interface Behavior': 'Interface Behavior',
+  'Auto-hide Completed': 'Auto-hide Resolved',
+  'Reduce Motion': 'Reduce Motion',
+  'Performance Mode': 'Speed Force Efficiency',
+  'Type to begin searching': 'Type to scan the archive',
+  'Clear Search': 'Clear Scan',
+};
+
 export const LIST_MODES = [
   { id: 'core', label: 'MCU', sublabel: 'Curated List', color: '#c0392b', desc: '60 curated films & series' },
   { id: 'extended', label: 'Extended', sublabel: 'Full Chronological', color: '#4a9ede', desc: 'All entries incl. Netflix, SHIELD & more' },
