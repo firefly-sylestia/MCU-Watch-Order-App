@@ -1,0 +1,69 @@
+import React from 'react';
+
+export default function SetupWizard({
+  open,
+  profile,
+  setProfile,
+  onPickPhoto,
+  onGoogleLogin,
+  onFetchCore,
+  onFetchAll,
+  fetchState,
+  onSkip,
+  onFinish,
+  onExpandToggle,
+  expanded,
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="setup-overlay" role="dialog" aria-modal="true" aria-label="First time setup">
+      <div className="setup-card">
+        <div className="setup-header">
+          <h2>First-time setup</h2>
+          <p>Set up your profile, choose what to fetch, and start watching.</p>
+        </div>
+
+        <div className="setup-grid">
+          <section className="setup-section">
+            <h3>1) Profile</h3>
+            <input
+              value={profile.name}
+              onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))}
+              placeholder="Display name"
+              className="setup-input"
+            />
+            <div className="setup-actions-row">
+              <button className="fpill" onClick={onPickPhoto}>Upload photo from gallery</button>
+              <button className="fpill" onClick={onGoogleLogin}>Continue with Google</button>
+            </div>
+            <small className="setup-note">Google Sign-In opens Gmail account chooser after OAuth is configured in Google Cloud.</small>
+          </section>
+
+          <section className="setup-section">
+            <h3>2) Fetch data & posters</h3>
+            <div className="setup-actions-row">
+              <button className="fpill" onClick={onFetchCore} disabled={fetchState.active}>Fetch Core Only</button>
+              <button className="fpill" onClick={onFetchAll} disabled={fetchState.active}>Fetch All</button>
+            </div>
+            <small className="setup-note">{fetchState.message || 'Choose how much data to prefetch from posters + metadata cache.'}</small>
+          </section>
+
+          <section className="setup-section">
+            <button className="setup-expand-btn" onClick={onExpandToggle}>{expanded ? 'Hide expanded setup options' : 'Show expanded setup options'}</button>
+            {expanded && (
+              <div className="setup-expanded">
+                <p>Expanded setup helps preload timeline details, local database cache, and artwork for smoother browsing.</p>
+              </div>
+            )}
+          </section>
+        </div>
+
+        <div className="setup-footer">
+          <button className="fpill" onClick={onSkip}>Skip for now</button>
+          <button className="fpill" onClick={onFinish}>Finish setup</button>
+        </div>
+      </div>
+    </div>
+  );
+}
