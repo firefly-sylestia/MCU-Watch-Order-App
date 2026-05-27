@@ -3804,29 +3804,39 @@ export default function MCUViewer() {
                     <div><strong>Cast</strong><span>{detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</span></div>
                   </div>
                 </section>
-                <section className="detail-export-panel intel">
+                <section className="detail-export-panel intel post-credit-graph-panel">
                   <div className="detail-export-panel-head"><span>POST-CREDIT DEPENDENCY GRAPH</span></div>
-                  <div className="detail-intel-list">
-                    <div style={{ gridColumn: '1 / -1' }}>
-                      <strong>Outgoing stingers</strong>
-                      <span style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-                        <span className="fpill">{detailItem.title}</span>
-                        <span aria-hidden>→</span>
+                  <div className="post-credit-graph" role="list" aria-label="Post-credit dependency graph">
+                    <article className="post-credit-lane outgoing" role="listitem" aria-label="Outgoing post-credit dependencies">
+                      <header>
+                        <strong>Outgoing stingers</strong>
+                        <small>What this title sets up next</small>
+                      </header>
+                      <div className="post-credit-flow">
+                        <span className="post-credit-node is-current">{detailItem.title}</span>
                         {postCreditForward.length ? postCreditForward.map(node => (
-                          <span key={`forward-${node}`} className="fpill" style={{ background: 'color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface))' }}>{node}</span>
-                        )) : 'No outgoing setup tracked.'}
-                      </span>
-                    </div>
-                    <div style={{ gridColumn: '1 / -1' }}>
-                      <strong>Incoming stingers</strong>
-                      <span style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                          <React.Fragment key={`forward-${node}`}>
+                            <span className="post-credit-arrow" aria-hidden>→</span>
+                            <span className="post-credit-node is-outgoing">{node}</span>
+                          </React.Fragment>
+                        )) : <span className="post-credit-empty">No outgoing setup tracked.</span>}
+                      </div>
+                    </article>
+                    <article className="post-credit-lane incoming" role="listitem" aria-label="Incoming post-credit dependencies">
+                      <header>
+                        <strong>Incoming stingers</strong>
+                        <small>What sets up this title</small>
+                      </header>
+                      <div className="post-credit-flow">
                         {postCreditInbound.length ? postCreditInbound.map(node => (
-                          <span key={`incoming-${node}`} className="fpill" style={{ background: 'color-mix(in srgb, var(--theme-accent-alt) 12%, var(--theme-surface))' }}>{node}</span>
-                        )) : 'No incoming setup tracked.'}
-                        <span aria-hidden>→</span>
-                        <span className="fpill">{detailItem.title}</span>
-                      </span>
-                    </div>
+                          <React.Fragment key={`incoming-${node}`}>
+                            <span className="post-credit-node is-incoming">{node}</span>
+                            <span className="post-credit-arrow" aria-hidden>→</span>
+                          </React.Fragment>
+                        )) : <span className="post-credit-empty">No incoming setup tracked.</span>}
+                        <span className="post-credit-node is-current">{detailItem.title}</span>
+                      </div>
+                    </article>
                   </div>
                 </section>
 

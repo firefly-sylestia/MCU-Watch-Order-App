@@ -3049,3 +3049,61 @@ textarea{font-size:var(--type-body)}
   background:linear-gradient(160deg,#fff,#f4f7fb) !important;
   color:#1f2937 !important;
 }
+
+/* One UI-inspired modernization: detail graph + theme ambience */
+:root {
+  --app-shell-gradient: radial-gradient(1200px 700px at 10% -12%, color-mix(in srgb, var(--theme-accent) 24%, transparent), transparent 64%),
+    radial-gradient(960px 620px at 92% -15%, color-mix(in srgb, var(--theme-accent-alt) 24%, transparent), transparent 62%),
+    linear-gradient(170deg, color-mix(in srgb, var(--theme-bg) 92%, #030712), color-mix(in srgb, var(--theme-surface) 72%, var(--theme-bg)));
+  --node-current-bg: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 26%, var(--theme-surface)), color-mix(in srgb, var(--theme-accent-alt) 14%, var(--theme-surface)));
+}
+
+body { background: var(--app-shell-gradient); }
+
+.post-credit-graph-panel {
+  background: linear-gradient(155deg, color-mix(in srgb, var(--theme-surface) 88%, transparent), color-mix(in srgb, var(--theme-bg) 72%, transparent));
+  border-color: color-mix(in srgb, var(--theme-accent) 30%, var(--border-soft));
+}
+.post-credit-graph { display: grid; gap: 12px; }
+.post-credit-lane {
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--border-soft));
+  background: linear-gradient(145deg, color-mix(in srgb, var(--theme-surface) 84%, transparent), color-mix(in srgb, var(--theme-bg) 58%, transparent));
+  display: grid;
+  gap: 10px;
+}
+.post-credit-lane.incoming { border-color: color-mix(in srgb, var(--theme-accent-alt) 26%, var(--border-soft)); }
+.post-credit-lane header { display: grid; gap: 3px; }
+.post-credit-lane header strong { font-size: var(--type-caption); letter-spacing: .06em; text-transform: uppercase; }
+.post-credit-lane header small { color: var(--text-muted); font-size: var(--type-metadata); }
+.post-credit-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 38px; }
+.post-credit-node {
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: var(--type-metadata);
+  line-height: 1.2;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 84%, transparent);
+  background: color-mix(in srgb, var(--theme-surface) 90%, transparent);
+  color: var(--theme-text-primary);
+  transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out), box-shadow 180ms var(--ease-out);
+}
+.post-credit-node:hover { transform: translateY(-1px); box-shadow: 0 8px 14px rgba(2, 8, 23, 0.2); }
+.post-credit-node.is-current { background: var(--node-current-bg); border-color: color-mix(in srgb, var(--theme-accent) 54%, var(--theme-border)); font-weight: 700; }
+.post-credit-node.is-outgoing { border-color: color-mix(in srgb, var(--theme-accent) 42%, var(--theme-border)); }
+.post-credit-node.is-incoming { border-color: color-mix(in srgb, var(--theme-accent-alt) 44%, var(--theme-border)); }
+.post-credit-arrow { color: var(--theme-text-muted); font-weight: 700; }
+.post-credit-empty { color: var(--theme-text-muted); font-size: var(--type-caption); }
+
+[data-color-mode="light"] .post-credit-lane,
+[data-theme="light"] .post-credit-lane {
+  background: linear-gradient(150deg, color-mix(in srgb, #ffffff 92%, var(--theme-accent) 8%), color-mix(in srgb, #f3f7ff 90%, var(--theme-accent-alt) 10%));
+}
+[data-color-mode="light"] .post-credit-node,
+[data-theme="light"] .post-credit-node {
+  background: color-mix(in srgb, #ffffff 94%, var(--theme-accent) 6%);
+  color: #0f172a;
+}
+@media (prefers-reduced-motion: reduce) {
+  .post-credit-node { transition: none; }
+}
