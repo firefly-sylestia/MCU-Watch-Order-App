@@ -2920,7 +2920,7 @@ export default function MCUViewer() {
     '--theme-app-bg': 'linear-gradient(145deg, color-mix(in srgb, var(--bg-base) 88%, #020617), color-mix(in srgb, var(--surface-2) 86%, var(--bg-base)))',
   };
 
-const appThemeBg = routeMode === 'utility'
+const appThemeBg = appearanceMode === 'minimal'
     ? `linear-gradient(180deg, color-mix(in srgb, var(--theme-surface) 36%, var(--app-bg-base)), var(--app-bg-base))`
     : `radial-gradient(circle at 50% 0%, var(--app-bg-vignette), transparent 58%), var(--theme-app-bg)`;
   const appTexture = 'none';
