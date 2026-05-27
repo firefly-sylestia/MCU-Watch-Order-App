@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Upload, Film, PlayCircle, ChevRight, Moon, Sun, Eye, Settings } from '../../constants/icons';
 import './FirstTimeSetup.css';
 
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '895654125638-pspr0bqmlpf78cc4gj2132ttrhbmlqn2.apps.googleusercontent.com';
+
 const parseGoogleCredential = (credential) => {
   if (!credential || typeof credential !== 'string') return null;
   const parts = credential.split('.');
@@ -19,7 +21,7 @@ export default function FirstTimeSetup({ darkMode, setDarkMode, profile, setProf
   const [stepDone, setStepDone] = useState({ profile: false, metadata: false, posters: false });
 
   useEffect(() => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    const clientId = GOOGLE_CLIENT_ID;
     if (!clientId || !window.google?.accounts?.id || !googleBtnRef.current) return;
     googleBtnRef.current.innerHTML = '';
     window.google.accounts.id.initialize({
@@ -34,7 +36,7 @@ export default function FirstTimeSetup({ darkMode, setDarkMode, profile, setProf
     window.google.accounts.id.renderButton(googleBtnRef.current, { theme: darkMode ? 'filled_black' : 'outline', size: 'large', width: 320, shape: 'pill', text: 'continue_with' });
   }, [darkMode, setProfile]);
 
-  const hasGoogleClientId = useMemo(() => Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID), []);
+  const hasGoogleClientId = useMemo(() => Boolean(GOOGLE_CLIENT_ID), []);
 
   const onPickFile = async (event) => {
     const file = event.target.files?.[0];
