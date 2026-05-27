@@ -41,6 +41,10 @@ export const TRAILER_DATA = {
   'WandaVision': [{ label: 'Official Trailer', youtubeId: 'sj9J2ecsSpo', type: 'trailer' }, { label: 'Teaser', youtubeId: 'UBhlqe2OTt4', type: 'teaser' }],
   'The Falcon and the Winter Soldier': [{ label: 'Official Trailer', youtubeId: 'IWBsDaFWyTE', type: 'trailer' }, { label: 'Teaser', youtubeId: 'jkBfGvb7NzM', type: 'teaser' }],
   'Hawkeye': [{ label: 'Official Trailer', youtubeId: '5VYb3B1ETlk', type: 'trailer' }, { label: 'Teaser', youtubeId: 'd5NCSx5HF8c', type: 'teaser' }],
+  'She-Hulk: Attorney at Law': [{ label: 'Official Trailer', youtubeId: 'u7JsKhI2An0', type: 'trailer' }, { label: 'Teaser', youtubeId: 'gim2kprjL50', type: 'teaser' }],
+  'She-Hulk: Attorney at Law S1': [{ label: 'Official Trailer', youtubeId: 'u7JsKhI2An0', type: 'trailer' }, { label: 'Teaser', youtubeId: 'gim2kprjL50', type: 'teaser' }],
+  'Moon Knight': [{ label: 'Official Trailer', youtubeId: 'x7Krla_UxRg', type: 'trailer' }, { label: 'Teaser', youtubeId: 'x7Krla_UxRg', type: 'teaser' }],
+  'Moon Knight S1': [{ label: 'Official Trailer', youtubeId: 'x7Krla_UxRg', type: 'trailer' }, { label: 'Teaser', youtubeId: 'x7Krla_UxRg', type: 'teaser' }],
 };
 
 export const trailerEmbedUrl = (youtubeId) => `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`;
@@ -52,9 +56,31 @@ export const getTrailerByTitle = (title = '') => {
     .replace(/\sEp\s.*$/i, '')
     .replace(/\s&\sS\d+.*$/i, '')
     .replace(/:\sSlingshot.*$/i, '')
+    .replace(/\sS\d+\s*&\s*S\d+.*$/i, '')
+    .replace(/\s*\(.*?\)\s*$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const canonical = (input = '') => normalize(input)
+    .replace(/\band\b/gi, '&')
+    .replace(/\s*&\s*/g, ' & ')
+    .replace(/\s+/g, ' ')
     .trim();
   const normalized = normalize(title);
-  const direct = TRAILER_DATA[title] || TRAILER_DATA[normalized] || null;
+  const canonicalTitle = canonical(title);
+  const canonicalNormalized = canonical(normalized);
+  const direct = TRAILER_DATA[title] || TRAILER_DATA[normalized] || TRAILER_DATA[canonicalTitle] || TRAILER_DATA[canonicalNormalized] || null;
+  if (!direct) {
+    const fuzzyKey = Object.keys(TRAILER_DATA).find((key) => {
+      const ck = canonical(key);
+      return ck === canonicalNormalized
+        || ck.includes(canonicalNormalized)
+        || canonicalNormalized.includes(ck);
+    });
+    if (fuzzyKey) {
+      const options = Array.isArray(TRAILER_DATA[fuzzyKey]) ? TRAILER_DATA[fuzzyKey] : [TRAILER_DATA[fuzzyKey]];
+      return { options, primary: options[0] };
+    }
+  }
   if (!direct) return null;
   const options = Array.isArray(direct) ? direct : [direct];
   return { options, primary: options[0] };

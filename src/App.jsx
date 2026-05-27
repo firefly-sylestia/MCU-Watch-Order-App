@@ -865,6 +865,7 @@ export default function MCUViewer() {
   const [trailerExpanded, setTrailerExpanded] = useState(false);
   const [trailerRotateHint, setTrailerRotateHint] = useState('');
   const [trailerVariantIndex, setTrailerVariantIndex] = useState(0);
+  const [releaseFilter, setReleaseFilter] = useState('all');
   const trailerShellRef = useRef(null);
   const { posterCache, setPosterCache, localPosterMap, setLocalPosterMap } = usePosterCache();
   const [posterFetchState, setPosterFetchState] = useState({ active: false, done: 0, total: 0, message: '' });
@@ -1511,7 +1512,9 @@ export default function MCUViewer() {
       if (watchedOnly && i.status !== 'watched') return false;
       if (statusFilter && i.status !== statusFilter) return false;
       if (typeFilter && i.type !== typeFilter) return false;
-      if (activePhase && i.phase !== activePhase) return false;
+      if (browseMode !== 'phase' && activePhase && i.phase !== activePhase) return false;
+      if (releaseFilter === 'released' && (i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
+      if (releaseFilter === 'upcoming' && !(i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
       if (timelineMode === 'loki' && !CHARACTER_POV_TITLE_SETS.loki.has(i.title)) return false;
       if (timelineMode === 'wanda' && !CHARACTER_POV_TITLE_SETS.wanda.has(i.title)) return false;
       if (timelineMode === 'multiverse') {
@@ -1540,7 +1543,7 @@ export default function MCUViewer() {
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, browseMode, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap, releaseFilter]);
 
 
 
@@ -2976,10 +2979,21 @@ export default function MCUViewer() {
   const trailerDataForDetail = detailItem ? getTrailerByTitle(detailItem.title) : null;
   const trailerOptions = trailerDataForDetail?.options || [];
   const selectedTrailer = trailerOptions[trailerVariantIndex] || trailerOptions[0] || null;
+  const trailerOptionIndex = trailerOptions.findIndex(option => /trailer/i.test(option?.label || option?.type || ''));
+  const teaserOptionIndex = trailerOptions.findIndex(option => /teaser/i.test(option?.label || option?.type || ''));
+  const hasTrailerOption = trailerOptionIndex >= 0;
+  const hasTeaserOption = teaserOptionIndex >= 0;
+  const postCreditForward = detailItem ? getAfterCreditsMeta(detailItem).connectsTo : [];
+  const postCreditInbound = useMemo(() => detailItem
+    ? Object.entries(AFTER_CREDITS)
+      .filter(([, meta]) => Array.isArray(meta?.connectsTo) && meta.connectsTo.includes(detailItem.title))
+      .map(([name]) => name)
+    : [], [detailItem]);
   const tMarvel = (label) => (marvelLangMode ? (MARVEL_UI_LEXICON[label] || `✦ ${label}`) : label);
   const filterTriggerLabel = tMarvel('Filters');
 
   const renderPhaseSelector = () => (
+    <>
     <div ref={phaseRef} className="phase-selector-rail">
       <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} onClick={() => { setActivePhase(0); if (browseMode !== 'phase') setBrowseMode('phase'); }}>
         <span className="phase-chip-label">All Phases</span>
@@ -2992,7 +3006,11 @@ export default function MCUViewer() {
         return (
           <button
             key={ph.id}
-            onClick={() => { setActivePhase(ph.id); scrollToListTop(); }}
+            onClick={() => {
+              setActivePhase(ph.id);
+              if (browseMode !== 'phase') setBrowseMode('phase');
+              requestAnimationFrame(() => scrollTo(ph.id));
+            }}
             className="fpill phase-chip marvel-phase-btn"
             data-active={isActive}>
             <span className="phase-chip-label">{ph.name}</span>
@@ -3001,6 +3019,24 @@ export default function MCUViewer() {
         );
       })}
     </div>
+    <div className="phase-selector-rail" style={{ marginTop: 10 }}>
+      {[
+        { id: 'all', label: 'All Releases' },
+        { id: 'released', label: 'Released' },
+        { id: 'upcoming', label: 'Upcoming + TBA' },
+      ].map(opt => (
+        <button
+          key={opt.id}
+          className="fpill phase-chip"
+          data-active={releaseFilter === opt.id}
+          onClick={() => setReleaseFilter(opt.id)}
+          aria-pressed={releaseFilter === opt.id}
+        >
+          <span className="phase-chip-label">{opt.label}</span>
+        </button>
+      ))}
+    </div>
+    </>
   );
 
   const sectionScaffold = (
@@ -3693,8 +3729,14 @@ export default function MCUViewer() {
                   {(detailData?.imdbRating && detailData.imdbRating !== 'N/A') && <span>★ {detailData.imdbRating}/10</span>}
                 </div>
                 <div className="detail-export-actions-inline">
-                  {!!selectedTrailer?.youtubeId && (
-                    <button className="fpill glass-panel detail-btn" onClick={openTrailerPlayer}><PlayCircle size={12}/>Watch Trailer</button>
+                  {hasTrailerOption && (
+                    <button className="fpill glass-panel detail-btn" onClick={() => { setTrailerVariantIndex(trailerOptionIndex); openTrailerPlayer(); }}><PlayCircle size={12}/>Trailer</button>
+                  )}
+                  {hasTeaserOption && (
+                    <button className="fpill glass-panel detail-btn" onClick={() => { setTrailerVariantIndex(teaserOptionIndex); openTrailerPlayer(); }}><PlayCircle size={12}/>Teaser</button>
+                  )}
+                  {!hasTrailerOption && !hasTeaserOption && !!selectedTrailer?.youtubeId && (
+                    <button className="fpill glass-panel detail-btn" onClick={openTrailerPlayer}><PlayCircle size={12}/>Watch Media</button>
                   )}
                   <button className="fpill glass-panel detail-btn" onClick={() => openImdbForItem(detailItem, detailData)}><Info size={12}/>Open IMDb</button>
                   <button className="fpill glass-panel detail-btn" onClick={() => exportPosterForItem(detailItem, { share: true })}><Upload size={12}/>Share Exact Card</button>
@@ -3760,6 +3802,31 @@ export default function MCUViewer() {
                     <div><strong>Connects to</strong><span>{getAfterCreditsMeta(detailItem).connectsTo.length ? getAfterCreditsMeta(detailItem).connectsTo.join(', ') : 'No explicit setup tracked'}</span></div>
                     <div><strong>Director</strong><span>{detailData?.Director && detailData.Director !== 'N/A' ? detailData.Director : (DIRECTOR_DATA[detailItem.title] || 'Director data coming soon')}</span></div>
                     <div><strong>Cast</strong><span>{detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</span></div>
+                  </div>
+                </section>
+                <section className="detail-export-panel intel">
+                  <div className="detail-export-panel-head"><span>POST-CREDIT DEPENDENCY GRAPH</span></div>
+                  <div className="detail-intel-list">
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <strong>Outgoing stingers</strong>
+                      <span style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                        <span className="fpill">{detailItem.title}</span>
+                        <span aria-hidden>→</span>
+                        {postCreditForward.length ? postCreditForward.map(node => (
+                          <span key={`forward-${node}`} className="fpill" style={{ background: 'color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface))' }}>{node}</span>
+                        )) : 'No outgoing setup tracked.'}
+                      </span>
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <strong>Incoming stingers</strong>
+                      <span style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                        {postCreditInbound.length ? postCreditInbound.map(node => (
+                          <span key={`incoming-${node}`} className="fpill" style={{ background: 'color-mix(in srgb, var(--theme-accent-alt) 12%, var(--theme-surface))' }}>{node}</span>
+                        )) : 'No incoming setup tracked.'}
+                        <span aria-hidden>→</span>
+                        <span className="fpill">{detailItem.title}</span>
+                      </span>
+                    </div>
                   </div>
                 </section>
 
