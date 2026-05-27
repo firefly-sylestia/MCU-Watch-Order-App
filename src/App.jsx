@@ -865,6 +865,7 @@ export default function MCUViewer() {
   const [trailerExpanded, setTrailerExpanded] = useState(false);
   const [trailerRotateHint, setTrailerRotateHint] = useState('');
   const [trailerVariantIndex, setTrailerVariantIndex] = useState(0);
+  const [releaseFilter, setReleaseFilter] = useState('all');
   const trailerShellRef = useRef(null);
   const { posterCache, setPosterCache, localPosterMap, setLocalPosterMap } = usePosterCache();
   const [posterFetchState, setPosterFetchState] = useState({ active: false, done: 0, total: 0, message: '' });
@@ -1511,7 +1512,9 @@ export default function MCUViewer() {
       if (watchedOnly && i.status !== 'watched') return false;
       if (statusFilter && i.status !== statusFilter) return false;
       if (typeFilter && i.type !== typeFilter) return false;
-      if (activePhase && i.phase !== activePhase) return false;
+      if (browseMode !== 'phase' && activePhase && i.phase !== activePhase) return false;
+      if (releaseFilter === 'released' && (i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
+      if (releaseFilter === 'upcoming' && !(i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
       if (timelineMode === 'loki' && !CHARACTER_POV_TITLE_SETS.loki.has(i.title)) return false;
       if (timelineMode === 'wanda' && !CHARACTER_POV_TITLE_SETS.wanda.has(i.title)) return false;
       if (timelineMode === 'multiverse') {
@@ -1540,7 +1543,7 @@ export default function MCUViewer() {
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, browseMode, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap, releaseFilter]);
 
 
 
@@ -2976,10 +2979,13 @@ export default function MCUViewer() {
   const trailerDataForDetail = detailItem ? getTrailerByTitle(detailItem.title) : null;
   const trailerOptions = trailerDataForDetail?.options || [];
   const selectedTrailer = trailerOptions[trailerVariantIndex] || trailerOptions[0] || null;
+  const trailerOptionIndex = trailerOptions.findIndex(option => /trailer/i.test(option?.label || option?.type || ''));
+  const teaserOptionIndex = trailerOptions.findIndex(option => /teaser/i.test(option?.label || option?.type || ''));
   const tMarvel = (label) => (marvelLangMode ? (MARVEL_UI_LEXICON[label] || `✦ ${label}`) : label);
   const filterTriggerLabel = tMarvel('Filters');
 
   const renderPhaseSelector = () => (
+    <>
     <div ref={phaseRef} className="phase-selector-rail">
       <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} onClick={() => { setActivePhase(0); if (browseMode !== 'phase') setBrowseMode('phase'); }}>
         <span className="phase-chip-label">All Phases</span>
@@ -3001,6 +3007,24 @@ export default function MCUViewer() {
         );
       })}
     </div>
+    <div className="phase-selector-rail" style={{ marginTop: 10 }}>
+      {[
+        { id: 'all', label: 'All Releases' },
+        { id: 'released', label: 'Released' },
+        { id: 'upcoming', label: 'Upcoming + TBA' },
+      ].map(opt => (
+        <button
+          key={opt.id}
+          className="fpill phase-chip"
+          data-active={releaseFilter === opt.id}
+          onClick={() => setReleaseFilter(opt.id)}
+          aria-pressed={releaseFilter === opt.id}
+        >
+          <span className="phase-chip-label">{opt.label}</span>
+        </button>
+      ))}
+    </div>
+    </>
   );
 
   const sectionScaffold = (
@@ -3695,6 +3719,12 @@ export default function MCUViewer() {
                 <div className="detail-export-actions-inline">
                   {!!selectedTrailer?.youtubeId && (
                     <button className="fpill glass-panel detail-btn" onClick={openTrailerPlayer}><PlayCircle size={12}/>Watch Trailer</button>
+                  )}
+                  {trailerOptionIndex >= 0 && (
+                    <button className="fpill glass-panel detail-btn" onClick={() => { setTrailerVariantIndex(trailerOptionIndex); openTrailerPlayer(); }}><PlayCircle size={12}/>Trailer</button>
+                  )}
+                  {teaserOptionIndex >= 0 && (
+                    <button className="fpill glass-panel detail-btn" onClick={() => { setTrailerVariantIndex(teaserOptionIndex); openTrailerPlayer(); }}><PlayCircle size={12}/>Teaser</button>
                   )}
                   <button className="fpill glass-panel detail-btn" onClick={() => openImdbForItem(detailItem, detailData)}><Info size={12}/>Open IMDb</button>
                   <button className="fpill glass-panel detail-btn" onClick={() => exportPosterForItem(detailItem, { share: true })}><Upload size={12}/>Share Exact Card</button>
