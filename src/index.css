@@ -815,14 +815,60 @@ button:active {
   --motion-fast: 120ms;
   --motion-base: 180ms;
   --motion-slow: 220ms;
+  --android-radius-sm: 12px;
+  --android-radius-md: 18px;
+  --android-radius-lg: 26px;
+  --android-surface-1: color-mix(in srgb, var(--theme-surface) 90%, transparent);
+  --android-surface-2: color-mix(in srgb, var(--theme-surface) 96%, transparent);
+  --android-border: color-mix(in srgb, var(--theme-border) 72%, transparent);
+  --android-shadow: 0 10px 24px rgba(2, 8, 23, 0.22);
+  --android-shadow-soft: 0 4px 14px rgba(2, 8, 23, 0.16);
 }
 
 body.android-native {
   overscroll-behavior-y: contain;
-  padding-bottom: var(--app-safe-bottom);
+  padding: var(--app-safe-top) var(--app-safe-side) var(--app-safe-bottom);
   background:
     radial-gradient(1200px 500px at 50% -20%, var(--ambient-glow), transparent 62%),
     var(--bg);
+}
+
+.android-native #root,
+.android-native main.app-scroll-shell {
+  min-height: calc(100svh - var(--app-safe-top) - var(--app-safe-bottom));
+}
+
+.android-native .header-brand,
+.android-native .phase-rows-full,
+.android-native .analytics-shell,
+.android-native .settings-menu,
+.android-native .rrow,
+.android-native .calendar-row,
+.android-native .detail-shell,
+.android-native .filters-open {
+  border-radius: var(--android-radius-md) !important;
+  border-color: var(--android-border) !important;
+  background: var(--android-surface-1) !important;
+  box-shadow: var(--android-shadow-soft);
+}
+
+.android-native .hero-carousel-poster,
+.android-native .detail-poster,
+.android-native .hero-backdrop-image {
+  border-radius: var(--android-radius-lg) !important;
+}
+
+.android-native .fpill,
+.android-native .theme-btn,
+.android-native .bottom-action-bar,
+.android-native .fab-primary,
+.android-native .status-pill,
+.android-native .wbtn {
+  min-height: 42px;
+  border-radius: 999px !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border)) !important;
+  background: var(--android-surface-2) !important;
+  box-shadow: var(--android-shadow-soft);
 }
 
 .android-native button,
@@ -831,7 +877,16 @@ body.android-native {
 .android-native .seg-btn,
 .android-native .icon-btn,
 .android-native .toggle {
-  transition: transform var(--motion-fast) var(--ease-smooth), box-shadow var(--motion-fast) var(--ease-smooth), filter var(--motion-fast) var(--ease-smooth);
+  transition: transform var(--motion-fast) var(--ease-smooth), box-shadow var(--motion-fast) var(--ease-smooth), filter var(--motion-fast) var(--ease-smooth), background-color var(--motion-base) var(--ease-smooth), border-color var(--motion-base) var(--ease-smooth);
+}
+
+.android-native button:hover,
+.android-native [role="button"]:hover,
+.android-native .chip:hover,
+.android-native .seg-btn:hover,
+.android-native .icon-btn:hover,
+.android-native .toggle:hover {
+  box-shadow: var(--android-shadow);
 }
 
 .android-native button:active,
@@ -844,7 +899,49 @@ body.android-native {
   filter: brightness(0.98);
 }
 
+.android-native .filter-row-actions,
+.android-native .filter-bar,
+.android-native .bottom-action-dock {
+  gap: 10px !important;
+}
+
+.android-native .hero-carousel-shell,
+.android-native .phase-rows-full,
+.android-native .analytics-shell,
+.android-native .settings-menu {
+  margin-bottom: 14px;
+}
+
 .android-native :focus-visible {
   outline: 2px solid color-mix(in srgb, var(--accent) 72%, white 28%);
   outline-offset: 2px;
 }
+
+[data-color-mode="light"].android-native {
+  --android-surface-1: color-mix(in srgb, #ffffff 92%, var(--theme-surface));
+  --android-surface-2: color-mix(in srgb, #ffffff 98%, var(--theme-surface));
+  --android-border: color-mix(in srgb, var(--theme-border) 70%, #ffffff);
+  --android-shadow: 0 12px 26px rgba(15, 23, 42, 0.16);
+  --android-shadow-soft: 0 6px 16px rgba(15, 23, 42, 0.1);
+}
+
+@media (max-width: 767px) {
+  body.android-native {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .android-native .floating-controls {
+    left: 10px;
+    right: 10px;
+    bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
+  .android-native .fpill,
+  .android-native .theme-btn,
+  .android-native .status-pill {
+    min-height: 40px;
+    padding-inline: 14px;
+  }
+}
+
