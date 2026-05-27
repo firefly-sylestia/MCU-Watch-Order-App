@@ -1,12 +1,10 @@
 @import './_shared.css';
-.feature-header,.timeline-controls,.progress-section,.feature-title-card,.detail-drawer,.feature-settings,.feature-analytics { margin: var(--feature-gap) 0; }
-.feature-header{padding:1rem;display:flex;justify-content:space-between;gap:1rem;align-items:flex-start}
-.feature-header__title{margin:0;font-size:clamp(1.1rem,2vw,1.35rem)}
-.feature-header__subtitle{margin:.35rem 0 0;color:var(--text-muted)}
-.timeline-controls,.progress-section,.feature-settings,.feature-analytics{padding:.85rem 1rem}
-.feature-title-card{padding:0;border-radius:14px;transition:transform 180ms ease, box-shadow 180ms ease}
-.feature-title-card:hover{transform:translateY(-1px)}
-.detail-drawer{position:relative;opacity:.96}
-.detail-drawer.is-open{opacity:1}
-.feature-settings,.feature-analytics{display:none}
-.feature-settings.is-open,.feature-analytics.is-open{display:block}
+.feature-settings{display:grid;gap:var(--space-md);padding:var(--space-lg);border:var(--border-width) solid var(--edge-color);border-radius:var(--radius-lg);background:color-mix(in srgb,var(--surface-1) 90%, transparent);box-shadow:var(--shadow-1)}
+.feature-settings.is-open{display:grid}
+.theme-option-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-sm)}
+.theme-option-card{display:grid;gap:6px;padding:10px;border:var(--border-width) solid var(--edge-color);border-radius:var(--radius-md);background:var(--surface-2);color:var(--text-primary);transition:transform var(--motion-fast) var(--motion-ease),border-color var(--motion-fast) var(--motion-ease),box-shadow var(--motion-fast) var(--motion-ease)}
+.theme-option-card:hover{transform:translateY(-1px) scale(var(--motion-hover-scale));border-color:var(--accent-1)}
+.theme-option-card:focus-visible{outline:2px solid var(--accent-1);outline-offset:2px}
+.theme-option-card[aria-pressed='true']{border-color:var(--accent-1);box-shadow:0 0 0 1px var(--accent-1),0 0 0 8px color-mix(in srgb,var(--accent-1) 12%, transparent)}
+.theme-preview{height:22px;border-radius:var(--radius-sm);border:1px solid var(--edge-color);background:linear-gradient(120deg,var(--accent-1),var(--accent-2));position:relative;overflow:hidden}
+.theme-preview::after{content:'';position:absolute;inset:0;background:var(--texture-overlay);background-size:8px 8px;opacity:.5}

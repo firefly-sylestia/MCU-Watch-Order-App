@@ -13,8 +13,7 @@ import { usePosterCache } from './hooks/usePosterCache';
 import { useOverlayNavigation } from './hooks/useOverlayNavigation';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
-import { THEME_CHOICES, getActiveThemeVars } from './constants/themeSettings';
-import { buildSemanticThemeVars, UI_PARITY_TOKENS } from './constants/ui';
+import { APPEARANCE_MODES, CHARACTER_THEMES, resolveThemeTokens } from './constants/themeSettings';
 import './App.layout.css';
 import './App.components.css';
 import './App.motion.css';
@@ -818,11 +817,7 @@ export default function MCUViewer() {
   const [typeFilter,     setTypeFilter]     = useState(initialUiState.typeFilter);
   const [activePhase,    setActivePhase]    = useState(initialUiState.activePhase);
   const activeUniverse = UNIVERSE_META[universe] || UNIVERSE_META.mcu;
-  const themedChoices = useMemo(() => THEME_CHOICES.map(choice => ({
-    ...choice,
-    displayLabel: universe === 'dc' ? (choice.dcLabel || choice.label) : choice.label,
-    displaySwatch: universe === 'dc' ? (choice.dcSwatch || choice.swatch) : choice.swatch,
-  })), [universe]);
+  const themedChoices = useMemo(() => CHARACTER_THEMES, []);
   const [uiModeState, dispatchUiMode] = useReducer((state, action) => ({ ...state, ...action }), { sortOpen: false, phaseOpen: false, filterStatusOpen: false, dockStatusOpen: false, filtersOpen: initialUiState.filtersOpen, timelineOpen: false });
   const { sortOpen, phaseOpen, filterStatusOpen, dockStatusOpen, filtersOpen, timelineOpen } = uiModeState;
   const setSortOpen = (next) => dispatchUiMode({ sortOpen: typeof next === 'function' ? next(uiModeState.sortOpen) : next });
@@ -877,7 +872,8 @@ export default function MCUViewer() {
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
-  const [themeMode,      setThemeMode]      = useState('classic');
+  const [themeMode,      setThemeMode]      = useState('iron-man');
+  const [appearanceMode, setAppearanceMode] = useState('glass');
   const [marvelLangMode, setMarvelLangMode] = useState(false);
   const [spoilerSafeMode, setSpoilerSafeMode] = useState(true);
   const [autoHideStatuses, setAutoHideStatuses] = useState(initialUiState.autoHideStatuses);
@@ -2351,6 +2347,8 @@ export default function MCUViewer() {
       if (Array.isArray(avatars)) setUploadedAvatars(avatars);
       const t = readStorageValue('mcu-theme-mode-v1', '');
       if (t) setThemeMode(t);
+      const am = readStorageValue('mcu-appearance-mode-v1', '');
+      if (am) setAppearanceMode(am);
       const darkModeSaved = readStorageValue('mcu-dark-mode-v1', '');
       if (darkModeSaved === '1' || darkModeSaved === '0') setDarkMode(darkModeSaved === '1');
       const langModeSaved = readStorageValue('mcu-marvel-lang-v1', '0');
@@ -2370,6 +2368,7 @@ export default function MCUViewer() {
   useEffect(() => { scheduleStorageWrite('mcu-profile-v1', JSON.stringify(profile)); }, [profile]);
   useEffect(() => { scheduleStorageWrite('mcu-uploaded-avatars-v1', JSON.stringify(uploadedAvatars)); }, [uploadedAvatars]);
   useEffect(() => { scheduleStorageWrite('mcu-theme-mode-v1', themeMode); }, [themeMode]);
+  useEffect(() => { scheduleStorageWrite('mcu-appearance-mode-v1', appearanceMode); }, [appearanceMode]);
   useEffect(() => { scheduleStorageWrite('mcu-dark-mode-v1', darkMode ? '1' : '0'); }, [darkMode]);
   useEffect(() => { scheduleStorageWrite('mcu-marvel-lang-v1', marvelLangMode ? '1' : '0'); }, [marvelLangMode]);
   useEffect(() => { scheduleStorageWrite('mcu-export-prefs-v1', JSON.stringify({ font: exportFont, textScale: exportTextScale })); }, [exportFont, exportTextScale]);
@@ -2911,147 +2910,17 @@ export default function MCUViewer() {
     phaseSummaryBg: 'color-mix(in srgb, #ffffff 5%, transparent)', phaseSummaryBorder: 'rgba(214,205,194,0.5)',
   };
 
-  // ─── Per-theme accent + distinctive surface tints ─────────────────────────
-  const activeThemeVars = getActiveThemeVars(themeMode, darkMode);
-
-  const semanticThemeVars = buildSemanticThemeVars(darkMode);
-
+  // ─── Modern appearance + character theme token system ─────────────────────
   const cssThemeVars = {
-    ...semanticThemeVars,
-    '--theme-border': darkMode ? '#1b1b33' : '#c8beaf',
-    '--theme-text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
-    '--font-marvel-display': 'var(--font-display)',
-    '--font-marvel-ui': 'var(--font-ui)',
-    '--font-marvel-body': 'var(--font-body)',
-    '--ui-space-1': UI_PARITY_TOKENS.spacing.xs,
-    '--ui-space-2': UI_PARITY_TOKENS.spacing.sm,
-    '--ui-space-3': UI_PARITY_TOKENS.spacing.md,
-    '--ui-space-4': UI_PARITY_TOKENS.spacing.lg,
-    '--ui-radius-sm': UI_PARITY_TOKENS.radius.sm,
-    '--ui-radius-md': UI_PARITY_TOKENS.radius.md,
-    '--ui-radius-lg': UI_PARITY_TOKENS.radius.lg,
-    '--motion-fast': UI_PARITY_TOKENS.motion.fast,
-    '--motion-base': UI_PARITY_TOKENS.motion.base,
-    '--motion-slow': UI_PARITY_TOKENS.motion.slow,
-    '--theme-success-soft': darkMode
-      ? 'color-mix(in srgb, var(--theme-accent) 16%, transparent)'
-      : 'color-mix(in srgb, var(--theme-accent) 12%, #f8f9fb)',
+    ...resolveThemeTokens({ appearanceMode, characterTheme: themeMode, darkMode }),
+    '--theme-success-soft': darkMode ? 'color-mix(in srgb, var(--accent-1) 16%, transparent)' : 'color-mix(in srgb, var(--accent-1) 12%, #f8f9fb)',
     '--theme-warning-soft': darkMode ? 'rgba(232,184,75,0.16)' : 'rgba(232,184,75,0.12)',
     '--theme-danger-soft': darkMode ? 'rgba(209,106,106,0.16)' : 'rgba(209,106,106,0.12)',
-    '--text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
-    '--theme-text-secondary': darkMode ? `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 40%, #e9f1ff)` : `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 52%, #1f2f46)`,
-    '--theme-overlay-surface': darkMode
-      ? `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 14%, rgba(255,255,255,0.06))`
-      : `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 10%, rgba(15,23,42,0.04))`,
-    '--theme-overlay-border': darkMode
-      ? `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 32%, rgba(255,255,255,0.14))`
-      : `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 26%, rgba(15,23,42,0.14))`,
-    '--overlay-soft': darkMode ? 'rgba(2,6,18,0.3)' : 'rgba(15,23,42,0.09)',
-    '--overlay-dark': darkMode ? 'rgba(2,6,18,0.46)' : 'rgba(15,23,42,0.15)',
-    '--overlay-strong': darkMode ? 'rgba(2,6,18,0.58)' : 'rgba(15,23,42,0.24)',
-    '--control-solid-bg': darkMode ? 'rgba(20,25,46,0.84)' : 'rgba(239,233,223,0.94)',
-    '--detail-shell-bg': darkMode
-      ? 'linear-gradient(145deg, color-mix(in srgb,var(--theme-bg) 92%, #000), color-mix(in srgb,var(--theme-surface) 88%, #000) 54%, color-mix(in srgb,var(--theme-bg-alt) 88%, #000))'
-      : 'linear-gradient(145deg, color-mix(in srgb,var(--theme-surface) 88%, var(--theme-bg)), color-mix(in srgb,var(--theme-bg) 90%, #f5efe3) 56%, color-mix(in srgb,var(--theme-surface) 78%, var(--theme-bg)))',
-    '--detail-panel-bg': darkMode
-      ? 'color-mix(in srgb,var(--theme-surface) 74%, rgba(8,12,26,0.82))'
-      : 'color-mix(in srgb,var(--theme-surface) 74%, var(--theme-bg))',
-    '--app-bg-base': darkMode ? '#06060f' : '#e2dbcf',
-    '--app-bg-vignette': darkMode ? 'rgba(2,6,23,0.42)' : 'rgba(2,6,23,0.08)',
-    '--app-bg-noise-opacity': darkMode ? '0.06' : '0.03',
-    '--theme-app-bg': darkMode
-      ? `radial-gradient(circle at 8% 2%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 40%, transparent), transparent 34%), radial-gradient(circle at 90% 8%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 36%, transparent), transparent 40%), radial-gradient(circle at 50% 120%, rgba(14,165,233,0.22), transparent 52%), linear-gradient(138deg, #02030a 0%, #09071a 30%, #0f1031 58%, #1a1038 100%)`
-      : `radial-gradient(circle at 8% 4%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 15%, #e9e1d5), transparent 34%), radial-gradient(circle at 88% 14%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 13%, #e9e1d5), transparent 40%), linear-gradient(140deg, #e5ddd1 0%, #dfd6c8 44%, #e4dbcf 100%)`,
-    '--comp-overlay-bg': darkMode ? 'rgba(4,8,18,0.56)' : 'rgba(255,255,255,0.58)',
-    '--comp-dropdown-bg': darkMode ? 'rgba(9,14,28,0.52)' : 'rgba(255,255,255,0.62)',
-    '--theme-header-bg': darkMode
-      ? `linear-gradient(180deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 18%, #0c1022), #06060f)`
-      : `linear-gradient(180deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 9%, #f2ede3), #ece5d9)`,
-    '--theme-watched-bg': darkMode
-      ? `linear-gradient(100deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 18%, rgba(12,18,34,0.62)), color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 10%, rgba(10,20,32,0.54)))`
-      : `linear-gradient(100deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 14%, #ffffff), color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 8%, #f7f5ef))`,
-    ...activeThemeVars,
+    '--app-bg-base': 'var(--bg-base)',
+    '--theme-app-bg': 'linear-gradient(145deg, color-mix(in srgb, var(--bg-base) 88%, #020617), color-mix(in srgb, var(--surface-2) 86%, var(--bg-base)))',
   };
-  const routeMode = analyticsOpen || settingsOpen ? 'utility' : 'home';
 
-  // Count active filters for the collapsed bar badge
-  const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
-  const trailerDataForDetail = detailItem ? getTrailerByTitle(detailItem.title) : null;
-  const trailerOptions = trailerDataForDetail?.options || [];
-  const selectedTrailer = trailerOptions[trailerVariantIndex] || trailerOptions[0] || null;
-  const trailerOptionIndex = trailerOptions.findIndex(option => /trailer/i.test(option?.label || option?.type || ''));
-  const teaserOptionIndex = trailerOptions.findIndex(option => /teaser/i.test(option?.label || option?.type || ''));
-  const hasTrailerOption = trailerOptionIndex >= 0;
-  const hasTeaserOption = teaserOptionIndex >= 0;
-  const postCreditForward = detailItem ? getAfterCreditsMeta(detailItem).connectsTo : [];
-  const postCreditInbound = useMemo(() => detailItem
-    ? Object.entries(AFTER_CREDITS)
-      .filter(([, meta]) => Array.isArray(meta?.connectsTo) && meta.connectsTo.includes(detailItem.title))
-      .map(([name]) => name)
-    : [], [detailItem]);
-  const tMarvel = (label) => (marvelLangMode ? (MARVEL_UI_LEXICON[label] || `✦ ${label}`) : label);
-  const filterTriggerLabel = tMarvel('Filters');
-
-  const renderPhaseSelector = () => (
-    <>
-    <div ref={phaseRef} className="phase-selector-rail">
-      <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} onClick={() => { setActivePhase(0); if (browseMode !== 'phase') setBrowseMode('phase'); }}>
-        <span className="phase-chip-label">All Phases</span>
-      </button>
-      {currentPhases.map((ph) => {
-        const stat = phaseStats.find(s => s.phase === ph.id);
-        const total = stat?.total || 0;
-        const watched = stat?.watched || 0;
-        const isActive = activePhase === ph.id;
-        return (
-          <button
-            key={ph.id}
-            onClick={() => {
-              setActivePhase(ph.id);
-              if (browseMode !== 'phase') setBrowseMode('phase');
-              requestAnimationFrame(() => scrollTo(ph.id));
-            }}
-            className="fpill phase-chip marvel-phase-btn"
-            data-active={isActive}>
-            <span className="phase-chip-label">{ph.name}</span>
-            <span className="phase-chip-count">{watched}/{total}</span>
-          </button>
-        );
-      })}
-    </div>
-    <div className="phase-selector-rail" style={{ marginTop: 10 }}>
-      {[
-        { id: 'all', label: 'All Releases' },
-        { id: 'released', label: 'Released' },
-        { id: 'upcoming', label: 'Upcoming + TBA' },
-      ].map(opt => (
-        <button
-          key={opt.id}
-          className="fpill phase-chip"
-          data-active={releaseFilter === opt.id}
-          onClick={() => setReleaseFilter(opt.id)}
-          aria-pressed={releaseFilter === opt.id}
-        >
-          <span className="phase-chip-label">{opt.label}</span>
-        </button>
-      ))}
-    </div>
-    </>
-  );
-
-  const sectionScaffold = (
-    <>
-      <Header title="MCU Viewing Order" subtitle="Modernized modular UI shell" />
-      <TimelineControls />
-      <ProgressSection />
-      <TitleCard />
-      <SettingsSection open={settingsOpen} />
-      <Analytics open={analyticsOpen} />
-      <DetailDrawer open={Boolean(detailItem)} />
-    </>
-  );
-
-  const appThemeBg = routeMode === 'utility'
+const appThemeBg = routeMode === 'utility'
     ? `linear-gradient(180deg, color-mix(in srgb, var(--theme-surface) 36%, var(--app-bg-base)), var(--app-bg-base))`
     : `radial-gradient(circle at 50% 0%, var(--app-bg-vignette), transparent 58%), var(--theme-app-bg)`;
   const appTexture = 'none';
@@ -3059,7 +2928,7 @@ export default function MCUViewer() {
     ? `${Math.max(heroBackdropScale - 16, 112)}% auto`
     : `auto ${Math.max(heroBackdropScale - 8, 96)}%`;
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={themeMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={appearanceMode} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
 
 
@@ -3134,9 +3003,15 @@ export default function MCUViewer() {
         <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
           {currentPhases.map(ph => <button key={ph.id} className="fpill" onClick={() => { setSidebarOpen(false); setActivePhase(ph.id); scrollToListTop(); }} style={{ justifyContent: 'space-between' }}><span>{ph.name}</span><ChevRight size={13} /></button>)}
         </div>
-        <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Theme</div>
+        <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Appearance Mode</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6, marginTop: 8 }}>
-          {themedChoices.map(({ id: t, displayLabel, displaySwatch }) => (
+          {APPEARANCE_MODES.map((mode) => (
+            <button key={mode.id} className="fpill filter-pill type-pill" style={{ justifyContent: 'center', gap: 6, fontSize: 11, borderColor: appearanceMode === mode.id ? 'var(--accent-1)' : 'var(--theme-border)', boxShadow: appearanceMode === mode.id ? '0 0 0 1px var(--accent-1)' : 'none', background: appearanceMode === mode.id ? 'color-mix(in srgb, var(--accent-1) 15%, var(--surface-1))' : 'var(--theme-surface)', color: appearanceMode === mode.id ? 'var(--accent-1)' : 'var(--theme-text)' }} onClick={() => setAppearanceMode(mode.id)}><span style={{ width: 8, height: 8, borderRadius: mode.id === 'pixelated' ? '2px':'50%', background: 'var(--accent-1)', display: 'inline-block' }} />{mode.label}</button>
+          ))}
+        </div>
+        <div style={{ marginTop: 14, fontSize: 12, color: T.textMuted, letterSpacing: 1.5, fontFamily: 'var(--font-marvel-ui)' }}>Character Theme</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6, marginTop: 8 }}>
+          {themedChoices.map(({ id: t, label: displayLabel, swatch: displaySwatch }) => (
             <button key={t} className="fpill filter-pill type-pill"
               style={{ justifyContent: 'center', gap: 6, fontSize: 11, borderColor: themeMode === t ? displaySwatch : 'var(--theme-border)', boxShadow: themeMode === t ? `0 0 0 1px ${displaySwatch}, 0 0 10px ${displaySwatch}44` : 'none', background: themeMode === t ? `${displaySwatch}18` : 'var(--theme-surface)', color: themeMode === t ? displaySwatch : 'var(--theme-text)' }}
               onClick={() => setThemeMode(t)}
