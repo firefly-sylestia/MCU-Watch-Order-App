@@ -33,21 +33,30 @@ export const fuzzyIncludes = (haystack, needle) => {
   return false;
 };
 
-export const matchesSearch = (item, query, extras = {}) => {
+export const matchesSearch = (item, query, extras = {}, options = {}) => {
   const q = normalizeSearchText(query);
   if (!q) return true;
+  const searchIn = {
+    title: true,
+    description: false,
+    director: false,
+    actors: false,
+    prerequisites: false,
+    metadata: false,
+    ...options,
+  };
+  const corpusParts = [];
+  if (searchIn.title) corpusParts.push(item.title);
+  if (searchIn.description) corpusParts.push(item.desc);
+  if (searchIn.prerequisites) corpusParts.push(item.prereq);
+  if (searchIn.metadata) {
+    corpusParts.push(item.releaseDate, item.releaseStatus, item.type, item.status, item.phase ? `phase ${item.phase}` : '');
+    corpusParts.push(...(extras.connectsTo || []), extras.timelineLabel || '');
+  }
+  if (searchIn.director) corpusParts.push(extras.director || '');
+  if (searchIn.actors) corpusParts.push(extras.actors || '');
   const corpus = normalizeSearchText([
-    item.title,
-    item.prereq,
-    item.desc,
-    item.releaseDate,
-    item.releaseStatus,
-    item.type,
-    item.status,
-    item.phase ? `phase ${item.phase}` : '',
-    extras.director || '',
-    ...(extras.connectsTo || []),
-    extras.timelineLabel || '',
+    ...corpusParts,
   ].filter(Boolean).join(' '));
   return fuzzyIncludes(corpus, q);
 };
