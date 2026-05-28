@@ -1,0 +1,177 @@
+/* Theme mode layer: centralized visual treatment for light/dark, universe, and style variants. */
+.theme-switch {
+  --theme-panel-bg: color-mix(in srgb, var(--theme-surface) 80%, transparent);
+  --theme-panel-border: color-mix(in srgb, var(--theme-border) 72%, transparent);
+  --theme-panel-border-hover: color-mix(in srgb, var(--theme-accent) 46%, var(--theme-border));
+  --theme-control-bg: color-mix(in srgb, var(--theme-surface) 76%, transparent);
+  --theme-control-bg-hover: color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface));
+  --theme-focus-ring: 0 0 0 3px color-mix(in srgb, var(--theme-accent) 28%, transparent);
+  --theme-text-shadow: none;
+  --theme-panel-radius: var(--radius-lg);
+  --theme-card-radius: var(--radius-xl);
+  --theme-card-shadow: var(--fx-shadow-2);
+  --theme-backdrop-filter: blur(var(--fx-blur)) saturate(var(--fx-saturate));
+  filter: var(--theme-style-filter);
+}
+
+.theme-switch[data-universe="marvel"] {
+  --universe-mark: linear-gradient(90deg, var(--theme-accent), var(--theme-accent-alt));
+  --universe-bg-bias: color-mix(in srgb, var(--theme-accent) 12%, var(--theme-bg));
+}
+
+.theme-switch[data-universe="dc"] {
+  --universe-mark: linear-gradient(90deg, var(--theme-accent-alt), var(--theme-accent));
+  --universe-bg-bias: color-mix(in srgb, var(--theme-accent) 8%, var(--theme-bg-alt));
+}
+
+.theme-switch :is(.curvy-panel,.glass-panel,.filters-open,.sidebar-menu,.settings-menu,.analytics-shell,.detail-shell,.detail-panel,.post-credit-lane,.feature-title-card,.calendar-section,.rrow,.phase-rows-full) {
+  position: relative;
+  overflow: hidden;
+  border-color: var(--theme-panel-border) !important;
+  border-width: var(--fx-border-width);
+  border-radius: var(--theme-panel-radius) !important;
+  background: var(--theme-panel-bg) !important;
+  box-shadow: var(--theme-card-shadow);
+  backdrop-filter: var(--theme-backdrop-filter);
+  -webkit-backdrop-filter: var(--theme-backdrop-filter);
+}
+
+.theme-switch :is(.fpill,.wbtn,.theme-btn,.filters-trigger,.phase-chip,.status-pill,.dock-btn,.quick-continue-btn,.appearance-card,.marvel-phase-btn) {
+  border-color: var(--theme-panel-border) !important;
+  border-width: var(--fx-border-width);
+  border-radius: var(--radius-md) !important;
+  background: var(--theme-control-bg) !important;
+  color: var(--theme-text) !important;
+  box-shadow: none;
+  text-shadow: var(--theme-text-shadow);
+}
+
+.theme-switch :is(.fpill,.wbtn,.theme-btn,.filters-trigger,.phase-chip,.status-pill,.dock-btn,.quick-continue-btn,.appearance-card,.marvel-phase-btn):hover {
+  border-color: var(--theme-panel-border-hover) !important;
+  background: var(--theme-control-bg-hover) !important;
+  transform: translateY(-1px) scale(var(--theme-hover-scale));
+}
+
+.theme-switch :is(button,input,textarea,select,.fpill,.theme-btn,.wbtn):focus-visible {
+  outline: none;
+  box-shadow: var(--theme-focus-ring) !important;
+}
+
+.theme-switch :is(input,textarea,select) {
+  background: var(--theme-input-bg) !important;
+  border-color: var(--theme-border) !important;
+  color: var(--theme-text) !important;
+}
+
+.theme-switch .hero-backdrop-blend {
+  background:
+    radial-gradient(circle at 18% 10%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%),
+    radial-gradient(circle at 88% 12%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%),
+    linear-gradient(180deg, color-mix(in srgb, var(--theme-bg) 18%, transparent), var(--theme-bg));
+}
+
+.theme-switch[data-color-mode="light"] {
+  --theme-panel-bg: color-mix(in srgb, var(--theme-surface) 86%, transparent);
+  --theme-control-bg: color-mix(in srgb, var(--theme-surface) 90%, white);
+  --theme-control-bg-hover: color-mix(in srgb, var(--theme-accent) 10%, white);
+  --theme-card-shadow: var(--theme-shadow-1);
+}
+
+.theme-switch[data-color-mode="dark"] {
+  --theme-control-bg: color-mix(in srgb, var(--theme-surface) 72%, transparent);
+  --theme-control-bg-hover: color-mix(in srgb, var(--theme-accent) 16%, var(--theme-surface));
+}
+
+.theme-switch[data-theme="glass"] {
+  --theme-panel-bg: linear-gradient(145deg, color-mix(in srgb, var(--theme-surface) 70%, transparent), color-mix(in srgb, var(--theme-bg-alt) 48%, transparent));
+  --theme-control-bg: linear-gradient(145deg, color-mix(in srgb, var(--theme-surface) 78%, transparent), color-mix(in srgb, var(--theme-bg-alt) 38%, transparent));
+  --theme-panel-border: color-mix(in srgb, var(--edge-highlight) 54%, var(--theme-border));
+  --theme-card-shadow: var(--theme-shadow-2), inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
+}
+
+.theme-switch[data-theme="glass"] :is(.curvy-panel,.glass-panel,.filters-open,.sidebar-menu,.settings-menu,.analytics-shell,.detail-shell,.detail-panel,.feature-title-card,.rrow)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: var(--texture-overlay);
+  opacity: .7;
+}
+
+.theme-switch[data-theme="pixelated"] {
+  --theme-panel-bg: color-mix(in srgb, var(--theme-surface) 88%, var(--theme-bg));
+  --theme-control-bg: color-mix(in srgb, var(--theme-surface) 92%, var(--theme-bg));
+  --theme-panel-border: color-mix(in srgb, var(--theme-accent) 28%, var(--theme-border));
+  --theme-card-shadow: var(--theme-pixel-shadow);
+  --theme-backdrop-filter: none;
+  --theme-text-shadow: 1px 1px 0 color-mix(in srgb, var(--theme-bg) 68%, transparent);
+}
+
+.theme-switch[data-theme="pixelated"] :is(.curvy-panel,.glass-panel,.filters-open,.sidebar-menu,.settings-menu,.analytics-shell,.detail-shell,.detail-panel,.feature-title-card,.rrow,.phase-chip,.fpill,.theme-btn,.wbtn) {
+  clip-path: polygon(0 8px, 8px 8px, 8px 0, calc(100% - 8px) 0, calc(100% - 8px) 8px, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 8px calc(100% - 8px), 0 calc(100% - 8px));
+  background-image: var(--texture-overlay) !important;
+  background-size: var(--pixel-grid-size) var(--pixel-grid-size) !important;
+}
+
+.theme-switch[data-theme="pixelated"] :is(.title-main,.feature-header__title,h1,h2,h3) {
+  letter-spacing: .045em;
+  text-shadow: 2px 2px 0 color-mix(in srgb, var(--theme-accent) 20%, transparent);
+}
+
+.theme-switch[data-theme="neo"] {
+  --theme-panel-bg: linear-gradient(145deg, color-mix(in srgb, var(--theme-bg) 62%, transparent), color-mix(in srgb, var(--theme-surface) 76%, transparent));
+  --theme-control-bg: color-mix(in srgb, var(--theme-bg-alt) 68%, transparent);
+  --theme-panel-border: color-mix(in srgb, var(--theme-accent) 48%, var(--theme-border));
+  --theme-panel-border-hover: color-mix(in srgb, var(--theme-accent-alt) 70%, var(--theme-accent));
+  --theme-card-shadow: var(--theme-neon-shadow);
+  --theme-text-shadow: 0 0 12px color-mix(in srgb, var(--theme-accent) 38%, transparent);
+}
+
+.theme-switch[data-theme="neo"] :is(.title-main,.feature-header__title,h1,h2,h3,.phase-chip-label) {
+  text-shadow: 0 0 14px color-mix(in srgb, var(--theme-accent) 38%, transparent);
+}
+
+.theme-switch[data-theme="neo"] :is(.fpill,.wbtn,.theme-btn,.filters-trigger,.phase-chip,.status-pill,.appearance-card)[data-active="true"],
+.theme-switch[data-theme="neo"] :is(.appearance-card.is-active,.fpill[aria-pressed="true"],.wbtn[aria-pressed="true"]) {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-accent) 42%, transparent), 0 0 16px color-mix(in srgb, var(--theme-accent) 38%, transparent) !important;
+}
+
+.theme-switch[data-theme="minimal"] {
+  --theme-panel-bg: color-mix(in srgb, var(--theme-surface) 96%, var(--theme-bg));
+  --theme-control-bg: color-mix(in srgb, var(--theme-surface) 94%, var(--theme-bg));
+  --theme-panel-border: color-mix(in srgb, var(--theme-border) 84%, transparent);
+  --theme-card-shadow: none;
+  --theme-backdrop-filter: none;
+}
+
+.theme-switch[data-theme="minimal"] :is(.curvy-panel,.glass-panel,.filters-open,.sidebar-menu,.settings-menu,.analytics-shell,.detail-shell,.detail-panel,.feature-title-card,.rrow) {
+  background-image: none !important;
+}
+
+.theme-switch .appearance-card {
+  min-height: 58px;
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-switch .appearance-card::after {
+  content: '';
+  position: absolute;
+  inset: auto 10px 8px 10px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--universe-mark);
+  opacity: .85;
+}
+
+.theme-switch .appearance-card.is-active {
+  border-color: var(--theme-accent) !important;
+  color: var(--theme-accent) !important;
+}
+
+@media (max-width: 767px) {
+  .theme-switch {
+    --theme-backdrop-filter: none;
+  }
+}
