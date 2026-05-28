@@ -820,6 +820,7 @@ export default function MCUViewer() {
   const [watchedOnly,    setWatchedOnly]    = useState(initialUiState.watchedOnly);
   const [statusFilter,   setStatusFilter]   = useState(initialUiState.statusFilter);
   const [typeFilter,     setTypeFilter]     = useState(initialUiState.typeFilter);
+  const [categoryFilter, setCategoryFilter] = useState(null);
   const [activePhase,    setActivePhase]    = useState(initialUiState.activePhase);
   const activeUniverse = UNIVERSE_META[universe] || UNIVERSE_META.mcu;
   const themedChoices = useMemo(() => CHARACTER_THEMES.map(choice => ({
@@ -1520,6 +1521,7 @@ export default function MCUViewer() {
   };
 
   const { filtered, grouped, phaseKeys } = useMemo(() => {
+    const isSonyMarvelItem = (item) => /(^|\b)(venom|morbius|madame web|kraven|into the spider-verse|across the spider-verse|beyond the spider-verse|friendly neighborhood spider-man|spider-verse|silk: spider society)\b/i.test(item.title || '');
     const f = items.filter(i => {
       if (listMode === 'core' && !coreIds.has(i.id)) return false;
       if (showAllFiltersOverride) return true;
@@ -1527,6 +1529,8 @@ export default function MCUViewer() {
       if (watchedOnly && i.status !== 'watched') return false;
       if (statusFilter && i.status !== statusFilter) return false;
       if (typeFilter && i.type !== typeFilter) return false;
+      if (categoryFilter === 'sony-marvel' && !isSonyMarvelItem(i)) return false;
+      if (categoryFilter === 'marvel-studios' && isSonyMarvelItem(i)) return false;
       if (browseMode !== 'phase' && activePhase && i.phase !== activePhase) return false;
       if (releaseFilter === 'released' && (i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
       if (releaseFilter === 'upcoming' && !(i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
@@ -1558,7 +1562,7 @@ export default function MCUViewer() {
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, browseMode, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap, releaseFilter]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, categoryFilter, activePhase, browseMode, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap, releaseFilter]);
 
 
 
@@ -3023,7 +3027,7 @@ export default function MCUViewer() {
   const routeMode = analyticsOpen || settingsOpen ? 'utility' : 'home';
 
   // Count active filters for the collapsed bar badge
-  const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
+  const activeFilterCount = [typeFilter, categoryFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
   const trailerDataForDetail = detailItem ? getTrailerByTitle(detailItem.title) : null;
   const trailerOptions = trailerDataForDetail?.options || [];
   const selectedTrailer = trailerOptions[trailerVariantIndex] || trailerOptions[0] || null;
@@ -3442,6 +3446,20 @@ export default function MCUViewer() {
                   </button>
                 );
               })}
+              {universe === 'mcu' && (
+                <>
+                  <button className="fpill"
+                    style={categoryFilter === 'marvel-studios' ? { borderColor: 'color-mix(in srgb, #ed1d24 50%, var(--theme-border))', background: 'color-mix(in srgb, #ed1d24 12%, var(--theme-surface))', color: 'var(--theme-text)' } : {}}
+                    onClick={() => setCategoryFilter(v => v === 'marvel-studios' ? null : 'marvel-studios')}>
+                    Marvel Studios
+                  </button>
+                  <button className="fpill"
+                    style={categoryFilter === 'sony-marvel' ? { borderColor: 'color-mix(in srgb, #0ea5e9 52%, var(--theme-border))', background: 'color-mix(in srgb, #0ea5e9 14%, var(--theme-surface))', color: 'var(--theme-text)' } : {}}
+                    onClick={() => setCategoryFilter(v => v === 'sony-marvel' ? null : 'sony-marvel')}>
+                    Sony + Marvel
+                  </button>
+                </>
+              )}
               {(listMode === 'core' || listMode === 'extended') && (
                 <button className="fpill"
                   style={essentialOnly ? { borderColor: 'color-mix(in srgb, var(--theme-warning) 50%, transparent)', background: 'var(--theme-warning-soft)', color: 'var(--theme-warning)' } : {}}
@@ -3488,14 +3506,15 @@ export default function MCUViewer() {
                   <button className="fpill" disabled={!selectedIds.size} onClick={() => applyBulkStatus('unwatched')} style={{ padding: '7px 12px', opacity: selectedIds.size ? 1 : 0.5 }}><EyeOff size={10}/>Unwatched</button>
                 </>
               )}
-              {/* Reset */}
-              {activeFilterCount > 0 && (
-                <button className="fpill" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', padding: '7px 12px' }}
-                  onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setSortBy('order'); }}>
-                  <Trash2 size={10} /> Clear
-                </button>
-              )}
             </div>
+            {activeFilterCount > 0 && (
+              <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end' }}>
+                <button className="fpill" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', padding: '7px 12px' }}
+                  onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setCategoryFilter(null); setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setSortBy('order'); }}>
+                  <Trash2 size={10} /> Clear filters
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>}

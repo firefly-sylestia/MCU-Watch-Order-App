@@ -20,11 +20,13 @@ export function useOverlayNavigation({
     window.history.pushState({ mcuOverlay: true, hasOverlay, hasInAppBackStep: Boolean(hasInAppBackStep) }, '');
 
     const onBack = () => {
+      const previousScrollY = window.scrollY || document.documentElement.scrollTop || 0;
       if (detailItem) onCloseDetail();
       else if (analyticsOpen) onCloseAnalytics();
       else if (settingsOpen) onCloseSettings();
       else if (sidebarOpen) onCloseSidebar();
       else if (hasInAppBackStep && typeof onInAppBack === 'function') onInAppBack();
+      requestAnimationFrame(() => window.scrollTo({ top: previousScrollY, behavior: 'auto' }));
     };
 
     window.addEventListener('popstate', onBack);
