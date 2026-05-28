@@ -84,7 +84,7 @@ const CACHE_KEYS = {
 
 
 const UI_STATE_DEFAULTS = {
-  listMode: 'core',
+  listMode: 'extended',
   search: '',
   searchScope: { title: true, description: false, director: false, actors: false, prerequisites: false, metadata: false },
   sortBy: 'order',
@@ -1526,24 +1526,27 @@ export default function MCUViewer() {
   };
 
   const { filtered, grouped, phaseKeys } = useMemo(() => {
+    const searchOnlyMode = browseMode === 'search';
     const f = items.filter(i => {
-      if (listMode === 'core' && !coreIds.has(i.id)) return false;
+      if (!searchOnlyMode && listMode === 'core' && !coreIds.has(i.id)) return false;
       if (showAllFiltersOverride) return true;
-      if (listMode === 'core' && essentialOnly && !i.essential) return false;
-      if (watchedOnly && i.status !== 'watched') return false;
-      if (statusFilter && i.status !== statusFilter) return false;
-      if (typeFilter && i.type !== typeFilter) return false;
-      if (activePhase && i.phase !== activePhase) return false;
-      if (releaseFilter === 'released' && (i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
-      if (releaseFilter === 'upcoming' && !(i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
-      if (timelineMode === 'loki' && !CHARACTER_POV_TITLE_SETS.loki.has(i.title)) return false;
-      if (timelineMode === 'wanda' && !CHARACTER_POV_TITLE_SETS.wanda.has(i.title)) return false;
-      if (timelineMode === 'sony' && !SONY_MARVEL_TITLE_SET.has(i.title)) return false;
-      if (timelineMode === 'multiverse') {
-        const isMultiverse = /what if|multiverse|loki|deadpool|friendly neighborhood|x-men/i.test(i.title + ' ' + (i.desc || ''));
-        if (!isMultiverse) return false;
+      if (!searchOnlyMode) {
+        if (listMode === 'core' && essentialOnly && !i.essential) return false;
+        if (watchedOnly && i.status !== 'watched') return false;
+        if (statusFilter && i.status !== statusFilter) return false;
+        if (typeFilter && i.type !== typeFilter) return false;
+        if (activePhase && i.phase !== activePhase) return false;
+        if (releaseFilter === 'released' && (i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
+        if (releaseFilter === 'upcoming' && !(i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
+        if (timelineMode === 'loki' && !CHARACTER_POV_TITLE_SETS.loki.has(i.title)) return false;
+        if (timelineMode === 'wanda' && !CHARACTER_POV_TITLE_SETS.wanda.has(i.title)) return false;
+        if (timelineMode === 'sony' && !SONY_MARVEL_TITLE_SET.has(i.title)) return false;
+        if (timelineMode === 'multiverse') {
+          const isMultiverse = /what if|multiverse|loki|deadpool|friendly neighborhood|x-men/i.test(i.title + ' ' + (i.desc || ''));
+          if (!isMultiverse) return false;
+        }
+        if (genreFilter !== 'all' && i.type !== genreFilter) return false;
       }
-      if (genreFilter !== 'all' && i.type !== genreFilter) return false;
       const after = AFTER_CREDITS[i.title] || AFTER_CREDITS_DEFAULT;
       const timelineLabel = TIMELINE_MODES.find(m => m.id === timelineMode)?.label || '';
       return matchesSearch(i, search, { director: DIRECTOR_DATA[i.title] || '', actors: metaCache[i.id]?.cast || '', connectsTo: after.connectsTo || [], timelineLabel }, searchScope);
@@ -3369,42 +3372,7 @@ export default function MCUViewer() {
           <div className="search-page-panel" style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 18, padding: 14, background: 'color-mix(in srgb, var(--theme-surface) 84%, transparent)', boxShadow: '0 10px 30px color-mix(in srgb, #000 16%, transparent)' }}>
             <div style={{ position: 'relative' }}>
               <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
-              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by title..." aria-label="Search library" style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650, transition: 'border-color 180ms ease, box-shadow 180ms ease' }} />
-            </div>
-            <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
-              <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' }}>Search in</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {[
-                  ['title', 'Name'],
-                  ['description', 'Description'],
-                  ['director', 'Director'],
-                  ['actors', 'Actors'],
-                  ['prerequisites', 'Prerequisites'],
-                  ['metadata', 'Phase/Status/Type'],
-                ].map(([key, label]) => {
-                  const active = Boolean(searchScope[key]);
-                  return (
-                    <button
-                      key={key}
-                      className="fpill"
-                      onClick={() => setSearchScope(prev => ({ ...prev, [key]: key === 'title' ? true : !prev[key] }))}
-                      style={{
-                        minHeight: 34,
-                        padding: '0 12px',
-                        borderRadius: 999,
-                        border: `1px solid ${active ? 'color-mix(in srgb, var(--theme-accent) 62%, var(--theme-border))' : T.filterBorder}`,
-                        background: active ? 'color-mix(in srgb, var(--theme-accent) 22%, transparent)' : 'transparent',
-                        color: active ? 'var(--theme-text)' : T.textMuted,
-                        transform: active ? 'translateY(-1px)' : 'none',
-                        transition: 'all 180ms ease',
-                      }}
-                      aria-pressed={active}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
+              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="" aria-label="Search library" style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650, transition: 'border-color 180ms ease, box-shadow 180ms ease' }} />
             </div>
             <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.4 }}>{search ? `${filtered.length} matches` : tUniverse('Type to begin searching')}</div>
@@ -3669,7 +3637,7 @@ export default function MCUViewer() {
                 )}
 
                 {/* Phase divider */}
-                <div className="curvy-panel phase-header-card motion-pop" style={{ '--phase-color': ph.color, border: `1px solid ${T.surfaceBorder}` }}>
+                {browseMode !== 'search' && <div className="curvy-panel phase-header-card motion-pop" style={{ '--phase-color': ph.color, border: `1px solid ${T.surfaceBorder}` }}>
                   <WatermarkOverlay surface="card" theme={darkMode ? 'dark' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['title', 'progress']} />
                   <div className="phase-title-wrap">
                     <div className="phase-title" style={{ color: ph.color }}>
@@ -3702,7 +3670,7 @@ export default function MCUViewer() {
                       CLEAR
                     </button>
                   )}
-                </div>
+                </div>}
 
                 {summaryOpen && (
                   <div className="fade-in curvy-panel" style={{ '--phase-color': ph.color, background: `color-mix(in srgb, ${T.phaseSummaryBg} 72%, transparent)`, border: `1px solid ${T.phaseSummaryBorder}`, borderRadius: 12, padding: '12px 14px 12px 18px', marginBottom: 10, fontSize: 14, color: T.textMuted, lineHeight: 1.6, fontFamily: 'var(--font-marvel-display)', letterSpacing: 0.2 }}>
