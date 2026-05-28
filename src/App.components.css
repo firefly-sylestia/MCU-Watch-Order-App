@@ -3343,3 +3343,253 @@ body { background: var(--app-shell-gradient); }
     animation:none !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Semantic universe + appearance theme system
+   Centralizes dark/light surfaces, brand accents, and mode-specific material
+   treatments so the same components visibly shift between Glass, Pixelated,
+   Neon, and Minimal without hard-coded component colors.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.theme-switch {
+  --component-bg: var(--theme-panel-overlay, var(--theme-surface));
+  --component-bg-strong: color-mix(in srgb, var(--theme-surface-strong, var(--theme-surface)) 88%, transparent);
+  --component-border: color-mix(in srgb, var(--theme-border) 78%, transparent);
+  --component-border-hover: color-mix(in srgb, var(--theme-accent) 38%, var(--theme-border));
+  --component-shadow: var(--fx-shadow-2, 0 14px 34px rgba(2, 8, 23, .18));
+  --component-texture-size: 18px 18px;
+  --component-outline: 0 0 0 3px color-mix(in srgb, var(--theme-accent) 22%, transparent);
+  --hero-title-bg: linear-gradient(180deg, var(--theme-accent), color-mix(in srgb, var(--theme-accent) 64%, var(--theme-bg)));
+  background-color: var(--theme-bg);
+}
+
+.theme-switch[data-universe="marvel"] {
+  --brand-mark-gradient: linear-gradient(135deg, #ed1d24, #fb923c 54%, #fde68a);
+  --brand-orbit: radial-gradient(circle at 14% 0%, color-mix(in srgb, var(--theme-accent) 26%, transparent), transparent 30%);
+}
+
+.theme-switch[data-universe="dc"] {
+  --brand-mark-gradient: linear-gradient(135deg, #1d4ed8, #38bdf8 54%, #f8fafc);
+  --brand-orbit: radial-gradient(circle at 88% 4%, color-mix(in srgb, var(--theme-accent-alt) 22%, transparent), transparent 32%);
+}
+
+.theme-switch .glass-panel,
+.theme-switch .sidebar-menu,
+.theme-switch .settings-menu,
+.theme-switch .settings-card,
+.theme-switch .settings-hero-card,
+.theme-switch .analytics-shell,
+.theme-switch .analytics-shell .ui-panel,
+.theme-switch .curvy-panel,
+.theme-switch .phase-rows-full,
+.theme-switch .calendar-section,
+.theme-switch .filters-open,
+.theme-switch .dropdown-pop,
+.theme-switch .rrow,
+.theme-switch .hero-carousel-shell,
+.theme-switch .header-brand,
+.theme-switch .bottom-action-dock,
+.theme-switch .detail-shell,
+.theme-switch .detail-panel,
+.theme-switch .appearance-card,
+.theme-switch .fpill,
+.theme-switch .theme-btn,
+.theme-switch .meta-chip,
+.theme-switch input,
+.theme-switch textarea,
+.theme-switch select {
+  border-color: var(--component-border) !important;
+}
+
+.theme-switch .glass-panel,
+.theme-switch .sidebar-menu,
+.theme-switch .settings-menu,
+.theme-switch .settings-card,
+.theme-switch .settings-hero-card,
+.theme-switch .analytics-shell,
+.theme-switch .analytics-shell .ui-panel,
+.theme-switch .curvy-panel,
+.theme-switch .phase-rows-full,
+.theme-switch .calendar-section,
+.theme-switch .filters-open,
+.theme-switch .hero-carousel-shell,
+.theme-switch .header-brand,
+.theme-switch .bottom-action-dock,
+.theme-switch .detail-shell,
+.theme-switch .detail-panel {
+  background: var(--brand-orbit), var(--theme-texture), var(--component-bg) !important;
+  box-shadow: var(--component-shadow) !important;
+  color: var(--theme-text) !important;
+}
+
+.theme-switch .fpill,
+.theme-switch .theme-btn,
+.theme-switch .appearance-card,
+.theme-switch .meta-chip,
+.theme-switch .detail-btn,
+.theme-switch .detail-pill,
+.theme-switch input,
+.theme-switch textarea,
+.theme-switch select {
+  background: color-mix(in srgb, var(--theme-surface) 84%, transparent) !important;
+  color: var(--theme-text) !important;
+  box-shadow: none !important;
+}
+
+.theme-switch .fpill:hover,
+.theme-switch .theme-btn:hover,
+.theme-switch .appearance-card:hover,
+.theme-switch .detail-btn:hover {
+  border-color: var(--component-border-hover) !important;
+  background: var(--theme-surface-hover) !important;
+  color: var(--theme-text-primary) !important;
+  transform: translateY(-1px) scale(var(--theme-hover-scale, 1.006));
+}
+
+.theme-switch .fpill:focus-visible,
+.theme-switch .theme-btn:focus-visible,
+.theme-switch .appearance-card:focus-visible,
+.theme-switch input:focus-visible,
+.theme-switch textarea:focus-visible,
+.theme-switch select:focus-visible {
+  outline: none !important;
+  box-shadow: var(--component-outline) !important;
+}
+
+.theme-switch .fpill[data-active="true"],
+.theme-switch .fpill[aria-pressed="true"],
+.theme-switch .appearance-card.is-active,
+.theme-switch .phase-chip[data-active="true"] {
+  border-color: color-mix(in srgb, var(--theme-accent) 52%, var(--theme-border)) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 18%, var(--theme-surface)), color-mix(in srgb, var(--theme-accent-alt) 12%, var(--theme-surface-strong))) !important;
+  color: var(--theme-text-primary) !important;
+}
+
+.theme-switch .header-title-mcu {
+  background: var(--hero-title-bg) !important;
+  border-color: color-mix(in srgb, var(--theme-accent-alt) 34%, var(--theme-border)) !important;
+  color: color-mix(in srgb, #ffffff 92%, var(--theme-accent-alt)) !important;
+}
+
+.theme-switch[data-color-mode="light"] .header-title-mcu {
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px color-mix(in srgb, var(--theme-bg) 52%, transparent) !important;
+}
+
+.theme-switch[data-color-mode="light"] {
+  --component-shadow: 0 16px 36px color-mix(in srgb, var(--theme-shadow-rgb) 12%, transparent);
+  --component-border: color-mix(in srgb, var(--theme-border) 84%, #ffffff);
+  --component-outline: 0 0 0 3px color-mix(in srgb, var(--theme-accent) 18%, transparent);
+}
+
+.theme-switch[data-color-mode="dark"] {
+  --component-border: color-mix(in srgb, var(--theme-border) 72%, transparent);
+}
+
+.theme-switch[data-theme="glass"] {
+  --component-bg: linear-gradient(145deg, color-mix(in srgb, var(--theme-surface) 70%, transparent), color-mix(in srgb, var(--theme-surface-strong) 45%, transparent));
+  --component-border: color-mix(in srgb, var(--theme-border) 68%, rgba(255,255,255,.08));
+  --component-shadow: 0 20px 54px color-mix(in srgb, var(--theme-shadow-rgb) 22%, transparent), inset 0 1px 0 rgba(255,255,255,.18);
+}
+
+.theme-switch[data-theme="glass"] .glass-panel,
+.theme-switch[data-theme="glass"] .sidebar-menu,
+.theme-switch[data-theme="glass"] .settings-menu,
+.theme-switch[data-theme="glass"] .analytics-shell,
+.theme-switch[data-theme="glass"] .filters-open,
+.theme-switch[data-theme="glass"] .hero-carousel-shell,
+.theme-switch[data-theme="glass"] .header-brand,
+.theme-switch[data-theme="glass"] .rrow,
+.theme-switch[data-theme="glass"] .fpill,
+.theme-switch[data-theme="glass"] .appearance-card {
+  backdrop-filter: blur(var(--fx-blur)) saturate(145%) !important;
+  -webkit-backdrop-filter: blur(var(--fx-blur)) saturate(145%) !important;
+}
+
+.theme-switch[data-theme="pixelated"] {
+  --component-bg: linear-gradient(135deg, color-mix(in srgb, var(--theme-surface) 94%, transparent), color-mix(in srgb, var(--theme-surface-strong) 92%, var(--theme-accent) 8%));
+  --component-border: color-mix(in srgb, var(--theme-accent) 32%, var(--theme-border));
+  --component-border-hover: color-mix(in srgb, var(--theme-accent-alt) 54%, var(--theme-border));
+  --component-texture-size: 10px 10px;
+  --component-shadow: 4px 4px 0 color-mix(in srgb, var(--theme-accent) 28%, transparent), 8px 8px 0 color-mix(in srgb, var(--theme-accent-alt) 12%, transparent), 0 10px 22px rgba(2,8,23,.14);
+}
+
+.theme-switch[data-theme="pixelated"] .glass-panel,
+.theme-switch[data-theme="pixelated"] .sidebar-menu,
+.theme-switch[data-theme="pixelated"] .settings-menu,
+.theme-switch[data-theme="pixelated"] .analytics-shell,
+.theme-switch[data-theme="pixelated"] .filters-open,
+.theme-switch[data-theme="pixelated"] .hero-carousel-shell,
+.theme-switch[data-theme="pixelated"] .header-brand,
+.theme-switch[data-theme="pixelated"] .rrow,
+.theme-switch[data-theme="pixelated"] .fpill,
+.theme-switch[data-theme="pixelated"] .appearance-card,
+.theme-switch[data-theme="pixelated"] .meta-chip {
+  image-rendering: pixelated;
+  clip-path: polygon(0 8px, 8px 8px, 8px 0, calc(100% - 8px) 0, calc(100% - 8px) 8px, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 8px calc(100% - 8px), 0 calc(100% - 8px));
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.theme-switch[data-theme="pixelated"] .rrow:hover,
+.theme-switch[data-theme="pixelated"] .fpill:hover,
+.theme-switch[data-theme="pixelated"] .appearance-card:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 5px 5px 0 color-mix(in srgb, var(--theme-accent) 34%, transparent) !important;
+}
+
+.theme-switch[data-theme="neon"] {
+  --component-bg: linear-gradient(145deg, color-mix(in srgb, var(--theme-bg) 54%, transparent), color-mix(in srgb, var(--theme-accent) 10%, var(--theme-surface)));
+  --component-border: color-mix(in srgb, var(--theme-accent) 48%, transparent);
+  --component-border-hover: color-mix(in srgb, var(--theme-accent-alt) 72%, var(--theme-accent));
+  --component-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-accent) 18%, transparent), 0 0 18px color-mix(in srgb, var(--theme-accent) 30%, transparent), 0 0 42px color-mix(in srgb, var(--theme-accent-alt) 16%, transparent);
+  --hero-title-bg: linear-gradient(180deg, color-mix(in srgb, var(--theme-accent) 84%, white), color-mix(in srgb, var(--theme-accent-alt) 66%, var(--theme-bg)));
+}
+
+.theme-switch[data-theme="neon"] .header-title-mcu,
+.theme-switch[data-theme="neon"] .title-btn,
+.theme-switch[data-theme="neon"] h1,
+.theme-switch[data-theme="neon"] h2 {
+  text-shadow: 0 0 12px color-mix(in srgb, var(--theme-accent) 42%, transparent), 0 0 26px color-mix(in srgb, var(--theme-accent-alt) 24%, transparent) !important;
+}
+
+.theme-switch[data-theme="neon"] .fpill[data-active="true"],
+.theme-switch[data-theme="neon"] .fpill[aria-pressed="true"],
+.theme-switch[data-theme="neon"] .appearance-card.is-active {
+  box-shadow: 0 0 18px color-mix(in srgb, var(--theme-accent) 34%, transparent) !important;
+}
+
+.theme-switch[data-theme="minimal"] {
+  --component-bg: linear-gradient(180deg, var(--theme-surface), var(--theme-surface-strong));
+  --component-border: color-mix(in srgb, var(--theme-border) 92%, transparent);
+  --component-border-hover: color-mix(in srgb, var(--theme-accent) 34%, var(--theme-border));
+  --component-shadow: 0 8px 20px color-mix(in srgb, var(--theme-shadow-rgb) 8%, transparent);
+  --theme-texture: none;
+}
+
+.theme-switch[data-theme="minimal"] .glass-panel,
+.theme-switch[data-theme="minimal"] .sidebar-menu,
+.theme-switch[data-theme="minimal"] .settings-menu,
+.theme-switch[data-theme="minimal"] .analytics-shell,
+.theme-switch[data-theme="minimal"] .filters-open,
+.theme-switch[data-theme="minimal"] .hero-carousel-shell,
+.theme-switch[data-theme="minimal"] .header-brand,
+.theme-switch[data-theme="minimal"] .rrow,
+.theme-switch[data-theme="minimal"] .fpill,
+.theme-switch[data-theme="minimal"] .appearance-card,
+.theme-switch[data-theme="minimal"] .meta-chip {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.theme-switch[data-theme="minimal"] .header-title-mcu {
+  border-radius: var(--radius-sm) !important;
+  text-shadow: none !important;
+}
+
+.theme-switch .rrow {
+  border-left-color: color-mix(in srgb, var(--phase-color, var(--theme-accent)) 44%, transparent) !important;
+}
+
+.theme-switch .rrow:hover {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 10%, var(--theme-surface)), var(--theme-surface-hover)) !important;
+}
