@@ -902,6 +902,7 @@ export default function MCUViewer() {
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
+  const showPhaseSystem = timelineMode === 'release' || timelineMode === 'chronological';
   const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
   const [posterDataSaver, setPosterDataSaver] = useState(initialUiState.posterDataSaver);
   const [scrollTuning] = useState({ desktopMultiplier: 5, desktopDeltaCap: 7, mobileMultiplier: 5, mobileDeltaCap: 7 });
@@ -3058,7 +3059,6 @@ export default function MCUViewer() {
     return lexicon[label] || `✦ ${label}`;
   };
   const filterTriggerLabel = tUniverse('Filters');
-  const showPhaseSystem = timelineMode === 'release' || timelineMode === 'chronological';
 
   const renderPhaseSelector = () => (
     <>
