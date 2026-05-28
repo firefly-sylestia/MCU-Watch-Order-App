@@ -206,6 +206,9 @@ const EXPORT_THEME_OPTIONS = [
   { id: 'heroDossier', label: 'Hero Dossier', desc: 'mission file' },
 ];
 
+const SONY_MARVEL_TITLE_REGEX = /(spider-man|venom|morbius|madame web|kraven|into the spider-verse|across the spider-verse|beyond the spider-verse)/i;
+const isSonyMarvelEntry = (item) => SONY_MARVEL_TITLE_REGEX.test(`${item?.title || ''} ${item?.desc || ''}`);
+
 const WATERMARK_POSITION_PRESETS = {
   hero: { position: 'bottom-end', mobile: { x: 14, y: 14 }, tablet: { x: 20, y: 18 }, desktop: { x: 28, y: 22 } },
   card: { position: 'top-end', mobile: { x: 10, y: 10 }, tablet: { x: 12, y: 12 }, desktop: { x: 14, y: 14 } },
@@ -1527,9 +1530,11 @@ export default function MCUViewer() {
       if (watchedOnly && i.status !== 'watched') return false;
       if (statusFilter && i.status !== statusFilter) return false;
       if (typeFilter && i.type !== typeFilter) return false;
-      if (browseMode !== 'phase' && activePhase && i.phase !== activePhase) return false;
+      if (activePhase && i.phase !== activePhase) return false;
       if (releaseFilter === 'released' && (i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
       if (releaseFilter === 'upcoming' && !(i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
+      if (timelineMode === 'release-mcu' && isSonyMarvelEntry(i)) return false;
+      if (timelineMode === 'release-sony-marvel' && !(/marvel/i.test(i.title) || isSonyMarvelEntry(i))) return false;
       if (timelineMode === 'loki' && !CHARACTER_POV_TITLE_SETS.loki.has(i.title)) return false;
       if (timelineMode === 'wanda' && !CHARACTER_POV_TITLE_SETS.wanda.has(i.title)) return false;
       if (timelineMode === 'multiverse') {
@@ -1546,7 +1551,7 @@ export default function MCUViewer() {
       if (sortBy === 'runtime') return (a.episodes || (a.type === 'film' ? 2.3 : 6)) - (b.episodes || (b.type === 'film' ? 2.3 : 6));
       if (sortBy === 'watched') return (b.watchedDate || '').localeCompare(a.watchedDate || '');
       if (sortBy === 'status') return (STATUS_SORT_ORDER[a.status] ?? 99) - (STATUS_SORT_ORDER[b.status] ?? 99);
-      if (sortBy === 'order' && timelineMode === 'release') return a.year - b.year || a.order - b.order;
+      if (sortBy === 'order' && (timelineMode === 'release' || timelineMode === 'release-mcu' || timelineMode === 'release-sony-marvel')) return a.year - b.year || a.order - b.order;
       if (sortBy === 'order' && timelineMode === 'chronological') {
         const ao = STORY_ORDER_OVERRIDES.get(a.title) ?? a.order + 100;
         const bo = STORY_ORDER_OVERRIDES.get(b.title) ?? b.order + 100;
@@ -3047,7 +3052,7 @@ export default function MCUViewer() {
   const renderPhaseSelector = () => (
     <>
     <div ref={phaseRef} className="phase-selector-rail">
-      <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} onClick={() => { setBrowseMode('phase'); setActivePhase(0); requestAnimationFrame(() => scrollToListTop()); }}>
+      <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} aria-pressed={activePhase === 0} onClick={() => { setActivePhase(0); requestAnimationFrame(() => scrollToListTop()); }}>
         <span className="phase-chip-label">All Phases</span>
       </button>
       {currentPhases.map((ph) => {
@@ -3059,12 +3064,12 @@ export default function MCUViewer() {
           <button
             key={ph.id}
             onClick={() => {
-              setBrowseMode('phase');
               setActivePhase(ph.id);
               requestAnimationFrame(() => scrollTo(ph.id));
             }}
             className="fpill phase-chip marvel-phase-btn"
-            data-active={isActive}>
+            data-active={isActive}
+            aria-pressed={isActive}>
             <span className="phase-chip-label">{ph.name}</span>
             <span className="phase-chip-count">{watched}/{total}</span>
           </button>
@@ -3388,6 +3393,12 @@ export default function MCUViewer() {
               )}
               <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
+            {activeFilterCount > 0 && (
+              <button className="filters-trigger" onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setSortBy('order'); setActivePhase(0); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: '1px solid color-mix(in srgb, var(--theme-danger) 36%, var(--theme-border))', background: 'color-mix(in srgb, var(--theme-danger) 14%, var(--theme-surface))', color: 'var(--theme-danger)', cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}>
+                <Trash2 size={13} />
+                Clear Filters
+              </button>
+            )}
             <div ref={sortMenuRef} style={{ position: 'relative' }}>
               <button className="filters-trigger" onClick={() => setSortMenuOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${sortBy === 'order' ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: sortBy === 'order' ? 'var(--theme-accent)' : T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}><ArrowUpDown size={13} />Sort: {SORT_LABELS[sortBy]}<ChevDown size={11} style={{ transform: sortMenuOpen ? 'rotate(180deg)' : 'none' }}/></button>
               {sortMenuOpen && <div className="dropdown-pop filter-dropdown redesigned-sort-menu" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1450, minWidth: 240 }}>
@@ -3487,13 +3498,6 @@ export default function MCUViewer() {
                   <button className="fpill" disabled={!selectedIds.size} onClick={() => applyBulkStatus('plan-to-watch')} style={{ padding: '7px 12px', opacity: selectedIds.size ? 1 : 0.5 }}><Clock size={10}/>Plan</button>
                   <button className="fpill" disabled={!selectedIds.size} onClick={() => applyBulkStatus('unwatched')} style={{ padding: '7px 12px', opacity: selectedIds.size ? 1 : 0.5 }}><EyeOff size={10}/>Unwatched</button>
                 </>
-              )}
-              {/* Reset */}
-              {activeFilterCount > 0 && (
-                <button className="fpill" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', padding: '7px 12px' }}
-                  onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setSortBy('order'); }}>
-                  <Trash2 size={10} /> Clear
-                </button>
               )}
             </div>
           </div>
