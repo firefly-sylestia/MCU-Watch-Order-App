@@ -3343,3 +3343,31 @@ body { background: var(--app-shell-gradient); }
     animation:none !important;
   }
 }
+
+/* Redesigned phase/release chip system */
+.redesigned-phase-rail{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  padding:4px 2px 10px;
+}
+.redesigned-phase-rail .phase-chip,
+.redesigned-phase-rail .marvel-phase-btn{
+  border-radius:14px !important;
+  min-height:42px !important;
+  padding:10px 14px !important;
+  border:1px solid color-mix(in srgb,var(--theme-border) 84%, transparent) !important;
+  background:color-mix(in srgb,var(--theme-surface) 88%, transparent) !important;
+  box-shadow:0 6px 16px rgba(2,8,23,.14);
+  transition:transform .16s var(--ease-out), box-shadow .18s var(--ease-out), border-color .18s var(--ease-out), background-color .2s var(--ease-out);
+}
+.redesigned-phase-rail .phase-chip:hover,
+.redesigned-phase-rail .marvel-phase-btn:hover{ transform:translateY(-1px); }
+.redesigned-phase-rail .phase-chip:active,
+.redesigned-phase-rail .marvel-phase-btn:active{ transform:translateY(0) scale(.985); }
+.redesigned-phase-rail .phase-chip[data-active="true"],
+.redesigned-phase-rail .marvel-phase-btn[data-active="true"]{
+  background:linear-gradient(135deg,color-mix(in srgb,var(--theme-accent) 20%, var(--theme-surface)),color-mix(in srgb,var(--theme-accent-alt) 10%, var(--theme-surface))) !important;
+  border-color:color-mix(in srgb,var(--theme-accent) 62%, var(--theme-border)) !important;
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 32%, transparent),0 10px 18px rgba(2,8,23,.18);
+}

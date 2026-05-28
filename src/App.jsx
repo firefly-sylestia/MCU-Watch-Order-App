@@ -3058,9 +3058,15 @@ export default function MCUViewer() {
   };
   const filterTriggerLabel = tUniverse('Filters');
 
+  const shouldShowPhaseChips = timelineMode === 'release' || timelineMode === 'chronological';
+
+  useEffect(() => {
+    if (!shouldShowPhaseChips && activePhase !== 0) setActivePhase(0);
+  }, [shouldShowPhaseChips, activePhase]);
+
   const renderPhaseSelector = () => (
     <>
-    <div ref={phaseRef} className="phase-selector-rail">
+    {shouldShowPhaseChips && <div ref={phaseRef} className="phase-selector-rail redesigned-phase-rail">
       <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} onClick={() => { setActivePhase(0); requestAnimationFrame(() => scrollToListTop()); }}>
         <span className="phase-chip-label">All Phases</span>
       </button>
@@ -3083,8 +3089,8 @@ export default function MCUViewer() {
           </button>
         );
       })}
-    </div>
-    <div className="phase-selector-rail" style={{ marginTop: 10 }}>
+    </div>}
+    <div className="phase-selector-rail redesigned-phase-rail" style={{ marginTop: shouldShowPhaseChips ? 10 : 0 }}>
       {[
         { id: 'all', label: 'All Release States' },
         { id: 'released', label: 'Now Available' },
