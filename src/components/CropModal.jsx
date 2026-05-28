@@ -76,19 +76,19 @@ export default function CropModal({ src, onConfirm, onCancel, theme, cropTarget 
   };
 
   const top = crop.y; const left = crop.x; const right = imgDisplay.w - (crop.x + crop.w); const bottom = imgDisplay.h - (crop.y + crop.h);
-  return <div onClick={(e) => e.target === e.currentTarget && onCancel()} style={{ position: "fixed", inset: 0, zIndex: 20000, display: "grid", placeItems: "center", padding: 20, background: "color-mix(in srgb, var(--theme-bg) 18%, #000)", backdropFilter: "blur(6px)" }}>
-    <div style={{ width: "min(1040px,96vw)", borderRadius: 22, border: "1px solid var(--theme-border)", background: "var(--theme-surface)", boxShadow: "0 28px 60px rgba(0,0,0,.35)", padding: 16, display: "grid", gap: 12 }}>
+  return <div onClick={(e) => e.target === e.currentTarget && onCancel()} style={{ position: "fixed", inset: 0, zIndex: 20000, display: "grid", placeItems: "center", padding: 20, background: "var(--overlay-strong)", backdropFilter: "blur(6px)" }}>
+    <div style={{ width: "min(1040px,96vw)", borderRadius: 22, border: "1px solid var(--theme-border)", background: "var(--theme-surface)", boxShadow: "var(--shadow-lg)", padding: 16, display: "grid", gap: 12 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><h3 style={{ margin: 0, fontSize: 18 }}>Crop image</h3><button className="fpill" onClick={onCancel}>Close</button></div>
-      <div onPointerMove={onDrag} onPointerUp={stopDrag} onPointerLeave={stopDrag} style={{ position: "relative", borderRadius: 16, overflow: "hidden", border: "1px solid var(--theme-border)", display: "grid", placeItems: "center", background: "#080d18" }}>
+      <div onPointerMove={onDrag} onPointerUp={stopDrag} onPointerLeave={stopDrag} style={{ position: "relative", borderRadius: 16, overflow: "hidden", border: "1px solid var(--theme-border)", display: "grid", placeItems: "center", background: "var(--theme-bg-secondary)" }}>
         <div style={{ position: "relative", width: imgDisplay.w || "auto", height: imgDisplay.h || "auto" }}>
           <img src={src} onLoad={onImgLoad} draggable={false} style={{ display: "block", width: imgDisplay.w || "auto", height: imgDisplay.h || "auto", maxWidth: "100%", userSelect: "none" }} />
           {imgDisplay.w > 0 && <>
-            <div style={{ position: "absolute", left: 0, top: 0, right: 0, height: top, background: "rgba(1,6,14,.55)" }} />
-            <div style={{ position: "absolute", left: 0, top: top, width: left, height: crop.h, background: "rgba(1,6,14,.55)" }} />
-            <div style={{ position: "absolute", right: 0, top: top, width: right, height: crop.h, background: "rgba(1,6,14,.55)" }} />
-            <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: bottom, background: "rgba(1,6,14,.55)" }} />
+            <div style={{ position: "absolute", left: 0, top: 0, right: 0, height: top, background: "var(--overlay-dark)" }} />
+            <div style={{ position: "absolute", left: 0, top: top, width: left, height: crop.h, background: "var(--overlay-dark)" }} />
+            <div style={{ position: "absolute", right: 0, top: top, width: right, height: crop.h, background: "var(--overlay-dark)" }} />
+            <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: bottom, background: "var(--overlay-dark)" }} />
             <div onPointerDown={(e) => startDrag(e, "move")} style={{ position: "absolute", left: crop.x, top: crop.y, width: crop.w, height: crop.h, border: `2px solid ${theme?.accent || "var(--theme-accent)"}`, borderRadius: 12, cursor: "move" }}>
-              <button onPointerDown={(e) => startDrag(e, "resize")} style={{ position: "absolute", right: -8, bottom: -8, width: 20, height: 20, borderRadius: 999, border: "2px solid #fff", background: theme?.accent || "var(--theme-accent)", cursor: "nwse-resize" }} />
+              <button onPointerDown={(e) => startDrag(e, "resize")} style={{ position: "absolute", right: -8, bottom: -8, width: 20, height: 20, borderRadius: 999, border: "2px solid var(--theme-surface-strong)", background: theme?.accent || "var(--theme-accent)", cursor: "nwse-resize" }} />
             </div>
           </>}
         </div>

@@ -3343,3 +3343,87 @@ body { background: var(--app-shell-gradient); }
     animation:none !important;
   }
 }
+
+/* Modern theme pass: shared component roles for both color modes.
+   Hard edges and glow-heavy states are normalized here while preserving the
+   character accent system exposed from themeSettings.js. */
+.theme-switch {
+  --control-border-default: color-mix(in srgb, var(--theme-border) 82%, transparent);
+  --control-border-hover: color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border));
+  --control-border-active: color-mix(in srgb, var(--theme-accent) 42%, var(--theme-border));
+  --control-bg-default: color-mix(in srgb, var(--theme-surface-elevated) 72%, transparent);
+  --control-bg-hover: color-mix(in srgb, var(--theme-surface-hover) 88%, var(--theme-accent) 5%);
+  --control-bg-active: color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface-elevated));
+  --control-shadow-default: var(--shadow-sm);
+  --control-shadow-hover: 0 10px 24px color-mix(in srgb, var(--theme-accent) 10%, transparent);
+  --control-shadow-active: inset 0 1px 0 color-mix(in srgb, var(--theme-text) 8%, transparent);
+  --ui-surface-1: color-mix(in srgb, var(--theme-surface) 92%, transparent);
+  --ui-surface-2: color-mix(in srgb, var(--theme-surface-elevated) 90%, transparent);
+  --ui-surface-3: color-mix(in srgb, var(--theme-surface-strong) 82%, var(--theme-bg));
+  --ui-border-soft: color-mix(in srgb, var(--theme-border) 76%, transparent);
+  --ui-border-strong: color-mix(in srgb, var(--theme-border-active) 72%, var(--theme-border));
+  --ui-accent-muted: color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface-elevated));
+}
+
+.theme-switch .glass-panel,
+.theme-switch .list-panel,
+.theme-switch .sidebar-panel,
+.theme-switch .settings-card,
+.theme-switch .settings-hero-card,
+.theme-switch .analytics-header,
+.theme-switch .detail-card {
+  border-color: var(--ui-border-soft) !important;
+  background-color: var(--ui-surface-1);
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.theme-switch .glass-panel:hover,
+.theme-switch .list-panel:hover,
+.theme-switch .settings-card:hover,
+.theme-switch .settings-hero-card:hover {
+  border-color: var(--ui-border-strong) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.theme-switch .fpill[data-active="true"],
+.theme-switch .fpill[aria-pressed="true"],
+.theme-switch .appearance-card.is-active,
+.theme-switch .marvel-phase-btn[data-active="true"] {
+  border-color: color-mix(in srgb, var(--theme-accent) 46%, var(--theme-border)) !important;
+  background: color-mix(in srgb, var(--theme-accent) 13%, var(--theme-surface-elevated)) !important;
+  color: var(--theme-text-primary) !important;
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--theme-accent) 10%, transparent) !important;
+}
+
+.theme-switch .fpill:hover,
+.theme-switch .theme-btn:hover,
+.theme-switch .lmode-btn:hover,
+.theme-switch .wbtn:hover {
+  transform: translateY(-1px);
+}
+
+.theme-switch .rrow {
+  border-color: var(--ui-border-soft) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.theme-switch .rrow:hover {
+  background: var(--row-hover-bg) !important;
+  border-color: var(--ui-border-strong) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.theme-switch .meta-chip {
+  border-color: color-mix(in srgb, var(--theme-border) 72%, transparent) !important;
+  background: color-mix(in srgb, var(--theme-surface-elevated) 64%, transparent) !important;
+  color: var(--theme-text-secondary) !important;
+}
+
+[data-color-mode="light"] .theme-switch::before,
+[data-color-mode="light"] .theme-switch::after {
+  opacity: .28;
+}
+
+[data-color-mode="light"] .hero-backdrop-image {
+  filter: blur(2px) saturate(.98) contrast(.98) brightness(.82);
+}

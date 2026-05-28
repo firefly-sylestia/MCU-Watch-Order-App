@@ -52,17 +52,42 @@ export const resolveThemeTokens = ({ appearanceMode = 'glass', characterTheme = 
   const mode = MODE_TOKENS[appearanceMode] || MODE_TOKENS.glass;
   const hero = THEME_TOKEN_MAP[characterTheme] || THEME_TOKEN_MAP['iron-man'];
   const isDark = Boolean(darkMode);
-  const bg = isDark ? '#070b14' : '#f4f8ff';
-  const surface = isDark ? 'rgba(15,22,36,0.82)' : 'rgba(255,255,255,0.9)';
-  const elevated = isDark ? 'rgba(22,30,48,0.94)' : 'rgba(255,255,255,0.98)';
+  const surface = isDark
+    ? 'rgba(17, 24, 39, 0.76)'
+    : 'rgba(255, 255, 255, 0.82)';
+  const elevated = isDark
+    ? 'rgba(30, 41, 59, 0.86)'
+    : 'rgba(255, 255, 255, 0.94)';
+  const accentSoftness = Math.max(8, Math.round(mode.effects.glow * (isDark ? 34 : 22)));
+  const accentStrength = Math.max(12, Math.round(mode.effects.glow * (isDark ? 58 : 34)));
+
   return {
-    '--bg-base': bg, '--bg-elevated': elevated, '--surface-1': surface, '--surface-2': elevated,
-    '--text-primary': isDark ? '#f6f8ff' : '#0f172a', '--text-secondary': isDark ? '#c1cbdd' : '#42526b',
-    '--accent-1': hero.accent, '--accent-2': hero.accent2,
-    '--edge-color': isDark ? 'color-mix(in srgb, #ffffff 15%, transparent)' : 'color-mix(in srgb, #0f172a 12%, transparent)', '--edge-highlight': isDark ? 'rgba(255,255,255,0.24)' : 'rgba(255,255,255,0.82)',
-    '--glow-color': hero.accent, '--glow-soft': `color-mix(in srgb, ${hero.accent} ${Math.round(mode.effects.glow*45)}%, transparent)`, '--glow-strong': `color-mix(in srgb, ${hero.accent2} ${Math.round(mode.effects.glow*75)}%, transparent)`,
-    '--radius-sm': mode.shape.radius[0]+'px', '--radius-md': mode.shape.radius[1]+'px', '--radius-lg': mode.shape.radius[2]+'px', '--radius-xl': mode.shape.radius[3]+'px',
-    '--motion-fast': mode.motion.fast, '--motion-normal': mode.motion.normal, '--motion-slow': mode.motion.slow,
-    '--fx-blur': mode.effects.blur+'px', '--fx-shadow-2': mode.effects.shadow, '--fx-border-width': mode.shape.border+'px', '--texture-overlay': mode.texture,
+    '--bg-base': 'var(--theme-bg)',
+    '--bg-elevated': 'var(--theme-surface-elevated)',
+    '--surface-1': surface,
+    '--surface-2': elevated,
+    '--surface-3': isDark ? 'rgba(45, 57, 79, 0.9)' : 'rgba(255, 255, 255, 0.98)',
+    '--text-primary': 'var(--theme-text-primary)',
+    '--text-secondary': 'var(--theme-text-secondary)',
+    '--accent-1': hero.accent,
+    '--accent-2': hero.accent2,
+    '--theme-accent': hero.accent,
+    '--theme-accent-alt': hero.accent2,
+    '--edge-color': 'var(--theme-border)',
+    '--edge-highlight': isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(255, 255, 255, 0.86)',
+    '--glow-color': hero.accent,
+    '--glow-soft': `color-mix(in srgb, ${hero.accent} ${accentSoftness}%, transparent)`,
+    '--glow-strong': `color-mix(in srgb, ${hero.accent2} ${accentStrength}%, transparent)`,
+    '--radius-sm': mode.shape.radius[0]+'px',
+    '--radius-md': mode.shape.radius[1]+'px',
+    '--radius-lg': mode.shape.radius[2]+'px',
+    '--radius-xl': mode.shape.radius[3]+'px',
+    '--motion-fast': mode.motion.fast,
+    '--motion-normal': mode.motion.normal,
+    '--motion-slow': mode.motion.slow,
+    '--fx-blur': mode.effects.blur+'px',
+    '--fx-shadow-2': mode.effects.shadow,
+    '--fx-border-width': mode.shape.border+'px',
+    '--texture-overlay': mode.texture,
   };
 };
