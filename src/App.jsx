@@ -673,11 +673,11 @@ const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
   return (
     <>
       <div className="sidebar-control-cluster" style={controlsHidden ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
-      <button className="theme-btn sidebar-toggle-btn" onClick={onToggle} aria-label="Toggle sidebar menu" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Menu size={18} /></button>
-      <button className="theme-btn sidebar-toggle-btn settings-toggle-btn" onClick={onOpenSettings} aria-label="Open settings and profile" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Settings size={18} /></button>
+      <button className="theme-btn sidebar-toggle-btn" onClick={onToggle} aria-label="Toggle sidebar menu" style={{ background: 'var(--theme-surface-elevated)', color: 'var(--theme-text-primary)', borderColor: 'var(--theme-border-strong)', boxShadow: 'var(--shadow-control)' }}><Menu size={18} /></button>
+      <button className="theme-btn sidebar-toggle-btn settings-toggle-btn" onClick={onOpenSettings} aria-label="Open settings and profile" style={{ background: 'var(--theme-surface-elevated)', color: 'var(--theme-text-primary)', borderColor: 'var(--theme-border-strong)', boxShadow: 'var(--shadow-control)' }}><Settings size={18} /></button>
       </div>
       <div className="sidebar-backdrop" data-state={open ? 'open' : 'closed'} onPointerDown={(e) => { e.preventDefault(); onClose?.(); }} />
-      <aside ref={ref} data-state={open ? 'open' : 'closed'} aria-hidden={!open} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
+      <aside ref={ref} data-state={open ? 'open' : 'closed'} aria-hidden={!open} className="sidebar-menu" style={{ '--sidebar-bg': 'color-mix(in srgb, var(--theme-surface-elevated) 88%, transparent)', '--sidebar-border': 'var(--theme-border)', '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': 'var(--shadow-panel)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
         {children}
       </aside>
     </>
@@ -695,7 +695,7 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
     <>
       <button className="settings-backdrop" data-state={open ? 'open' : 'closed'} aria-label="Close settings menu" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose?.(); }} />
       <div className="settings-shell" data-state={open ? 'open' : 'closed'} role="dialog" aria-modal={open ? 'true' : 'false'} aria-hidden={!open} aria-label="Settings and profile" ref={ref}>
-        <div className="fade-in settings-menu settings-menu-redesign" data-state={open ? 'open' : 'closed'} style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
+        <div className="fade-in settings-menu settings-menu-redesign" data-state={open ? 'open' : 'closed'} style={{ '--settings-bg': 'color-mix(in srgb, var(--theme-surface-elevated) 94%, transparent)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
           <div className="settings-close-row"><button className="fpill settings-close-sticky" onClick={() => onClose?.()}><X size={14}/>Close</button></div>{children}
         </div>
       </div>
@@ -2933,40 +2933,55 @@ export default function MCUViewer() {
   };
 
   // ─── Theme tokens ──────────────────────────────────────────────────────────
-  const T = darkMode ? {
-    appBg: '#06060f', headerBg: 'linear-gradient(180deg,#0d0d1e 0%,#06060f 100%)',
-    headerBorder: '#13132a', navBg: '#08081a', navBorder: '#13132a',
-    filterBg: 'transparent', filterBorder: '#10101f',
-    surfaceBg: 'transparent', surfaceBorder: '#12122a',
-    rowHoverBg: 'rgba(255,255,255,0.04)', rowWatchedBg: 'rgba(62,196,122,0.22)',
-    rowBorder: '#0e0e1e', expandBg: '#090916', expandBorder: '#14142a',
-    pillBg: '#0d0d1e', pillBorder: '#1a1a2e', pillText: '#6a7a90',
-    pillHoverBorder: '#252540', pillHoverText: '#c5d0e8',
-    inputBg: '#0b0b1d', inputBorder: '#171730', inputColor: '#c5d0e8',
-    dropdownBg: '#0d0d1e', dropdownBorder: '#1e1e36', dropdownShadow: '0 24px 64px rgba(0,0,0,0.95)',
-    text: '#cfd9ea', textMuted: '#8fa1b8', textFaint: '#5a6880',
-    sortHoverBg: '#0f0f22', statBg: '#0b0b1c', statBorder: '#131328',
-    numFaint: '#4a5566', footerText: '#1e2a38',
-    scrollTrack: '#07070f', scrollThumb: '#16162a', scrollThumbH: '#222238',
-    hexDot: 'rgba(255,255,255,0.01)', switcherBg: '#080818', switcherBorder: '#13132a',
-    phaseSummaryBg: 'color-mix(in srgb, #ffffff 5%, transparent)', phaseSummaryBorder: '#13132a',
-  } : {
-    appBg: '#e8e2d7', headerBg: 'linear-gradient(180deg,#f5f0e6 0%,#e8e2d7 100%)',
-    headerBorder: '#ddd8d0', navBg: '#ffffff', navBorder: '#e8e2d8',
-    filterBg: 'transparent', filterBorder: 'rgba(178,170,160,0.52)',
-    surfaceBg: 'transparent', surfaceBorder: '#d5cec3',
-    rowHoverBg: 'rgba(31,41,55,0.04)', rowWatchedBg: 'rgba(62,196,122,0.14)',
-    rowBorder: '#dfd7cc', expandBg: '#f0e9de', expandBorder: '#d8cfc3',
-    pillBg: '#e7e0d5', pillBorder: '#d0c8bc', pillText: '#535d6e',
-    pillHoverBorder: '#b8afa2', pillHoverText: '#172235',
-    inputBg: '#f5efe4', inputBorder: '#cbc2b6', inputColor: '#1a2030',
-    dropdownBg: '#f3ece1', dropdownBorder: '#cbc2b6', dropdownShadow: '0 20px 44px rgba(15,23,42,0.12)',
-    text: '#162033', textMuted: '#42506a', textFaint: '#607089',
-    sortHoverBg: '#ece4d9', statBg: '#f3ede2', statBorder: '#d8cfc3',
-    numFaint: '#8e98a6', footerText: '#8e98a6',
-    scrollTrack: '#e5ddd2', scrollThumb: '#beb5a8', scrollThumbH: '#aba294',
-    hexDot: 'rgba(13,24,42,0.028)', switcherBg: '#eee7dc', switcherBorder: '#d5ccbf',
-    phaseSummaryBg: 'color-mix(in srgb, #ffffff 5%, transparent)', phaseSummaryBorder: 'rgba(214,205,194,0.5)',
+  const themeSurface = 'var(--theme-surface)';
+  const themeSurfaceElevated = 'var(--theme-surface-elevated)';
+  const themeBorder = 'var(--theme-border)';
+  const themeBorderStrong = 'var(--theme-border-strong)';
+  const themeText = 'var(--theme-text-primary)';
+  const themeTextMuted = 'var(--theme-text-muted)';
+
+  const T = {
+    appBg: 'var(--theme-bg)',
+    headerBg: 'var(--theme-header-bg)',
+    headerBorder: themeBorder,
+    navBg: themeSurfaceElevated,
+    navBorder: themeBorder,
+    filterBg: 'transparent',
+    filterBorder: themeBorder,
+    surfaceBg: 'transparent',
+    surfaceBorder: themeBorder,
+    rowHoverBg: 'color-mix(in srgb, var(--theme-accent) 8%, var(--theme-surface))',
+    rowWatchedBg: 'var(--theme-watched-bg)',
+    rowBorder: themeBorder,
+    expandBg: 'color-mix(in srgb, var(--theme-surface) 86%, var(--theme-bg))',
+    expandBorder: themeBorder,
+    pillBg: 'color-mix(in srgb, var(--theme-surface) 88%, transparent)',
+    pillBorder: themeBorder,
+    pillText: 'var(--theme-text-secondary)',
+    pillHoverBorder: themeBorderStrong,
+    pillHoverText: themeText,
+    inputBg: 'var(--theme-input-bg)',
+    inputBorder: themeBorder,
+    inputColor: themeText,
+    dropdownBg: 'var(--comp-dropdown-bg)',
+    dropdownBorder: themeBorder,
+    dropdownShadow: 'var(--shadow-panel)',
+    text: themeText,
+    textMuted: themeTextMuted,
+    textFaint: 'var(--theme-text-disabled)',
+    sortHoverBg: 'var(--theme-surface-hover)',
+    statBg: themeSurface,
+    statBorder: themeBorder,
+    numFaint: 'var(--theme-text-disabled)',
+    footerText: themeTextMuted,
+    scrollTrack: 'color-mix(in srgb, var(--theme-bg) 84%, transparent)',
+    scrollThumb: 'color-mix(in srgb, var(--theme-accent) 20%, var(--theme-border))',
+    scrollThumbH: 'color-mix(in srgb, var(--theme-accent) 34%, var(--theme-border))',
+    hexDot: 'color-mix(in srgb, var(--theme-text) 5%, transparent)',
+    switcherBg: themeSurface,
+    switcherBorder: themeBorder,
+    phaseSummaryBg: 'color-mix(in srgb, var(--theme-surface) 74%, transparent)',
+    phaseSummaryBorder: themeBorder,
   };
 
   // ─── Per-theme accent + distinctive surface tints ─────────────────────────
@@ -2975,16 +2990,8 @@ export default function MCUViewer() {
   const semanticThemeVars = buildSemanticThemeVars(darkMode);
 
   const cssThemeVars = {
-    ...activeThemeVars,
-    '--theme-accent': 'var(--accent-1)',
-    '--theme-accent-alt': 'var(--accent-2)',
-    '--theme-surface': 'var(--surface-1)',
-    '--theme-surface-hover': 'var(--surface-2)',
-    '--theme-text': 'var(--text-primary)',
-    '--theme-text-secondary': 'var(--text-secondary)',
     ...semanticThemeVars,
-    '--theme-border': darkMode ? '#1b1b33' : '#c8beaf',
-    '--theme-text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
+    ...activeThemeVars,
     '--font-marvel-display': 'var(--font-display)',
     '--font-marvel-ui': 'var(--font-ui)',
     '--font-marvel-body': 'var(--font-body)',
@@ -2999,42 +3006,26 @@ export default function MCUViewer() {
     '--motion-base': UI_PARITY_TOKENS.motion.base,
     '--motion-slow': UI_PARITY_TOKENS.motion.slow,
     '--theme-success-soft': darkMode
-      ? 'color-mix(in srgb, var(--theme-accent) 16%, transparent)'
-      : 'color-mix(in srgb, var(--theme-accent) 12%, #f8f9fb)',
-    '--theme-warning-soft': darkMode ? 'rgba(232,184,75,0.16)' : 'rgba(232,184,75,0.12)',
-    '--theme-danger-soft': darkMode ? 'rgba(209,106,106,0.16)' : 'rgba(209,106,106,0.12)',
-    '--text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
-    '--theme-overlay-surface': darkMode
-      ? `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 14%, rgba(255,255,255,0.06))`
-      : `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 10%, rgba(15,23,42,0.04))`,
-    '--theme-overlay-border': darkMode
-      ? `color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 32%, rgba(255,255,255,0.14))`
-      : `color-mix(in srgb, ${activeThemeVars['--theme-accent']} 26%, rgba(15,23,42,0.14))`,
-    '--overlay-soft': darkMode ? 'rgba(2,6,18,0.3)' : 'rgba(15,23,42,0.09)',
-    '--overlay-dark': darkMode ? 'rgba(2,6,18,0.46)' : 'rgba(15,23,42,0.15)',
-    '--overlay-strong': darkMode ? 'rgba(2,6,18,0.58)' : 'rgba(15,23,42,0.24)',
-    '--control-solid-bg': darkMode ? 'rgba(20,25,46,0.84)' : 'rgba(239,233,223,0.94)',
-    '--detail-shell-bg': darkMode
-      ? 'linear-gradient(145deg, color-mix(in srgb,var(--theme-bg) 92%, #000), color-mix(in srgb,var(--theme-surface) 88%, #000) 54%, color-mix(in srgb,var(--theme-bg-alt) 88%, #000))'
-      : 'linear-gradient(145deg, color-mix(in srgb,var(--theme-surface) 88%, var(--theme-bg)), color-mix(in srgb,var(--theme-bg) 90%, #f5efe3) 56%, color-mix(in srgb,var(--theme-surface) 78%, var(--theme-bg)))',
-    '--detail-panel-bg': darkMode
-      ? 'color-mix(in srgb,var(--theme-surface) 74%, rgba(8,12,26,0.82))'
-      : 'color-mix(in srgb,var(--theme-surface) 74%, var(--theme-bg))',
-    '--app-bg-base': darkMode ? '#06060f' : '#e2dbcf',
-    '--app-bg-vignette': darkMode ? 'rgba(2,6,23,0.42)' : 'rgba(2,6,23,0.08)',
-    '--app-bg-noise-opacity': darkMode ? '0.06' : '0.03',
-    '--theme-app-bg': darkMode
-      ? `radial-gradient(circle at 8% 2%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 40%, transparent), transparent 34%), radial-gradient(circle at 90% 8%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 36%, transparent), transparent 40%), radial-gradient(circle at 50% 120%, rgba(14,165,233,0.22), transparent 52%), linear-gradient(138deg, #02030a 0%, #09071a 30%, #0f1031 58%, #1a1038 100%)`
-      : `radial-gradient(circle at 8% 4%, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 15%, #e9e1d5), transparent 34%), radial-gradient(circle at 88% 14%, color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 13%, #e9e1d5), transparent 40%), linear-gradient(140deg, #e5ddd1 0%, #dfd6c8 44%, #e4dbcf 100%)`,
-    '--comp-overlay-bg': darkMode ? 'rgba(4,8,18,0.56)' : 'rgba(255,255,255,0.58)',
-    '--comp-dropdown-bg': darkMode ? 'rgba(9,14,28,0.52)' : 'rgba(255,255,255,0.62)',
-    '--theme-header-bg': darkMode
-      ? `linear-gradient(180deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 18%, #0c1022), #06060f)`
-      : `linear-gradient(180deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 9%, #f2ede3), #ece5d9)`,
-    '--theme-watched-bg': darkMode
-      ? `linear-gradient(100deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 18%, rgba(12,18,34,0.62)), color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 10%, rgba(10,20,32,0.54)))`
-      : `linear-gradient(100deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 14%, #ffffff), color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 8%, #f7f5ef))`,
-    ...activeThemeVars,
+      ? 'color-mix(in srgb, var(--theme-success) 18%, transparent)'
+      : 'color-mix(in srgb, var(--theme-success) 12%, var(--theme-surface))',
+    '--theme-warning-soft': darkMode
+      ? 'color-mix(in srgb, var(--theme-warning) 18%, transparent)'
+      : 'color-mix(in srgb, var(--theme-warning) 12%, var(--theme-surface))',
+    '--theme-danger-soft': darkMode
+      ? 'color-mix(in srgb, var(--theme-danger) 18%, transparent)'
+      : 'color-mix(in srgb, var(--theme-danger) 12%, var(--theme-surface))',
+    '--text-disabled': 'var(--theme-text-disabled)',
+    '--overlay-soft': 'color-mix(in srgb, var(--theme-bg) 24%, transparent)',
+    '--overlay-dark': 'color-mix(in srgb, var(--theme-bg) 42%, transparent)',
+    '--overlay-strong': 'color-mix(in srgb, var(--theme-bg) 58%, transparent)',
+    '--control-solid-bg': 'color-mix(in srgb, var(--theme-surface-elevated) 88%, var(--theme-bg))',
+    '--detail-shell-bg': 'linear-gradient(145deg, color-mix(in srgb,var(--theme-surface-elevated) 80%, var(--theme-bg)), color-mix(in srgb,var(--theme-surface) 88%, var(--theme-bg)) 56%, color-mix(in srgb,var(--theme-bg-alt) 82%, var(--theme-surface)))',
+    '--detail-panel-bg': 'color-mix(in srgb,var(--theme-surface) 78%, transparent)',
+    '--app-bg-base': 'var(--theme-bg)',
+    '--app-bg-vignette': darkMode ? 'rgba(2,6,23,0.32)' : 'rgba(15,23,42,0.07)',
+    '--app-bg-noise-opacity': darkMode ? '0.05' : '0.025',
+    '--comp-overlay-bg': 'var(--overlay-scrim)',
+    '--comp-dropdown-bg': 'color-mix(in srgb, var(--theme-surface-elevated) 76%, transparent)',
   };
   const routeMode = analyticsOpen || settingsOpen ? 'utility' : 'home';
 

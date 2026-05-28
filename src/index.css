@@ -944,3 +944,51 @@ body.android-native {
     padding-inline: 14px;
   }
 }
+
+/* ── Unified light/dark color contract ───────────────────────────────────────
+   App components should consume these semantic roles instead of hard-coded
+   theme colors. They are intentionally low-glow with clear, accessible borders.
+*/
+.theme-switch {
+  --surface-primary: var(--theme-surface);
+  --surface-elevated: var(--theme-surface-elevated);
+  --bg-secondary: var(--theme-bg-alt);
+  --radius-surface: var(--radius-lg);
+  --motion-ease: var(--ease-out);
+  --motion-medium: var(--motion-base);
+  --interactive-duration: 160ms;
+  --interactive-ease: var(--ease-out);
+  --chip-text: var(--theme-text-secondary);
+  --chip-text-active: var(--theme-text-primary);
+  --chip-border: var(--theme-border);
+  --chip-border-active: color-mix(in srgb, var(--theme-accent) 42%, var(--theme-border));
+  --chip-bg-hover: color-mix(in srgb, var(--theme-accent) 10%, var(--theme-surface-elevated));
+  --chip-shadow-active: 0 0 0 3px color-mix(in srgb, var(--theme-accent) 18%, transparent), var(--shadow-control);
+  --interactive-border-hover: color-mix(in srgb, var(--theme-accent) 34%, var(--theme-border));
+  --interactive-active-bg: color-mix(in srgb, var(--theme-accent) 13%, var(--theme-surface));
+  --interactive-focus-ring: 0 0 0 3px color-mix(in srgb, var(--theme-accent) 22%, transparent);
+}
+
+.theme-switch[data-color-mode='dark'] {
+  --shadow-panel: 0 16px 42px rgba(0, 0, 0, 0.32);
+  --shadow-control: 0 5px 14px rgba(0, 0, 0, 0.18);
+}
+
+.theme-switch[data-color-mode='light'] {
+  --shadow-panel: 0 14px 32px rgba(15, 23, 42, 0.12);
+  --shadow-control: 0 5px 14px rgba(15, 23, 42, 0.08);
+}
+
+.theme-switch::before,
+.theme-switch::after {
+  opacity: .32;
+}
+
+.theme-switch .header-brand::after,
+.theme-switch .analytics-shell::after,
+.theme-switch .detail-shell::after,
+.theme-switch .phase-rows-full::before,
+.theme-switch .rrow::after,
+.theme-switch .calendar-row::after {
+  opacity: .22;
+}

@@ -3343,3 +3343,110 @@ body { background: var(--app-shell-gradient); }
     animation:none !important;
   }
 }
+
+/* ── Modern theme pass: unified surfaces, vivid accents, restrained glow ───── */
+.theme-switch .glass-panel,
+.theme-switch .settings-menu,
+.theme-switch .analytics-shell,
+.theme-switch .sidebar-menu,
+.theme-switch .phase-header-card,
+.theme-switch .phase-rows-full,
+.theme-switch .filters-open,
+.theme-switch .calendar-row,
+.theme-switch .rrow {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-elevated) 82%, transparent), color-mix(in srgb, var(--theme-surface) 92%, var(--theme-bg))) !important;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 84%, transparent) !important;
+  box-shadow: var(--shadow-panel) !important;
+}
+
+.theme-switch .rrow {
+  border-left: 2px solid color-mix(in srgb, var(--phase-color, var(--theme-accent)) 38%, transparent) !important;
+}
+
+.theme-switch .rrow:hover,
+.theme-switch .calendar-row:hover,
+.theme-switch .glass-panel:hover {
+  border-color: color-mix(in srgb, var(--theme-accent) 30%, var(--theme-border)) !important;
+  box-shadow: var(--shadow-panel), 0 0 0 1px color-mix(in srgb, var(--theme-accent) 12%, transparent) !important;
+  transform: translateY(-1px);
+}
+
+.theme-switch .fpill,
+.theme-switch .wbtn,
+.theme-switch .theme-btn,
+.theme-switch .dock-btn,
+.theme-switch .filters-trigger,
+.theme-switch .dropdown-item,
+.theme-switch .sopt {
+  background: color-mix(in srgb, var(--theme-surface-elevated) 82%, transparent) !important;
+  border-color: color-mix(in srgb, var(--theme-border) 86%, transparent) !important;
+  color: var(--theme-text-secondary) !important;
+  box-shadow: var(--shadow-control) !important;
+}
+
+.theme-switch .fpill:hover,
+.theme-switch .wbtn:hover,
+.theme-switch .theme-btn:hover,
+.theme-switch .dock-btn:hover,
+.theme-switch .filters-trigger:hover,
+.theme-switch .dropdown-item:hover,
+.theme-switch .sopt:hover {
+  background: color-mix(in srgb, var(--theme-accent) 10%, var(--theme-surface-elevated)) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 36%, var(--theme-border)) !important;
+  color: var(--theme-text-primary) !important;
+  box-shadow: var(--shadow-control), 0 0 0 1px color-mix(in srgb, var(--theme-accent) 10%, transparent) !important;
+}
+
+.theme-switch .fpill[aria-pressed='true'],
+.theme-switch .fpill.active,
+.theme-switch .fpill.picked,
+.theme-switch .dropdown-item.active,
+.theme-switch .sopt.picked,
+.theme-switch .phase-chip[data-active='true'] {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 18%, var(--theme-surface-elevated)), color-mix(in srgb, var(--theme-accent-alt) 12%, var(--theme-surface))) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 46%, var(--theme-border)) !important;
+  color: var(--theme-text-primary) !important;
+  box-shadow: var(--shadow-control), inset 0 1px 0 color-mix(in srgb, var(--edge-highlight) 70%, transparent) !important;
+}
+
+.theme-switch .meta-chip,
+.theme-switch .detail-pill,
+.theme-switch .hero-carousel-meta,
+.theme-switch .row-meta-line {
+  background: color-mix(in srgb, var(--theme-surface-elevated) 74%, transparent) !important;
+  border-color: color-mix(in srgb, var(--theme-border) 78%, transparent) !important;
+  color: var(--theme-text-secondary) !important;
+}
+
+.theme-switch input,
+.theme-switch textarea,
+.theme-switch select,
+.theme-switch .settings-input {
+  background: var(--theme-input-bg) !important;
+  color: var(--theme-text-primary) !important;
+  border-color: var(--theme-border) !important;
+}
+
+.theme-switch input:focus,
+.theme-switch textarea:focus,
+.theme-switch select:focus,
+.theme-switch .settings-input:focus {
+  border-color: color-mix(in srgb, var(--theme-accent) 46%, var(--theme-border)) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent) 16%, transparent) !important;
+}
+
+.theme-switch[data-color-mode='light'] .title-main,
+.theme-switch[data-color-mode='light'] .header-title-sub,
+.theme-switch[data-color-mode='light'] .settings-hero-card h2,
+.theme-switch[data-color-mode='light'] .settings-card h3 {
+  color: var(--theme-text-primary) !important;
+  text-shadow: none !important;
+}
+
+.theme-switch[data-color-mode='dark'] .hero-backdrop-blend {
+  background: linear-gradient(180deg, rgba(5, 8, 18, 0.18), rgba(5, 8, 18, 0.28)) !important;
+}
+
+.theme-switch[data-color-mode='light'] .hero-backdrop-blend {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(248, 250, 252, 0.20)) !important;
+}
