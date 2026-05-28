@@ -841,7 +841,7 @@ export default function MCUViewer() {
   const [statusDropdown, setStatusDropdown] = useState(null);
   const [fabMenuOpen, setFabMenuOpen] = useState(true);
   const [fabMinimized, setFabMinimized] = useState(false);
-  const [browseMode, setBrowseMode] = useState('home');
+  const [browseMode, setBrowseMode] = useState('search');
   const setFilterStatusOpen = (next) => dispatchUiMode({ filterStatusOpen: typeof next === 'function' ? next(uiModeState.filterStatusOpen) : next });
   const setDockStatusOpen = (next) => dispatchUiMode({ dockStatusOpen: typeof next === 'function' ? next(uiModeState.dockStatusOpen) : next });
   const setFiltersOpen = (next) => dispatchUiMode({ filtersOpen: typeof next === 'function' ? next(uiModeState.filtersOpen) : next });
@@ -1526,14 +1526,17 @@ export default function MCUViewer() {
   };
 
   const { filtered, grouped, phaseKeys } = useMemo(() => {
+    const isSearchMode = browseMode === 'search';
+    const hasSearchQuery = search.trim().length > 0;
     const f = items.filter(i => {
-      if (listMode === 'core' && !coreIds.has(i.id)) return false;
+      if (isSearchMode && !hasSearchQuery) return false;
+      if (!isSearchMode && listMode === 'core' && !coreIds.has(i.id)) return false;
       if (showAllFiltersOverride) return true;
-      if (listMode === 'core' && essentialOnly && !i.essential) return false;
+      if (!isSearchMode && listMode === 'core' && essentialOnly && !i.essential) return false;
       if (watchedOnly && i.status !== 'watched') return false;
       if (statusFilter && i.status !== statusFilter) return false;
       if (typeFilter && i.type !== typeFilter) return false;
-      if (activePhase && i.phase !== activePhase) return false;
+      if (!isSearchMode && activePhase && i.phase !== activePhase) return false;
       if (releaseFilter === 'released' && (i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
       if (releaseFilter === 'upcoming' && !(i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
       if (timelineMode === 'loki' && !CHARACTER_POV_TITLE_SETS.loki.has(i.title)) return false;
@@ -3369,7 +3372,7 @@ export default function MCUViewer() {
           <div className="search-page-panel" style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 18, padding: 14, background: 'color-mix(in srgb, var(--theme-surface) 84%, transparent)', boxShadow: '0 10px 30px color-mix(in srgb, #000 16%, transparent)' }}>
             <div style={{ position: 'relative' }}>
               <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
-              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by title..." aria-label="Search library" style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650, transition: 'border-color 180ms ease, box-shadow 180ms ease' }} />
+              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="" aria-label="Search library" style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650, transition: 'border-color 180ms ease, box-shadow 180ms ease' }} />
             </div>
             <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
               <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' }}>Search in</div>
@@ -3628,7 +3631,50 @@ export default function MCUViewer() {
             </div>
           )}
 
-          {viewMode === 'calendar' ? (
+          {browseMode === 'search' ? (
+            <section data-motion="section" className="curvy-panel motion-section motion-pop" style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 12 }}>
+              {search.trim() ? (
+                <div className="list-panel" style={{ overflow: 'hidden' }}>
+                  <PhaseRows rows={filtered} renderRow={(item, idx) => {
+                    const itemReleaseStatus = releaseStatusFor(item);
+                    const itemReleaseInfo = releaseInfoFor(item);
+                    return (
+                      <MemoizedTitleRow
+                        key={item.id}
+                        item={item}
+                        idx={idx}
+                        ph={currentPhases.find(p => p.id === item.phase) || { color: 'var(--theme-accent)' }}
+                        T={T}
+                        typeMeta={getSafeTypeMeta(item.type)}
+                        statusMeta={getSafeStatusMeta(item.status)}
+                        releaseStatus={itemReleaseStatus}
+                        releaseStatusText={releaseStatusLabel(itemReleaseStatus)}
+                        releaseStatusStyleObj={releaseStatusStyle(itemReleaseStatus)}
+                        releaseLabel={formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}
+                        poster={posterSrc(item)}
+                        genres={inferGenres(item)}
+                        isExpanded={expandedItem === item.id}
+                        isWatched={item.status === 'watched'}
+                        isBookmarked={Boolean(bookmarks[item.id])}
+                        statusDropdown={statusDropdown}
+                        rating={metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
+                        onOpenDetail={openDetail}
+                        onSetStatus={setStatusDirect}
+                        onToggleBookmark={toggleBookmark}
+                        onOpenStatus={openStatusDropdown}
+                        bulkSelectMode={bulkSelectMode}
+                        isSelected={selectedIds.has(item.id)}
+                        onToggleSelected={toggleSelected}
+                        isDesktopViewport={isDesktopViewport}
+                      />
+                    );
+                  }} />
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '64px 12px', color: T.textMuted, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 2.2 }}>Start typing to search titles.</div>
+              )}
+            </section>
+          ) : viewMode === 'calendar' ? (
             <section data-motion="section" className='curvy-panel calendar-section motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
               <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', color: 'var(--theme-text-primary)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
               <div style={{ marginBottom: 12, color: T.textMuted, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.2 }}>Grouped by month / quarter / year</div>
