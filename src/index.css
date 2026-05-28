@@ -944,3 +944,62 @@ body.android-native {
     padding-inline: 14px;
   }
 }
+
+/* ── Modernized unified light/dark color system ───────────────────────────────
+   These aliases sit after legacy tokens so every component resolves through one
+   semantic surface model while still allowing character accents to swap safely.
+*/
+:root,
+[data-color-mode="dark"] {
+  color-scheme: dark;
+  --bg: var(--theme-bg, #080b14);
+  --bg-elevated: var(--theme-surface-elevated, rgba(27, 36, 58, 0.92));
+  --bg-card: var(--theme-surface, rgba(17, 24, 39, 0.84));
+  --bg-glass: var(--theme-overlay-surface, rgba(17, 24, 39, 0.72));
+  --text: var(--theme-text, #f7f9ff);
+  --text-h: var(--theme-text-primary, #f7f9ff);
+  --text-dim: var(--theme-text-secondary, #c8d2e5);
+  --text-muted: var(--theme-text-muted, #8f9bb1);
+  --surface-1: var(--theme-surface, rgba(17, 24, 39, 0.84));
+  --surface-2: var(--theme-surface-elevated, rgba(27, 36, 58, 0.92));
+  --surface-3: var(--theme-surface-hover, rgba(39, 50, 77, 0.9));
+  --ambient-glow: color-mix(in srgb, var(--theme-accent) 10%, transparent);
+  --edge-highlight: rgba(255, 255, 255, 0.16);
+  --border: var(--theme-border, rgba(148, 163, 184, 0.18));
+  --border-hover: var(--theme-border-strong, rgba(203, 213, 225, 0.3));
+  --border-active: var(--theme-border-strong, rgba(203, 213, 225, 0.3));
+}
+
+[data-color-mode="light"],
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: var(--theme-bg, #f5f7fb);
+  --bg-elevated: var(--theme-surface-elevated, rgba(255, 255, 255, 0.95));
+  --bg-card: var(--theme-surface, rgba(255, 255, 255, 0.82));
+  --bg-glass: var(--theme-overlay-surface, rgba(255, 255, 255, 0.78));
+  --text: var(--theme-text, #101828);
+  --text-h: var(--theme-text-primary, #101828);
+  --text-dim: var(--theme-text-secondary, #344054);
+  --text-muted: var(--theme-text-muted, #667085);
+  --surface-1: var(--theme-surface, rgba(255, 255, 255, 0.82));
+  --surface-2: var(--theme-surface-elevated, rgba(255, 255, 255, 0.95));
+  --surface-3: var(--theme-surface-hover, rgba(237, 242, 248, 0.96));
+  --ambient-glow: color-mix(in srgb, var(--theme-accent) 7%, transparent);
+  --edge-highlight: rgba(255, 255, 255, 0.86);
+  --border: var(--theme-border, rgba(16, 24, 40, 0.12));
+  --border-hover: var(--theme-border-strong, rgba(16, 24, 40, 0.22));
+  --border-active: var(--theme-border-strong, rgba(16, 24, 40, 0.22));
+}
+
+.wbtn {
+  border-color: var(--theme-border);
+  background: var(--control-solid-bg);
+  color: var(--theme-text);
+  box-shadow: var(--shadow-sm), inset 0 1px 0 var(--edge-highlight);
+}
+
+.wbtn:hover {
+  border-color: color-mix(in srgb, var(--theme-accent) 42%, var(--theme-border-strong));
+  background: var(--theme-surface-hover) !important;
+  box-shadow: var(--shadow-md), 0 0 0 3px color-mix(in srgb, var(--theme-accent) 12%, transparent);
+}

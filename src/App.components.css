@@ -3343,3 +3343,104 @@ body { background: var(--app-shell-gradient); }
     animation:none !important;
   }
 }
+
+/* ── Final color-system overrides: modern surfaces and interaction feedback ── */
+.theme-switch {
+  background: var(--theme-app-bg);
+}
+
+.glass-panel,
+.ui-panel,
+.ui-panel-strong,
+.curvy-panel,
+.list-panel,
+.phase-header-card,
+.rrow,
+.calendar-row,
+.sidebar-menu,
+.settings-menu-redesign,
+.detail-card,
+.analytics-shell,
+.export-card-studio {
+  border-color: var(--theme-overlay-border, var(--theme-border)) !important;
+  color: var(--theme-text);
+}
+
+.glass-panel,
+.ui-panel,
+.curvy-panel,
+.list-panel,
+.settings-menu-redesign,
+.detail-card,
+.analytics-shell,
+.export-card-studio {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-elevated) 82%, transparent), color-mix(in srgb, var(--theme-surface) 92%, transparent)) !important;
+  box-shadow: var(--shadow-md), inset 0 1px 0 var(--edge-highlight) !important;
+}
+
+.rrow,
+.calendar-row {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--theme-surface-elevated) 74%, transparent), color-mix(in srgb, var(--theme-surface) 94%, transparent)) !important;
+  box-shadow: var(--shadow-sm), inset 0 1px 0 var(--edge-highlight) !important;
+}
+
+.rrow:hover,
+.calendar-row:hover,
+.glass-panel:hover,
+.ui-panel:hover {
+  border-color: color-mix(in srgb, var(--theme-accent) 42%, var(--theme-border-strong)) !important;
+  box-shadow: var(--shadow-md), 0 0 0 3px color-mix(in srgb, var(--theme-accent) 10%, transparent) !important;
+}
+
+.sidebar-toggle-btn,
+.theme-btn,
+.fpill,
+.dock-btn,
+.fab-primary,
+.bottom-action-bar,
+.status-pill,
+.sopt,
+.lmode-btn {
+  background: var(--control-solid-bg) !important;
+  color: var(--theme-text) !important;
+  border-color: var(--theme-border) !important;
+  box-shadow: var(--shadow-sm), inset 0 1px 0 var(--edge-highlight) !important;
+}
+
+.sidebar-toggle-btn:hover,
+.theme-btn:hover,
+.fpill:hover,
+.dock-btn:hover,
+.fab-primary:hover,
+.bottom-action-bar:hover,
+.status-pill:hover,
+.sopt:hover,
+.lmode-btn:hover {
+  background: var(--theme-surface-hover) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 48%, var(--theme-border-strong)) !important;
+  color: var(--theme-accent) !important;
+  transform: translateY(-1px);
+}
+
+.sidebar-backdrop,
+.detail-backdrop {
+  background: radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--theme-accent) 18%, transparent), transparent 42%), var(--overlay-strong) !important;
+}
+
+.hero-carousel-meta {
+  background: linear-gradient(180deg, transparent, rgba(2, 6, 23, 0.82)) !important;
+  color: #ffffff !important;
+}
+
+[data-color-mode="light"] .glass-panel,
+[data-color-mode="light"] .ui-panel,
+[data-color-mode="light"] .curvy-panel,
+[data-color-mode="light"] .list-panel,
+[data-color-mode="light"] .settings-menu-redesign,
+[data-color-mode="light"] .detail-card,
+[data-color-mode="light"] .analytics-shell,
+[data-color-mode="light"] .export-card-studio,
+[data-color-mode="light"] .rrow,
+[data-color-mode="light"] .calendar-row {
+  box-shadow: var(--shadow-sm), inset 0 1px 0 var(--edge-highlight) !important;
+}

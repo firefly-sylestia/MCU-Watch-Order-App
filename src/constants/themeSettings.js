@@ -1,3 +1,5 @@
+import { COLOR_MODE_TOKENS } from './colorThemes';
+
 export const APPEARANCE_MODES = [
   { id: 'glass', label: 'Glass' },
   { id: 'pixelated', label: 'Pixelated' },
@@ -51,18 +53,41 @@ export { THEME_TOKEN_MAP };
 export const resolveThemeTokens = ({ appearanceMode = 'glass', characterTheme = 'iron-man', darkMode = true }) => {
   const mode = MODE_TOKENS[appearanceMode] || MODE_TOKENS.glass;
   const hero = THEME_TOKEN_MAP[characterTheme] || THEME_TOKEN_MAP['iron-man'];
-  const isDark = Boolean(darkMode);
-  const bg = isDark ? '#070b14' : '#f4f8ff';
-  const surface = isDark ? 'rgba(15,22,36,0.82)' : 'rgba(255,255,255,0.9)';
-  const elevated = isDark ? 'rgba(22,30,48,0.94)' : 'rgba(255,255,255,0.98)';
+  const base = COLOR_MODE_TOKENS[darkMode ? 'dark' : 'light'];
+  const accentMix = darkMode ? 28 : 14;
+  const accentAltMix = darkMode ? 22 : 12;
+
   return {
-    '--bg-base': bg, '--bg-elevated': elevated, '--surface-1': surface, '--surface-2': elevated,
-    '--text-primary': isDark ? '#f6f8ff' : '#0f172a', '--text-secondary': isDark ? '#c1cbdd' : '#42526b',
-    '--accent-1': hero.accent, '--accent-2': hero.accent2,
-    '--edge-color': isDark ? 'color-mix(in srgb, #ffffff 15%, transparent)' : 'color-mix(in srgb, #0f172a 12%, transparent)', '--edge-highlight': isDark ? 'rgba(255,255,255,0.24)' : 'rgba(255,255,255,0.82)',
-    '--glow-color': hero.accent, '--glow-soft': `color-mix(in srgb, ${hero.accent} ${Math.round(mode.effects.glow*45)}%, transparent)`, '--glow-strong': `color-mix(in srgb, ${hero.accent2} ${Math.round(mode.effects.glow*75)}%, transparent)`,
-    '--radius-sm': mode.shape.radius[0]+'px', '--radius-md': mode.shape.radius[1]+'px', '--radius-lg': mode.shape.radius[2]+'px', '--radius-xl': mode.shape.radius[3]+'px',
-    '--motion-fast': mode.motion.fast, '--motion-normal': mode.motion.normal, '--motion-slow': mode.motion.slow,
-    '--fx-blur': mode.effects.blur+'px', '--fx-shadow-2': mode.effects.shadow, '--fx-border-width': mode.shape.border+'px', '--texture-overlay': mode.texture,
+    '--accent-1': hero.accent,
+    '--accent-2': hero.accent2,
+    '--theme-accent': hero.accent,
+    '--theme-accent-alt': hero.accent2,
+    '--accent': hero.accent,
+    '--accent-glow': `color-mix(in srgb, ${hero.accent} ${darkMode ? 34 : 20}%, transparent)`,
+    '--accent-glow-2': `color-mix(in srgb, ${hero.accent2} ${darkMode ? 30 : 18}%, transparent)`,
+    '--glow-color': hero.accent,
+    '--glow-soft': `color-mix(in srgb, ${hero.accent} ${Math.round(mode.effects.glow * 45)}%, transparent)`,
+    '--glow-strong': `color-mix(in srgb, ${hero.accent2} ${Math.round(mode.effects.glow * 75)}%, transparent)`,
+    '--theme-overlay-surface': darkMode
+      ? `color-mix(in srgb, ${hero.accent} 14%, ${base.surface})`
+      : `color-mix(in srgb, ${hero.accent2} 8%, ${base.surface})`,
+    '--theme-overlay-border': darkMode
+      ? `color-mix(in srgb, ${hero.accent2} 32%, ${base.border})`
+      : `color-mix(in srgb, ${hero.accent} 24%, ${base.border})`,
+    '--row-top-tint': `color-mix(in srgb, ${hero.accent} ${accentMix}%, transparent)`,
+    '--row-top-tint-soft': `color-mix(in srgb, ${hero.accent2} ${accentAltMix}%, transparent)`,
+    '--edge-color': base.border,
+    '--edge-highlight': darkMode ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.86)',
+    '--radius-sm': mode.shape.radius[0] + 'px',
+    '--radius-md': mode.shape.radius[1] + 'px',
+    '--radius-lg': mode.shape.radius[2] + 'px',
+    '--radius-xl': mode.shape.radius[3] + 'px',
+    '--motion-fast': mode.motion.fast,
+    '--motion-normal': mode.motion.normal,
+    '--motion-slow': mode.motion.slow,
+    '--fx-blur': mode.effects.blur + 'px',
+    '--fx-shadow-2': mode.effects.shadow,
+    '--fx-border-width': mode.shape.border + 'px',
+    '--texture-overlay': mode.texture,
   };
 };

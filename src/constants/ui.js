@@ -1,3 +1,5 @@
+import { COLOR_MODE_TOKENS, buildColorModeVars } from './colorThemes';
+
 export const MOBILE_TABS = ["assets", "avatar", "text"];
 
 export const UI_PARITY_TOKENS = {
@@ -14,52 +16,9 @@ export const UI_PARITY_TOKENS = {
   contrastTargets: { normalText: '4.5:1', largeText: '3:1', nonTextUI: '3:1' },
 };
 
-export const SEMANTIC_COLOR_MATRIX = {
-  dark: {
-    background: '#06060f',
-    surface: '#111728',
-    emphasis: '#f3f8ff',
-    success: '#4ade80',
-    warning: '#facc15',
-    error: '#f87171',
-    textPrimary: '#f4f8ff',
-    textSecondary: '#a9b6cb',
-  },
-  light: {
-    background: '#e2dbcf',
-    surface: '#f4eee3',
-    emphasis: '#121a2a',
-    success: '#15803d',
-    warning: '#b45309',
-    error: '#b91c1c',
-    textPrimary: '#121a2a',
-    textSecondary: '#4f5c70',
-  },
-};
+export const SEMANTIC_COLOR_MATRIX = COLOR_MODE_TOKENS;
 
-export const buildSemanticThemeVars = (darkMode) => {
-  const mode = darkMode ? 'dark' : 'light';
-  const c = SEMANTIC_COLOR_MATRIX[mode];
-
-  return {
-    '--theme-bg': c.background,
-    '--theme-surface': c.surface,
-    '--theme-surface-hover': `color-mix(in srgb, ${c.surface} 82%, ${c.emphasis})`,
-    '--theme-surface-dark': 'color-mix(in srgb, #101827 90%, #06060f)',
-    '--theme-surface-light': 'color-mix(in srgb, #f7f2ea 90%, #e2dbcf)',
-    '--theme-surface-hover-dark': 'color-mix(in srgb, #172033 85%, #f4f8ff)',
-    '--theme-surface-hover-light': 'color-mix(in srgb, #fbf8f2 88%, #1a2030)',
-    '--theme-comp-card-dark': 'color-mix(in srgb, #1f2937 82%, #0f172a)',
-    '--theme-comp-card-light': 'color-mix(in srgb, #ffffff 92%, #e2dbcf)',
-    '--theme-text': c.textPrimary,
-    '--theme-text-primary': c.textPrimary,
-    '--theme-text-secondary': c.textSecondary,
-    '--theme-text-muted': c.textSecondary,
-    '--theme-success': c.success,
-    '--theme-warning': c.warning,
-    '--theme-danger': c.error,
-  };
-};
+export const buildSemanticThemeVars = buildColorModeVars;
 
 export const UI_TOKENS = {
   panel: { level1: 'var(--ui-panel-1)', level2: 'var(--ui-panel-2)' },
