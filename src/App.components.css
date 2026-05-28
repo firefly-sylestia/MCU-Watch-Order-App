@@ -3593,3 +3593,153 @@ body { background: var(--app-shell-gradient); }
 .theme-switch .rrow:hover {
   background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 10%, var(--theme-surface)), var(--theme-surface-hover)) !important;
 }
+
+/* 2026 redesign pass: researched glass/neon/pixel systems with distinct typography. */
+.theme-switch {
+  --style-letter-space: 0.02em;
+  --style-control-weight: 750;
+}
+
+.theme-switch[data-theme="glass"] {
+  --style-letter-space: -0.015em;
+  --component-bg:
+    linear-gradient(135deg, color-mix(in srgb, var(--theme-surface) 58%, transparent), color-mix(in srgb, var(--theme-surface-strong) 38%, transparent)),
+    linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.025));
+  --component-border: color-mix(in srgb, var(--theme-accent) 24%, rgba(255,255,255,.18));
+  --component-shadow: 0 26px 70px color-mix(in srgb, var(--theme-shadow-rgb) 24%, transparent), inset 0 1px 0 rgba(255,255,255,.22), inset 0 -1px 0 rgba(255,255,255,.06);
+}
+
+.theme-switch[data-theme="neon"] {
+  --style-letter-space: .045em;
+  --style-control-weight: 800;
+  --component-bg:
+    linear-gradient(145deg, color-mix(in srgb, var(--theme-bg) 66%, transparent), color-mix(in srgb, var(--theme-accent) 10%, var(--theme-surface))),
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-alt) 20%, transparent), transparent 32%);
+  --component-border: color-mix(in srgb, var(--theme-accent) 56%, transparent);
+  --component-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-accent) 22%, transparent), 0 0 22px color-mix(in srgb, var(--theme-accent) 30%, transparent), 0 0 58px color-mix(in srgb, var(--theme-accent-alt) 18%, transparent);
+}
+
+.theme-switch[data-theme="pixelated"] {
+  --style-letter-space: .035em;
+  --style-control-weight: 700;
+  --component-bg:
+    linear-gradient(135deg, color-mix(in srgb, var(--theme-surface) 96%, transparent), color-mix(in srgb, var(--theme-accent) 10%, var(--theme-surface-strong))),
+    repeating-linear-gradient(0deg, color-mix(in srgb, var(--theme-accent) 9%, transparent) 0 1px, transparent 1px 6px);
+  --component-shadow: 5px 5px 0 color-mix(in srgb, var(--theme-accent) 34%, transparent), 10px 10px 0 color-mix(in srgb, var(--theme-accent-alt) 14%, transparent), 0 16px 24px rgba(2,8,23,.16);
+}
+
+.theme-switch[data-theme="minimal"] {
+  --style-letter-space: -0.01em;
+  --style-control-weight: 650;
+}
+
+.theme-switch .header-brand,
+.theme-switch .hero-carousel-shell,
+.theme-switch .phase-rows-full,
+.theme-switch .filters-open,
+.theme-switch .settings-menu,
+.theme-switch .analytics-shell,
+.theme-switch .detail-card,
+.theme-switch .glass-panel,
+.theme-switch .rrow,
+.theme-switch .calendar-row,
+.theme-switch .curvy-panel {
+  background: var(--component-bg) !important;
+  border-color: var(--component-border) !important;
+  box-shadow: var(--component-shadow) !important;
+}
+
+.theme-switch .header-title-mcu,
+.theme-switch .detail-export-title,
+.theme-switch .hero-carousel-title,
+.theme-switch .title-main,
+.theme-switch h1,
+.theme-switch h2,
+.theme-switch h3 {
+  font-family: var(--font-marvel-display) !important;
+  letter-spacing: var(--style-letter-space);
+}
+
+.theme-switch .fpill,
+.theme-switch .filters-trigger,
+.theme-switch .phase-chip,
+.theme-switch .wbtn,
+.theme-switch .dock-btn,
+.theme-switch .status-pill,
+.theme-switch .meta-chip,
+.theme-switch .sopt {
+  font-family: var(--font-marvel-ui) !important;
+  font-weight: var(--style-control-weight);
+}
+
+.theme-switch[data-theme="glass"] .header-brand,
+.theme-switch[data-theme="glass"] .hero-carousel-shell,
+.theme-switch[data-theme="glass"] .phase-rows-full,
+.theme-switch[data-theme="glass"] .filters-open,
+.theme-switch[data-theme="glass"] .settings-menu,
+.theme-switch[data-theme="glass"] .analytics-shell,
+.theme-switch[data-theme="glass"] .detail-card,
+.theme-switch[data-theme="glass"] .glass-panel,
+.theme-switch[data-theme="glass"] .rrow,
+.theme-switch[data-theme="glass"] .calendar-row,
+.theme-switch[data-theme="glass"] .curvy-panel {
+  backdrop-filter: blur(calc(var(--fx-blur) * 1.05)) saturate(156%) contrast(1.04) !important;
+  -webkit-backdrop-filter: blur(calc(var(--fx-blur) * 1.05)) saturate(156%) contrast(1.04) !important;
+}
+
+.theme-switch[data-theme="neon"] .fpill,
+.theme-switch[data-theme="neon"] .filters-trigger,
+.theme-switch[data-theme="neon"] .phase-chip,
+.theme-switch[data-theme="neon"] .hero-carousel-nav {
+  border-color: color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border)) !important;
+  text-shadow: 0 0 10px color-mix(in srgb, var(--theme-accent) 26%, transparent);
+}
+
+.theme-switch[data-theme="pixelated"] .header-brand,
+.theme-switch[data-theme="pixelated"] .hero-carousel-shell,
+.theme-switch[data-theme="pixelated"] .phase-rows-full,
+.theme-switch[data-theme="pixelated"] .filters-open,
+.theme-switch[data-theme="pixelated"] .settings-menu,
+.theme-switch[data-theme="pixelated"] .analytics-shell,
+.theme-switch[data-theme="pixelated"] .detail-card,
+.theme-switch[data-theme="pixelated"] .glass-panel,
+.theme-switch[data-theme="pixelated"] .rrow,
+.theme-switch[data-theme="pixelated"] .calendar-row,
+.theme-switch[data-theme="pixelated"] .curvy-panel,
+.theme-switch[data-theme="pixelated"] .fpill,
+.theme-switch[data-theme="pixelated"] .filters-trigger,
+.theme-switch[data-theme="pixelated"] .phase-chip {
+  border-width: 2px !important;
+  border-style: solid !important;
+  image-rendering: pixelated;
+  text-shadow: none !important;
+}
+
+.theme-switch[data-theme="pixelated"] .header-title-mcu,
+.theme-switch[data-theme="pixelated"] .hero-carousel-title,
+.theme-switch[data-theme="pixelated"] .detail-export-title {
+  line-height: 1.28 !important;
+  text-transform: uppercase;
+  font-size: clamp(1rem, 3.4vw, 2.7rem) !important;
+}
+
+.theme-switch[data-color-mode="light"][data-theme="neon"] {
+  --component-bg:
+    linear-gradient(145deg, color-mix(in srgb, #ffffff 82%, transparent), color-mix(in srgb, var(--theme-accent) 9%, #ffffff)),
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-alt) 14%, transparent), transparent 36%);
+  --component-shadow: 0 16px 42px rgba(15,23,42,.13), 0 0 18px color-mix(in srgb, var(--theme-accent) 16%, transparent);
+}
+
+.theme-switch[data-color-mode="light"][data-theme="pixelated"] {
+  --component-shadow: 4px 4px 0 color-mix(in srgb, var(--theme-accent) 24%, transparent), 8px 8px 0 color-mix(in srgb, var(--theme-accent-alt) 10%, transparent), 0 12px 20px rgba(15,23,42,.10);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-switch *,
+  .theme-switch *::before,
+  .theme-switch *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}

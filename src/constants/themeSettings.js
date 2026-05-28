@@ -33,6 +33,7 @@ const MODE_TOKENS = {
     motion: { fast: '140ms', normal: '220ms', slow: '320ms', hoverScale: 1.008 },
     texture: 'linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.025) 48%, transparent 72%)',
     panelOverlay: 'linear-gradient(145deg, color-mix(in srgb, var(--theme-surface) 72%, transparent), color-mix(in srgb, var(--theme-surface-strong) 54%, transparent))',
+    fonts: { display: '"Syne", "Bebas Neue", system-ui, sans-serif', ui: '"Manrope", system-ui, sans-serif', body: '"Manrope", "Outfit", system-ui, sans-serif' },
   },
   pixelated: {
     effects: { blur: 0, glow: 0.1, shadow: '6px 6px 0 color-mix(in srgb, var(--theme-accent) 22%, transparent), 0 14px 24px rgba(2,8,23,.16)' },
@@ -40,6 +41,7 @@ const MODE_TOKENS = {
     motion: { fast: '80ms', normal: '140ms', slow: '190ms', hoverScale: 1 },
     texture: 'linear-gradient(90deg, color-mix(in srgb, var(--theme-accent) 13%, transparent) 1px, transparent 1px), linear-gradient(0deg, color-mix(in srgb, var(--theme-accent-alt) 10%, transparent) 1px, transparent 1px)',
     panelOverlay: 'linear-gradient(135deg, color-mix(in srgb, var(--theme-surface) 90%, transparent), color-mix(in srgb, var(--theme-accent) 9%, var(--theme-surface-strong)))',
+    fonts: { display: '"Press Start 2P", "Share Tech Mono", monospace', ui: '"Share Tech Mono", "Rajdhani", monospace', body: '"IBM Plex Mono", "Share Tech Mono", monospace' },
   },
   neon: {
     effects: { blur: 8, glow: 0.58, shadow: '0 0 20px color-mix(in srgb, var(--theme-accent) 34%, transparent), 0 0 42px color-mix(in srgb, var(--theme-accent-alt) 18%, transparent)' },
@@ -47,6 +49,7 @@ const MODE_TOKENS = {
     motion: { fast: '120ms', normal: '210ms', slow: '300ms', hoverScale: 1.014 },
     texture: 'radial-gradient(circle at 22% 18%, color-mix(in srgb, var(--theme-accent) 18%, transparent), transparent 34%), radial-gradient(circle at 78% 0%, color-mix(in srgb, var(--theme-accent-alt) 14%, transparent), transparent 30%)',
     panelOverlay: 'linear-gradient(145deg, color-mix(in srgb, var(--theme-bg) 46%, transparent), color-mix(in srgb, var(--theme-accent) 10%, transparent))',
+    fonts: { display: '"Orbitron", "Rajdhani", system-ui, sans-serif', ui: '"Rajdhani", "Orbitron", system-ui, sans-serif', body: '"Space Grotesk", "Outfit", system-ui, sans-serif' },
   },
   minimal: {
     effects: { blur: 0, glow: 0.04, shadow: '0 10px 28px rgba(15,23,42,.1)' },
@@ -54,6 +57,7 @@ const MODE_TOKENS = {
     motion: { fast: '120ms', normal: '180ms', slow: '240ms', hoverScale: 1.004 },
     texture: 'none',
     panelOverlay: 'linear-gradient(180deg, var(--theme-surface), var(--theme-surface-strong))',
+    fonts: { display: '"Fraunces", Georgia, serif', ui: '"Inter", system-ui, sans-serif', body: '"Inter", "Manrope", system-ui, sans-serif' },
   },
 };
 
@@ -158,5 +162,11 @@ export const resolveThemeTokens = ({ appearanceMode = 'glass', characterTheme = 
     '--texture-overlay': mode.texture,
     '--theme-panel-overlay': mode.panelOverlay,
     '--theme-style-edge': mode.shape.edge,
+    '--font-display': mode.fonts.display,
+    '--font-ui': mode.fonts.ui,
+    '--font-body': mode.fonts.body,
+    '--font-marvel-display': mode.fonts.display,
+    '--font-marvel-ui': mode.fonts.ui,
+    '--font-marvel-body': mode.fonts.body,
   };
 };
