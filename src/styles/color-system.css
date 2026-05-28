@@ -1,0 +1,181 @@
+/* Modernized semantic color layer: imported last to normalize light/dark components. */
+.theme-switch {
+  --theme-floating-control-bg: color-mix(in srgb, var(--theme-surface-elevated) 90%, transparent);
+  --theme-floating-control-border: color-mix(in srgb, var(--theme-accent) 28%, var(--theme-border));
+  --theme-sidebar-bg: color-mix(in srgb, var(--theme-surface-elevated) 86%, transparent);
+  --theme-settings-bg: color-mix(in srgb, var(--theme-surface-elevated) 94%, transparent);
+  --theme-focus-ring: color-mix(in srgb, var(--theme-accent) 58%, white);
+  --theme-hover-lift: translate3d(0, -2px, 0);
+  --theme-active-press: translate3d(0, 1px, 0) scale(0.99);
+  --component-radius: clamp(14px, 1.4vw, 22px);
+  --component-gap: var(--space-4);
+  background: var(--theme-bg);
+  color: var(--theme-text);
+}
+
+.theme-switch[data-color-mode='dark'] {
+  color-scheme: dark;
+  --theme-floating-control-bg: color-mix(in srgb, var(--theme-surface-elevated) 86%, rgba(2, 6, 23, 0.88));
+  --theme-sidebar-bg: color-mix(in srgb, var(--theme-surface-elevated) 82%, rgba(2, 6, 23, 0.76));
+  --theme-settings-bg: color-mix(in srgb, var(--theme-surface-elevated) 92%, rgba(2, 6, 23, 0.86));
+}
+
+.theme-switch[data-color-mode='light'] {
+  color-scheme: light;
+  --theme-floating-control-bg: color-mix(in srgb, var(--theme-surface-elevated) 96%, rgba(255, 255, 255, 0.94));
+  --theme-sidebar-bg: color-mix(in srgb, var(--theme-surface-elevated) 92%, rgba(255, 255, 255, 0.78));
+  --theme-settings-bg: color-mix(in srgb, var(--theme-surface-elevated) 96%, rgba(255, 255, 255, 0.9));
+}
+
+.hero-theme-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%),
+    radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%),
+    linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) 5%, var(--theme-bg)), color-mix(in srgb, var(--theme-accent-alt) 5%, var(--theme-bg-alt)) 42%, var(--theme-bg) 100%);
+  opacity: 0.1;
+  transition: opacity 320ms var(--ease-out), background 320ms var(--ease-out);
+  animation: cinematicIn 0.8s ease both;
+}
+
+.theme-switch[data-color-mode='light'] .hero-theme-overlay { opacity: 0.065; }
+.theme-switch[data-color-mode='dark'] .hero-theme-overlay { opacity: 0.13; }
+
+.theme-switch .header-brand,
+.theme-switch .curvy-panel,
+.theme-switch .analytics-shell,
+.theme-switch .detail-shell,
+.theme-switch .settings-menu,
+.theme-switch .sidebar-panel,
+.theme-switch .phase-rows-full,
+.theme-switch .list-panel {
+  background: color-mix(in srgb, var(--theme-surface-elevated) 76%, transparent) !important;
+  border-color: var(--theme-border) !important;
+  color: var(--theme-text) !important;
+  box-shadow: var(--shadow-surface-md), inset 0 1px 0 color-mix(in srgb, var(--theme-text-primary) 10%, transparent) !important;
+}
+
+.theme-switch[data-color-mode='light'] .header-brand,
+.theme-switch[data-color-mode='light'] .curvy-panel,
+.theme-switch[data-color-mode='light'] .analytics-shell,
+.theme-switch[data-color-mode='light'] .detail-shell,
+.theme-switch[data-color-mode='light'] .settings-menu,
+.theme-switch[data-color-mode='light'] .sidebar-panel,
+.theme-switch[data-color-mode='light'] .phase-rows-full,
+.theme-switch[data-color-mode='light'] .list-panel {
+  background: color-mix(in srgb, var(--theme-surface-elevated) 88%, transparent) !important;
+  box-shadow: var(--shadow-surface-sm), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+.theme-switch .rrow,
+.theme-switch .calendar-row,
+.theme-switch .detail-card,
+.theme-switch .appearance-card {
+  background: color-mix(in srgb, var(--theme-surface) 82%, transparent) !important;
+  border-color: var(--theme-border) !important;
+  color: var(--theme-text) !important;
+  box-shadow: var(--shadow-surface-sm), inset 0 1px 0 color-mix(in srgb, var(--theme-text-primary) 8%, transparent) !important;
+}
+
+.theme-switch .rrow:hover,
+.theme-switch .calendar-row:hover,
+.theme-switch .appearance-card:hover {
+  transform: var(--theme-hover-lift);
+  border-color: color-mix(in srgb, var(--theme-accent) 30%, var(--theme-border)) !important;
+  background: color-mix(in srgb, var(--theme-surface-hover) 84%, transparent) !important;
+  box-shadow: var(--shadow-surface-md), 0 0 0 1px color-mix(in srgb, var(--theme-accent) 16%, transparent) !important;
+}
+
+.theme-switch .fpill,
+.theme-switch .theme-btn,
+.theme-switch .lmode-btn,
+.theme-switch .sopt,
+.theme-switch .wbtn {
+  background: color-mix(in srgb, var(--theme-surface-elevated) 72%, transparent) !important;
+  border-color: var(--theme-border) !important;
+  color: var(--theme-text-primary) !important;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--overlay-dark) 42%, transparent), inset 0 1px 0 color-mix(in srgb, var(--theme-text-primary) 10%, transparent) !important;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-base) var(--ease-out),
+    color var(--motion-fast) var(--ease-out);
+}
+
+.theme-switch .fpill:hover,
+.theme-switch .theme-btn:hover,
+.theme-switch .lmode-btn:hover,
+.theme-switch .sopt:hover,
+.theme-switch .wbtn:hover {
+  transform: var(--theme-hover-lift);
+  background: color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface-elevated)) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 42%, var(--theme-border)) !important;
+  box-shadow: var(--shadow-surface-sm), 0 0 0 1px color-mix(in srgb, var(--theme-accent) 18%, transparent) !important;
+}
+
+.theme-switch .fpill:active,
+.theme-switch .theme-btn:active,
+.theme-switch .lmode-btn:active,
+.theme-switch .sopt:active,
+.theme-switch .wbtn:active {
+  transform: var(--theme-active-press);
+  transition-duration: 90ms;
+}
+
+.theme-switch .fpill[data-active='true'],
+.theme-switch .phase-chip[data-active='true'],
+.theme-switch .lmode-btn[aria-pressed='true'],
+.theme-switch .sopt[aria-selected='true'] {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 24%, var(--theme-surface-elevated)), color-mix(in srgb, var(--theme-accent-alt) 14%, var(--theme-surface-elevated))) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 48%, var(--theme-border)) !important;
+  color: var(--theme-text-primary) !important;
+}
+
+.theme-switch input,
+.theme-switch select,
+.theme-switch textarea,
+.theme-switch .search-input {
+  background: color-mix(in srgb, var(--theme-surface-elevated) 76%, transparent) !important;
+  border-color: var(--theme-border) !important;
+  color: var(--theme-text-primary) !important;
+}
+
+.theme-switch button:focus-visible,
+.theme-switch a:focus-visible,
+.theme-switch input:focus-visible,
+.theme-switch select:focus-visible,
+.theme-switch textarea:focus-visible,
+.theme-switch [role='button']:focus-visible {
+  outline: 2px solid var(--theme-focus-ring) !important;
+  outline-offset: 3px;
+}
+
+.theme-switch .sidebar-menu {
+  background: var(--sidebar-bg) !important;
+  border-color: var(--sidebar-border) !important;
+  box-shadow: var(--sidebar-shadow) !important;
+  backdrop-filter: var(--sidebar-blur) saturate(145%);
+  -webkit-backdrop-filter: var(--sidebar-blur) saturate(145%);
+}
+
+.theme-switch .settings-menu {
+  background: var(--settings-bg) !important;
+  backdrop-filter: var(--settings-blur) saturate(145%);
+  -webkit-backdrop-filter: var(--settings-blur) saturate(145%);
+}
+
+.theme-switch .sidebar-backdrop,
+.theme-switch .settings-backdrop {
+  background: color-mix(in srgb, var(--overlay-strong) 78%, transparent) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-switch *,
+  .hero-theme-overlay {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
