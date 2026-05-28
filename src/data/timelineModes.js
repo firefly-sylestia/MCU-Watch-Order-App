@@ -23,7 +23,7 @@ export const SONY_MARVEL_TITLE_SET = new Set([
   'Spider-Man: Homecoming',
   'Spider-Man: Far From Home',
   'Spider-Man: No Way Home',
-  'Spider-Man Noir (In Development)',
+  'Spider-Man Noir',
   'Venom',
   'Venom: Let There Be Carnage',
   'Venom: The Last Dance',
