@@ -944,3 +944,8 @@ body.android-native {
     padding-inline: 14px;
   }
 }
+
+
+.inline-back-shell{display:flex;justify-content:center;padding:8px 16px 0;position:relative;z-index:80}.inline-back-btn{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:999px;border:1px solid color-mix(in srgb,var(--theme-accent) 42%, var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 84%, transparent);color:var(--theme-text);font:700 12px/1 var(--font-marvel-ui);letter-spacing:1.1px;text-transform:uppercase;box-shadow:0 12px 24px rgba(2,6,23,.16);transition:transform var(--motion-ui) var(--interactive-ease),border-color var(--motion-ui) var(--interactive-ease),background-color var(--motion-ui) var(--interactive-ease)}.inline-back-btn:hover{transform:translateY(-1px);border-color:var(--theme-accent);background:color-mix(in srgb,var(--theme-accent) 14%, var(--theme-surface))}.inline-back-btn:active{transform:translateY(0)}
+.bottom-action-dock{padding:10px 12px;border-radius:22px;gap:10px;box-shadow:0 16px 34px rgba(2,6,23,.26)}.dock-btn{min-height:40px;border-radius:12px;padding:9px 12px;background:color-mix(in srgb,var(--theme-surface) 84%, transparent);border:1px solid var(--theme-border);color:var(--theme-text);font:700 11px/1 var(--font-marvel-ui);letter-spacing:1.1px;text-transform:uppercase;transition:all 180ms var(--interactive-ease)}.dock-btn:hover{border-color:var(--theme-accent);transform:translateY(-1px)}
+[data-color-mode="light"] .inline-back-btn{box-shadow:0 10px 24px rgba(15,23,42,.12)}

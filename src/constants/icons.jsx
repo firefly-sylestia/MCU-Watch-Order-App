@@ -16,6 +16,7 @@ export const Tv = p => <Icon {...p}><rect x="2" y="7" width="20" height="15" rx=
 export const Zap = p => <Icon {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></Icon>;
 export const ChevDown = p => <Icon {...p}><path d="m6 9 6 6 6-6"/></Icon>;
 export const ChevRight = p => <Icon {...p}><path d="m9 6 6 6-6 6"/></Icon>;
+export const ArrowLeft = p => <Icon {...p}><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></Icon>;
 export const ArrowUpDown = p => <Icon {...p}><path d="m7 7 5-5 5 5"/><path d="M12 2v20"/><path d="m17 17-5 5-5-5"/></Icon>;
 export const Check = p => <Icon {...p}><path d="M20 6 9 17l-5-5"/></Icon>;
 export const Clock = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></Icon>;

@@ -34,7 +34,7 @@ import { TIMELINE_MODES, TIMELINE_MODE_IDS, CHARACTER_POV_TITLE_SETS, STORY_ORDE
 import { AFTER_CREDITS, AFTER_CREDITS_DEFAULT, DIRECTOR_DATA } from './data/afterCreditsData';
 import { TRAILER_DATA, trailerEmbedUrl, getTrailerByTitle } from './data/trailerData';
 
-import { Search, Eye, EyeOff, Film, Tv, Zap, ChevDown, ChevRight, ArrowUpDown, Check, Clock, Heart, Pause, Trash2, Upload, Download, Sun, Star, Moon, Settings, Info, Bookmark, Layers, PlayCircle, PauseCircle, XCircle, SlidersH, UserCircle, Menu, SwitchIcon, X } from './constants/icons';
+import { Search, Eye, EyeOff, Film, Tv, Zap, ChevDown, ChevRight, ArrowLeft, ArrowUpDown, Check, Clock, Heart, Pause, Trash2, Upload, Download, Sun, Star, Moon, Settings, Info, Bookmark, Layers, PlayCircle, PauseCircle, XCircle, SlidersH, UserCircle, Menu, SwitchIcon, X } from './constants/icons';
 import { MARVEL_UI_LEXICON, DC_UI_LEXICON, LIST_MODES } from './constants/appText';
 import { matchesSearch } from './utils/searchUtils';
 
@@ -3021,6 +3021,7 @@ export default function MCUViewer() {
     ...activeThemeVars,
   };
   const routeMode = analyticsOpen || settingsOpen ? 'utility' : 'home';
+  const hasInlineBack = browseMode === 'search' || browseMode === 'phase';
 
   // Count active filters for the collapsed bar badge
   const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
@@ -3338,6 +3339,19 @@ export default function MCUViewer() {
 
         {!detailItem && !analyticsOpen && !settingsOpen && <WatermarkOverlay surface="hero" theme={darkMode ? 'cinematic' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['cta', 'title']} />}
       </section>}
+      {hasInlineBack && !overlayActive && (
+        <div className="inline-back-shell">
+          <button
+            type="button"
+            className="inline-back-btn"
+            onClick={handleInAppBack}
+            aria-label="Go back to home carousel"
+          >
+            <ArrowLeft size={14} />
+            <span>{browseMode === 'search' ? 'Back from Search' : 'Back from Phases'}</span>
+          </button>
+        </div>
+      )}
       {browseMode === 'phase' && (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 16px 12px' }}>
           <button
@@ -3345,7 +3359,7 @@ export default function MCUViewer() {
             onClick={() => setBrowseMode('home')}
             style={{ minHeight: 42, padding: '0 18px', fontSize: 13 }}
           >
-            <ChevDown size={14}/> Back to Home Carousel
+            <ChevDown size={14}/> Return to Home
           </button>
         </div>
       )}
@@ -3357,7 +3371,7 @@ export default function MCUViewer() {
               <div style={{ fontSize: 11, letterSpacing: 1.8, textTransform: 'uppercase', color: T.textMuted }}>{tUniverse('S.H.I.E.L.D. Intel Search')}</div>
               <div style={{ fontSize: 20, fontWeight: 800, color: T.text }}>{tUniverse('Locate any Marvel story node')}</div>
             </div>
-            <button className="fpill" onClick={() => setBrowseMode('home')}><ChevDown size={14}/> {tUniverse('Back to Home')}</button>
+            <button className="fpill" onClick={() => setBrowseMode('home')}><ChevDown size={14}/> {tUniverse('Return Home')}</button>
           </div>
           <div className="search-page-panel" style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 18, padding: 14, background: 'color-mix(in srgb, var(--theme-surface) 84%, transparent)' }}>
             <div style={{ position: 'relative' }}>
