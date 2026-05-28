@@ -40,8 +40,8 @@ class AppErrorBoundary extends Component {
             display: 'grid',
             placeItems: 'center',
             padding: 24,
-            background: '#090d1f',
-            color: '#f4f7ff',
+            background: 'var(--theme-bg, #090d1f)',
+            color: 'var(--theme-text, #f4f7ff)',
             fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
             textAlign: 'center',
           }}

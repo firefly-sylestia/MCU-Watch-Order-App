@@ -52,17 +52,48 @@ export const resolveThemeTokens = ({ appearanceMode = 'glass', characterTheme = 
   const mode = MODE_TOKENS[appearanceMode] || MODE_TOKENS.glass;
   const hero = THEME_TOKEN_MAP[characterTheme] || THEME_TOKEN_MAP['iron-man'];
   const isDark = Boolean(darkMode);
-  const bg = isDark ? '#070b14' : '#f4f8ff';
-  const surface = isDark ? 'rgba(15,22,36,0.82)' : 'rgba(255,255,255,0.9)';
-  const elevated = isDark ? 'rgba(22,30,48,0.94)' : 'rgba(255,255,255,0.98)';
+  const bg = isDark ? '#070a13' : '#f4f7fb';
+  const bgAlt = isDark ? '#0d1324' : '#e8eef7';
+  const surface = isDark ? 'rgba(18,25,42,0.84)' : 'rgba(255,255,255,0.86)';
+  const elevated = isDark ? 'rgba(25,34,55,0.92)' : 'rgba(255,255,255,0.96)';
+  const border = isDark ? 'rgba(194,213,255,0.13)' : 'rgba(29,41,57,0.12)';
+  const glowScale = Math.max(0.08, mode.effects.glow * 0.62);
+
   return {
-    '--bg-base': bg, '--bg-elevated': elevated, '--surface-1': surface, '--surface-2': elevated,
-    '--text-primary': isDark ? '#f6f8ff' : '#0f172a', '--text-secondary': isDark ? '#c1cbdd' : '#42526b',
-    '--accent-1': hero.accent, '--accent-2': hero.accent2,
-    '--edge-color': isDark ? 'color-mix(in srgb, #ffffff 15%, transparent)' : 'color-mix(in srgb, #0f172a 12%, transparent)', '--edge-highlight': isDark ? 'rgba(255,255,255,0.24)' : 'rgba(255,255,255,0.82)',
-    '--glow-color': hero.accent, '--glow-soft': `color-mix(in srgb, ${hero.accent} ${Math.round(mode.effects.glow*45)}%, transparent)`, '--glow-strong': `color-mix(in srgb, ${hero.accent2} ${Math.round(mode.effects.glow*75)}%, transparent)`,
-    '--radius-sm': mode.shape.radius[0]+'px', '--radius-md': mode.shape.radius[1]+'px', '--radius-lg': mode.shape.radius[2]+'px', '--radius-xl': mode.shape.radius[3]+'px',
-    '--motion-fast': mode.motion.fast, '--motion-normal': mode.motion.normal, '--motion-slow': mode.motion.slow,
-    '--fx-blur': mode.effects.blur+'px', '--fx-shadow-2': mode.effects.shadow, '--fx-border-width': mode.shape.border+'px', '--texture-overlay': mode.texture,
+    '--bg-base': bg,
+    '--bg-elevated': elevated,
+    '--surface-1': surface,
+    '--surface-2': elevated,
+    '--surface-3': isDark ? 'rgba(34,45,69,0.94)' : 'rgba(255,255,255,0.98)',
+    '--text-primary': isDark ? '#f5f8ff' : '#111827',
+    '--text-secondary': isDark ? '#c5d0e3' : '#40516d',
+    '--text-muted': isDark ? '#93a2ba' : '#68758c',
+    '--accent-1': hero.accent,
+    '--accent-2': hero.accent2,
+    '--theme-accent': hero.accent,
+    '--theme-accent-alt': hero.accent2,
+    '--edge-color': border,
+    '--edge-highlight': isDark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.82)',
+    '--glow-color': hero.accent,
+    '--glow-soft': `color-mix(in srgb, ${hero.accent} ${Math.round(glowScale * 34)}%, transparent)`,
+    '--glow-strong': `color-mix(in srgb, ${hero.accent2} ${Math.round(glowScale * 48)}%, transparent)`,
+    '--accent-glow': `color-mix(in srgb, ${hero.accent} ${isDark ? 20 : 13}%, transparent)`,
+    '--accent-glow-2': `color-mix(in srgb, ${hero.accent2} ${isDark ? 18 : 11}%, transparent)`,
+    '--radius-sm': mode.shape.radius[0]+'px',
+    '--radius-md': mode.shape.radius[1]+'px',
+    '--radius-lg': mode.shape.radius[2]+'px',
+    '--radius-xl': mode.shape.radius[3]+'px',
+    '--motion-fast': mode.motion.fast,
+    '--motion-normal': mode.motion.normal,
+    '--motion-slow': mode.motion.slow,
+    '--fx-blur': mode.effects.blur+'px',
+    '--fx-shadow-2': isDark ? mode.effects.shadow : '0 18px 42px rgba(31,41,55,0.12)',
+    '--fx-border-width': mode.shape.border+'px',
+    '--texture-overlay': mode.texture,
+    '--theme-bg': bg,
+    '--theme-bg-alt': bgAlt,
+    '--theme-surface': surface,
+    '--theme-surface-hover': elevated,
+    '--theme-border': border,
   };
 };
