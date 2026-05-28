@@ -902,6 +902,7 @@ export default function MCUViewer() {
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
+  const showPhaseSystem = timelineMode === 'release' || timelineMode === 'chronological';
   const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
   const [posterDataSaver, setPosterDataSaver] = useState(initialUiState.posterDataSaver);
   const [scrollTuning] = useState({ desktopMultiplier: 5, desktopDeltaCap: 7, mobileMultiplier: 5, mobileDeltaCap: 7 });
@@ -1539,7 +1540,7 @@ export default function MCUViewer() {
       if (watchedOnly && i.status !== 'watched') return false;
       if (statusFilter && i.status !== statusFilter) return false;
       if (typeFilter && i.type !== typeFilter) return false;
-      if (activePhase && i.phase !== activePhase) return false;
+      if (showPhaseSystem && activePhase && i.phase !== activePhase) return false;
       if (releaseFilter === 'released' && (i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
       if (releaseFilter === 'upcoming' && !(i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
       if (timelineMode === 'loki' && !CHARACTER_POV_TITLE_SETS.loki.has(i.title)) return false;
@@ -1565,6 +1566,7 @@ export default function MCUViewer() {
         const bo = STORY_ORDER_OVERRIDES.get(b.title) ?? b.order + 100;
         return ao - bo || a.order - b.order;
       }
+      if (sortBy === 'order' && timelineMode === 'sony') return a.year - b.year || a.order - b.order;
       return a.order - b.order;
     });
     const g = {};
@@ -3060,6 +3062,7 @@ export default function MCUViewer() {
 
   const renderPhaseSelector = () => (
     <>
+    {showPhaseSystem && (
     <div ref={phaseRef} className="phase-selector-rail">
       <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} onClick={() => { setActivePhase(0); requestAnimationFrame(() => scrollToListTop()); }}>
         <span className="phase-chip-label">All Phases</span>
@@ -3084,7 +3087,8 @@ export default function MCUViewer() {
         );
       })}
     </div>
-    <div className="phase-selector-rail" style={{ marginTop: 10 }}>
+    )}
+    <div className="phase-selector-rail" style={{ marginTop: showPhaseSystem ? 10 : 0 }}>
       {[
         { id: 'all', label: 'All Release States' },
         { id: 'released', label: 'Now Available' },
@@ -3705,7 +3709,7 @@ export default function MCUViewer() {
                 </div>
               ))}
             </section>
-          ) : phaseKeys.map(pid => {
+          ) : showPhaseSystem ? phaseKeys.map(pid => {
             const ph = currentPhases.find(p => p.id === pid);
             const rows = grouped[pid];
             const done = rows.filter(r => r.status === 'watched').length;
@@ -3803,7 +3807,47 @@ export default function MCUViewer() {
                 </div>
               </section>
             );
-          })}
+          }) : (
+            <section data-motion="section" className='curvy-panel motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 12 }}>
+              <div className="list-panel" style={{ overflow: 'hidden' }}>
+                <PhaseRows rows={filtered} renderRow={(item, idx) => {
+                  const itemReleaseStatus = releaseStatusFor(item);
+                  const itemReleaseInfo = releaseInfoFor(item);
+                  const ph = currentPhases.find(p => p.id === item.phase) || currentPhases[0];
+                  return (
+                    <MemoizedTitleRow
+                      key={item.id}
+                      item={item}
+                      idx={idx}
+                      ph={ph}
+                      T={T}
+                      typeMeta={getSafeTypeMeta(item.type)}
+                      statusMeta={getSafeStatusMeta(item.status)}
+                      releaseStatus={itemReleaseStatus}
+                      releaseStatusText={releaseStatusLabel(itemReleaseStatus)}
+                      releaseStatusStyleObj={releaseStatusStyle(itemReleaseStatus)}
+                      releaseLabel={formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}
+                      poster={posterSrc(item)}
+                      genres={inferGenres(item)}
+                      isExpanded={expandedItem === item.id}
+                      isWatched={item.status === 'watched'}
+                      isBookmarked={Boolean(bookmarks[item.id])}
+                      statusDropdown={statusDropdown}
+                      rating={metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
+                      onOpenDetail={openDetail}
+                      onSetStatus={setStatusDirect}
+                      onToggleBookmark={toggleBookmark}
+                      onOpenStatus={openStatusDropdown}
+                      bulkSelectMode={bulkSelectMode}
+                      isSelected={selectedIds.has(item.id)}
+                      onToggleSelected={toggleSelected}
+                      isDesktopViewport={isDesktopViewport}
+                    />
+                  );
+                }} />
+              </div>
+            </section>
+          )}
 
           <div data-motion="section" className="motion-section motion-pop" style={{ textAlign: 'center', marginTop: 44, fontFamily: 'var(--font-marvel-ui)', fontSize: 11, color: 'var(--theme-text-muted)', letterSpacing: 2.2, fontWeight: 700 }}>
             Made with ♥️ by {tUniverse('Marvel Fan')}
