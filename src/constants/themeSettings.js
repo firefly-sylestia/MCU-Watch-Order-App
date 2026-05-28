@@ -1,8 +1,8 @@
 export const APPEARANCE_MODES = [
-  { id: 'glass', label: 'Glass' },
-  { id: 'pixelated', label: 'Pixelated' },
-  { id: 'neon', label: 'Neon' },
-  { id: 'minimal', label: 'Minimal' },
+  { id: 'glass', label: 'Glass', desc: 'Frosted depth, soft refraction, editorial display type', font: 'Space Grotesk' },
+  { id: 'pixelated', label: 'Pixelated', desc: 'Arcade grid, chunky type, crisp stepped edges', font: 'Pixelify Sans' },
+  { id: 'neon', label: 'Neon', desc: 'Night-city glow, luminous borders, techno titles', font: 'Audiowide' },
+  { id: 'minimal', label: 'Minimal', desc: 'Quiet contrast, roomy rhythm, readable UI typography', font: 'Manrope' },
 ];
 
 export const normalizeAppearanceMode = (appearanceMode = 'glass') => (
@@ -28,13 +28,15 @@ export const CHARACTER_THEMES = [
 
 const MODE_TOKENS = {
   glass: {
-    effects: { blur: 22, glow: 0.18, shadow: '0 18px 46px color-mix(in srgb, var(--theme-shadow-rgb, #020617) 22%, transparent)' },
+    fonts: { display: '"Space Grotesk", "Outfit", system-ui, sans-serif', ui: '"Manrope", "Outfit", system-ui, sans-serif', body: '"Manrope", "Outfit", system-ui, sans-serif' },
+    effects: { blur: 26, glow: 0.18, shadow: '0 18px 46px color-mix(in srgb, var(--theme-shadow-rgb, #020617) 22%, transparent)' },
     shape: { radius: [16, 22, 30, 38], edge: 'glass', border: 1 },
     motion: { fast: '140ms', normal: '220ms', slow: '320ms', hoverScale: 1.008 },
     texture: 'linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.025) 48%, transparent 72%)',
     panelOverlay: 'linear-gradient(145deg, color-mix(in srgb, var(--theme-surface) 72%, transparent), color-mix(in srgb, var(--theme-surface-strong) 54%, transparent))',
   },
   pixelated: {
+    fonts: { display: '"Pixelify Sans", "Press Start 2P", system-ui, sans-serif', ui: '"Pixelify Sans", "Rajdhani", system-ui, sans-serif', body: '"Rajdhani", "Outfit", system-ui, sans-serif' },
     effects: { blur: 0, glow: 0.1, shadow: '6px 6px 0 color-mix(in srgb, var(--theme-accent) 22%, transparent), 0 14px 24px rgba(2,8,23,.16)' },
     shape: { radius: [6, 8, 12, 16], edge: 'pixel', border: 2 },
     motion: { fast: '80ms', normal: '140ms', slow: '190ms', hoverScale: 1 },
@@ -42,13 +44,15 @@ const MODE_TOKENS = {
     panelOverlay: 'linear-gradient(135deg, color-mix(in srgb, var(--theme-surface) 90%, transparent), color-mix(in srgb, var(--theme-accent) 9%, var(--theme-surface-strong)))',
   },
   neon: {
-    effects: { blur: 8, glow: 0.58, shadow: '0 0 20px color-mix(in srgb, var(--theme-accent) 34%, transparent), 0 0 42px color-mix(in srgb, var(--theme-accent-alt) 18%, transparent)' },
+    fonts: { display: '"Audiowide", "Rajdhani", system-ui, sans-serif', ui: '"Rajdhani", "Outfit", system-ui, sans-serif', body: '"Space Grotesk", "Outfit", system-ui, sans-serif' },
+    effects: { blur: 10, glow: 0.58, shadow: '0 0 20px color-mix(in srgb, var(--theme-accent) 34%, transparent), 0 0 42px color-mix(in srgb, var(--theme-accent-alt) 18%, transparent)' },
     shape: { radius: [12, 18, 26, 34], edge: 'neon', border: 1 },
     motion: { fast: '120ms', normal: '210ms', slow: '300ms', hoverScale: 1.014 },
     texture: 'radial-gradient(circle at 22% 18%, color-mix(in srgb, var(--theme-accent) 18%, transparent), transparent 34%), radial-gradient(circle at 78% 0%, color-mix(in srgb, var(--theme-accent-alt) 14%, transparent), transparent 30%)',
     panelOverlay: 'linear-gradient(145deg, color-mix(in srgb, var(--theme-bg) 46%, transparent), color-mix(in srgb, var(--theme-accent) 10%, transparent))',
   },
   minimal: {
+    fonts: { display: '"Manrope", "Outfit", system-ui, sans-serif', ui: '"Manrope", "Outfit", system-ui, sans-serif', body: '"Manrope", "Outfit", system-ui, sans-serif' },
     effects: { blur: 0, glow: 0.04, shadow: '0 10px 28px rgba(15,23,42,.1)' },
     shape: { radius: [10, 14, 18, 24], edge: 'minimal', border: 1 },
     motion: { fast: '120ms', normal: '180ms', slow: '240ms', hoverScale: 1.004 },
@@ -147,6 +151,12 @@ export const resolveThemeTokens = ({ appearanceMode = 'glass', characterTheme = 
     '--radius-md': `${mode.shape.radius[1]}px`,
     '--radius-lg': `${mode.shape.radius[2]}px`,
     '--radius-xl': `${mode.shape.radius[3]}px`,
+    '--font-display-mode': mode.fonts.display,
+    '--font-ui-mode': mode.fonts.ui,
+    '--font-body-mode': mode.fonts.body,
+    '--font-marvel-display': mode.fonts.display,
+    '--font-marvel-ui': mode.fonts.ui,
+    '--font-marvel-body': mode.fonts.body,
     '--motion-fast': mode.motion.fast,
     '--motion-normal': mode.motion.normal,
     '--motion-slow': mode.motion.slow,

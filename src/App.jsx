@@ -14,7 +14,8 @@ import { usePosterCache } from './hooks/usePosterCache';
 import { useOverlayNavigation } from './hooks/useOverlayNavigation';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
-import { APPEARANCE_MODES, CHARACTER_THEMES, normalizeAppearanceMode, resolveThemeTokens } from './constants/themeSettings';
+import ThemeStudio from './components/features/ThemeStudio';
+import { CHARACTER_THEMES, normalizeAppearanceMode, resolveThemeTokens } from './constants/themeSettings';
 import { buildSemanticThemeVars, UI_PARITY_TOKENS } from './constants/ui';
 import './App.layout.css';
 import './App.components.css';
@@ -2978,9 +2979,9 @@ export default function MCUViewer() {
     ...semanticThemeVars,
     ...activeThemeVars,
     '--theme-text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
-    '--font-marvel-display': 'var(--font-display)',
-    '--font-marvel-ui': 'var(--font-ui)',
-    '--font-marvel-body': 'var(--font-body)',
+    '--font-marvel-display': activeThemeVars['--font-marvel-display'] || 'var(--font-display)',
+    '--font-marvel-ui': activeThemeVars['--font-marvel-ui'] || 'var(--font-ui)',
+    '--font-marvel-body': activeThemeVars['--font-marvel-body'] || 'var(--font-body)',
     '--ui-space-1': UI_PARITY_TOKENS.spacing.xs,
     '--ui-space-2': UI_PARITY_TOKENS.spacing.sm,
     '--ui-space-3': UI_PARITY_TOKENS.spacing.md,
@@ -3178,17 +3179,15 @@ export default function MCUViewer() {
           </section>
 
           <section className="sidebar-panel">
-            <div className="sidebar-section-title">{tUniverse('Universe Style')}</div>
-            <div className='appearance-grid'>
-              {APPEARANCE_MODES.map(mode => <button key={mode.id} className={`appearance-card ${normalizeAppearanceMode(appearanceMode)===mode.id ? 'is-active' : ''}`} onClick={() => setAppearanceMode(mode.id)}><span>{mode.label}</span><em /></button>)}
-            </div>
-            <div className='theme-grid' style={{ marginTop: 8 }}>
-              {themedChoices.map(({ id: t, displayLabel, displaySwatch }) => (
-                <button key={t} className="fpill filter-pill type-pill" style={{ justifyContent: 'center', gap: 6, fontSize: 11, borderColor: themeMode === t ? 'color-mix(in srgb, var(--accent-1) 36%, var(--edge-color))' : 'var(--edge-color)' }} onClick={() => setThemeMode(t)}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: displaySwatch, flexShrink: 0, display: 'inline-block' }} />{displayLabel}
-                </button>
-              ))}
-            </div>
+            <ThemeStudio
+              compact
+              title={tUniverse('Universe Style')}
+              appearanceMode={appearanceMode}
+              onAppearanceChange={setAppearanceMode}
+              themeChoices={themedChoices}
+              themeMode={themeMode}
+              onThemeChange={setThemeMode}
+            />
           </section>
 
           <section className="sidebar-panel">
@@ -3215,6 +3214,17 @@ export default function MCUViewer() {
         <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={13} />Dark</button>
         <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={13} />Light</button>
       </div>
+    </section>
+
+    <section className="settings-card settings-theme-studio-card">
+      <ThemeStudio
+        title={tUniverse('Universe Style')}
+        appearanceMode={appearanceMode}
+        onAppearanceChange={setAppearanceMode}
+        themeChoices={themedChoices}
+        themeMode={themeMode}
+        onThemeChange={setThemeMode}
+      />
     </section>
 
     <section className="settings-grid-2">
