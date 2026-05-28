@@ -1,5 +1,6 @@
 export const TIMELINE_MODES = [
   { id: 'release', label: 'Release Order', description: 'View by theatrical/streaming release order.' },
+  { id: 'sony', label: 'Sony Marvel Universe', description: 'Shows Sony-only Marvel projects (Raimi, Webb, Venomverse, Spider-Verse, and Sony spinoffs).' },
   { id: 'chronological', label: 'Chronological Story', description: 'Approximate in-universe story chronology.' },
   { id: 'loki', label: 'Character POV: Loki', description: 'Focuses Loki and TVA-centric journey.' },
   { id: 'wanda', label: 'Character POV: Wanda', description: 'Focuses Wanda Maximoff arc.' },

@@ -1532,6 +1532,11 @@ export default function MCUViewer() {
       if (releaseFilter === 'upcoming' && !(i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
       if (timelineMode === 'loki' && !CHARACTER_POV_TITLE_SETS.loki.has(i.title)) return false;
       if (timelineMode === 'wanda' && !CHARACTER_POV_TITLE_SETS.wanda.has(i.title)) return false;
+      if (timelineMode === 'sony') {
+        const sonyPattern = /spider-man|venom|morbius|madame web|kraven|spider-verse|noir/i;
+        const isMcuOnlySpider = ['Spider-Man: Homecoming', 'Spider-Man: Far From Home', 'Spider-Man: No Way Home'].includes(i.title);
+        if (!(sonyPattern.test(i.title) && !isMcuOnlySpider)) return false;
+      }
       if (timelineMode === 'multiverse') {
         const isMultiverse = /what if|multiverse|loki|deadpool|friendly neighborhood|x-men/i.test(i.title + ' ' + (i.desc || ''));
         if (!isMultiverse) return false;
@@ -1577,13 +1582,7 @@ export default function MCUViewer() {
 
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const container = mainRef.current;
-      if (container) container.scrollTop = 0;
-      window.scrollTo({ top: 0, behavior: 'auto' });
-      restoredUiStateRef.current = true;
-    }, 180);
-    return () => clearTimeout(timer);
+    restoredUiStateRef.current = true;
   }, []);
 
   useDebouncedEffect(() => {
@@ -3023,7 +3022,7 @@ export default function MCUViewer() {
   const routeMode = analyticsOpen || settingsOpen ? 'utility' : 'home';
 
   // Count active filters for the collapsed bar badge
-  const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
+  const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order', activePhase !== 0, releaseFilter !== 'all'].filter(Boolean).length;
   const trailerDataForDetail = detailItem ? getTrailerByTitle(detailItem.title) : null;
   const trailerOptions = trailerDataForDetail?.options || [];
   const selectedTrailer = trailerOptions[trailerVariantIndex] || trailerOptions[0] || null;
@@ -3047,7 +3046,7 @@ export default function MCUViewer() {
   const renderPhaseSelector = () => (
     <>
     <div ref={phaseRef} className="phase-selector-rail">
-      <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} onClick={() => { setBrowseMode('phase'); setActivePhase(0); requestAnimationFrame(() => scrollToListTop()); }}>
+      <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} aria-pressed={activePhase === 0} style={activePhase === 0 ? { borderColor: 'color-mix(in srgb, var(--theme-accent) 72%, var(--theme-border))', background: 'color-mix(in srgb, var(--theme-accent) 26%, var(--theme-surface))', color: 'var(--theme-accent)', boxShadow: '0 8px 22px color-mix(in srgb, var(--theme-accent) 30%, transparent)' } : {}} onClick={() => { setActivePhase(0); requestAnimationFrame(() => scrollToListTop()); }}>
         <span className="phase-chip-label">All Phases</span>
       </button>
       {currentPhases.map((ph) => {
@@ -3059,12 +3058,13 @@ export default function MCUViewer() {
           <button
             key={ph.id}
             onClick={() => {
-              setBrowseMode('phase');
               setActivePhase(ph.id);
               requestAnimationFrame(() => scrollTo(ph.id));
             }}
             className="fpill phase-chip marvel-phase-btn"
-            data-active={isActive}>
+            data-active={isActive}
+            aria-pressed={isActive}
+            style={isActive ? { borderColor: `${ph.color}AA`, background: `${ph.color}22`, color: ph.color, boxShadow: `0 8px 22px ${ph.color}40` } : {}}>
             <span className="phase-chip-label">{ph.name}</span>
             <span className="phase-chip-count">{watched}/{total}</span>
           </button>
@@ -3388,6 +3388,12 @@ export default function MCUViewer() {
               )}
               <ChevDown size={11} style={{ opacity: 0.7, transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
+            {activeFilterCount > 0 && (
+              <button className="filters-trigger" onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setSortBy('order'); setActivePhase(0); setReleaseFilter('all'); }}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: '1px solid var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', color: 'var(--theme-danger)', cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.2 }}>
+                <Trash2 size={12} /> Clear
+              </button>
+            )}
             <div ref={sortMenuRef} style={{ position: 'relative' }}>
               <button className="filters-trigger" onClick={() => setSortMenuOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${sortBy === 'order' ? 'color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border))' : T.filterBorder}`, background: 'transparent', color: sortBy === 'order' ? 'var(--theme-accent)' : T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}><ArrowUpDown size={13} />Sort: {SORT_LABELS[sortBy]}<ChevDown size={11} style={{ transform: sortMenuOpen ? 'rotate(180deg)' : 'none' }}/></button>
               {sortMenuOpen && <div className="dropdown-pop filter-dropdown redesigned-sort-menu" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 1450, minWidth: 240 }}>
@@ -3488,13 +3494,7 @@ export default function MCUViewer() {
                   <button className="fpill" disabled={!selectedIds.size} onClick={() => applyBulkStatus('unwatched')} style={{ padding: '7px 12px', opacity: selectedIds.size ? 1 : 0.5 }}><EyeOff size={10}/>Unwatched</button>
                 </>
               )}
-              {/* Reset */}
-              {activeFilterCount > 0 && (
-                <button className="fpill" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', padding: '7px 12px' }}
-                  onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setSortBy('order'); }}>
-                  <Trash2 size={10} /> Clear
-                </button>
-              )}
+              
             </div>
           </div>
         )}
