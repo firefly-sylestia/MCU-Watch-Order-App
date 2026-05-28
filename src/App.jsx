@@ -86,6 +86,7 @@ const CACHE_KEYS = {
 const UI_STATE_DEFAULTS = {
   listMode: 'core',
   search: '',
+  searchScope: { title: true, description: false, director: false, actors: false, prerequisites: false, metadata: false },
   sortBy: 'order',
   essentialOnly: false,
   watchedOnly: false,
@@ -132,6 +133,10 @@ const readSavedUiState = () => {
       ...UI_STATE_DEFAULTS,
       listMode: VALID_LIST_MODES.has(saved.listMode) ? saved.listMode : UI_STATE_DEFAULTS.listMode,
       search: typeof saved.search === 'string' ? saved.search : UI_STATE_DEFAULTS.search,
+      searchScope: {
+        ...UI_STATE_DEFAULTS.searchScope,
+        ...(saved.searchScope && typeof saved.searchScope === 'object' ? saved.searchScope : {}),
+      },
       sortBy: SORT_LABELS[saved.sortBy] ? saved.sortBy : UI_STATE_DEFAULTS.sortBy,
       essentialOnly: Boolean(saved.essentialOnly),
       watchedOnly: Boolean(saved.watchedOnly),
@@ -815,6 +820,7 @@ export default function MCUViewer() {
   const [items,          setItems]          = useState(RAW);
   const [listMode,       setListMode]       = useState(initialUiState.listMode);
   const [search,         setSearch]         = useState(initialUiState.search);
+  const [searchScope,    setSearchScope]    = useState(initialUiState.searchScope || UI_STATE_DEFAULTS.searchScope);
   const [sortBy,         setSortBy]         = useState(initialUiState.sortBy);
   const [essentialOnly,  setEssOnly]        = useState(initialUiState.essentialOnly);
   const [watchedOnly,    setWatchedOnly]    = useState(initialUiState.watchedOnly);
@@ -1540,7 +1546,7 @@ export default function MCUViewer() {
       if (genreFilter !== 'all' && i.type !== genreFilter) return false;
       const after = AFTER_CREDITS[i.title] || AFTER_CREDITS_DEFAULT;
       const timelineLabel = TIMELINE_MODES.find(m => m.id === timelineMode)?.label || '';
-      return matchesSearch(i, search, { director: DIRECTOR_DATA[i.title] || '', connectsTo: after.connectsTo || [], timelineLabel });
+      return matchesSearch(i, search, { director: DIRECTOR_DATA[i.title] || '', actors: metaCache[i.id]?.cast || '', connectsTo: after.connectsTo || [], timelineLabel }, searchScope);
     }).sort((a, b) => {
       if (sortBy === 'title') return a.title.localeCompare(b.title);
       if (sortBy === 'year') return a.year - b.year;
@@ -1559,7 +1565,7 @@ export default function MCUViewer() {
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, browseMode, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap, releaseFilter]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, browseMode, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap, releaseFilter, metaCache, searchScope]);
 
 
 
@@ -1595,6 +1601,7 @@ export default function MCUViewer() {
     safeLocalStorageSetItem(CACHE_KEYS.uiState, JSON.stringify({
       listMode,
       search,
+      searchScope,
       sortBy,
       essentialOnly,
       watchedOnly,
@@ -1612,7 +1619,7 @@ export default function MCUViewer() {
       textScaleEnabled,
       scrollTop,
     }));
-  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, posterDataSaver, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
+  }, [listMode, search, searchScope, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, posterDataSaver, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
   const totalWatched = useMemo(() => activeItems.filter(i => i.status === 'watched').length, [activeItems]);
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
@@ -3359,10 +3366,45 @@ export default function MCUViewer() {
             </div>
             <button className="fpill" onClick={() => setBrowseMode('home')}><ChevDown size={14}/> {tUniverse('Back to Home')}</button>
           </div>
-          <div className="search-page-panel" style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 18, padding: 14, background: 'color-mix(in srgb, var(--theme-surface) 84%, transparent)' }}>
+          <div className="search-page-panel" style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 18, padding: 14, background: 'color-mix(in srgb, var(--theme-surface) 84%, transparent)', boxShadow: '0 10px 30px color-mix(in srgb, #000 16%, transparent)' }}>
             <div style={{ position: 'relative' }}>
               <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
-              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search titles, characters, phases, status, notes..." aria-label="Search titles" style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650 }} />
+              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by title..." aria-label="Search library" style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650, transition: 'border-color 180ms ease, box-shadow 180ms ease' }} />
+            </div>
+            <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
+              <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' }}>Search in</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {[
+                  ['title', 'Name'],
+                  ['description', 'Description'],
+                  ['director', 'Director'],
+                  ['actors', 'Actors'],
+                  ['prerequisites', 'Prerequisites'],
+                  ['metadata', 'Phase/Status/Type'],
+                ].map(([key, label]) => {
+                  const active = Boolean(searchScope[key]);
+                  return (
+                    <button
+                      key={key}
+                      className="fpill"
+                      onClick={() => setSearchScope(prev => ({ ...prev, [key]: key === 'title' ? true : !prev[key] }))}
+                      style={{
+                        minHeight: 34,
+                        padding: '0 12px',
+                        borderRadius: 999,
+                        border: `1px solid ${active ? 'color-mix(in srgb, var(--theme-accent) 62%, var(--theme-border))' : T.filterBorder}`,
+                        background: active ? 'color-mix(in srgb, var(--theme-accent) 22%, transparent)' : 'transparent',
+                        color: active ? 'var(--theme-text)' : T.textMuted,
+                        transform: active ? 'translateY(-1px)' : 'none',
+                        transition: 'all 180ms ease',
+                      }}
+                      aria-pressed={active}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.4 }}>{search ? `${filtered.length} matches` : tUniverse('Type to begin searching')}</div>
