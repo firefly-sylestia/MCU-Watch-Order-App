@@ -870,6 +870,7 @@ export default function MCUViewer() {
   const [trailerRotateHint, setTrailerRotateHint] = useState('');
   const [trailerVariantIndex, setTrailerVariantIndex] = useState(0);
   const [releaseFilter, setReleaseFilter] = useState('all');
+  const [releaseCategoryFilter, setReleaseCategoryFilter] = useState('all');
   const trailerShellRef = useRef(null);
   const { posterCache, setPosterCache, localPosterMap, setLocalPosterMap } = usePosterCache();
   const [posterFetchState, setPosterFetchState] = useState({ active: false, done: 0, total: 0, message: '' });
@@ -975,7 +976,7 @@ export default function MCUViewer() {
     setAnalyticsOpen(true);
   }, []);
   const handleInAppBack = useCallback(() => {
-    if (browseMode === 'search' || browseMode === 'phase') {
+    if (browseMode === 'search') {
       setBrowseMode('home');
       return true;
     }
@@ -1024,7 +1025,7 @@ export default function MCUViewer() {
     onCloseAnalytics: closeAnalytics,
     onCloseSettings: closeSettings,
     onCloseSidebar: closeSidebar,
-    hasInAppBackStep: browseMode === 'search' || browseMode === 'phase',
+    hasInAppBackStep: browseMode === 'search',
     onInAppBack: handleInAppBack,
   });
 
@@ -1527,7 +1528,7 @@ export default function MCUViewer() {
       if (watchedOnly && i.status !== 'watched') return false;
       if (statusFilter && i.status !== statusFilter) return false;
       if (typeFilter && i.type !== typeFilter) return false;
-      if (browseMode !== 'phase' && activePhase && i.phase !== activePhase) return false;
+      if (activePhase && i.phase !== activePhase) return false;
       if (releaseFilter === 'released' && (i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
       if (releaseFilter === 'upcoming' && !(i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
       if (timelineMode === 'loki' && !CHARACTER_POV_TITLE_SETS.loki.has(i.title)) return false;
@@ -1558,7 +1559,7 @@ export default function MCUViewer() {
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, browseMode, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap, releaseFilter]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, browseMode, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap, releaseFilter, releaseCategoryFilter]);
 
 
 
@@ -3023,7 +3024,7 @@ export default function MCUViewer() {
   const routeMode = analyticsOpen || settingsOpen ? 'utility' : 'home';
 
   // Count active filters for the collapsed bar badge
-  const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
+  const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order', releaseFilter !== 'all', releaseCategoryFilter !== 'all', activePhase !== 0].filter(Boolean).length;
   const trailerDataForDetail = detailItem ? getTrailerByTitle(detailItem.title) : null;
   const trailerOptions = trailerDataForDetail?.options || [];
   const selectedTrailer = trailerOptions[trailerVariantIndex] || trailerOptions[0] || null;
@@ -3047,7 +3048,7 @@ export default function MCUViewer() {
   const renderPhaseSelector = () => (
     <>
     <div ref={phaseRef} className="phase-selector-rail">
-      <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} onClick={() => { setBrowseMode('phase'); setActivePhase(0); requestAnimationFrame(() => scrollToListTop()); }}>
+      <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} onClick={() => { setActivePhase(0); requestAnimationFrame(() => scrollToListTop()); }}>
         <span className="phase-chip-label">All Phases</span>
       </button>
       {currentPhases.map((ph) => {
@@ -3059,7 +3060,6 @@ export default function MCUViewer() {
           <button
             key={ph.id}
             onClick={() => {
-              setBrowseMode('phase');
               setActivePhase(ph.id);
               requestAnimationFrame(() => scrollTo(ph.id));
             }}
@@ -3083,6 +3083,23 @@ export default function MCUViewer() {
           data-active={releaseFilter === opt.id}
           onClick={() => setReleaseFilter(opt.id)}
           aria-pressed={releaseFilter === opt.id}
+        >
+          <span className="phase-chip-label">{opt.label}</span>
+        </button>
+      ))}
+    </div>
+    <div className="phase-selector-rail" style={{ marginTop: 8 }}>
+      {[
+        { id: 'all', label: 'All Catalogs' },
+        { id: 'marvel-studios', label: 'Marvel Studios Core' },
+        { id: 'sony-marvel', label: 'Sony + Marvel' },
+      ].map(opt => (
+        <button
+          key={opt.id}
+          className="fpill phase-chip"
+          data-active={releaseCategoryFilter === opt.id}
+          onClick={() => setReleaseCategoryFilter(opt.id)}
+          aria-pressed={releaseCategoryFilter === opt.id}
         >
           <span className="phase-chip-label">{opt.label}</span>
         </button>
@@ -3338,18 +3355,6 @@ export default function MCUViewer() {
 
         {!detailItem && !analyticsOpen && !settingsOpen && <WatermarkOverlay surface="hero" theme={darkMode ? 'cinematic' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['cta', 'title']} />}
       </section>}
-      {browseMode === 'phase' && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 16px 12px' }}>
-          <button
-            className="fpill"
-            onClick={() => setBrowseMode('home')}
-            style={{ minHeight: 42, padding: '0 18px', fontSize: 13 }}
-          >
-            <ChevDown size={14}/> Back to Home Carousel
-          </button>
-        </div>
-      )}
-
       {browseMode === 'search' && (
         <section className="search-page-shell" style={{ maxWidth: 1480, margin: '8px auto 14px', padding: '0 16px' }}>
           <div className="search-page-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
@@ -3422,7 +3427,14 @@ export default function MCUViewer() {
               <Search size={13} />
               Search Library
             </button>
-            <div className='filter-row-actions' style={{ marginLeft: 0, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-start', minWidth: 0 }} />
+            <div className='filter-row-actions' style={{ marginLeft: 0, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-start', minWidth: 0 }}>
+              {activeFilterCount > 0 && (
+                <button className="filters-trigger" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)' }}
+                  onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setSortBy('order'); setReleaseFilter('all'); setReleaseCategoryFilter('all'); setActivePhase(0); }}>
+                  <Trash2 size={12} /> Clear Filters
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -3489,12 +3501,6 @@ export default function MCUViewer() {
                 </>
               )}
               {/* Reset */}
-              {activeFilterCount > 0 && (
-                <button className="fpill" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', padding: '7px 12px' }}
-                  onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setSortBy('order'); }}>
-                  <Trash2 size={10} /> Clear
-                </button>
-              )}
             </div>
           </div>
         )}
