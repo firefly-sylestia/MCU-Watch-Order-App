@@ -3061,7 +3061,7 @@ export default function MCUViewer() {
             key={ph.id}
             onClick={() => {
               setActivePhase(ph.id);
-              requestAnimationFrame(() => scrollTo(ph.id));
+              requestAnimationFrame(() => scrollToListTop());
             }}
             className="fpill phase-chip marvel-phase-btn"
             data-active={isActive}>
@@ -3442,27 +3442,31 @@ export default function MCUViewer() {
                 const on = typeFilter === t;
                 return (
                   <button key={t} className="fpill filter-pill type-pill"
+                    aria-pressed={on}
                     style={on ? { borderColor: m.color + '88', background: m.color + '14', color: m.color } : {}}
                     onClick={() => setTypeFilter(on ? null : t)}>
-                    <m.Icon size={10} />{m.label}
+                    {on ? <Check size={10} /> : <m.Icon size={10} />}{m.label}
                   </button>
                 );
               })}
               {(listMode === 'core' || listMode === 'extended') && (
                 <button className="fpill"
+                  aria-pressed={essentialOnly}
                   style={essentialOnly ? { borderColor: 'color-mix(in srgb, var(--theme-warning) 50%, transparent)', background: 'var(--theme-warning-soft)', color: 'var(--theme-warning)' } : {}}
                   onClick={() => setEssOnly(o => !o)}>
-                  <Star size={10} />Must-Watch
+                  {essentialOnly ? <Check size={10} /> : <Star size={10} />}Must-Watch
                 </button>
               )}
               <button className="fpill"
+                aria-pressed={showAllFiltersOverride}
                 style={showAllFiltersOverride ? { borderColor: 'var(--theme-accent)', background: 'color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface))', color: 'var(--theme-accent)' } : {}}
                 onClick={() => setShowAllFiltersOverride(v => !v)}>
-                <Eye size={10} />Show All
+                {showAllFiltersOverride ? <Check size={10} /> : <Eye size={10} />}Show All
               </button>
               {/* Status filter */}
               <div style={{ position: 'relative' }}>
                 <button className="fpill"
+                  aria-pressed={Boolean(watchedOnly || statusFilter)}
                   style={watchedOnly || statusFilter ? { borderColor: 'color-mix(in srgb, var(--theme-success) 50%, transparent)', background: 'var(--theme-success-soft)', color: 'var(--theme-success)' } : {}}
                   onClick={() => setFilterStatusOpen(v => !v)}
                   >
@@ -3482,6 +3486,7 @@ export default function MCUViewer() {
               </div>
               {/* Bulk actions */}
               <button className="fpill"
+                aria-pressed={bulkSelectMode}
                 style={bulkSelectMode ? { borderColor: 'var(--theme-accent)', background: 'color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface))', color: 'var(--theme-accent)' } : {}}
                 onClick={() => { setBulkSelectMode(v => !v); clearBulkSelection(); }}>
                 <Check size={10} />{bulkSelectMode ? `Selecting ${selectedIds.size}` : 'Select'}
