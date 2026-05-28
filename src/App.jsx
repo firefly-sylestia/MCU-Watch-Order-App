@@ -3639,33 +3639,40 @@ export default function MCUViewer() {
                 <div className="list-panel" style={{ overflow: 'hidden' }}>
                   <PhaseRows
                     rows={filtered}
-                    renderRow={(item, idx) => (
-                      <MemoizedTitleRow
-                        key={item.id}
-                        item={item}
-                        idx={idx}
-                        ph={currentPhases.find(p => p.id === item.phase) || currentPhases[0]}
-                        T={T}
-                        typeMeta={getSafeTypeMeta(item.type)}
-                        statusMeta={getSafeStatusMeta(item.status)}
-                        toggleSeen={toggleSeen}
-                        openDetail={openDetail}
-                        trailerByTitle={trailerByTitle}
-                        setTrailerOpen={setTrailerOpen}
-                        setTrailerItem={setTrailerItem}
-                        expandedItem={expandedItem}
-                        setExpandedItem={setExpandedItem}
-                        rowMeta={rowMeta}
-                        localPosterMap={localPosterMap}
-                        posterSrc={posterSrc}
-                        darkMode={darkMode}
-                        setRowHeight={setRowHeight}
-                        setRowNode={setRowNode}
-                        releaseStatusFor={releaseStatusFor}
-                        releaseInfoFor={releaseInfoFor}
-                        tUniverse={tUniverse}
-                      />
-                    )}
+                    renderRow={(item, idx) => {
+                      const itemReleaseStatus = releaseStatusFor(item);
+                      const itemReleaseInfo = releaseInfoFor(item);
+                      return (
+                        <MemoizedTitleRow
+                          key={item.id}
+                          item={item}
+                          idx={idx}
+                          ph={currentPhases.find(p => p.id === item.phase) || currentPhases[0]}
+                          T={T}
+                          typeMeta={getSafeTypeMeta(item.type)}
+                          statusMeta={getSafeStatusMeta(item.status)}
+                          releaseStatus={itemReleaseStatus}
+                          releaseStatusText={releaseStatusLabel(itemReleaseStatus)}
+                          releaseStatusStyleObj={releaseStatusStyle(itemReleaseStatus)}
+                          releaseLabel={formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}
+                          poster={posterSrc(item)}
+                          genres={inferGenres(item)}
+                          isExpanded={expandedItem === item.id}
+                          isWatched={item.status === 'watched'}
+                          isBookmarked={Boolean(bookmarks[item.id])}
+                          statusDropdown={statusDropdown}
+                          rating={metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
+                          onOpenDetail={openDetail}
+                          onSetStatus={setStatusDirect}
+                          onToggleBookmark={toggleBookmark}
+                          onOpenStatus={openStatusDropdown}
+                          bulkSelectMode={bulkSelectMode}
+                          isSelected={selectedIds.has(item.id)}
+                          onToggleSelected={toggleSelected}
+                          isDesktopViewport={isDesktopViewport}
+                        />
+                      );
+                    }}
                   />
                 </div>
               </section>
