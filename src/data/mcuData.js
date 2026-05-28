@@ -155,6 +155,13 @@ export const ADDITIONAL_LIST = [
   { id: 164, order: 164, phase: 5, type: 'film', year: 2023, essential: false, episodes: null, title: "Spider-Man: Across the Spider-Verse", prereq: "Into the Spider-Verse", desc: "Miles joins a larger Spider-Society across dimensions, deepening animated multiverse lore that complements MCU multiverse themes." },
   { id: 165, order: 165, phase: 5, type: 'series', year: 2017, essential: false, episodes: 26, title: "Spider-Man (2017) S1–S3", prereq: "None (separate continuity)", desc: "Marvel Animation's 2017 Spider-Man series offers a modernized Peter Parker arc across three seasons. Optional for viewers building a fuller Marvel + Sony-adjacent Spider watchlist." },
   { id: 166, order: 166, phase: 5, type: 'series', year: 2018, essential: false, episodes: 20, title: "Marvel's Spider-Man: Maximum Venom", prereq: "Spider-Man (2017) S1–S2", desc: "The final season/event arc of Marvel's 2017 Spider-Man run focuses on symbiote mythology and Venom escalation. Optional animated companion for Venom-era interests." },
+
+  { id: 167, order: 167, phase: 5, type: 'film', year: 2002, essential: false, episodes: null, title: "Spider-Man", prereq: "None (alternate reality)", desc: "Sam Raimi's original Spider-Man film starring Tobey Maguire. Key legacy Spider-Man multiverse watch before No Way Home." },
+  { id: 168, order: 168, phase: 5, type: 'film', year: 2004, essential: false, episodes: null, title: "Spider-Man 2", prereq: "Spider-Man (2002)", desc: "Peter Parker faces Doctor Octopus in Raimi's acclaimed sequel. Legacy Sony Spider-Man continuity." },
+  { id: 169, order: 169, phase: 5, type: 'film', year: 2007, essential: false, episodes: null, title: "Spider-Man 3", prereq: "Spider-Man 2", desc: "Raimi trilogy finale featuring symbiote arc and Sandman. Optional Sony legacy continuity watch." },
+  { id: 170, order: 170, phase: 5, type: 'film', year: 2012, essential: false, episodes: null, title: "The Amazing Spider-Man", prereq: "None (alternate reality)", desc: "Andrew Garfield's Spider-Man reboot introduces a new continuity with Gwen Stacy and Lizard." },
+  { id: 171, order: 171, phase: 5, type: 'film', year: 2014, essential: false, episodes: null, title: "The Amazing Spider-Man 2", prereq: "The Amazing Spider-Man", desc: "Andrew Garfield sequel expanding Oscorp and Electro arcs in Sony's Amazing continuity." },
+  { id: 172, order: 172, phase: 5, type: 'series', year: 2026, releaseStatus: 'TBA', essential: false, episodes: null, title: "Spider-Noir", prereq: "None (alternate reality)", desc: "Sony live-action Spider-Noir project set in a separate Spider continuity." },
 ];
 
 export const RELEASE_INFO = Object.freeze(

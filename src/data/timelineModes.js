@@ -4,6 +4,7 @@ export const TIMELINE_MODES = [
   { id: 'loki', label: 'Character POV: Loki', description: 'Focuses Loki and TVA-centric journey.' },
   { id: 'wanda', label: 'Character POV: Wanda', description: 'Focuses Wanda Maximoff arc.' },
   { id: 'multiverse', label: 'Branching Multiverse', description: 'Highlights multiverse branches and alternate continuities.' },
+  { id: 'sony', label: 'Sony Marvel Universe', description: 'Sony Spider-verse and SSU projects plus MCU crossover Spider titles.' },
 ];
 
 export const TIMELINE_MODE_IDS = new Set(TIMELINE_MODES.map((m) => m.id));

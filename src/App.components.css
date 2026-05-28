@@ -3343,3 +3343,6 @@ body { background: var(--app-shell-gradient); }
     animation:none !important;
   }
 }
+
+.phase-chip[data-active="true"]{border-color:color-mix(in srgb,var(--theme-accent) 72%, var(--theme-border)) !important; background:linear-gradient(135deg,color-mix(in srgb,var(--theme-accent) 24%, var(--theme-surface)),color-mix(in srgb,var(--theme-accent-alt) 16%, var(--theme-surface))) !important; color:var(--theme-accent) !important; box-shadow:0 0 0 2px color-mix(in srgb,var(--theme-accent) 34%, transparent),0 10px 20px rgba(2,8,23,.22) !important;}
+[data-color-mode="light"] .phase-chip[data-active="true"]{color:#b21b22 !important;}
