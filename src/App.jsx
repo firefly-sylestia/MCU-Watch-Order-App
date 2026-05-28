@@ -842,6 +842,12 @@ export default function MCUViewer() {
   const [fabMenuOpen, setFabMenuOpen] = useState(true);
   const [fabMinimized, setFabMinimized] = useState(false);
   const [browseMode, setBrowseMode] = useState('home');
+  const openSearchMode = useCallback(() => {
+    setBrowseMode('search');
+    setListMode('extended');
+    setActivePhase(0);
+    setSearchScope(UI_STATE_DEFAULTS.searchScope);
+  }, [setBrowseMode, setListMode, setActivePhase, setSearchScope]);
   const setFilterStatusOpen = (next) => dispatchUiMode({ filterStatusOpen: typeof next === 'function' ? next(uiModeState.filterStatusOpen) : next });
   const setDockStatusOpen = (next) => dispatchUiMode({ dockStatusOpen: typeof next === 'function' ? next(uiModeState.dockStatusOpen) : next });
   const setFiltersOpen = (next) => dispatchUiMode({ filtersOpen: typeof next === 'function' ? next(uiModeState.filtersOpen) : next });
@@ -3369,7 +3375,7 @@ export default function MCUViewer() {
           <div className="search-page-panel" style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 18, padding: 14, background: 'color-mix(in srgb, var(--theme-surface) 84%, transparent)', boxShadow: '0 10px 30px color-mix(in srgb, #000 16%, transparent)' }}>
             <div style={{ position: 'relative' }}>
               <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
-              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by title..." aria-label="Search library" style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650, transition: 'border-color 180ms ease, box-shadow 180ms ease' }} />
+              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} aria-label="Search library" style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650, transition: 'border-color 180ms ease, box-shadow 180ms ease' }} />
             </div>
             <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
               <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' }}>Search in</div>
@@ -3466,7 +3472,7 @@ export default function MCUViewer() {
               <span style={{ fontSize: 10, letterSpacing: 1.6, color: T.textMuted, textTransform: 'uppercase' }}>Continue</span>
               <span style={{ fontSize: 12, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</span>
             </button>
-            <button className="filters-trigger" onClick={() => setBrowseMode('search')} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${T.filterBorder}`, background: 'transparent', color: T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}>
+            <button className="filters-trigger" onClick={openSearchMode} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 10, border: `1px solid ${T.filterBorder}`, background: 'transparent', color: T.text, cursor: 'pointer', fontFamily: 'var(--font-marvel-ui)', fontSize: 13, letterSpacing: 1.3 }}>
               <Search size={13} />
               Search Library
             </button>
@@ -3622,13 +3628,60 @@ export default function MCUViewer() {
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
-          {phaseKeys.length === 0 && (
+          {browseMode !== 'search' && phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
             </div>
           )}
-
-          {viewMode === 'calendar' ? (
+          {browseMode === 'search' ? (
+            search.trim() ? (
+              <section data-motion="section" className='curvy-panel motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 12 }}>
+                <div className="list-panel" style={{ overflow: 'hidden' }}>
+                  <PhaseRows
+                    rows={filtered}
+                    renderRow={(item, idx) => {
+                      const itemReleaseStatus = releaseStatusFor(item);
+                      const itemReleaseInfo = releaseInfoFor(item);
+                      return (
+                        <MemoizedTitleRow
+                          key={item.id}
+                          item={item}
+                          idx={idx}
+                          ph={currentPhases.find(p => p.id === item.phase) || currentPhases[0]}
+                          T={T}
+                          typeMeta={getSafeTypeMeta(item.type)}
+                          statusMeta={getSafeStatusMeta(item.status)}
+                          releaseStatus={itemReleaseStatus}
+                          releaseStatusText={releaseStatusLabel(itemReleaseStatus)}
+                          releaseStatusStyleObj={releaseStatusStyle(itemReleaseStatus)}
+                          releaseLabel={formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}
+                          poster={posterSrc(item)}
+                          genres={inferGenres(item)}
+                          isExpanded={expandedItem === item.id}
+                          isWatched={item.status === 'watched'}
+                          isBookmarked={Boolean(bookmarks[item.id])}
+                          statusDropdown={statusDropdown}
+                          rating={metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
+                          onOpenDetail={openDetail}
+                          onSetStatus={setStatusDirect}
+                          onToggleBookmark={toggleBookmark}
+                          onOpenStatus={openStatusDropdown}
+                          bulkSelectMode={bulkSelectMode}
+                          isSelected={selectedIds.has(item.id)}
+                          onToggleSelected={toggleSelected}
+                          isDesktopViewport={isDesktopViewport}
+                        />
+                      );
+                    }}
+                  />
+                </div>
+              </section>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '84px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 17, color: T.textMuted, letterSpacing: 2 }}>
+                Start typing to search across your full list.
+              </div>
+            )
+          ) : viewMode === 'calendar' ? (
             <section data-motion="section" className='curvy-panel calendar-section motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
               <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', color: 'var(--theme-text-primary)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
               <div style={{ marginBottom: 12, color: T.textMuted, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.2 }}>Grouped by month / quarter / year</div>
