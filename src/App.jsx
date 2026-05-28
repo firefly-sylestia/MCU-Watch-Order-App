@@ -30,7 +30,7 @@ import {
 } from './data/mcuData';
 import { DC_RAW, DC_PHASES, DC_CORE_IDS } from './data/dcData';
 import { UNIVERSE_META } from './constants/universeSwitch';
-import { TIMELINE_MODES, TIMELINE_MODE_IDS, CHARACTER_POV_TITLE_SETS, STORY_ORDER_OVERRIDES } from './data/timelineModes';
+import { TIMELINE_MODES, TIMELINE_MODE_IDS, CHARACTER_POV_TITLE_SETS, STORY_ORDER_OVERRIDES, SONY_MARVEL_TITLE_SET } from './data/timelineModes';
 import { AFTER_CREDITS, AFTER_CREDITS_DEFAULT, DIRECTOR_DATA } from './data/afterCreditsData';
 import { TRAILER_DATA, trailerEmbedUrl, getTrailerByTitle } from './data/trailerData';
 
@@ -91,7 +91,7 @@ const UI_STATE_DEFAULTS = {
   watchedOnly: false,
   statusFilter: null,
   typeFilter: null,
-  activePhase: 1,
+  activePhase: 0,
   filtersOpen: false,
   viewMode: 'list',
   densityMode: 'comfortable',
@@ -1527,11 +1527,12 @@ export default function MCUViewer() {
       if (watchedOnly && i.status !== 'watched') return false;
       if (statusFilter && i.status !== statusFilter) return false;
       if (typeFilter && i.type !== typeFilter) return false;
-      if (browseMode !== 'phase' && activePhase && i.phase !== activePhase) return false;
+      if (activePhase && i.phase !== activePhase) return false;
       if (releaseFilter === 'released' && (i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
       if (releaseFilter === 'upcoming' && !(i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
       if (timelineMode === 'loki' && !CHARACTER_POV_TITLE_SETS.loki.has(i.title)) return false;
       if (timelineMode === 'wanda' && !CHARACTER_POV_TITLE_SETS.wanda.has(i.title)) return false;
+      if (timelineMode === 'sony' && !SONY_MARVEL_TITLE_SET.has(i.title)) return false;
       if (timelineMode === 'multiverse') {
         const isMultiverse = /what if|multiverse|loki|deadpool|friendly neighborhood|x-men/i.test(i.title + ' ' + (i.desc || ''));
         if (!isMultiverse) return false;
@@ -3047,7 +3048,7 @@ export default function MCUViewer() {
   const renderPhaseSelector = () => (
     <>
     <div ref={phaseRef} className="phase-selector-rail">
-      <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} onClick={() => { setBrowseMode('phase'); setActivePhase(0); requestAnimationFrame(() => scrollToListTop()); }}>
+      <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} onClick={() => { setActivePhase(0); requestAnimationFrame(() => scrollToListTop()); }}>
         <span className="phase-chip-label">All Phases</span>
       </button>
       {currentPhases.map((ph) => {
@@ -3059,7 +3060,6 @@ export default function MCUViewer() {
           <button
             key={ph.id}
             onClick={() => {
-              setBrowseMode('phase');
               setActivePhase(ph.id);
               requestAnimationFrame(() => scrollTo(ph.id));
             }}
@@ -3414,6 +3414,12 @@ export default function MCUViewer() {
             </div>
 
             {renderPhaseSelector()}
+            {activeFilterCount > 0 && (
+              <button className="fpill" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', padding: '7px 12px' }}
+                onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setSortBy('order'); setActivePhase(0); setReleaseFilter('all'); }}>
+                <Trash2 size={10} /> Clear
+              </button>
+            )}
             <button className="glass-grad quick-continue-btn" onClick={() => nextUnwatched && openDetail(nextUnwatched)} style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 999, padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 8, maxWidth: 380, background: 'color-mix(in srgb, var(--theme-surface) 70%, transparent)', backdropFilter: 'blur(12px) saturate(130%)', WebkitBackdropFilter: 'blur(12px) saturate(130%)', cursor: nextUnwatched ? 'pointer' : 'default' }}>
               <span style={{ fontSize: 10, letterSpacing: 1.6, color: T.textMuted, textTransform: 'uppercase' }}>Continue</span>
               <span style={{ fontSize: 12, color: T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nextUnwatched ? nextUnwatched.title : 'All caught up'}</span>
@@ -3489,12 +3495,6 @@ export default function MCUViewer() {
                 </>
               )}
               {/* Reset */}
-              {activeFilterCount > 0 && (
-                <button className="fpill" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', padding: '7px 12px' }}
-                  onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setSortBy('order'); }}>
-                  <Trash2 size={10} /> Clear
-                </button>
-              )}
             </div>
           </div>
         )}
