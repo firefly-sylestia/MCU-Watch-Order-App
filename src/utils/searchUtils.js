@@ -36,18 +36,30 @@ export const fuzzyIncludes = (haystack, needle) => {
 export const matchesSearch = (item, query, extras = {}) => {
   const q = normalizeSearchText(query);
   if (!q) return true;
-  const corpus = normalizeSearchText([
-    item.title,
-    item.prereq,
-    item.desc,
-    item.releaseDate,
-    item.releaseStatus,
-    item.type,
-    item.status,
-    item.phase ? `phase ${item.phase}` : '',
-    extras.director || '',
-    ...(extras.connectsTo || []),
-    extras.timelineLabel || '',
-  ].filter(Boolean).join(' '));
+
+  const fields = {
+    title: extras.fields?.title !== false,
+    description: Boolean(extras.fields?.description),
+    director: Boolean(extras.fields?.director),
+    cast: Boolean(extras.fields?.cast),
+    metadata: Boolean(extras.fields?.metadata),
+  };
+
+  const corpusParts = [item.title];
+  if (fields.description) corpusParts.push(item.desc, item.prereq);
+  if (fields.director) corpusParts.push(extras.director || '');
+  if (fields.cast) corpusParts.push(...(extras.connectsTo || []));
+  if (fields.metadata) {
+    corpusParts.push(
+      item.releaseDate,
+      item.releaseStatus,
+      item.type,
+      item.status,
+      item.phase ? `phase ${item.phase}` : '',
+      extras.timelineLabel || '',
+    );
+  }
+
+  const corpus = normalizeSearchText(corpusParts.filter(Boolean).join(' '));
   return fuzzyIncludes(corpus, q);
 };

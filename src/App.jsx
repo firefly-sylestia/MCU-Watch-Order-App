@@ -815,6 +815,7 @@ export default function MCUViewer() {
   const [items,          setItems]          = useState(RAW);
   const [listMode,       setListMode]       = useState(initialUiState.listMode);
   const [search,         setSearch]         = useState(initialUiState.search);
+  const [searchFields,   setSearchFields]   = useState({ title: true, description: false, director: false, cast: false, metadata: false });
   const [sortBy,         setSortBy]         = useState(initialUiState.sortBy);
   const [essentialOnly,  setEssOnly]        = useState(initialUiState.essentialOnly);
   const [watchedOnly,    setWatchedOnly]    = useState(initialUiState.watchedOnly);
@@ -1029,6 +1030,13 @@ export default function MCUViewer() {
   });
 
   const currentPhases = universe === 'dc' ? DC_PHASES : PHASES;
+
+  useEffect(() => {
+    if (activePhase === 0) return;
+    if (!currentPhases.some(phase => phase.id === activePhase)) {
+      setActivePhase(0);
+    }
+  }, [activePhase, currentPhases]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1540,7 +1548,7 @@ export default function MCUViewer() {
       if (genreFilter !== 'all' && i.type !== genreFilter) return false;
       const after = AFTER_CREDITS[i.title] || AFTER_CREDITS_DEFAULT;
       const timelineLabel = TIMELINE_MODES.find(m => m.id === timelineMode)?.label || '';
-      return matchesSearch(i, search, { director: DIRECTOR_DATA[i.title] || '', connectsTo: after.connectsTo || [], timelineLabel });
+      return matchesSearch(i, search, { director: DIRECTOR_DATA[i.title] || '', connectsTo: after.connectsTo || [], timelineLabel, fields: searchFields });
     }).sort((a, b) => {
       if (sortBy === 'title') return a.title.localeCompare(b.title);
       if (sortBy === 'year') return a.year - b.year;
@@ -3359,10 +3367,36 @@ export default function MCUViewer() {
             </div>
             <button className="fpill" onClick={() => setBrowseMode('home')}><ChevDown size={14}/> {tUniverse('Back to Home')}</button>
           </div>
-          <div className="search-page-panel" style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 18, padding: 14, background: 'color-mix(in srgb, var(--theme-surface) 84%, transparent)' }}>
+          <div className="search-page-panel" style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 22, padding: 16, background: 'color-mix(in srgb, var(--theme-surface) 88%, transparent)', backdropFilter: 'blur(14px) saturate(125%)', WebkitBackdropFilter: 'blur(14px) saturate(125%)', boxShadow: '0 10px 28px color-mix(in srgb, var(--theme-shadow) 22%, transparent)' }}>
             <div style={{ position: 'relative' }}>
               <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
-              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search titles, characters, phases, status, notes..." aria-label="Search titles" style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650 }} />
+              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by title (default)" aria-label="Search titles" style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650 }} />
+            </div>
+            <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {[
+                { key: 'title', label: 'Name' },
+                { key: 'description', label: 'Description' },
+                { key: 'director', label: 'Director' },
+                { key: 'cast', label: 'Actors & Links' },
+                { key: 'metadata', label: 'Phase / Status' },
+              ].map(opt => (
+                <button
+                  key={opt.key}
+                  className="fpill"
+                  aria-pressed={searchFields[opt.key]}
+                  onClick={() => setSearchFields(prev => ({ ...prev, [opt.key]: opt.key === 'title' ? true : !prev[opt.key] }))}
+                  style={{
+                    minHeight: 34,
+                    borderRadius: 999,
+                    border: `1px solid ${searchFields[opt.key] ? 'color-mix(in srgb, var(--theme-accent) 62%, var(--theme-border))' : T.inputBorder}`,
+                    background: searchFields[opt.key] ? 'color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface))' : 'color-mix(in srgb, var(--theme-surface) 84%, transparent)',
+                    color: searchFields[opt.key] ? 'var(--theme-accent)' : T.textMuted,
+                    transition: 'all 180ms var(--ease-out)',
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
             <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.4 }}>{search ? `${filtered.length} matches` : tUniverse('Type to begin searching')}</div>
