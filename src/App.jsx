@@ -13,7 +13,7 @@ import { useHeroBackdrop } from './hooks/useHeroBackdrop';
 import { usePosterCache } from './hooks/usePosterCache';
 import { useOverlayNavigation } from './hooks/useOverlayNavigation';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
-import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
+import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics, DesignDirectionPanel } from './components/features';
 import { APPEARANCE_MODES, CHARACTER_THEMES, normalizeAppearanceMode, resolveThemeTokens } from './constants/themeSettings';
 import { buildSemanticThemeVars, UI_PARITY_TOKENS } from './constants/ui';
 import './App.layout.css';
@@ -3180,7 +3180,7 @@ export default function MCUViewer() {
           <section className="sidebar-panel">
             <div className="sidebar-section-title">{tUniverse('Universe Style')}</div>
             <div className='appearance-grid'>
-              {APPEARANCE_MODES.map(mode => <button key={mode.id} className={`appearance-card ${normalizeAppearanceMode(appearanceMode)===mode.id ? 'is-active' : ''}`} onClick={() => setAppearanceMode(mode.id)}><span>{mode.label}</span><em /></button>)}
+              {APPEARANCE_MODES.map(mode => <button key={mode.id} className={`appearance-card ${normalizeAppearanceMode(appearanceMode)===mode.id ? 'is-active' : ''}`} data-mode={mode.id} onClick={() => setAppearanceMode(mode.id)}><span>{mode.label}</span><small>{mode.description}</small><em /></button>)}
             </div>
             <div className='theme-grid' style={{ marginTop: 8 }}>
               {themedChoices.map(({ id: t, displayLabel, displaySwatch }) => (
@@ -3347,6 +3347,10 @@ export default function MCUViewer() {
 
         {!detailItem && !analyticsOpen && !settingsOpen && <WatermarkOverlay surface="hero" theme={darkMode ? 'cinematic' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['cta', 'title']} />}
       </section>}
+      {browseMode === 'home' && (
+        <DesignDirectionPanel appearanceMode={appearanceMode} darkMode={darkMode} universeLabel={activeUniverse.title} />
+      )}
+
       {browseMode === 'phase' && (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 16px 12px' }}>
           <button

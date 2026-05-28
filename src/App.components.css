@@ -3593,3 +3593,209 @@ body { background: var(--app-shell-gradient); }
 .theme-switch .rrow:hover {
   background: linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 10%, var(--theme-surface)), var(--theme-surface-hover)) !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2026 research refresh: tactile glass, restrained neon, stronger pixel theme,
+   and type-led variants for every appearance mode.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.theme-switch {
+  letter-spacing: var(--theme-letter-spacing, 0);
+}
+
+.theme-switch h1,
+.theme-switch h2,
+.theme-switch h3,
+.theme-switch .header-title-mcu,
+.theme-switch .hero-carousel-title,
+.theme-switch .title-main,
+.theme-switch .analytics-metric-value {
+  font-family: var(--font-marvel-display) !important;
+}
+
+.theme-switch .fpill,
+.theme-switch .filters-trigger,
+.theme-switch .meta-chip,
+.theme-switch .sidebar-section-title,
+.theme-switch .analytics-metric-label,
+.theme-switch .calendar-group-header {
+  font-family: var(--font-marvel-ui) !important;
+}
+
+.theme-switch .rrow,
+.theme-switch .detail-export-panel,
+.theme-switch .settings-card,
+.theme-switch .design-direction-panel,
+.theme-switch input,
+.theme-switch textarea {
+  font-family: var(--font-marvel-body) !important;
+}
+
+.theme-switch .hero-backdrop-blend {
+  background:
+    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--theme-accent) 18%, transparent), transparent 38%),
+    linear-gradient(180deg, color-mix(in srgb, var(--theme-bg) 24%, transparent), var(--theme-bg) 92%) !important;
+}
+
+.theme-switch .hero-carousel-card,
+.theme-switch .rrow,
+.theme-switch .fpill,
+.theme-switch .filters-trigger,
+.theme-switch .appearance-card,
+.theme-switch .detail-btn {
+  transition:
+    transform var(--motion-normal) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out),
+    background var(--motion-normal) var(--ease-out),
+    box-shadow var(--motion-normal) var(--ease-out),
+    color var(--motion-fast) var(--ease-out) !important;
+}
+
+.theme-switch .rrow:hover,
+.theme-switch .hero-carousel-card:hover,
+.theme-switch .fpill:hover,
+.theme-switch .filters-trigger:hover {
+  will-change: transform;
+}
+
+.theme-switch[data-theme="glass"] {
+  --theme-texture: linear-gradient(135deg, rgba(255,255,255,.18), rgba(255,255,255,.035) 42%, transparent 72%);
+}
+
+.theme-switch[data-theme="glass"] .hero-carousel-card,
+.theme-switch[data-theme="glass"] .rrow,
+.theme-switch[data-theme="glass"] .search-page-panel,
+.theme-switch[data-theme="glass"] .detail-card,
+.theme-switch[data-theme="glass"] .settings-hero-card,
+.theme-switch[data-theme="glass"] .analytics-metric-card {
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--theme-surface) 68%, transparent), color-mix(in srgb, var(--theme-surface-strong) 42%, transparent)),
+    linear-gradient(135deg, rgba(255,255,255,.16), transparent 44%, color-mix(in srgb, var(--theme-accent-alt) 10%, transparent)) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border)) !important;
+  box-shadow: 0 22px 54px color-mix(in srgb, var(--theme-shadow-rgb) 22%, transparent), inset 0 1px 0 rgba(255,255,255,.18) !important;
+  backdrop-filter: blur(var(--fx-blur)) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(var(--fx-blur)) saturate(150%) !important;
+}
+
+.theme-switch[data-theme="pixelated"] {
+  --theme-texture:
+    linear-gradient(90deg, color-mix(in srgb, var(--theme-accent) 16%, transparent) 1px, transparent 1px),
+    linear-gradient(0deg, color-mix(in srgb, var(--theme-accent-alt) 13%, transparent) 1px, transparent 1px),
+    linear-gradient(135deg, color-mix(in srgb, var(--theme-bg) 22%, transparent), transparent);
+  --component-texture-size: 12px 12px;
+}
+
+.theme-switch[data-theme="pixelated"] .header-title-mcu {
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  border-radius: 0 !important;
+}
+
+.theme-switch[data-theme="pixelated"] .poster,
+.theme-switch[data-theme="pixelated"] .hero-carousel-poster,
+.theme-switch[data-theme="pixelated"] .detail-poster-frame img {
+  image-rendering: auto;
+  filter: saturate(.92) contrast(1.08);
+}
+
+.theme-switch[data-theme="pixelated"] .title-main,
+.theme-switch[data-theme="pixelated"] .hero-carousel-title,
+.theme-switch[data-theme="pixelated"] .design-direction-panel h2 {
+  letter-spacing: .08em;
+  text-shadow: 2px 2px 0 color-mix(in srgb, var(--theme-bg) 58%, transparent);
+}
+
+.theme-switch[data-theme="pixelated"] .fpill,
+.theme-switch[data-theme="pixelated"] .filters-trigger,
+.theme-switch[data-theme="pixelated"] .meta-chip {
+  text-transform: uppercase;
+  border-width: 2px !important;
+}
+
+.theme-switch[data-theme="neon"] {
+  --theme-texture:
+    radial-gradient(circle at 18% 16%, color-mix(in srgb, var(--theme-accent) 22%, transparent), transparent 30%),
+    linear-gradient(115deg, transparent 0 42%, color-mix(in srgb, var(--theme-accent-alt) 12%, transparent) 43% 44%, transparent 45% 100%);
+}
+
+.theme-switch[data-theme="neon"] .hero-carousel-card.is-active,
+.theme-switch[data-theme="neon"] .rrow:hover,
+.theme-switch[data-theme="neon"] .fpill:hover,
+.theme-switch[data-theme="neon"] .filters-trigger:hover,
+.theme-switch[data-theme="neon"] .appearance-card.is-active {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--theme-accent) 34%, transparent),
+    0 0 18px color-mix(in srgb, var(--theme-accent) 32%, transparent),
+    0 0 44px color-mix(in srgb, var(--theme-accent-alt) 18%, transparent) !important;
+}
+
+.theme-switch[data-theme="neon"] .meta-chip,
+.theme-switch[data-theme="neon"] .rating-marvel-pill,
+.theme-switch[data-theme="neon"] .status-marvel-pill {
+  text-shadow: 0 0 10px color-mix(in srgb, var(--theme-accent) 28%, transparent);
+}
+
+.theme-switch[data-theme="minimal"] {
+  --theme-letter-spacing: 0;
+}
+
+.theme-switch[data-theme="minimal"] .rrow,
+.theme-switch[data-theme="minimal"] .hero-carousel-shell,
+.theme-switch[data-theme="minimal"] .design-direction-panel,
+.theme-switch[data-theme="minimal"] .settings-menu,
+.theme-switch[data-theme="minimal"] .analytics-shell {
+  background: linear-gradient(180deg, var(--theme-surface), var(--theme-surface-strong)) !important;
+}
+
+.theme-switch .appearance-card {
+  min-height: 92px;
+  padding: 12px !important;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+}
+
+.theme-switch .appearance-card span {
+  font: 800 1rem/1.05 var(--font-marvel-display);
+  letter-spacing: var(--theme-letter-spacing, 0);
+}
+
+.theme-switch .appearance-card small {
+  color: var(--theme-text-muted);
+  font: 650 .72rem/1.35 var(--font-marvel-body);
+}
+
+.theme-switch .appearance-card em {
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--theme-accent), var(--theme-accent-alt));
+  opacity: .72;
+}
+
+.theme-switch[data-color-mode="light"] .hero-carousel-card,
+.theme-switch[data-color-mode="light"] .rrow,
+.theme-switch[data-color-mode="light"] .design-direction-panel,
+.theme-switch[data-color-mode="light"] .search-page-panel {
+  color: var(--theme-text-primary) !important;
+  border-color: color-mix(in srgb, var(--theme-border) 80%, #fff) !important;
+}
+
+.theme-switch[data-color-mode="light"] .meta-muted,
+.theme-switch[data-color-mode="light"] .design-direction-panel__notes span,
+.theme-switch[data-color-mode="light"] .design-direction-panel__copy > p:last-child {
+  color: var(--theme-text-secondary) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-switch *,
+  .theme-switch *::before,
+  .theme-switch *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+}
