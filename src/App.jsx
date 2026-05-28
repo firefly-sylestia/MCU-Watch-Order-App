@@ -91,6 +91,7 @@ const UI_STATE_DEFAULTS = {
   watchedOnly: false,
   statusFilter: null,
   typeFilter: null,
+  categoryFilter: null,
   activePhase: 1,
   filtersOpen: false,
   viewMode: 'list',
@@ -109,6 +110,7 @@ const VALID_LIST_MODES = new Set(LIST_MODES.map(mode => mode.id));
 const VALID_VIEW_MODES = new Set(['list', 'calendar']);
 const VALID_PHASES = new Set([0, ...PHASES.map(phase => phase.id), ...DC_PHASES.map(phase => phase.id)]);
 const VALID_TYPES = new Set([null, ...Object.keys(TYPE_META)]);
+const VALID_CATEGORY_FILTERS = new Set([null, 'sony-marvel', 'marvel-studios']);
 const VALID_STATUSES = new Set([null, ...Object.keys(STATUS_META)]);
 const VALID_DENSITY_MODES = new Set(['comfortable', 'compact']);
 const VALID_TIMELINE_MODES = TIMELINE_MODE_IDS;
@@ -137,6 +139,7 @@ const readSavedUiState = () => {
       watchedOnly: Boolean(saved.watchedOnly),
       statusFilter: VALID_STATUSES.has(saved.statusFilter) ? saved.statusFilter : UI_STATE_DEFAULTS.statusFilter,
       typeFilter: VALID_TYPES.has(saved.typeFilter) ? saved.typeFilter : UI_STATE_DEFAULTS.typeFilter,
+      categoryFilter: VALID_CATEGORY_FILTERS.has(saved.categoryFilter) ? saved.categoryFilter : UI_STATE_DEFAULTS.categoryFilter,
       activePhase: VALID_PHASES.has(Number(saved.activePhase)) ? Number(saved.activePhase) : UI_STATE_DEFAULTS.activePhase,
       filtersOpen: Boolean(saved.filtersOpen),
       viewMode: VALID_VIEW_MODES.has(saved.viewMode) ? saved.viewMode : UI_STATE_DEFAULTS.viewMode,
@@ -820,6 +823,7 @@ export default function MCUViewer() {
   const [watchedOnly,    setWatchedOnly]    = useState(initialUiState.watchedOnly);
   const [statusFilter,   setStatusFilter]   = useState(initialUiState.statusFilter);
   const [typeFilter,     setTypeFilter]     = useState(initialUiState.typeFilter);
+  const [categoryFilter, setCategoryFilter] = useState(initialUiState.categoryFilter);
   const [activePhase,    setActivePhase]    = useState(initialUiState.activePhase);
   const activeUniverse = UNIVERSE_META[universe] || UNIVERSE_META.mcu;
   const themedChoices = useMemo(() => CHARACTER_THEMES.map(choice => ({
@@ -870,6 +874,11 @@ export default function MCUViewer() {
   const [trailerRotateHint, setTrailerRotateHint] = useState('');
   const [trailerVariantIndex, setTrailerVariantIndex] = useState(0);
   const [releaseFilter, setReleaseFilter] = useState('all');
+  const getCategoryForItem = useCallback((item) => {
+    const title = String(item?.title || '').toLowerCase();
+    if (title.includes('spider-man')) return 'sony-marvel';
+    return 'marvel-studios';
+  }, []);
   const trailerShellRef = useRef(null);
   const { posterCache, setPosterCache, localPosterMap, setLocalPosterMap } = usePosterCache();
   const [posterFetchState, setPosterFetchState] = useState({ active: false, done: 0, total: 0, message: '' });
@@ -1527,6 +1536,7 @@ export default function MCUViewer() {
       if (watchedOnly && i.status !== 'watched') return false;
       if (statusFilter && i.status !== statusFilter) return false;
       if (typeFilter && i.type !== typeFilter) return false;
+      if (categoryFilter && getCategoryForItem(i) !== categoryFilter) return false;
       if (browseMode !== 'phase' && activePhase && i.phase !== activePhase) return false;
       if (releaseFilter === 'released' && (i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
       if (releaseFilter === 'upcoming' && !(i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
@@ -1558,7 +1568,7 @@ export default function MCUViewer() {
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, browseMode, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap, releaseFilter]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, categoryFilter, activePhase, browseMode, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap, releaseFilter, getCategoryForItem]);
 
 
 
@@ -1599,6 +1609,7 @@ export default function MCUViewer() {
       watchedOnly,
       statusFilter,
       typeFilter,
+      categoryFilter,
       activePhase,
       filtersOpen,
       viewMode,
@@ -1611,7 +1622,7 @@ export default function MCUViewer() {
       textScaleEnabled,
       scrollTop,
     }));
-  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, posterDataSaver, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
+  }, [listMode, search, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, categoryFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, posterDataSaver, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
   const totalWatched = useMemo(() => activeItems.filter(i => i.status === 'watched').length, [activeItems]);
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
@@ -3023,7 +3034,7 @@ export default function MCUViewer() {
   const routeMode = analyticsOpen || settingsOpen ? 'utility' : 'home';
 
   // Count active filters for the collapsed bar badge
-  const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
+  const activeFilterCount = [typeFilter, categoryFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
   const trailerDataForDetail = detailItem ? getTrailerByTitle(detailItem.title) : null;
   const trailerOptions = trailerDataForDetail?.options || [];
   const selectedTrailer = trailerOptions[trailerVariantIndex] || trailerOptions[0] || null;
@@ -3442,6 +3453,22 @@ export default function MCUViewer() {
                   </button>
                 );
               })}
+              {[
+                { id: 'marvel-studios', label: 'Marvel Studios' },
+                { id: 'sony-marvel', label: 'Sony + Marvel' },
+              ].map(cat => {
+                const on = categoryFilter === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    className="fpill filter-pill"
+                    style={on ? { borderColor: 'color-mix(in srgb, var(--theme-accent) 58%, transparent)', background: 'color-mix(in srgb, var(--theme-accent) 16%, var(--theme-surface))', color: 'var(--theme-accent)' } : {}}
+                    onClick={() => setCategoryFilter(on ? null : cat.id)}
+                  >
+                    <Layers size={10} />{cat.label}
+                  </button>
+                );
+              })}
               {(listMode === 'core' || listMode === 'extended') && (
                 <button className="fpill"
                   style={essentialOnly ? { borderColor: 'color-mix(in srgb, var(--theme-warning) 50%, transparent)', background: 'var(--theme-warning-soft)', color: 'var(--theme-warning)' } : {}}
@@ -3490,8 +3517,8 @@ export default function MCUViewer() {
               )}
               {/* Reset */}
               {activeFilterCount > 0 && (
-                <button className="fpill" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', padding: '7px 12px' }}
-                  onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setSortBy('order'); }}>
+                <button className="fpill" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', padding: '7px 12px', marginLeft: 'auto' }}
+                  onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setCategoryFilter(null); setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setSortBy('order'); }}>
                   <Trash2 size={10} /> Clear
                 </button>
               )}
