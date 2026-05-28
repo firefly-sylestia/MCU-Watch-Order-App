@@ -1,0 +1,209 @@
+/* Modern theme contract: semantic color variables feed every component while
+   appearance modes reshape material, texture, border rhythm, and feedback. */
+.theme-switch {
+  --theme-input-bg: color-mix(in srgb, var(--theme-surface-hover) 84%, transparent);
+  --theme-scroll-track: color-mix(in srgb, var(--theme-bg) 82%, transparent);
+  --theme-scroll-thumb: color-mix(in srgb, var(--theme-accent) 36%, var(--theme-border));
+  --theme-scroll-thumb-hover: color-mix(in srgb, var(--theme-accent-alt) 48%, var(--theme-border));
+  --theme-card-bg: color-mix(in srgb, var(--theme-surface) var(--fx-surface-alpha), transparent);
+  --theme-card-bg-strong: color-mix(in srgb, var(--theme-surface-hover) 88%, transparent);
+  --theme-control-bg: color-mix(in srgb, var(--theme-surface-hover) 72%, transparent);
+  --theme-control-bg-hover: color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface-hover));
+  --theme-control-bg-active: color-mix(in srgb, var(--theme-accent) 22%, var(--theme-surface-hover));
+  --theme-control-border: color-mix(in srgb, var(--theme-border) 88%, transparent);
+  --theme-control-border-hover: color-mix(in srgb, var(--theme-accent) 34%, var(--theme-border));
+  --theme-type-film: color-mix(in srgb, var(--theme-accent) 88%, #ef4444);
+  --theme-type-series: color-mix(in srgb, var(--theme-accent-alt) 82%, #38bdf8);
+  --theme-type-short: color-mix(in srgb, var(--theme-accent) 52%, var(--theme-accent-alt));
+  --theme-status-completed: color-mix(in srgb, var(--theme-success) 78%, var(--theme-accent));
+  --theme-status-watchlist: color-mix(in srgb, var(--theme-accent-alt) 82%, #3b82f6);
+  --theme-status-progress: color-mix(in srgb, var(--theme-accent) 70%, #a855f7);
+  --theme-status-paused: var(--theme-warning);
+  --theme-status-dropped: var(--theme-danger);
+  --theme-status-completed-soft: color-mix(in srgb, var(--theme-status-completed) 14%, transparent);
+  --theme-status-watchlist-soft: color-mix(in srgb, var(--theme-status-watchlist) 14%, transparent);
+  --theme-status-progress-soft: color-mix(in srgb, var(--theme-status-progress) 14%, transparent);
+  --theme-status-paused-soft: color-mix(in srgb, var(--theme-status-paused) 14%, transparent);
+  --theme-status-dropped-soft: color-mix(in srgb, var(--theme-status-dropped) 14%, transparent);
+  --theme-focus-ring: 0 0 0 3px color-mix(in srgb, var(--theme-accent) 24%, transparent);
+  --theme-panel-shadow: var(--fx-shadow-2);
+  --theme-inset-highlight: inset 0 1px 0 color-mix(in srgb, var(--edge-highlight) 72%, transparent);
+  color: var(--theme-text);
+  accent-color: var(--theme-accent);
+}
+
+.theme-switch.mcu-universe {
+  --universe-mark: linear-gradient(90deg, var(--theme-accent), var(--theme-accent-alt));
+  --universe-watermark: 'MARVEL';
+}
+
+.theme-switch.dc-universe {
+  --universe-mark: linear-gradient(90deg, var(--theme-accent-alt), var(--theme-accent));
+  --universe-watermark: 'DC';
+}
+
+.theme-switch :is(.header-brand,.settings-menu,.analytics-shell,.phase-rows-full,.detail-shell,.detail-card,.curvy-panel,.rrow,.calendar-row,.search-page-panel,.filters-open,.post-credit-lane,.setup-card) {
+  background: linear-gradient(145deg, var(--theme-card-bg), color-mix(in srgb, var(--theme-card-bg-strong) 70%, transparent)) !important;
+  border: var(--fx-border-width) solid var(--theme-border) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--theme-panel-shadow), var(--theme-inset-highlight) !important;
+  backdrop-filter: blur(var(--fx-blur)) saturate(var(--fx-saturation));
+  -webkit-backdrop-filter: blur(var(--fx-blur)) saturate(var(--fx-saturation));
+}
+
+.theme-switch :is(.fpill,.wbtn,.theme-btn,.status-pill,.detail-btn,.detail-pill,.fab-primary,.bottom-action-bar,.bottom-action-dock,.filter-pill,.settings-toggle-pill,.status-menu-bookmark,.row-watch-toggle,.marvel-phase-btn,.dock-status-item,.appearance-card,.post-credit-node,.setup-input,.settings-input,input,textarea,select) {
+  background: var(--theme-control-bg) !important;
+  border-color: var(--theme-control-border) !important;
+  color: var(--theme-text) !important;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--theme-shadow-rgb) 11%, transparent), var(--theme-inset-highlight) !important;
+}
+
+.theme-switch :is(.fpill,.wbtn,.theme-btn,.status-pill,.detail-btn,.detail-pill,.fab-primary,.filter-pill,.settings-toggle-pill,.status-menu-bookmark,.row-watch-toggle,.marvel-phase-btn,.dock-status-item,.appearance-card,.post-credit-node):hover {
+  background: var(--theme-control-bg-hover) !important;
+  border-color: var(--theme-control-border-hover) !important;
+  color: var(--theme-text-primary) !important;
+  transform: translateY(-1px) scale(var(--fx-hover-scale, 1.006));
+}
+
+.theme-switch :is(.fpill,.wbtn,.theme-btn,.status-pill,.detail-btn,.detail-pill,.fab-primary,.filter-pill,.settings-toggle-pill,.status-menu-bookmark,.row-watch-toggle,.marvel-phase-btn,.dock-status-item,.appearance-card,.post-credit-node):active,
+.theme-switch :is(.fpill,.wbtn,.theme-btn,.status-pill,.marvel-phase-btn)[data-active='true'],
+.theme-switch :is(.fpill,.wbtn,.theme-btn,.status-pill)[aria-pressed='true'] {
+  background: var(--theme-control-bg-active) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 48%, var(--theme-border)) !important;
+  transform: translateY(1px) scale(.995);
+}
+
+.theme-switch :is(.fpill,.wbtn,.theme-btn,.status-pill,.detail-btn,.detail-pill,.appearance-card,input,textarea,select):focus-visible {
+  outline: none !important;
+  box-shadow: var(--theme-focus-ring), 0 8px 18px color-mix(in srgb, var(--theme-shadow-rgb) 14%, transparent) !important;
+}
+
+.theme-switch :is(.title-btn,.title-main,.header-title-mcu,h1,h2,h3,strong) {
+  color: var(--theme-text-primary) !important;
+}
+
+.theme-switch :is(.meta-chip,.meta-muted,.settings-help,.calendar-group-header,.ui-section-header,small) {
+  color: var(--theme-text-muted) !important;
+}
+
+.theme-switch .header-title-mcu {
+  background: var(--universe-mark);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+  text-shadow: none !important;
+}
+
+.theme-switch .header-brand::before,
+.theme-switch .phase-rows-full::after {
+  content: var(--universe-watermark);
+  position: absolute;
+  right: 18px;
+  bottom: 10px;
+  pointer-events: none;
+  font-family: var(--font-display);
+  font-size: clamp(42px, 9vw, 108px);
+  line-height: .75;
+  letter-spacing: -.05em;
+  color: color-mix(in srgb, var(--theme-accent) 10%, transparent);
+  z-index: 0;
+}
+
+.theme-switch .rrow {
+  border-left-color: color-mix(in srgb, var(--phase-color, var(--theme-accent)) 42%, var(--theme-border)) !important;
+}
+
+.theme-switch .rrow:hover {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--theme-accent) 10%, var(--theme-card-bg-strong)), var(--theme-card-bg)) !important;
+}
+
+.theme-switch[data-color-mode='light'] {
+  --theme-card-bg: color-mix(in srgb, var(--theme-surface) var(--fx-surface-alpha), transparent);
+  --theme-control-bg: color-mix(in srgb, var(--theme-surface-hover) 88%, transparent);
+  --theme-panel-shadow: 0 14px 32px color-mix(in srgb, var(--theme-shadow-rgb) 12%, transparent);
+}
+
+.theme-switch[data-color-mode='dark'] {
+  --theme-panel-shadow: 0 18px 46px color-mix(in srgb, var(--theme-shadow-rgb) 34%, transparent);
+}
+
+/* Glass: translucent layered cards with obvious depth and blur. */
+.theme-switch[data-theme='glass'] {
+  --theme-card-bg: color-mix(in srgb, var(--theme-surface) 62%, transparent);
+  --theme-control-bg: color-mix(in srgb, var(--theme-surface-hover) 56%, transparent);
+  --theme-control-border: color-mix(in srgb, var(--edge-highlight) 30%, var(--theme-border));
+}
+
+.theme-switch[data-theme='glass'] :is(.header-brand,.settings-menu,.analytics-shell,.phase-rows-full,.detail-shell,.rrow,.calendar-row,.curvy-panel)::before {
+  background: linear-gradient(135deg, color-mix(in srgb, #fff 18%, transparent), transparent 42%) !important;
+  opacity: .75;
+}
+
+/* Pixelated: rounded silhouettes with pixel-grid texture, stepped shadows, and crisp movement. */
+.theme-switch[data-theme='pixelated'] {
+  --theme-panel-shadow: 5px 5px 0 color-mix(in srgb, var(--theme-accent) 18%, transparent), 10px 10px 0 color-mix(in srgb, var(--theme-shadow-rgb) 12%, transparent);
+  --theme-inset-highlight: inset 0 0 0 1px color-mix(in srgb, var(--edge-highlight) 36%, transparent);
+}
+
+.theme-switch[data-theme='pixelated'] :is(.header-brand,.settings-menu,.analytics-shell,.phase-rows-full,.detail-shell,.detail-card,.curvy-panel,.rrow,.calendar-row,.search-page-panel,.appearance-card) {
+  background-image: var(--texture-overlay), linear-gradient(145deg, var(--theme-card-bg), var(--theme-card-bg-strong)) !important;
+  background-size: 10px 10px, auto !important;
+  image-rendering: pixelated;
+  clip-path: polygon(0 10px, 10px 10px, 10px 0, calc(100% - 10px) 0, calc(100% - 10px) 10px, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 10px calc(100% - 10px), 0 calc(100% - 10px));
+}
+
+.theme-switch[data-theme='pixelated'] :is(.fpill,.wbtn,.theme-btn,.status-pill,.detail-btn,.detail-pill,.fab-primary,.filter-pill,.marvel-phase-btn,.dock-status-item) {
+  border-style: solid !important;
+  text-shadow: 1px 1px 0 color-mix(in srgb, var(--theme-shadow-rgb) 20%, transparent);
+}
+
+/* Neon: saturated accents, luminous text, darker surfaces, restrained border glow. */
+.theme-switch[data-theme='neo'] {
+  --theme-card-bg: color-mix(in srgb, var(--theme-bg) 66%, var(--theme-accent) 8%);
+  --theme-control-bg: color-mix(in srgb, var(--theme-bg-alt) 58%, var(--theme-accent) 12%);
+  --theme-control-border: color-mix(in srgb, var(--theme-accent) 36%, var(--theme-border));
+  --theme-panel-shadow: 0 0 18px color-mix(in srgb, var(--theme-accent) 20%, transparent), 0 16px 42px color-mix(in srgb, var(--theme-shadow-rgb) 32%, transparent);
+}
+
+.theme-switch[data-theme='neo'] :is(.header-title-mcu,.ntab.on,.phase-chip[data-active='true'],.appearance-card.is-active) {
+  text-shadow: 0 0 12px color-mix(in srgb, var(--theme-accent) 52%, transparent), 0 0 24px color-mix(in srgb, var(--theme-accent-alt) 24%, transparent) !important;
+}
+
+.theme-switch[data-theme='neo'] .rrow::after,
+.theme-switch[data-theme='neo'] .calendar-row::after {
+  opacity: .54 !important;
+  filter: blur(18px) saturate(180%) !important;
+}
+
+/* Minimal: airy, flatter, lower chrome, and almost no glow. */
+.theme-switch[data-theme='minimal'] {
+  --theme-card-bg: color-mix(in srgb, var(--theme-surface-hover) 94%, transparent);
+  --theme-control-bg: color-mix(in srgb, var(--theme-surface-hover) 92%, transparent);
+  --theme-panel-shadow: 0 8px 22px color-mix(in srgb, var(--theme-shadow-rgb) 10%, transparent);
+  --theme-inset-highlight: none;
+}
+
+.theme-switch[data-theme='minimal'] :is(.header-brand,.settings-menu,.analytics-shell,.phase-rows-full,.detail-shell,.detail-card,.curvy-panel,.rrow,.calendar-row,.search-page-panel) {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.theme-switch[data-theme='minimal'] .header-brand::after,
+.theme-switch[data-theme='minimal'] .analytics-shell::after,
+.theme-switch[data-theme='minimal'] .detail-shell::after,
+.theme-switch[data-theme='minimal'] .phase-rows-full::before,
+.theme-switch[data-theme='minimal'] .rrow::after,
+.theme-switch[data-theme='minimal'] .calendar-row::after,
+.theme-switch[data-theme='minimal']::before,
+.theme-switch[data-theme='minimal']::after {
+  opacity: 0 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-switch *,
+  .theme-switch *::before,
+  .theme-switch *::after {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+  }
+}
