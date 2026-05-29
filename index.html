@@ -18,6 +18,22 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     
+
+    <script>
+      (function () {
+        try {
+          var dark = localStorage.getItem('mcu-dark-mode-v1');
+          var appearance = localStorage.getItem('mcu-appearance-mode-v1') || 'glass';
+          if (appearance === 'neo') appearance = 'neon';
+          var isLight = dark === '0';
+          document.documentElement.classList.toggle('dark', !isLight);
+          document.documentElement.dataset.colorMode = isLight ? 'light' : 'dark';
+          document.documentElement.dataset.theme = appearance;
+          document.documentElement.style.colorScheme = isLight ? 'light' : 'dark';
+          document.documentElement.style.background = isLight ? '#fff4e6' : '#050812';
+        } catch (e) {}
+      })();
+    </script>
     <!-- Prevent white flash on load -->
     <style>
       html, body, #root {
@@ -26,16 +42,28 @@
         margin: 0;
         padding: 0;
       }
+      html[data-color-mode="light"],
+      html[data-color-mode="light"] body,
+      html[data-color-mode="light"] #root {
+        background: #fff4e6 !important;
+        color: #241313;
+      }
       /* Critical loading styles to prevent white flash */
       html::before {
         content: "";
         position: fixed;
         inset: 0;
         z-index: -10;
-        background: 
+        background:
           radial-gradient(circle at 18% 8%, rgba(124,255,218,0.25), transparent 35%),
           radial-gradient(circle at 82% 22%, rgba(154,134,255,0.20), transparent 40%),
           linear-gradient(155deg, #050812 0%, #0b1936 38%, #25114e 70%, #083d3b 100%);
+      }
+      html[data-color-mode="light"]::before {
+        background:
+          radial-gradient(circle at 18% 8%, rgba(244,63,63,0.12), transparent 35%),
+          radial-gradient(circle at 82% 22%, rgba(245,158,11,0.10), transparent 40%),
+          linear-gradient(155deg, #fff4e6 0%, #fffaf5 46%, #ffe7df 100%);
       }
     </style>
     

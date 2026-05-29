@@ -3620,7 +3620,7 @@ body { background: var(--app-shell-gradient); }
   background-size:44px 44px;mask-image:linear-gradient(to bottom,rgba(0,0,0,.85),transparent 78%);
 }
 .theme-switch :is(.curvy-panel,.list-panel,.settings-card,.settings-hero-card,.sidebar-panel,.rrow,.dropdown-pop,.detail-card,.bottom-action-dock,.glass-panel){
-  border-width:var(--fx-border-width,1px);border-color:color-mix(in srgb,var(--theme-border) 82%,transparent);background:var(--theme-panel-overlay);box-shadow:var(--fx-shadow-2);backdrop-filter:blur(var(--fx-blur)) saturate(145%);
+  border-width:var(--fx-border-width,1px);border-color:color-mix(in srgb,var(--theme-border) 82%,transparent);background:var(--theme-panel-overlay);box-shadow:var(--fx-shadow-2);backdrop-filter:blur(var(--fx-blur)) saturate(145%);-webkit-backdrop-filter:blur(var(--fx-blur)) saturate(145%);
 }
 .theme-switch :is(.fpill,.wbtn,.dock-btn,.theme-btn,.filters-trigger,.sopt){
   min-height:var(--control-height-md);border-radius:var(--control-radius);border-color:var(--control-border-default);background:var(--control-bg-default);box-shadow:var(--control-shadow-default);font-family:var(--font-marvel-ui);font-weight:800;letter-spacing:.055em;text-transform:none;transition:transform var(--motion-fast) var(--ease-out),border-color var(--motion-fast) var(--ease-out),background var(--motion-fast) var(--ease-out),box-shadow var(--motion-normal) var(--ease-out),color var(--motion-fast) var(--ease-out);
@@ -3639,3 +3639,138 @@ body { background: var(--app-shell-gradient); }
 .performance-mode.theme-switch :is(.curvy-panel,.list-panel,.settings-card,.settings-hero-card,.sidebar-panel,.rrow,.dropdown-pop,.detail-card,.glass-panel){backdrop-filter:none!important}.performance-mode.theme-switch::before,.performance-mode.theme-switch::after{opacity:.18}.performance-mode.theme-switch *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:80ms!important}
 @media (prefers-reduced-motion: reduce){.theme-switch *{animation:none!important;transition:none!important}.theme-switch :is(.fpill,.wbtn,.dock-btn,.theme-btn,.filters-trigger,.sopt):hover{transform:none}}
 @media (max-width:760px){.settings-hero-card{grid-template-columns:1fr}.phase-header-card{align-items:flex-start;flex-wrap:wrap}.title-main{font-size:16px}.theme-switch{--control-height-md:36px}}
+
+/* 2026 scroll/theme performance polish
+ * Based on current CSS performance guidance: avoid runtime backdrop-filter on large
+ * scrolling overlays, avoid animating blur/filter values, and keep theme switches to
+ * composited opacity/transform/color changes where possible.
+ */
+.theme-switch {
+  transition: background-color 180ms var(--ease-out), color 120ms var(--ease-out) !important;
+}
+
+.theme-switch::before,
+.theme-switch::after,
+.hero-backdrop-image,
+.hero-backdrop-blend {
+  contain: strict;
+}
+
+.sidebar-menu,
+.settings-menu,
+.detail-card {
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable both-edges;
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sidebar-menu[data-state='closed'] {
+  transform: translate3d(-105%, 0, 0) !important;
+  opacity: 0 !important;
+  visibility: hidden;
+}
+
+.sidebar-menu[data-state='open'] {
+  transform: translate3d(0, 0, 0) !important;
+  opacity: 1 !important;
+  visibility: visible;
+}
+
+.settings-menu[data-state='closed'] {
+  transform: translate3d(0, 8px, 0) scale(.99) !important;
+}
+
+.settings-menu[data-state='open'] {
+  transform: translate3d(0, 0, 0) scale(1) !important;
+}
+
+.theme-switch[data-theme="glass"] {
+  --app-bg-noise-opacity: .025;
+}
+
+.theme-switch[data-theme="glass"] .theme-style-card--glass,
+.theme-switch[data-theme="glass"] :is(.settings-card,.settings-hero-card,.sidebar-panel,.detail-export-panel,.detail-poster-frame,.dropdown-pop,.bottom-action-dock,.glass-panel:not(.detail-card):not(.settings-menu)) {
+  backdrop-filter: blur(min(var(--fx-blur), 12px)) saturate(132%);
+  -webkit-backdrop-filter: blur(min(var(--fx-blur), 12px)) saturate(132%);
+}
+
+.theme-switch[data-theme="glass"] :is(.settings-menu,.sidebar-menu,.detail-card,.detail-backdrop,.settings-backdrop,.sidebar-backdrop) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.theme-switch[data-theme="glass"] :is(.settings-menu,.sidebar-menu,.detail-card) {
+  background:
+    radial-gradient(circle at 18% 10%, color-mix(in srgb,var(--theme-accent) 10%, transparent), transparent 34%),
+    linear-gradient(150deg, color-mix(in srgb,var(--theme-surface-strong) 94%, var(--theme-bg)), color-mix(in srgb,var(--theme-surface) 94%, var(--theme-bg))) !important;
+}
+
+.theme-switch[data-theme="glass"] :is(.rrow,.curvy-panel,.list-panel) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: linear-gradient(145deg, color-mix(in srgb,var(--theme-surface) 88%, transparent), color-mix(in srgb,var(--theme-surface-strong) 84%, transparent)) !important;
+}
+
+.theme-switch[data-theme="pixelated"] {
+  --app-bg-noise-opacity: .045;
+}
+
+.theme-switch[data-theme="pixelated"]::after {
+  opacity: .055 !important;
+  background-size: 16px 16px !important;
+}
+
+.theme-switch[data-theme="pixelated"] :is(.curvy-panel,.list-panel,.settings-card,.settings-hero-card,.sidebar-panel,.rrow,.dropdown-pop,.detail-card,.glass-panel,.fpill,.wbtn,.dock-btn,.theme-btn,.filters-trigger,.sopt,.poster,.meta-chip) {
+  clip-path: none !important;
+  border-radius: 6px !important;
+  box-shadow: 3px 3px 0 color-mix(in srgb,var(--theme-accent) 18%, transparent), 0 10px 18px color-mix(in srgb,var(--theme-shadow-rgb,#020617) 12%, transparent) !important;
+  transform: translateZ(0);
+}
+
+.theme-switch[data-theme="pixelated"] :is(.settings-menu,.sidebar-menu,.detail-card,.rrow) {
+  image-rendering: auto;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.theme-switch[data-theme="pixelated"] .theme-style-card--pixelated,
+.theme-switch[data-theme="pixelated"] .theme-style-card--pixelated .theme-style-card__visual {
+  clip-path: polygon(0 8px,8px 8px,8px 0,calc(100% - 8px) 0,calc(100% - 8px) 8px,100% 8px,100% calc(100% - 8px),calc(100% - 8px) calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,8px calc(100% - 8px),0 calc(100% - 8px));
+}
+
+.settings-redesign,
+.sidebar-redesign,
+.detail-export-content {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 900px;
+}
+
+.detail-export-content {
+  content-visibility: visible;
+}
+
+.settings-close-row,
+.detail-sticky-actions,
+.analytics-tabs {
+  transform: translateZ(0);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+@media (prefers-reduced-motion: reduce), (update: slow) {
+  .theme-switch::before,
+  .theme-switch::after,
+  .hero-backdrop-image,
+  .hero-backdrop-blend {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .theme-switch :is(.curvy-panel,.list-panel,.settings-card,.settings-hero-card,.sidebar-panel,.rrow,.dropdown-pop,.detail-card,.glass-panel,.fpill,.wbtn,.dock-btn,.theme-btn,.filters-trigger,.sopt) {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}

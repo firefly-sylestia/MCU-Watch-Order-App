@@ -853,7 +853,7 @@ export default function MCUViewer() {
   const setDockStatusOpen = (next) => dispatchUiMode({ dockStatusOpen: typeof next === 'function' ? next(uiModeState.dockStatusOpen) : next });
   const setFiltersOpen = (next) => dispatchUiMode({ filtersOpen: typeof next === 'function' ? next(uiModeState.filtersOpen) : next });
   const [dropdownPos,    setDropdownPos]    = useState({ x: 0, y: 0 });
-  const [darkMode,       setDarkMode]       = useState(false);
+  const [darkMode,       setDarkMode]       = useState(() => readStorageValue('mcu-dark-mode-v1', '1') !== '0');
   const [expandedItem,   setExpandedItem]   = useState(null);
   const [expandedPhase,  setExpandedPhase]  = useState(null);
   const [celebPhase,     setCelebPhase]     = useState(null);
@@ -895,8 +895,8 @@ export default function MCUViewer() {
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
   const [setupOpen, setSetupOpen] = useState(false);
-  const [themeMode,      setThemeMode]      = useState('iron-man');
-  const [appearanceMode, setAppearanceMode] = useState('glass');
+  const [themeMode,      setThemeMode]      = useState(() => readStorageValue('mcu-theme-mode-v1', 'iron-man') || 'iron-man');
+  const [appearanceMode, setAppearanceMode] = useState(() => normalizeAppearanceMode(readStorageValue('mcu-appearance-mode-v1', 'glass') || 'glass'));
   const [marvelLangMode, setMarvelLangMode] = useState(false);
   const [spoilerSafeMode, setSpoilerSafeMode] = useState(true);
   const [autoHideStatuses, setAutoHideStatuses] = useState(initialUiState.autoHideStatuses);
@@ -2436,6 +2436,14 @@ export default function MCUViewer() {
   useEffect(() => { scheduleStorageWrite('mcu-theme-mode-v1', themeMode); }, [themeMode]);
   useEffect(() => { scheduleStorageWrite('mcu-dark-mode-v1', darkMode ? '1' : '0'); }, [darkMode]);
   useEffect(() => { scheduleStorageWrite('mcu-appearance-mode-v1', appearanceMode); }, [appearanceMode]);
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const root = document.documentElement;
+    root.classList.toggle('dark', darkMode);
+    root.dataset.colorMode = darkMode ? 'dark' : 'light';
+    root.dataset.theme = normalizeAppearanceMode(appearanceMode);
+    root.style.colorScheme = darkMode ? 'dark' : 'light';
+  }, [appearanceMode, darkMode]);
   useEffect(() => { scheduleStorageWrite('mcu-marvel-lang-v1', marvelLangMode ? '1' : '0'); }, [marvelLangMode]);
   useEffect(() => { scheduleStorageWrite('mcu-export-prefs-v1', JSON.stringify({ font: exportFont, textScale: exportTextScale })); }, [exportFont, exportTextScale]);
 
@@ -3214,17 +3222,6 @@ export default function MCUViewer() {
         <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={13} />Dark</button>
         <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={13} />Light</button>
       </div>
-    </section>
-
-    <section className="settings-card settings-theme-studio-card">
-      <ThemeStudio
-        title={tUniverse('Universe Style')}
-        appearanceMode={appearanceMode}
-        onAppearanceChange={setAppearanceMode}
-        themeChoices={themedChoices}
-        themeMode={themeMode}
-        onThemeChange={setThemeMode}
-      />
     </section>
 
     <section className="settings-grid-2">
