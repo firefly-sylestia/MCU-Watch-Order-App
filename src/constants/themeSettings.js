@@ -1,7 +1,7 @@
 export const APPEARANCE_MODES = [
   { id: 'glass', label: 'Glass', desc: 'Frosted depth, soft refraction, editorial display type', font: 'Space Grotesk' },
   { id: 'pixelated', label: 'Pixelated', desc: 'Arcade grid, chunky type, crisp stepped edges', font: 'Pixelify Sans' },
-  { id: 'neon', label: 'Neon', desc: 'Night-city glow, luminous borders, techno titles', font: 'Audiowide' },
+  { id: 'neon', label: 'Neon', desc: 'Electric signage, blacklight grids, outlined circuit panels', font: 'Audiowide' },
   { id: 'minimal', label: 'Minimal', desc: 'Quiet contrast, roomy rhythm, readable UI typography', font: 'Manrope' },
 ];
 
@@ -44,12 +44,12 @@ const MODE_TOKENS = {
     panelOverlay: 'linear-gradient(135deg, color-mix(in srgb, var(--theme-surface) 90%, transparent), color-mix(in srgb, var(--theme-accent) 9%, var(--theme-surface-strong)))',
   },
   neon: {
-    fonts: { display: '"Audiowide", "Rajdhani", system-ui, sans-serif', ui: '"Rajdhani", "Outfit", system-ui, sans-serif', body: '"Space Grotesk", "Outfit", system-ui, sans-serif' },
-    effects: { blur: 10, glow: 0.58, shadow: '0 0 20px color-mix(in srgb, var(--theme-accent) 34%, transparent), 0 0 42px color-mix(in srgb, var(--theme-accent-alt) 18%, transparent)' },
-    shape: { radius: [12, 18, 26, 34], edge: 'neon', border: 1 },
-    motion: { fast: '120ms', normal: '210ms', slow: '300ms', hoverScale: 1.014 },
-    texture: 'radial-gradient(circle at 22% 18%, color-mix(in srgb, var(--theme-accent) 18%, transparent), transparent 34%), radial-gradient(circle at 78% 0%, color-mix(in srgb, var(--theme-accent-alt) 14%, transparent), transparent 30%)',
-    panelOverlay: 'linear-gradient(145deg, color-mix(in srgb, var(--theme-bg) 46%, transparent), color-mix(in srgb, var(--theme-accent) 10%, transparent))',
+    fonts: { display: '"Audiowide", "Rajdhani", system-ui, sans-serif', ui: '"Rajdhani", "Outfit", system-ui, sans-serif', body: '"Rajdhani", "Space Grotesk", system-ui, sans-serif' },
+    effects: { blur: 0, glow: 0.7, shadow: '0 0 0 1px color-mix(in srgb, var(--theme-accent) 40%, transparent), 0 0 18px color-mix(in srgb, var(--theme-accent) 30%, transparent), 0 0 48px color-mix(in srgb, var(--theme-accent-alt) 18%, transparent)' },
+    shape: { radius: [2, 6, 12, 18], edge: 'neon', border: 1.5 },
+    motion: { fast: '110ms', normal: '190ms', slow: '280ms', hoverScale: 1.006 },
+    texture: 'linear-gradient(90deg, color-mix(in srgb, var(--theme-accent) 13%, transparent) 1px, transparent 1px), linear-gradient(0deg, color-mix(in srgb, var(--theme-accent-alt) 10%, transparent) 1px, transparent 1px), radial-gradient(circle at 20% 10%, color-mix(in srgb, var(--theme-accent) 18%, transparent), transparent 28%)',
+    panelOverlay: 'linear-gradient(145deg, color-mix(in srgb, var(--theme-bg) 82%, #000), color-mix(in srgb, var(--theme-surface) 88%, #000) 52%, color-mix(in srgb, var(--theme-accent-alt) 9%, var(--theme-bg)))',
   },
   minimal: {
     fonts: { display: '"Manrope", "Outfit", system-ui, sans-serif', ui: '"Manrope", "Outfit", system-ui, sans-serif', body: '"Manrope", "Outfit", system-ui, sans-serif' },
@@ -102,6 +102,10 @@ const COLOR_MODE_TOKENS = {
     dark: { bg: '#07050c', bgAlt: '#14080d', surface: 'rgba(25,22,31,.76)', surfaceStrong: 'rgba(40,31,39,.9)', text: '#fff7ed', text2: '#d8c9c1', muted: '#a9958d', border: 'rgba(255,255,255,.12)', shadowRgb: '#07050c' },
     light: { bg: '#fff4e6', bgAlt: '#ffe7df', surface: 'rgba(255,251,246,.84)', surfaceStrong: 'rgba(255,255,255,.96)', text: '#241313', text2: '#664744', muted: '#8a6861', border: 'rgba(127,29,29,.16)', shadowRgb: '#7f1d1d' },
   },
+  neon: {
+    dark: { bg: '#03000f', bgAlt: '#090525', surface: 'rgba(8, 7, 28, .92)', surfaceStrong: 'rgba(14, 12, 42, .98)', text: '#f8fbff', text2: '#c8f7ff', muted: '#7dd6e9', border: 'rgba(57,255,243,.24)', shadowRgb: '#03000f' },
+    light: { bg: '#f8fbff', bgAlt: '#edf5ff', surface: 'rgba(255,255,255,.92)', surfaceStrong: 'rgba(255,255,255,.98)', text: '#101532', text2: '#334465', muted: '#61708c', border: 'rgba(0,99,229,.20)', shadowRgb: '#1e3a8a' },
+  },
   dc: {
     dark: { bg: '#030817', bgAlt: '#061b3a', surface: 'rgba(12,24,48,.76)', surfaceStrong: 'rgba(18,36,70,.9)', text: '#eff6ff', text2: '#bfd8ff', muted: '#8fb4e8', border: 'rgba(147,197,253,.16)', shadowRgb: '#020617' },
     light: { bg: '#eef6ff', bgAlt: '#e7f0ff', surface: 'rgba(248,252,255,.84)', surfaceStrong: 'rgba(255,255,255,.97)', text: '#08162c', text2: '#294365', muted: '#527099', border: 'rgba(37,99,235,.16)', shadowRgb: '#1e3a8a' },
@@ -114,7 +118,8 @@ export const resolveThemeTokens = ({ appearanceMode = 'glass', characterTheme = 
   const universeKey = universe === 'dc' ? 'dc' : 'marvel';
   const brandMap = universeKey === 'dc' ? DC_THEME_TOKEN_MAP : MARVEL_THEME_TOKEN_MAP;
   const hero = brandMap[characterTheme] || brandMap['iron-man'];
-  const color = COLOR_MODE_TOKENS[universeKey][darkMode ? 'dark' : 'light'];
+  const colorSystemKey = normalizedMode === 'neon' ? 'neon' : universeKey;
+  const color = COLOR_MODE_TOKENS[colorSystemKey][darkMode ? 'dark' : 'light'];
   const glowSoftPct = Math.round(mode.effects.glow * 42);
   const glowStrongPct = Math.round(mode.effects.glow * 68);
 

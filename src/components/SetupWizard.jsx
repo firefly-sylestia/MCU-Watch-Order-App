@@ -1,4 +1,5 @@
 import React from 'react';
+import ThemeStudio from './features/ThemeStudio';
 
 export default function SetupWizard({
   open,
@@ -18,12 +19,20 @@ export default function SetupWizard({
   setMarvelLangMode,
   posterDataSaver,
   setPosterDataSaver,
+  darkMode,
+  setDarkMode,
+  appearanceMode,
+  setAppearanceMode,
+  themeChoices = [],
+  themeMode,
+  setThemeMode,
 }) {
   if (!open) return null;
   const fetchStatus = fetchState.active ? 'loading' : (fetchState.message?.toLowerCase().includes('built') ? 'success' : (fetchState.message?.toLowerCase().includes('could not') ? 'error' : 'idle'));
   const stepStatus = {
     profile: profile.name?.trim() ? 'Complete' : 'In progress',
     preload: fetchState.active ? 'In progress' : (fetchStatus === 'success' ? 'Complete' : 'Optional'),
+    style: 'Recommended',
     tuning: 'Optional',
   };
 
@@ -32,13 +41,14 @@ export default function SetupWizard({
       <div className="setup-card">
         <div className="setup-header">
           <h2>Let&apos;s get you set up</h2>
-          <p>Three quick steps. No sign-in needed now, and you can sync across devices later from Settings.</p>
+          <p>Four quick steps. No sign-in needed now, and you can sync across devices later from Settings.</p>
         </div>
 
         <ol className="setup-step-progress" aria-label="Setup progress">
           <li><span>1</span> Profile <em>{stepStatus.profile}</em></li>
           <li><span>2</span> Library preload <em>{stepStatus.preload}</em></li>
-          <li><span>3</span> Optional advanced tuning <em>{stepStatus.tuning}</em></li>
+          <li><span>3</span> Style <em>{stepStatus.style}</em></li>
+          <li><span>4</span> Optional advanced tuning <em>{stepStatus.tuning}</em></li>
         </ol>
 
         <div className="setup-grid">
@@ -65,8 +75,26 @@ export default function SetupWizard({
             <small className="setup-note">{fetchState.message || 'Choose how much content to cache for smoother browsing.'}</small>
           </section>
 
+          <section className="setup-section setup-style-section">
+            <h3>Step 3 · Style</h3>
+            <div className="setup-color-mode-row" aria-label="Color mode">
+              <button className="fpill" type="button" aria-pressed={!darkMode} onClick={() => setDarkMode(false)}>Light default</button>
+              <button className="fpill" type="button" aria-pressed={darkMode} onClick={() => setDarkMode(true)}>Dark mode</button>
+            </div>
+            <ThemeStudio
+              compact
+              title="Choose your opening style"
+              appearanceMode={appearanceMode}
+              onAppearanceChange={setAppearanceMode}
+              themeChoices={themeChoices}
+              themeMode={themeMode}
+              onThemeChange={setThemeMode}
+            />
+            <small className="setup-note">New installs start in light, minimal, Iron Man mode. You can switch style systems anytime.</small>
+          </section>
+
           <section className="setup-section">
-            <h3>Step 3 · Optional advanced tuning</h3>
+            <h3>Step 4 · Optional advanced tuning</h3>
             <div className="settings-toggle-grid">
               <label className="settings-toggle-row"><span>Spoiler Safe</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={spoilerSafeMode} onClick={() => setSpoilerSafeMode(v => !v)}>{spoilerSafeMode ? 'On' : 'Off'}</button></label>
               <label className="settings-toggle-row"><span>Reduce Motion</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={performanceMode} onClick={() => setPerformanceMode(v => !v)}>{performanceMode ? 'On' : 'Off'}</button></label>
