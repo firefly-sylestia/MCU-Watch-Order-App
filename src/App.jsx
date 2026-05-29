@@ -448,7 +448,7 @@ const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poste
 
   return <div ref={shellRef} className={`poster-shell ${loaded ? 'is-loaded' : ''}`}>
     <div className="poster-skeleton" aria-hidden="true" />
-    <img className={`${className} ${loaded ? 'is-loaded' : ''}`} src={shouldLoadSrc ? src : undefined} alt={alt} loading={eager ? 'eager' : loadingMode} decoding="async" fetchpriority={eager ? 'high' : 'auto'} onLoad={handleLoad} />
+    <img className={`${className} ${loaded ? 'is-loaded' : ''}`} src={shouldLoadSrc ? src : undefined} alt={alt} loading={eager ? 'eager' : loadingMode} decoding="async" fetchPriority={eager ? 'high' : 'auto'} onLoad={handleLoad} />
   </div>;
 });
 const TMDB_LOOKUP_OVERRIDES = {
@@ -1042,14 +1042,6 @@ export default function MCUViewer() {
     setSettingsOpen(false);
     setAnalyticsOpen(true);
   }, []);
-  const handleInAppBack = useCallback(() => {
-    if (browseMode === 'search' || browseMode === 'phase') {
-      setBrowseMode('home');
-      return true;
-    }
-    return false;
-  }, [browseMode]);
-
   const [desktopTextScale, setDesktopTextScale] = useState(initialUiState.desktopTextScale);
   const [textScaleEnabled, setTextScaleEnabled] = useState(initialUiState.textScaleEnabled);
   const { isDesktopViewport } = useResponsiveLayout();
@@ -1101,8 +1093,6 @@ export default function MCUViewer() {
     onCloseAnalytics: closeAnalytics,
     onCloseSettings: closeSettings,
     onCloseSidebar: closeSidebar,
-    hasInAppBackStep: browseMode === 'search' || browseMode === 'phase',
-    onInAppBack: handleInAppBack,
   });
 
   const currentPhases = universe === 'dc' ? DC_PHASES : PHASES;
@@ -4120,7 +4110,7 @@ export default function MCUViewer() {
                     <span>{detailItem.title}</span>
                   </div>
                 ) : (
-                  <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : posterSrc(detailItem)} onError={() => setDetailPosterFailed(true)} alt={`${detailItem.title} poster`} onClick={() => { if (selectedTrailer?.youtubeId) openTrailerPlayer(); }} style={{ cursor: selectedTrailer?.youtubeId ? 'pointer' : 'default' }} />
+                  <img src={detailData?.Poster && detailData.Poster !== 'N/A' ? detailData.Poster : posterSrc(detailItem)} onError={() => setDetailPosterFailed(true)} alt={`${detailItem.title} poster`} loading="eager" decoding="async" fetchPriority="high" onClick={() => { if (selectedTrailer?.youtubeId) openTrailerPlayer(); }} style={{ cursor: selectedTrailer?.youtubeId ? 'pointer' : 'default' }} />
                 )}
               
                 {!!selectedTrailer?.youtubeId && (
@@ -4467,7 +4457,7 @@ export default function MCUViewer() {
                     <span style={{ color: T.textMuted, fontSize: 12, fontFamily: 'var(--font-marvel-ui)' }}>{item.watchedDate || 'No watch date'} · ~{Math.round(estimateRuntimeHours(item) * 10) / 10}h</span>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: 14, alignItems: 'start', borderBottom: `1px solid color-mix(in srgb, var(--theme-border) 82%, transparent)`, paddingBottom: 10 }}>
-                    <img src={posterSrc(item)} alt={item.title} style={{ width: 100, height: 145, borderRadius: 10, objectFit: 'cover', border: `1px solid ${T.surfaceBorder}` }} />
+                    <img src={posterSrc(item)} alt={item.title} loading="lazy" decoding="async" style={{ width: 100, height: 145, borderRadius: 10, objectFit: 'cover', border: `1px solid ${T.surfaceBorder}` }} />
                     <div style={{ display: 'grid', gap: 10 }}>
                       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
                         <button className="fpill" style={{ padding: '7px 10px', fontSize: 11 }} onClick={() => setRewatchCount(p => ({ ...p, [item.id]: (p[item.id] || 0) + 1 }))}><Clock size={12}/>Re-watch {rewatchCount[item.id] || 0}</button>
