@@ -81,6 +81,7 @@ const CACHE_KEYS = {
   userActionsReviews: 'mcu-user-actions-reviews-v1',
   uiState: 'mcu-ui-state-v1',
   heroCarousel: 'mcu-hero-carousel-cache-v1',
+  uiBuild: 'mcu-ui-build-cache-v1',
 };
 
 
@@ -101,6 +102,7 @@ const UI_STATE_DEFAULTS = {
   autoHideStatuses: false,
   performanceMode: true,
   posterDataSaver: true,
+  uiBuildCacheEnabled: true,
   desktopTextScale: 1,
   textScaleEnabled: true,
   scrollTop: 0,
@@ -151,6 +153,7 @@ const readSavedUiState = () => {
       autoHideStatuses: typeof saved.autoHideStatuses === 'boolean' ? saved.autoHideStatuses : UI_STATE_DEFAULTS.autoHideStatuses,
       performanceMode: typeof saved.performanceMode === 'boolean' ? saved.performanceMode : UI_STATE_DEFAULTS.performanceMode,
       posterDataSaver: typeof saved.posterDataSaver === 'boolean' ? saved.posterDataSaver : UI_STATE_DEFAULTS.posterDataSaver,
+      uiBuildCacheEnabled: typeof saved.uiBuildCacheEnabled === 'boolean' ? saved.uiBuildCacheEnabled : UI_STATE_DEFAULTS.uiBuildCacheEnabled,
       desktopTextScale: VALID_DESKTOP_TEXT_SCALES.has(Number(saved.desktopTextScale)) ? Number(saved.desktopTextScale) : UI_STATE_DEFAULTS.desktopTextScale,
       textScaleEnabled: typeof saved.textScaleEnabled === 'boolean' ? saved.textScaleEnabled : UI_STATE_DEFAULTS.textScaleEnabled,
       scrollTop: Number.isFinite(Number(saved.scrollTop)) ? Math.max(0, Number(saved.scrollTop)) : UI_STATE_DEFAULTS.scrollTop,
@@ -369,7 +372,19 @@ const posterExportName = (item, ext = 'jpg') => posterFileName(item, ext);
 const loadedPosterSrcs = new Set();
 const requestedPosterSrcs = new Set();
 const posterDecodeStateBySrc = new Map();
-const posterPreloadObserversBySrc = new Map();
+const POSTER_MEMORY_LIMIT = 180;
+
+const rememberLoadedPoster = (src) => {
+  if (!src) return;
+  loadedPosterSrcs.add(src);
+  posterDecodeStateBySrc.set(src, 'loaded');
+  if (loadedPosterSrcs.size <= POSTER_MEMORY_LIMIT) return;
+  const overflow = loadedPosterSrcs.size - POSTER_MEMORY_LIMIT;
+  Array.from(loadedPosterSrcs).slice(0, overflow).forEach((oldSrc) => {
+    loadedPosterSrcs.delete(oldSrc);
+    posterDecodeStateBySrc.delete(oldSrc);
+  });
+};
 
 const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poster', eager = false, loadingMode = 'auto' }) {
   const shellRef = useRef(null);
@@ -390,26 +405,18 @@ const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poste
       setShouldLoadSrc(true);
       return undefined;
     }
-    const existingObserver = posterPreloadObserversBySrc.get(src);
-    if (existingObserver) {
-      existingObserver.observe(target);
-      return () => existingObserver.unobserve(target);
-    }
     const observer = new IntersectionObserver((entries) => {
       const hasMatch = entries.some(entry => entry.isIntersecting || entry.intersectionRatio > 0.01);
       if (!hasMatch) return;
       setShouldLoadSrc(true);
       observer.disconnect();
-      posterPreloadObserversBySrc.delete(src);
-    }, { threshold: 0.01, rootMargin: '220px 0px 220px 0px' });
-    posterPreloadObserversBySrc.set(src, observer);
+    }, { threshold: 0.01, rootMargin: '260px 0px 260px 0px' });
     observer.observe(target);
-    return () => observer.unobserve(target);
+    return () => observer.disconnect();
   }, [eager, shouldLoadSrc, src]);
 
   const handleLoad = () => {
-    posterDecodeStateBySrc.set(src, 'loaded');
-    loadedPosterSrcs.add(src);
+    rememberLoadedPoster(src);
     setLoaded(true);
   };
 
@@ -906,6 +913,9 @@ export default function MCUViewer() {
   const showPhaseSystem = timelineMode === 'release' || timelineMode === 'chronological';
   const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
   const [posterDataSaver, setPosterDataSaver] = useState(initialUiState.posterDataSaver);
+  const [uiBuildCacheEnabled, setUiBuildCacheEnabled] = useState(initialUiState.uiBuildCacheEnabled);
+  const [uiBuildStatus, setUiBuildStatus] = useState({ active: false, message: '' });
+  const [themeApplying, setThemeApplying] = useState(false);
   const [scrollTuning] = useState({ desktopMultiplier: 5, desktopDeltaCap: 7, mobileMultiplier: 5, mobileDeltaCap: 7 });
   const [genreFilter] = useState('all');
   const [myLikes,        setMyLikes]        = useState({});
@@ -1624,11 +1634,12 @@ export default function MCUViewer() {
       autoHideStatuses,
       performanceMode,
       posterDataSaver,
+      uiBuildCacheEnabled,
       desktopTextScale,
       textScaleEnabled,
       scrollTop,
     }));
-  }, [listMode, search, searchScope, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, posterDataSaver, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
+  }, [listMode, search, searchScope, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, posterDataSaver, uiBuildCacheEnabled, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
   const totalWatched = useMemo(() => activeItems.filter(i => i.status === 'watched').length, [activeItems]);
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
@@ -1759,8 +1770,7 @@ export default function MCUViewer() {
         img.decoding = 'async';
         img.src = src;
         const markLoaded = () => {
-          posterDecodeStateBySrc.set(src, 'loaded');
-          loadedPosterSrcs.add(src);
+          rememberLoadedPoster(src);
           requestedPosterSrcs.delete(src);
         };
         img.onload = markLoaded;
@@ -1777,6 +1787,55 @@ export default function MCUViewer() {
       cancelled = true;
     };
   }, [filtered, posterSrc]);
+
+
+
+  const buildUiCache = useCallback(() => {
+    if (uiBuildStatus.active) return;
+    setUiBuildCacheEnabled(true);
+    setPerformanceMode(true);
+    setUiBuildStatus({ active: true, message: 'Building optimized UI cache during idle time…' });
+
+    const runIdle = (cb) => {
+      if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+        return window.requestIdleCallback(cb, { timeout: 900 });
+      }
+      return window.setTimeout(() => cb({ timeRemaining: () => 12, didTimeout: true }), 24);
+    };
+
+    const targets = filtered.slice(0, 36).map((item) => ({ id: item.id, title: item.title, src: posterSrc(item) }));
+    let index = 0;
+    const warmNext = () => {
+      const chunk = targets.slice(index, index + 6);
+      chunk.forEach(({ src }) => {
+        if (!src || loadedPosterSrcs.has(src) || requestedPosterSrcs.has(src)) return;
+        requestedPosterSrcs.add(src);
+        const img = new Image();
+        img.decoding = 'async';
+        img.onload = () => { rememberLoadedPoster(src); requestedPosterSrcs.delete(src); };
+        img.onerror = () => requestedPosterSrcs.delete(src);
+        img.src = src;
+      });
+      index += chunk.length;
+      setUiBuildStatus({ active: true, message: `Warmed ${Math.min(index, targets.length)}/${targets.length} visible UI assets…` });
+      if (index < targets.length) {
+        runIdle(warmNext);
+        return;
+      }
+      scheduleStorageWrite(CACHE_KEYS.uiBuild, JSON.stringify({
+        builtAt: new Date().toISOString(),
+        universe,
+        themeMode,
+        appearanceMode: normalizeAppearanceMode(appearanceMode),
+        darkMode,
+        densityMode,
+        timelineMode,
+        items: targets.map(({ id, title }) => ({ id, title })),
+      }));
+      setUiBuildStatus({ active: false, message: `UI cache built for ${targets.length} visible titles. Performance mode and CSS containment are active.` });
+    };
+    runIdle(warmNext);
+  }, [appearanceMode, darkMode, densityMode, filtered, posterSrc, themeMode, timelineMode, uiBuildStatus.active, universe]);
 
   const heroPosterItems = useMemo(() => {
     const seen = new Set();
@@ -2436,6 +2495,11 @@ export default function MCUViewer() {
   useEffect(() => { scheduleStorageWrite('mcu-theme-mode-v1', themeMode); }, [themeMode]);
   useEffect(() => { scheduleStorageWrite('mcu-dark-mode-v1', darkMode ? '1' : '0'); }, [darkMode]);
   useEffect(() => { scheduleStorageWrite('mcu-appearance-mode-v1', appearanceMode); }, [appearanceMode]);
+  useEffect(() => {
+    setThemeApplying(true);
+    const timer = window.setTimeout(() => setThemeApplying(false), performanceMode ? 220 : 420);
+    return () => window.clearTimeout(timer);
+  }, [appearanceMode, darkMode, themeMode, universe, performanceMode]);
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const root = document.documentElement;
@@ -3129,7 +3193,7 @@ export default function MCUViewer() {
     ? `${Math.max(heroBackdropScale - 16, 112)}% auto`
     : `auto ${Math.max(heroBackdropScale - 8, 96)}%`;
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={normalizeAppearanceMode(appearanceMode)} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={normalizeAppearanceMode(appearanceMode)} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${uiBuildCacheEnabled ? ' ui-build-cache' : ''}${themeApplying ? ' is-theme-applying' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
 
 
@@ -3250,7 +3314,9 @@ export default function MCUViewer() {
         <label className="settings-toggle-row"><span><EyeOff size={14}/>{tUniverse('Auto-hide Completed')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={autoHideStatuses} onClick={() => setAutoHideStatuses(v => !v)}>{autoHideStatuses ? 'On' : 'Off'}</button></label>
         <label className="settings-toggle-row"><span><Pause size={14}/>{tUniverse('Reduce Motion')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={performanceMode} onClick={() => setPerformanceMode(v => !v)}>{performanceMode ? 'On' : 'Off'}</button></label>
         <label className="settings-toggle-row"><span><Film size={14}/>Poster Data Saver</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={posterDataSaver} onClick={() => setPosterDataSaver(v => !v)}>{posterDataSaver ? 'On' : 'Off'}</button></label>
-        <p className="settings-help">Data saver uses lighter TMDB poster sizes in home and list feeds when available.</p>
+        <label className="settings-toggle-row"><span><Layers size={14}/>Build UI cache</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={uiBuildCacheEnabled} onClick={() => setUiBuildCacheEnabled(v => !v)}>{uiBuildCacheEnabled ? 'On' : 'Off'}</button></label>
+        <button className="fpill settings-build-btn" type="button" onClick={buildUiCache} disabled={uiBuildStatus.active}><Zap size={14}/>{uiBuildStatus.active ? 'Building optimized UI…' : 'Build optimized UI now'}</button>
+        <p className="settings-help">{uiBuildStatus.message || 'Data saver uses lighter TMDB poster sizes; UI build warms visible posters and enables containment so offscreen panels do less work.'}</p>
       </article>
     </section>
 
@@ -4269,6 +4335,10 @@ export default function MCUViewer() {
         themeChoices={themedChoices}
         themeMode={themeMode}
         setThemeMode={setThemeMode}
+        uiBuildCacheEnabled={uiBuildCacheEnabled}
+        setUiBuildCacheEnabled={setUiBuildCacheEnabled}
+        onBuildUiCache={buildUiCache}
+        uiBuildStatus={uiBuildStatus}
       />
       <input id="setup-avatar-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => setAvatarCropSrc(String(r.result || '')); r.readAsDataURL(f); e.target.value=''; }} />
 
