@@ -28,8 +28,8 @@ export const CHARACTER_THEMES = [
 
 const MODE_TOKENS = {
   glass: {
-    fonts: { display: '"Space Grotesk", "Outfit", system-ui, sans-serif', ui: '"Manrope", "Outfit", system-ui, sans-serif', body: '"Manrope", "Outfit", system-ui, sans-serif' },
-    effects: { blur: 26, glow: 0.18, shadow: '0 18px 46px color-mix(in srgb, var(--theme-shadow-rgb, #020617) 22%, transparent)' },
+    fonts: { display: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', ui: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', body: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' },
+    effects: { blur: 12, glow: 0.16, shadow: '0 18px 46px color-mix(in srgb, var(--theme-shadow-rgb, #020617) 22%, transparent)' },
     shape: { radius: [16, 22, 30, 38], edge: 'glass', border: 1 },
     motion: { fast: '140ms', normal: '220ms', slow: '320ms', hoverScale: 1.008 },
     texture: 'linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.025) 48%, transparent 72%)',
