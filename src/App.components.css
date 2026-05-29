@@ -3921,3 +3921,29 @@ body { background: var(--app-shell-gradient); }
   font-family:var(--font-marvel-body) !important;
   font-weight:600;
 }
+
+/* Neon and performance polish expansion */
+.setup-step-progress li{padding:0;overflow:hidden}
+.setup-step-progress button{appearance:none;width:100%;min-height:54px;border:0;background:transparent;color:inherit;display:flex;align-items:center;gap:8px;padding:9px 10px;text-align:left;cursor:pointer}
+.setup-step-progress li.is-active{border-color:color-mix(in srgb,var(--theme-accent) 64%,var(--ui-border-soft));box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 20%,transparent),0 12px 24px color-mix(in srgb,var(--theme-accent) 12%,transparent)}
+.setup-step-stage{grid-template-columns:minmax(0,1fr) !important;min-height:260px}
+.setup-section.is-current{animation:setupStepIn 260ms var(--ease-out) both;grid-column:1/-1}
+.setup-build-box,.settings-build-panel{display:grid;gap:8px;border:1px solid color-mix(in srgb,var(--theme-accent) 28%,var(--ui-border-soft,var(--theme-border)));border-radius:16px;background:linear-gradient(145deg,color-mix(in srgb,var(--theme-accent) 8%,var(--theme-surface)),color-mix(in srgb,var(--theme-accent-alt) 6%,var(--theme-surface-strong)));padding:12px;margin-top:10px;color:var(--theme-text)}
+.settings-build-panel{grid-template-columns:minmax(0,1fr) auto;align-items:center;margin-top:12px}
+.settings-build-panel div{display:grid;gap:3px}.settings-build-panel span,.setup-build-box small{color:var(--theme-text-muted);font-size:12px;line-height:1.4}
+@keyframes setupStepIn{from{opacity:0;transform:translate3d(10px,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+.theme-transition-loader{position:fixed;top:max(14px,env(safe-area-inset-top));left:50%;z-index:18000;display:inline-flex;align-items:center;gap:9px;padding:9px 13px;border-radius:999px;border:1px solid color-mix(in srgb,var(--theme-accent) 38%,var(--theme-border));background:color-mix(in srgb,var(--theme-surface) 88%,transparent);color:var(--theme-text);box-shadow:0 14px 34px color-mix(in srgb,var(--theme-accent) 18%,transparent);backdrop-filter:blur(10px) saturate(140%);transform:translate3d(-50%,-150%,0);opacity:0;pointer-events:none;transition:opacity 220ms var(--ease-out),transform 260ms var(--ease-out);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.theme-is-transitioning .theme-transition-loader{opacity:1;transform:translate3d(-50%,0,0)}
+.theme-transition-loader span{width:14px;height:14px;border-radius:50%;border:2px solid color-mix(in srgb,var(--theme-accent) 35%,transparent);border-top-color:var(--theme-accent);animation:themeLoaderSpin 780ms linear infinite}
+@keyframes themeLoaderSpin{to{transform:rotate(360deg)}}
+.theme-is-transitioning :is(.app-backdrop-layout,.header-brand,.hero-carousel-shell,.phase-rows-full,.settings-menu,.setup-card){transition:opacity 240ms var(--ease-out),filter 260ms var(--ease-out),transform 260ms var(--ease-out),background 260ms var(--ease-out),border-color 260ms var(--ease-out),box-shadow 260ms var(--ease-out)}
+.theme-is-transitioning :is(.app-backdrop-layout,.hero-carousel-shell){filter:saturate(1.05) brightness(1.03)}
+.theme-switch[data-theme="neon"] .app-backdrop-layout::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 20% 10%,color-mix(in srgb,var(--theme-accent) 28%,transparent),transparent 34%),radial-gradient(circle at 82% 18%,color-mix(in srgb,var(--theme-accent-alt) 24%,transparent),transparent 38%),linear-gradient(115deg,transparent 0 42%,color-mix(in srgb,var(--theme-accent) 10%,transparent) 48%,transparent 56%);opacity:.72;mix-blend-mode:screen}
+.theme-switch[data-theme="neon"] :is(.hero-carousel-shell,.setup-card,.setup-section,.setup-step-progress li,.settings-menu,.settings-card,.settings-hero-card,.settings-build-panel,.setup-build-box,.hero-carousel-card,.poster-shell,.rrow){border-color:color-mix(in srgb,var(--theme-accent) 46%,var(--theme-border)) !important;box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 15%,transparent),0 0 22px color-mix(in srgb,var(--theme-accent) 18%,transparent),0 18px 42px color-mix(in srgb,var(--theme-accent-alt) 10%,transparent) !important}
+.theme-switch[data-theme="neon"] :is(.header-title-mcu,.header-title-sub){background:linear-gradient(180deg,#fff,color-mix(in srgb,var(--theme-accent) 82%,#fff) 42%,color-mix(in srgb,var(--theme-accent-alt) 72%,#7dd3fc));-webkit-background-clip:text;background-clip:text;color:transparent !important;text-shadow:0 0 16px color-mix(in srgb,var(--theme-accent) 54%,transparent),0 0 40px color-mix(in srgb,var(--theme-accent-alt) 32%,transparent) !important}
+.theme-switch[data-theme="neon"] .header-brand{border:1px solid color-mix(in srgb,var(--theme-accent) 36%,transparent);background:linear-gradient(145deg,color-mix(in srgb,var(--theme-bg) 58%,transparent),color-mix(in srgb,var(--theme-accent) 10%,transparent));box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 12%,transparent),0 0 26px color-mix(in srgb,var(--theme-accent) 20%,transparent);padding:12px 14px;border-radius:18px}
+.theme-switch[data-theme="neon"] .poster-shell::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(180deg,color-mix(in srgb,var(--theme-accent) 16%,transparent),transparent 42%);opacity:.5}
+.theme-switch[data-theme="neon"] .setup-overlay{background:radial-gradient(circle at 20% 10%,color-mix(in srgb,var(--theme-accent) 24%,transparent),transparent 42%),rgba(2,6,18,.78)}
+.ui-build-cache-on :is(.hero-carousel-card,.rrow,.poster-shell){content-visibility:auto;contain-intrinsic-size:140px}
+.performance-mode .theme-transition-loader span{animation:none}
+@media (max-width:720px){.settings-build-panel{grid-template-columns:1fr}.theme-transition-loader{max-width:calc(100vw - 28px)}}
