@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { APPEARANCE_MODES, normalizeAppearanceMode } from '../constants/themeSettings';
 
 export default function SetupWizard({
@@ -30,15 +31,35 @@ export default function SetupWizard({
   themeChoices = [],
   themeMode,
   setThemeMode,
+  portalStyle = {},
+  colorMode = 'dark',
+  universe = 'marvel',
 }) {
   const [currentStep, setCurrentStep] = useState(0);
+  const portalNode = useMemo(() => {
+    if (typeof document === 'undefined') return null;
+    const node = document.createElement('section');
+    node.className = 'setup-portal-root';
+    node.setAttribute('data-setup-container', 'true');
+    return node;
+  }, []);
+
+  useEffect(() => {
+    if (!open || !portalNode || typeof document === 'undefined') return undefined;
+    document.body.appendChild(portalNode);
+    document.documentElement.classList.add('setup-wizard-open');
+    return () => {
+      document.documentElement.classList.remove('setup-wizard-open');
+      portalNode.remove();
+    };
+  }, [open, portalNode]);
   const steps = useMemo(() => [
     { id: 'profile', label: 'Profile' },
     { id: 'preload', label: 'Library' },
     { id: 'style', label: 'Style' },
     { id: 'tuning', label: 'Tuning' },
   ], []);
-  if (!open) return null;
+  if (!open || !portalNode) return null;
   const fetchStatus = fetchState.active ? 'loading' : (fetchState.message?.toLowerCase().includes('built') ? 'success' : (fetchState.message?.toLowerCase().includes('could not') ? 'error' : 'idle'));
   const stepStatus = {
     profile: profile.name?.trim() ? 'Complete' : 'In progress',
@@ -48,8 +69,8 @@ export default function SetupWizard({
   };
   const activeAppearance = normalizeAppearanceMode(appearanceMode);
 
-  return (
-    <div className="setup-overlay" role="dialog" aria-modal="true" aria-label="First time setup">
+  return createPortal(
+    <div className="setup-overlay" role="dialog" aria-modal="true" aria-label="First time setup" style={portalStyle} data-color-mode={colorMode} data-universe={universe} data-theme={activeAppearance}>
       <div className="setup-card">
         <div className="setup-header">
           <h2>Let&apos;s get you set up</h2>
@@ -157,6 +178,7 @@ export default function SetupWizard({
           <button className="fpill setup-primary-action" onClick={currentStep === steps.length - 1 ? onFinish : () => setCurrentStep(step => Math.min(steps.length - 1, step + 1))}>{currentStep === steps.length - 1 ? (fetchState.active ? 'Continue' : 'Finish') : 'Next'}</button>
         </div>
       </div>
-    </div>
+    </div>,
+    portalNode
   );
 }

@@ -3947,3 +3947,109 @@ body { background: var(--app-shell-gradient); }
 .ui-build-cache-on :is(.hero-carousel-card,.rrow,.poster-shell){content-visibility:auto;contain-intrinsic-size:140px}
 .performance-mode .theme-transition-loader span{animation:none}
 @media (max-width:720px){.settings-build-panel{grid-template-columns:1fr}.theme-transition-loader{max-width:calc(100vw - 28px)}}
+
+/* Responsive interaction-performance pass
+ * Sources researched: web.dev INP/long-task guidance (paint feedback before work),
+ * MDN containment/content-visibility, and MDN View Transition opt-out patterns.
+ */
+.setup-portal-root{
+  position:fixed;
+  inset:0;
+  z-index:15000;
+  isolation:isolate;
+  contain:layout style paint;
+  pointer-events:none;
+}
+.setup-portal-root .setup-overlay{pointer-events:auto;}
+.setup-wizard-open{overflow:hidden;}
+.setup-overlay{
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  background:radial-gradient(circle at 18% 8%,color-mix(in srgb,var(--theme-accent) 18%,transparent),transparent 36%),rgba(2,6,18,.76) !important;
+  contain:layout style paint;
+}
+.setup-card{
+  contain:content;
+  content-visibility:visible;
+  transform:translateZ(0);
+  will-change:contents;
+}
+
+.blocking-work-overlay{
+  position:fixed;
+  inset:0;
+  z-index:22000;
+  display:grid;
+  place-items:center;
+  padding:24px;
+  background:
+    radial-gradient(circle at 22% 14%,color-mix(in srgb,var(--theme-accent) 28%,transparent),transparent 34%),
+    radial-gradient(circle at 78% 18%,color-mix(in srgb,var(--theme-accent-alt) 22%,transparent),transparent 38%),
+    color-mix(in srgb,var(--app-bg-base,#020617) 94%,#000);
+  color:var(--theme-text,#fff);
+  pointer-events:auto;
+  contain:strict;
+  animation:none !important;
+}
+.blocking-work-card{
+  width:min(420px,calc(100vw - 40px));
+  display:grid;
+  justify-items:center;
+  gap:12px;
+  padding:28px 24px;
+  border-radius:24px;
+  border:1px solid color-mix(in srgb,var(--theme-accent) 34%,var(--theme-border));
+  background:linear-gradient(155deg,color-mix(in srgb,var(--theme-surface) 92%,transparent),color-mix(in srgb,var(--theme-surface-strong) 92%,transparent));
+  box-shadow:0 24px 80px rgba(0,0,0,.34),inset 0 1px 0 color-mix(in srgb,#fff 16%,transparent);
+  text-align:center;
+}
+.blocking-work-card strong{font:900 clamp(22px,4vw,34px)/1 var(--font-marvel-display);letter-spacing:.04em;text-transform:uppercase;}
+.blocking-work-card small{max-width:34ch;color:var(--theme-text-secondary);line-height:1.5;}
+.blocking-work-spinner{
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  border:3px solid color-mix(in srgb,var(--theme-accent) 22%,transparent);
+  border-top-color:var(--theme-accent);
+  animation:themeLoaderSpin 720ms linear infinite;
+}
+
+.backdrop-frozen .hero-backdrop-image,
+.overlay-open .hero-backdrop-image,
+.overlay-open .hero-backdrop-blend,
+.backdrop-frozen .app-backdrop-layout,
+.overlay-open .app-backdrop-layout{
+  transition:none !important;
+  animation:none !important;
+}
+.backdrop-frozen .hero-backdrop-image,
+.overlay-open .hero-backdrop-image{
+  will-change:auto;
+}
+.theme-is-transitioning :is(.app-backdrop-layout,.hero-backdrop-image,.hero-backdrop-blend){
+  transition:none !important;
+}
+
+.ui-build-cache-on :is(.rrow,.hero-carousel-card,.poster-shell,.settings-card,.sidebar-panel,.theme-style-card,.theme-accent-card){
+  contain:layout style paint;
+}
+.ui-build-cache-on :is(.phase-row-virtualized,.settings-card,.sidebar-panel){
+  content-visibility:auto;
+  contain-intrinsic-size:1px 160px;
+}
+
+.theme-switch[data-theme="neon"] :is(.title-main,.phase-title,.hero-carousel-title,.settings-card h3,.settings-hero-card h2){
+  color:color-mix(in srgb,var(--theme-text-primary) 88%,var(--theme-accent) 12%) !important;
+  text-shadow:0 1px 0 rgba(0,0,0,.32),0 0 10px color-mix(in srgb,var(--theme-accent) 24%,transparent) !important;
+}
+.theme-switch[data-theme="neon"] .rrow :is(.title-main,.title-sub,.meta-line){
+  text-shadow:none !important;
+}
+.theme-switch[data-color-mode="light"][data-theme="neon"] :is(.title-main,.phase-title,.settings-card h3,.settings-hero-card h2){
+  color:#102033 !important;
+  text-shadow:0 1px 0 rgba(255,255,255,.8),0 0 8px color-mix(in srgb,var(--theme-accent) 18%,transparent) !important;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .blocking-work-spinner{animation:none;}
+}
