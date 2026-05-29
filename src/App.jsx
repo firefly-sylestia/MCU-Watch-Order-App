@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, useReducer } from 'react';
+import { flushSync } from 'react-dom';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
@@ -270,6 +271,7 @@ const waitForExportFont = async (fontFamily) => {
 
 const isAgentsOfShieldCarouselDuplicate = (item) => /agents of shield/i.test(item?.title || '');
 const HERO_ROTATION_MS = 10000;
+const HERO_IDLE_RESUME_MS = 10000;
 const HERO_VISIBLE_COUNT = 15;
 const HERO_PRELOAD_AHEAD = 12;
 const loadedHeroPosterSrcs = new Set();
@@ -691,7 +693,7 @@ const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
       <button className="theme-btn sidebar-toggle-btn" onClick={onToggle} aria-label="Toggle sidebar menu" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Menu size={18} /></button>
       <button className="theme-btn sidebar-toggle-btn settings-toggle-btn" onClick={onOpenSettings} aria-label="Open settings and profile" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Settings size={18} /></button>
       </div>
-      <div className="sidebar-backdrop" data-state={open ? 'open' : 'closed'} onPointerDown={(e) => { e.preventDefault(); onClose?.(); }} />
+      <div className="sidebar-backdrop" data-state={open ? 'open' : 'closed'} onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose?.(); }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} />
       <aside ref={ref} data-state={open ? 'open' : 'closed'} aria-hidden={!open} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
         {children}
       </aside>
@@ -708,7 +710,7 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
 }, ref) {
   return (
     <>
-      <button className="settings-backdrop" data-state={open ? 'open' : 'closed'} aria-label="Close settings menu" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose?.(); }} />
+      <button className="settings-backdrop" data-state={open ? 'open' : 'closed'} aria-label="Close settings menu" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose?.(); }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} />
       <div className="settings-shell" data-state={open ? 'open' : 'closed'} role="dialog" aria-modal={open ? 'true' : 'false'} aria-hidden={!open} aria-label="Settings and profile" ref={ref}>
         <div className="fade-in settings-menu settings-menu-redesign" data-state={open ? 'open' : 'closed'} style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
           <div className="settings-close-row"><button className="fpill settings-close-sticky" onClick={() => onClose?.()}><X size={14}/>Close</button></div>{children}
@@ -721,6 +723,8 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
 const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
   const shellRef = useRef(null);
   const rowHeightsRef = useRef(new Map());
+  const measurementQueueRef = useRef(new Map());
+  const measurementRafRef = useRef(0);
   const [scrollY, setScrollY] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(() => (typeof window !== 'undefined' ? window.innerHeight : 900));
   const [measuredVersion, setMeasuredVersion] = useState(0);
@@ -803,12 +807,26 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
 
   const setRowRef = useCallback((rowId) => (node) => {
     if (!node || !rowId) return;
-    const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-    const prevHeight = rowHeightsRef.current.get(rowId);
-    if (nextHeight > 0 && prevHeight !== nextHeight) {
-      rowHeightsRef.current.set(rowId, nextHeight);
-      setMeasuredVersion(v => v + 1);
-    }
+    measurementQueueRef.current.set(rowId, node);
+    if (measurementRafRef.current) return;
+    measurementRafRef.current = window.requestAnimationFrame(() => {
+      measurementRafRef.current = 0;
+      let changed = false;
+      measurementQueueRef.current.forEach((queuedNode, queuedId) => {
+        const nextHeight = Math.ceil(queuedNode.getBoundingClientRect().height);
+        const prevHeight = rowHeightsRef.current.get(queuedId);
+        if (nextHeight > 0 && prevHeight !== nextHeight) {
+          rowHeightsRef.current.set(queuedId, nextHeight);
+          changed = true;
+        }
+      });
+      measurementQueueRef.current.clear();
+      if (changed) setMeasuredVersion(v => v + 1);
+    });
+  }, []);
+
+  useEffect(() => () => {
+    if (measurementRafRef.current) window.cancelAnimationFrame(measurementRafRef.current);
   }, []);
 
   return (
@@ -950,6 +968,26 @@ export default function MCUViewer() {
   const sortMenuRef = useRef(null);
   const [scrollCheckpoint, setScrollCheckpoint] = useState(initialUiState.scrollTop);
   const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
+  const themeTransitionTimeoutRef = useRef(null);
+  const runThemeTransition = useCallback((applyChange) => {
+    if (typeof applyChange !== 'function') return;
+    if (typeof window === 'undefined') {
+      applyChange();
+      return;
+    }
+    if (themeTransitionTimeoutRef.current) window.clearTimeout(themeTransitionTimeoutRef.current);
+    flushSync(() => setThemeTransitioning(true));
+    window.requestAnimationFrame(() => {
+      applyChange();
+      themeTransitionTimeoutRef.current = window.setTimeout(() => {
+        setThemeTransitioning(false);
+        themeTransitionTimeoutRef.current = null;
+      }, 760);
+    });
+  }, []);
+  const changeDarkMode = useCallback((next) => runThemeTransition(() => setDarkMode(value => (typeof next === 'function' ? next(value) : next))), [runThemeTransition]);
+  const changeAppearanceMode = useCallback((next) => runThemeTransition(() => setAppearanceMode(value => normalizeAppearanceMode(typeof next === 'function' ? next(value) : next))), [runThemeTransition]);
+  const changeThemeMode = useCallback((next) => runThemeTransition(() => setThemeMode(value => (typeof next === 'function' ? next(value) : next))), [runThemeTransition]);
 
   useEffect(() => {
     setItems(universe === 'dc' ? DC_RAW : RAW);
@@ -1067,7 +1105,7 @@ export default function MCUViewer() {
   }, [scrollTuning]);
 
   const overlayActive = Boolean(settingsOpen || analyticsOpen || detailItem || sidebarOpen || setupOpen || avatarCropSrc);
-  const blockHomeInteractions = Boolean(settingsOpen || sidebarOpen || setupOpen || avatarCropSrc);
+  const blockHomeInteractions = overlayActive;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1868,40 +1906,65 @@ export default function MCUViewer() {
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
     if (heroPosters.length <= 1) return undefined;
-    const overlayBlockingCycle = overlayActive;
+    let idleTimer = 0;
     const telemetry = (state, reason) => {
-      if (typeof window === 'undefined') return;
       window.dispatchEvent(new CustomEvent(`backdrop_cycle_${state}_reason`, { detail: { reason } }));
     };
-
-    const startHeroCycle = () => {
-      if (overlayBlockingCycle) return;
-      if (heroIntervalRef.current) return;
-      heroIntervalRef.current = window.setInterval(() => {
-        if (Date.now() < heroUserInteractingUntilRef.current) return;
-        setHeroIndex(i => (i + 1) % heroPosters.length);
-      }, HERO_ROTATION_MS);
-      telemetry('resumed', 'home-active');
-    };
-    const stopHeroCycle = () => {
+    const stopHeroCycle = (reason = 'user-active') => {
       if (!heroIntervalRef.current) return;
       window.clearInterval(heroIntervalRef.current);
       heroIntervalRef.current = null;
-      telemetry('paused', overlayBlockingCycle ? 'overlay-open' : 'document-hidden');
+      telemetry('paused', reason);
+    };
+    const startHeroCycle = (reason = 'idle-resume') => {
+      if (overlayActive || document.visibilityState !== 'visible') return;
+      if (Date.now() < heroUserInteractingUntilRef.current) return;
+      if (heroIntervalRef.current) return;
+      heroIntervalRef.current = window.setInterval(() => {
+        if (overlayActive || document.visibilityState !== 'visible') {
+          stopHeroCycle(overlayActive ? 'overlay-open' : 'document-hidden');
+          return;
+        }
+        if (Date.now() < heroUserInteractingUntilRef.current) return;
+        setHeroIndex(i => (i + 1) % heroPosters.length);
+      }, HERO_ROTATION_MS);
+      telemetry('resumed', reason);
+    };
+    const markActivity = (reason = 'user-active') => {
+      heroUserInteractingUntilRef.current = Date.now() + HERO_IDLE_RESUME_MS;
+      stopHeroCycle(reason);
+      if (idleTimer) window.clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(() => startHeroCycle('idle-10s'), HERO_IDLE_RESUME_MS);
     };
     const onVisibility = () => {
-      if (document.visibilityState === 'visible') startHeroCycle();
-      else stopHeroCycle();
+      if (document.visibilityState === 'visible') markActivity('visibility-restored');
+      else stopHeroCycle('document-hidden');
     };
 
-    const debounce = window.setTimeout(onVisibility, 120);
+    if (overlayActive) {
+      markActivity('overlay-open');
+    } else {
+      markActivity('initial-idle-gate');
+    }
+
+    const passive = { passive: true };
+    window.addEventListener('scroll', markActivity, passive);
+    window.addEventListener('wheel', markActivity, passive);
+    window.addEventListener('touchstart', markActivity, passive);
+    window.addEventListener('pointerdown', markActivity, passive);
+    window.addEventListener('keydown', markActivity);
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
-      window.clearTimeout(debounce);
+      if (idleTimer) window.clearTimeout(idleTimer);
+      window.removeEventListener('scroll', markActivity);
+      window.removeEventListener('wheel', markActivity);
+      window.removeEventListener('touchstart', markActivity);
+      window.removeEventListener('pointerdown', markActivity);
+      window.removeEventListener('keydown', markActivity);
       document.removeEventListener('visibilitychange', onVisibility);
-      stopHeroCycle();
+      stopHeroCycle('effect-cleanup');
     };
-  }, [heroPosters.length, settingsOpen, analyticsOpen, detailItem, sidebarOpen]);
+  }, [heroPosters.length, overlayActive]);
 
   const pauseHeroAutoSlide = useCallback((duration = 2200) => {
     heroUserInteractingUntilRef.current = Date.now() + duration;
@@ -2454,12 +2517,9 @@ export default function MCUViewer() {
   useEffect(() => { scheduleStorageWrite('mcu-theme-mode-v1', themeMode); }, [themeMode]);
   useEffect(() => { scheduleStorageWrite('mcu-dark-mode-v1', darkMode ? '1' : '0'); }, [darkMode]);
   useEffect(() => { scheduleStorageWrite('mcu-appearance-mode-v1', appearanceMode); }, [appearanceMode]);
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-    setThemeTransitioning(true);
-    const timer = window.setTimeout(() => setThemeTransitioning(false), performanceMode ? 180 : 420);
-    return () => window.clearTimeout(timer);
-  }, [appearanceMode, darkMode, themeMode, performanceMode]);
+  useEffect(() => () => {
+    if (themeTransitionTimeoutRef.current) window.clearTimeout(themeTransitionTimeoutRef.current);
+  }, []);
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const root = document.documentElement;
@@ -2555,7 +2615,7 @@ export default function MCUViewer() {
       if (event.key === sequence[index]) {
         index += 1;
         if (index === sequence.length) {
-          setThemeMode('mystic');
+          changeThemeMode('mystic');
           index = 0;
         }
       } else {
@@ -2564,7 +2624,7 @@ export default function MCUViewer() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
+  }, [changeThemeMode]);
 
 
   const hasCompleteMetadata = (item, posterValues = posterCache, metaValues = metaCache) => {
@@ -2651,21 +2711,37 @@ export default function MCUViewer() {
   const buildUiExperienceCache = useCallback(async (mode = 'view') => {
     if (uiBuildState.active) return;
     const source = mode === 'all' ? items : mode === 'core' ? items.filter(item => coreIds.has(item.id)) : filtered;
-    const posterTargets = source.slice(0, mode === 'view' ? 48 : 120).map(item => posterSrc(item)).filter(Boolean);
-    setUiBuildState({ active: true, done: 0, total: posterTargets.length, message: `Preparing ${posterTargets.length} UI poster layers…` });
+    const targets = source.slice(0, mode === 'view' ? 64 : 160);
+    const posterTargets = targets.map(item => posterSrc(item)).filter(Boolean);
+    const componentTasks = [
+      () => document.querySelectorAll('.rrow,.hero-carousel-card,.settings-card,.setup-section,.glass-panel').forEach(node => node.getBoundingClientRect()),
+      () => document.fonts?.ready?.catch?.(() => {}),
+      () => Promise.allSettled(posterTargets.slice(0, 24).map(preloadHeroPoster)),
+    ];
+    const total = posterTargets.length + componentTasks.length;
+    setUiBuildState({ active: true, done: 0, total, message: `Preparing ${targets.length} UI rows, controls, fonts, and poster layers…` });
     let done = 0;
+    for (const task of componentTasks) {
+      await new Promise(resolve => runWhenIdle(async () => {
+        try { await task(); } catch {}
+        done += 1;
+        setUiBuildState({ active: true, done, total, message: `Built UI components ${done}/${total}` });
+        resolve();
+      }, 650));
+      await wait(12);
+    }
     for (let i = 0; i < posterTargets.length; i += 4) {
       const batch = posterTargets.slice(i, i + 4);
       await new Promise(resolve => runWhenIdle(async () => {
         await Promise.allSettled(batch.map(preloadHeroPoster));
         done += batch.length;
-        setUiBuildState({ active: true, done, total: posterTargets.length, message: `Built UI cache ${done}/${posterTargets.length}` });
+        setUiBuildState({ active: true, done, total, message: `Built UI cache ${done}/${total}` });
         resolve();
       }, 650));
       await wait(16);
     }
-    scheduleStorageWrite('mcu-ui-build-cache-v1', JSON.stringify({ enabled: true, mode, builtAt: new Date().toISOString(), count: posterTargets.length }));
-    setUiBuildState({ active: false, done, total: posterTargets.length, message: `UI build cache ready for ${posterTargets.length} poster layers.` });
+    scheduleStorageWrite('mcu-ui-build-cache-v1', JSON.stringify({ enabled: true, mode, builtAt: new Date().toISOString(), rows: targets.length, posters: posterTargets.length, componentTasks: componentTasks.length }));
+    setUiBuildState({ active: false, done: total, total, message: `UI build cache ready for rows, controls, fonts, and ${posterTargets.length} poster layers.` });
   }, [coreIds, filtered, items, posterSrc, uiBuildState.active]);
 
   useEffect(() => {
@@ -3225,8 +3301,8 @@ export default function MCUViewer() {
           <section className="sidebar-panel">
             <div className="sidebar-section-title">{tUniverse('Theme & Language')}</div>
             <div className="sidebar-btn-grid">
-              <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={12} />{tUniverse('Dark')}</button>
-              <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={12} />{tUniverse('Light')}</button>
+              <button className="fpill" onClick={() => changeDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={12} />{tUniverse('Dark')}</button>
+              <button className="fpill" onClick={() => changeDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={12} />{tUniverse('Light')}</button>
             </div>
             <button className='fpill settings-toggle-pill' type='button' aria-pressed={marvelLangMode} onClick={() => setMarvelLangMode(v => !v)} style={{ justifyContent: 'space-between' }}><span>{tUniverse('Universe Language')}</span><span>{marvelLangMode ? 'On' : 'Off'}</span></button>
           </section>
@@ -3245,10 +3321,10 @@ export default function MCUViewer() {
               compact
               title={tUniverse('Universe Style')}
               appearanceMode={appearanceMode}
-              onAppearanceChange={setAppearanceMode}
+              onAppearanceChange={changeAppearanceMode}
               themeChoices={themedChoices}
               themeMode={themeMode}
-              onThemeChange={setThemeMode}
+              onThemeChange={changeThemeMode}
             />
           </section>
 
@@ -3273,8 +3349,8 @@ export default function MCUViewer() {
         <p>Unified controls for profile, universe themes, sync, backups, and modern accessibility-focused tuning.</p>
       </div>
       <div className="settings-hero-actions">
-        <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={13} />Dark</button>
-        <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={13} />Light</button>
+        <button className="fpill" onClick={() => changeDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={13} />Dark</button>
+        <button className="fpill" onClick={() => changeDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={13} />Light</button>
       </div>
     </section>
 
@@ -3398,7 +3474,7 @@ export default function MCUViewer() {
                     loading={idx < 8 ? 'eager' : 'lazy'}
                     decoding="async"
                     onDragStart={(e) => e.preventDefault()}
-                    onClick={() => { if (heroItem) openDetail(heroItem); }}
+                    onClick={() => { if (!overlayActive && heroItem) openDetail(heroItem); }}
                     />
                   <div className="hero-carousel-meta">
                     <p className="hero-carousel-title">{heroItem?.title || `Featured ${activeUniverse.title} poster`}</p>
@@ -4326,12 +4402,12 @@ export default function MCUViewer() {
         posterDataSaver={posterDataSaver}
         setPosterDataSaver={setPosterDataSaver}
         darkMode={darkMode}
-        setDarkMode={setDarkMode}
+        setDarkMode={changeDarkMode}
         appearanceMode={appearanceMode}
-        setAppearanceMode={setAppearanceMode}
+        setAppearanceMode={changeAppearanceMode}
         themeChoices={themedChoices}
         themeMode={themeMode}
-        setThemeMode={setThemeMode}
+        setThemeMode={changeThemeMode}
       />
       <input id="setup-avatar-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => setAvatarCropSrc(String(r.result || '')); r.readAsDataURL(f); e.target.value=''; }} />
 

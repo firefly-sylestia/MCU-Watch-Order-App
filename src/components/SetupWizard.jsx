@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { APPEARANCE_MODES, normalizeAppearanceMode } from '../constants/themeSettings';
 
 export default function SetupWizard({
@@ -48,7 +49,7 @@ export default function SetupWizard({
   };
   const activeAppearance = normalizeAppearanceMode(appearanceMode);
 
-  return (
+  const wizard = (
     <div className="setup-overlay" role="dialog" aria-modal="true" aria-label="First time setup">
       <div className="setup-card">
         <div className="setup-header">
@@ -159,4 +160,6 @@ export default function SetupWizard({
       </div>
     </div>
   );
+
+  return typeof document === 'undefined' ? wizard : createPortal(wizard, document.body);
 }

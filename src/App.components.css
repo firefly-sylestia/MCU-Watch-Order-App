@@ -3945,5 +3945,137 @@ body { background: var(--app-shell-gradient); }
 .theme-switch[data-theme="neon"] .poster-shell::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(180deg,color-mix(in srgb,var(--theme-accent) 16%,transparent),transparent 42%);opacity:.5}
 .theme-switch[data-theme="neon"] .setup-overlay{background:radial-gradient(circle at 20% 10%,color-mix(in srgb,var(--theme-accent) 24%,transparent),transparent 42%),rgba(2,6,18,.78)}
 .ui-build-cache-on :is(.hero-carousel-card,.rrow,.poster-shell){content-visibility:auto;contain-intrinsic-size:140px}
-.performance-mode .theme-transition-loader span{animation:none}
 @media (max-width:720px){.settings-build-panel{grid-template-columns:1fr}.theme-transition-loader{max-width:calc(100vw - 28px)}}
+
+/* Modal isolation + scroll performance hardening (researched: inert-style hit blocking,
+   passive/RAF scroll work, content visibility, and CSS containment). */
+.sidebar-backdrop[data-state='closed'],
+.settings-backdrop[data-state='closed'],
+.settings-shell[data-state='closed']{
+  opacity:0 !important;
+  pointer-events:none !important;
+  visibility:hidden !important;
+}
+.sidebar-backdrop[data-state='open'],
+.settings-backdrop[data-state='open'],
+.settings-shell[data-state='open']{
+  opacity:1 !important;
+  pointer-events:auto !important;
+  visibility:visible !important;
+}
+.overlay-open :is(header.hexbg, main.app-scroll-shell, .hero-carousel-shell){
+  pointer-events:none !important;
+  user-select:none;
+}
+.overlay-open :is(.settings-shell,.settings-menu,.sidebar-menu,.sidebar-backdrop,.settings-backdrop,.detail-backdrop,.analytics-backdrop,.trailer-backdrop,.setup-overlay,.crop-modal){
+  pointer-events:auto !important;
+  user-select:auto;
+}
+
+.theme-transition-loader{
+  inset:0 !important;
+  top:0 !important;
+  left:0 !important;
+  z-index:22000 !important;
+  display:grid !important;
+  place-items:center !important;
+  gap:18px !important;
+  width:100vw !important;
+  height:100dvh !important;
+  padding:clamp(24px,6vw,64px) !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:
+    radial-gradient(circle at 30% 22%, color-mix(in srgb,var(--theme-accent) 34%, transparent), transparent 32%),
+    radial-gradient(circle at 78% 70%, color-mix(in srgb,var(--theme-accent-alt) 26%, transparent), transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb,var(--theme-bg) 94%, #020617), color-mix(in srgb,var(--theme-surface) 82%, #020617)) !important;
+  box-shadow:none !important;
+  transform:none !important;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none !important;
+  color:var(--theme-text) !important;
+  font-size:clamp(13px,2.4vw,17px) !important;
+  letter-spacing:.18em !important;
+  transition:opacity 180ms var(--ease-out), visibility 180ms var(--ease-out) !important;
+}
+.theme-is-transitioning .theme-transition-loader{
+  opacity:1 !important;
+  visibility:visible !important;
+}
+.theme-transition-loader::before{
+  content:'Applying theme';
+  display:block;
+  font:900 clamp(30px,8vw,72px)/.9 var(--font-marvel-display);
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  background:linear-gradient(90deg,var(--theme-accent),var(--theme-accent-alt),var(--theme-accent));
+  background-size:220% 100%;
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  animation:themeLoaderSweep 1100ms linear infinite;
+  text-align:center;
+}
+.theme-transition-loader span{
+  width:58px !important;
+  height:58px !important;
+  border-width:4px !important;
+  animation:themeLoaderSpin 780ms linear infinite !important;
+}
+@keyframes themeLoaderSweep{to{background-position:220% 0}}
+
+.setup-overlay{
+  z-index:21000 !important;
+  display:grid;
+  place-items:center;
+  background:
+    radial-gradient(circle at 18% 12%, color-mix(in srgb,var(--theme-accent) 24%, transparent), transparent 38%),
+    linear-gradient(145deg, rgba(2,6,18,.86), rgba(8,13,28,.78)) !important;
+  contain:layout paint style;
+}
+[data-color-mode='light'] .setup-overlay{
+  background:
+    radial-gradient(circle at 18% 12%, color-mix(in srgb,var(--theme-accent) 18%, transparent), transparent 38%),
+    linear-gradient(145deg, rgba(241,245,249,.88), rgba(226,232,240,.8)) !important;
+}
+.setup-card{
+  width:min(980px,calc(100vw - 24px)) !important;
+  max-height:min(90dvh,920px) !important;
+  border-radius:clamp(20px,3vw,34px) !important;
+  background:
+    linear-gradient(145deg,color-mix(in srgb,var(--theme-surface) 94%, transparent),color-mix(in srgb,var(--theme-surface-strong,var(--theme-bg)) 86%, transparent)) !important;
+  box-shadow:0 34px 90px color-mix(in srgb,var(--theme-shadow-rgb,#020617) 34%, transparent), inset 0 1px 0 var(--edge-highlight,rgba(255,255,255,.12)) !important;
+  contain:layout paint style;
+}
+.setup-step-stage,.setup-section,.settings-menu,.sidebar-menu,.detail-card,.analytics-shell{
+  overscroll-behavior:contain;
+}
+
+.theme-switch[data-theme='neon'] :is(.header-title-mcu,.header-title-sub,.phase-title,.title-main,.detail-title,.settings-card h3,.settings-hero-card h2,.analytics-header h2){
+  color:color-mix(in srgb,var(--theme-accent) 52%, var(--theme-text)) !important;
+  text-shadow:0 1px 0 color-mix(in srgb,var(--theme-bg) 78%, transparent), 0 0 10px color-mix(in srgb,var(--theme-accent) 18%, transparent) !important;
+}
+.theme-switch[data-color-mode='light'][data-theme='neon'] :is(.header-title-mcu,.header-title-sub,.phase-title,.title-main,.detail-title,.settings-card h3,.settings-hero-card h2,.analytics-header h2){
+  color:color-mix(in srgb,var(--theme-accent) 46%, #0f172a) !important;
+  text-shadow:0 1px 0 rgba(255,255,255,.72),0 0 8px color-mix(in srgb,var(--theme-accent) 14%, transparent) !important;
+}
+
+.phase-row-virtualized,
+.hero-carousel-card,
+.settings-card,
+.setup-section,
+.glass-panel{
+  content-visibility:auto;
+  contain-intrinsic-size:1px 160px;
+  contain:layout paint style;
+}
+.hero-carousel-poster,.poster,.rrow .poster-shell{
+  transform:translateZ(0);
+  backface-visibility:hidden;
+}
+.rrow:hover{transform:translate3d(0,-1px,0)}
+@media (max-width:720px){
+  .setup-card{width:calc(100vw - 16px) !important;max-height:92dvh !important}
+  .theme-transition-loader::before{font-size:clamp(28px,12vw,54px)}
+}
