@@ -1,7 +1,7 @@
 export const APPEARANCE_MODES = [
   { id: 'glass', label: 'Glass', desc: 'Frosted depth, soft refraction, editorial display type', font: 'Space Grotesk' },
   { id: 'pixelated', label: 'Pixelated', desc: 'Arcade grid, chunky type, crisp stepped edges', font: 'Pixelify Sans' },
-  { id: 'neon', label: 'Neon', desc: 'Night-city glow, luminous borders, techno titles', font: 'Audiowide' },
+  { id: 'neon', label: 'Neon', desc: 'Electric night-grid, restrained glow, luminous signwork', font: 'Audiowide' },
   { id: 'minimal', label: 'Minimal', desc: 'Quiet contrast, roomy rhythm, readable UI typography', font: 'Manrope' },
 ];
 
@@ -45,11 +45,11 @@ const MODE_TOKENS = {
   },
   neon: {
     fonts: { display: '"Audiowide", "Rajdhani", system-ui, sans-serif', ui: '"Rajdhani", "Outfit", system-ui, sans-serif', body: '"Space Grotesk", "Outfit", system-ui, sans-serif' },
-    effects: { blur: 10, glow: 0.58, shadow: '0 0 20px color-mix(in srgb, var(--theme-accent) 34%, transparent), 0 0 42px color-mix(in srgb, var(--theme-accent-alt) 18%, transparent)' },
-    shape: { radius: [12, 18, 26, 34], edge: 'neon', border: 1 },
-    motion: { fast: '120ms', normal: '210ms', slow: '300ms', hoverScale: 1.014 },
-    texture: 'radial-gradient(circle at 22% 18%, color-mix(in srgb, var(--theme-accent) 18%, transparent), transparent 34%), radial-gradient(circle at 78% 0%, color-mix(in srgb, var(--theme-accent-alt) 14%, transparent), transparent 30%)',
-    panelOverlay: 'linear-gradient(145deg, color-mix(in srgb, var(--theme-bg) 46%, transparent), color-mix(in srgb, var(--theme-accent) 10%, transparent))',
+    effects: { blur: 0, glow: 0.48, shadow: '0 0 0 1px color-mix(in srgb, var(--theme-accent) 28%, transparent), 0 0 18px color-mix(in srgb, var(--theme-accent) 22%, transparent), 0 18px 46px color-mix(in srgb, var(--theme-shadow-rgb, #020617) 34%, transparent)' },
+    shape: { radius: [10, 14, 20, 28], edge: 'neon', border: 1 },
+    motion: { fast: '110ms', normal: '190ms', slow: '280ms', hoverScale: 1.006 },
+    texture: 'linear-gradient(90deg, color-mix(in srgb, var(--theme-accent) 10%, transparent) 1px, transparent 1px), linear-gradient(0deg, color-mix(in srgb, var(--theme-accent-alt) 8%, transparent) 1px, transparent 1px)',
+    panelOverlay: 'linear-gradient(145deg, color-mix(in srgb, var(--theme-surface) 92%, transparent), color-mix(in srgb, var(--theme-bg-alt) 72%, transparent))',
   },
   minimal: {
     fonts: { display: '"Manrope", "Outfit", system-ui, sans-serif', ui: '"Manrope", "Outfit", system-ui, sans-serif', body: '"Manrope", "Outfit", system-ui, sans-serif' },
@@ -108,13 +108,25 @@ const COLOR_MODE_TOKENS = {
   },
 };
 
-export const resolveThemeTokens = ({ appearanceMode = 'glass', characterTheme = 'iron-man', darkMode = true, universe = 'mcu' }) => {
+export const resolveThemeTokens = ({ appearanceMode = 'minimal', characterTheme = 'iron-man', darkMode = false, universe = 'mcu' }) => {
   const normalizedMode = normalizeAppearanceMode(appearanceMode);
   const mode = MODE_TOKENS[normalizedMode] || MODE_TOKENS.glass;
   const universeKey = universe === 'dc' ? 'dc' : 'marvel';
   const brandMap = universeKey === 'dc' ? DC_THEME_TOKEN_MAP : MARVEL_THEME_TOKEN_MAP;
-  const hero = brandMap[characterTheme] || brandMap['iron-man'];
-  const color = COLOR_MODE_TOKENS[universeKey][darkMode ? 'dark' : 'light'];
+  let hero = brandMap[characterTheme] || brandMap['iron-man'];
+  let color = COLOR_MODE_TOKENS[universeKey][darkMode ? 'dark' : 'light'];
+
+  // Neon is intentionally palette-led instead of character-led: research-backed neon UI
+  // works best with a deep base, one primary luminous accent, one secondary accent,
+  // and readable neutral text rather than applying glow to every surface.
+  if (normalizedMode === 'neon') {
+    hero = darkMode
+      ? { accent: '#22d3ee', accent2: '#f43fbc' }
+      : { accent: '#0891b2', accent2: '#c026d3' };
+    color = darkMode
+      ? { bg: '#02030a', bgAlt: '#071426', surface: 'rgba(6,16,32,.88)', surfaceStrong: 'rgba(10,24,46,.96)', text: '#ecfeff', text2: '#b8dbe4', muted: '#7aa5b4', border: 'rgba(34,211,238,.2)', shadowRgb: '#020617' }
+      : { bg: '#f4fbff', bgAlt: '#eaf7ff', surface: 'rgba(255,255,255,.9)', surfaceStrong: 'rgba(248,253,255,.98)', text: '#082f49', text2: '#164e63', muted: '#417383', border: 'rgba(8,145,178,.22)', shadowRgb: '#075985' };
+  }
   const glowSoftPct = Math.round(mode.effects.glow * 42);
   const glowStrongPct = Math.round(mode.effects.glow * 68);
 
