@@ -30,3 +30,60 @@
   transition-property: background, border-color, transform;
   transition-duration: 120ms;
 }
+
+/* Fluid route + theme performance: keep expensive surfaces isolated and animate only compositor-safe properties. */
+.search-page-shell,
+.search-page-panel,
+.sidebar-panel,
+.detail-drawer,
+.settings-redesign,
+.analytics-backdrop {
+  contain: layout style paint;
+}
+
+.search-page-shell,
+.search-page-panel,
+.sidebar-panel {
+  content-visibility: auto;
+  contain-intrinsic-size: 260px;
+}
+
+.hero-backdrop-image,
+.hero-backdrop-blend,
+.navigation-shell,
+.navigation-backdrop,
+.theme-transition-loader,
+.detail-drawer {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+.performance-mode .hero-backdrop-image,
+.performance-mode .hero-backdrop-blend {
+  filter: none !important;
+  transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out) !important;
+}
+
+.theme-is-transitioning .rrow,
+.theme-is-transitioning .curvy-panel,
+.theme-is-transitioning .sidebar-panel,
+.theme-is-transitioning .search-page-panel {
+  transition-duration: 80ms !important;
+}
+
+@media (max-width: 768px), (prefers-reduced-motion: reduce) {
+  .hero-backdrop-image,
+  .hero-backdrop-blend,
+  .sweep::after {
+    animation: none !important;
+  }
+
+  .navigation-control-btn,
+  .fpill,
+  .rrow,
+  .curvy-panel,
+  .search-page-panel {
+    transition-property: transform, opacity, background-color, border-color, color !important;
+    transition-duration: 120ms !important;
+  }
+}

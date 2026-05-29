@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback, useReducer } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, useReducer, useDeferredValue } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
@@ -373,6 +373,10 @@ const posterExportName = (item, ext = 'jpg') => posterFileName(item, ext);
 const ROUTE_FALLBACK = '/home';
 const compactRouteSlug = (value) => slugifyPosterName(value).replace(/-/g, '');
 const titleRoutePath = (item) => `/movie/${slugifyPosterName(item?.title) || item?.id || ''}`;
+const searchRoutePath = (query = '') => {
+  const trimmed = String(query || '').trim();
+  return trimmed ? `/search?query=${encodeURIComponent(trimmed)}` : '/search';
+};
 const routeItemMatchesSlug = (item, rawSlug) => {
   const slug = slugifyPosterName(decodeURIComponent(String(rawSlug || '')));
   if (!item || !slug) return false;
@@ -872,6 +876,7 @@ export default function MCUViewer() {
   const [items,          setItems]          = useState(RAW);
   const [listMode,       setListMode]       = useState(initialUiState.listMode);
   const [search,         setSearch]         = useState(initialUiState.search);
+  const deferredSearch = useDeferredValue(search);
   const [searchScope,    setSearchScope]    = useState(initialUiState.searchScope || UI_STATE_DEFAULTS.searchScope);
   const [sortBy,         setSortBy]         = useState(initialUiState.sortBy);
   const [essentialOnly,  setEssOnly]        = useState(initialUiState.essentialOnly);
@@ -900,14 +905,32 @@ export default function MCUViewer() {
     setAnalyticsOpen(false);
     setTrailerOpen(false);
     setTrailerExpanded(false);
+    setTypeFilter(null);
+    setActivePhase(0);
     setBrowseMode('home');
-  }, []);
-  const openSearchMode = useCallback(() => {
+  }, [setActivePhase, setTypeFilter]);
+  const openSearchMode = useCallback((initialQuery = '') => {
+    setDetailItem(null);
+    setSettingsOpen(false);
+    setAnalyticsOpen(false);
     setBrowseMode('search');
     setListMode('extended');
     setActivePhase(0);
     setSearchScope(UI_STATE_DEFAULTS.searchScope);
-  }, [setBrowseMode, setListMode, setActivePhase, setSearchScope]);
+    if (typeof initialQuery === 'string') setSearch(initialQuery);
+  }, [setBrowseMode, setListMode, setActivePhase, setSearchScope, setSearch]);
+
+  const openSeriesMode = useCallback(() => {
+    setDetailItem(null);
+    setSettingsOpen(false);
+    setAnalyticsOpen(false);
+    setBrowseMode('home');
+    setListMode('extended');
+    setActivePhase(0);
+    setTypeFilter('series');
+    setSearch('');
+    setSidebarOpen(false);
+  }, [setActivePhase, setBrowseMode, setListMode, setSearch, setTypeFilter]);
   const setFilterStatusOpen = (next) => dispatchUiMode({ filterStatusOpen: typeof next === 'function' ? next(uiModeState.filterStatusOpen) : next });
   const setDockStatusOpen = (next) => dispatchUiMode({ dockStatusOpen: typeof next === 'function' ? next(uiModeState.dockStatusOpen) : next });
   const setFiltersOpen = (next) => dispatchUiMode({ filtersOpen: typeof next === 'function' ? next(uiModeState.filtersOpen) : next });
@@ -1578,24 +1601,29 @@ export default function MCUViewer() {
   }, []);
 
 
-  const applyUrlRoute = useCallback((path = window.location.pathname) => {
+  const applyUrlRoute = useCallback((path = window.location.pathname, routeSearch = window.location.search) => {
     if (typeof window === 'undefined') return;
-    const cleanPath = `/${String(path || '').split('?')[0].split('#')[0].replace(/^\/+/, '')}`.replace(/\/+$/, '') || ROUTE_FALLBACK;
+    const [pathOnly, inlineQuery = ''] = String(path || '').split('?');
+    const cleanPath = `/${pathOnly.split('#')[0].replace(/^\/+/, '')}`.replace(/\/+$/, '') || ROUTE_FALLBACK;
     const parts = cleanPath.split('/').filter(Boolean);
     const primary = parts[0] || 'home';
+    const params = new URLSearchParams(String(routeSearch || inlineQuery || '').replace(/^\?/, ''));
 
     setSidebarOpen(false);
     setTrailerOpen(false);
     setTrailerExpanded(false);
 
     if (primary === 'search') {
+      const routedQuery = params.get('query') || params.get('q') || decodeURIComponent(parts.slice(1).join(' ')).replace(/-/g, ' ');
       setDetailItem(null);
       setSettingsOpen(false);
       setAnalyticsOpen(false);
       setBrowseMode('search');
       setListMode('extended');
       setActivePhase(0);
+      setTypeFilter(null);
       setSearchScope(UI_STATE_DEFAULTS.searchScope);
+      setSearch(routedQuery.trim());
       return;
     }
 
@@ -1621,7 +1649,20 @@ export default function MCUViewer() {
       setSettingsOpen(false);
       setAnalyticsOpen(false);
       setBrowseMode('phase');
+      setTypeFilter(null);
       setActivePhase(Number.isFinite(requestedPhase) && requestedPhase > 0 ? requestedPhase : 0);
+      return;
+    }
+
+    if (primary === 'series') {
+      setDetailItem(null);
+      setSettingsOpen(false);
+      setAnalyticsOpen(false);
+      setBrowseMode('home');
+      setListMode('extended');
+      setActivePhase(0);
+      setTypeFilter('series');
+      setSearch('');
       return;
     }
 
@@ -1646,12 +1687,13 @@ export default function MCUViewer() {
     setSettingsOpen(false);
     setAnalyticsOpen(false);
     setBrowseMode('home');
+    setTypeFilter(null);
   }, [items, openDetail]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
-    applyUrlRoute(window.location.pathname);
-    const onPopState = () => applyUrlRoute(window.location.pathname);
+    applyUrlRoute(window.location.pathname, window.location.search);
+    const onPopState = () => applyUrlRoute(window.location.pathname, window.location.search);
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
   }, [applyUrlRoute]);
@@ -1660,24 +1702,27 @@ export default function MCUViewer() {
     if (detailItem) return titleRoutePath(detailItem);
     if (settingsOpen) return '/settings';
     if (analyticsOpen) return '/analytics';
-    if (browseMode === 'search') return '/search';
+    if (browseMode === 'search') return searchRoutePath(search);
     if (browseMode === 'phase') return activePhase ? `/phase/${activePhase}` : '/phase';
+    if (typeFilter === 'series' && !search && !activePhase) return '/series';
     return ROUTE_FALLBACK;
-  }, [activePhase, analyticsOpen, browseMode, detailItem, settingsOpen]);
+  }, [activePhase, analyticsOpen, browseMode, detailItem, search, settingsOpen, typeFilter]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
+    const currentRoute = `${window.location.pathname.replace(/\/+$/, '') || '/'}${window.location.search || ''}`;
     const nextState = { ...(window.history.state || {}), mcuRoute: canonicalRoute };
-    if (currentPath === canonicalRoute) {
+    if (currentRoute === canonicalRoute) {
       if (window.history.state?.mcuRoute !== canonicalRoute) {
         window.history.replaceState(nextState, '', canonicalRoute);
       }
       return;
     }
-    const method = currentPath === '/' || canonicalRoute === ROUTE_FALLBACK ? 'replaceState' : 'pushState';
+    const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
+    const canonicalPath = canonicalRoute.split('?')[0];
+    const method = currentPath === '/' || canonicalRoute === ROUTE_FALLBACK || browseMode === 'search' || currentPath === canonicalPath ? 'replaceState' : 'pushState';
     window.history[method](nextState, '', canonicalRoute);
-  }, [canonicalRoute]);
+  }, [browseMode, canonicalRoute]);
   useEffect(() => {
     const onDocPointerDown = (event) => {
       if (sortMenuRef.current && !sortMenuRef.current.contains(event.target)) setSortMenuOpen(false);
@@ -1755,7 +1800,7 @@ export default function MCUViewer() {
       if (genreFilter !== 'all' && i.type !== genreFilter) return false;
       const after = AFTER_CREDITS[i.title] || AFTER_CREDITS_DEFAULT;
       const timelineLabel = TIMELINE_MODES.find(m => m.id === timelineMode)?.label || '';
-      return matchesSearch(i, search, { director: DIRECTOR_DATA[i.title] || '', actors: metaCache[i.id]?.cast || '', connectsTo: after.connectsTo || [], timelineLabel }, searchScope);
+      return matchesSearch(i, deferredSearch, { director: DIRECTOR_DATA[i.title] || '', actors: metaCache[i.id]?.cast || '', connectsTo: after.connectsTo || [], timelineLabel }, searchScope);
     }).sort((a, b) => {
       if (sortBy === 'title') return a.title.localeCompare(b.title);
       if (sortBy === 'year') return a.year - b.year;
@@ -1775,7 +1820,7 @@ export default function MCUViewer() {
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, browseMode, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap, releaseFilter, metaCache, searchScope]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, browseMode, timelineMode, genreFilter, deferredSearch, sortBy, coreIds, showAllFiltersOverride, localPosterMap, releaseFilter, metaCache, searchScope]);
 
 
 
@@ -3434,6 +3479,10 @@ export default function MCUViewer() {
           <section className="sidebar-panel">
             <div className="sidebar-section-title">{tUniverse('View & Navigate')}</div>
             <div className="sidebar-btn-grid">
+              <button className="fpill" onClick={() => { setSidebarOpen(false); navigateHome(); }} style={{ justifyContent: 'center' }}>{tUniverse('Home')}</button>
+              <button className="fpill" onClick={() => { setSidebarOpen(false); openSearchMode(search); }} style={{ justifyContent: 'center' }}>{tUniverse('Search')}</button>
+              <button className="fpill" onClick={openSeriesMode} style={{ justifyContent: 'center', borderColor: typeFilter === 'series' ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Tv size={12} />{tUniverse('Series')}</button>
+              <button className="fpill" onClick={() => { setSidebarOpen(false); setBrowseMode('phase'); setTypeFilter(null); }} style={{ justifyContent: 'center' }}>{tUniverse('Phases')}</button>
               <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ justifyContent: 'center' }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
               <button className="fpill" onClick={openAnalyticsPanel} style={{ justifyContent: 'center' }}>{tUniverse('Analytics')}</button>
             </div>
@@ -3637,7 +3686,7 @@ export default function MCUViewer() {
           <div className="search-page-panel" style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 18, padding: 14, background: 'color-mix(in srgb, var(--theme-surface) 84%, transparent)', boxShadow: '0 10px 30px color-mix(in srgb, #000 16%, transparent)' }}>
             <div style={{ position: 'relative' }}>
               <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
-              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} aria-label="Search library" style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650, transition: 'border-color 180ms ease, box-shadow 180ms ease' }} />
+              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search titles, series, actors, phases..." aria-label="Search library" style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650, transition: 'border-color 180ms ease, box-shadow 180ms ease' }} />
             </div>
             <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
               <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' }}>Search in</div>
