@@ -1,0 +1,32 @@
+/* Performance-focused rendering isolation for long phase lists. */
+.virtual-list {
+  contain: layout style paint;
+}
+
+.phase-row-virtualized {
+  content-visibility: auto;
+  contain-intrinsic-size: var(--row-min-h, 126px);
+  contain: layout style paint;
+}
+
+.section-up,
+.list-panel,
+.curvy-panel.phase-header-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 420px;
+}
+
+.phase-list-mode .app-backdrop-layout {
+  display: none;
+}
+
+.phase-list-mode .motion-section,
+.performance-mode .motion-section {
+  animation: none !important;
+}
+
+.phase-list-mode .rrow,
+.performance-mode .rrow {
+  transition-property: background, border-color, transform;
+  transition-duration: 120ms;
+}

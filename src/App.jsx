@@ -15,11 +15,14 @@ import { useOverlayNavigation } from './hooks/useOverlayNavigation';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
 import ThemeStudio from './components/features/ThemeStudio';
+import NavigationShell from './components/navigation/NavigationShell';
 import { CHARACTER_THEMES, normalizeAppearanceMode, resolveThemeTokens } from './constants/themeSettings';
 import { buildSemanticThemeVars, UI_PARITY_TOKENS } from './constants/ui';
 import './App.layout.css';
 import './App.components.css';
 import './App.motion.css';
+import './styles/performance.css';
+import './styles/theme-surfaces.css';
 
 import {
   ESSENTIAL_LIST,
@@ -35,7 +38,7 @@ import { TIMELINE_MODES, TIMELINE_MODE_IDS, CHARACTER_POV_TITLE_SETS, STORY_ORDE
 import { AFTER_CREDITS, AFTER_CREDITS_DEFAULT, DIRECTOR_DATA } from './data/afterCreditsData';
 import { TRAILER_DATA, trailerEmbedUrl, getTrailerByTitle } from './data/trailerData';
 
-import { Search, Eye, EyeOff, Film, Tv, Zap, ChevDown, ChevRight, ArrowUpDown, Check, Clock, Heart, Pause, Trash2, Upload, Download, Sun, Star, Moon, Settings, Info, Bookmark, Layers, PlayCircle, PauseCircle, XCircle, SlidersH, UserCircle, Menu, SwitchIcon, X } from './constants/icons';
+import { Search, Eye, EyeOff, Film, Tv, Zap, ChevDown, ChevRight, ArrowUpDown, Check, Clock, Heart, Pause, Trash2, Upload, Download, Sun, Star, Moon, Settings, Info, Bookmark, Layers, PlayCircle, PauseCircle, XCircle, SlidersH, UserCircle, SwitchIcon, X } from './constants/icons';
 import { MARVEL_UI_LEXICON, DC_UI_LEXICON, LIST_MODES } from './constants/appText';
 import { matchesSearch } from './utils/searchUtils';
 
@@ -671,34 +674,6 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
 }, areTitleRowPropsEqual);
 
 
-
-const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
-  open,
-  darkMode,
-  performanceMode,
-  pillBorder,
-  surfaceBorder,
-  onToggle,
-  onClose,
-  onOpenSettings,
-  onDismissBackdrop,
-  controlsHidden = false,
-  settingsOpen = false,
-  children,
-}, ref) {
-  return (
-    <>
-      <div className="sidebar-control-cluster" style={controlsHidden ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
-      <button className="theme-btn sidebar-toggle-btn" onClick={onToggle} aria-label="Toggle sidebar menu" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Menu size={18} /></button>
-      <button className="theme-btn sidebar-toggle-btn settings-toggle-btn" onClick={onOpenSettings} aria-label="Open settings and profile" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Settings size={18} /></button>
-      </div>
-      {open && <div className="sidebar-backdrop" data-state="open" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onDismissBackdrop?.(); onClose?.(); }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} />}
-      <aside ref={ref} data-state={open ? 'open' : 'closed'} aria-hidden={!open} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
-        {children}
-      </aside>
-    </>
-  );
-}));
 
 const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
   open,
@@ -3316,7 +3291,7 @@ export default function MCUViewer() {
       <div className="theme-transition-loader" aria-hidden={!themeTransitioning}><span />Retuning theme</div>
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} settingsOpen={settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onDismissBackdrop={suppressNextDocumentClick} onOpenSettings={toggleSettingsPanel}>
+      <NavigationShell controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onDismissBackdrop={suppressNextDocumentClick} onOpenSettings={toggleSettingsPanel}>
         <div className="sidebar-redesign">
           <section className="sidebar-panel sidebar-panel--brand">
             <p className="sidebar-kicker">{universe === 'dc' ? 'Justice Network' : 'Avengers Network'}</p>
@@ -3371,7 +3346,7 @@ export default function MCUViewer() {
             </div>
           </section>
         </div>
-      </SidebarMenu>
+      </NavigationShell>
 
       <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} performanceMode={performanceMode} onClose={closeSettings} onDismissBackdrop={suppressNextDocumentClick}>
   <div className="settings-redesign">
