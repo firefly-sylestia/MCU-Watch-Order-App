@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { APPEARANCE_MODES, normalizeAppearanceMode } from '../constants/themeSettings';
 
 export default function SetupWizard({
@@ -30,15 +31,29 @@ export default function SetupWizard({
   themeChoices = [],
   themeMode,
   setThemeMode,
+  onRequestClose,
 }) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [portalRoot, setPortalRoot] = useState(null);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    let node = document.getElementById('setup-wizard-root');
+    if (!node) {
+      node = document.createElement('div');
+      node.id = 'setup-wizard-root';
+      document.body.appendChild(node);
+    }
+    setPortalRoot(node);
+    return undefined;
+  }, []);
   const steps = useMemo(() => [
     { id: 'profile', label: 'Profile' },
     { id: 'preload', label: 'Library' },
     { id: 'style', label: 'Style' },
     { id: 'tuning', label: 'Tuning' },
   ], []);
-  if (!open) return null;
+  if (!open || !portalRoot) return null;
   const fetchStatus = fetchState.active ? 'loading' : (fetchState.message?.toLowerCase().includes('built') ? 'success' : (fetchState.message?.toLowerCase().includes('could not') ? 'error' : 'idle'));
   const stepStatus = {
     profile: profile.name?.trim() ? 'Complete' : 'In progress',
@@ -48,9 +63,9 @@ export default function SetupWizard({
   };
   const activeAppearance = normalizeAppearanceMode(appearanceMode);
 
-  return (
-    <div className="setup-overlay" role="dialog" aria-modal="true" aria-label="First time setup">
-      <div className="setup-card">
+  return createPortal(
+    <div className="setup-overlay setup-portal-container" role="dialog" aria-modal="true" aria-label="First time setup" onPointerDown={(event) => { if (event.target === event.currentTarget) onRequestClose?.(); }}>
+      <div className="setup-card" onPointerDown={(event) => event.stopPropagation()}>
         <div className="setup-header">
           <h2>Let&apos;s get you set up</h2>
           <p>Four quick steps. No sign-in needed now, and you can sync across devices later from Settings.</p>
@@ -157,6 +172,7 @@ export default function SetupWizard({
           <button className="fpill setup-primary-action" onClick={currentStep === steps.length - 1 ? onFinish : () => setCurrentStep(step => Math.min(steps.length - 1, step + 1))}>{currentStep === steps.length - 1 ? (fetchState.active ? 'Continue' : 'Finish') : 'Next'}</button>
         </div>
       </div>
-    </div>
+    </div>,
+    portalRoot
   );
 }

@@ -681,6 +681,7 @@ const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
   onToggle,
   onClose,
   onOpenSettings,
+  onDismissBackdrop,
   controlsHidden = false,
   settingsOpen = false,
   children,
@@ -691,7 +692,7 @@ const SidebarMenu = React.memo(React.forwardRef(function SidebarMenu({
       <button className="theme-btn sidebar-toggle-btn" onClick={onToggle} aria-label="Toggle sidebar menu" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Menu size={18} /></button>
       <button className="theme-btn sidebar-toggle-btn settings-toggle-btn" onClick={onOpenSettings} aria-label="Open settings and profile" style={{ background: darkMode ? 'rgba(8,12,28,0.96)' : '#ffffff', color: darkMode ? '#f5fffd' : '#0f172a', borderColor: darkMode ? 'rgba(255,255,255,0.42)' : pillBorder, boxShadow: 'none' }}><Settings size={18} /></button>
       </div>
-      <div className="sidebar-backdrop" data-state={open ? 'open' : 'closed'} onPointerDown={(e) => { e.preventDefault(); onClose?.(); }} />
+      {open && <div className="sidebar-backdrop" data-state="open" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onDismissBackdrop?.(); onClose?.(); }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} />}
       <aside ref={ref} data-state={open ? 'open' : 'closed'} aria-hidden={!open} className="sidebar-menu" style={{ '--sidebar-bg': darkMode ? 'rgba(8,12,28,0.88)' : 'rgba(248,251,255,0.9)', '--sidebar-border': surfaceBorder, '--sidebar-transform': open ? 'translateX(0)' : 'translateX(-105%)', '--sidebar-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--sidebar-blur': performanceMode ? 'none' : 'blur(8px)' }}>
         {children}
       </aside>
@@ -704,11 +705,12 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
   darkMode,
   performanceMode,
   onClose,
+  onDismissBackdrop,
   children,
 }, ref) {
   return (
     <>
-      <button className="settings-backdrop" data-state={open ? 'open' : 'closed'} aria-label="Close settings menu" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onClose?.(); }} />
+      {open && <button className="settings-backdrop" data-state="open" aria-label="Close settings menu" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onDismissBackdrop?.(); onClose?.(); }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} />}
       <div className="settings-shell" data-state={open ? 'open' : 'closed'} role="dialog" aria-modal={open ? 'true' : 'false'} aria-hidden={!open} aria-label="Settings and profile" ref={ref}>
         <div className="fade-in settings-menu settings-menu-redesign" data-state={open ? 'open' : 'closed'} style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
           <div className="settings-close-row"><button className="fpill settings-close-sticky" onClick={() => onClose?.()}><X size={14}/>Close</button></div>{children}
@@ -1035,6 +1037,7 @@ export default function MCUViewer() {
   const heroActiveCardRef = useRef(null);
   const heroInteractionTimeoutRef = useRef(null);
   const heroUserInteractingUntilRef = useRef(0);
+  const overlayDismissSuppressUntilRef = useRef(0);
   const heroProgrammaticScrollRef = useRef(false);
   const heroForceRecenterRef = useRef(false);
   const heroRandomSeedRef = useRef(() => Math.random().toString(36).slice(2));
@@ -1044,6 +1047,14 @@ export default function MCUViewer() {
   const detailRequestRef = useRef(0);
   const desktopSmoothScrollStateRef = useRef({ raf: null, velocity: 0, lastTs: 0 });
 
+  const pauseHeroAutoSlide = useCallback((duration = 10000) => {
+    heroUserInteractingUntilRef.current = Date.now() + duration;
+    if (heroInteractionTimeoutRef.current) window.clearTimeout(heroInteractionTimeoutRef.current);
+    heroInteractionTimeoutRef.current = window.setTimeout(() => {
+      heroUserInteractingUntilRef.current = 0;
+      heroInteractionTimeoutRef.current = null;
+    }, duration);
+  }, []);
 
 
   useOverlayNavigation({
@@ -1061,13 +1072,17 @@ export default function MCUViewer() {
 
   const currentPhases = universe === 'dc' ? DC_PHASES : PHASES;
 
+  const suppressNextDocumentClick = useCallback((duration = 420) => {
+    overlayDismissSuppressUntilRef.current = Date.now() + duration;
+  }, []);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     window.__scrollTuning = scrollTuning;
   }, [scrollTuning]);
 
   const overlayActive = Boolean(settingsOpen || analyticsOpen || detailItem || sidebarOpen || setupOpen || avatarCropSrc);
-  const blockHomeInteractions = Boolean(settingsOpen || sidebarOpen || setupOpen || avatarCropSrc);
+  const blockHomeInteractions = overlayActive;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1094,6 +1109,21 @@ export default function MCUViewer() {
       htmlStyle.overflow = prevHtmlOverflow;
     };
   }, [overlayActive]);
+
+  useEffect(() => {
+    const stopSuppressedClick = (event) => {
+      if (Date.now() > overlayDismissSuppressUntilRef.current) return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation?.();
+    };
+    document.addEventListener('click', stopSuppressedClick, true);
+    document.addEventListener('pointerup', stopSuppressedClick, true);
+    return () => {
+      document.removeEventListener('click', stopSuppressedClick, true);
+      document.removeEventListener('pointerup', stopSuppressedClick, true);
+    };
+  }, []);
 
   useEffect(() => {
     if (!sidebarOpen || !sidebarRef.current) return;
@@ -1300,6 +1330,25 @@ export default function MCUViewer() {
       window.removeEventListener('scroll', onScroll);
     };
   }, [fabMenuOpen]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const markUiBusy = () => { pauseHeroAutoSlide(10000); };
+    const markScrollBusy = () => { pauseHeroAutoSlide(10000); };
+    const opts = { passive: true, capture: true };
+    window.addEventListener('scroll', markScrollBusy, opts);
+    window.addEventListener('wheel', markScrollBusy, opts);
+    window.addEventListener('touchmove', markScrollBusy, opts);
+    window.addEventListener('pointerdown', markUiBusy, opts);
+    window.addEventListener('keydown', markUiBusy, true);
+    return () => {
+      window.removeEventListener('scroll', markScrollBusy, opts);
+      window.removeEventListener('wheel', markScrollBusy, opts);
+      window.removeEventListener('touchmove', markScrollBusy, opts);
+      window.removeEventListener('pointerdown', markUiBusy, opts);
+      window.removeEventListener('keydown', markUiBusy, true);
+    };
+  }, [pauseHeroAutoSlide]);
 
   useEffect(() => {
     // Phase selection is a filter, so do not rewrite it from scroll position.
@@ -1878,7 +1927,7 @@ export default function MCUViewer() {
       if (overlayBlockingCycle) return;
       if (heroIntervalRef.current) return;
       heroIntervalRef.current = window.setInterval(() => {
-        if (Date.now() < heroUserInteractingUntilRef.current) return;
+        if (overlayActive || document.visibilityState !== 'visible' || Date.now() < heroUserInteractingUntilRef.current) return;
         setHeroIndex(i => (i + 1) % heroPosters.length);
       }, HERO_ROTATION_MS);
       telemetry('resumed', 'home-active');
@@ -1901,16 +1950,7 @@ export default function MCUViewer() {
       document.removeEventListener('visibilitychange', onVisibility);
       stopHeroCycle();
     };
-  }, [heroPosters.length, settingsOpen, analyticsOpen, detailItem, sidebarOpen]);
-
-  const pauseHeroAutoSlide = useCallback((duration = 2200) => {
-    heroUserInteractingUntilRef.current = Date.now() + duration;
-    if (heroInteractionTimeoutRef.current) window.clearTimeout(heroInteractionTimeoutRef.current);
-    heroInteractionTimeoutRef.current = window.setTimeout(() => {
-      heroUserInteractingUntilRef.current = 0;
-      heroInteractionTimeoutRef.current = null;
-    }, duration);
-  }, []);
+  }, [heroPosters.length, overlayActive]);
 
   useEffect(() => () => {
     if (heroInteractionTimeoutRef.current) window.clearTimeout(heroInteractionTimeoutRef.current);
@@ -1936,14 +1976,14 @@ export default function MCUViewer() {
 
   const goToNextHero = useCallback(() => {
     if (!heroPosters.length) return;
-    pauseHeroAutoSlide(2800);
+    pauseHeroAutoSlide(10000);
     heroForceRecenterRef.current = true;
     setHeroIndex(i => (i + 1) % heroPosters.length);
   }, [heroPosters.length, pauseHeroAutoSlide]);
 
   const goToPrevHero = useCallback(() => {
     if (!heroPosters.length) return;
-    pauseHeroAutoSlide(2800);
+    pauseHeroAutoSlide(10000);
     heroForceRecenterRef.current = true;
     setHeroIndex(i => (i - 1 + heroPosters.length) % heroPosters.length);
   }, [heroPosters.length, pauseHeroAutoSlide]);
@@ -1953,7 +1993,7 @@ export default function MCUViewer() {
     if (!horizontalIntent) return;
     const horizontalDelta = e.shiftKey ? e.deltaY : e.deltaX;
     if (!horizontalDelta) return;
-    pauseHeroAutoSlide(2600);
+    pauseHeroAutoSlide(10000);
     e.currentTarget.scrollBy({ left: horizontalDelta * 2.4, behavior: 'auto' });
     e.preventDefault();
   }, [pauseHeroAutoSlide]);
@@ -2457,7 +2497,7 @@ export default function MCUViewer() {
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
     setThemeTransitioning(true);
-    const timer = window.setTimeout(() => setThemeTransitioning(false), performanceMode ? 180 : 420);
+    const timer = window.setTimeout(() => setThemeTransitioning(false), 720);
     return () => window.clearTimeout(timer);
   }, [appearanceMode, darkMode, themeMode, performanceMode]);
   useEffect(() => {
@@ -2651,21 +2691,55 @@ export default function MCUViewer() {
   const buildUiExperienceCache = useCallback(async (mode = 'view') => {
     if (uiBuildState.active) return;
     const source = mode === 'all' ? items : mode === 'core' ? items.filter(item => coreIds.has(item.id)) : filtered;
-    const posterTargets = source.slice(0, mode === 'view' ? 48 : 120).map(item => posterSrc(item)).filter(Boolean);
-    setUiBuildState({ active: true, done: 0, total: posterTargets.length, message: `Preparing ${posterTargets.length} UI poster layers…` });
+    const visibleSource = source.slice(0, mode === 'view' ? 64 : 160);
+    const posterTargets = visibleSource.map(item => posterSrc(item)).filter(Boolean);
+    const uiTasks = [
+      ...posterTargets.map(src => ({ type: 'poster', src })),
+      { type: 'fonts' },
+      { type: 'layout' },
+      { type: 'rows' },
+      { type: 'controls' },
+    ];
+    setUiBuildState({ active: true, done: 0, total: uiTasks.length, message: `Preparing ${uiTasks.length} UI layers…` });
     let done = 0;
+    const complete = (message) => {
+      done += 1;
+      setUiBuildState({ active: true, done, total: uiTasks.length, message });
+    };
+
     for (let i = 0; i < posterTargets.length; i += 4) {
       const batch = posterTargets.slice(i, i + 4);
       await new Promise(resolve => runWhenIdle(async () => {
         await Promise.allSettled(batch.map(preloadHeroPoster));
-        done += batch.length;
-        setUiBuildState({ active: true, done, total: posterTargets.length, message: `Built UI cache ${done}/${posterTargets.length}` });
+        batch.forEach(() => complete(`Decoded poster layers ${Math.min(done + 1, posterTargets.length)}/${posterTargets.length}`));
         resolve();
       }, 650));
-      await wait(16);
+      await wait(8);
     }
-    scheduleStorageWrite('mcu-ui-build-cache-v1', JSON.stringify({ enabled: true, mode, builtAt: new Date().toISOString(), count: posterTargets.length }));
-    setUiBuildState({ active: false, done, total: posterTargets.length, message: `UI build cache ready for ${posterTargets.length} poster layers.` });
+
+    await new Promise(resolve => runWhenIdle(async () => {
+      await document.fonts?.ready?.catch?.(() => {});
+      complete('Fonts and text metrics warmed.');
+      resolve();
+    }, 700));
+    await new Promise(resolve => window.requestAnimationFrame(() => {
+      document.querySelectorAll('.header-brand,.hero-carousel-shell,.phase-header-card,.rrow,.bottom-action-dock,.settings-card').forEach(node => node.getBoundingClientRect());
+      complete('Layout geometry cached.');
+      resolve();
+    }));
+    await new Promise(resolve => runWhenIdle(() => {
+      const rowMetrics = visibleSource.slice(0, 120).map(item => ({ id: item.id, title: item.title, phase: item.phase, status: item.status, type: item.type }));
+      scheduleStorageWrite('mcu-ui-row-manifest-v1', JSON.stringify({ mode, builtAt: new Date().toISOString(), rows: rowMetrics }));
+      complete('Row component manifest built.');
+      resolve();
+    }, 700));
+    await new Promise(resolve => runWhenIdle(() => {
+      document.querySelectorAll('button,input,select,textarea').forEach(node => { node.classList.add('ui-control-warmed'); });
+      complete('Interactive controls warmed.');
+      resolve();
+    }, 700));
+    scheduleStorageWrite('mcu-ui-build-cache-v1', JSON.stringify({ enabled: true, mode, builtAt: new Date().toISOString(), posters: posterTargets.length, components: uiTasks.length - posterTargets.length }));
+    setUiBuildState({ active: false, done, total: uiTasks.length, message: `UI build cache ready: ${posterTargets.length} posters + ${uiTasks.length - posterTargets.length} component layers.` });
   }, [coreIds, filtered, items, posterSrc, uiBuildState.active]);
 
   useEffect(() => {
@@ -3207,7 +3281,7 @@ export default function MCUViewer() {
       <div className="theme-transition-loader" aria-hidden={!themeTransitioning}><span />Retuning theme</div>
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} settingsOpen={settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
+      <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} settingsOpen={settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onDismissBackdrop={suppressNextDocumentClick} onOpenSettings={toggleSettingsPanel}>
         <div className="sidebar-redesign">
           <section className="sidebar-panel sidebar-panel--brand">
             <p className="sidebar-kicker">{universe === 'dc' ? 'Justice Network' : 'Avengers Network'}</p>
@@ -3264,7 +3338,7 @@ export default function MCUViewer() {
         </div>
       </SidebarMenu>
 
-      <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} performanceMode={performanceMode} onClose={closeSettings}>
+      <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} performanceMode={performanceMode} onClose={closeSettings} onDismissBackdrop={suppressNextDocumentClick}>
   <div className="settings-redesign">
     <section className="settings-hero-card">
       <div>
@@ -3383,9 +3457,9 @@ export default function MCUViewer() {
             <div className="hero-carousel-track"
               ref={heroRailRef}
               onWheel={handleHeroWheel}
-              onScroll={() => { if (!heroProgrammaticScrollRef.current) pauseHeroAutoSlide(1800); }}
-              onPointerDown={() => pauseHeroAutoSlide(3200)}
-              onTouchStart={() => pauseHeroAutoSlide(3200)}>
+              onScroll={() => { if (!heroProgrammaticScrollRef.current) pauseHeroAutoSlide(10000); }}
+              onPointerDown={() => pauseHeroAutoSlide(10000)}
+              onTouchStart={() => pauseHeroAutoSlide(10000)}>
               {visibleHeroPosters.map(({ src, item: heroItem }, idx) => {
               const isActive = src === activeHeroSrc;
               return (
@@ -4313,6 +4387,7 @@ export default function MCUViewer() {
         fetchState={posterFetchState}
         onSkip={() => { safeLocalStorageSetItem('mcu-first-setup-v1', 'done'); setSetupOpen(false); }}
         onFinish={() => { safeLocalStorageSetItem('mcu-first-setup-v1', 'done'); setSetupOpen(false); }}
+        onRequestClose={() => { suppressNextDocumentClick(); safeLocalStorageSetItem('mcu-first-setup-v1', 'done'); setSetupOpen(false); }}
         spoilerSafeMode={spoilerSafeMode}
         setSpoilerSafeMode={setSpoilerSafeMode}
         performanceMode={performanceMode}
