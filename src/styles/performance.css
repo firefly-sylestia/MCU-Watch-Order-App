@@ -30,3 +30,79 @@
   transition-property: background, border-color, transform;
   transition-duration: 120ms;
 }
+
+/* Default fluid-mode optimizations for Vercel builds: keep the full UI, but
+   isolate expensive surfaces and keep motion on compositor-friendly properties. */
+.app-scroll-shell {
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable both-edges;
+}
+
+.search-page-shell,
+.floating-controls,
+.bottom-action-dock,
+.navigation-shell,
+.settings-menu,
+.detail-drawer,
+.trailer-overlay {
+  contain: layout style paint;
+}
+
+.hero-backdrop-image,
+.hero-backdrop-blend,
+.motion-section,
+.navigation-shell,
+.dropdown-pop,
+.dropdown-pop-up,
+.search-page-panel,
+.curvy-panel,
+.rrow {
+  backface-visibility: hidden;
+}
+
+.theme-transition-loader,
+.search-page-panel,
+.sidebar-panel,
+.rrow,
+.fpill,
+.filters-trigger,
+.navigation-control-btn {
+  transition-property: transform, opacity, border-color, background-color, color, box-shadow;
+}
+
+.hero-backdrop-image {
+  will-change: opacity, transform;
+}
+
+.motion-section.is-visible,
+.phase-rows-full .phase-row-virtualized,
+.navigation-shell[data-state="closed"] {
+  will-change: auto;
+}
+
+.search-route-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.search-route-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  max-width: min(58vw, 420px);
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 32%, var(--theme-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface));
+  color: var(--theme-text-secondary);
+  font-family: var(--font-marvel-ui);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
