@@ -87,3 +87,223 @@
     animation: none !important;
   }
 }
+
+/* GPU-friendly polish layer: keeps theme changes and neon surfaces smooth without heavy layout work. */
+.ui-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  contain: paint;
+  isolation: isolate;
+}
+
+.ui-accelerated .hero-backdrop-image,
+.ui-accelerated .hero-carousel-track,
+.ui-accelerated .hero-carousel-card,
+.ui-accelerated .rrow,
+.ui-accelerated .poster-shell,
+.ui-accelerated .glass-panel,
+.ui-accelerated .sidebar-menu,
+.ui-accelerated .settings-shell,
+.ui-accelerated .detail-card,
+.ui-accelerated .theme-transition-veil {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.phase-row-virtualized,
+.hero-carousel-card,
+.search-page-panel,
+.settings-card,
+.settings-hero-card,
+.sidebar-panel,
+.detail-export-panel,
+.analytics-shell .ui-panel {
+  content-visibility: auto;
+  contain: layout paint style;
+}
+
+.phase-row-virtualized { contain-intrinsic-size: 1px var(--row-min-h, 86px); }
+.hero-carousel-card { contain-intrinsic-size: 170px 260px; }
+.settings-card,
+.settings-hero-card,
+.sidebar-panel,
+.detail-export-panel { contain-intrinsic-size: 1px 160px; }
+
+.theme-transition-veil {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-modal, 240) + 40);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  background:
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 28%),
+    color-mix(in srgb, var(--theme-bg) 8%, transparent);
+  backdrop-filter: blur(0px) saturate(120%);
+  -webkit-backdrop-filter: blur(0px) saturate(120%);
+  transition: opacity 220ms var(--ease-out), visibility 220ms var(--ease-out), backdrop-filter 280ms var(--ease-out);
+}
+
+.theme-transition-veil[data-active="true"] {
+  opacity: 1;
+  visibility: visible;
+  backdrop-filter: blur(4px) saturate(145%);
+  -webkit-backdrop-filter: blur(4px) saturate(145%);
+}
+
+.theme-transition-orb {
+  width: clamp(86px, 14vw, 140px);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 64%, transparent);
+  background:
+    conic-gradient(from 90deg, var(--theme-accent), var(--theme-accent-alt), var(--theme-accent)),
+    radial-gradient(circle, color-mix(in srgb, var(--theme-bg) 8%, transparent), transparent 68%);
+  box-shadow:
+    0 0 30px color-mix(in srgb, var(--theme-accent) 48%, transparent),
+    0 0 80px color-mix(in srgb, var(--theme-accent-alt) 26%, transparent);
+  mask: radial-gradient(circle, transparent 43%, #000 45% 58%, transparent 60%);
+  -webkit-mask: radial-gradient(circle, transparent 43%, #000 45% 58%, transparent 60%);
+  animation: themeOrbSpin 760ms linear infinite;
+}
+
+.theme-transition-label {
+  position: absolute;
+  margin-top: clamp(132px, 19vw, 190px);
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 34%, var(--theme-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--theme-surface) 78%, transparent);
+  color: var(--theme-text-secondary);
+  font: 800 10px/1 var(--font-marvel-ui);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--theme-accent) 18%, transparent);
+}
+
+@keyframes themeOrbSpin {
+  to { transform: rotate(1turn); }
+}
+
+.theme-transition-active .hero-backdrop-image,
+.theme-transition-active .hero-carousel-card,
+.theme-transition-active .rrow,
+.theme-transition-active .glass-panel,
+.theme-transition-active .fpill,
+.theme-transition-active .wbtn,
+.theme-transition-active .theme-btn {
+  transition-duration: 420ms !important;
+  transition-timing-function: var(--ease-smooth, cubic-bezier(.2,.8,.2,1)) !important;
+}
+
+[data-theme="neon"] {
+  --neon-line: color-mix(in srgb, var(--theme-accent) 54%, transparent);
+  --neon-line-soft: color-mix(in srgb, var(--theme-accent-alt) 24%, transparent);
+  --neon-glow: 0 0 14px color-mix(in srgb, var(--theme-accent) 34%, transparent), 0 0 36px color-mix(in srgb, var(--theme-accent-alt) 18%, transparent);
+}
+
+[data-theme="neon"] .glass-panel,
+[data-theme="neon"] .glass-surface,
+[data-theme="neon"] .sidebar-panel,
+[data-theme="neon"] .settings-card,
+[data-theme="neon"] .settings-hero-card,
+[data-theme="neon"] .search-page-panel,
+[data-theme="neon"] .phase-rows-full,
+[data-theme="neon"] .detail-export-panel,
+[data-theme="neon"] .analytics-shell,
+[data-theme="neon"] .calendar-section {
+  position: relative;
+  border-color: var(--neon-line) !important;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 8%, transparent), transparent 42%),
+    color-mix(in srgb, var(--theme-surface) 82%, transparent) !important;
+  box-shadow: var(--neon-glow), inset 0 1px 0 color-mix(in srgb, var(--theme-accent) 24%, transparent) !important;
+}
+
+[data-theme="neon"] .rrow,
+[data-theme="neon"] .glass-panel,
+[data-theme="neon"] .hero-carousel-card,
+[data-theme="neon"] .theme-style-card,
+[data-theme="neon"] .theme-accent-card,
+[data-theme="neon"] .fpill,
+[data-theme="neon"] .wbtn,
+[data-theme="neon"] .theme-btn,
+[data-theme="neon"] .meta-chip,
+[data-theme="neon"] .post-credit-node,
+[data-theme="neon"] .trailer-variant-chip {
+  border-color: var(--neon-line) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-accent) 10%, transparent), 0 0 18px color-mix(in srgb, var(--theme-accent) 16%, transparent) !important;
+}
+
+[data-theme="neon"] .rrow::after,
+[data-theme="neon"] .glass-panel::after,
+[data-theme="neon"] .sidebar-panel::after,
+[data-theme="neon"] .settings-card::after,
+[data-theme="neon"] .settings-hero-card::after,
+[data-theme="neon"] .detail-export-panel::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 1px solid var(--neon-line-soft);
+  border-radius: calc(var(--radius-md, 12px) - 2px);
+  pointer-events: none;
+  opacity: .72;
+}
+
+[data-theme="neon"] .header-title-mcu,
+[data-theme="neon"] .feature-header__title,
+[data-theme="neon"] .settings-hero-card h2,
+[data-theme="neon"] .settings-card h3,
+[data-theme="neon"] .title-main,
+[data-theme="neon"] .hero-carousel-title,
+[data-theme="neon"] .detail-export-title {
+  color: var(--theme-text) !important;
+  text-shadow: 0 0 10px color-mix(in srgb, var(--theme-accent) 44%, transparent), 0 0 24px color-mix(in srgb, var(--theme-accent-alt) 22%, transparent);
+}
+
+[data-theme="neon"] .poster-shell,
+[data-theme="neon"] .poster,
+[data-theme="neon"] .hero-carousel-poster {
+  border-color: color-mix(in srgb, var(--theme-accent-alt) 40%, var(--theme-border)) !important;
+  filter: saturate(1.08) contrast(1.04);
+}
+
+[data-theme="neon"][data-color-mode="light"] .glass-panel,
+[data-theme="neon"][data-color-mode="light"] .glass-surface,
+[data-theme="neon"][data-color-mode="light"] .sidebar-panel,
+[data-theme="neon"][data-color-mode="light"] .settings-card,
+[data-theme="neon"][data-color-mode="light"] .settings-hero-card,
+[data-theme="neon"][data-color-mode="light"] .search-page-panel,
+[data-theme="neon"][data-color-mode="light"] .phase-rows-full,
+[data-theme="neon"][data-color-mode="light"] .detail-export-panel {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 9%, #ffffff), color-mix(in srgb, var(--theme-surface) 92%, #ffffff)) !important;
+  box-shadow: 0 12px 28px rgba(30, 64, 175, .12), 0 0 22px color-mix(in srgb, var(--theme-accent) 18%, transparent) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-transition-veil,
+  .theme-transition-orb,
+  .theme-transition-active * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .theme-transition-veil[data-active="true"] {
+    backdrop-filter: blur(2px) saturate(130%);
+    -webkit-backdrop-filter: blur(2px) saturate(130%);
+  }
+
+  [data-theme="neon"] .rrow::after,
+  [data-theme="neon"] .glass-panel::after,
+  [data-theme="neon"] .sidebar-panel::after,
+  [data-theme="neon"] .settings-card::after,
+  [data-theme="neon"] .settings-hero-card::after,
+  [data-theme="neon"] .detail-export-panel::after {
+    opacity: .46;
+  }
+}

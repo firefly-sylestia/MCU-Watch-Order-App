@@ -707,6 +707,7 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
 const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
   const shellRef = useRef(null);
   const rowHeightsRef = useRef(new Map());
+  const measureFrameRef = useRef(0);
   const [scrollY, setScrollY] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(() => (typeof window !== 'undefined' ? window.innerHeight : 900));
   const [measuredVersion, setMeasuredVersion] = useState(0);
@@ -793,8 +794,17 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
     const prevHeight = rowHeightsRef.current.get(rowId);
     if (nextHeight > 0 && prevHeight !== nextHeight) {
       rowHeightsRef.current.set(rowId, nextHeight);
-      setMeasuredVersion(v => v + 1);
+      if (!measureFrameRef.current) {
+        measureFrameRef.current = window.requestAnimationFrame(() => {
+          measureFrameRef.current = 0;
+          setMeasuredVersion(v => v + 1);
+        });
+      }
     }
+  }, []);
+
+  useEffect(() => () => {
+    if (measureFrameRef.current) window.cancelAnimationFrame(measureFrameRef.current);
   }, []);
 
   return (
@@ -933,6 +943,8 @@ export default function MCUViewer() {
   const sortMenuRef = useRef(null);
   const [scrollCheckpoint, setScrollCheckpoint] = useState(initialUiState.scrollTop);
   const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
+  const [themeTransitioning, setThemeTransitioning] = useState(false);
+  const themeTransitionMountedRef = useRef(false);
 
   useEffect(() => {
     setItems(universe === 'dc' ? DC_RAW : RAW);
@@ -2444,6 +2456,28 @@ export default function MCUViewer() {
     root.dataset.theme = normalizeAppearanceMode(appearanceMode);
     root.style.colorScheme = darkMode ? 'dark' : 'light';
   }, [appearanceMode, darkMode]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
+    const root = document.documentElement;
+    const cores = navigator.hardwareConcurrency || 4;
+    const memory = navigator.deviceMemory || 4;
+    root.dataset.deviceTier = cores >= 8 && memory >= 6 ? 'high' : cores >= 4 && memory >= 3 ? 'balanced' : 'efficient';
+    if (!themeTransitionMountedRef.current) {
+      themeTransitionMountedRef.current = true;
+      return undefined;
+    }
+    root.classList.add('theme-is-transitioning');
+    setThemeTransitioning(true);
+    const timer = window.setTimeout(() => {
+      root.classList.remove('theme-is-transitioning');
+      setThemeTransitioning(false);
+    }, 520);
+    return () => {
+      window.clearTimeout(timer);
+      root.classList.remove('theme-is-transitioning');
+    };
+  }, [appearanceMode, darkMode, themeMode, universe]);
   useEffect(() => { scheduleStorageWrite('mcu-marvel-lang-v1', marvelLangMode ? '1' : '0'); }, [marvelLangMode]);
   useEffect(() => { scheduleStorageWrite('mcu-export-prefs-v1', JSON.stringify({ font: exportFont, textScale: exportTextScale })); }, [exportFont, exportTextScale]);
 
@@ -2979,11 +3013,13 @@ export default function MCUViewer() {
   };
 
   // ─── Per-theme accent + distinctive surface tints ─────────────────────────
-  const activeThemeVars = resolveThemeTokens({ appearanceMode, characterTheme: themeMode, darkMode, universe });
+  const activeThemeVars = useMemo(() => (
+    resolveThemeTokens({ appearanceMode, characterTheme: themeMode, darkMode, universe })
+  ), [appearanceMode, themeMode, darkMode, universe]);
 
-  const semanticThemeVars = buildSemanticThemeVars(darkMode);
+  const semanticThemeVars = useMemo(() => buildSemanticThemeVars(darkMode), [darkMode]);
 
-  const cssThemeVars = {
+  const cssThemeVars = useMemo(() => ({
     ...semanticThemeVars,
     ...activeThemeVars,
     '--theme-text-disabled': darkMode ? 'rgba(186, 200, 222, 0.56)' : 'rgba(77, 91, 111, 0.56)',
@@ -3036,7 +3072,8 @@ export default function MCUViewer() {
     '--theme-watched-bg': darkMode
       ? `linear-gradient(100deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 18%, rgba(12,18,34,0.62)), color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 10%, rgba(10,20,32,0.54)))`
       : `linear-gradient(100deg, color-mix(in srgb, ${activeThemeVars['--theme-accent']} 14%, #ffffff), color-mix(in srgb, ${activeThemeVars['--theme-accent-alt']} 8%, #f7f5ef))`,
-  };
+    '--gpu-layer-opacity': performanceMode ? '0.82' : '1',
+  }), [semanticThemeVars, activeThemeVars, darkMode, performanceMode]);
   const routeMode = analyticsOpen || settingsOpen ? 'utility' : 'home';
 
   // Count active filters for the collapsed bar badge
@@ -3129,9 +3166,14 @@ export default function MCUViewer() {
     ? `${Math.max(heroBackdropScale - 16, 112)}% auto`
     : `auto ${Math.max(heroBackdropScale - 8, 96)}%`;
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={normalizeAppearanceMode(appearanceMode)} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={normalizeAppearanceMode(appearanceMode)} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ui-accelerated ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${themeTransitioning ? ' theme-transition-active' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
 
+
+      <div className="theme-transition-veil" aria-hidden="true" data-active={themeTransitioning ? 'true' : 'false'}>
+        <span className="theme-transition-orb" />
+        <span className="theme-transition-label">Retuning interface</span>
+      </div>
 
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
         {browseMode !== 'phase' && previousHeroSrc && previousHeroSrc !== currentHeroSrc && (
