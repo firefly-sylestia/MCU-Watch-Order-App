@@ -723,12 +723,27 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
 const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
   const shellRef = useRef(null);
   const rowHeightsRef = useRef(new Map());
-  const [scrollY, setScrollY] = useState(0);
+  const [scrollY, setScrollY] = useState(() => (typeof window !== 'undefined' ? window.scrollY || 0 : 0));
   const [viewportHeight, setViewportHeight] = useState(() => (typeof window !== 'undefined' ? window.innerHeight : 900));
   const [measuredVersion, setMeasuredVersion] = useState(0);
+  const [isNearViewport, setIsNearViewport] = useState(true);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
+    if (typeof window === 'undefined' || typeof IntersectionObserver !== 'function') return undefined;
+    const shell = shellRef.current;
+    if (!shell) return undefined;
+
+    const observer = new IntersectionObserver((entries) => {
+      const nextNear = entries.some(entry => entry.isIntersecting || entry.intersectionRatio > 0);
+      setIsNearViewport(nextNear);
+    }, { rootMargin: '900px 0px 900px 0px', threshold: 0 });
+
+    observer.observe(shell);
+    return () => observer.disconnect();
+  }, [rows.length]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !isNearViewport) return undefined;
     let rafId = 0;
     const schedule = () => {
       if (rafId) return;
@@ -746,16 +761,17 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
       window.removeEventListener('resize', schedule);
       if (rafId) window.cancelAnimationFrame(rafId);
     };
-  }, []);
+  }, [isNearViewport]);
 
   const estimatedRowHeight = 132;
   const estimatedTotalHeight = rows.length * estimatedRowHeight;
-  const computedOverscan = Math.min(12, Math.max(6, Math.round(viewportHeight / 220)));
+  const computedOverscan = Math.min(8, Math.max(4, Math.round(viewportHeight / 280)));
 
   const windowRange = useMemo(() => {
     if (!rows.length) return { start: 0, end: -1 };
     const shellRect = shellRef.current?.getBoundingClientRect?.();
-    if (!shellRect) return { start: 0, end: Math.min(rows.length - 1, 26) };
+    if (!shellRect) return { start: 0, end: Math.min(rows.length - 1, 18) };
+    if (!isNearViewport) return { start: 0, end: Math.min(rows.length - 1, 0) };
 
     const listTopInPage = shellRect.top + scrollY;
     const top = Math.max(0, scrollY - listTopInPage);
@@ -785,7 +801,7 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
       start: Math.max(0, start - computedOverscan),
       end: Math.min(rows.length - 1, end + computedOverscan),
     };
-  }, [rows, scrollY, viewportHeight, measuredVersion, computedOverscan]);
+  }, [rows, scrollY, viewportHeight, measuredVersion, computedOverscan, isNearViewport]);
 
   const { topSpacer, bottomSpacer, visibleRows } = useMemo(() => {
     if (!rows.length || windowRange.end < windowRange.start) return { topSpacer: 0, bottomSpacer: 0, visibleRows: [] };
@@ -801,7 +817,7 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
     const total = Math.max(estimatedTotalHeight, measuredTotal);
     const bottomPx = Math.max(0, total - topPx - visiblePx);
     return { topSpacer: topPx, bottomSpacer: bottomPx, visibleRows: subset };
-  }, [rows, windowRange, estimatedTotalHeight]);
+  }, [rows, windowRange, estimatedTotalHeight, measuredVersion]);
 
   const setRowRef = useCallback((rowId) => (node) => {
     if (!node || !rowId) return;
@@ -814,7 +830,7 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
   }, []);
 
   return (
-    <div className="phase-rows-full" ref={shellRef}>
+    <div className={`phase-rows-full ${isNearViewport ? 'is-near-viewport' : 'is-scroll-idle'}`} ref={shellRef}>
       {topSpacer > 0 && <div style={{ height: topSpacer }} aria-hidden="true" />}
       {visibleRows.map(({ item, idx }) => (
         <div key={item.id} ref={setRowRef(item.id)} className="phase-row-virtualized">
@@ -3278,7 +3294,7 @@ export default function MCUViewer() {
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '6%' : '3%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '5%' : '2.5%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.12 : 0.06, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
       </div>
 
-      <div className="theme-transition-loader" aria-hidden={!themeTransitioning}><span />Retuning theme</div>
+      <div className="theme-transition-loader" role="status" aria-live="polite" aria-hidden={!themeTransitioning}><span />Applying theme</div>
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} settingsOpen={settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onDismissBackdrop={suppressNextDocumentClick} onOpenSettings={toggleSettingsPanel}>

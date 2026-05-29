@@ -176,3 +176,34 @@
 /* Unified layout motion/spacing */
 #center{gap:var(--space-lg);padding:var(--space-lg) var(--space-md);animation:none !important;}
 #next-steps>div{padding:var(--space-lg) var(--space-md);}
+
+/* Long-page rendering optimizations: skip offscreen phase work while preserving scroll height. */
+.section-up,
+.calendar-section,
+.list-panel {
+  content-visibility: auto;
+  contain: layout paint style;
+  contain-intrinsic-size: auto 760px;
+}
+
+.phase-rows-full {
+  contain: layout paint style;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 520px;
+}
+
+.phase-row-virtualized {
+  contain: layout paint style;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 132px;
+}
+
+.poster-shell,
+.poster {
+  contain: layout paint;
+}
+
+html.native-scroll-ready,
+html.native-scroll-ready body {
+  scroll-behavior: auto;
+}

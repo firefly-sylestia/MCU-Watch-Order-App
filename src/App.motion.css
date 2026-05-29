@@ -87,3 +87,49 @@
     animation: none !important;
   }
 }
+
+/* Performance-first motion pass: compositor-only, no scroll-linked parallax. */
+.performance-mode .motion-section,
+.performance-mode .motion-pop,
+.performance-mode .phase-rows-full .phase-row-virtualized,
+.scroll-performance .motion-section,
+.scroll-performance .phase-rows-full .phase-row-virtualized {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+  will-change: auto !important;
+}
+
+.motion-section.in-view .phase-header-card {
+  transform: none;
+}
+
+.phase-rows-full.is-scroll-idle .phase-row-virtualized {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+
+.theme-transition-loader::after {
+  content: "";
+  width: clamp(96px, 18vw, 180px);
+  height: 2px;
+  margin-top: 18px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--theme-accent), var(--theme-accent-alt), transparent);
+  animation: shimmerLoad 900ms ease-in-out infinite alternate;
+}
+
+@keyframes shimmerLoad {
+  from { opacity: .45; transform: scaleX(.72); }
+  to { opacity: 1; transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-transition-loader span,
+  .theme-transition-loader::after {
+    animation: none !important;
+  }
+}
