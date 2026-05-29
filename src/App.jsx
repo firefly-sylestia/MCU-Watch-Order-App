@@ -894,6 +894,14 @@ export default function MCUViewer() {
   const [fabMenuOpen, setFabMenuOpen] = useState(true);
   const [fabMinimized, setFabMinimized] = useState(false);
   const [browseMode, setBrowseMode] = useState('home');
+  const navigateHome = useCallback(() => {
+    setDetailItem(null);
+    setSettingsOpen(false);
+    setAnalyticsOpen(false);
+    setTrailerOpen(false);
+    setTrailerExpanded(false);
+    setBrowseMode('home');
+  }, []);
   const openSearchMode = useCallback(() => {
     setBrowseMode('search');
     setListMode('extended');
@@ -1042,14 +1050,6 @@ export default function MCUViewer() {
     setSettingsOpen(false);
     setAnalyticsOpen(true);
   }, []);
-  const handleInAppBack = useCallback(() => {
-    if (browseMode === 'search' || browseMode === 'phase') {
-      setBrowseMode('home');
-      return true;
-    }
-    return false;
-  }, [browseMode]);
-
   const [desktopTextScale, setDesktopTextScale] = useState(initialUiState.desktopTextScale);
   const [textScaleEnabled, setTextScaleEnabled] = useState(initialUiState.textScaleEnabled);
   const { isDesktopViewport } = useResponsiveLayout();
@@ -1094,15 +1094,13 @@ export default function MCUViewer() {
 
   useOverlayNavigation({
     sidebarOpen,
-    settingsOpen,
-    detailItem,
-    analyticsOpen,
+    settingsOpen: false,
+    detailItem: null,
+    analyticsOpen: false,
     onCloseDetail: closeDetail,
     onCloseAnalytics: closeAnalytics,
     onCloseSettings: closeSettings,
     onCloseSidebar: closeSidebar,
-    hasInAppBackStep: browseMode === 'search' || browseMode === 'phase',
-    onInAppBack: handleInAppBack,
   });
 
   const currentPhases = universe === 'dc' ? DC_PHASES : PHASES;
@@ -1670,9 +1668,15 @@ export default function MCUViewer() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
-    if (currentPath === canonicalRoute) return;
-    const method = currentPath === '/' ? 'replaceState' : 'pushState';
-    window.history[method]({}, '', canonicalRoute);
+    const nextState = { ...(window.history.state || {}), mcuRoute: canonicalRoute };
+    if (currentPath === canonicalRoute) {
+      if (window.history.state?.mcuRoute !== canonicalRoute) {
+        window.history.replaceState(nextState, '', canonicalRoute);
+      }
+      return;
+    }
+    const method = currentPath === '/' || canonicalRoute === ROUTE_FALLBACK ? 'replaceState' : 'pushState';
+    window.history[method](nextState, '', canonicalRoute);
   }, [canonicalRoute]);
   useEffect(() => {
     const onDocPointerDown = (event) => {
@@ -3613,7 +3617,7 @@ export default function MCUViewer() {
         <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 16px 12px' }}>
           <button
             className="fpill"
-            onClick={() => setBrowseMode('home')}
+            onClick={navigateHome}
             style={{ minHeight: 42, padding: '0 18px', fontSize: 13 }}
           >
             <ChevDown size={14}/> Back to Home Carousel
@@ -3628,7 +3632,7 @@ export default function MCUViewer() {
               <div style={{ fontSize: 11, letterSpacing: 1.8, textTransform: 'uppercase', color: T.textMuted }}>{tUniverse('S.H.I.E.L.D. Intel Search')}</div>
               <div style={{ fontSize: 20, fontWeight: 800, color: T.text }}>{tUniverse('Locate any Marvel story node')}</div>
             </div>
-            <button className="fpill" onClick={() => setBrowseMode('home')}><ChevDown size={14}/> {tUniverse('Back to Home')}</button>
+            <button className="fpill" onClick={navigateHome}><ChevDown size={14}/> {tUniverse('Back to Home')}</button>
           </div>
           <div className="search-page-panel" style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 18, padding: 14, background: 'color-mix(in srgb, var(--theme-surface) 84%, transparent)', boxShadow: '0 10px 30px color-mix(in srgb, #000 16%, transparent)' }}>
             <div style={{ position: 'relative' }}>

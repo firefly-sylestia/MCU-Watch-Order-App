@@ -9,21 +9,18 @@ export function useOverlayNavigation({
   onCloseAnalytics,
   onCloseSettings,
   onCloseSidebar,
-  hasInAppBackStep = false,
-  onInAppBack = null,
 }) {
   const hasHistoryEntryRef = useRef(false);
 
   useEffect(() => {
     const hasOverlay = Boolean(sidebarOpen || settingsOpen || detailItem || analyticsOpen);
-    const hasBackStep = hasOverlay || hasInAppBackStep;
-    if (!hasBackStep) {
+    if (!hasOverlay) {
       hasHistoryEntryRef.current = false;
       return;
     }
 
     if (!hasHistoryEntryRef.current) {
-      window.history.pushState({ mcuOverlay: true, hasOverlay, hasInAppBackStep: Boolean(hasInAppBackStep) }, '');
+      window.history.pushState({ mcuOverlay: true, hasOverlay }, '');
       hasHistoryEntryRef.current = true;
     }
 
@@ -33,7 +30,6 @@ export function useOverlayNavigation({
       else if (analyticsOpen) onCloseAnalytics();
       else if (settingsOpen) onCloseSettings();
       else if (sidebarOpen) onCloseSidebar();
-      else if (hasInAppBackStep && typeof onInAppBack === 'function') onInAppBack();
       window.requestAnimationFrame(() => window.scrollTo({ top: currentScroll, behavior: 'instant' }));
       hasHistoryEntryRef.current = false;
     };
@@ -49,7 +45,5 @@ export function useOverlayNavigation({
     onCloseAnalytics,
     onCloseSettings,
     onCloseSidebar,
-    hasInAppBackStep,
-    onInAppBack,
   ]);
 }
