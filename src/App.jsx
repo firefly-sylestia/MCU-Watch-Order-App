@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, useReducer } from 'react';
+import { flushSync } from 'react-dom';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
@@ -296,6 +297,46 @@ const preloadHeroPoster = (src) => {
   });
   heroPosterLoadPromises.set(src, promise);
   return promise;
+};
+
+
+const UI_WARMUP_CLASSNAMES = [
+  'header-brand',
+  'hero-carousel-shell',
+  'hero-carousel-card',
+  'curvy-panel',
+  'list-panel',
+  'phase-header-card',
+  'phase-rows-full',
+  'rrow',
+  'poster-shell',
+  'settings-menu',
+  'settings-card',
+  'settings-build-panel',
+  'analytics-shell',
+  'detail-card',
+  'dropdown-pop',
+  'bottom-action-dock',
+  'fpill',
+];
+
+const warmUiComponentSurfaces = () => {
+  if (typeof document === 'undefined') return 0;
+  const host = document.createElement('div');
+  host.className = 'ui-warmup-stage';
+  host.setAttribute('aria-hidden', 'true');
+  UI_WARMUP_CLASSNAMES.forEach((className) => {
+    const node = document.createElement(className === 'fpill' ? 'button' : 'div');
+    node.className = className;
+    node.textContent = className === 'fpill' ? 'Warm control' : '';
+    host.appendChild(node);
+  });
+  document.body.appendChild(host);
+  const warmed = host.querySelectorAll('*').length;
+  host.getBoundingClientRect();
+  host.querySelectorAll('*').forEach(node => node.getBoundingClientRect());
+  (typeof window !== 'undefined' && window.requestAnimationFrame ? window.requestAnimationFrame : setTimeout)(() => host.remove());
+  return warmed;
 };
 
 const hashStringToUnit = (value) => {
@@ -923,6 +964,7 @@ export default function MCUViewer() {
   const [uiBuildCacheEnabled, setUiBuildCacheEnabled] = useState(initialUiState.uiBuildCacheEnabled);
   const [uiBuildState, setUiBuildState] = useState({ active: false, message: '', done: 0, total: 0 });
   const [themeTransitioning, setThemeTransitioning] = useState(false);
+  const [backdropMotionLocked, setBackdropMotionLocked] = useState(false);
   const [scrollTuning] = useState({ desktopMultiplier: 5, desktopDeltaCap: 7, mobileMultiplier: 5, mobileDeltaCap: 7 });
   const [genreFilter] = useState('all');
   const [myLikes,        setMyLikes]        = useState({});
@@ -1043,7 +1085,44 @@ export default function MCUViewer() {
   const metadataBuildRef = useRef({ paused: false, running: false });
   const detailRequestRef = useRef(0);
   const desktopSmoothScrollStateRef = useRef({ raf: null, velocity: 0, lastTs: 0 });
+  const themeRetuneTimerRef = useRef(null);
+  const backdropScrollTimerRef = useRef(null);
 
+  const showThemeLoaderNow = useCallback(() => {
+    if (themeRetuneTimerRef.current && typeof window !== 'undefined') window.clearTimeout(themeRetuneTimerRef.current);
+    flushSync(() => setThemeTransitioning(true));
+  }, []);
+
+  const finishThemeLoaderLater = useCallback((delay = performanceMode ? 180 : 420) => {
+    if (themeRetuneTimerRef.current && typeof window !== 'undefined') window.clearTimeout(themeRetuneTimerRef.current);
+    themeRetuneTimerRef.current = window.setTimeout(() => setThemeTransitioning(false), delay);
+  }, [performanceMode]);
+
+  const retuneThemeInBackground = useCallback((applyThemeChange) => {
+    if (typeof window === 'undefined') {
+      applyThemeChange?.();
+      return;
+    }
+    showThemeLoaderNow();
+    window.requestAnimationFrame(() => {
+      window.setTimeout(() => {
+        applyThemeChange?.();
+        finishThemeLoaderLater();
+      }, 0);
+    });
+  }, [finishThemeLoaderLater, showThemeLoaderNow]);
+
+  const updateDarkMode = useCallback((next) => {
+    retuneThemeInBackground(() => setDarkMode(typeof next === 'function' ? next : Boolean(next)));
+  }, [retuneThemeInBackground]);
+
+  const updateAppearanceMode = useCallback((next) => {
+    retuneThemeInBackground(() => setAppearanceMode(normalizeAppearanceMode(typeof next === 'function' ? next(appearanceMode) : next)));
+  }, [appearanceMode, retuneThemeInBackground]);
+
+  const updateThemeMode = useCallback((next) => {
+    retuneThemeInBackground(() => setThemeMode(typeof next === 'function' ? next : next));
+  }, [retuneThemeInBackground]);
 
 
   useOverlayNavigation({
@@ -1074,6 +1153,23 @@ export default function MCUViewer() {
     window.__overlayActive = overlayActive;
     return () => { window.__overlayActive = false; };
   }, [overlayActive]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const lockBackdropDuringScroll = () => {
+      setBackdropMotionLocked(true);
+      if (backdropScrollTimerRef.current) window.clearTimeout(backdropScrollTimerRef.current);
+      backdropScrollTimerRef.current = window.setTimeout(() => setBackdropMotionLocked(false), 180);
+    };
+    window.addEventListener('scroll', lockBackdropDuringScroll, { passive: true });
+    const main = mainRef.current;
+    main?.addEventListener?.('scroll', lockBackdropDuringScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', lockBackdropDuringScroll);
+      main?.removeEventListener?.('scroll', lockBackdropDuringScroll);
+      if (backdropScrollTimerRef.current) window.clearTimeout(backdropScrollTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const bodyStyle = document.body.style;
@@ -2456,10 +2552,14 @@ export default function MCUViewer() {
   useEffect(() => { scheduleStorageWrite('mcu-appearance-mode-v1', appearanceMode); }, [appearanceMode]);
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
-    setThemeTransitioning(true);
-    const timer = window.setTimeout(() => setThemeTransitioning(false), performanceMode ? 180 : 420);
-    return () => window.clearTimeout(timer);
-  }, [appearanceMode, darkMode, themeMode, performanceMode]);
+    if (!themeTransitioning) return undefined;
+    finishThemeLoaderLater(performanceMode ? 180 : 420);
+    return undefined;
+  }, [appearanceMode, darkMode, themeMode, performanceMode, themeTransitioning, finishThemeLoaderLater]);
+
+  useEffect(() => () => {
+    if (themeRetuneTimerRef.current && typeof window !== 'undefined') window.clearTimeout(themeRetuneTimerRef.current);
+  }, []);
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const root = document.documentElement;
@@ -2555,7 +2655,7 @@ export default function MCUViewer() {
       if (event.key === sequence[index]) {
         index += 1;
         if (index === sequence.length) {
-          setThemeMode('mystic');
+          updateThemeMode('mystic');
           index = 0;
         }
       } else {
@@ -2564,7 +2664,7 @@ export default function MCUViewer() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
+  }, [updateThemeMode]);
 
 
   const hasCompleteMetadata = (item, posterValues = posterCache, metaValues = metaCache) => {
@@ -2651,21 +2751,49 @@ export default function MCUViewer() {
   const buildUiExperienceCache = useCallback(async (mode = 'view') => {
     if (uiBuildState.active) return;
     const source = mode === 'all' ? items : mode === 'core' ? items.filter(item => coreIds.has(item.id)) : filtered;
-    const posterTargets = source.slice(0, mode === 'view' ? 48 : 120).map(item => posterSrc(item)).filter(Boolean);
-    setUiBuildState({ active: true, done: 0, total: posterTargets.length, message: `Preparing ${posterTargets.length} UI poster layers…` });
+    const posterTargets = source.slice(0, mode === 'view' ? 56 : 132).map(item => posterSrc(item)).filter(Boolean);
+    const componentTotal = UI_WARMUP_CLASSNAMES.length;
+    const total = posterTargets.length + componentTotal + 3;
+    setUiBuildState({ active: true, done: 0, total, message: `Preparing ${posterTargets.length} poster layers and ${componentTotal} UI surfaces…` });
     let done = 0;
+
+    await new Promise(resolve => runWhenIdle(() => {
+      const warmed = warmUiComponentSurfaces();
+      done += Math.max(componentTotal, warmed);
+      setUiBuildState({ active: true, done: Math.min(done, total), total, message: `Warmed ${componentTotal} UI components, overlays, and controls.` });
+      resolve();
+    }, 450));
+    await wait(16);
+
+    await new Promise(resolve => runWhenIdle(() => {
+      if (typeof document !== 'undefined') document.documentElement?.style.setProperty('--ui-build-cache-ready', '1');
+      done += 1;
+      setUiBuildState({ active: true, done: Math.min(done, total), total, message: 'Primed theme tokens and layout containment.' });
+      resolve();
+    }, 450));
+
     for (let i = 0; i < posterTargets.length; i += 4) {
       const batch = posterTargets.slice(i, i + 4);
       await new Promise(resolve => runWhenIdle(async () => {
         await Promise.allSettled(batch.map(preloadHeroPoster));
         done += batch.length;
-        setUiBuildState({ active: true, done, total: posterTargets.length, message: `Built UI cache ${done}/${posterTargets.length}` });
+        setUiBuildState({ active: true, done: Math.min(done, total), total, message: `Decoded poster and backdrop layers ${Math.min(done, total)}/${total}` });
         resolve();
       }, 650));
       await wait(16);
     }
-    scheduleStorageWrite('mcu-ui-build-cache-v1', JSON.stringify({ enabled: true, mode, builtAt: new Date().toISOString(), count: posterTargets.length }));
-    setUiBuildState({ active: false, done, total: posterTargets.length, message: `UI build cache ready for ${posterTargets.length} poster layers.` });
+
+    await new Promise(resolve => runWhenIdle(() => {
+      try {
+        const fonts = typeof document !== 'undefined' ? document.fonts : null;
+        fonts?.ready?.then?.(() => {});
+      } catch {}
+      done = total;
+      resolve();
+    }, 450));
+
+    scheduleStorageWrite('mcu-ui-build-cache-v1', JSON.stringify({ enabled: true, mode, builtAt: new Date().toISOString(), posters: posterTargets.length, components: componentTotal }));
+    setUiBuildState({ active: false, done: total, total, message: `UI build cache ready: ${componentTotal} component surfaces and ${posterTargets.length} poster/backdrop layers.` });
   }, [coreIds, filtered, items, posterSrc, uiBuildState.active]);
 
   useEffect(() => {
@@ -3180,8 +3308,10 @@ export default function MCUViewer() {
   const heroBackdropBackgroundSize = isDesktopViewport
     ? `${Math.max(heroBackdropScale - 16, 112)}% auto`
     : `auto ${Math.max(heroBackdropScale - 8, 96)}%`;
+  const freezeBackdropMotion = overlayActive || backdropMotionLocked;
+  const heroBackdropTransition = freezeBackdropMotion || browseMode === 'phase' ? 'none' : undefined;
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={normalizeAppearanceMode(appearanceMode)} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${themeTransitioning ? ' theme-is-transitioning' : ''}${uiBuildCacheEnabled ? ' ui-build-cache-on' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={normalizeAppearanceMode(appearanceMode)} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${themeTransitioning ? ' theme-is-transitioning' : ''}${uiBuildCacheEnabled ? ' ui-build-cache-on' : ''}${overlayActive ? ' overlay-open' : ''}${backdropMotionLocked ? ' backdrop-motion-locked' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
 
 
@@ -3190,18 +3320,18 @@ export default function MCUViewer() {
           <div
             key={`backdrop-exit-${previousHeroSrc}`}
             className="hero-backdrop-image is-exiting"
-            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${previousHeroSrc})`, backgroundSize: heroBackdropBackgroundSize, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%', transition: browseMode === 'phase' ? 'none' : undefined }}
+            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${previousHeroSrc})`, backgroundSize: heroBackdropBackgroundSize, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%', transition: heroBackdropTransition }}
           />
         )}
         {currentHeroSrc && (
           <div
             key={`backdrop-${currentHeroSrc}`}
             className="hero-backdrop-image"
-            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${currentHeroSrc})`, backgroundSize: heroBackdropBackgroundSize, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%', transition: browseMode === 'phase' ? 'none' : undefined }}
+            style={{ '--backdrop-opacity': heroBackdropOpacity, position: 'absolute', top: 8, left: 8, right: 8, bottom: 8, borderRadius: 24, overflow: 'hidden', backgroundImage: `url(${currentHeroSrc})`, backgroundSize: heroBackdropBackgroundSize, backgroundRepeat: 'no-repeat', backgroundPosition: 'center 7%', transition: heroBackdropTransition }}
           />
         )}
         <div className="hero-backdrop-blend" />
-        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '6%' : '3%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '5%' : '2.5%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.12 : 0.06, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
+        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '6%' : '3%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '5%' : '2.5%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.12 : 0.06, transition: heroBackdropTransition || 'opacity 0.95s ease-in-out', animation: freezeBackdropMotion ? 'none' : 'cinematicIn 0.8s ease both' }} />
       </div>
 
       <div className="theme-transition-loader" aria-hidden={!themeTransitioning}><span />Retuning theme</div>
@@ -3225,8 +3355,8 @@ export default function MCUViewer() {
           <section className="sidebar-panel">
             <div className="sidebar-section-title">{tUniverse('Theme & Language')}</div>
             <div className="sidebar-btn-grid">
-              <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={12} />{tUniverse('Dark')}</button>
-              <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={12} />{tUniverse('Light')}</button>
+              <button className="fpill" onClick={() => updateDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={12} />{tUniverse('Dark')}</button>
+              <button className="fpill" onClick={() => updateDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={12} />{tUniverse('Light')}</button>
             </div>
             <button className='fpill settings-toggle-pill' type='button' aria-pressed={marvelLangMode} onClick={() => setMarvelLangMode(v => !v)} style={{ justifyContent: 'space-between' }}><span>{tUniverse('Universe Language')}</span><span>{marvelLangMode ? 'On' : 'Off'}</span></button>
           </section>
@@ -3245,10 +3375,10 @@ export default function MCUViewer() {
               compact
               title={tUniverse('Universe Style')}
               appearanceMode={appearanceMode}
-              onAppearanceChange={setAppearanceMode}
+              onAppearanceChange={updateAppearanceMode}
               themeChoices={themedChoices}
               themeMode={themeMode}
-              onThemeChange={setThemeMode}
+              onThemeChange={updateThemeMode}
             />
           </section>
 
@@ -3273,8 +3403,8 @@ export default function MCUViewer() {
         <p>Unified controls for profile, universe themes, sync, backups, and modern accessibility-focused tuning.</p>
       </div>
       <div className="settings-hero-actions">
-        <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={13} />Dark</button>
-        <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={13} />Light</button>
+        <button className="fpill" onClick={() => updateDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={13} />Dark</button>
+        <button className="fpill" onClick={() => updateDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={13} />Light</button>
       </div>
     </section>
 
@@ -4326,12 +4456,15 @@ export default function MCUViewer() {
         posterDataSaver={posterDataSaver}
         setPosterDataSaver={setPosterDataSaver}
         darkMode={darkMode}
-        setDarkMode={setDarkMode}
+        setDarkMode={updateDarkMode}
         appearanceMode={appearanceMode}
-        setAppearanceMode={setAppearanceMode}
+        setAppearanceMode={updateAppearanceMode}
         themeChoices={themedChoices}
         themeMode={themeMode}
-        setThemeMode={setThemeMode}
+        setThemeMode={updateThemeMode}
+        portalStyle={{ ...cssThemeVars, '--setup-color-scheme': darkMode ? 'dark' : 'light' }}
+        colorMode={darkMode ? 'dark' : 'light'}
+        appearanceTheme={normalizeAppearanceMode(appearanceMode)}
       />
       <input id="setup-avatar-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => setAvatarCropSrc(String(r.result || '')); r.readAsDataURL(f); e.target.value=''; }} />
 

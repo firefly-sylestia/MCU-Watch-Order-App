@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { APPEARANCE_MODES, normalizeAppearanceMode } from '../constants/themeSettings';
 
 export default function SetupWizard({
@@ -30,6 +31,9 @@ export default function SetupWizard({
   themeChoices = [],
   themeMode,
   setThemeMode,
+  portalStyle = {},
+  colorMode = 'dark',
+  appearanceTheme = 'minimal',
 }) {
   const [currentStep, setCurrentStep] = useState(0);
   const steps = useMemo(() => [
@@ -38,7 +42,21 @@ export default function SetupWizard({
     { id: 'style', label: 'Style' },
     { id: 'tuning', label: 'Tuning' },
   ], []);
-  if (!open) return null;
+  const [portalNode, setPortalNode] = useState(null);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    let node = document.getElementById('setup-wizard-root');
+    if (!node) {
+      node = document.createElement('div');
+      node.id = 'setup-wizard-root';
+      document.body.appendChild(node);
+    }
+    setPortalNode(node);
+    return undefined;
+  }, []);
+
+  if (!open || !portalNode) return null;
   const fetchStatus = fetchState.active ? 'loading' : (fetchState.message?.toLowerCase().includes('built') ? 'success' : (fetchState.message?.toLowerCase().includes('could not') ? 'error' : 'idle'));
   const stepStatus = {
     profile: profile.name?.trim() ? 'Complete' : 'In progress',
@@ -48,8 +66,9 @@ export default function SetupWizard({
   };
   const activeAppearance = normalizeAppearanceMode(appearanceMode);
 
-  return (
-    <div className="setup-overlay" role="dialog" aria-modal="true" aria-label="First time setup">
+  const wizard = (
+    <div className="setup-portal-host" style={portalStyle} data-color-mode={colorMode} data-theme={appearanceTheme}>
+      <div className="setup-overlay" role="dialog" aria-modal="true" aria-label="First time setup">
       <div className="setup-card">
         <div className="setup-header">
           <h2>Let&apos;s get you set up</h2>
@@ -157,6 +176,10 @@ export default function SetupWizard({
           <button className="fpill setup-primary-action" onClick={currentStep === steps.length - 1 ? onFinish : () => setCurrentStep(step => Math.min(steps.length - 1, step + 1))}>{currentStep === steps.length - 1 ? (fetchState.active ? 'Continue' : 'Finish') : 'Next'}</button>
         </div>
       </div>
+      </div>
     </div>
   );
+
+  return createPortal(wizard, portalNode);
 }
+

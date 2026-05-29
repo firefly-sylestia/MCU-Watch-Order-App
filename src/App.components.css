@@ -3947,3 +3947,61 @@ body { background: var(--app-shell-gradient); }
 .ui-build-cache-on :is(.hero-carousel-card,.rrow,.poster-shell){content-visibility:auto;contain-intrinsic-size:140px}
 .performance-mode .theme-transition-loader span{animation:none}
 @media (max-width:720px){.settings-build-panel{grid-template-columns:1fr}.theme-transition-loader{max-width:calc(100vw - 28px)}}
+
+/* Performance fixes: separate setup portal, scroll-safe backdrop, and full-screen theme loader. */
+.setup-portal-host{
+  position:fixed;
+  inset:0;
+  z-index:15000;
+  pointer-events:none;
+  color:var(--theme-text);
+  font-family:var(--font-marvel-body);
+  color-scheme:var(--setup-color-scheme, dark);
+}
+.setup-portal-host .setup-overlay{pointer-events:auto;contain:layout style paint;isolation:isolate;backdrop-filter:none;-webkit-backdrop-filter:none;background:color-mix(in srgb,var(--theme-bg) 76%,rgba(2,6,18,.74))}
+[data-color-mode="light"].setup-portal-host .setup-overlay{background:color-mix(in srgb,var(--theme-bg) 72%,rgba(235,241,250,.72))}
+.setup-portal-host .setup-card{contain:content;will-change:transform;overscroll-behavior:contain}
+.backdrop-motion-locked .hero-backdrop-image,
+.overlay-open .hero-backdrop-image,
+.backdrop-motion-locked .app-backdrop-layout *,
+.overlay-open .app-backdrop-layout *{transition:none !important;animation:none !important;will-change:auto !important}
+.theme-transition-loader{
+  inset:0 !important;
+  width:100vw;
+  height:100dvh;
+  max-width:none !important;
+  display:grid !important;
+  place-items:center;
+  grid-auto-flow:row;
+  align-content:center;
+  gap:16px;
+  border:0 !important;
+  border-radius:0 !important;
+  background:
+    radial-gradient(circle at 50% 34%,color-mix(in srgb,var(--theme-accent) 22%,transparent),transparent 34%),
+    linear-gradient(180deg,color-mix(in srgb,var(--theme-bg) 94%,rgba(2,6,18,.96)),color-mix(in srgb,var(--theme-bg-alt) 96%,rgba(2,6,18,.98))) !important;
+  box-shadow:none !important;
+  transform:none !important;
+  opacity:0;
+  visibility:hidden;
+  z-index:22000 !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  font-size:13px;
+  text-align:center;
+}
+.theme-is-transitioning .theme-transition-loader{opacity:1 !important;visibility:visible;transform:none !important;transition:opacity 80ms linear !important}
+.theme-transition-loader span{width:34px !important;height:34px !important;border-width:3px !important;box-shadow:0 0 28px color-mix(in srgb,var(--theme-accent) 36%,transparent)}
+.ui-warmup-stage{position:fixed;left:-10000px;top:-10000px;width:360px;height:360px;visibility:hidden;pointer-events:none;contain:strict;content-visibility:hidden;z-index:-1}
+.theme-switch[data-theme="neon"] :is(.title-main,.title-btn){
+  color:color-mix(in srgb,var(--theme-text) 88%,#eaf7ff) !important;
+  text-shadow:0 1px 0 color-mix(in srgb,var(--theme-bg) 74%,transparent),0 0 7px color-mix(in srgb,var(--theme-accent) 24%,transparent) !important;
+}
+.theme-switch[data-color-mode="light"][data-theme="neon"] :is(.title-main,.title-btn){
+  color:color-mix(in srgb,var(--theme-text) 92%,#0f172a) !important;
+  text-shadow:0 1px 0 rgba(255,255,255,.85),0 0 5px color-mix(in srgb,var(--theme-accent) 16%,transparent) !important;
+}
+.theme-switch[data-theme="neon"] .rrow:hover :is(.title-main,.title-btn){
+  color:color-mix(in srgb,var(--theme-text) 76%,var(--theme-accent)) !important;
+  text-shadow:0 0 8px color-mix(in srgb,var(--theme-accent) 28%,transparent) !important;
+}
