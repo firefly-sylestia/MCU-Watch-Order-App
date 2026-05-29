@@ -30,3 +30,58 @@
   transition-property: background, border-color, transform;
   transition-duration: 120ms;
 }
+
+/* Fluid UI baseline for full visual mode: keep rich themes, but constrain expensive paint work. */
+.theme-switch:not(.performance-mode) .hero-carousel-shell,
+.theme-switch:not(.performance-mode) .search-page-shell,
+.theme-switch:not(.performance-mode) .sidebar-redesign,
+.theme-switch:not(.performance-mode) .settings-redesign,
+.theme-switch:not(.performance-mode) .analytics-shell {
+  contain: layout style paint;
+}
+
+.theme-switch:not(.performance-mode) .hero-backdrop-image,
+.theme-switch:not(.performance-mode) .hero-carousel-card,
+.theme-switch:not(.performance-mode) .hero-carousel-poster,
+.theme-switch:not(.performance-mode) .navigation-shell,
+.theme-switch:not(.performance-mode) .dropdown-pop,
+.theme-switch:not(.performance-mode) .search-page-panel {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.theme-switch:not(.performance-mode) .hero-backdrop-image {
+  contain: strict;
+  will-change: opacity, transform;
+}
+
+.theme-switch:not(.performance-mode) .hero-carousel-track {
+  contain: layout paint;
+  content-visibility: auto;
+  contain-intrinsic-size: 360px;
+  overscroll-behavior-x: contain;
+}
+
+.theme-switch:not(.performance-mode) .hero-carousel-poster,
+.theme-switch:not(.performance-mode) .rrow,
+.theme-switch:not(.performance-mode) .fpill,
+.theme-switch:not(.performance-mode) .filters-trigger {
+  transition-property: transform, opacity, background-color, border-color, color, box-shadow;
+}
+
+.theme-switch:not(.performance-mode) :is(.navigation-control-btn, .navigation-shell, .dropdown-pop, .search-page-panel, .glass-grad) {
+  backdrop-filter: blur(8px) saturate(1.08);
+  -webkit-backdrop-filter: blur(8px) saturate(1.08);
+}
+
+.sidebar-deeplink-pill {
+  min-height: 38px;
+  gap: 8px;
+}
+
+@media (max-width: 760px) {
+  .theme-switch:not(.performance-mode) :is(.navigation-control-btn, .navigation-shell, .dropdown-pop, .search-page-panel, .glass-grad) {
+    backdrop-filter: blur(6px) saturate(1.04);
+    -webkit-backdrop-filter: blur(6px) saturate(1.04);
+  }
+}

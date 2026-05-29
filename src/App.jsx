@@ -273,8 +273,8 @@ const waitForExportFont = async (fontFamily) => {
 
 const isAgentsOfShieldCarouselDuplicate = (item) => /agents of shield/i.test(item?.title || '');
 const HERO_ROTATION_MS = 10000;
-const HERO_VISIBLE_COUNT = 15;
-const HERO_PRELOAD_AHEAD = 12;
+const HERO_VISIBLE_COUNT = 11;
+const HERO_PRELOAD_AHEAD = 6;
 const loadedHeroPosterSrcs = new Set();
 const heroPosterLoadPromises = new Map();
 
@@ -372,6 +372,16 @@ const posterExportName = (item, ext = 'jpg') => posterFileName(item, ext);
 
 const ROUTE_FALLBACK = '/home';
 const compactRouteSlug = (value) => slugifyPosterName(value).replace(/-/g, '');
+const routeQuerySlug = (value) => slugifyPosterName(value);
+const routeSlugToSearch = (value) => decodeURIComponent(String(value || '')).replace(/-/g, ' ').trim();
+const searchRoutePath = (value = '') => {
+  const slug = routeQuerySlug(value);
+  return slug ? `/search/${slug}` : '/search';
+};
+const seriesRoutePath = (value = '') => {
+  const slug = routeQuerySlug(value);
+  return slug ? `/series/${slug}` : '/series';
+};
 const titleRoutePath = (item) => `/movie/${slugifyPosterName(item?.title) || item?.id || ''}`;
 const routeItemMatchesSlug = (item, rawSlug) => {
   const slug = slugifyPosterName(decodeURIComponent(String(rawSlug || '')));
@@ -902,12 +912,27 @@ export default function MCUViewer() {
     setTrailerExpanded(false);
     setBrowseMode('home');
   }, []);
-  const openSearchMode = useCallback(() => {
+  const openSearchMode = useCallback((nextSearch = search) => {
     setBrowseMode('search');
     setListMode('extended');
     setActivePhase(0);
+    setTypeFilter(null);
+    setSearch(typeof nextSearch === 'string' ? nextSearch : search);
     setSearchScope(UI_STATE_DEFAULTS.searchScope);
-  }, [setBrowseMode, setListMode, setActivePhase, setSearchScope]);
+  }, [search, setBrowseMode, setListMode, setActivePhase, setSearchScope, setTypeFilter]);
+  const openSeriesMode = useCallback((nextSearch = '') => {
+    setDetailItem(null);
+    setSettingsOpen(false);
+    setAnalyticsOpen(false);
+    setTrailerOpen(false);
+    setTrailerExpanded(false);
+    setBrowseMode('series');
+    setListMode('extended');
+    setActivePhase(0);
+    setTypeFilter('series');
+    setSearch(typeof nextSearch === 'string' ? nextSearch : '');
+    setSearchScope(UI_STATE_DEFAULTS.searchScope);
+  }, [setBrowseMode, setListMode, setActivePhase, setTypeFilter, setSearchScope]);
   const setFilterStatusOpen = (next) => dispatchUiMode({ filterStatusOpen: typeof next === 'function' ? next(uiModeState.filterStatusOpen) : next });
   const setDockStatusOpen = (next) => dispatchUiMode({ dockStatusOpen: typeof next === 'function' ? next(uiModeState.dockStatusOpen) : next });
   const setFiltersOpen = (next) => dispatchUiMode({ filtersOpen: typeof next === 'function' ? next(uiModeState.filtersOpen) : next });
@@ -1578,24 +1603,44 @@ export default function MCUViewer() {
   }, []);
 
 
-  const applyUrlRoute = useCallback((path = window.location.pathname) => {
+  const applyUrlRoute = useCallback((path = window.location.pathname, searchString = window.location.search) => {
     if (typeof window === 'undefined') return;
     const cleanPath = `/${String(path || '').split('?')[0].split('#')[0].replace(/^\/+/, '')}`.replace(/\/+$/, '') || ROUTE_FALLBACK;
     const parts = cleanPath.split('/').filter(Boolean);
     const primary = parts[0] || 'home';
+    const query = new URLSearchParams(String(searchString || '').replace(/^\?/, ''));
 
     setSidebarOpen(false);
     setTrailerOpen(false);
     setTrailerExpanded(false);
 
+    if (primary === 'home') {
+      setDetailItem(null);
+      setSettingsOpen(false);
+      setAnalyticsOpen(false);
+      setBrowseMode('home');
+      return;
+    }
+
     if (primary === 'search') {
+      const querySearch = query.get('q') || query.get('query') || '';
+      const routedSearch = querySearch || routeSlugToSearch(parts.slice(1).join('-'));
       setDetailItem(null);
       setSettingsOpen(false);
       setAnalyticsOpen(false);
       setBrowseMode('search');
       setListMode('extended');
+      setTypeFilter(null);
       setActivePhase(0);
+      setSearch(routedSearch);
       setSearchScope(UI_STATE_DEFAULTS.searchScope);
+      return;
+    }
+
+    if (primary === 'series' || primary === 'shows') {
+      const querySearch = query.get('q') || query.get('query') || '';
+      const routedSearch = querySearch || routeSlugToSearch(parts.slice(1).join('-'));
+      openSeriesMode(routedSearch);
       return;
     }
 
@@ -1620,6 +1665,7 @@ export default function MCUViewer() {
       setDetailItem(null);
       setSettingsOpen(false);
       setAnalyticsOpen(false);
+      setTypeFilter(null);
       setBrowseMode('phase');
       setActivePhase(Number.isFinite(requestedPhase) && requestedPhase > 0 ? requestedPhase : 0);
       return;
@@ -1637,7 +1683,8 @@ export default function MCUViewer() {
         setDetailItem(null);
         setBrowseMode('search');
         setListMode('extended');
-        setSearch(decodeURIComponent(requestedSlug || '').replace(/-/g, ' '));
+        setTypeFilter(null);
+        setSearch(routeSlugToSearch(requestedSlug));
       }
       return;
     }
@@ -1646,12 +1693,12 @@ export default function MCUViewer() {
     setSettingsOpen(false);
     setAnalyticsOpen(false);
     setBrowseMode('home');
-  }, [items, openDetail]);
+  }, [items, openDetail, openSeriesMode]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
-    applyUrlRoute(window.location.pathname);
-    const onPopState = () => applyUrlRoute(window.location.pathname);
+    applyUrlRoute(window.location.pathname, window.location.search);
+    const onPopState = () => applyUrlRoute(window.location.pathname, window.location.search);
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
   }, [applyUrlRoute]);
@@ -1660,10 +1707,11 @@ export default function MCUViewer() {
     if (detailItem) return titleRoutePath(detailItem);
     if (settingsOpen) return '/settings';
     if (analyticsOpen) return '/analytics';
-    if (browseMode === 'search') return '/search';
+    if (browseMode === 'search') return searchRoutePath(search);
+    if (browseMode === 'series') return seriesRoutePath(search);
     if (browseMode === 'phase') return activePhase ? `/phase/${activePhase}` : '/phase';
     return ROUTE_FALLBACK;
-  }, [activePhase, analyticsOpen, browseMode, detailItem, settingsOpen]);
+  }, [activePhase, analyticsOpen, browseMode, detailItem, search, settingsOpen]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1675,8 +1723,14 @@ export default function MCUViewer() {
       }
       return;
     }
-    const method = currentPath === '/' || canonicalRoute === ROUTE_FALLBACK ? 'replaceState' : 'pushState';
-    window.history[method](nextState, '', canonicalRoute);
+    const currentRoot = currentPath.split('/').filter(Boolean)[0] || 'home';
+    const nextRoot = canonicalRoute.split('/').filter(Boolean)[0] || 'home';
+    const shouldReplace = currentPath === '/'
+      || canonicalRoute === ROUTE_FALLBACK
+      || currentRoot === nextRoot
+      || nextRoot === 'search'
+      || nextRoot === 'series';
+    window.history[shouldReplace ? 'replaceState' : 'pushState'](nextState, '', canonicalRoute);
   }, [canonicalRoute]);
   useEffect(() => {
     const onDocPointerDown = (event) => {
@@ -3434,6 +3488,10 @@ export default function MCUViewer() {
           <section className="sidebar-panel">
             <div className="sidebar-section-title">{tUniverse('View & Navigate')}</div>
             <div className="sidebar-btn-grid">
+              <button className="fpill sidebar-deeplink-pill" onClick={() => { setSidebarOpen(false); navigateHome(); }} style={{ justifyContent: 'center' }}><Layers size={13} />Home</button>
+              <button className="fpill sidebar-deeplink-pill" onClick={() => { setSidebarOpen(false); openSearchMode(''); }} style={{ justifyContent: 'center' }}><Search size={13} />Search</button>
+              <button className="fpill sidebar-deeplink-pill" onClick={() => { setSidebarOpen(false); openSeriesMode(''); }} style={{ justifyContent: 'center' }}><Tv size={13} />Series</button>
+              <button className="fpill sidebar-deeplink-pill" onClick={() => { setSidebarOpen(false); setBrowseMode('phase'); setTypeFilter(null); setActivePhase(0); }} style={{ justifyContent: 'center' }}><Film size={13} />Phases</button>
               <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ justifyContent: 'center' }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
               <button className="fpill" onClick={openAnalyticsPanel} style={{ justifyContent: 'center' }}>{tUniverse('Analytics')}</button>
             </div>
@@ -3625,19 +3683,19 @@ export default function MCUViewer() {
         </div>
       )}
 
-      {browseMode === 'search' && (
+      {(browseMode === 'search' || browseMode === 'series') && (
         <section className="search-page-shell" style={{ maxWidth: 1480, margin: '8px auto 14px', padding: '0 16px' }}>
           <div className="search-page-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
             <div>
-              <div style={{ fontSize: 11, letterSpacing: 1.8, textTransform: 'uppercase', color: T.textMuted }}>{tUniverse('S.H.I.E.L.D. Intel Search')}</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: T.text }}>{tUniverse('Locate any Marvel story node')}</div>
+              <div style={{ fontSize: 11, letterSpacing: 1.8, textTransform: 'uppercase', color: T.textMuted }}>{browseMode === 'series' ? 'Series Deep Link' : tUniverse('S.H.I.E.L.D. Intel Search')}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: T.text }}>{browseMode === 'series' ? 'Browse only series and shows' : tUniverse('Locate any Marvel story node')}</div>
             </div>
             <button className="fpill" onClick={navigateHome}><ChevDown size={14}/> {tUniverse('Back to Home')}</button>
           </div>
           <div className="search-page-panel" style={{ border: `1px solid ${T.filterBorder}`, borderRadius: 18, padding: 14, background: 'color-mix(in srgb, var(--theme-surface) 84%, transparent)', boxShadow: '0 10px 30px color-mix(in srgb, #000 16%, transparent)' }}>
             <div style={{ position: 'relative' }}>
               <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: T.textMuted }} />
-              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} aria-label="Search library" style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650, transition: 'border-color 180ms ease, box-shadow 180ms ease' }} />
+              <input autoFocus value={search} onChange={e => setSearch(e.target.value)} aria-label={browseMode === 'series' ? 'Search series library' : 'Search library'} placeholder={browseMode === 'series' ? 'Filter series deep link…' : 'Search titles, actors, metadata…'} style={{ width: '100%', background: 'color-mix(in srgb, var(--theme-surface) 78%, transparent)', border: `1px solid ${T.inputBorder}`, borderRadius: 14, padding: '12px 14px 12px 38px', color: T.inputColor, fontSize: 15, fontWeight: 650, transition: 'border-color 180ms ease, box-shadow 180ms ease' }} />
             </div>
             <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
               <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' }}>Search in</div>
@@ -3675,7 +3733,7 @@ export default function MCUViewer() {
               </div>
             </div>
             <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.4 }}>{search ? `${filtered.length} matches` : tUniverse('Type to begin searching')}</div>
+              <div style={{ color: T.textMuted, fontSize: 12, letterSpacing: 0.4 }}>{search ? `${filtered.length} matches` : (browseMode === 'series' ? `${filtered.length} series available` : tUniverse('Type to begin searching'))}</div>
               {search && <button className="fpill" onClick={() => setSearch('')}><Trash2 size={12}/> {tUniverse('Clear Search')}</button>}
             </div>
           </div>
