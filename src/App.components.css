@@ -3921,3 +3921,32 @@ body { background: var(--app-shell-gradient); }
   font-family:var(--font-marvel-body) !important;
   font-weight:600;
 }
+
+/* Setup wizard is portaled out of the accelerated app shell so first-run onboarding
+ * stays visible above containment/GPU layers while inheriting active theme tokens. */
+.setup-portal-root{
+  position:fixed;
+  inset:0;
+  z-index:15000;
+  pointer-events:none;
+  color:var(--theme-text, var(--ui-text-primary));
+  font-family:var(--font-marvel-body, var(--font-body));
+  color-scheme:dark light;
+}
+.setup-portal-root .setup-overlay{
+  pointer-events:auto;
+  z-index:1;
+}
+.setup-portal-root[data-color-mode="dark"]{color-scheme:dark}
+.setup-portal-root[data-color-mode="light"]{color-scheme:light}
+[data-theme="neon"] .setup-card,
+[data-theme="neon"] .setup-section,
+[data-theme="neon"] .setup-choice-card,
+[data-theme="neon"] .setup-style-card{
+  border-color:color-mix(in srgb,var(--theme-accent) 52%,transparent) !important;
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--theme-accent) 12%,transparent),0 0 24px color-mix(in srgb,var(--theme-accent-alt) 16%,transparent) !important;
+}
+[data-theme="neon"] .setup-header h2,
+[data-theme="neon"] .setup-section h3{
+  text-shadow:0 0 12px color-mix(in srgb,var(--theme-accent) 34%,transparent);
+}

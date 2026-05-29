@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { APPEARANCE_MODES, normalizeAppearanceMode } from '../constants/themeSettings';
 
 export default function SetupWizard({
@@ -26,6 +27,7 @@ export default function SetupWizard({
   themeChoices = [],
   themeMode,
   setThemeMode,
+  themeStyle,
 }) {
   if (!open) return null;
   const fetchStatus = fetchState.active ? 'loading' : (fetchState.message?.toLowerCase().includes('built') ? 'success' : (fetchState.message?.toLowerCase().includes('could not') ? 'error' : 'idle'));
@@ -37,8 +39,14 @@ export default function SetupWizard({
   };
   const activeAppearance = normalizeAppearanceMode(appearanceMode);
 
-  return (
-    <div className="setup-overlay" role="dialog" aria-modal="true" aria-label="First time setup">
+  const setupDialog = (
+    <div
+      className="setup-portal-root"
+      data-color-mode={darkMode ? 'dark' : 'light'}
+      data-theme={activeAppearance}
+      style={themeStyle}
+    >
+      <div className="setup-overlay" role="dialog" aria-modal="true" aria-label="First time setup">
       <div className="setup-card">
         <div className="setup-header">
           <h2>Let&apos;s get you set up</h2>
@@ -137,6 +145,10 @@ export default function SetupWizard({
           <button className="fpill setup-primary-action" onClick={onFinish}>{fetchState.active ? 'Continue' : 'Finish'}</button>
         </div>
       </div>
+      </div>
     </div>
   );
+
+  if (typeof document === 'undefined' || !document.body) return setupDialog;
+  return createPortal(setupDialog, document.body);
 }

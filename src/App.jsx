@@ -69,6 +69,8 @@ const DESKTOP_TEXT_SCALES = [1, 1.25, 1.5, 1.75, 2];
 // ─── OMDB ratings key (for ratings only — posters use TMDB) ─────────────────
 const OMDB_RATINGS_KEY = '2c971c17';
 
+const SETUP_STORAGE_KEY = 'mcu-first-setup-v1';
+
 const CACHE_KEYS = {
   poster: 'mcu-poster-cache-v1',
   meta: 'mcu-meta-cache-v1',
@@ -904,7 +906,7 @@ export default function MCUViewer() {
   const [profile,        setProfile]        = useState({ name: '', pfp: '' });
   const [uploadedAvatars,setUploadedAvatars]= useState([]);
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
-  const [setupOpen, setSetupOpen] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(() => readStorageValue(SETUP_STORAGE_KEY) !== 'done');
   const [themeMode,      setThemeMode]      = useState(() => readStorageValue('mcu-theme-mode-v1', 'iron-man') || 'iron-man');
   const [appearanceMode, setAppearanceMode] = useState(() => normalizeAppearanceMode(readStorageValue('mcu-appearance-mode-v1', 'minimal') || 'minimal'));
   const [marvelLangMode, setMarvelLangMode] = useState(false);
@@ -999,6 +1001,13 @@ export default function MCUViewer() {
     setSidebarOpen(false);
     setSettingsOpen(false);
     setAnalyticsOpen(true);
+  }, []);
+  const openSetupWizard = useCallback(() => {
+    setSidebarOpen(false);
+    setSettingsOpen(false);
+    setAnalyticsOpen(false);
+    setDetailItem(null);
+    setSetupOpen(true);
   }, []);
   const handleInAppBack = useCallback(() => {
     if (browseMode === 'search' || browseMode === 'phase') {
@@ -2417,7 +2426,7 @@ export default function MCUViewer() {
 
 
   useEffect(() => {
-    const setupDone = readStorageValue('mcu-first-setup-v1') === 'done';
+    const setupDone = readStorageValue(SETUP_STORAGE_KEY) === 'done';
     if (!setupDone) setSetupOpen(true);
   }, []);
 
@@ -3226,6 +3235,7 @@ export default function MCUViewer() {
               <button className="fpill" onClick={openAnalyticsPanel} style={{ justifyContent: 'center' }}>{tUniverse('Analytics')}</button>
             </div>
             <button className="fpill" onClick={() => { setSidebarOpen(false); toggleSettingsPanel(); }} style={{ width: '100%', justifyContent: 'center' }}><Settings size={13} />{tUniverse('Open Settings')}</button>
+            <button className="fpill" onClick={openSetupWizard} style={{ width: '100%', justifyContent: 'center' }}><SlidersH size={13} />Setup Wizard</button>
           </section>
 
           <section className="sidebar-panel">
@@ -3263,6 +3273,7 @@ export default function MCUViewer() {
       <div className="settings-hero-actions">
         <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={13} />Dark</button>
         <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={13} />Light</button>
+        <button className="fpill" onClick={openSetupWizard} style={{ justifyContent: 'center' }}><SlidersH size={13} />Run Setup</button>
       </div>
     </section>
 
@@ -4294,8 +4305,8 @@ export default function MCUViewer() {
         onFetchCore={() => refreshPostersAndMetadata('core')}
         onFetchAll={() => refreshPostersAndMetadata('all')}
         fetchState={posterFetchState}
-        onSkip={() => { safeLocalStorageSetItem('mcu-first-setup-v1', 'done'); setSetupOpen(false); }}
-        onFinish={() => { safeLocalStorageSetItem('mcu-first-setup-v1', 'done'); setSetupOpen(false); }}
+        onSkip={() => { safeLocalStorageSetItem(SETUP_STORAGE_KEY, 'done'); setSetupOpen(false); }}
+        onFinish={() => { safeLocalStorageSetItem(SETUP_STORAGE_KEY, 'done'); setSetupOpen(false); }}
         spoilerSafeMode={spoilerSafeMode}
         setSpoilerSafeMode={setSpoilerSafeMode}
         performanceMode={performanceMode}
@@ -4311,6 +4322,11 @@ export default function MCUViewer() {
         themeChoices={themedChoices}
         themeMode={themeMode}
         setThemeMode={setThemeMode}
+        themeStyle={{
+          ...cssThemeVars,
+          color: 'var(--theme-text)',
+          fontFamily: 'var(--font-marvel-body)',
+        }}
       />
       <input id="setup-avatar-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => setAvatarCropSrc(String(r.result || '')); r.readAsDataURL(f); e.target.value=''; }} />
 
