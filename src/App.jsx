@@ -720,46 +720,84 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
   );
 }));
 
+const getScrollParent = (node) => {
+  if (typeof window === 'undefined' || !node) return null;
+  const main = node.closest?.('main');
+  if (main && main.scrollHeight > main.clientHeight + 1) return main;
+  return window;
+};
+
+const getScrollSnapshot = (node) => {
+  if (typeof window === 'undefined') {
+    return { top: 0, height: 900, rootTop: 0, usesWindow: true };
+  }
+  const root = getScrollParent(node);
+  if (root && root !== window) {
+    const rect = root.getBoundingClientRect();
+    return {
+      top: root.scrollTop || 0,
+      height: root.clientHeight || window.innerHeight || 900,
+      rootTop: rect.top || 0,
+      usesWindow: false,
+    };
+  }
+  return {
+    top: window.scrollY || document.documentElement.scrollTop || 0,
+    height: window.innerHeight || 900,
+    rootTop: 0,
+    usesWindow: true,
+  };
+};
+
 const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
   const shellRef = useRef(null);
   const rowHeightsRef = useRef(new Map());
-  const [scrollY, setScrollY] = useState(0);
-  const [viewportHeight, setViewportHeight] = useState(() => (typeof window !== 'undefined' ? window.innerHeight : 900));
+  const pendingMeasureRef = useRef(false);
+  const [viewportState, setViewportState] = useState(() => getScrollSnapshot(null));
   const [measuredVersion, setMeasuredVersion] = useState(0);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
+    const shell = shellRef.current;
+    const root = getScrollParent(shell);
     let rafId = 0;
+
     const schedule = () => {
       if (rafId) return;
       rafId = window.requestAnimationFrame(() => {
         rafId = 0;
-        setScrollY(window.scrollY || 0);
-        setViewportHeight(window.innerHeight || 900);
+        setViewportState(getScrollSnapshot(shellRef.current));
       });
     };
+
     schedule();
-    window.addEventListener('scroll', schedule, { passive: true });
+    const scrollTarget = root && root !== window ? root : window;
+    scrollTarget.addEventListener('scroll', schedule, { passive: true });
     window.addEventListener('resize', schedule);
     return () => {
-      window.removeEventListener('scroll', schedule);
+      scrollTarget.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', schedule);
       if (rafId) window.cancelAnimationFrame(rafId);
     };
-  }, []);
+  }, [rows]);
 
-  const estimatedRowHeight = 132;
+  useEffect(() => {
+    rowHeightsRef.current.clear();
+    setMeasuredVersion(v => v + 1);
+  }, [rows]);
+
+  const estimatedRowHeight = 126;
   const estimatedTotalHeight = rows.length * estimatedRowHeight;
-  const computedOverscan = Math.min(12, Math.max(6, Math.round(viewportHeight / 220)));
+  const computedOverscan = Math.min(8, Math.max(4, Math.round(viewportState.height / 260)));
 
   const windowRange = useMemo(() => {
     if (!rows.length) return { start: 0, end: -1 };
     const shellRect = shellRef.current?.getBoundingClientRect?.();
-    if (!shellRect) return { start: 0, end: Math.min(rows.length - 1, 26) };
+    if (!shellRect) return { start: 0, end: Math.min(rows.length - 1, 22) };
 
-    const listTopInPage = shellRect.top + scrollY;
-    const top = Math.max(0, scrollY - listTopInPage);
-    const bottom = top + viewportHeight;
+    const listTopInScrollRoot = viewportState.top + shellRect.top - viewportState.rootTop;
+    const top = Math.max(0, viewportState.top - listTopInScrollRoot);
+    const bottom = top + viewportState.height;
 
     let acc = 0;
     let start = 0;
@@ -785,7 +823,7 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
       start: Math.max(0, start - computedOverscan),
       end: Math.min(rows.length - 1, end + computedOverscan),
     };
-  }, [rows, scrollY, viewportHeight, measuredVersion, computedOverscan]);
+  }, [rows, viewportState, measuredVersion, computedOverscan]);
 
   const { topSpacer, bottomSpacer, visibleRows } = useMemo(() => {
     if (!rows.length || windowRange.end < windowRange.start) return { topSpacer: 0, bottomSpacer: 0, visibleRows: [] };
@@ -809,19 +847,25 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
     const prevHeight = rowHeightsRef.current.get(rowId);
     if (nextHeight > 0 && prevHeight !== nextHeight) {
       rowHeightsRef.current.set(rowId, nextHeight);
-      setMeasuredVersion(v => v + 1);
+      if (!pendingMeasureRef.current) {
+        pendingMeasureRef.current = true;
+        requestAnimationFrame(() => {
+          pendingMeasureRef.current = false;
+          setMeasuredVersion(v => v + 1);
+        });
+      }
     }
   }, []);
 
   return (
-    <div className="phase-rows-full" ref={shellRef}>
-      {topSpacer > 0 && <div style={{ height: topSpacer }} aria-hidden="true" />}
+    <div className="phase-rows-full virtual-list" ref={shellRef} style={{ '--virtual-total-rows': rows.length }}>
+      {topSpacer > 0 && <div className="virtual-spacer" style={{ height: topSpacer }} aria-hidden="true" />}
       {visibleRows.map(({ item, idx }) => (
         <div key={item.id} ref={setRowRef(item.id)} className="phase-row-virtualized">
           {renderRow(item, idx)}
         </div>
       ))}
-      {bottomSpacer > 0 && <div style={{ height: bottomSpacer }} aria-hidden="true" />}
+      {bottomSpacer > 0 && <div className="virtual-spacer" style={{ height: bottomSpacer }} aria-hidden="true" />}
     </div>
   );
 });
@@ -1715,14 +1759,16 @@ export default function MCUViewer() {
     const animated = Array.from(shell.querySelectorAll('[data-motion]'));
     if (!animated.length) return undefined;
 
-    if (prefersReducedMotion) {
+    if (prefersReducedMotion || performanceMode || browseMode === 'phase') {
       animated.forEach((el) => {
         el.classList.add('is-visible');
-        el.style.setProperty('--section-progress', '0');
+        el.classList.remove('in-view');
+        el.style.setProperty('--section-progress', '1');
       });
       return undefined;
     }
 
+    const observerRoot = shell.scrollHeight > shell.clientHeight + 1 ? shell : null;
     const revealObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         const el = entry.target;
@@ -1735,28 +1781,17 @@ export default function MCUViewer() {
           if (replay) el.classList.remove('is-visible');
         }
       });
-    }, { threshold: [0, 0.15, 0.3], rootMargin: '0px 0px -18% 0px' });
-
-    const progressObserver = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        const range = entry.boundingClientRect.height + window.innerHeight;
-        const raw = (window.innerHeight - entry.boundingClientRect.top) / Math.max(range, 1);
-        const progress = Math.max(0, Math.min(1, raw));
-        entry.target.style.setProperty('--section-progress', progress.toFixed(3));
-      });
-    }, { threshold: [0, 0.25, 0.5, 0.75, 1] });
+    }, { root: observerRoot, threshold: [0, 0.18], rootMargin: '0px 0px -12% 0px' });
 
     animated.forEach((el) => {
       el.style.setProperty('--section-progress', '0');
       revealObserver.observe(el);
-      progressObserver.observe(el);
     });
 
     return () => {
       revealObserver.disconnect();
-      progressObserver.disconnect();
     };
-  }, [allowMotionReplay, viewMode, phaseKeys.length]);
+  }, [allowMotionReplay, viewMode, phaseKeys.length, performanceMode, browseMode]);
 
   const stickyPhaseProgress = useMemo(() => {
     if (activePhase === 0) return { label: 'All Phases', done: totalWatched, total: activeItems.length, pct };
