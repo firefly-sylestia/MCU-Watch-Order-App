@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback, useReducer } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, useReducer, useDeferredValue } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
@@ -371,8 +371,18 @@ const posterExportName = (item, ext = 'jpg') => posterFileName(item, ext);
 
 
 const ROUTE_FALLBACK = '/home';
+const SEARCH_ROUTE = '/search';
+const SERIES_ROUTE = '/series';
 const compactRouteSlug = (value) => slugifyPosterName(value).replace(/-/g, '');
-const titleRoutePath = (item) => `/movie/${slugifyPosterName(item?.title) || item?.id || ''}`;
+const titleRoutePath = (item) => `/${item?.type === 'series' ? 'series' : 'movie'}/${slugifyPosterName(item?.title) || item?.id || ''}`;
+const searchRoutePath = (query = '', type = '') => {
+  const params = new URLSearchParams();
+  const trimmedQuery = String(query || '').trim();
+  if (trimmedQuery) params.set('q', trimmedQuery);
+  if (type) params.set('type', type);
+  const qs = params.toString();
+  return qs ? `${SEARCH_ROUTE}?${qs}` : SEARCH_ROUTE;
+};
 const routeItemMatchesSlug = (item, rawSlug) => {
   const slug = slugifyPosterName(decodeURIComponent(String(rawSlug || '')));
   if (!item || !slug) return false;
@@ -872,6 +882,7 @@ export default function MCUViewer() {
   const [items,          setItems]          = useState(RAW);
   const [listMode,       setListMode]       = useState(initialUiState.listMode);
   const [search,         setSearch]         = useState(initialUiState.search);
+  const deferredSearch = useDeferredValue(search);
   const [searchScope,    setSearchScope]    = useState(initialUiState.searchScope || UI_STATE_DEFAULTS.searchScope);
   const [sortBy,         setSortBy]         = useState(initialUiState.sortBy);
   const [essentialOnly,  setEssOnly]        = useState(initialUiState.essentialOnly);
@@ -901,13 +912,33 @@ export default function MCUViewer() {
     setTrailerOpen(false);
     setTrailerExpanded(false);
     setBrowseMode('home');
+    setSidebarOpen(false);
   }, []);
-  const openSearchMode = useCallback(() => {
+  const openSearchMode = useCallback((nextSearch = '', nextType = null) => {
+    setDetailItem(null);
+    setSettingsOpen(false);
+    setAnalyticsOpen(false);
+    setTrailerOpen(false);
+    setTrailerExpanded(false);
     setBrowseMode('search');
     setListMode('extended');
     setActivePhase(0);
     setSearchScope(UI_STATE_DEFAULTS.searchScope);
+    setTypeFilter(nextType);
+    if (typeof nextSearch === 'string') setSearch(nextSearch);
+    setSidebarOpen(false);
   }, [setBrowseMode, setListMode, setActivePhase, setSearchScope]);
+  const navigateToPhase = useCallback((phaseId = 0) => {
+    setDetailItem(null);
+    setSettingsOpen(false);
+    setAnalyticsOpen(false);
+    setTrailerOpen(false);
+    setTrailerExpanded(false);
+    setBrowseMode('phase');
+    setActivePhase(phaseId);
+    setSidebarOpen(false);
+    requestAnimationFrame(() => scrollToListTop());
+  }, []);
   const setFilterStatusOpen = (next) => dispatchUiMode({ filterStatusOpen: typeof next === 'function' ? next(uiModeState.filterStatusOpen) : next });
   const setDockStatusOpen = (next) => dispatchUiMode({ dockStatusOpen: typeof next === 'function' ? next(uiModeState.dockStatusOpen) : next });
   const setFiltersOpen = (next) => dispatchUiMode({ filtersOpen: typeof next === 'function' ? next(uiModeState.filtersOpen) : next });
@@ -1578,11 +1609,14 @@ export default function MCUViewer() {
   }, []);
 
 
-  const applyUrlRoute = useCallback((path = window.location.pathname) => {
+  const applyUrlRoute = useCallback((path = window.location.pathname, queryString = window.location.search) => {
     if (typeof window === 'undefined') return;
     const cleanPath = `/${String(path || '').split('?')[0].split('#')[0].replace(/^\/+/, '')}`.replace(/\/+$/, '') || ROUTE_FALLBACK;
+    const params = new URLSearchParams(String(queryString || '').replace(/^\?/, ''));
     const parts = cleanPath.split('/').filter(Boolean);
     const primary = parts[0] || 'home';
+    const requestedSearch = params.get('q') || '';
+    const requestedType = VALID_TYPES.has(params.get('type')) ? params.get('type') : null;
 
     setSidebarOpen(false);
     setTrailerOpen(false);
@@ -1596,6 +1630,8 @@ export default function MCUViewer() {
       setListMode('extended');
       setActivePhase(0);
       setSearchScope(UI_STATE_DEFAULTS.searchScope);
+      setTypeFilter(requestedType);
+      setSearch(requestedSearch);
       return;
     }
 
@@ -1621,17 +1657,32 @@ export default function MCUViewer() {
       setSettingsOpen(false);
       setAnalyticsOpen(false);
       setBrowseMode('phase');
+      setTypeFilter(null);
       setActivePhase(Number.isFinite(requestedPhase) && requestedPhase > 0 ? requestedPhase : 0);
       return;
     }
 
-    if (primary === 'movie' || primary === 'title') {
+    if (primary === 'series' && parts.length === 1) {
+      setDetailItem(null);
+      setSettingsOpen(false);
+      setAnalyticsOpen(false);
+      setBrowseMode('search');
+      setListMode('extended');
+      setActivePhase(0);
+      setTypeFilter('series');
+      setSearch(requestedSearch);
+      setSearchScope(UI_STATE_DEFAULTS.searchScope);
+      return;
+    }
+
+    if (primary === 'movie' || primary === 'title' || primary === 'series') {
       const requestedSlug = parts.slice(1).join('-');
       const routedItem = items.find(item => routeItemMatchesSlug(item, requestedSlug));
       setSettingsOpen(false);
       setAnalyticsOpen(false);
       setBrowseMode('home');
       if (routedItem) {
+        setTypeFilter(null);
         openDetail(routedItem);
       } else {
         setDetailItem(null);
@@ -1646,12 +1697,13 @@ export default function MCUViewer() {
     setSettingsOpen(false);
     setAnalyticsOpen(false);
     setBrowseMode('home');
+    setTypeFilter(null);
   }, [items, openDetail]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
-    applyUrlRoute(window.location.pathname);
-    const onPopState = () => applyUrlRoute(window.location.pathname);
+    applyUrlRoute(window.location.pathname, window.location.search);
+    const onPopState = () => applyUrlRoute(window.location.pathname, window.location.search);
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
   }, [applyUrlRoute]);
@@ -1660,22 +1712,26 @@ export default function MCUViewer() {
     if (detailItem) return titleRoutePath(detailItem);
     if (settingsOpen) return '/settings';
     if (analyticsOpen) return '/analytics';
-    if (browseMode === 'search') return '/search';
+    if (browseMode === 'search' && typeFilter === 'series' && !search.trim()) return SERIES_ROUTE;
+    if (browseMode === 'search') return searchRoutePath(search, typeFilter);
     if (browseMode === 'phase') return activePhase ? `/phase/${activePhase}` : '/phase';
     return ROUTE_FALLBACK;
-  }, [activePhase, analyticsOpen, browseMode, detailItem, settingsOpen]);
+  }, [activePhase, analyticsOpen, browseMode, detailItem, search, settingsOpen, typeFilter]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
+    const currentRoute = `${currentPath}${window.location.search || ''}`;
     const nextState = { ...(window.history.state || {}), mcuRoute: canonicalRoute };
-    if (currentPath === canonicalRoute) {
+    if (currentRoute === canonicalRoute) {
       if (window.history.state?.mcuRoute !== canonicalRoute) {
         window.history.replaceState(nextState, '', canonicalRoute);
       }
       return;
     }
-    const method = currentPath === '/' || canonicalRoute === ROUTE_FALLBACK ? 'replaceState' : 'pushState';
+    const currentPrimary = currentPath.split('/').filter(Boolean)[0] || 'home';
+    const nextPrimary = canonicalRoute.split('?')[0].split('/').filter(Boolean)[0] || 'home';
+    const method = currentPath === '/' || canonicalRoute === ROUTE_FALLBACK || currentPrimary === nextPrimary ? 'replaceState' : 'pushState';
     window.history[method](nextState, '', canonicalRoute);
   }, [canonicalRoute]);
   useEffect(() => {
@@ -1755,7 +1811,7 @@ export default function MCUViewer() {
       if (genreFilter !== 'all' && i.type !== genreFilter) return false;
       const after = AFTER_CREDITS[i.title] || AFTER_CREDITS_DEFAULT;
       const timelineLabel = TIMELINE_MODES.find(m => m.id === timelineMode)?.label || '';
-      return matchesSearch(i, search, { director: DIRECTOR_DATA[i.title] || '', actors: metaCache[i.id]?.cast || '', connectsTo: after.connectsTo || [], timelineLabel }, searchScope);
+      return matchesSearch(i, deferredSearch, { director: DIRECTOR_DATA[i.title] || '', actors: metaCache[i.id]?.cast || '', connectsTo: after.connectsTo || [], timelineLabel }, searchScope);
     }).sort((a, b) => {
       if (sortBy === 'title') return a.title.localeCompare(b.title);
       if (sortBy === 'year') return a.year - b.year;
@@ -1775,7 +1831,7 @@ export default function MCUViewer() {
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, browseMode, timelineMode, genreFilter, search, sortBy, coreIds, showAllFiltersOverride, localPosterMap, releaseFilter, metaCache, searchScope]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, browseMode, timelineMode, genreFilter, deferredSearch, sortBy, coreIds, showAllFiltersOverride, releaseFilter, metaCache, searchScope]);
 
 
 
@@ -3317,7 +3373,7 @@ export default function MCUViewer() {
     <>
     {showPhaseSystem && (
     <div ref={phaseRef} className="phase-selector-rail">
-      <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} onClick={() => { setActivePhase(0); requestAnimationFrame(() => scrollToListTop()); }}>
+      <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} onClick={() => navigateToPhase(0)}>
         <span className="phase-chip-label">All Phases</span>
       </button>
       {currentPhases.map((ph) => {
@@ -3328,10 +3384,7 @@ export default function MCUViewer() {
         return (
           <button
             key={ph.id}
-            onClick={() => {
-              setActivePhase(ph.id);
-              requestAnimationFrame(() => scrollToListTop());
-            }}
+            onClick={() => navigateToPhase(ph.id)}
             className="fpill phase-chip marvel-phase-btn"
             data-active={isActive}>
             <span className="phase-chip-label">{ph.name}</span>
@@ -3434,6 +3487,10 @@ export default function MCUViewer() {
           <section className="sidebar-panel">
             <div className="sidebar-section-title">{tUniverse('View & Navigate')}</div>
             <div className="sidebar-btn-grid">
+              <button className="fpill" onClick={navigateHome} style={{ justifyContent: 'center' }}>Home</button>
+              <button className="fpill" onClick={() => openSearchMode(search, null)} style={{ justifyContent: 'center' }}>Search</button>
+              <button className="fpill" onClick={() => openSearchMode('', 'series')} style={{ justifyContent: 'center' }}>Series</button>
+              <button className="fpill" onClick={() => navigateToPhase(activePhase || 0)} style={{ justifyContent: 'center' }}>Phases</button>
               <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ justifyContent: 'center' }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
               <button className="fpill" onClick={openAnalyticsPanel} style={{ justifyContent: 'center' }}>{tUniverse('Analytics')}</button>
             </div>
