@@ -1,0 +1,87 @@
+/* Shared dark/light surface polish for modernized controls and app chrome. */
+.theme-switch {
+  --interactive-ring: 0 0 0 3px color-mix(in srgb, var(--theme-accent) 22%, transparent);
+  --interactive-hover-bg: color-mix(in srgb, var(--theme-accent) 12%, var(--theme-surface));
+}
+
+.theme-switch button,
+.theme-switch input,
+.theme-switch textarea,
+.theme-switch select {
+  accent-color: var(--theme-accent);
+}
+
+.theme-switch button:focus-visible,
+.theme-switch input:focus-visible,
+.theme-switch textarea:focus-visible,
+.theme-switch select:focus-visible,
+.theme-switch .fpill:focus-visible,
+.theme-switch .wbtn:focus-visible {
+  outline: none;
+  box-shadow: var(--interactive-ring), var(--control-shadow-default, none);
+}
+
+.theme-switch .fpill,
+.theme-switch .wbtn,
+.theme-switch .dock-btn,
+.theme-switch .sopt {
+  transition:
+    transform var(--duration-fast, 150ms) var(--ease-out),
+    border-color var(--duration-fast, 150ms) var(--ease-out),
+    background var(--duration-fast, 150ms) var(--ease-out),
+    color var(--duration-fast, 150ms) var(--ease-out),
+    box-shadow var(--duration-fast, 150ms) var(--ease-out);
+}
+
+.theme-switch .fpill:hover,
+.theme-switch .wbtn:hover,
+.theme-switch .dock-btn:hover,
+.theme-switch .sopt:hover {
+  transform: translateY(-1px);
+}
+
+.theme-switch .fpill:active,
+.theme-switch .wbtn:active,
+.theme-switch .dock-btn:active,
+.theme-switch .sopt:active {
+  transform: translateY(0) scale(0.985);
+}
+
+.sidebar-panel,
+.settings-card,
+.settings-hero-card,
+.search-page-panel,
+.list-panel {
+  border-color: color-mix(in srgb, var(--theme-border) 84%, transparent) !important;
+}
+
+.sidebar-panel,
+.settings-card,
+.settings-hero-card {
+  background:
+    linear-gradient(145deg,
+      color-mix(in srgb, var(--theme-surface) 88%, transparent),
+      color-mix(in srgb, var(--theme-bg) 26%, transparent)
+    );
+}
+
+[data-color-mode="light"] .sidebar-panel,
+[data-color-mode="light"] .settings-card,
+[data-color-mode="light"] .settings-hero-card {
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.10), inset 0 1px 0 rgba(255,255,255,0.72);
+}
+
+[data-color-mode="dark"] .sidebar-panel,
+[data-color-mode="dark"] .settings-card,
+[data-color-mode="dark"] .settings-hero-card {
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-switch .fpill,
+  .theme-switch .wbtn,
+  .theme-switch .dock-btn,
+  .theme-switch .sopt {
+    transition-duration: 1ms !important;
+  }
+}
