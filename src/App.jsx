@@ -1067,7 +1067,7 @@ export default function MCUViewer() {
 
     if (overlayActive) {
       bodyStyle.overflow = 'hidden';
-      bodyStyle.touchAction = 'none';
+      bodyStyle.touchAction = 'pan-y';
       htmlStyle.overflow = 'hidden';
     }
 
@@ -2436,6 +2436,17 @@ export default function MCUViewer() {
   useEffect(() => { scheduleStorageWrite('mcu-theme-mode-v1', themeMode); }, [themeMode]);
   useEffect(() => { scheduleStorageWrite('mcu-dark-mode-v1', darkMode ? '1' : '0'); }, [darkMode]);
   useEffect(() => { scheduleStorageWrite('mcu-appearance-mode-v1', appearanceMode); }, [appearanceMode]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined' || typeof window === 'undefined') return undefined;
+    const root = document.documentElement;
+    root.classList.add('theme-is-swapping');
+    const timeout = window.setTimeout(() => root.classList.remove('theme-is-swapping'), 180);
+    return () => {
+      window.clearTimeout(timeout);
+      root.classList.remove('theme-is-swapping');
+    };
+  }, [themeMode, darkMode, appearanceMode]);
   useEffect(() => { scheduleStorageWrite('mcu-marvel-lang-v1', marvelLangMode ? '1' : '0'); }, [marvelLangMode]);
   useEffect(() => { scheduleStorageWrite('mcu-export-prefs-v1', JSON.stringify({ font: exportFont, textScale: exportTextScale })); }, [exportFont, exportTextScale]);
 
@@ -3214,17 +3225,6 @@ export default function MCUViewer() {
         <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={13} />Dark</button>
         <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={13} />Light</button>
       </div>
-    </section>
-
-    <section className="settings-card settings-theme-studio-card">
-      <ThemeStudio
-        title={tUniverse('Universe Style')}
-        appearanceMode={appearanceMode}
-        onAppearanceChange={setAppearanceMode}
-        themeChoices={themedChoices}
-        themeMode={themeMode}
-        onThemeChange={setThemeMode}
-      />
     </section>
 
     <section className="settings-grid-2">

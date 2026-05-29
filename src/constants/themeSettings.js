@@ -1,5 +1,5 @@
 export const APPEARANCE_MODES = [
-  { id: 'glass', label: 'Glass', desc: 'Frosted depth, soft refraction, editorial display type', font: 'Space Grotesk' },
+  { id: 'glass', label: 'Glass', desc: 'Frosted depth, soft refraction, clean Inter typography', font: 'Inter' },
   { id: 'pixelated', label: 'Pixelated', desc: 'Arcade grid, chunky type, crisp stepped edges', font: 'Pixelify Sans' },
   { id: 'neon', label: 'Neon', desc: 'Night-city glow, luminous borders, techno titles', font: 'Audiowide' },
   { id: 'minimal', label: 'Minimal', desc: 'Quiet contrast, roomy rhythm, readable UI typography', font: 'Manrope' },
@@ -28,7 +28,7 @@ export const CHARACTER_THEMES = [
 
 const MODE_TOKENS = {
   glass: {
-    fonts: { display: '"Space Grotesk", "Outfit", system-ui, sans-serif', ui: '"Manrope", "Outfit", system-ui, sans-serif', body: '"Manrope", "Outfit", system-ui, sans-serif' },
+    fonts: { display: '"Inter", "Outfit", system-ui, sans-serif', ui: '"Inter", "Outfit", system-ui, sans-serif', body: '"Inter", "Outfit", system-ui, sans-serif' },
     effects: { blur: 26, glow: 0.18, shadow: '0 18px 46px color-mix(in srgb, var(--theme-shadow-rgb, #020617) 22%, transparent)' },
     shape: { radius: [16, 22, 30, 38], edge: 'glass', border: 1 },
     motion: { fast: '140ms', normal: '220ms', slow: '320ms', hoverScale: 1.008 },

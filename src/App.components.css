@@ -3639,3 +3639,152 @@ body { background: var(--app-shell-gradient); }
 .performance-mode.theme-switch :is(.curvy-panel,.list-panel,.settings-card,.settings-hero-card,.sidebar-panel,.rrow,.dropdown-pop,.detail-card,.glass-panel){backdrop-filter:none!important}.performance-mode.theme-switch::before,.performance-mode.theme-switch::after{opacity:.18}.performance-mode.theme-switch *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:80ms!important}
 @media (prefers-reduced-motion: reduce){.theme-switch *{animation:none!important;transition:none!important}.theme-switch :is(.fpill,.wbtn,.dock-btn,.theme-btn,.filters-trigger,.sopt):hover{transform:none}}
 @media (max-width:760px){.settings-hero-card{grid-template-columns:1fr}.phase-header-card{align-items:flex-start;flex-wrap:wrap}.title-main{font-size:16px}.theme-switch{--control-height-md:36px}}
+
+/* 2026 performance polish: researched scroll-safe overlays and lighter theme surfaces.
+   Backdrop filters are isolated to overlays instead of every scrolling row/card, and theme
+   swaps temporarily disable transitions to avoid mixed old/new paint frames. */
+.theme-is-swapping .theme-switch,
+.theme-is-swapping .theme-switch *,
+.theme-is-swapping .theme-switch::before,
+.theme-is-swapping .theme-switch::after {
+  transition: none !important;
+  animation-duration: .01ms !important;
+  animation-iteration-count: 1 !important;
+}
+
+.sidebar-backdrop,
+.settings-backdrop,
+.detail-backdrop {
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+}
+
+.sidebar-menu,
+.settings-shell,
+.settings-menu,
+.detail-card {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable both-edges;
+  contain: paint;
+}
+
+.sidebar-menu,
+.settings-menu {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  max-height: calc(100dvh - max(24px, env(safe-area-inset-top)) - max(24px, env(safe-area-inset-bottom))) !important;
+  transform: var(--sidebar-transform, translate3d(0, 0, 0));
+  will-change: transform;
+}
+
+.settings-shell {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-block: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-bottom));
+}
+
+.detail-backdrop {
+  align-items: start !important;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-block: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-bottom)) !important;
+}
+
+.detail-card {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.detail-export-content,
+.settings-redesign,
+.sidebar-redesign {
+  min-width: 0;
+}
+
+.theme-switch :is(.curvy-panel,.list-panel,.settings-card,.settings-hero-card,.sidebar-panel,.rrow,.dropdown-pop,.detail-card,.bottom-action-dock,.glass-panel,.fpill,.wbtn,.dock-btn,.theme-btn,.filters-trigger,.sopt) {
+  transition-property: transform, opacity, border-color, color, background-color, box-shadow !important;
+  transition-duration: var(--motion-fast, 140ms) !important;
+  transition-timing-function: var(--ease-out, ease) !important;
+}
+
+.theme-switch[data-theme="glass"] {
+  --app-bg-noise-opacity: .02;
+  --fx-blur: min(var(--fx-blur, 18px), 16px);
+}
+
+.theme-switch[data-theme="glass"] :is(.rrow,.fpill,.wbtn,.dock-btn,.theme-btn,.filters-trigger,.sopt,.meta-chip,.poster) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.theme-switch[data-theme="glass"] :is(.sidebar-menu,.settings-menu,.detail-card,.dropdown-pop,.dropdown-pop-up,.bottom-action-dock) {
+  backdrop-filter: blur(14px) saturate(125%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(125%) !important;
+}
+
+.theme-switch[data-theme="glass"] :is(.rrow,.settings-card,.settings-hero-card,.sidebar-panel,.detail-export-panel) {
+  background: linear-gradient(145deg, color-mix(in srgb,var(--theme-surface) 82%, transparent), color-mix(in srgb,var(--theme-surface-strong) 70%, transparent)) !important;
+}
+
+.theme-switch[data-theme="glass"] :is(.header-title-mcu,.phase-title,.title-main,.detail-export-title,.settings-hero-card h2,.theme-studio__header h3) {
+  font-family: var(--font-marvel-display) !important;
+  letter-spacing: -.015em !important;
+}
+
+.theme-switch[data-theme="pixelated"] {
+  --app-bg-noise-opacity: .045;
+  --control-radius: 6px;
+}
+
+.theme-switch[data-theme="pixelated"]::after {
+  opacity: .055 !important;
+  background-size: 18px 18px !important;
+}
+
+.theme-switch[data-theme="pixelated"] :is(.curvy-panel,.list-panel,.settings-card,.settings-hero-card,.sidebar-panel,.rrow,.dropdown-pop,.detail-card,.glass-panel,.fpill,.wbtn,.dock-btn,.theme-btn,.filters-trigger,.sopt,.poster,.meta-chip) {
+  clip-path: none !important;
+  image-rendering: auto !important;
+  border-radius: 6px !important;
+  box-shadow: 3px 3px 0 color-mix(in srgb,var(--theme-accent) 20%, transparent), 0 10px 20px color-mix(in srgb,var(--theme-shadow-rgb,#020617) 12%, transparent) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.theme-switch[data-theme="pixelated"] :is(.rrow,.settings-card,.settings-hero-card,.sidebar-panel,.detail-export-panel)::before {
+  opacity: .18 !important;
+}
+
+.theme-switch[data-theme="pixelated"] :is(.rrow:hover,.fpill:hover,.wbtn:hover,.theme-btn:hover,.filters-trigger:hover) {
+  transform: translateY(-1px) !important;
+  box-shadow: 4px 4px 0 color-mix(in srgb,var(--theme-accent) 24%, transparent), 0 12px 22px color-mix(in srgb,var(--theme-shadow-rgb,#020617) 14%, transparent) !important;
+}
+
+.theme-switch[data-theme="neon"] :is(.rrow,.fpill,.wbtn,.dock-btn,.theme-btn,.filters-trigger,.sopt) {
+  text-shadow: none !important;
+  box-shadow: inset 0 1px 0 var(--edge-highlight), 0 10px 22px color-mix(in srgb,var(--theme-shadow-rgb,#020617) 16%, transparent) !important;
+}
+
+.theme-switch[data-color-mode="light"] :is(.sidebar-menu,.settings-menu,.detail-card) {
+  background: color-mix(in srgb, #ffffff 88%, var(--theme-surface)) !important;
+  color: var(--theme-text) !important;
+}
+
+@media (max-width: 760px) {
+  .sidebar-menu,
+  .settings-menu {
+    max-height: calc(100dvh - 16px) !important;
+  }
+
+  .settings-shell {
+    padding: 8px !important;
+  }
+
+  .detail-backdrop {
+    padding: 8px !important;
+  }
+
+  .detail-export-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
