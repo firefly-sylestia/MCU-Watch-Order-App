@@ -3774,3 +3774,121 @@ body { background: var(--app-shell-gradient); }
     -webkit-backdrop-filter: none !important;
   }
 }
+
+/* Neon theme redesign: independent cyber-terminal language rather than glass skin.
+ * Research notes applied: dark neon UIs need off-black depth, restrained glow,
+ * strong contrast, tokenized surfaces, and glow used as feedback instead of noise.
+ */
+.theme-switch[data-theme="neon"] {
+  --component-bg: linear-gradient(150deg, color-mix(in srgb, var(--theme-bg) 96%, #061b2b), color-mix(in srgb, var(--theme-surface-strong) 88%, #00e5ff 4%));
+  --component-bg-strong: linear-gradient(150deg, color-mix(in srgb, var(--theme-surface-strong) 94%, var(--theme-bg)), color-mix(in srgb, var(--theme-bg-alt) 76%, var(--theme-accent) 6%));
+  --component-border: color-mix(in srgb, var(--theme-accent) 42%, rgba(255,255,255,.08));
+  --component-border-hover: color-mix(in srgb, var(--theme-accent-alt) 52%, var(--theme-accent));
+  --component-shadow: inset 0 0 0 1px color-mix(in srgb, var(--theme-accent) 10%, transparent), 0 0 0 1px color-mix(in srgb, var(--theme-accent) 12%, transparent), 0 18px 42px color-mix(in srgb, var(--theme-shadow-rgb) 30%, transparent);
+  --theme-texture: linear-gradient(90deg, color-mix(in srgb,var(--theme-accent) 10%, transparent) 1px, transparent 1px), linear-gradient(0deg, color-mix(in srgb,var(--theme-accent-alt) 8%, transparent) 1px, transparent 1px);
+  --component-texture-size: 28px 28px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  background-image:
+    radial-gradient(circle at 12% 10%, color-mix(in srgb, var(--theme-accent) 22%, transparent), transparent 32%),
+    radial-gradient(circle at 88% 6%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 28%),
+    linear-gradient(180deg, var(--theme-bg), var(--theme-bg-alt)) !important;
+}
+
+.theme-switch[data-theme="neon"]::after {
+  opacity: .08 !important;
+  background-image: linear-gradient(color-mix(in srgb, var(--theme-accent) 30%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--theme-accent-alt) 24%, transparent) 1px, transparent 1px) !important;
+  background-size: 32px 32px !important;
+  mask-image: radial-gradient(circle at 50% 20%, #000 0 46%, transparent 78%);
+}
+
+.theme-switch[data-theme="neon"] :is(.glass-panel,.sidebar-menu,.settings-menu,.settings-card,.settings-hero-card,.analytics-shell,.analytics-shell .ui-panel,.curvy-panel,.phase-rows-full,.calendar-section,.filters-open,.hero-carousel-shell,.header-brand,.bottom-action-dock,.detail-shell,.detail-panel,.rrow) {
+  background: var(--theme-texture), var(--component-bg) !important;
+  background-size: var(--component-texture-size), auto !important;
+  border-color: var(--component-border) !important;
+  box-shadow: var(--component-shadow) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.theme-switch[data-theme="neon"] :is(.fpill,.theme-btn,.appearance-card,.meta-chip,.detail-btn,.detail-pill,input,textarea,select) {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--theme-bg) 82%, transparent), color-mix(in srgb, var(--theme-surface-strong) 70%, transparent)) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 36%, var(--theme-border)) !important;
+  color: var(--theme-text-primary) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--theme-accent) 8%, transparent) !important;
+}
+
+.theme-switch[data-theme="neon"] :is(.fpill,.theme-btn,.appearance-card,.detail-btn):hover,
+.theme-switch[data-theme="neon"] :is(.fpill,.theme-btn,.appearance-card,.detail-btn):focus-visible {
+  border-color: var(--component-border-hover) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-accent) 18%, transparent), 0 0 18px color-mix(in srgb, var(--theme-accent) 26%, transparent) !important;
+  transform: translateY(-1px) !important;
+}
+
+.theme-switch[data-theme="neon"] :is(.header-title-mcu,.phase-title,.title-main,h1,h2) {
+  color: var(--theme-text-primary) !important;
+  letter-spacing: .06em !important;
+  text-shadow: 0 0 10px color-mix(in srgb, var(--theme-accent) 32%, transparent), 0 0 24px color-mix(in srgb, var(--theme-accent-alt) 18%, transparent) !important;
+}
+
+.theme-switch[data-color-mode="light"][data-theme="neon"] {
+  --component-shadow: inset 0 0 0 1px color-mix(in srgb, var(--theme-accent) 8%, transparent), 0 12px 30px rgba(8,145,178,.13) !important;
+}
+
+/* Pixel typography expansion: keep readable body text, but make UI labels and controls consistently arcade. */
+.theme-switch[data-theme="pixelated"] :is(.header-title-mcu,.header-title-sub,.phase-title,.title-main,.title-btn,.row-title,.sidebar-section-title,.settings-section-title,.analytics-metric-label,.analytics-progress-title,.meta-chip,.fpill,.theme-btn,.dock-btn,.filters-trigger,.sopt,.status-pill,.setup-step-progress,.setup-section h3,.setup-note,.theme-style-card__copy,.theme-accent-card__copy) {
+  font-family: "Pixelify Sans", "Press Start 2P", var(--font-marvel-ui) !important;
+  letter-spacing: .045em !important;
+  text-transform: uppercase;
+}
+
+.theme-switch[data-theme="pixelated"] :is(.analytics-metric-value,.stat-card-num,.progress-count,.phase-chip-count) {
+  font-family: "Press Start 2P", "Pixelify Sans", monospace !important;
+  letter-spacing: .02em !important;
+}
+
+.theme-switch[data-theme="pixelated"] :is(input,textarea,select,.row-meta-line,.analytics-metric-meta,.analytics-progress-sub) {
+  font-family: "Pixelify Sans", "Rajdhani", system-ui, sans-serif !important;
+}
+
+/* Analytics modal desktop scroll fix: let the backdrop own the viewport scroll and keep the shell bounded. */
+.analytics-backdrop {
+  align-items: flex-start !important;
+  justify-items: center !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: clamp(12px, 3vh, 28px) clamp(12px, 3vw, 28px) !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.analytics-shell-redesign {
+  max-height: none !important;
+  height: auto !important;
+  overflow: visible !important;
+  margin-block: auto !important;
+}
+
+@media (min-width: 900px) {
+  .analytics-backdrop {
+    display: grid !important;
+    place-items: start center !important;
+  }
+
+  .analytics-shell-redesign {
+    width: min(1180px, calc(100vw - 56px)) !important;
+    margin: 0 auto clamp(28px, 4vh, 44px) !important;
+  }
+}
+
+/* Setup style chooser */
+.setup-step-progress{grid-template-columns:repeat(4,minmax(0,1fr))}
+.setup-style-section{grid-column:1/-1}
+.setup-style-modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.setup-choice-card,.setup-style-card{appearance:none;border:1px solid var(--ui-border-soft);background:linear-gradient(145deg,var(--ui-surface-1),var(--ui-surface-2));color:var(--ui-text-primary);border-radius:16px;padding:12px;text-align:left;cursor:pointer;transition:transform 160ms var(--ease-out),border-color 160ms var(--ease-out),box-shadow 180ms var(--ease-out)}
+.setup-choice-card:hover,.setup-style-card:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--theme-accent) 46%,var(--ui-border-soft));box-shadow:0 10px 22px color-mix(in srgb,var(--theme-shadow-rgb) 12%,transparent)}
+.setup-choice-card[aria-pressed="true"],.setup-style-card[aria-pressed="true"]{border-color:var(--theme-accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--theme-accent) 18%,transparent),0 12px 24px color-mix(in srgb,var(--theme-shadow-rgb) 12%,transparent)}
+.setup-choice-card__title{display:block;font-weight:850;margin-bottom:4px}.setup-choice-card__meta{display:block;color:var(--ui-text-secondary);font-size:12px;line-height:1.35}
+.setup-style-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.setup-style-card{display:grid;grid-template-columns:42px minmax(0,1fr);gap:10px;align-items:center;min-height:94px}.setup-style-card__visual{position:relative;display:block;width:42px;height:58px;border-radius:12px;border:1px solid color-mix(in srgb,var(--theme-accent) 38%,var(--ui-border-soft));background:radial-gradient(circle at 28% 20%,color-mix(in srgb,var(--theme-accent) 28%,transparent),transparent 44%),linear-gradient(145deg,var(--ui-surface-2),var(--ui-surface-3));overflow:hidden}.setup-style-card__visual i,.setup-style-card__visual b,.setup-style-card__visual em{position:absolute;left:8px;right:8px;height:4px;border-radius:999px;background:var(--theme-accent);opacity:.8}.setup-style-card__visual i{top:12px}.setup-style-card__visual b{top:25px;right:14px}.setup-style-card__visual em{bottom:12px;right:18px}.setup-style-card__copy strong{display:block;font-size:13px;margin-bottom:4px}.setup-style-card__copy small{display:block;color:var(--ui-text-secondary);font-size:11px;line-height:1.35}.setup-accent-strip{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.setup-accent-dot{width:30px;height:30px;border-radius:999px;border:2px solid color-mix(in srgb,var(--setup-accent) 72%,var(--ui-border-soft));background:radial-gradient(circle at 30% 24%,#fff 0 12%,var(--setup-accent) 13% 100%);cursor:pointer;box-shadow:0 6px 14px color-mix(in srgb,var(--setup-accent) 20%,transparent)}.setup-accent-dot[aria-pressed="true"]{outline:2px solid var(--theme-accent);outline-offset:3px}.setup-tuning-section{grid-column:1/-1}
+@media (max-width: 920px){.setup-step-progress,.setup-style-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width: 620px){.setup-step-progress,.setup-style-grid,.setup-style-modes{grid-template-columns:minmax(0,1fr)}.setup-style-card{grid-template-columns:36px minmax(0,1fr)}}

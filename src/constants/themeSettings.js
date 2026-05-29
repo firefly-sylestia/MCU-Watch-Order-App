@@ -1,7 +1,7 @@
 export const APPEARANCE_MODES = [
   { id: 'glass', label: 'Glass', desc: 'Frosted depth, soft refraction, editorial display type', font: 'Space Grotesk' },
   { id: 'pixelated', label: 'Pixelated', desc: 'Arcade grid, chunky type, crisp stepped edges', font: 'Pixelify Sans' },
-  { id: 'neon', label: 'Neon', desc: 'Night-city glow, luminous borders, techno titles', font: 'Audiowide' },
+  { id: 'neon', label: 'Neon', desc: 'Cyber terminal, electric outlines, dark city depth', font: 'Audiowide' },
   { id: 'minimal', label: 'Minimal', desc: 'Quiet contrast, roomy rhythm, readable UI typography', font: 'Manrope' },
 ];
 
@@ -45,11 +45,11 @@ const MODE_TOKENS = {
   },
   neon: {
     fonts: { display: '"Audiowide", "Rajdhani", system-ui, sans-serif', ui: '"Rajdhani", "Outfit", system-ui, sans-serif', body: '"Space Grotesk", "Outfit", system-ui, sans-serif' },
-    effects: { blur: 10, glow: 0.58, shadow: '0 0 20px color-mix(in srgb, var(--theme-accent) 34%, transparent), 0 0 42px color-mix(in srgb, var(--theme-accent-alt) 18%, transparent)' },
-    shape: { radius: [12, 18, 26, 34], edge: 'neon', border: 1 },
-    motion: { fast: '120ms', normal: '210ms', slow: '300ms', hoverScale: 1.014 },
-    texture: 'radial-gradient(circle at 22% 18%, color-mix(in srgb, var(--theme-accent) 18%, transparent), transparent 34%), radial-gradient(circle at 78% 0%, color-mix(in srgb, var(--theme-accent-alt) 14%, transparent), transparent 30%)',
-    panelOverlay: 'linear-gradient(145deg, color-mix(in srgb, var(--theme-bg) 46%, transparent), color-mix(in srgb, var(--theme-accent) 10%, transparent))',
+    effects: { blur: 0, glow: 0.46, shadow: '0 0 0 1px color-mix(in srgb, var(--theme-accent) 22%, transparent), 0 0 18px color-mix(in srgb, var(--theme-accent) 26%, transparent), 0 16px 42px color-mix(in srgb, var(--theme-shadow-rgb, #020617) 32%, transparent)' },
+    shape: { radius: [10, 14, 20, 28], edge: 'neon', border: 1.5 },
+    motion: { fast: '110ms', normal: '180ms', slow: '260ms', hoverScale: 1.006 },
+    texture: 'linear-gradient(90deg, color-mix(in srgb, var(--theme-accent) 12%, transparent) 1px, transparent 1px), linear-gradient(0deg, color-mix(in srgb, var(--theme-accent-alt) 10%, transparent) 1px, transparent 1px), radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 18%, transparent), transparent 32%)',
+    panelOverlay: 'linear-gradient(145deg, color-mix(in srgb, var(--theme-bg) 88%, transparent), color-mix(in srgb, var(--theme-surface-strong) 84%, transparent))',
   },
   minimal: {
     fonts: { display: '"Manrope", "Outfit", system-ui, sans-serif', ui: '"Manrope", "Outfit", system-ui, sans-serif', body: '"Manrope", "Outfit", system-ui, sans-serif' },
@@ -108,13 +108,17 @@ const COLOR_MODE_TOKENS = {
   },
 };
 
-export const resolveThemeTokens = ({ appearanceMode = 'glass', characterTheme = 'iron-man', darkMode = true, universe = 'mcu' }) => {
+export const resolveThemeTokens = ({ appearanceMode = 'minimal', characterTheme = 'iron-man', darkMode = false, universe = 'mcu' }) => {
   const normalizedMode = normalizeAppearanceMode(appearanceMode);
   const mode = MODE_TOKENS[normalizedMode] || MODE_TOKENS.glass;
   const universeKey = universe === 'dc' ? 'dc' : 'marvel';
   const brandMap = universeKey === 'dc' ? DC_THEME_TOKEN_MAP : MARVEL_THEME_TOKEN_MAP;
   const hero = brandMap[characterTheme] || brandMap['iron-man'];
-  const color = COLOR_MODE_TOKENS[universeKey][darkMode ? 'dark' : 'light'];
+  const baseColor = COLOR_MODE_TOKENS[universeKey][darkMode ? 'dark' : 'light'];
+  const neonColor = darkMode
+    ? { bg: '#050711', bgAlt: '#081a2a', surface: 'rgba(7,18,32,.88)', surfaceStrong: 'rgba(9,28,48,.96)', text: '#f4fbff', text2: '#b7d8e9', muted: '#7fa6bb', border: 'rgba(103,232,249,.22)', shadowRgb: '#020617' }
+    : { bg: '#eefbff', bgAlt: '#dff8ff', surface: 'rgba(248,253,255,.92)', surfaceStrong: 'rgba(234,249,255,.98)', text: '#071827', text2: '#254861', muted: '#537387', border: 'rgba(8,145,178,.22)', shadowRgb: '#0891b2' };
+  const color = normalizedMode === 'neon' ? neonColor : baseColor;
   const glowSoftPct = Math.round(mode.effects.glow * 42);
   const glowStrongPct = Math.round(mode.effects.glow * 68);
 
