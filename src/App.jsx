@@ -2971,7 +2971,8 @@ export default function MCUViewer() {
   };
 
   // ─── Per-theme accent + distinctive surface tints ─────────────────────────
-  const activeThemeVars = resolveThemeTokens({ appearanceMode, characterTheme: themeMode, darkMode, universe });
+  const normalizedAppearanceMode = normalizeAppearanceMode(appearanceMode);
+  const activeThemeVars = resolveThemeTokens({ appearanceMode: normalizedAppearanceMode, characterTheme: themeMode, darkMode, universe });
 
   const semanticThemeVars = buildSemanticThemeVars(darkMode);
 
@@ -2989,9 +2990,10 @@ export default function MCUViewer() {
     '--ui-radius-sm': UI_PARITY_TOKENS.radius.sm,
     '--ui-radius-md': UI_PARITY_TOKENS.radius.md,
     '--ui-radius-lg': UI_PARITY_TOKENS.radius.lg,
-    '--motion-fast': UI_PARITY_TOKENS.motion.fast,
-    '--motion-base': UI_PARITY_TOKENS.motion.base,
-    '--motion-slow': UI_PARITY_TOKENS.motion.slow,
+    '--motion-fast': activeThemeVars['--motion-fast'] || UI_PARITY_TOKENS.motion.fast,
+    '--motion-base': activeThemeVars['--motion-normal'] || UI_PARITY_TOKENS.motion.base,
+    '--motion-normal': activeThemeVars['--motion-normal'] || UI_PARITY_TOKENS.motion.base,
+    '--motion-slow': activeThemeVars['--motion-slow'] || UI_PARITY_TOKENS.motion.slow,
     '--theme-success-soft': darkMode
       ? 'color-mix(in srgb, var(--theme-accent) 16%, transparent)'
       : 'color-mix(in srgb, var(--theme-accent) 12%, #f8f9fb)',
@@ -3121,7 +3123,7 @@ export default function MCUViewer() {
     ? `${Math.max(heroBackdropScale - 16, 112)}% auto`
     : `auto ${Math.max(heroBackdropScale - 8, 96)}%`;
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={normalizeAppearanceMode(appearanceMode)} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={normalizedAppearanceMode} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background-color 180ms var(--ease-out), color 180ms var(--ease-out), border-color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
 
 
@@ -3183,7 +3185,7 @@ export default function MCUViewer() {
               compact
               title={tUniverse('Universe Style')}
               appearanceMode={appearanceMode}
-              onAppearanceChange={setAppearanceMode}
+              onAppearanceChange={(mode) => setAppearanceMode(prev => normalizeAppearanceMode(prev) === normalizeAppearanceMode(mode) ? prev : mode)}
               themeChoices={themedChoices}
               themeMode={themeMode}
               onThemeChange={setThemeMode}
@@ -3220,7 +3222,7 @@ export default function MCUViewer() {
       <ThemeStudio
         title={tUniverse('Universe Style')}
         appearanceMode={appearanceMode}
-        onAppearanceChange={setAppearanceMode}
+        onAppearanceChange={(mode) => setAppearanceMode(prev => normalizeAppearanceMode(prev) === normalizeAppearanceMode(mode) ? prev : mode)}
         themeChoices={themedChoices}
         themeMode={themeMode}
         onThemeChange={setThemeMode}

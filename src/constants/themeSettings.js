@@ -1,6 +1,6 @@
 export const APPEARANCE_MODES = [
-  { id: 'glass', label: 'Glass', desc: 'Frosted depth, soft refraction, editorial display type', font: 'Space Grotesk' },
-  { id: 'pixelated', label: 'Pixelated', desc: 'Arcade grid, chunky type, crisp stepped edges', font: 'Pixelify Sans' },
+  { id: 'glass', label: 'Glass', desc: 'Polished translucent panels, soft depth, readable modern type', font: 'Manrope' },
+  { id: 'pixelated', label: 'Pixelated', desc: 'Arcade-inspired rhythm, crisp accents, stable readable UI', font: 'Rajdhani' },
   { id: 'neon', label: 'Neon', desc: 'Night-city glow, luminous borders, techno titles', font: 'Audiowide' },
   { id: 'minimal', label: 'Minimal', desc: 'Quiet contrast, roomy rhythm, readable UI typography', font: 'Manrope' },
 ];
@@ -28,20 +28,20 @@ export const CHARACTER_THEMES = [
 
 const MODE_TOKENS = {
   glass: {
-    fonts: { display: '"Space Grotesk", "Outfit", system-ui, sans-serif', ui: '"Manrope", "Outfit", system-ui, sans-serif', body: '"Manrope", "Outfit", system-ui, sans-serif' },
-    effects: { blur: 26, glow: 0.18, shadow: '0 18px 46px color-mix(in srgb, var(--theme-shadow-rgb, #020617) 22%, transparent)' },
+    fonts: { display: '"Manrope", "Outfit", system-ui, sans-serif', ui: '"Manrope", "Outfit", system-ui, sans-serif', body: '"Manrope", "Outfit", system-ui, sans-serif' },
+    effects: { blur: 14, glow: 0.14, shadow: '0 16px 38px color-mix(in srgb, var(--theme-shadow-rgb, #020617) 18%, transparent)' },
     shape: { radius: [16, 22, 30, 38], edge: 'glass', border: 1 },
-    motion: { fast: '140ms', normal: '220ms', slow: '320ms', hoverScale: 1.008 },
-    texture: 'linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.025) 48%, transparent 72%)',
-    panelOverlay: 'linear-gradient(145deg, color-mix(in srgb, var(--theme-surface) 72%, transparent), color-mix(in srgb, var(--theme-surface-strong) 54%, transparent))',
+    motion: { fast: '150ms', normal: '210ms', slow: '260ms', hoverScale: 1.004 },
+    texture: 'linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.035) 46%, transparent 74%)',
+    panelOverlay: 'linear-gradient(145deg, color-mix(in srgb, var(--theme-surface) 84%, transparent), color-mix(in srgb, var(--theme-surface-strong) 72%, transparent))',
   },
   pixelated: {
-    fonts: { display: '"Pixelify Sans", "Press Start 2P", system-ui, sans-serif', ui: '"Pixelify Sans", "Rajdhani", system-ui, sans-serif', body: '"Rajdhani", "Outfit", system-ui, sans-serif' },
-    effects: { blur: 0, glow: 0.1, shadow: '6px 6px 0 color-mix(in srgb, var(--theme-accent) 22%, transparent), 0 14px 24px rgba(2,8,23,.16)' },
-    shape: { radius: [6, 8, 12, 16], edge: 'pixel', border: 2 },
-    motion: { fast: '80ms', normal: '140ms', slow: '190ms', hoverScale: 1 },
-    texture: 'linear-gradient(90deg, color-mix(in srgb, var(--theme-accent) 13%, transparent) 1px, transparent 1px), linear-gradient(0deg, color-mix(in srgb, var(--theme-accent-alt) 10%, transparent) 1px, transparent 1px)',
-    panelOverlay: 'linear-gradient(135deg, color-mix(in srgb, var(--theme-surface) 90%, transparent), color-mix(in srgb, var(--theme-accent) 9%, var(--theme-surface-strong)))',
+    fonts: { display: '"Rajdhani", "Outfit", system-ui, sans-serif', ui: '"Rajdhani", "Outfit", system-ui, sans-serif', body: '"Manrope", "Outfit", system-ui, sans-serif' },
+    effects: { blur: 0, glow: 0.08, shadow: '4px 4px 0 color-mix(in srgb, var(--theme-accent) 18%, transparent), 0 12px 22px rgba(2,8,23,.14)' },
+    shape: { radius: [8, 10, 14, 18], edge: 'pixel', border: 1 },
+    motion: { fast: '120ms', normal: '170ms', slow: '220ms', hoverScale: 1 },
+    texture: 'linear-gradient(90deg, color-mix(in srgb, var(--theme-accent) 9%, transparent) 1px, transparent 1px), linear-gradient(0deg, color-mix(in srgb, var(--theme-accent-alt) 7%, transparent) 1px, transparent 1px)',
+    panelOverlay: 'linear-gradient(135deg, color-mix(in srgb, var(--theme-surface) 92%, transparent), color-mix(in srgb, var(--theme-accent) 6%, var(--theme-surface-strong)))',
   },
   neon: {
     fonts: { display: '"Audiowide", "Rajdhani", system-ui, sans-serif', ui: '"Rajdhani", "Outfit", system-ui, sans-serif', body: '"Space Grotesk", "Outfit", system-ui, sans-serif' },
