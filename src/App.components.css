@@ -3976,3 +3976,34 @@ body { background: var(--app-shell-gradient); }
 
 .theme-switch[data-theme="neon"] :is(.header-title-mcu,.phase-title,.title-main,.detail-title,.settings-card h3,.settings-hero-card h2,.analytics-header h2){color:color-mix(in srgb,var(--theme-text-primary) 88%,var(--theme-accent) 12%) !important;text-shadow:0 1px 0 color-mix(in srgb,var(--theme-bg) 80%,transparent),0 0 10px color-mix(in srgb,var(--theme-accent) 26%,transparent) !important}
 .theme-switch[data-color-mode="light"][data-theme="neon"] :is(.header-title-mcu,.phase-title,.title-main,.detail-title,.settings-card h3,.settings-hero-card h2,.analytics-header h2){color:#102033 !important;text-shadow:0 1px 0 rgba(255,255,255,.9),0 0 8px color-mix(in srgb,var(--theme-accent) 18%,transparent) !important}
+
+/* Scroll performance hardening
+   Research-backed: keep long lists cheap by containing each row, avoiding deep
+   off-screen paint, and dropping decorative pseudo layers in phase list mode. */
+.phase-row-virtualized{
+  contain: layout paint style;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 132px;
+  overflow: visible;
+}
+.phase-row-virtualized > div{min-height:var(--row-min-h,86px)}
+.phase-list-mode .app-backdrop-layout,
+.scroll-performance .app-backdrop-layout{opacity:.55;filter:none!important}
+.phase-list-mode :is(.rrow,.calendar-row)::before,
+.phase-list-mode :is(.rrow,.calendar-row)::after,
+.scroll-performance :is(.rrow,.calendar-row)::before,
+.scroll-performance :is(.rrow,.calendar-row)::after{display:none!important}
+.phase-list-mode :is(.rrow,.calendar-row,.curvy-panel,.phase-header-card),
+.scroll-performance :is(.rrow,.calendar-row,.curvy-panel,.phase-header-card){
+  box-shadow:0 8px 22px color-mix(in srgb,var(--theme-bg) 30%,transparent)!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+.phase-list-mode .motion-section,
+.phase-list-mode .phase-row-virtualized,
+.scroll-performance .motion-section,
+.scroll-performance .phase-row-virtualized{transition-property:opacity,transform!important;transition-duration:120ms!important;transition-delay:0ms!important}
+.theme-transition-loader{isolation:isolate}
+.theme-transition-loader::after{content:"";width:min(260px,62vw);height:4px;border-radius:999px;margin-top:8px;background:linear-gradient(90deg,var(--theme-accent),var(--theme-accent-alt),var(--theme-accent));background-size:200% 100%;animation:themeLoaderBar 920ms ease-in-out infinite;box-shadow:0 0 18px color-mix(in srgb,var(--theme-accent) 38%,transparent)}
+@keyframes themeLoaderBar{0%{background-position:0% 50%;transform:scaleX(.7);opacity:.7}50%{background-position:100% 50%;transform:scaleX(1);opacity:1}100%{background-position:0% 50%;transform:scaleX(.7);opacity:.7}}
+@media (prefers-reduced-motion: reduce){.theme-transition-loader::after{animation:none}.phase-row-virtualized{content-visibility:visible}}

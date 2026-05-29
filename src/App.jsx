@@ -720,45 +720,30 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
   );
 }));
 
-const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
+const PhaseRows = React.memo(function PhaseRows({ rows, renderRow, scrollViewport }) {
   const shellRef = useRef(null);
   const rowHeightsRef = useRef(new Map());
-  const [scrollY, setScrollY] = useState(0);
-  const [viewportHeight, setViewportHeight] = useState(() => (typeof window !== 'undefined' ? window.innerHeight : 900));
+  const measureRafRef = useRef(0);
   const [measuredVersion, setMeasuredVersion] = useState(0);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-    let rafId = 0;
-    const schedule = () => {
-      if (rafId) return;
-      rafId = window.requestAnimationFrame(() => {
-        rafId = 0;
-        setScrollY(window.scrollY || 0);
-        setViewportHeight(window.innerHeight || 900);
-      });
-    };
-    schedule();
-    window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', schedule);
-    return () => {
-      window.removeEventListener('scroll', schedule);
-      window.removeEventListener('resize', schedule);
-      if (rafId) window.cancelAnimationFrame(rafId);
-    };
-  }, []);
-
+  const viewportTop = scrollViewport?.top ?? 0;
+  const viewportHeight = scrollViewport?.height ?? (typeof window !== 'undefined' ? window.innerHeight : 900);
+  const viewportVersion = scrollViewport?.version ?? 0;
   const estimatedRowHeight = 132;
   const estimatedTotalHeight = rows.length * estimatedRowHeight;
-  const computedOverscan = Math.min(12, Math.max(6, Math.round(viewportHeight / 220)));
+  const computedOverscan = Math.min(10, Math.max(5, Math.round(viewportHeight / 240)));
+
+  useEffect(() => () => {
+    if (measureRafRef.current && typeof window !== 'undefined') window.cancelAnimationFrame(measureRafRef.current);
+  }, []);
 
   const windowRange = useMemo(() => {
     if (!rows.length) return { start: 0, end: -1 };
     const shellRect = shellRef.current?.getBoundingClientRect?.();
-    if (!shellRect) return { start: 0, end: Math.min(rows.length - 1, 26) };
+    if (!shellRect) return { start: 0, end: Math.min(rows.length - 1, 24) };
 
-    const listTopInPage = shellRect.top + scrollY;
-    const top = Math.max(0, scrollY - listTopInPage);
+    const listTopInPage = shellRect.top + viewportTop;
+    const top = Math.max(0, viewportTop - listTopInPage);
     const bottom = top + viewportHeight;
 
     let acc = 0;
@@ -785,7 +770,7 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
       start: Math.max(0, start - computedOverscan),
       end: Math.min(rows.length - 1, end + computedOverscan),
     };
-  }, [rows, scrollY, viewportHeight, measuredVersion, computedOverscan]);
+  }, [rows, viewportTop, viewportHeight, viewportVersion, measuredVersion, computedOverscan]);
 
   const { topSpacer, bottomSpacer, visibleRows } = useMemo(() => {
     if (!rows.length || windowRange.end < windowRange.start) return { topSpacer: 0, bottomSpacer: 0, visibleRows: [] };
@@ -809,7 +794,12 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
     const prevHeight = rowHeightsRef.current.get(rowId);
     if (nextHeight > 0 && prevHeight !== nextHeight) {
       rowHeightsRef.current.set(rowId, nextHeight);
-      setMeasuredVersion(v => v + 1);
+      if (!measureRafRef.current && typeof window !== 'undefined') {
+        measureRafRef.current = window.requestAnimationFrame(() => {
+          measureRafRef.current = 0;
+          setMeasuredVersion(v => v + 1);
+        });
+      }
     }
   }, []);
 
@@ -951,6 +941,11 @@ export default function MCUViewer() {
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const sortMenuRef = useRef(null);
   const [scrollCheckpoint, setScrollCheckpoint] = useState(initialUiState.scrollTop);
+  const [scrollViewport, setScrollViewport] = useState(() => ({
+    top: initialUiState.scrollTop || 0,
+    height: typeof window !== 'undefined' ? window.innerHeight : 900,
+    version: 0,
+  }));
   const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
 
   useEffect(() => {
@@ -1298,14 +1293,32 @@ export default function MCUViewer() {
   useEffect(() => {
     const el = mainRef.current;
     let scrollSaveTimer;
+    let viewportRaf = 0;
     let previousTop = 0;
     const getCurrentScrollTop = () => {
       const canScrollMain = el && el.scrollHeight > el.clientHeight + 1;
       return canScrollMain ? el.scrollTop : window.scrollY;
     };
-    previousTop = getCurrentScrollTop();
+    const publishViewport = () => {
+      const currentTop = getCurrentScrollTop();
+      setScrollViewport(prev => {
+        const nextHeight = window.innerHeight || prev.height || 900;
+        if (Math.abs(prev.top - currentTop) < 1 && prev.height === nextHeight) return prev;
+        return { top: currentTop, height: nextHeight, version: prev.version + 1 };
+      });
+      return currentTop;
+    };
+    previousTop = publishViewport();
+    const scheduleViewport = () => {
+      if (viewportRaf) return;
+      viewportRaf = window.requestAnimationFrame(() => {
+        viewportRaf = 0;
+        publishViewport();
+      });
+    };
     const onScroll = () => {
       const currentTop = getCurrentScrollTop();
+      scheduleViewport();
       const delta = currentTop - previousTop;
       if (currentTop < 120) {
         setFabMinimized(false);
@@ -1324,10 +1337,13 @@ export default function MCUViewer() {
     };
     el?.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', scheduleViewport, { passive: true });
     return () => {
       clearTimeout(scrollSaveTimer);
+      if (viewportRaf) window.cancelAnimationFrame(viewportRaf);
       el?.removeEventListener('scroll', onScroll);
       window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', scheduleViewport);
     };
   }, [fabMenuOpen]);
 
@@ -3278,7 +3294,7 @@ export default function MCUViewer() {
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '6%' : '3%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '5%' : '2.5%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.12 : 0.06, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
       </div>
 
-      <div className="theme-transition-loader" aria-hidden={!themeTransitioning}><span />Retuning theme</div>
+      <div className="theme-transition-loader" aria-hidden={!themeTransitioning} aria-live="polite" role="status"><span />Retuning theme</div>
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} settingsOpen={settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onDismissBackdrop={suppressNextDocumentClick} onOpenSettings={toggleSettingsPanel}>
@@ -3775,6 +3791,7 @@ export default function MCUViewer() {
                 <div className="list-panel" style={{ overflow: 'hidden' }}>
                   <PhaseRows
                     rows={filtered}
+                    scrollViewport={scrollViewport}
                     renderRow={(item, idx) => {
                       const itemReleaseStatus = releaseStatusFor(item);
                       const itemReleaseInfo = releaseInfoFor(item);
@@ -3901,7 +3918,7 @@ export default function MCUViewer() {
 
                 {/* Row table */}
                 <div className="list-panel" style={{ overflow: 'hidden' }}>
-                  <PhaseRows rows={rows} renderRow={(item, idx) => {
+                  <PhaseRows rows={rows} scrollViewport={scrollViewport} renderRow={(item, idx) => {
                     const itemReleaseStatus = releaseStatusFor(item);
                     const itemReleaseInfo = releaseInfoFor(item);
                     return (
@@ -3942,7 +3959,7 @@ export default function MCUViewer() {
           }) : (
             <section data-motion="section" className='curvy-panel motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 12 }}>
               <div className="list-panel" style={{ overflow: 'hidden' }}>
-                <PhaseRows rows={filtered} renderRow={(item, idx) => {
+                <PhaseRows rows={filtered} scrollViewport={scrollViewport} renderRow={(item, idx) => {
                   const itemReleaseStatus = releaseStatusFor(item);
                   const itemReleaseInfo = releaseInfoFor(item);
                   const ph = currentPhases.find(p => p.id === item.phase) || currentPhases[0];
