@@ -42,15 +42,15 @@ const normalizeDeltaY = (event) => {
 export const useLenis = () => {
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+    const narrowViewport = window.matchMedia('(max-width: 900px)').matches;
+    const slowUpdate = window.matchMedia('(update: slow)').matches;
+    if (prefersReducedMotion || coarsePointer || narrowViewport || slowUpdate) return undefined;
 
     const html = document.documentElement;
     html.classList.add('lenis-ready');
 
-    let touchY = null;
-    let touchX = null;
-    let lastTouchTime = 0;
-    let touchVelocity = 0;
     let momentumVelocity = 0;
     let targetY = window.scrollY;
     let rafId = null;
@@ -110,76 +110,11 @@ export const useLenis = () => {
       queueScroll(deltaY * 0.98);
     };
 
-    const onTouchStart = (event) => {
-      if (event.touches.length !== 1 || isOverlayActive()) return;
-      touchY = event.touches[0].clientY;
-      touchX = event.touches[0].clientX;
-      lastTouchTime = performance.now();
-      touchVelocity = 0;
-      momentumVelocity = 0;
-      targetY = window.scrollY;
-    };
-
-    const onTouchMove = (event) => {
-      if (event.touches.length !== 1 || isOverlayActive()) return;
-      if (isEditableTarget(event.target)) return;
-
-      if (touchY == null) {
-        touchY = event.touches[0].clientY;
-        touchX = event.touches[0].clientX;
-        lastTouchTime = performance.now();
-        return;
-      }
-
-      const now = performance.now();
-      const nextY = event.touches[0].clientY;
-      const nextX = event.touches[0].clientX;
-      const deltaY = touchY - nextY;
-      const deltaX = (touchX ?? nextX) - nextX;
-      const dt = Math.max(8, now - lastTouchTime);
-
-      touchY = nextY;
-      touchX = nextX;
-      lastTouchTime = now;
-
-      if (!Number.isFinite(deltaY) || Math.abs(deltaY) < 0.8) return;
-      const horizontalIntent = Math.abs(deltaX) > Math.abs(deltaY) * 1.1;
-      if (horizontalIntent) return;
-      if (hasScrollableParent(event.target, { deltaY, axis: 'y' })) return;
-
-      event.preventDefault();
-      window.scrollBy({ top: deltaY, left: 0, behavior: 'auto' });
-      targetY = window.scrollY;
-      touchVelocity = deltaY / dt;
-    };
-
-    const onTouchEnd = () => {
-      touchY = null;
-      touchX = null;
-      targetY = window.scrollY;
-
-      const projected = touchVelocity * 26;
-      momentumVelocity = Math.max(-38, Math.min(38, projected));
-      touchVelocity = 0;
-
-      if (Math.abs(momentumVelocity) > 0.25) {
-        targetY = clamp(targetY + momentumVelocity * 7.5);
-        startLoop();
-      }
-    };
 
     window.addEventListener('wheel', onWheel, { passive: false });
-    window.addEventListener('touchstart', onTouchStart, { passive: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: false });
-    window.addEventListener('touchend', onTouchEnd, { passive: true });
-    window.addEventListener('touchcancel', onTouchEnd, { passive: true });
 
     return () => {
       window.removeEventListener('wheel', onWheel);
-      window.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('touchend', onTouchEnd);
-      window.removeEventListener('touchcancel', onTouchEnd);
       if (rafId != null) window.cancelAnimationFrame(rafId);
       html.classList.remove('lenis-ready');
     };

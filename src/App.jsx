@@ -270,10 +270,27 @@ const waitForExportFont = async (fontFamily) => {
 
 const isAgentsOfShieldCarouselDuplicate = (item) => /agents of shield/i.test(item?.title || '');
 const HERO_ROTATION_MS = 10000;
+const HERO_IDLE_RESUME_MS = 10000;
 const HERO_VISIBLE_COUNT = 15;
 const HERO_PRELOAD_AHEAD = 12;
 const loadedHeroPosterSrcs = new Set();
 const heroPosterLoadPromises = new Map();
+const UI_BUILD_SELECTORS = [
+  '.header-brand',
+  '.hero-carousel-shell',
+  '.hero-carousel-card',
+  '.phase-rows-full',
+  '.list-panel',
+  '.rrow',
+  '.title-btn',
+  '.row-actions',
+  '.settings-card',
+  '.settings-menu',
+  '.detail-card',
+  '.analytics-shell',
+  '.fpill',
+  '.wbtn',
+];
 
 const preloadHeroPoster = (src) => {
   if (!src || typeof window === 'undefined') return Promise.resolve(src || '');
@@ -1035,6 +1052,7 @@ export default function MCUViewer() {
   const heroActiveCardRef = useRef(null);
   const heroInteractionTimeoutRef = useRef(null);
   const heroUserInteractingUntilRef = useRef(0);
+  const [heroIdlePaused, setHeroIdlePaused] = useState(false);
   const heroProgrammaticScrollRef = useRef(false);
   const heroForceRecenterRef = useRef(false);
   const heroRandomSeedRef = useRef(() => Math.random().toString(36).slice(2));
@@ -1093,6 +1111,31 @@ export default function MCUViewer() {
       bodyStyle.touchAction = prevBodyTouchAction;
       htmlStyle.overflow = prevHtmlOverflow;
     };
+  }, [overlayActive]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const markUserActivity = () => {
+      heroUserInteractingUntilRef.current = Date.now() + HERO_IDLE_RESUME_MS;
+      setHeroIdlePaused(true);
+      if (heroInteractionTimeoutRef.current) window.clearTimeout(heroInteractionTimeoutRef.current);
+      heroInteractionTimeoutRef.current = window.setTimeout(() => {
+        heroUserInteractingUntilRef.current = 0;
+        heroInteractionTimeoutRef.current = null;
+        setHeroIdlePaused(false);
+      }, HERO_IDLE_RESUME_MS);
+    };
+    const activityEvents = ['wheel', 'scroll', 'touchstart', 'touchmove', 'pointerdown', 'keydown'];
+    activityEvents.forEach(eventName => window.addEventListener(eventName, markUserActivity, { passive: true, capture: true }));
+    window.addEventListener('blur', markUserActivity);
+    return () => {
+      activityEvents.forEach(eventName => window.removeEventListener(eventName, markUserActivity, { capture: true }));
+      window.removeEventListener('blur', markUserActivity);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (overlayActive) setHeroIdlePaused(true);
   }, [overlayActive]);
 
   useEffect(() => {
@@ -1868,14 +1911,14 @@ export default function MCUViewer() {
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
     if (heroPosters.length <= 1) return undefined;
-    const overlayBlockingCycle = overlayActive;
+    const cycleBlocked = overlayActive || heroIdlePaused || browseMode !== 'home';
     const telemetry = (state, reason) => {
       if (typeof window === 'undefined') return;
       window.dispatchEvent(new CustomEvent(`backdrop_cycle_${state}_reason`, { detail: { reason } }));
     };
 
     const startHeroCycle = () => {
-      if (overlayBlockingCycle) return;
+      if (cycleBlocked) return;
       if (heroIntervalRef.current) return;
       heroIntervalRef.current = window.setInterval(() => {
         if (Date.now() < heroUserInteractingUntilRef.current) return;
@@ -1887,28 +1930,31 @@ export default function MCUViewer() {
       if (!heroIntervalRef.current) return;
       window.clearInterval(heroIntervalRef.current);
       heroIntervalRef.current = null;
-      telemetry('paused', overlayBlockingCycle ? 'overlay-open' : 'document-hidden');
+      telemetry('paused', overlayActive ? 'overlay-open' : (heroIdlePaused ? 'waiting-for-idle' : 'document-hidden'));
     };
     const onVisibility = () => {
-      if (document.visibilityState === 'visible') startHeroCycle();
+      if (document.visibilityState === 'visible' && !cycleBlocked) startHeroCycle();
       else stopHeroCycle();
     };
 
     const debounce = window.setTimeout(onVisibility, 120);
+    if (cycleBlocked) stopHeroCycle();
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
       window.clearTimeout(debounce);
       document.removeEventListener('visibilitychange', onVisibility);
       stopHeroCycle();
     };
-  }, [heroPosters.length, settingsOpen, analyticsOpen, detailItem, sidebarOpen]);
+  }, [heroPosters.length, overlayActive, heroIdlePaused, browseMode]);
 
-  const pauseHeroAutoSlide = useCallback((duration = 2200) => {
+  const pauseHeroAutoSlide = useCallback((duration = HERO_IDLE_RESUME_MS) => {
     heroUserInteractingUntilRef.current = Date.now() + duration;
+    setHeroIdlePaused(true);
     if (heroInteractionTimeoutRef.current) window.clearTimeout(heroInteractionTimeoutRef.current);
     heroInteractionTimeoutRef.current = window.setTimeout(() => {
       heroUserInteractingUntilRef.current = 0;
       heroInteractionTimeoutRef.current = null;
+      setHeroIdlePaused(false);
     }, duration);
   }, []);
 
@@ -1936,14 +1982,14 @@ export default function MCUViewer() {
 
   const goToNextHero = useCallback(() => {
     if (!heroPosters.length) return;
-    pauseHeroAutoSlide(2800);
+    pauseHeroAutoSlide(HERO_IDLE_RESUME_MS);
     heroForceRecenterRef.current = true;
     setHeroIndex(i => (i + 1) % heroPosters.length);
   }, [heroPosters.length, pauseHeroAutoSlide]);
 
   const goToPrevHero = useCallback(() => {
     if (!heroPosters.length) return;
-    pauseHeroAutoSlide(2800);
+    pauseHeroAutoSlide(HERO_IDLE_RESUME_MS);
     heroForceRecenterRef.current = true;
     setHeroIndex(i => (i - 1 + heroPosters.length) % heroPosters.length);
   }, [heroPosters.length, pauseHeroAutoSlide]);
@@ -1953,7 +1999,7 @@ export default function MCUViewer() {
     if (!horizontalIntent) return;
     const horizontalDelta = e.shiftKey ? e.deltaY : e.deltaX;
     if (!horizontalDelta) return;
-    pauseHeroAutoSlide(2600);
+    pauseHeroAutoSlide(HERO_IDLE_RESUME_MS);
     e.currentTarget.scrollBy({ left: horizontalDelta * 2.4, behavior: 'auto' });
     e.preventDefault();
   }, [pauseHeroAutoSlide]);
@@ -2454,12 +2500,32 @@ export default function MCUViewer() {
   useEffect(() => { scheduleStorageWrite('mcu-theme-mode-v1', themeMode); }, [themeMode]);
   useEffect(() => { scheduleStorageWrite('mcu-dark-mode-v1', darkMode ? '1' : '0'); }, [darkMode]);
   useEffect(() => { scheduleStorageWrite('mcu-appearance-mode-v1', appearanceMode); }, [appearanceMode]);
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
+  const runThemeTransition = useCallback((applyThemeChange) => {
+    if (typeof applyThemeChange !== 'function') return;
+    if (typeof window === 'undefined') {
+      applyThemeChange();
+      return;
+    }
     setThemeTransitioning(true);
-    const timer = window.setTimeout(() => setThemeTransitioning(false), performanceMode ? 180 : 420);
-    return () => window.clearTimeout(timer);
-  }, [appearanceMode, darkMode, themeMode, performanceMode]);
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        applyThemeChange();
+        window.setTimeout(() => setThemeTransitioning(false), 920);
+      });
+    });
+  }, []);
+
+  const requestDarkMode = useCallback((next) => {
+    runThemeTransition(() => setDarkMode(typeof next === 'function' ? next : Boolean(next)));
+  }, [runThemeTransition]);
+
+  const requestAppearanceMode = useCallback((next) => {
+    runThemeTransition(() => setAppearanceMode(normalizeAppearanceMode(next)));
+  }, [runThemeTransition]);
+
+  const requestThemeMode = useCallback((next) => {
+    runThemeTransition(() => setThemeMode(next));
+  }, [runThemeTransition]);
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const root = document.documentElement;
@@ -2648,25 +2714,74 @@ export default function MCUViewer() {
 
   // Intentionally avoid background metadata/poster warmups on app load.
   // This keeps startup network/data usage minimal and only fetches on demand.
+  const warmUiComponentBatch = useCallback(async (source, mode) => {
+    if (typeof document === 'undefined') return { componentCount: 0, fontCount: 0 };
+    const selectorMatches = UI_BUILD_SELECTORS.flatMap(selector => Array.from(document.querySelectorAll(selector)).slice(0, mode === 'view' ? 18 : 40));
+    const uniqueNodes = Array.from(new Set(selectorMatches)).slice(0, mode === 'view' ? 90 : 180);
+    let componentCount = 0;
+    for (let i = 0; i < uniqueNodes.length; i += 12) {
+      const batch = uniqueNodes.slice(i, i + 12);
+      await new Promise(resolve => runWhenIdle(() => {
+        batch.forEach(node => {
+          try {
+            const rect = node.getBoundingClientRect();
+            const style = window.getComputedStyle(node);
+            // Touch a small set of layout/style values so expensive shells are ready before later opening.
+            void rect.width;
+            void rect.height;
+            void style.borderRadius;
+            void style.backgroundImage;
+            componentCount += 1;
+          } catch {}
+        });
+        resolve();
+      }, 500));
+      await wait(8);
+    }
+
+    const fontFamilies = ['Inter', 'Outfit', 'Bebas Neue', 'Rajdhani'];
+    let fontCount = 0;
+    if (document.fonts?.load) {
+      await Promise.allSettled(fontFamilies.map(async family => {
+        await document.fonts.load(`800 18px ${family}`);
+        fontCount += 1;
+      }));
+    }
+
+    const scaffoldPreview = {
+      mode,
+      sourceCount: source.length,
+      viewport: { width: window.innerWidth, height: window.innerHeight, dpr: window.devicePixelRatio || 1 },
+      selectors: UI_BUILD_SELECTORS,
+      builtAt: new Date().toISOString(),
+    };
+    scheduleStorageWrite('mcu-ui-component-build-v1', JSON.stringify(scaffoldPreview));
+    return { componentCount, fontCount };
+  }, []);
+
   const buildUiExperienceCache = useCallback(async (mode = 'view') => {
     if (uiBuildState.active) return;
     const source = mode === 'all' ? items : mode === 'core' ? items.filter(item => coreIds.has(item.id)) : filtered;
-    const posterTargets = source.slice(0, mode === 'view' ? 48 : 120).map(item => posterSrc(item)).filter(Boolean);
-    setUiBuildState({ active: true, done: 0, total: posterTargets.length, message: `Preparing ${posterTargets.length} UI poster layers…` });
-    let done = 0;
-    for (let i = 0; i < posterTargets.length; i += 4) {
-      const batch = posterTargets.slice(i, i + 4);
+    const mediaTargets = source.slice(0, mode === 'view' ? 54 : 140).map(item => posterSrc(item)).filter(Boolean);
+    const totalSteps = mediaTargets.length + UI_BUILD_SELECTORS.length + 4;
+    setUiBuildState({ active: true, done: 0, total: totalSteps, message: `Preparing UI shell, fonts, rows, overlays, and ${mediaTargets.length} media layers…` });
+    const uiStats = await warmUiComponentBatch(source, mode);
+    let done = Math.min(totalSteps, UI_BUILD_SELECTORS.length + uiStats.fontCount);
+    setUiBuildState({ active: true, done, total: totalSteps, message: `Built ${uiStats.componentCount} component measurements and ${uiStats.fontCount} font faces…` });
+
+    for (let i = 0; i < mediaTargets.length; i += 4) {
+      const batch = mediaTargets.slice(i, i + 4);
       await new Promise(resolve => runWhenIdle(async () => {
         await Promise.allSettled(batch.map(preloadHeroPoster));
-        done += batch.length;
-        setUiBuildState({ active: true, done, total: posterTargets.length, message: `Built UI cache ${done}/${posterTargets.length}` });
+        done = Math.min(totalSteps, done + batch.length);
+        setUiBuildState({ active: true, done, total: totalSteps, message: `Built UI cache ${done}/${totalSteps}` });
         resolve();
       }, 650));
-      await wait(16);
+      await wait(12);
     }
-    scheduleStorageWrite('mcu-ui-build-cache-v1', JSON.stringify({ enabled: true, mode, builtAt: new Date().toISOString(), count: posterTargets.length }));
-    setUiBuildState({ active: false, done, total: posterTargets.length, message: `UI build cache ready for ${posterTargets.length} poster layers.` });
-  }, [coreIds, filtered, items, posterSrc, uiBuildState.active]);
+    scheduleStorageWrite('mcu-ui-build-cache-v1', JSON.stringify({ enabled: true, mode, builtAt: new Date().toISOString(), mediaCount: mediaTargets.length, componentCount: uiStats.componentCount, fontCount: uiStats.fontCount }));
+    setUiBuildState({ active: false, done: totalSteps, total: totalSteps, message: `UI build cache ready: ${uiStats.componentCount} components, ${uiStats.fontCount} fonts, ${mediaTargets.length} media layers.` });
+  }, [coreIds, filtered, items, posterSrc, uiBuildState.active, warmUiComponentBatch]);
 
   useEffect(() => {
     if (!uiBuildCacheEnabled) {
@@ -3204,7 +3319,7 @@ export default function MCUViewer() {
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '6%' : '3%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '5%' : '2.5%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.12 : 0.06, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
       </div>
 
-      <div className="theme-transition-loader" aria-hidden={!themeTransitioning}><span />Retuning theme</div>
+      <div className="theme-transition-loader" role="status" aria-live="polite" aria-hidden={!themeTransitioning}><div className="theme-transition-loader__orb" /><div><strong>Retuning theme</strong><small>Applying the new interface in the background</small></div></div>
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} settingsOpen={settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
@@ -3225,8 +3340,8 @@ export default function MCUViewer() {
           <section className="sidebar-panel">
             <div className="sidebar-section-title">{tUniverse('Theme & Language')}</div>
             <div className="sidebar-btn-grid">
-              <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={12} />{tUniverse('Dark')}</button>
-              <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={12} />{tUniverse('Light')}</button>
+              <button className="fpill" onClick={() => requestDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={12} />{tUniverse('Dark')}</button>
+              <button className="fpill" onClick={() => requestDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={12} />{tUniverse('Light')}</button>
             </div>
             <button className='fpill settings-toggle-pill' type='button' aria-pressed={marvelLangMode} onClick={() => setMarvelLangMode(v => !v)} style={{ justifyContent: 'space-between' }}><span>{tUniverse('Universe Language')}</span><span>{marvelLangMode ? 'On' : 'Off'}</span></button>
           </section>
@@ -3245,10 +3360,10 @@ export default function MCUViewer() {
               compact
               title={tUniverse('Universe Style')}
               appearanceMode={appearanceMode}
-              onAppearanceChange={setAppearanceMode}
+              onAppearanceChange={requestAppearanceMode}
               themeChoices={themedChoices}
               themeMode={themeMode}
-              onThemeChange={setThemeMode}
+              onThemeChange={requestThemeMode}
             />
           </section>
 
@@ -3273,8 +3388,8 @@ export default function MCUViewer() {
         <p>Unified controls for profile, universe themes, sync, backups, and modern accessibility-focused tuning.</p>
       </div>
       <div className="settings-hero-actions">
-        <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={13} />Dark</button>
-        <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={13} />Light</button>
+        <button className="fpill" onClick={() => requestDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={13} />Dark</button>
+        <button className="fpill" onClick={() => requestDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={13} />Light</button>
       </div>
     </section>
 
@@ -3305,7 +3420,7 @@ export default function MCUViewer() {
         <label className="settings-toggle-row"><span><Pause size={14}/>{tUniverse('Reduce Motion')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={performanceMode} onClick={() => setPerformanceMode(v => !v)}>{performanceMode ? 'On' : 'Off'}</button></label>
         <label className="settings-toggle-row"><span><Film size={14}/>Poster Data Saver</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={posterDataSaver} onClick={() => setPosterDataSaver(v => !v)}>{posterDataSaver ? 'On' : 'Off'}</button></label>
         <label className="settings-toggle-row"><span><Layers size={14}/>UI Build Cache</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={uiBuildCacheEnabled} onClick={() => setUiBuildCacheEnabled(v => !v)}>{uiBuildCacheEnabled ? 'On' : 'Off'}</button></label>
-        <p className="settings-help">Data saver uses lighter TMDB poster sizes. UI Build Cache pre-decodes visible poster layers during idle time and stores a small build manifest without growing memory.</p>
+        <p className="settings-help">Data saver uses lighter TMDB poster sizes. UI Build Cache warms component measurements, critical fonts, overlays, carousel assets, and visible media during idle time without growing memory.</p>
       </article>
     </section>
 
@@ -3319,7 +3434,7 @@ export default function MCUViewer() {
       <p className="settings-help">Performance mode reduces visual effects for slower devices.</p>
       <div className="settings-build-panel">
         <div><strong>UI build status</strong><span>{uiBuildState.message || 'Idle · cache capped and built only during browser idle time.'}</span></div>
-        <button className="fpill" type="button" disabled={uiBuildState.active} onClick={() => buildUiExperienceCache('view')}>{uiBuildState.active ? `${uiBuildState.done}/${uiBuildState.total}` : 'Build visible UI'}</button>
+        <button className="fpill" type="button" disabled={uiBuildState.active} onClick={() => buildUiExperienceCache('view')}>{uiBuildState.active ? `${uiBuildState.done}/${uiBuildState.total}` : 'Build UI components'}</button>
       </div>
     </section>
 
@@ -3383,9 +3498,9 @@ export default function MCUViewer() {
             <div className="hero-carousel-track"
               ref={heroRailRef}
               onWheel={handleHeroWheel}
-              onScroll={() => { if (!heroProgrammaticScrollRef.current) pauseHeroAutoSlide(1800); }}
-              onPointerDown={() => pauseHeroAutoSlide(3200)}
-              onTouchStart={() => pauseHeroAutoSlide(3200)}>
+              onScroll={() => { if (!heroProgrammaticScrollRef.current) pauseHeroAutoSlide(HERO_IDLE_RESUME_MS); }}
+              onPointerDown={() => pauseHeroAutoSlide(HERO_IDLE_RESUME_MS)}
+              onTouchStart={() => pauseHeroAutoSlide(HERO_IDLE_RESUME_MS)}>
               {visibleHeroPosters.map(({ src, item: heroItem }, idx) => {
               const isActive = src === activeHeroSrc;
               return (
@@ -4326,12 +4441,13 @@ export default function MCUViewer() {
         posterDataSaver={posterDataSaver}
         setPosterDataSaver={setPosterDataSaver}
         darkMode={darkMode}
-        setDarkMode={setDarkMode}
+        setDarkMode={requestDarkMode}
         appearanceMode={appearanceMode}
-        setAppearanceMode={setAppearanceMode}
+        setAppearanceMode={requestAppearanceMode}
         themeChoices={themedChoices}
         themeMode={themeMode}
-        setThemeMode={setThemeMode}
+        setThemeMode={requestThemeMode}
+        themeVars={cssThemeVars}
       />
       <input id="setup-avatar-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => setAvatarCropSrc(String(r.result || '')); r.readAsDataURL(f); e.target.value=''; }} />
 

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { APPEARANCE_MODES, normalizeAppearanceMode } from '../constants/themeSettings';
 
 export default function SetupWizard({
@@ -30,6 +31,7 @@ export default function SetupWizard({
   themeChoices = [],
   themeMode,
   setThemeMode,
+  themeVars = {},
 }) {
   const [currentStep, setCurrentStep] = useState(0);
   const steps = useMemo(() => [
@@ -38,6 +40,7 @@ export default function SetupWizard({
     { id: 'style', label: 'Style' },
     { id: 'tuning', label: 'Tuning' },
   ], []);
+  const canUsePortal = typeof document !== 'undefined';
   if (!open) return null;
   const fetchStatus = fetchState.active ? 'loading' : (fetchState.message?.toLowerCase().includes('built') ? 'success' : (fetchState.message?.toLowerCase().includes('could not') ? 'error' : 'idle'));
   const stepStatus = {
@@ -48,8 +51,8 @@ export default function SetupWizard({
   };
   const activeAppearance = normalizeAppearanceMode(appearanceMode);
 
-  return (
-    <div className="setup-overlay" role="dialog" aria-modal="true" aria-label="First time setup">
+  const wizardMarkup = (
+    <div className="setup-overlay setup-overlay--portal theme-switch" data-theme={activeAppearance} data-color-mode={darkMode ? 'dark' : 'light'} style={themeVars} role="dialog" aria-modal="true" aria-label="First time setup">
       <div className="setup-card">
         <div className="setup-header">
           <h2>Let&apos;s get you set up</h2>
@@ -87,7 +90,7 @@ export default function SetupWizard({
               <button className={`fpill setup-preload-btn is-${fetchStatus}`} onClick={onFetchCore} disabled={fetchState.active} data-state={fetchStatus}>Core preload {fetchState.active ? '• Loading…' : (fetchStatus === 'success' ? '• Ready' : '')}</button>
               <button className={`fpill setup-preload-btn is-${fetchStatus}`} onClick={onFetchAll} disabled={fetchState.active} data-state={fetchStatus}>Full preload {fetchState.active ? '• Loading…' : (fetchStatus === 'success' ? '• Ready' : '')}</button>
             </div>
-            <small className="setup-note">{fetchState.message || 'Choose how much content to cache for smoother browsing.'}</small>
+            <small className="setup-note">{fetchState.message || 'Choose how much content, metadata, and UI shell work to cache for smoother browsing.'}</small>
           </section>}
 
           {currentStep === 2 && <section className="setup-section setup-style-section is-current">
@@ -145,10 +148,10 @@ export default function SetupWizard({
             </div>
             <div className="setup-build-box">
               <strong>Build smoother UI cache</strong>
-              <small>{uiBuildState.message || 'Pre-decodes visible posters on idle time and keeps the cache capped to avoid memory leaks.'}</small>
+              <small>{uiBuildState.message || 'Builds row measurements, overlay shells, critical fonts, carousel assets, and visible media during idle time.'}</small>
               <button className="fpill" type="button" disabled={uiBuildState.active} onClick={onBuildUiCache}>{uiBuildState.active ? `Building ${uiBuildState.done}/${uiBuildState.total}` : 'Build UI cache now'}</button>
             </div>
-            <small className="setup-note">Data saver uses smaller poster assets from TMDB; UI Build Cache warms only the first visible layers so it does not create lag.</small>
+            <small className="setup-note">Data saver uses smaller poster assets from TMDB; UI Build Cache warms the first visible interface path without blocking scrolling.</small>
           </section>}
         </div>
 
@@ -159,4 +162,6 @@ export default function SetupWizard({
       </div>
     </div>
   );
+
+  return canUsePortal ? createPortal(wizardMarkup, document.body) : wizardMarkup;
 }
