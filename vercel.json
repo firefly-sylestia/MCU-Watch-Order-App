@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/home", "destination": "/" },
+    { "source": "/search", "destination": "/" },
+    { "source": "/settings", "destination": "/" },
+    { "source": "/analytics", "destination": "/" },
+    { "source": "/phase", "destination": "/" },
+    { "source": "/phase/:id", "destination": "/" },
+    { "source": "/movie/:slug", "destination": "/" },
+    { "source": "/title/:slug", "destination": "/" }
+  ]
+}

@@ -1,0 +1,137 @@
+.navigation-control-cluster {
+  position: fixed;
+  z-index: var(--overlay-z-menu, 1200);
+  top: max(16px, env(safe-area-inset-top, 0px) + 12px);
+  right: max(16px, env(safe-area-inset-right, 0px) + 14px);
+  display: flex;
+  gap: var(--space-2, 8px);
+  transition: opacity var(--duration-fast, 150ms) var(--ease-out), visibility var(--duration-fast, 150ms) var(--ease-out);
+}
+
+.navigation-control-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid var(--nav-control-border);
+  background: var(--nav-control-bg);
+  color: var(--nav-control-text);
+  box-shadow: 0 12px 32px color-mix(in srgb, #000 20%, transparent), inset 0 1px 0 rgba(255,255,255,0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: transform var(--duration-fast, 150ms) var(--ease-out), border-color var(--duration-fast, 150ms) var(--ease-out), background var(--duration-fast, 150ms) var(--ease-out);
+}
+
+.navigation-control-btn:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--theme-accent) 54%, var(--nav-control-border));
+}
+
+.navigation-control-btn:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.navigation-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--overlay-z-menu, 1200) - 2);
+  border: 0;
+  background: rgba(2, 6, 23, 0.46);
+  cursor: pointer;
+  animation: navigationBackdropIn 160ms var(--ease-out) both;
+}
+
+.navigation-shell {
+  position: fixed;
+  z-index: calc(var(--overlay-z-menu, 1200) - 1);
+  top: max(12px, env(safe-area-inset-top, 0px) + 10px);
+  bottom: max(12px, env(safe-area-inset-bottom, 0px) + 10px);
+  left: max(12px, env(safe-area-inset-left, 0px) + 10px);
+  width: min(360px, calc(100vw - 24px));
+  transform: var(--navigation-transform);
+  border: 1px solid var(--navigation-border);
+  border-radius: 28px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--navigation-bg) 96%, var(--theme-accent) 4%), var(--navigation-bg));
+  box-shadow: var(--navigation-shadow);
+  color: var(--theme-text);
+  overflow: hidden;
+  backdrop-filter: var(--navigation-blur);
+  -webkit-backdrop-filter: var(--navigation-blur);
+  transition: transform 220ms var(--ease-out), box-shadow 220ms var(--ease-out), border-color 180ms var(--ease-out);
+  will-change: transform;
+  contain: layout paint style;
+}
+
+.navigation-shell__topbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  padding: 12px 14px 10px 18px;
+  border-bottom: 1px solid color-mix(in srgb, var(--theme-border) 70%, transparent);
+  background: color-mix(in srgb, var(--navigation-bg) 88%, transparent);
+  font-family: var(--font-marvel-ui);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--theme-text-secondary);
+}
+
+.navigation-close-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 82%, transparent);
+  background: color-mix(in srgb, var(--theme-surface) 80%, transparent);
+  color: var(--theme-text);
+  cursor: pointer;
+  transition: transform var(--duration-fast, 150ms) var(--ease-out), background var(--duration-fast, 150ms) var(--ease-out);
+}
+
+.navigation-close-btn:hover {
+  transform: rotate(6deg);
+  background: color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface));
+}
+
+.navigation-shell .sidebar-redesign {
+  height: calc(100% - 52px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px;
+  scrollbar-width: thin;
+}
+
+@keyframes navigationBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 640px) {
+  .navigation-control-cluster {
+    top: max(12px, env(safe-area-inset-top, 0px) + 10px);
+    right: max(12px, env(safe-area-inset-right, 0px) + 10px);
+  }
+
+  .navigation-control-btn {
+    width: 42px;
+    height: 42px;
+  }
+
+  .navigation-shell {
+    border-radius: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navigation-control-btn,
+  .navigation-shell,
+  .navigation-backdrop,
+  .navigation-close-btn {
+    animation: none !important;
+    transition-duration: 1ms !important;
+  }
+}
