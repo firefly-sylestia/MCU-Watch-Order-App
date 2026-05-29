@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback, useReducer, useDeferredValue } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useDeferredValue } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
@@ -371,17 +371,20 @@ const posterExportName = (item, ext = 'jpg') => posterFileName(item, ext);
 
 
 const ROUTE_FALLBACK = '/home';
+const UNIVERSE_ROUTE_PREFIX = { mcu: '/marvel', dc: '/dc' };
 const SEARCH_ROUTE = '/search';
 const SERIES_ROUTE = '/series';
 const compactRouteSlug = (value) => slugifyPosterName(value).replace(/-/g, '');
-const titleRoutePath = (item) => `/${item?.type === 'series' ? 'series' : 'movie'}/${slugifyPosterName(item?.title) || item?.id || ''}`;
-const searchRoutePath = (query = '', type = '') => {
+const withUniverseRoute = (universe = 'mcu', path = ROUTE_FALLBACK) => `${UNIVERSE_ROUTE_PREFIX[universe === 'dc' ? 'dc' : 'mcu']}${path === ROUTE_FALLBACK ? '' : path}`;
+const titleRoutePath = (item, universe = 'mcu') => withUniverseRoute(universe, `/${item?.type === 'series' ? 'series' : 'movie'}/${slugifyPosterName(item?.title) || item?.id || ''}`);
+const searchRoutePath = (query = '', type = '', universe = 'mcu') => {
   const params = new URLSearchParams();
   const trimmedQuery = String(query || '').trim();
   if (trimmedQuery) params.set('q', trimmedQuery);
   if (type) params.set('type', type);
   const qs = params.toString();
-  return qs ? `${SEARCH_ROUTE}?${qs}` : SEARCH_ROUTE;
+  const base = qs ? `${SEARCH_ROUTE}?${qs}` : SEARCH_ROUTE;
+  return withUniverseRoute(universe, base);
 };
 const routeItemMatchesSlug = (item, rawSlug) => {
   const slug = slugifyPosterName(decodeURIComponent(String(rawSlug || '')));
@@ -1027,13 +1030,28 @@ export default function MCUViewer() {
   const [scrollCheckpoint, setScrollCheckpoint] = useState(initialUiState.scrollTop);
   const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setItems(universe === 'dc' ? DC_RAW : RAW);
     setActivePhase(0);
     setExpandedPhase(null);
     setExpandedItem(null);
+    setDetailItem(null);
+    setSelectedIds(new Set());
     setHeroIndex(0);
   }, [universe]);
+
+  const switchUniverse = useCallback((nextUniverse) => {
+    const normalizedUniverse = nextUniverse === 'dc' ? 'dc' : 'mcu';
+    setUniverse(normalizedUniverse);
+    setBrowseMode('home');
+    setSearch('');
+    setTypeFilter(null);
+    setSettingsOpen(false);
+    setAnalyticsOpen(false);
+    setSidebarOpen(false);
+    setTrailerOpen(false);
+    setTrailerExpanded(false);
+  }, []);
 
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
@@ -1135,6 +1153,16 @@ export default function MCUViewer() {
   });
 
   const currentPhases = universe === 'dc' ? DC_PHASES : PHASES;
+  const phaseMetaById = useMemo(() => new Map(currentPhases.map(phase => [phase.id, phase])), [currentPhases]);
+  const getPhaseMeta = useCallback((phaseId) => phaseMetaById.get(phaseId) || {
+    id: phaseId,
+    label: `Phase ${phaseId}`,
+    name: `${universe === 'dc' ? 'DC Era' : 'Phase'} ${phaseId}`,
+    color: 'var(--theme-accent)',
+    glow: 'color-mix(in srgb, var(--theme-accent) 28%, transparent)',
+    tagline: 'Timeline collection',
+    summary: 'Titles in this timeline group are loading while the universe switches.',
+  }, [phaseMetaById, universe]);
 
   const suppressNextDocumentClick = useCallback((duration = 420) => {
     overlayDismissSuppressUntilRef.current = Date.now() + duration;
@@ -1501,7 +1529,7 @@ export default function MCUViewer() {
   };
 
   const shareProgressCard = async () => {
-    const currentPhase = activePhase === 0 ? stickyPhaseProgress.label : (currentPhases.find(p => p.id === activePhase)?.name || stickyPhaseProgress.label);
+    const currentPhase = activePhase === 0 ? stickyPhaseProgress.label : (getPhaseMeta(activePhase)?.name || stickyPhaseProgress.label);
     await shareCardImage({ type: 'progress', data: { pct, currentPhase, totalWatched, totalItems: activeItems.length } });
   };
 
@@ -1614,6 +1642,11 @@ export default function MCUViewer() {
     const cleanPath = `/${String(path || '').split('?')[0].split('#')[0].replace(/^\/+/, '')}`.replace(/\/+$/, '') || ROUTE_FALLBACK;
     const params = new URLSearchParams(String(queryString || '').replace(/^\?/, ''));
     const parts = cleanPath.split('/').filter(Boolean);
+    const explicitUniverse = parts[0] === 'dc' ? 'dc' : (parts[0] === 'marvel' ? 'mcu' : null);
+    if (explicitUniverse) parts.shift();
+    const routeUniverse = explicitUniverse || universe;
+    const routeItems = routeUniverse === 'dc' ? DC_RAW : RAW;
+    if (explicitUniverse && explicitUniverse !== universe) setUniverse(explicitUniverse);
     const primary = parts[0] || 'home';
     const requestedSearch = params.get('q') || '';
     const requestedType = VALID_TYPES.has(params.get('type')) ? params.get('type') : null;
@@ -1677,7 +1710,7 @@ export default function MCUViewer() {
 
     if (primary === 'movie' || primary === 'title' || primary === 'series') {
       const requestedSlug = parts.slice(1).join('-');
-      const routedItem = items.find(item => routeItemMatchesSlug(item, requestedSlug));
+      const routedItem = routeItems.find(item => routeItemMatchesSlug(item, requestedSlug));
       setSettingsOpen(false);
       setAnalyticsOpen(false);
       setBrowseMode('home');
@@ -1698,7 +1731,7 @@ export default function MCUViewer() {
     setAnalyticsOpen(false);
     setBrowseMode('home');
     setTypeFilter(null);
-  }, [items, openDetail]);
+  }, [openDetail, universe]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -1709,14 +1742,14 @@ export default function MCUViewer() {
   }, [applyUrlRoute]);
 
   const canonicalRoute = useMemo(() => {
-    if (detailItem) return titleRoutePath(detailItem);
-    if (settingsOpen) return '/settings';
-    if (analyticsOpen) return '/analytics';
-    if (browseMode === 'search' && typeFilter === 'series' && !search.trim()) return SERIES_ROUTE;
-    if (browseMode === 'search') return searchRoutePath(search, typeFilter);
-    if (browseMode === 'phase') return activePhase ? `/phase/${activePhase}` : '/phase';
-    return ROUTE_FALLBACK;
-  }, [activePhase, analyticsOpen, browseMode, detailItem, search, settingsOpen, typeFilter]);
+    if (detailItem) return titleRoutePath(detailItem, universe);
+    if (settingsOpen) return withUniverseRoute(universe, '/settings');
+    if (analyticsOpen) return withUniverseRoute(universe, '/analytics');
+    if (browseMode === 'search' && typeFilter === 'series' && !search.trim()) return withUniverseRoute(universe, SERIES_ROUTE);
+    if (browseMode === 'search') return searchRoutePath(search, typeFilter, universe);
+    if (browseMode === 'phase') return withUniverseRoute(universe, activePhase ? `/phase/${activePhase}` : '/phase');
+    return withUniverseRoute(universe);
+  }, [activePhase, analyticsOpen, browseMode, detailItem, search, settingsOpen, typeFilter, universe]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -3484,17 +3517,45 @@ export default function MCUViewer() {
             <button className='fpill settings-toggle-pill' type='button' aria-pressed={marvelLangMode} onClick={() => setMarvelLangMode(v => !v)} style={{ justifyContent: 'space-between' }}><span>{tUniverse('Universe Language')}</span><span>{marvelLangMode ? 'On' : 'Off'}</span></button>
           </section>
 
-          <section className="sidebar-panel">
-            <div className="sidebar-section-title">{tUniverse('View & Navigate')}</div>
-            <div className="sidebar-btn-grid">
-              <button className="fpill" onClick={navigateHome} style={{ justifyContent: 'center' }}>Home</button>
-              <button className="fpill" onClick={() => openSearchMode(search, null)} style={{ justifyContent: 'center' }}>Search</button>
-              <button className="fpill" onClick={() => openSearchMode('', 'series')} style={{ justifyContent: 'center' }}>Series</button>
-              <button className="fpill" onClick={() => navigateToPhase(activePhase || 0)} style={{ justifyContent: 'center' }}>Phases</button>
-              <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ justifyContent: 'center' }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
-              <button className="fpill" onClick={openAnalyticsPanel} style={{ justifyContent: 'center' }}>{tUniverse('Analytics')}</button>
+          <section className="sidebar-panel sidebar-panel--routes">
+            <div className="sidebar-section-title">Deep links</div>
+            <div className="universe-route-switcher" aria-label="Universe deep links">
+              <button className={`universe-route-card ${universe === 'mcu' ? 'active' : ''}`} onClick={() => switchUniverse('mcu')} aria-pressed={universe === 'mcu'}>
+                <span>/marvel</span>
+                <strong>Marvel hub</strong>
+              </button>
+              <button className={`universe-route-card ${universe === 'dc' ? 'active' : ''}`} onClick={() => switchUniverse('dc')} aria-pressed={universe === 'dc'}>
+                <span>/dc</span>
+                <strong>DC hub</strong>
+              </button>
             </div>
-            <button className="fpill" onClick={() => { setSidebarOpen(false); toggleSettingsPanel(); }} style={{ width: '100%', justifyContent: 'center' }}><Settings size={13} />{tUniverse('Open Settings')}</button>
+          </section>
+
+          <section className="sidebar-panel sidebar-panel--nav-redesign">
+            <div className="sidebar-section-title">{tUniverse('View & Navigate')}</div>
+            <div className="route-command-grid">
+              <button className="route-command" onClick={navigateHome}><strong>Home</strong><span>{withUniverseRoute(universe)}</span></button>
+              <button className="route-command" onClick={() => openSearchMode(search, null)}><strong>Search</strong><span>{withUniverseRoute(universe, SEARCH_ROUTE)}</span></button>
+              <button className="route-command" onClick={() => openSearchMode('', 'series')}><strong>Series</strong><span>{withUniverseRoute(universe, SERIES_ROUTE)}</span></button>
+              <button className="route-command" onClick={openAnalyticsPanel}><strong>{tUniverse('Analytics')}</strong><span>{withUniverseRoute(universe, '/analytics')}</span></button>
+            </div>
+            <div className="phase-route-list" aria-label="Phase deep links">
+              <button className={`phase-route-chip ${browseMode === 'phase' && !activePhase ? 'active' : ''}`} onClick={() => navigateToPhase(0)}>All <span>{withUniverseRoute(universe, '/phase')}</span></button>
+              {currentPhases.map(phase => (
+                <button
+                  key={`nav-phase-${phase.id}`}
+                  className={`phase-route-chip ${browseMode === 'phase' && activePhase === phase.id ? 'active' : ''}`}
+                  onClick={() => navigateToPhase(phase.id)}
+                  style={{ '--phase-color': phase.color }}
+                >
+                  {phase.label || `Phase ${phase.id}`} <span>{withUniverseRoute(universe, `/phase/${phase.id}`)}</span>
+                </button>
+              ))}
+            </div>
+            <div className="sidebar-btn-grid">
+              <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ justifyContent: 'center' }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
+              <button className="fpill" onClick={() => { setSidebarOpen(false); toggleSettingsPanel(); }} style={{ justifyContent: 'center' }}><Settings size={13} />{tUniverse('Open Settings')}</button>
+            </div>
           </section>
 
           <section className="sidebar-panel">
@@ -3619,7 +3680,7 @@ export default function MCUViewer() {
       <header className="hexbg" style={{ position: 'relative', zIndex: 'var(--overlay-z-base)', background: universe === 'dc' ? 'linear-gradient(180deg, rgba(20,44,88,.95), rgba(10,22,43,.88))' : 'transparent', borderBottom: universe === 'dc' ? '1px solid rgba(59,130,246,.35)' : 'none', flexShrink: 0, pointerEvents: blockHomeInteractions ? 'none' : 'auto' }}>
         <div className="header-inner" style={{ width: '100%', maxWidth: 1480, margin: '0 auto', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 26px) 30px 16px', transition: 'padding 0.2s ease' }}>
           <div className="header-controls-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
-            <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} onClick={() => { setBrandTapCount(c => c + 1); setTimeout(() => setBrandTapCount(0), 550); }} onDoubleClick={() => setUniverse(prev => prev === 'mcu' ? 'dc' : 'mcu')} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900, cursor: 'pointer', userSelect: 'none', WebkitUserSelect: 'none' }}>
+            <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} onClick={() => { setBrandTapCount(c => c + 1); setTimeout(() => setBrandTapCount(0), 550); }} onDoubleClick={() => switchUniverse(universe === 'mcu' ? 'dc' : 'mcu')} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900, cursor: 'pointer', userSelect: 'none', WebkitUserSelect: 'none' }}>
               <div className="header-title-mcu" style={{ color: universe === 'dc' ? '#9ac5ff' : undefined }}>{activeUniverse.title}</div>
               <div className="header-title-sub">{activeUniverse.subtitle}</div>
               <div className="header-tagline">
@@ -3671,15 +3732,33 @@ export default function MCUViewer() {
         {!detailItem && !analyticsOpen && !settingsOpen && <WatermarkOverlay surface="hero" theme={darkMode ? 'cinematic' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['cta', 'title']} />}
       </section>}
       {browseMode === 'phase' && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 16px 12px' }}>
-          <button
-            className="fpill"
-            onClick={navigateHome}
-            style={{ minHeight: 42, padding: '0 18px', fontSize: 13 }}
-          >
-            <ChevDown size={14}/> Back to Home Carousel
-          </button>
-        </div>
+        <section className="phase-command-center" aria-label="Timeline phase navigation">
+          <div className="phase-command-copy">
+            <p>{universe === 'dc' ? 'DC era navigator' : 'Marvel phase navigator'}</p>
+            <h2>{activePhase ? getPhaseMeta(activePhase).name : `All ${universe === 'dc' ? 'DC eras' : 'Marvel phases'}`}</h2>
+            <span>{activePhase ? getPhaseMeta(activePhase).summary : 'Pick a saga lane below or keep every timeline collection visible.'}</span>
+          </div>
+          <div className="phase-command-actions">
+            <button className="fpill" onClick={navigateHome}><ChevDown size={14}/> Back home</button>
+            <button className={`phase-jump-card ${!activePhase ? 'active' : ''}`} onClick={() => navigateToPhase(0)}>
+              <strong>All</strong><span>{phaseStats.reduce((sum, stat) => sum + stat.total, 0)} titles</span>
+            </button>
+            {currentPhases.map(phase => {
+              const stat = phaseStats.find(entry => entry.phase === phase.id);
+              return (
+                <button
+                  key={`phase-command-${phase.id}`}
+                  className={`phase-jump-card ${activePhase === phase.id ? 'active' : ''}`}
+                  onClick={() => navigateToPhase(phase.id)}
+                  style={{ '--phase-color': phase.color }}
+                >
+                  <strong>{phase.label || `Phase ${phase.id}`}</strong>
+                  <span>{stat ? `${stat.watched}/${stat.total}` : '0 titles'}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
       )}
 
       {browseMode === 'search' && (
@@ -3966,7 +4045,7 @@ export default function MCUViewer() {
                           key={item.id}
                           item={item}
                           idx={idx}
-                          ph={currentPhases.find(p => p.id === item.phase) || currentPhases[0]}
+                          ph={getPhaseMeta(item.phase)}
                           T={T}
                           typeMeta={getSafeTypeMeta(item.type)}
                           statusMeta={getSafeStatusMeta(item.status)}
@@ -4025,7 +4104,7 @@ export default function MCUViewer() {
               ))}
             </section>
           ) : showPhaseSystem ? phaseKeys.map(pid => {
-            const ph = currentPhases.find(p => p.id === pid);
+            const ph = getPhaseMeta(pid);
             const rows = grouped[pid];
             const done = rows.filter(r => r.status === 'watched').length;
             const phasePct = rows.length ? Math.round((done / rows.length) * 100) : 0;
@@ -4128,7 +4207,7 @@ export default function MCUViewer() {
                 <PhaseRows rows={filtered} renderRow={(item, idx) => {
                   const itemReleaseStatus = releaseStatusFor(item);
                   const itemReleaseInfo = releaseInfoFor(item);
-                  const ph = currentPhases.find(p => p.id === item.phase) || currentPhases[0];
+                  const ph = getPhaseMeta(item.phase);
                   return (
                     <MemoizedTitleRow
                       key={item.id}

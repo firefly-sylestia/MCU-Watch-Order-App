@@ -1,9 +1,9 @@
 export const DC_PHASES = [
-  { id: 1, label: 'Era 1', name: 'DCEU Foundations', color: '#2b6fff' },
-  { id: 2, label: 'Era 2', name: 'DCEU Expansion', color: '#4c8dff' },
-  { id: 3, label: 'Era 3', name: 'DCEU Finale', color: '#7ab2ff' },
-  { id: 4, label: 'Elseworlds', name: 'Standalone DC Stories', color: '#8b5cf6' },
-  { id: 5, label: 'DCU', name: 'Gods and Monsters', color: '#22a4ff' },
+  { id: 1, label: 'Era 1', name: 'DCEU Foundations', color: '#2b6fff', glow: 'rgba(43,111,255,0.28)', tagline: 'Heroes emerge', summary: 'Wonder Woman, Superman, Batman, and the first Justice League roster establish the modern DCEU foundation.' },
+  { id: 2, label: 'Era 2', name: 'DCEU Expansion', color: '#4c8dff', glow: 'rgba(76,141,255,0.26)', tagline: 'Worlds collide', summary: 'The universe widens with Aquaman, Shazam, the Suicide Squad corner, and Zack Snyder’s expanded Justice League cut.' },
+  { id: 3, label: 'Era 3', name: 'DCEU Finale', color: '#7ab2ff', glow: 'rgba(122,178,255,0.24)', tagline: 'Reset point', summary: 'Late-DCEU films and series close out the continuity while The Flash opens the door for a rebooted future.' },
+  { id: 4, label: 'Elseworlds', name: 'Standalone DC Stories', color: '#8b5cf6', glow: 'rgba(139,92,246,0.26)', tagline: 'Outside canon', summary: 'Self-contained DC stories such as Joker and The Batman sit outside the shared-universe spine.' },
+  { id: 5, label: 'DCU', name: 'Gods and Monsters', color: '#22a4ff', glow: 'rgba(34,164,255,0.28)', tagline: 'New continuity', summary: 'Creature Commandos and Superman begin the new DCU chapter under the Gods and Monsters banner.' },
 ];
 
 export const DC_RAW = [
