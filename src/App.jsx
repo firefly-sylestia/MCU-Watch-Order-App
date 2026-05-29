@@ -101,6 +101,7 @@ const UI_STATE_DEFAULTS = {
   autoHideStatuses: false,
   performanceMode: true,
   posterDataSaver: true,
+  uiBuildCacheEnabled: false,
   desktopTextScale: 1,
   textScaleEnabled: true,
   scrollTop: 0,
@@ -151,6 +152,7 @@ const readSavedUiState = () => {
       autoHideStatuses: typeof saved.autoHideStatuses === 'boolean' ? saved.autoHideStatuses : UI_STATE_DEFAULTS.autoHideStatuses,
       performanceMode: typeof saved.performanceMode === 'boolean' ? saved.performanceMode : UI_STATE_DEFAULTS.performanceMode,
       posterDataSaver: typeof saved.posterDataSaver === 'boolean' ? saved.posterDataSaver : UI_STATE_DEFAULTS.posterDataSaver,
+      uiBuildCacheEnabled: typeof saved.uiBuildCacheEnabled === 'boolean' ? saved.uiBuildCacheEnabled : UI_STATE_DEFAULTS.uiBuildCacheEnabled,
       desktopTextScale: VALID_DESKTOP_TEXT_SCALES.has(Number(saved.desktopTextScale)) ? Number(saved.desktopTextScale) : UI_STATE_DEFAULTS.desktopTextScale,
       textScaleEnabled: typeof saved.textScaleEnabled === 'boolean' ? saved.textScaleEnabled : UI_STATE_DEFAULTS.textScaleEnabled,
       scrollTop: Number.isFinite(Number(saved.scrollTop)) ? Math.max(0, Number(saved.scrollTop)) : UI_STATE_DEFAULTS.scrollTop,
@@ -370,6 +372,18 @@ const loadedPosterSrcs = new Set();
 const requestedPosterSrcs = new Set();
 const posterDecodeStateBySrc = new Map();
 const posterPreloadObserversBySrc = new Map();
+const MAX_DECODED_POSTER_TRACKING = 180;
+const trimPosterMemoryTracking = () => {
+  while (loadedPosterSrcs.size > MAX_DECODED_POSTER_TRACKING) {
+    const oldest = loadedPosterSrcs.values().next().value;
+    loadedPosterSrcs.delete(oldest);
+    posterDecodeStateBySrc.delete(oldest);
+  }
+  while (posterDecodeStateBySrc.size > MAX_DECODED_POSTER_TRACKING) {
+    const oldest = posterDecodeStateBySrc.keys().next().value;
+    posterDecodeStateBySrc.delete(oldest);
+  }
+};
 
 const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poster', eager = false, loadingMode = 'auto' }) {
   const shellRef = useRef(null);
@@ -390,11 +404,6 @@ const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poste
       setShouldLoadSrc(true);
       return undefined;
     }
-    const existingObserver = posterPreloadObserversBySrc.get(src);
-    if (existingObserver) {
-      existingObserver.observe(target);
-      return () => existingObserver.unobserve(target);
-    }
     const observer = new IntersectionObserver((entries) => {
       const hasMatch = entries.some(entry => entry.isIntersecting || entry.intersectionRatio > 0.01);
       if (!hasMatch) return;
@@ -404,12 +413,17 @@ const LazyPoster = React.memo(function LazyPoster({ src, alt, className = 'poste
     }, { threshold: 0.01, rootMargin: '220px 0px 220px 0px' });
     posterPreloadObserversBySrc.set(src, observer);
     observer.observe(target);
-    return () => observer.unobserve(target);
+    return () => {
+      observer.unobserve(target);
+      observer.disconnect();
+      if (posterPreloadObserversBySrc.get(src) === observer) posterPreloadObserversBySrc.delete(src);
+    };
   }, [eager, shouldLoadSrc, src]);
 
   const handleLoad = () => {
     posterDecodeStateBySrc.set(src, 'loaded');
     loadedPosterSrcs.add(src);
+    trimPosterMemoryTracking();
     setLoaded(true);
   };
 
@@ -906,6 +920,9 @@ export default function MCUViewer() {
   const showPhaseSystem = timelineMode === 'release' || timelineMode === 'chronological';
   const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
   const [posterDataSaver, setPosterDataSaver] = useState(initialUiState.posterDataSaver);
+  const [uiBuildCacheEnabled, setUiBuildCacheEnabled] = useState(initialUiState.uiBuildCacheEnabled);
+  const [uiBuildState, setUiBuildState] = useState({ active: false, message: '', done: 0, total: 0 });
+  const [themeTransitioning, setThemeTransitioning] = useState(false);
   const [scrollTuning] = useState({ desktopMultiplier: 5, desktopDeltaCap: 7, mobileMultiplier: 5, mobileDeltaCap: 7 });
   const [genreFilter] = useState('all');
   const [myLikes,        setMyLikes]        = useState({});
@@ -1624,11 +1641,12 @@ export default function MCUViewer() {
       autoHideStatuses,
       performanceMode,
       posterDataSaver,
+      uiBuildCacheEnabled,
       desktopTextScale,
       textScaleEnabled,
       scrollTop,
     }));
-  }, [listMode, search, searchScope, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, posterDataSaver, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
+  }, [listMode, search, searchScope, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, posterDataSaver, uiBuildCacheEnabled, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
   const totalWatched = useMemo(() => activeItems.filter(i => i.status === 'watched').length, [activeItems]);
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
@@ -2437,6 +2455,12 @@ export default function MCUViewer() {
   useEffect(() => { scheduleStorageWrite('mcu-dark-mode-v1', darkMode ? '1' : '0'); }, [darkMode]);
   useEffect(() => { scheduleStorageWrite('mcu-appearance-mode-v1', appearanceMode); }, [appearanceMode]);
   useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    setThemeTransitioning(true);
+    const timer = window.setTimeout(() => setThemeTransitioning(false), performanceMode ? 180 : 420);
+    return () => window.clearTimeout(timer);
+  }, [appearanceMode, darkMode, themeMode, performanceMode]);
+  useEffect(() => {
     if (typeof document === 'undefined') return;
     const root = document.documentElement;
     root.classList.toggle('dark', darkMode);
@@ -2624,6 +2648,34 @@ export default function MCUViewer() {
 
   // Intentionally avoid background metadata/poster warmups on app load.
   // This keeps startup network/data usage minimal and only fetches on demand.
+  const buildUiExperienceCache = useCallback(async (mode = 'view') => {
+    if (uiBuildState.active) return;
+    const source = mode === 'all' ? items : mode === 'core' ? items.filter(item => coreIds.has(item.id)) : filtered;
+    const posterTargets = source.slice(0, mode === 'view' ? 48 : 120).map(item => posterSrc(item)).filter(Boolean);
+    setUiBuildState({ active: true, done: 0, total: posterTargets.length, message: `Preparing ${posterTargets.length} UI poster layers…` });
+    let done = 0;
+    for (let i = 0; i < posterTargets.length; i += 4) {
+      const batch = posterTargets.slice(i, i + 4);
+      await new Promise(resolve => runWhenIdle(async () => {
+        await Promise.allSettled(batch.map(preloadHeroPoster));
+        done += batch.length;
+        setUiBuildState({ active: true, done, total: posterTargets.length, message: `Built UI cache ${done}/${posterTargets.length}` });
+        resolve();
+      }, 650));
+      await wait(16);
+    }
+    scheduleStorageWrite('mcu-ui-build-cache-v1', JSON.stringify({ enabled: true, mode, builtAt: new Date().toISOString(), count: posterTargets.length }));
+    setUiBuildState({ active: false, done, total: posterTargets.length, message: `UI build cache ready for ${posterTargets.length} poster layers.` });
+  }, [coreIds, filtered, items, posterSrc, uiBuildState.active]);
+
+  useEffect(() => {
+    if (!uiBuildCacheEnabled) {
+      scheduleStorageWrite('mcu-ui-build-cache-v1', JSON.stringify({ enabled: false }));
+      return;
+    }
+    buildUiExperienceCache('view');
+  }, [uiBuildCacheEnabled]);
+
   const refreshPosterForItem = async (item) => {
     if (localPosterSrc(item)) {
       setPosterFetchState({ active: false, done: 0, total: 0, message: `${item.title} uses a local poster override.` });
@@ -3129,11 +3181,11 @@ export default function MCUViewer() {
     ? `${Math.max(heroBackdropScale - 16, 112)}% auto`
     : `auto ${Math.max(heroBackdropScale - 8, 96)}%`;
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={normalizeAppearanceMode(appearanceMode)} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={normalizeAppearanceMode(appearanceMode)} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${themeTransitioning ? ' theme-is-transitioning' : ''}${uiBuildCacheEnabled ? ' ui-build-cache-on' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
 
 
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+      <div className="app-backdrop-layout" style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
         {browseMode !== 'phase' && previousHeroSrc && previousHeroSrc !== currentHeroSrc && (
           <div
             key={`backdrop-exit-${previousHeroSrc}`}
@@ -3151,6 +3203,8 @@ export default function MCUViewer() {
         <div className="hero-backdrop-blend" />
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '6%' : '3%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '5%' : '2.5%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.12 : 0.06, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
       </div>
+
+      <div className="theme-transition-loader" aria-hidden={!themeTransitioning}><span />Retuning theme</div>
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <SidebarMenu controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} settingsOpen={settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onOpenSettings={toggleSettingsPanel}>
@@ -3250,7 +3304,8 @@ export default function MCUViewer() {
         <label className="settings-toggle-row"><span><EyeOff size={14}/>{tUniverse('Auto-hide Completed')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={autoHideStatuses} onClick={() => setAutoHideStatuses(v => !v)}>{autoHideStatuses ? 'On' : 'Off'}</button></label>
         <label className="settings-toggle-row"><span><Pause size={14}/>{tUniverse('Reduce Motion')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={performanceMode} onClick={() => setPerformanceMode(v => !v)}>{performanceMode ? 'On' : 'Off'}</button></label>
         <label className="settings-toggle-row"><span><Film size={14}/>Poster Data Saver</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={posterDataSaver} onClick={() => setPosterDataSaver(v => !v)}>{posterDataSaver ? 'On' : 'Off'}</button></label>
-        <p className="settings-help">Data saver uses lighter TMDB poster sizes in home and list feeds when available.</p>
+        <label className="settings-toggle-row"><span><Layers size={14}/>UI Build Cache</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={uiBuildCacheEnabled} onClick={() => setUiBuildCacheEnabled(v => !v)}>{uiBuildCacheEnabled ? 'On' : 'Off'}</button></label>
+        <p className="settings-help">Data saver uses lighter TMDB poster sizes. UI Build Cache pre-decodes visible poster layers during idle time and stores a small build manifest without growing memory.</p>
       </article>
     </section>
 
@@ -3262,6 +3317,10 @@ export default function MCUViewer() {
         <label className="settings-toggle-row"><span><Zap size={14}/>{tUniverse('Performance Mode')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={performanceMode} onClick={() => setPerformanceMode(v => !v)}>{performanceMode ? 'On' : 'Off'}</button></label>
       </div>
       <p className="settings-help">Performance mode reduces visual effects for slower devices.</p>
+      <div className="settings-build-panel">
+        <div><strong>UI build status</strong><span>{uiBuildState.message || 'Idle · cache capped and built only during browser idle time.'}</span></div>
+        <button className="fpill" type="button" disabled={uiBuildState.active} onClick={() => buildUiExperienceCache('view')}>{uiBuildState.active ? `${uiBuildState.done}/${uiBuildState.total}` : 'Build visible UI'}</button>
+      </div>
     </section>
 
     <section className="settings-grid-2">
@@ -4258,6 +4317,10 @@ export default function MCUViewer() {
         setSpoilerSafeMode={setSpoilerSafeMode}
         performanceMode={performanceMode}
         setPerformanceMode={setPerformanceMode}
+        uiBuildCacheEnabled={uiBuildCacheEnabled}
+        setUiBuildCacheEnabled={setUiBuildCacheEnabled}
+        uiBuildState={uiBuildState}
+        onBuildUiCache={() => buildUiExperienceCache('view')}
         marvelLangMode={marvelLangMode}
         setMarvelLangMode={setMarvelLangMode}
         posterDataSaver={posterDataSaver}
