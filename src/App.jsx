@@ -724,6 +724,7 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
   const [scrollY, setScrollY] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(() => (typeof window !== 'undefined' ? window.innerHeight : 900));
   const [measuredVersion, setMeasuredVersion] = useState(0);
+  const lastVirtualScrollRef = useRef({ y: -1, h: -1 });
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -732,8 +733,14 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
       if (rafId) return;
       rafId = window.requestAnimationFrame(() => {
         rafId = 0;
-        setScrollY(window.scrollY || 0);
-        setViewportHeight(window.innerHeight || 900);
+        const nextY = window.scrollY || 0;
+        const nextHeight = window.innerHeight || 900;
+        const prev = lastVirtualScrollRef.current;
+        if (Math.abs(nextY - prev.y) >= 8 || Math.abs(nextHeight - prev.h) >= 16) {
+          lastVirtualScrollRef.current = { y: nextY, h: nextHeight };
+          setScrollY(nextY);
+          setViewportHeight(nextHeight);
+        }
       });
     };
     schedule();
@@ -923,6 +930,7 @@ export default function MCUViewer() {
   const [uiBuildCacheEnabled, setUiBuildCacheEnabled] = useState(initialUiState.uiBuildCacheEnabled);
   const [uiBuildState, setUiBuildState] = useState({ active: false, message: '', done: 0, total: 0 });
   const [themeTransitioning, setThemeTransitioning] = useState(false);
+  const [uiIdleForBackdrop, setUiIdleForBackdrop] = useState(false);
   const [scrollTuning] = useState({ desktopMultiplier: 5, desktopDeltaCap: 7, mobileMultiplier: 5, mobileDeltaCap: 7 });
   const [genreFilter] = useState('all');
   const [myLikes,        setMyLikes]        = useState({});
@@ -1037,6 +1045,7 @@ export default function MCUViewer() {
   const heroUserInteractingUntilRef = useRef(0);
   const heroProgrammaticScrollRef = useRef(false);
   const heroForceRecenterRef = useRef(false);
+  const backdropIdleTimerRef = useRef(null);
   const heroRandomSeedRef = useRef(() => Math.random().toString(36).slice(2));
   if (typeof heroRandomSeedRef.current === 'function') heroRandomSeedRef.current = heroRandomSeedRef.current();
   const restoredUiStateRef = useRef(false);
@@ -1067,12 +1076,46 @@ export default function MCUViewer() {
   }, [scrollTuning]);
 
   const overlayActive = Boolean(settingsOpen || analyticsOpen || detailItem || sidebarOpen || setupOpen || avatarCropSrc);
-  const blockHomeInteractions = Boolean(settingsOpen || sidebarOpen || setupOpen || avatarCropSrc);
+  const blockHomeInteractions = overlayActive;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     window.__overlayActive = overlayActive;
     return () => { window.__overlayActive = false; };
+  }, [overlayActive]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const clearIdleTimer = () => {
+      if (backdropIdleTimerRef.current) {
+        window.clearTimeout(backdropIdleTimerRef.current);
+        backdropIdleTimerRef.current = null;
+      }
+    };
+    const armIdleTimer = () => {
+      clearIdleTimer();
+      setUiIdleForBackdrop(false);
+      if (overlayActive) return;
+      backdropIdleTimerRef.current = window.setTimeout(() => {
+        backdropIdleTimerRef.current = null;
+        setUiIdleForBackdrop(true);
+      }, 10000);
+    };
+    armIdleTimer();
+    const options = { passive: true, capture: true };
+    window.addEventListener('scroll', armIdleTimer, options);
+    window.addEventListener('wheel', armIdleTimer, options);
+    window.addEventListener('touchstart', armIdleTimer, options);
+    window.addEventListener('pointerdown', armIdleTimer, options);
+    window.addEventListener('keydown', armIdleTimer, true);
+    return () => {
+      clearIdleTimer();
+      window.removeEventListener('scroll', armIdleTimer, options);
+      window.removeEventListener('wheel', armIdleTimer, options);
+      window.removeEventListener('touchstart', armIdleTimer, options);
+      window.removeEventListener('pointerdown', armIdleTimer, options);
+      window.removeEventListener('keydown', armIdleTimer, true);
+    };
   }, [overlayActive]);
 
   useEffect(() => {
@@ -1868,40 +1911,37 @@ export default function MCUViewer() {
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
     if (heroPosters.length <= 1) return undefined;
-    const overlayBlockingCycle = overlayActive;
+    const cycleBlocked = overlayActive || !uiIdleForBackdrop || document.visibilityState !== 'visible';
     const telemetry = (state, reason) => {
-      if (typeof window === 'undefined') return;
       window.dispatchEvent(new CustomEvent(`backdrop_cycle_${state}_reason`, { detail: { reason } }));
     };
-
+    const stopHeroCycle = (reason = 'activity') => {
+      if (!heroIntervalRef.current) return;
+      window.clearInterval(heroIntervalRef.current);
+      heroIntervalRef.current = null;
+      telemetry('paused', reason);
+    };
     const startHeroCycle = () => {
-      if (overlayBlockingCycle) return;
-      if (heroIntervalRef.current) return;
+      if (cycleBlocked || heroIntervalRef.current) return;
       heroIntervalRef.current = window.setInterval(() => {
         if (Date.now() < heroUserInteractingUntilRef.current) return;
         setHeroIndex(i => (i + 1) % heroPosters.length);
       }, HERO_ROTATION_MS);
-      telemetry('resumed', 'home-active');
-    };
-    const stopHeroCycle = () => {
-      if (!heroIntervalRef.current) return;
-      window.clearInterval(heroIntervalRef.current);
-      heroIntervalRef.current = null;
-      telemetry('paused', overlayBlockingCycle ? 'overlay-open' : 'document-hidden');
+      telemetry('resumed', 'idle-10s');
     };
     const onVisibility = () => {
-      if (document.visibilityState === 'visible') startHeroCycle();
-      else stopHeroCycle();
+      if (document.visibilityState === 'visible' && !overlayActive && uiIdleForBackdrop) startHeroCycle();
+      else stopHeroCycle(document.visibilityState === 'visible' ? 'activity-or-overlay' : 'document-hidden');
     };
 
-    const debounce = window.setTimeout(onVisibility, 120);
+    if (cycleBlocked) stopHeroCycle(overlayActive ? 'overlay-open' : 'activity');
+    else startHeroCycle();
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
-      window.clearTimeout(debounce);
       document.removeEventListener('visibilitychange', onVisibility);
-      stopHeroCycle();
+      stopHeroCycle('cleanup');
     };
-  }, [heroPosters.length, settingsOpen, analyticsOpen, detailItem, sidebarOpen]);
+  }, [heroPosters.length, overlayActive, uiIdleForBackdrop]);
 
   const pauseHeroAutoSlide = useCallback((duration = 2200) => {
     heroUserInteractingUntilRef.current = Date.now() + duration;
@@ -2457,7 +2497,7 @@ export default function MCUViewer() {
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
     setThemeTransitioning(true);
-    const timer = window.setTimeout(() => setThemeTransitioning(false), performanceMode ? 180 : 420);
+    const timer = window.setTimeout(() => setThemeTransitioning(false), 860);
     return () => window.clearTimeout(timer);
   }, [appearanceMode, darkMode, themeMode, performanceMode]);
   useEffect(() => {
@@ -2466,8 +2506,9 @@ export default function MCUViewer() {
     root.classList.toggle('dark', darkMode);
     root.dataset.colorMode = darkMode ? 'dark' : 'light';
     root.dataset.theme = normalizeAppearanceMode(appearanceMode);
+    root.dataset.characterTheme = themeMode;
     root.style.colorScheme = darkMode ? 'dark' : 'light';
-  }, [appearanceMode, darkMode]);
+  }, [appearanceMode, darkMode, themeMode]);
   useEffect(() => { scheduleStorageWrite('mcu-marvel-lang-v1', marvelLangMode ? '1' : '0'); }, [marvelLangMode]);
   useEffect(() => { scheduleStorageWrite('mcu-export-prefs-v1', JSON.stringify({ font: exportFont, textScale: exportTextScale })); }, [exportFont, exportTextScale]);
 
@@ -2647,25 +2688,48 @@ export default function MCUViewer() {
 
 
   // Intentionally avoid background metadata/poster warmups on app load.
-  // This keeps startup network/data usage minimal and only fetches on demand.
+  // The manual build warms images plus expensive visible UI/layout paths in idle slices.
   const buildUiExperienceCache = useCallback(async (mode = 'view') => {
     if (uiBuildState.active) return;
     const source = mode === 'all' ? items : mode === 'core' ? items.filter(item => coreIds.has(item.id)) : filtered;
-    const posterTargets = source.slice(0, mode === 'view' ? 48 : 120).map(item => posterSrc(item)).filter(Boolean);
-    setUiBuildState({ active: true, done: 0, total: posterTargets.length, message: `Preparing ${posterTargets.length} UI poster layers…` });
+    const posterTargets = source.slice(0, mode === 'view' ? 72 : 160).map(item => posterSrc(item)).filter(Boolean);
+    const selectorsToWarm = ['.rrow', '.hero-carousel-card', '.poster-shell', '.phase-header-card', '.settings-card', '.fpill', '.meta-chip'];
+    const total = posterTargets.length + selectorsToWarm.length + 3;
+    setUiBuildState({ active: true, done: 0, total, message: `Building ${total} UI, poster, and layout layers…` });
     let done = 0;
+    const update = (message) => setUiBuildState({ active: true, done, total, message });
+
     for (let i = 0; i < posterTargets.length; i += 4) {
       const batch = posterTargets.slice(i, i + 4);
       await new Promise(resolve => runWhenIdle(async () => {
         await Promise.allSettled(batch.map(preloadHeroPoster));
         done += batch.length;
-        setUiBuildState({ active: true, done, total: posterTargets.length, message: `Built UI cache ${done}/${posterTargets.length}` });
+        update(`Decoded poster layer ${Math.min(done, posterTargets.length)}/${posterTargets.length}`);
         resolve();
-      }, 650));
-      await wait(16);
+      }, 700));
+      await wait(12);
     }
-    scheduleStorageWrite('mcu-ui-build-cache-v1', JSON.stringify({ enabled: true, mode, builtAt: new Date().toISOString(), count: posterTargets.length }));
-    setUiBuildState({ active: false, done, total: posterTargets.length, message: `UI build cache ready for ${posterTargets.length} poster layers.` });
+
+    for (const selector of selectorsToWarm) {
+      await new Promise(resolve => runWhenIdle(() => {
+        const nodes = Array.from(document.querySelectorAll(selector)).slice(0, 60);
+        nodes.forEach(node => {
+          node.getBoundingClientRect();
+          window.getComputedStyle(node).transform;
+        });
+        done += 1;
+        update(`Prepared ${selector.replace('.', '')} interaction styles`);
+        resolve();
+      }, 500));
+    }
+
+    await new Promise(resolve => requestAnimationFrame(() => { done += 1; update('Committed warmed layout frame'); resolve(); }));
+    await new Promise(resolve => runWhenIdle(() => { document.fonts?.ready?.finally(resolve) || resolve(); }, 700));
+    done += 1;
+    await new Promise(resolve => requestAnimationFrame(() => { done += 1; resolve(); }));
+
+    scheduleStorageWrite('mcu-ui-build-cache-v1', JSON.stringify({ enabled: true, mode, builtAt: new Date().toISOString(), count: total }));
+    setUiBuildState({ active: false, done: total, total, message: `UI cache ready: posters, controls, rows, carousel, settings, and typography warmed.` });
   }, [coreIds, filtered, items, posterSrc, uiBuildState.active]);
 
   useEffect(() => {
@@ -3376,7 +3440,7 @@ export default function MCUViewer() {
       </header>
 
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {browseMode === 'home' && <section className="hero-carousel-shell" aria-label={activeUniverse.heroLabel}>
+      {browseMode === 'home' && <section className="hero-carousel-shell" aria-label={activeUniverse.heroLabel} style={overlayActive ? { pointerEvents: 'none' } : undefined}>
         {heroPosters.length > 0 && (
           <>
             <button className="hero-carousel-nav prev" type="button" aria-label="Previous featured poster" onClick={goToPrevHero}>‹</button>
@@ -4332,6 +4396,7 @@ export default function MCUViewer() {
         themeChoices={themedChoices}
         themeMode={themeMode}
         setThemeMode={setThemeMode}
+        themeVars={cssThemeVars}
       />
       <input id="setup-avatar-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => setAvatarCropSrc(String(r.result || '')); r.readAsDataURL(f); e.target.value=''; }} />
 
