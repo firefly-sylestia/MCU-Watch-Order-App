@@ -100,6 +100,7 @@ const UI_STATE_DEFAULTS = {
   timelineMode: 'release',
   autoHideStatuses: false,
   performanceMode: true,
+  adaptiveUiBoost: true,
   posterDataSaver: true,
   desktopTextScale: 1,
   textScaleEnabled: true,
@@ -150,6 +151,7 @@ const readSavedUiState = () => {
       timelineMode: VALID_TIMELINE_MODES.has(saved.timelineMode) ? saved.timelineMode : UI_STATE_DEFAULTS.timelineMode,
       autoHideStatuses: typeof saved.autoHideStatuses === 'boolean' ? saved.autoHideStatuses : UI_STATE_DEFAULTS.autoHideStatuses,
       performanceMode: typeof saved.performanceMode === 'boolean' ? saved.performanceMode : UI_STATE_DEFAULTS.performanceMode,
+      adaptiveUiBoost: typeof saved.adaptiveUiBoost === 'boolean' ? saved.adaptiveUiBoost : UI_STATE_DEFAULTS.adaptiveUiBoost,
       posterDataSaver: typeof saved.posterDataSaver === 'boolean' ? saved.posterDataSaver : UI_STATE_DEFAULTS.posterDataSaver,
       desktopTextScale: VALID_DESKTOP_TEXT_SCALES.has(Number(saved.desktopTextScale)) ? Number(saved.desktopTextScale) : UI_STATE_DEFAULTS.desktopTextScale,
       textScaleEnabled: typeof saved.textScaleEnabled === 'boolean' ? saved.textScaleEnabled : UI_STATE_DEFAULTS.textScaleEnabled,
@@ -905,6 +907,10 @@ export default function MCUViewer() {
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
   const showPhaseSystem = timelineMode === 'release' || timelineMode === 'chronological';
   const [performanceMode, setPerformanceMode] = useState(initialUiState.performanceMode);
+  const [adaptiveUiBoost, setAdaptiveUiBoost] = useState(initialUiState.adaptiveUiBoost);
+  const [themeTransition, setThemeTransition] = useState({ active: false, label: '' });
+  const previousThemeSignatureRef = useRef('');
+  const themeTransitionTimerRef = useRef(null);
   const [posterDataSaver, setPosterDataSaver] = useState(initialUiState.posterDataSaver);
   const [scrollTuning] = useState({ desktopMultiplier: 5, desktopDeltaCap: 7, mobileMultiplier: 5, mobileDeltaCap: 7 });
   const [genreFilter] = useState('all');
@@ -1623,12 +1629,13 @@ export default function MCUViewer() {
       timelineMode,
       autoHideStatuses,
       performanceMode,
+      adaptiveUiBoost,
       posterDataSaver,
       desktopTextScale,
       textScaleEnabled,
       scrollTop,
     }));
-  }, [listMode, search, searchScope, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, posterDataSaver, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
+  }, [listMode, search, searchScope, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, adaptiveUiBoost, posterDataSaver, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
   const totalWatched = useMemo(() => activeItems.filter(i => i.status === 'watched').length, [activeItems]);
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
@@ -2439,11 +2446,32 @@ export default function MCUViewer() {
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const root = document.documentElement;
+    const themeSignature = `${darkMode ? 'dark' : 'light'}:${appearanceMode}:${themeMode}:${universe}`;
+    const hasThemeChanged = previousThemeSignatureRef.current && previousThemeSignatureRef.current !== themeSignature;
+    previousThemeSignatureRef.current = themeSignature;
+
     root.classList.toggle('dark', darkMode);
+    root.classList.toggle('theme-transitioning', hasThemeChanged);
+    root.classList.toggle('ui-boost-mode', adaptiveUiBoost);
     root.dataset.colorMode = darkMode ? 'dark' : 'light';
     root.dataset.theme = normalizeAppearanceMode(appearanceMode);
+    root.dataset.universe = universe === 'dc' ? 'dc' : 'marvel';
     root.style.colorScheme = darkMode ? 'dark' : 'light';
-  }, [appearanceMode, darkMode]);
+
+    if (hasThemeChanged) {
+      const label = darkMode ? 'Dark neon loaded' : 'Light neon loaded';
+      setThemeTransition({ active: true, label });
+      if (themeTransitionTimerRef.current) window.clearTimeout(themeTransitionTimerRef.current);
+      themeTransitionTimerRef.current = window.setTimeout(() => {
+        setThemeTransition({ active: false, label: '' });
+        root.classList.remove('theme-transitioning');
+      }, adaptiveUiBoost && !performanceMode ? 720 : 420);
+    }
+
+    return () => {
+      if (themeTransitionTimerRef.current) window.clearTimeout(themeTransitionTimerRef.current);
+    };
+  }, [adaptiveUiBoost, appearanceMode, darkMode, performanceMode, themeMode, universe]);
   useEffect(() => { scheduleStorageWrite('mcu-marvel-lang-v1', marvelLangMode ? '1' : '0'); }, [marvelLangMode]);
   useEffect(() => { scheduleStorageWrite('mcu-export-prefs-v1', JSON.stringify({ font: exportFont, textScale: exportTextScale })); }, [exportFont, exportTextScale]);
 
@@ -3129,9 +3157,16 @@ export default function MCUViewer() {
     ? `${Math.max(heroBackdropScale - 16, 112)}% auto`
     : `auto ${Math.max(heroBackdropScale - 8, 96)}%`;
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={normalizeAppearanceMode(appearanceMode)} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={normalizeAppearanceMode(appearanceMode)} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${adaptiveUiBoost ? ' ui-boost-mode' : ''}${themeTransition.active ? ' is-theme-loading' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
 
+
+      {themeTransition.active && (
+        <div className="theme-loading-overlay" role="status" aria-live="polite">
+          <div className="theme-loading-orb" aria-hidden="true" />
+          <span>{themeTransition.label || 'Synchronizing theme'}</span>
+        </div>
+      )}
 
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '100vh', minHeight: '100vh', maxHeight: '100vh', zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
         {browseMode !== 'phase' && previousHeroSrc && previousHeroSrc !== currentHeroSrc && (
@@ -3249,6 +3284,7 @@ export default function MCUViewer() {
         <h3>{tUniverse('Interface Behavior')}</h3>
         <label className="settings-toggle-row"><span><EyeOff size={14}/>{tUniverse('Auto-hide Completed')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={autoHideStatuses} onClick={() => setAutoHideStatuses(v => !v)}>{autoHideStatuses ? 'On' : 'Off'}</button></label>
         <label className="settings-toggle-row"><span><Pause size={14}/>{tUniverse('Reduce Motion')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={performanceMode} onClick={() => setPerformanceMode(v => !v)}>{performanceMode ? 'On' : 'Off'}</button></label>
+        <label className="settings-toggle-row"><span><Zap size={14}/>Adaptive UI Boost</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={adaptiveUiBoost} onClick={() => setAdaptiveUiBoost(v => !v)}>{adaptiveUiBoost ? 'On' : 'Off'}</button></label>
         <label className="settings-toggle-row"><span><Film size={14}/>Poster Data Saver</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={posterDataSaver} onClick={() => setPosterDataSaver(v => !v)}>{posterDataSaver ? 'On' : 'Off'}</button></label>
         <p className="settings-help">Data saver uses lighter TMDB poster sizes in home and list feeds when available.</p>
       </article>
@@ -3261,7 +3297,7 @@ export default function MCUViewer() {
         <label className="settings-toggle-row"><span><EyeOff size={14}/>{tUniverse('Spoiler Safe')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={spoilerSafeMode} onClick={() => setSpoilerSafeMode(v => !v)}>{spoilerSafeMode ? 'On' : 'Off'}</button></label>
         <label className="settings-toggle-row"><span><Zap size={14}/>{tUniverse('Performance Mode')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={performanceMode} onClick={() => setPerformanceMode(v => !v)}>{performanceMode ? 'On' : 'Off'}</button></label>
       </div>
-      <p className="settings-help">Performance mode reduces visual effects for slower devices.</p>
+      <p className="settings-help">Performance mode reduces visual effects for slower devices. Adaptive UI Boost keeps key layers GPU-composited without forcing wasteful CPU work.</p>
     </section>
 
     <section className="settings-grid-2">
