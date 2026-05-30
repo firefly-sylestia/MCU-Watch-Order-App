@@ -3392,48 +3392,124 @@ export default function MCUViewer() {
 
   const renderPhaseSelector = () => (
     <>
-    {showPhaseSystem && (
-    <div ref={phaseRef} className="phase-selector-rail">
-      <button className="fpill phase-chip marvel-phase-btn" data-active={activePhase === 0} onClick={() => navigateToPhase(0)}>
-        <span className="phase-chip-label">All Phases</span>
-      </button>
-      {currentPhases.map((ph) => {
-        const stat = phaseStats.find(s => s.phase === ph.id);
-        const total = stat?.total || 0;
-        const watched = stat?.watched || 0;
-        const isActive = activePhase === ph.id;
-        return (
-          <button
-            key={ph.id}
-            onClick={() => navigateToPhase(ph.id)}
-            className="fpill phase-chip marvel-phase-btn"
-            data-active={isActive}>
-            <span className="phase-chip-label">{ph.name}</span>
-            <span className="phase-chip-count">{watched}/{total}</span>
+      {showPhaseSystem && (
+        <div ref={phaseRef} className="phase-selector-calendar" aria-label="Phase navigation">
+          <button className="phase-nav-card phase-nav-card--all" data-active={activePhase === 0} onClick={() => navigateToPhase(0)} aria-pressed={activePhase === 0}>
+            <span className="phase-nav-card__date">All</span>
+            <span className="phase-nav-card__title">All Phases</span>
+            <span className="phase-nav-card__meta">{totalWatched}/{activeItems.length} watched</span>
+            <span className="phase-nav-card__bar"><span style={{ width: `${pct}%` }} /></span>
           </button>
-        );
-      })}
-    </div>
-    )}
-    <div className="phase-selector-rail" style={{ marginTop: showPhaseSystem ? 10 : 0 }}>
-      {[
-        { id: 'all', label: 'All Release States' },
-        { id: 'released', label: 'Now Available' },
-        { id: 'upcoming', label: 'Coming Soon / TBA' },
-      ].map(opt => (
-        <button
-          key={opt.id}
-          className="fpill phase-chip"
-          data-active={releaseFilter === opt.id}
-          onClick={() => setReleaseFilter(opt.id)}
-          aria-pressed={releaseFilter === opt.id}
-        >
-          <span className="phase-chip-label">{opt.label}</span>
-        </button>
-      ))}
-    </div>
+          {currentPhases.map((ph) => {
+            const stat = phaseStats.find(s => s.phase === ph.id);
+            const total = stat?.total || 0;
+            const watched = stat?.watched || 0;
+            const phasePct = total ? Math.round((watched / total) * 100) : 0;
+            const nextTitle = activeItems.find(item => item.phase === ph.id && item.status !== 'watched')?.title || 'Phase complete';
+            const isActive = activePhase === ph.id;
+            return (
+              <button
+                key={ph.id}
+                onClick={() => navigateToPhase(ph.id)}
+                className="phase-nav-card"
+                data-active={isActive}
+                aria-pressed={isActive}
+                style={{ '--phase-color': ph.color }}
+              >
+                <span className="phase-nav-card__date">Phase {ph.id}</span>
+                <span className="phase-nav-card__title">{ph.name}</span>
+                <span className="phase-nav-card__meta">{watched}/{total} watched · Next: {nextTitle}</span>
+                <span className="phase-nav-card__bar"><span style={{ width: `${phasePct}%` }} /></span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <div className="phase-filter-calendar" style={{ marginTop: showPhaseSystem ? 10 : 0 }} aria-label="Release state filters">
+        {[
+          { id: 'all', label: 'All Release States', hint: `${activeItems.length} titles` },
+          { id: 'released', label: 'Now Available', hint: `${calendarItems.released.length} released` },
+          { id: 'upcoming', label: 'Coming Soon / TBA', hint: `${calendarItems.upcoming.length + calendarItems.tba.length} upcoming` },
+        ].map(opt => (
+          <button
+            key={opt.id}
+            className="phase-filter-card"
+            data-active={releaseFilter === opt.id}
+            onClick={() => setReleaseFilter(opt.id)}
+            aria-pressed={releaseFilter === opt.id}
+          >
+            <span>{opt.label}</span>
+            <small>{opt.hint}</small>
+          </button>
+        ))}
+      </div>
     </>
   );
+
+  const renderPhaseCalendarRow = (item, ph, idx = 0) => {
+    const itemReleaseStatus = releaseStatusFor(item);
+    const itemReleaseInfo = releaseInfoFor(item);
+    const isWatched = item.status === 'watched';
+    return (
+      <div key={item.id} className={`phase-calendar-row calendar-row row-status-${item.status}`} style={{ '--phase-color': ph?.color || 'var(--theme-accent)' }}>
+        <div className="phase-calendar-row__date">
+          <strong>{String(idx + 1).padStart(2, '0')}</strong>
+          <span>{formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}</span>
+        </div>
+        <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
+        <button className="phase-calendar-row__title title-btn" onClick={() => openDetail(item)}>
+          <span>{item.title}</span>
+          <small>Phase {item.phase} · {getSafeTypeMeta(item.type).label} · {releaseStatusLabel(itemReleaseStatus)}</small>
+        </button>
+        <div className="phase-calendar-row__actions">
+          <span className={`calendar-badge ${itemReleaseStatus}`}>{itemReleaseStatus}</span>
+          <button
+            type="button"
+            className="phase-calendar-status"
+            onClick={() => setStatusDirect(item.id, isWatched ? 'unwatched' : 'watched')}
+            aria-pressed={isWatched}
+          >
+            {isWatched ? 'Watched' : 'Mark watched'}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderPhaseCalendarSection = (pid) => {
+    const ph = currentPhases.find(p => p.id === pid);
+    const rows = grouped[pid] || [];
+    const done = rows.filter(r => r.status === 'watched').length;
+    const phasePct = rows.length ? Math.round((done / rows.length) * 100) : 0;
+    const summaryOpen = expandedPhase === pid;
+    return (
+      <section
+        key={pid}
+        className="phase-calendar-section motion-section"
+        data-motion="section"
+        data-phase={pid}
+        ref={el => { phaseRefs.current[pid] = el; }}
+        style={{ '--phase-color': ph?.color || 'var(--theme-accent)' }}
+      >
+        <div className="phase-calendar-header">
+          <div>
+            <div className="calendar-group-header">{ph?.name || `Phase ${pid}`}</div>
+            <p>{ph?.tagline || 'Release group'} · {done}/{rows.length} watched</p>
+          </div>
+          <div className="phase-calendar-header__actions">
+            <span className="phase-calendar-percent">{phasePct}%</span>
+            <button type="button" onClick={() => setExpandedPhase(summaryOpen ? null : pid)}>{summaryOpen ? 'Hide info' : 'Info'}</button>
+            <button type="button" onClick={() => markPhaseWatched(pid, done < rows.length ? 'watched' : 'unwatched')}>{done < rows.length ? 'Mark all' : 'Clear'}</button>
+          </div>
+        </div>
+        <span className="phase-nav-card__bar phase-calendar-section__bar"><span style={{ width: `${phasePct}%` }} /></span>
+        {summaryOpen && <div className="phase-calendar-summary">{ph?.summary}</div>}
+        <div className="phase-calendar-list">
+          {rows.map((item, idx) => renderPhaseCalendarRow(item, ph, idx))}
+        </div>
+      </section>
+    );
+  };
 
   const sectionScaffold = (
     <>
@@ -4046,105 +4122,7 @@ export default function MCUViewer() {
                 </div>
               ))}
             </section>
-          ) : showPhaseSystem ? phaseKeys.map(pid => {
-            const ph = currentPhases.find(p => p.id === pid);
-            const rows = grouped[pid];
-            const done = rows.filter(r => r.status === 'watched').length;
-            const phasePct = rows.length ? Math.round((done / rows.length) * 100) : 0;
-            const isCelebrating = celebPhase === pid;
-            const summaryOpen = expandedPhase === pid;
-
-            return (
-              <section key={pid} className="section-up motion-section" data-motion="section" data-phase={pid}
-                ref={el => { phaseRefs.current[pid] = el; }}
-                style={{ marginBottom: 36, scrollMarginTop: 'var(--sticky-offset)', position: 'relative' }}>
-                {isCelebrating && (
-                  <div className="phase-flash" style={{ position: 'absolute', inset: 0, background: `linear-gradient(90deg, ${ph.color}40, ${ph.color}22)`, boxShadow: `0 0 10px ${ph.glow}`, borderRadius: 12, pointerEvents: 'none', zIndex: 5 }} />
-                )}
-
-                {/* Phase divider */}
-                <div className="curvy-panel phase-header-card motion-pop" style={{ '--phase-color': ph.color, border: `1px solid ${T.surfaceBorder}` }}>
-                  <WatermarkOverlay surface="card" theme={darkMode ? 'dark' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['title', 'progress']} />
-                  <div className="phase-title-wrap">
-                    <div className="phase-title" style={{ color: ph.color }}>
-                      {ph.name}
-                    </div>
-                    <div className="phase-tagline" style={{ color: T.textMuted }}>
-                      {ph.tagline === 'Assembling the Avengers' ? <>ASSEMBLING<br />THE AVENGERS</> : ph.tagline}
-                    </div>
-                  </div>
-                  <span className="phase-progress-chip" style={{ color: phasePct === 100 ? ph.color : T.textMuted, border: `1px solid ${T.surfaceBorder}` }}>
-                    {done}/{rows.length}
-                  </span>
-                  <button onClick={() => setExpandedPhase(summaryOpen ? null : pid)}
-                    aria-label={summaryOpen ? 'Hide phase summary' : 'Show phase summary'}
-                    style={{ background: 'none', border: `1px solid ${summaryOpen ? ph.color + '66' : T.surfaceBorder}`, color: summaryOpen ? ph.color : T.textMuted, borderRadius: 6, padding: '3px 8px', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 2.2, textTransform: 'uppercase', transition: 'all 0.18s' }}>
-                    <Info size={11} />INFO
-                  </button>
-                  {done < rows.length ? (
-                    <button onClick={() => markPhaseWatched(pid, 'watched')}
-                      style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 10, letterSpacing: 1.5, color: ph.color, background: 'transparent', border: `1px solid ${ph.color}44`, borderRadius: 6, padding: '4px 9px', cursor: 'pointer', flexShrink: 0, transition: 'all 0.16s' }}
-                      onMouseEnter={e => { e.currentTarget.style.background = ph.color + '16'; e.currentTarget.style.borderColor = ph.color + '88'; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = ph.color + '44'; }}>
-                      MARK ALL
-                    </button>
-                  ) : (
-                    <button onClick={() => markPhaseWatched(pid, 'unwatched')}
-                      style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 10, letterSpacing: 1.5, color: T.textMuted, background: 'transparent', border: `1px solid ${T.surfaceBorder}`, borderRadius: 6, padding: '4px 9px', cursor: 'pointer', flexShrink: 0, transition: 'all 0.16s' }}
-                      onMouseEnter={e => { e.currentTarget.style.background = T.rowHoverBg; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>
-                      CLEAR
-                    </button>
-                  )}
-                </div>
-
-                {summaryOpen && (
-                  <div className="fade-in curvy-panel" style={{ '--phase-color': ph.color, background: `color-mix(in srgb, ${T.phaseSummaryBg} 72%, transparent)`, border: `1px solid ${T.phaseSummaryBorder}`, borderRadius: 12, padding: '12px 14px 12px 18px', marginBottom: 10, fontSize: 14, color: T.textMuted, lineHeight: 1.6, fontFamily: 'var(--font-marvel-display)', letterSpacing: 0.2 }}>
-                    {ph.summary}
-                  </div>
-                )}
-
-                {/* Row table */}
-                <div className="list-panel" style={{ overflow: 'hidden' }}>
-                  <PhaseRows rows={rows} renderRow={(item, idx) => {
-                    const itemReleaseStatus = releaseStatusFor(item);
-                    const itemReleaseInfo = releaseInfoFor(item);
-                    return (
-                      <MemoizedTitleRow
-                        key={item.id}
-                        item={item}
-                        idx={idx}
-                        ph={ph}
-                        T={T}
-                        typeMeta={getSafeTypeMeta(item.type)}
-                        statusMeta={getSafeStatusMeta(item.status)}
-                        releaseStatus={itemReleaseStatus}
-                        releaseStatusText={releaseStatusLabel(itemReleaseStatus)}
-                        releaseStatusStyleObj={releaseStatusStyle(itemReleaseStatus)}
-                        releaseLabel={formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}
-                        poster={posterSrc(item)}
-                        genres={inferGenres(item)}
-                        isExpanded={expandedItem === item.id}
-                        isWatched={item.status === 'watched'}
-                        isBookmarked={Boolean(bookmarks[item.id])}
-                        statusDropdown={statusDropdown}
-                        rating={metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
-                        onOpenDetail={openDetail}
-                        onSetStatus={setStatusDirect}
-                        onToggleBookmark={toggleBookmark}
-                        onOpenStatus={openStatusDropdown}
-                        bulkSelectMode={bulkSelectMode}
-                        isSelected={selectedIds.has(item.id)}
-                        onToggleSelected={toggleSelected}
-                        isDesktopViewport={isDesktopViewport}
-                      />
-                    );
-                  }}/>
-
-                </div>
-              </section>
-            );
-          }) : (
+          ) : showPhaseSystem ? phaseKeys.map(renderPhaseCalendarSection) : (
             <section data-motion="section" className='curvy-panel motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 12 }}>
               <div className="list-panel" style={{ overflow: 'hidden' }}>
                 <PhaseRows rows={filtered} renderRow={(item, idx) => {
