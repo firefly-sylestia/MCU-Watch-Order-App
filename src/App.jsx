@@ -16,6 +16,7 @@ import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
 import ThemeStudio from './components/features/ThemeStudio';
 import NavigationShell from './components/navigation/NavigationShell';
+import { DeepLinkRouteSync, ROUTE_FALLBACK, SERIES_ROUTE, parseDeepLinkRoute, phaseRoutePath, routeItemMatchesSlug, searchRoutePath, titleRoutePath, universeRoutePath } from './components/navigation/DeepLinkRouter';
 import { CHARACTER_THEMES, normalizeAppearanceMode, resolveThemeTokens } from './constants/themeSettings';
 import { buildSemanticThemeVars, UI_PARITY_TOKENS } from './constants/ui';
 import './App.layout.css';
@@ -370,31 +371,6 @@ const posterFileName = (item, ext = 'jpg') => `${String(item.id).padStart(3, '0'
 const posterExportName = (item, ext = 'jpg') => posterFileName(item, ext);
 
 
-const ROUTE_FALLBACK = '/home';
-const SEARCH_ROUTE = '/search';
-const SERIES_ROUTE = '/series';
-const compactRouteSlug = (value) => slugifyPosterName(value).replace(/-/g, '');
-const titleRoutePath = (item) => `/${item?.type === 'series' ? 'series' : 'movie'}/${slugifyPosterName(item?.title) || item?.id || ''}`;
-const searchRoutePath = (query = '', type = '') => {
-  const params = new URLSearchParams();
-  const trimmedQuery = String(query || '').trim();
-  if (trimmedQuery) params.set('q', trimmedQuery);
-  if (type) params.set('type', type);
-  const qs = params.toString();
-  return qs ? `${SEARCH_ROUTE}?${qs}` : SEARCH_ROUTE;
-};
-const routeItemMatchesSlug = (item, rawSlug) => {
-  const slug = slugifyPosterName(decodeURIComponent(String(rawSlug || '')));
-  if (!item || !slug) return false;
-  const titleSlug = slugifyPosterName(item.title);
-  const compactSlug = compactRouteSlug(slug);
-  const compactTitle = compactRouteSlug(item.title);
-  return String(item.id) === slug
-    || titleSlug === slug
-    || compactTitle === compactSlug
-    || titleSlug.includes(slug)
-    || compactTitle.includes(compactSlug);
-};
 
 
 const loadedPosterSrcs = new Set();
@@ -750,9 +726,11 @@ const getScrollSnapshot = (node) => {
   };
 };
 
+// WARNING: Do not remove this virtualized scrolling system. Optimize it in place when list scrolling needs fixes.
 const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
   const shellRef = useRef(null);
   const rowHeightsRef = useRef(new Map());
+  const prefixHeightsRef = useRef([]);
   const pendingMeasureRef = useRef(false);
   const [viewportState, setViewportState] = useState(() => getScrollSnapshot(null));
   const [measuredVersion, setMeasuredVersion] = useState(0);
@@ -767,7 +745,13 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
       if (rafId) return;
       rafId = window.requestAnimationFrame(() => {
         rafId = 0;
-        setViewportState(getScrollSnapshot(shellRef.current));
+        const node = shellRef.current;
+        if (node) {
+          const rect = node.getBoundingClientRect();
+          const viewportHeight = window.innerHeight || 900;
+          if (rect.bottom < -viewportHeight || rect.top > viewportHeight * 2) return;
+        }
+        setViewportState(getScrollSnapshot(node));
       });
     };
 
@@ -784,12 +768,36 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
 
   useEffect(() => {
     rowHeightsRef.current.clear();
+    prefixHeightsRef.current = [];
     setMeasuredVersion(v => v + 1);
   }, [rows]);
 
   const estimatedRowHeight = 126;
   const estimatedTotalHeight = rows.length * estimatedRowHeight;
   const computedOverscan = Math.min(8, Math.max(4, Math.round(viewportState.height / 260)));
+
+  const prefixHeights = useMemo(() => {
+    const prefix = new Array(rows.length + 1);
+    prefix[0] = 0;
+    for (let i = 0; i < rows.length; i += 1) {
+      prefix[i + 1] = prefix[i] + (rowHeightsRef.current.get(rows[i]?.id) ?? estimatedRowHeight);
+    }
+    prefixHeightsRef.current = prefix;
+    return prefix;
+  }, [rows, measuredVersion]);
+
+  const findRowIndexForOffset = useCallback((offset) => {
+    const prefix = prefixHeightsRef.current;
+    if (!prefix.length) return 0;
+    let lo = 0;
+    let hi = Math.max(0, prefix.length - 2);
+    while (lo < hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      if (prefix[mid + 1] < offset) lo = mid + 1;
+      else hi = mid;
+    }
+    return lo;
+  }, []);
 
   const windowRange = useMemo(() => {
     if (!rows.length) return { start: 0, end: -1 };
@@ -799,48 +807,29 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
     const listTopInScrollRoot = viewportState.top + shellRect.top - viewportState.rootTop;
     const top = Math.max(0, viewportState.top - listTopInScrollRoot);
     const bottom = top + viewportState.height;
-
-    let acc = 0;
-    let start = 0;
-    for (let i = 0; i < rows.length; i += 1) {
-      const h = rowHeightsRef.current.get(rows[i]?.id) ?? estimatedRowHeight;
-      if (acc + h >= top) {
-        start = i;
-        break;
-      }
-      acc += h;
-    }
-
-    let end = start;
-    let run = acc;
-    for (let i = start; i < rows.length; i += 1) {
-      const h = rowHeightsRef.current.get(rows[i]?.id) ?? estimatedRowHeight;
-      run += h;
-      end = i;
-      if (run >= bottom) break;
-    }
+    const start = findRowIndexForOffset(top);
+    const end = findRowIndexForOffset(bottom);
 
     return {
       start: Math.max(0, start - computedOverscan),
       end: Math.min(rows.length - 1, end + computedOverscan),
     };
-  }, [rows, viewportState, measuredVersion, computedOverscan]);
+  }, [rows.length, viewportState, findRowIndexForOffset, computedOverscan, prefixHeights]);
 
   const { topSpacer, bottomSpacer, visibleRows } = useMemo(() => {
     if (!rows.length || windowRange.end < windowRange.start) return { topSpacer: 0, bottomSpacer: 0, visibleRows: [] };
-    let topPx = 0;
-    for (let i = 0; i < windowRange.start; i += 1) topPx += rowHeightsRef.current.get(rows[i]?.id) ?? estimatedRowHeight;
+    const topPx = prefixHeights[windowRange.start] || 0;
     let visiblePx = 0;
     const subset = [];
     for (let i = windowRange.start; i <= windowRange.end; i += 1) {
       subset.push({ item: rows[i], idx: i });
       visiblePx += rowHeightsRef.current.get(rows[i]?.id) ?? estimatedRowHeight;
     }
-    const measuredTotal = rows.reduce((sum, row) => sum + (rowHeightsRef.current.get(row?.id) ?? estimatedRowHeight), 0);
+    const measuredTotal = prefixHeights[rows.length] || estimatedTotalHeight;
     const total = Math.max(estimatedTotalHeight, measuredTotal);
     const bottomPx = Math.max(0, total - topPx - visiblePx);
     return { topSpacer: topPx, bottomSpacer: bottomPx, visibleRows: subset };
-  }, [rows, windowRange, estimatedTotalHeight]);
+  }, [rows, windowRange, estimatedTotalHeight, prefixHeights]);
 
   const setRowRef = useCallback((rowId) => (node) => {
     if (!node || !rowId) return;
@@ -1026,14 +1015,38 @@ export default function MCUViewer() {
   const sortMenuRef = useRef(null);
   const [scrollCheckpoint, setScrollCheckpoint] = useState(initialUiState.scrollTop);
   const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
+  const routeUniverseIntentRef = useRef(null);
 
   useEffect(() => {
+    setThemeTransitioning(true);
     setItems(universe === 'dc' ? DC_RAW : RAW);
-    setActivePhase(0);
+    const routeIntent = routeUniverseIntentRef.current?.universe === universe ? routeUniverseIntentRef.current : null;
+    if (!routeIntent) {
+      setActivePhase(0);
+      setDetailItem(null);
+      setBrowseMode('home');
+    }
     setExpandedPhase(null);
     setExpandedItem(null);
+    setStatusDropdown(null);
+    setTrailerOpen(false);
+    setTrailerExpanded(false);
     setHeroIndex(0);
+    routeUniverseIntentRef.current = null;
+    const transitionTimer = window.setTimeout(() => setThemeTransitioning(false), 260);
+    return () => window.clearTimeout(transitionTimer);
   }, [universe]);
+
+  const switchUniverse = useCallback((nextUniverse) => {
+    setUniverse(prev => {
+      const resolved = nextUniverse === 'dc' ? 'dc' : 'mcu';
+      return prev === resolved ? prev : resolved;
+    });
+    setBrowseMode('home');
+    setSettingsOpen(false);
+    setAnalyticsOpen(false);
+    setSidebarOpen(false);
+  }, []);
 
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
@@ -1611,16 +1624,32 @@ export default function MCUViewer() {
 
   const applyUrlRoute = useCallback((path = window.location.pathname, queryString = window.location.search) => {
     if (typeof window === 'undefined') return;
-    const cleanPath = `/${String(path || '').split('?')[0].split('#')[0].replace(/^\/+/, '')}`.replace(/\/+$/, '') || ROUTE_FALLBACK;
-    const params = new URLSearchParams(String(queryString || '').replace(/^\?/, ''));
-    const parts = cleanPath.split('/').filter(Boolean);
-    const primary = parts[0] || 'home';
-    const requestedSearch = params.get('q') || '';
-    const requestedType = VALID_TYPES.has(params.get('type')) ? params.get('type') : null;
+    const route = parseDeepLinkRoute(path, queryString);
+    const requestedUniverse = route.universe;
+    const routeUniverse = requestedUniverse || universe;
+    const routeItems = routeUniverse === 'dc' ? DC_RAW : RAW;
+    const primary = route.primary;
+    const parts = route.parts;
+    const requestedSearch = route.query;
+    const requestedType = VALID_TYPES.has(route.type) ? route.type : null;
+
+    if (requestedUniverse && requestedUniverse !== universe) {
+      routeUniverseIntentRef.current = { universe: requestedUniverse, primary };
+      switchUniverse(requestedUniverse);
+    }
 
     setSidebarOpen(false);
     setTrailerOpen(false);
     setTrailerExpanded(false);
+
+    if (primary === 'home') {
+      setDetailItem(null);
+      setSettingsOpen(false);
+      setAnalyticsOpen(false);
+      setBrowseMode('home');
+      setTypeFilter(null);
+      return;
+    }
 
     if (primary === 'search') {
       setDetailItem(null);
@@ -1677,7 +1706,7 @@ export default function MCUViewer() {
 
     if (primary === 'movie' || primary === 'title' || primary === 'series') {
       const requestedSlug = parts.slice(1).join('-');
-      const routedItem = items.find(item => routeItemMatchesSlug(item, requestedSlug));
+      const routedItem = routeItems.find(item => routeItemMatchesSlug(item, requestedSlug));
       setSettingsOpen(false);
       setAnalyticsOpen(false);
       setBrowseMode('home');
@@ -1698,25 +1727,17 @@ export default function MCUViewer() {
     setAnalyticsOpen(false);
     setBrowseMode('home');
     setTypeFilter(null);
-  }, [items, openDetail]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-    applyUrlRoute(window.location.pathname, window.location.search);
-    const onPopState = () => applyUrlRoute(window.location.pathname, window.location.search);
-    window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
-  }, [applyUrlRoute]);
+  }, [openDetail, switchUniverse, universe]);
 
   const canonicalRoute = useMemo(() => {
-    if (detailItem) return titleRoutePath(detailItem);
-    if (settingsOpen) return '/settings';
-    if (analyticsOpen) return '/analytics';
-    if (browseMode === 'search' && typeFilter === 'series' && !search.trim()) return SERIES_ROUTE;
-    if (browseMode === 'search') return searchRoutePath(search, typeFilter);
-    if (browseMode === 'phase') return activePhase ? `/phase/${activePhase}` : '/phase';
-    return ROUTE_FALLBACK;
-  }, [activePhase, analyticsOpen, browseMode, detailItem, search, settingsOpen, typeFilter]);
+    if (detailItem) return titleRoutePath(detailItem, universe);
+    if (settingsOpen) return `${universeRoutePath(universe)}/settings`;
+    if (analyticsOpen) return `${universeRoutePath(universe)}/analytics`;
+    if (browseMode === 'search' && typeFilter === 'series' && !search.trim()) return `${universeRoutePath(universe)}${SERIES_ROUTE}`;
+    if (browseMode === 'search') return searchRoutePath(search, typeFilter, universe);
+    if (browseMode === 'phase') return phaseRoutePath(activePhase, universe);
+    return universeRoutePath(universe);
+  }, [activePhase, analyticsOpen, browseMode, detailItem, search, settingsOpen, typeFilter, universe]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -3457,6 +3478,7 @@ export default function MCUViewer() {
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%), radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--theme-accent-alt) 18%, transparent), transparent 40%), linear-gradient(165deg, color-mix(in srgb, var(--theme-accent) ${darkMode ? '6%' : '3%'}, #04050f), color-mix(in srgb, var(--theme-accent-alt) ${darkMode ? '5%' : '2.5%'}, #0a1734) 42%, ${darkMode ? '#090d1e' : '#edf2fa'} 100%)`, opacity: darkMode ? 0.12 : 0.06, transition: 'opacity 0.95s ease-in-out', animation: 'cinematicIn 0.8s ease both' }} />
       </div>
 
+      <DeepLinkRouteSync applyRoute={applyUrlRoute} />
       <div className="theme-transition-loader" aria-hidden={!themeTransitioning}><span />Retuning theme</div>
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
@@ -3619,7 +3641,7 @@ export default function MCUViewer() {
       <header className="hexbg" style={{ position: 'relative', zIndex: 'var(--overlay-z-base)', background: universe === 'dc' ? 'linear-gradient(180deg, rgba(20,44,88,.95), rgba(10,22,43,.88))' : 'transparent', borderBottom: universe === 'dc' ? '1px solid rgba(59,130,246,.35)' : 'none', flexShrink: 0, pointerEvents: blockHomeInteractions ? 'none' : 'auto' }}>
         <div className="header-inner" style={{ width: '100%', maxWidth: 1480, margin: '0 auto', padding: headerMinimized ? 'calc(env(safe-area-inset-top, 0px) + 14px) 24px 10px' : 'calc(env(safe-area-inset-top, 0px) + 26px) 30px 16px', transition: 'padding 0.2s ease' }}>
           <div className="header-controls-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
-            <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} onClick={() => { setBrandTapCount(c => c + 1); setTimeout(() => setBrandTapCount(0), 550); }} onDoubleClick={() => setUniverse(prev => prev === 'mcu' ? 'dc' : 'mcu')} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900, cursor: 'pointer', userSelect: 'none', WebkitUserSelect: 'none' }}>
+            <div className={`header-brand ${headerMinimized ? 'compact' : ''}`} onClick={() => { setBrandTapCount(c => c + 1); setTimeout(() => setBrandTapCount(0), 550); }} onDoubleClick={() => switchUniverse(universe === 'dc' ? 'mcu' : 'dc')} style={{ fontFamily: 'var(--font-marvel-display)', lineHeight: 0.9, marginBottom: 0, fontWeight: 900, cursor: 'pointer', userSelect: 'none', WebkitUserSelect: 'none' }}>
               <div className="header-title-mcu" style={{ color: universe === 'dc' ? '#9ac5ff' : undefined }}>{activeUniverse.title}</div>
               <div className="header-title-sub">{activeUniverse.subtitle}</div>
               <div className="header-tagline">
