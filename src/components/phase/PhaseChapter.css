@@ -1,0 +1,61 @@
+.phase-nav-deck {
+  display: grid;
+  gap: 14px;
+  margin: 0 0 18px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 22%, var(--theme-border));
+  border-radius: 24px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--theme-surface) 78%, transparent), color-mix(in srgb, var(--theme-bg-alt) 72%, transparent));
+  contain: layout paint style;
+}
+.phase-nav-deck__intro { display: grid; gap: 4px; }
+.phase-nav-deck__intro span,
+.phase-nav-card__kicker { font-family: var(--font-marvel-ui); letter-spacing: .16em; text-transform: uppercase; font-size: 11px; color: var(--theme-accent); }
+.phase-nav-deck__intro strong { font-family: var(--font-marvel-display); font-size: clamp(22px, 4vw, 34px); line-height: .95; }
+.phase-nav-deck__intro p { margin: 0; color: var(--theme-text-muted); font-size: 13px; }
+.phase-nav-deck__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(158px, 1fr)); gap: 10px; }
+.phase-nav-card {
+  position: relative;
+  display: grid;
+  gap: 5px;
+  min-height: 112px;
+  padding: 14px;
+  text-align: left;
+  border: 1px solid color-mix(in srgb, var(--phase-color) 24%, var(--theme-border));
+  border-radius: 18px;
+  background: radial-gradient(circle at top right, color-mix(in srgb, var(--phase-color) 20%, transparent), transparent 52%), color-mix(in srgb, var(--theme-surface) 78%, transparent);
+  color: var(--theme-text);
+  cursor: pointer;
+  overflow: hidden;
+  transform: translateZ(0);
+}
+.phase-nav-card::after { content: ''; position: absolute; inset: auto 12px 10px; height: 3px; border-radius: 999px; background: var(--phase-color); opacity: .45; }
+.phase-nav-card.is-active { box-shadow: 0 0 0 1px color-mix(in srgb, var(--phase-color) 54%, transparent), 0 18px 38px var(--phase-glow); }
+.phase-nav-card strong { font-family: var(--font-marvel-display); font-size: 17px; line-height: 1.04; }
+.phase-nav-card em { align-self: end; color: var(--theme-text-muted); font-style: normal; font-size: 12px; }
+.phase-chapter { position: relative; margin-bottom: 30px; contain: layout paint style; }
+.phase-chapter__shell { border-radius: 26px; padding: 10px; background: linear-gradient(180deg, color-mix(in srgb, var(--phase-color) 10%, transparent), transparent 170px), color-mix(in srgb, var(--theme-surface) 58%, transparent); border: 1px solid color-mix(in srgb, var(--phase-color) 24%, var(--theme-border)); }
+.phase-chapter__header { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(116px, 170px) auto; gap: 14px; align-items: center; padding: 16px; border: 1px solid; border-radius: 20px; background: linear-gradient(135deg, color-mix(in srgb, var(--phase-color) 18%, transparent), color-mix(in srgb, var(--theme-surface) 86%, transparent)); overflow: hidden; }
+.phase-chapter__identity { position: relative; z-index: 1; display: grid; gap: 4px; }
+.phase-chapter__identity span { color: var(--phase-color); font-family: var(--font-marvel-ui); letter-spacing: .18em; text-transform: uppercase; font-size: 11px; }
+.phase-chapter__identity h2 { margin: 0; color: var(--phase-color); font-family: var(--font-marvel-display); font-size: clamp(26px, 5vw, 48px); line-height: .9; }
+.phase-chapter__identity p { margin: 0; color: var(--theme-text-muted); font-size: 13px; }
+.phase-chapter__progress { display: grid; gap: 6px; padding: 12px; border: 1px solid color-mix(in srgb, var(--phase-color) 30%, transparent); border-radius: 16px; background: color-mix(in srgb, var(--theme-bg) 42%, transparent); }
+.phase-chapter__progress strong { color: var(--phase-color); font-size: 24px; line-height: 1; }
+.phase-chapter__progress span { font-size: 11px; color: var(--theme-text-muted); }
+.phase-chapter__meter { height: 7px; border-radius: 999px; overflow: hidden; background: color-mix(in srgb, var(--theme-border) 65%, transparent); }
+.phase-chapter__meter i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--phase-color), color-mix(in srgb, var(--phase-color) 54%, white)); }
+.phase-chapter__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.phase-action-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--theme-border) 90%, transparent); background: color-mix(in srgb, var(--theme-surface) 72%, transparent); color: var(--theme-text); font-family: var(--font-marvel-ui); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
+.phase-action-btn--accent { color: var(--phase-color); border-color: color-mix(in srgb, var(--phase-color) 42%, transparent); }
+.phase-chapter__summary { margin: 10px 2px 0; padding: 14px 16px; border-left: 3px solid var(--phase-color); border-radius: 14px; background: color-mix(in srgb, var(--theme-surface) 78%, transparent); line-height: 1.6; }
+.phase-chapter__list { margin-top: 10px; overflow: hidden; border-radius: 18px; }
+.phase-chapter__flash { position: absolute; inset: 0; border-radius: 26px; pointer-events: none; z-index: 2; background: linear-gradient(90deg, var(--phase-color), transparent); opacity: .22; }
+@media (max-width: 760px) {
+  .phase-nav-deck { padding: 12px; border-radius: 20px; }
+  .phase-nav-deck__grid { grid-template-columns: minmax(0, 1fr); }
+  .phase-chapter__shell { padding: 7px; border-radius: 20px; }
+  .phase-chapter__header { grid-template-columns: minmax(0, 1fr); padding: 13px; }
+  .phase-chapter__actions { justify-content: stretch; }
+  .phase-action-btn { flex: 1; justify-content: center; }
+}

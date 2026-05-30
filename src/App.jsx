@@ -16,6 +16,8 @@ import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
 import ThemeStudio from './components/features/ThemeStudio';
 import NavigationShell from './components/navigation/NavigationShell';
+import DeepLinkRouteSync from './components/deeplinks/DeepLinkRouteSync';
+import { PhaseNavigationDeck, PhaseChapter } from './components/phase/PhaseChapter';
 import { CHARACTER_THEMES, normalizeAppearanceMode, resolveThemeTokens } from './constants/themeSettings';
 import { buildSemanticThemeVars, UI_PARITY_TOKENS } from './constants/ui';
 import './App.layout.css';
@@ -368,33 +370,6 @@ const slugifyPosterName = (value) => String(value || '')
 
 const posterFileName = (item, ext = 'jpg') => `${String(item.id).padStart(3, '0')}-${slugifyPosterName(item.title)}.${ext}`;
 const posterExportName = (item, ext = 'jpg') => posterFileName(item, ext);
-
-
-const ROUTE_FALLBACK = '/home';
-const SEARCH_ROUTE = '/search';
-const SERIES_ROUTE = '/series';
-const compactRouteSlug = (value) => slugifyPosterName(value).replace(/-/g, '');
-const titleRoutePath = (item) => `/${item?.type === 'series' ? 'series' : 'movie'}/${slugifyPosterName(item?.title) || item?.id || ''}`;
-const searchRoutePath = (query = '', type = '') => {
-  const params = new URLSearchParams();
-  const trimmedQuery = String(query || '').trim();
-  if (trimmedQuery) params.set('q', trimmedQuery);
-  if (type) params.set('type', type);
-  const qs = params.toString();
-  return qs ? `${SEARCH_ROUTE}?${qs}` : SEARCH_ROUTE;
-};
-const routeItemMatchesSlug = (item, rawSlug) => {
-  const slug = slugifyPosterName(decodeURIComponent(String(rawSlug || '')));
-  if (!item || !slug) return false;
-  const titleSlug = slugifyPosterName(item.title);
-  const compactSlug = compactRouteSlug(slug);
-  const compactTitle = compactRouteSlug(item.title);
-  return String(item.id) === slug
-    || titleSlug === slug
-    || compactTitle === compactSlug
-    || titleSlug.includes(slug)
-    || compactTitle.includes(compactSlug);
-};
 
 
 const loadedPosterSrcs = new Set();
@@ -752,10 +727,7 @@ const getScrollSnapshot = (node) => {
 
 const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
   const shellRef = useRef(null);
-  const rowHeightsRef = useRef(new Map());
-  const pendingMeasureRef = useRef(false);
   const [viewportState, setViewportState] = useState(() => getScrollSnapshot(null));
-  const [measuredVersion, setMeasuredVersion] = useState(0);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -780,89 +752,38 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
       window.removeEventListener('resize', schedule);
       if (rafId) window.cancelAnimationFrame(rafId);
     };
-  }, [rows]);
+  }, []);
 
-  useEffect(() => {
-    rowHeightsRef.current.clear();
-    setMeasuredVersion(v => v + 1);
-  }, [rows]);
-
+  // WARNING: Do not remove the virtualized scrolling system. The Vercel list
+  // view depends on fixed-window rendering; only tune its math/overscan when
+  // optimizing scroll issues.
   const estimatedRowHeight = 126;
-  const estimatedTotalHeight = rows.length * estimatedRowHeight;
-  const computedOverscan = Math.min(8, Math.max(4, Math.round(viewportState.height / 260)));
-
-  const windowRange = useMemo(() => {
-    if (!rows.length) return { start: 0, end: -1 };
-    const shellRect = shellRef.current?.getBoundingClientRect?.();
-    if (!shellRect) return { start: 0, end: Math.min(rows.length - 1, 22) };
-
-    const listTopInScrollRoot = viewportState.top + shellRect.top - viewportState.rootTop;
-    const top = Math.max(0, viewportState.top - listTopInScrollRoot);
-    const bottom = top + viewportState.height;
-
-    let acc = 0;
-    let start = 0;
-    for (let i = 0; i < rows.length; i += 1) {
-      const h = rowHeightsRef.current.get(rows[i]?.id) ?? estimatedRowHeight;
-      if (acc + h >= top) {
-        start = i;
-        break;
-      }
-      acc += h;
-    }
-
-    let end = start;
-    let run = acc;
-    for (let i = start; i < rows.length; i += 1) {
-      const h = rowHeightsRef.current.get(rows[i]?.id) ?? estimatedRowHeight;
-      run += h;
-      end = i;
-      if (run >= bottom) break;
-    }
-
-    return {
-      start: Math.max(0, start - computedOverscan),
-      end: Math.min(rows.length - 1, end + computedOverscan),
-    };
-  }, [rows, viewportState, measuredVersion, computedOverscan]);
+  const computedOverscan = Math.min(10, Math.max(5, Math.round(viewportState.height / estimatedRowHeight)));
 
   const { topSpacer, bottomSpacer, visibleRows } = useMemo(() => {
-    if (!rows.length || windowRange.end < windowRange.start) return { topSpacer: 0, bottomSpacer: 0, visibleRows: [] };
-    let topPx = 0;
-    for (let i = 0; i < windowRange.start; i += 1) topPx += rowHeightsRef.current.get(rows[i]?.id) ?? estimatedRowHeight;
-    let visiblePx = 0;
+    if (!rows.length) return { topSpacer: 0, bottomSpacer: 0, visibleRows: [] };
+    const shellRect = shellRef.current?.getBoundingClientRect?.();
+    const listTopInScrollRoot = shellRect
+      ? viewportState.top + shellRect.top - viewportState.rootTop
+      : 0;
+    const localTop = Math.max(0, viewportState.top - listTopInScrollRoot);
+    const localBottom = localTop + viewportState.height;
+    const start = Math.max(0, Math.floor(localTop / estimatedRowHeight) - computedOverscan);
+    const end = Math.min(rows.length - 1, Math.ceil(localBottom / estimatedRowHeight) + computedOverscan);
     const subset = [];
-    for (let i = windowRange.start; i <= windowRange.end; i += 1) {
-      subset.push({ item: rows[i], idx: i });
-      visiblePx += rowHeightsRef.current.get(rows[i]?.id) ?? estimatedRowHeight;
-    }
-    const measuredTotal = rows.reduce((sum, row) => sum + (rowHeightsRef.current.get(row?.id) ?? estimatedRowHeight), 0);
-    const total = Math.max(estimatedTotalHeight, measuredTotal);
-    const bottomPx = Math.max(0, total - topPx - visiblePx);
-    return { topSpacer: topPx, bottomSpacer: bottomPx, visibleRows: subset };
-  }, [rows, windowRange, estimatedTotalHeight]);
-
-  const setRowRef = useCallback((rowId) => (node) => {
-    if (!node || !rowId) return;
-    const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-    const prevHeight = rowHeightsRef.current.get(rowId);
-    if (nextHeight > 0 && prevHeight !== nextHeight) {
-      rowHeightsRef.current.set(rowId, nextHeight);
-      if (!pendingMeasureRef.current) {
-        pendingMeasureRef.current = true;
-        requestAnimationFrame(() => {
-          pendingMeasureRef.current = false;
-          setMeasuredVersion(v => v + 1);
-        });
-      }
-    }
-  }, []);
+    for (let i = start; i <= end; i += 1) subset.push({ item: rows[i], idx: i });
+    return {
+      topSpacer: start * estimatedRowHeight,
+      bottomSpacer: Math.max(0, (rows.length - end - 1) * estimatedRowHeight),
+      visibleRows: subset,
+    };
+  }, [rows, viewportState, computedOverscan]);
 
   return (
     <div className="phase-rows-full virtual-list" ref={shellRef} style={{ '--virtual-total-rows': rows.length }}>
       {topSpacer > 0 && <div className="virtual-spacer" style={{ height: topSpacer }} aria-hidden="true" />}
       {visibleRows.map(({ item, idx }) => (
-        <div key={item.id} ref={setRowRef(item.id)} className="phase-row-virtualized">
+        <div key={item.id} className="phase-row-virtualized">
           {renderRow(item, idx)}
         </div>
       ))}
@@ -875,6 +796,7 @@ export default function MCUViewer() {
   const initialUiState = useMemo(() => readSavedUiState(), []);
   const [universe, setUniverse] = useState('mcu');
   const [brandTapCount, setBrandTapCount] = useState(0);
+  const deepLinkItemsByUniverse = useMemo(() => ({ mcu: RAW, dc: DC_RAW }), []);
 
   const [allowMotionReplay] = useState(false);
 
@@ -1028,11 +950,20 @@ export default function MCUViewer() {
   const [metadataBuild, setMetadataBuild] = useState({ status: 'idle', currentTitle: '', done: 0, total: 0, failedIds: [] });
 
   useEffect(() => {
-    setItems(universe === 'dc' ? DC_RAW : RAW);
+    const nextItems = universe === 'dc' ? DC_RAW : RAW;
+    setItems(nextItems);
     setActivePhase(0);
     setExpandedPhase(null);
     setExpandedItem(null);
+    setDetailItem(prev => (prev && nextItems.some(item => item.id === prev.id) ? prev : null));
+    setStatusDropdown(null);
+    setBulkSelectMode(false);
+    setSelectedIds(new Set());
     setHeroIndex(0);
+    setTimelineMode(prev => (universe === 'dc' && !['release', 'chronological'].includes(prev)) ? 'release' : prev);
+    setThemeTransitioning(true);
+    const transitionTimer = window.setTimeout(() => setThemeTransitioning(false), 220);
+    return () => window.clearTimeout(transitionTimer);
   }, [universe]);
 
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
@@ -1609,20 +1540,20 @@ export default function MCUViewer() {
   }, []);
 
 
-  const applyUrlRoute = useCallback((path = window.location.pathname, queryString = window.location.search) => {
-    if (typeof window === 'undefined') return;
-    const cleanPath = `/${String(path || '').split('?')[0].split('#')[0].replace(/^\/+/, '')}`.replace(/\/+$/, '') || ROUTE_FALLBACK;
-    const params = new URLSearchParams(String(queryString || '').replace(/^\?/, ''));
-    const parts = cleanPath.split('/').filter(Boolean);
-    const primary = parts[0] || 'home';
-    const requestedSearch = params.get('q') || '';
-    const requestedType = VALID_TYPES.has(params.get('type')) ? params.get('type') : null;
-
-    setSidebarOpen(false);
-    setTrailerOpen(false);
-    setTrailerExpanded(false);
-
-    if (primary === 'search') {
+  const deepLinkActions = useMemo(() => ({
+    closeTransient: () => {
+      setSidebarOpen(false);
+      setTrailerOpen(false);
+      setTrailerExpanded(false);
+    },
+    openHome: () => {
+      setDetailItem(null);
+      setSettingsOpen(false);
+      setAnalyticsOpen(false);
+      setBrowseMode('home');
+      setTypeFilter(null);
+    },
+    openSearch: ({ query = '', type = null } = {}) => {
       setDetailItem(null);
       setSettingsOpen(false);
       setAnalyticsOpen(false);
@@ -1630,110 +1561,39 @@ export default function MCUViewer() {
       setListMode('extended');
       setActivePhase(0);
       setSearchScope(UI_STATE_DEFAULTS.searchScope);
-      setTypeFilter(requestedType);
-      setSearch(requestedSearch);
-      return;
-    }
-
-    if (primary === 'settings') {
+      setTypeFilter(type);
+      setSearch(query);
+    },
+    openSettings: () => {
       setDetailItem(null);
       setAnalyticsOpen(false);
       setBrowseMode('home');
       setSettingsOpen(true);
-      return;
-    }
-
-    if (primary === 'analytics') {
+    },
+    openAnalytics: () => {
       setDetailItem(null);
       setSettingsOpen(false);
       setBrowseMode('home');
       setAnalyticsOpen(true);
-      return;
-    }
-
-    if (primary === 'phase') {
-      const requestedPhase = Number(parts[1] || 0);
+    },
+    openPhase: (phaseId = 0) => {
       setDetailItem(null);
       setSettingsOpen(false);
       setAnalyticsOpen(false);
       setBrowseMode('phase');
+      setTimelineMode(prev => (universe === 'dc' || prev === 'release' || prev === 'chronological') ? prev : 'release');
       setTypeFilter(null);
-      setActivePhase(Number.isFinite(requestedPhase) && requestedPhase > 0 ? requestedPhase : 0);
-      return;
-    }
-
-    if (primary === 'series' && parts.length === 1) {
-      setDetailItem(null);
-      setSettingsOpen(false);
-      setAnalyticsOpen(false);
-      setBrowseMode('search');
-      setListMode('extended');
-      setActivePhase(0);
-      setTypeFilter('series');
-      setSearch(requestedSearch);
-      setSearchScope(UI_STATE_DEFAULTS.searchScope);
-      return;
-    }
-
-    if (primary === 'movie' || primary === 'title' || primary === 'series') {
-      const requestedSlug = parts.slice(1).join('-');
-      const routedItem = items.find(item => routeItemMatchesSlug(item, requestedSlug));
+      setActivePhase(phaseId);
+    },
+    openDetailRoute: (item) => {
       setSettingsOpen(false);
       setAnalyticsOpen(false);
       setBrowseMode('home');
-      if (routedItem) {
-        setTypeFilter(null);
-        openDetail(routedItem);
-      } else {
-        setDetailItem(null);
-        setBrowseMode('search');
-        setListMode('extended');
-        setSearch(decodeURIComponent(requestedSlug || '').replace(/-/g, ' '));
-      }
-      return;
-    }
+      setTypeFilter(null);
+      openDetail(item);
+    },
+  }), [openDetail, universe]);
 
-    setDetailItem(null);
-    setSettingsOpen(false);
-    setAnalyticsOpen(false);
-    setBrowseMode('home');
-    setTypeFilter(null);
-  }, [items, openDetail]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-    applyUrlRoute(window.location.pathname, window.location.search);
-    const onPopState = () => applyUrlRoute(window.location.pathname, window.location.search);
-    window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
-  }, [applyUrlRoute]);
-
-  const canonicalRoute = useMemo(() => {
-    if (detailItem) return titleRoutePath(detailItem);
-    if (settingsOpen) return '/settings';
-    if (analyticsOpen) return '/analytics';
-    if (browseMode === 'search' && typeFilter === 'series' && !search.trim()) return SERIES_ROUTE;
-    if (browseMode === 'search') return searchRoutePath(search, typeFilter);
-    if (browseMode === 'phase') return activePhase ? `/phase/${activePhase}` : '/phase';
-    return ROUTE_FALLBACK;
-  }, [activePhase, analyticsOpen, browseMode, detailItem, search, settingsOpen, typeFilter]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
-    const currentRoute = `${currentPath}${window.location.search || ''}`;
-    const nextState = { ...(window.history.state || {}), mcuRoute: canonicalRoute };
-    if (currentRoute === canonicalRoute) {
-      if (window.history.state?.mcuRoute !== canonicalRoute) {
-        window.history.replaceState(nextState, '', canonicalRoute);
-      }
-      return;
-    }
-    const currentPrimary = currentPath.split('/').filter(Boolean)[0] || 'home';
-    const nextPrimary = canonicalRoute.split('?')[0].split('/').filter(Boolean)[0] || 'home';
-    const method = currentPath === '/' || canonicalRoute === ROUTE_FALLBACK || currentPrimary === nextPrimary ? 'replaceState' : 'pushState';
-    window.history[method](nextState, '', canonicalRoute);
-  }, [canonicalRoute]);
   useEffect(() => {
     const onDocPointerDown = (event) => {
       if (sortMenuRef.current && !sortMenuRef.current.contains(event.target)) setSortMenuOpen(false);
@@ -1801,12 +1661,14 @@ export default function MCUViewer() {
       if (showPhaseSystem && activePhase && i.phase !== activePhase) return false;
       if (releaseFilter === 'released' && (i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
       if (releaseFilter === 'upcoming' && !(i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
-      if (timelineMode === 'loki' && !CHARACTER_POV_TITLE_SETS.loki.has(i.title)) return false;
-      if (timelineMode === 'wanda' && !CHARACTER_POV_TITLE_SETS.wanda.has(i.title)) return false;
-      if (timelineMode === 'sony' && !SONY_MARVEL_TITLE_SET.has(i.title)) return false;
-      if (timelineMode === 'multiverse') {
-        const isMultiverse = /what if|multiverse|loki|deadpool|friendly neighborhood|x-men/i.test(i.title + ' ' + (i.desc || ''));
-        if (!isMultiverse) return false;
+      if (universe !== 'dc') {
+        if (timelineMode === 'loki' && !CHARACTER_POV_TITLE_SETS.loki.has(i.title)) return false;
+        if (timelineMode === 'wanda' && !CHARACTER_POV_TITLE_SETS.wanda.has(i.title)) return false;
+        if (timelineMode === 'sony' && !SONY_MARVEL_TITLE_SET.has(i.title)) return false;
+        if (timelineMode === 'multiverse') {
+          const isMultiverse = /what if|multiverse|loki|deadpool|friendly neighborhood|x-men/i.test(i.title + ' ' + (i.desc || ''));
+          if (!isMultiverse) return false;
+        }
       }
       if (genreFilter !== 'all' && i.type !== genreFilter) return false;
       const after = AFTER_CREDITS[i.title] || AFTER_CREDITS_DEFAULT;
@@ -1831,7 +1693,7 @@ export default function MCUViewer() {
     f.forEach(i => (g[i.phase] = g[i.phase] || []).push(i));
     const pk = Object.keys(g).map(Number).sort((a, b) => a - b);
     return { filtered: f, grouped: g, phaseKeys: pk };
-  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, browseMode, timelineMode, genreFilter, deferredSearch, sortBy, coreIds, showAllFiltersOverride, releaseFilter, metaCache, searchScope]);
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, browseMode, timelineMode, genreFilter, deferredSearch, sortBy, coreIds, showAllFiltersOverride, releaseFilter, metaCache, searchScope, universe]);
 
 
 
@@ -1895,7 +1757,7 @@ export default function MCUViewer() {
     const phaseItems = activeItems.filter(i => i.phase === ph.id);
     const watched = phaseItems.filter(i => i.status === 'watched').length;
     return { phase: ph.id, watched, total: phaseItems.length };
-  }).filter(p => p.total > 0), [activeItems]);
+  }).filter(p => p.total > 0), [activeItems, currentPhases]);
 
 
   useEffect(() => {
@@ -3435,6 +3297,22 @@ export default function MCUViewer() {
     : `auto ${Math.max(heroBackdropScale - 8, 96)}%`;
   return (
     <div data-scaffold={Boolean(sectionScaffold)} data-theme={normalizeAppearanceMode(appearanceMode)} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${themeTransitioning ? ' theme-is-transitioning' : ''}${uiBuildCacheEnabled ? ' ui-build-cache-on' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+
+      <DeepLinkRouteSync
+        universe={universe}
+        setUniverse={setUniverse}
+        items={items}
+        itemsByUniverse={deepLinkItemsByUniverse}
+        detailItem={detailItem}
+        settingsOpen={settingsOpen}
+        analyticsOpen={analyticsOpen}
+        browseMode={browseMode}
+        activePhase={activePhase}
+        search={search}
+        typeFilter={typeFilter}
+        validTypes={VALID_TYPES}
+        actions={deepLinkActions}
+      />
       
 
 
@@ -4024,105 +3902,83 @@ export default function MCUViewer() {
                 </div>
               ))}
             </section>
-          ) : showPhaseSystem ? phaseKeys.map(pid => {
-            const ph = currentPhases.find(p => p.id === pid);
-            const rows = grouped[pid];
-            const done = rows.filter(r => r.status === 'watched').length;
-            const phasePct = rows.length ? Math.round((done / rows.length) * 100) : 0;
-            const isCelebrating = celebPhase === pid;
-            const summaryOpen = expandedPhase === pid;
+          ) : showPhaseSystem ? (
+            <>
+              <PhaseNavigationDeck
+                phases={currentPhases}
+                activePhase={activePhase}
+                grouped={grouped}
+                activeItems={activeItems}
+                onSelectPhase={navigateToPhase}
+                universe={universe}
+              />
+              {phaseKeys.map(pid => {
+                const ph = currentPhases.find(p => p.id === pid);
+                if (!ph) return null;
+                const rows = grouped[pid] || [];
+                const done = rows.filter(r => r.status === 'watched').length;
+                const phasePct = rows.length ? Math.round((done / rows.length) * 100) : 0;
+                const isCelebrating = celebPhase === pid;
+                const summaryOpen = expandedPhase === pid;
 
-            return (
-              <section key={pid} className="section-up motion-section" data-motion="section" data-phase={pid}
-                ref={el => { phaseRefs.current[pid] = el; }}
-                style={{ marginBottom: 36, scrollMarginTop: 'var(--sticky-offset)', position: 'relative' }}>
-                {isCelebrating && (
-                  <div className="phase-flash" style={{ position: 'absolute', inset: 0, background: `linear-gradient(90deg, ${ph.color}40, ${ph.color}22)`, boxShadow: `0 0 10px ${ph.glow}`, borderRadius: 12, pointerEvents: 'none', zIndex: 5 }} />
-                )}
-
-                {/* Phase divider */}
-                <div className="curvy-panel phase-header-card motion-pop" style={{ '--phase-color': ph.color, border: `1px solid ${T.surfaceBorder}` }}>
-                  <WatermarkOverlay surface="card" theme={darkMode ? 'dark' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['title', 'progress']} />
-                  <div className="phase-title-wrap">
-                    <div className="phase-title" style={{ color: ph.color }}>
-                      {ph.name}
-                    </div>
-                    <div className="phase-tagline" style={{ color: T.textMuted }}>
-                      {ph.tagline === 'Assembling the Avengers' ? <>ASSEMBLING<br />THE AVENGERS</> : ph.tagline}
-                    </div>
-                  </div>
-                  <span className="phase-progress-chip" style={{ color: phasePct === 100 ? ph.color : T.textMuted, border: `1px solid ${T.surfaceBorder}` }}>
-                    {done}/{rows.length}
-                  </span>
-                  <button onClick={() => setExpandedPhase(summaryOpen ? null : pid)}
-                    aria-label={summaryOpen ? 'Hide phase summary' : 'Show phase summary'}
-                    style={{ background: 'none', border: `1px solid ${summaryOpen ? ph.color + '66' : T.surfaceBorder}`, color: summaryOpen ? ph.color : T.textMuted, borderRadius: 6, padding: '3px 8px', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 2.2, textTransform: 'uppercase', transition: 'all 0.18s' }}>
-                    <Info size={11} />INFO
-                  </button>
-                  {done < rows.length ? (
-                    <button onClick={() => markPhaseWatched(pid, 'watched')}
-                      style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 10, letterSpacing: 1.5, color: ph.color, background: 'transparent', border: `1px solid ${ph.color}44`, borderRadius: 6, padding: '4px 9px', cursor: 'pointer', flexShrink: 0, transition: 'all 0.16s' }}
-                      onMouseEnter={e => { e.currentTarget.style.background = ph.color + '16'; e.currentTarget.style.borderColor = ph.color + '88'; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = ph.color + '44'; }}>
-                      MARK ALL
-                    </button>
-                  ) : (
-                    <button onClick={() => markPhaseWatched(pid, 'unwatched')}
-                      style={{ fontFamily: 'var(--font-marvel-ui)', fontSize: 10, letterSpacing: 1.5, color: T.textMuted, background: 'transparent', border: `1px solid ${T.surfaceBorder}`, borderRadius: 6, padding: '4px 9px', cursor: 'pointer', flexShrink: 0, transition: 'all 0.16s' }}
-                      onMouseEnter={e => { e.currentTarget.style.background = T.rowHoverBg; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>
-                      CLEAR
-                    </button>
-                  )}
-                </div>
-
-                {summaryOpen && (
-                  <div className="fade-in curvy-panel" style={{ '--phase-color': ph.color, background: `color-mix(in srgb, ${T.phaseSummaryBg} 72%, transparent)`, border: `1px solid ${T.phaseSummaryBorder}`, borderRadius: 12, padding: '12px 14px 12px 18px', marginBottom: 10, fontSize: 14, color: T.textMuted, lineHeight: 1.6, fontFamily: 'var(--font-marvel-display)', letterSpacing: 0.2 }}>
-                    {ph.summary}
-                  </div>
-                )}
-
-                {/* Row table */}
-                <div className="list-panel" style={{ overflow: 'hidden' }}>
-                  <PhaseRows rows={rows} renderRow={(item, idx) => {
-                    const itemReleaseStatus = releaseStatusFor(item);
-                    const itemReleaseInfo = releaseInfoFor(item);
-                    return (
-                      <MemoizedTitleRow
-                        key={item.id}
-                        item={item}
-                        idx={idx}
-                        ph={ph}
-                        T={T}
-                        typeMeta={getSafeTypeMeta(item.type)}
-                        statusMeta={getSafeStatusMeta(item.status)}
-                        releaseStatus={itemReleaseStatus}
-                        releaseStatusText={releaseStatusLabel(itemReleaseStatus)}
-                        releaseStatusStyleObj={releaseStatusStyle(itemReleaseStatus)}
-                        releaseLabel={formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}
-                        poster={posterSrc(item)}
-                        genres={inferGenres(item)}
-                        isExpanded={expandedItem === item.id}
-                        isWatched={item.status === 'watched'}
-                        isBookmarked={Boolean(bookmarks[item.id])}
-                        statusDropdown={statusDropdown}
-                        rating={metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
-                        onOpenDetail={openDetail}
-                        onSetStatus={setStatusDirect}
-                        onToggleBookmark={toggleBookmark}
-                        onOpenStatus={openStatusDropdown}
-                        bulkSelectMode={bulkSelectMode}
-                        isSelected={selectedIds.has(item.id)}
-                        onToggleSelected={toggleSelected}
-                        isDesktopViewport={isDesktopViewport}
-                      />
-                    );
-                  }}/>
-
-                </div>
-              </section>
-            );
-          }) : (
+                return (
+                  <PhaseChapter
+                    key={pid}
+                    phase={ph}
+                    rows={rows}
+                    done={done}
+                    percent={phasePct}
+                    summaryOpen={summaryOpen}
+                    isCelebrating={isCelebrating}
+                    darkMode={darkMode}
+                    isDesktopViewport={isDesktopViewport}
+                    borderColor={T.surfaceBorder}
+                    textMuted={T.textMuted}
+                    onToggleSummary={() => setExpandedPhase(summaryOpen ? null : pid)}
+                    onMarkWatched={() => markPhaseWatched(pid, 'watched')}
+                    onClearWatched={() => markPhaseWatched(pid, 'unwatched')}
+                    setRef={el => { phaseRefs.current[pid] = el; }}
+                    WatermarkOverlay={WatermarkOverlay}
+                  >
+                    <PhaseRows rows={rows} renderRow={(item, idx) => {
+                      const itemReleaseStatus = releaseStatusFor(item);
+                      const itemReleaseInfo = releaseInfoFor(item);
+                      return (
+                        <MemoizedTitleRow
+                          key={item.id}
+                          item={item}
+                          idx={idx}
+                          ph={ph}
+                          T={T}
+                          typeMeta={getSafeTypeMeta(item.type)}
+                          statusMeta={getSafeStatusMeta(item.status)}
+                          releaseStatus={itemReleaseStatus}
+                          releaseStatusText={releaseStatusLabel(itemReleaseStatus)}
+                          releaseStatusStyleObj={releaseStatusStyle(itemReleaseStatus)}
+                          releaseLabel={formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}
+                          poster={posterSrc(item)}
+                          genres={inferGenres(item)}
+                          isExpanded={expandedItem === item.id}
+                          isWatched={item.status === 'watched'}
+                          isBookmarked={Boolean(bookmarks[item.id])}
+                          statusDropdown={statusDropdown}
+                          rating={metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
+                          onOpenDetail={openDetail}
+                          onSetStatus={setStatusDirect}
+                          onToggleBookmark={toggleBookmark}
+                          onOpenStatus={openStatusDropdown}
+                          bulkSelectMode={bulkSelectMode}
+                          isSelected={selectedIds.has(item.id)}
+                          onToggleSelected={toggleSelected}
+                          isDesktopViewport={isDesktopViewport}
+                        />
+                      );
+                    }}/>
+                  </PhaseChapter>
+                );
+              })}
+            </>
+          ) : (
             <section data-motion="section" className='curvy-panel motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 12 }}>
               <div className="list-panel" style={{ overflow: 'hidden' }}>
                 <PhaseRows rows={filtered} renderRow={(item, idx) => {
