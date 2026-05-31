@@ -99,7 +99,7 @@ const UI_STATE_DEFAULTS = {
   typeFilter: null,
   activePhase: 0,
   filtersOpen: false,
-  viewMode: 'list',
+  viewMode: 'pathfinder',
   densityMode: 'comfortable',
   timelineMode: 'release',
   autoHideStatuses: false,
@@ -113,7 +113,9 @@ const UI_STATE_DEFAULTS = {
 };
 
 const VALID_LIST_MODES = new Set(LIST_MODES.map(mode => mode.id));
-const VALID_VIEW_MODES = new Set(['list', 'calendar']);
+const VIEW_MODE_FLOW = ['pathfinder', 'list', 'calendar'];
+const VIEW_MODE_LABELS = { pathfinder: 'Pathfinder', list: 'List', calendar: 'Calendar' };
+const VALID_VIEW_MODES = new Set(VIEW_MODE_FLOW);
 const VALID_PHASES = new Set([0, ...PHASES.map(phase => phase.id), ...DC_PHASES.map(phase => phase.id)]);
 const VALID_TYPES = new Set([null, ...Object.keys(TYPE_META)]);
 const VALID_STATUSES = new Set([null, ...Object.keys(STATUS_META)]);
@@ -675,6 +677,176 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   );
 }, areTitleRowPropsEqual);
 
+const PathfinderView = React.memo(function PathfinderView({
+  rows,
+  phases,
+  activePhase,
+  onPhaseChange,
+  onOpenDetail,
+  posterSrc,
+  releaseInfoFor,
+  releaseStatusFor,
+  releaseStatusLabel,
+  formatReleaseDate,
+  getTypeMeta,
+  getStatusMeta,
+  onSetStatus,
+  universeLabel = 'MCU',
+}) {
+  const safeRows = Array.isArray(rows) ? rows : [];
+  const phaseBuckets = useMemo(() => {
+    const map = new Map();
+    safeRows.forEach((item) => {
+      const key = item.phase || 0;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(item);
+    });
+    return map;
+  }, [safeRows]);
+  const availablePhases = useMemo(() => phases.filter((phase) => phaseBuckets.has(phase.id)), [phaseBuckets, phases]);
+  const fallbackPhase = activePhase && phaseBuckets.has(activePhase) ? activePhase : 0;
+  const [localPhase, setLocalPhase] = useState(fallbackPhase);
+
+  useEffect(() => {
+    setLocalPhase(fallbackPhase);
+  }, [fallbackPhase]);
+
+  const selectedPhase = activePhase && phaseBuckets.has(activePhase) ? activePhase : localPhase;
+  const phaseItems = selectedPhase === 0 ? safeRows : (phaseBuckets.get(selectedPhase) || safeRows.slice(0, 8));
+  const nextIndex = Math.max(0, phaseItems.findIndex((item) => item.status !== 'watched'));
+  const [spotlightIndex, setSpotlightIndex] = useState(nextIndex >= 0 ? nextIndex : 0);
+
+  useEffect(() => {
+    setSpotlightIndex(nextIndex >= 0 ? nextIndex : 0);
+  }, [nextIndex, selectedPhase, phaseItems.length]);
+
+  const activeItem = phaseItems[Math.min(spotlightIndex, Math.max(phaseItems.length - 1, 0))];
+  const activePhaseMeta = selectedPhase === 0
+    ? { id: 0, name: 'Complete Saga', color: 'var(--theme-accent)', tagline: 'Every available arc on one compact map.' }
+    : (phases.find((phase) => phase.id === selectedPhase) || { id: selectedPhase, name: `Phase ${selectedPhase}`, color: 'var(--theme-accent)', tagline: 'Focused story arc' });
+  const phaseWatched = phaseItems.filter((item) => item.status === 'watched').length;
+  const phasePct = phaseItems.length ? Math.round((phaseWatched / phaseItems.length) * 100) : 0;
+  const constellationItems = phaseItems.slice(0, 9);
+
+  const choosePhase = (phaseId) => {
+    setLocalPhase(phaseId);
+    onPhaseChange?.(phaseId);
+  };
+
+  const moveSpotlight = (direction) => {
+    if (!phaseItems.length) return;
+    setSpotlightIndex((index) => (index + direction + phaseItems.length) % phaseItems.length);
+  };
+
+  if (!safeRows.length) {
+    return (
+      <section className="pathfinder-view pathfinder-view--empty" aria-label="Pathfinder viewing system">
+        <h3>No missions found</h3>
+        <p>Adjust filters or switch modes to rebuild the navigation map.</p>
+      </section>
+    );
+  }
+
+  const releaseInfo = activeItem ? releaseInfoFor(activeItem) : {};
+  const releaseStatus = activeItem ? releaseStatusFor(activeItem) : 'released';
+  const typeMeta = activeItem ? getTypeMeta(activeItem.type) : FALLBACK_TYPE_META;
+  const statusMeta = activeItem ? getStatusMeta(activeItem.status) : STATUS_META.unwatched;
+  const StatusIcon = statusMeta.Icon;
+  const TypeIcon = typeMeta.Icon;
+
+  return (
+    <section className="pathfinder-view motion-section motion-pop" data-motion="section" aria-label="Pathfinder viewing system">
+      <div className="pathfinder-hero" style={{ '--pathfinder-accent': activePhaseMeta.color || 'var(--theme-accent)' }}>
+        <div className="pathfinder-copy">
+          <span className="pathfinder-kicker">Pathfinder View · researched non-linear watch navigation</span>
+          <h2>{universeLabel} Story Map</h2>
+          <p>Navigate by arcs, spotlight the next mission, and jump through a compact constellation instead of scrolling a continuous list.</p>
+        </div>
+        <div className="pathfinder-score" aria-label={`${phasePct}% of selected arc watched`}>
+          <strong>{phasePct}%</strong>
+          <span>{phaseWatched}/{phaseItems.length} complete</span>
+        </div>
+      </div>
+
+      <div className="pathfinder-shell">
+        <nav className="pathfinder-phase-nav" aria-label="Pathfinder arcs">
+          <button type="button" className="pathfinder-phase-chip" data-active={selectedPhase === 0} onClick={() => { setLocalPhase(0); onPhaseChange?.(0); }}>
+            <span>All</span><small>{safeRows.length} titles</small>
+          </button>
+          {availablePhases.map((phase) => {
+            const count = phaseBuckets.get(phase.id)?.length || 0;
+            const watched = (phaseBuckets.get(phase.id) || []).filter((item) => item.status === 'watched').length;
+            return (
+              <button
+                key={phase.id}
+                type="button"
+                className="pathfinder-phase-chip"
+                data-active={selectedPhase === phase.id}
+                onClick={() => choosePhase(phase.id)}
+                style={{ '--pathfinder-accent': phase.color || 'var(--theme-accent)' }}
+              >
+                <span>{phase.name || `Phase ${phase.id}`}</span>
+                <small>{watched}/{count} tracked</small>
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="pathfinder-stage">
+          <div className="pathfinder-stage-card">
+            <div className="pathfinder-poster-frame">
+              {activeItem && <LazyPoster className="pathfinder-poster" src={posterSrc(activeItem)} alt={`${activeItem.title} poster`} eager />}
+            </div>
+            <div className="pathfinder-detail">
+              <span className="pathfinder-eyebrow">{activePhaseMeta.name || `Phase ${selectedPhase}`} · {releaseStatusLabel(releaseStatus)}</span>
+              <h3>{activeItem?.title}</h3>
+              <p>{activeItem?.desc || activePhaseMeta.tagline || 'A focused waypoint in this viewing arc.'}</p>
+              <div className="pathfinder-meta-row">
+                <span><TypeIcon size={13} />{typeMeta.label}</span>
+                <span>{activeItem?.year || formatReleaseDate(releaseInfo.date, activeItem?.year, releaseInfo.label, releaseStatus)}</span>
+                <span><StatusIcon size={13} />{statusMeta.label}</span>
+              </div>
+              <div className="pathfinder-actions">
+                <button type="button" className="pathfinder-btn primary" onClick={() => activeItem && onOpenDetail(activeItem)}>Open dossier</button>
+                <button type="button" className="pathfinder-btn" onClick={() => moveSpotlight(-1)}>Previous</button>
+                <button type="button" className="pathfinder-btn" onClick={() => moveSpotlight(1)}>Next</button>
+                {activeItem && releaseStatus !== 'upcoming' && (
+                  <button type="button" className="pathfinder-btn" onClick={() => onSetStatus(activeItem.id, activeItem.status === 'watched' ? 'unwatched' : 'watched')}>
+                    {activeItem.status === 'watched' ? 'Mark unwatched' : 'Mark watched'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="pathfinder-constellation" aria-label="Arc waypoints">
+            {constellationItems.map((item, index) => {
+              const selected = activeItem?.id === item.id;
+              const angle = (360 / Math.max(constellationItems.length, 1)) * index;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className="pathfinder-node"
+                  data-active={selected}
+                  data-status={item.status}
+                  onClick={() => setSpotlightIndex(phaseItems.findIndex((entry) => entry.id === item.id))}
+                  style={{ '--node-angle': `${angle}deg`, '--node-index': index }}
+                  aria-label={`Focus ${item.title}`}
+                >
+                  <span className="pathfinder-node-dot" />
+                  <span className="pathfinder-node-title">{item.title}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+});
+
+
 
 
 const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
@@ -980,6 +1152,9 @@ export default function MCUViewer() {
   const [spoilerSafeMode, setSpoilerSafeMode] = useState(true);
   const [autoHideStatuses, setAutoHideStatuses] = useState(initialUiState.autoHideStatuses);
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
+  const cycleViewMode = useCallback(() => {
+    setViewMode((mode) => VIEW_MODE_FLOW[(VIEW_MODE_FLOW.indexOf(mode) + 1) % VIEW_MODE_FLOW.length] || 'pathfinder');
+  }, []);
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
   const showPhaseSystem = timelineMode === 'release' || timelineMode === 'chronological';
@@ -3654,7 +3829,7 @@ export default function MCUViewer() {
               <button className="fpill" onClick={() => openSearchMode(search, null)} style={{ justifyContent: 'center' }}>Search</button>
               <button className="fpill" onClick={() => openSearchMode('', 'series')} style={{ justifyContent: 'center' }}>Series</button>
               <button className="fpill" onClick={() => navigateToPhase(activePhase || 0)} style={{ justifyContent: 'center' }}>Phases</button>
-              <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ justifyContent: 'center' }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
+              <button className="fpill" onClick={() => { setSidebarOpen(false); cycleViewMode(); }} style={{ justifyContent: 'center' }}>View: {VIEW_MODE_LABELS[viewMode]}</button>
               <button className="fpill" onClick={openAnalyticsPanel} style={{ justifyContent: 'center' }}>{tUniverse('Analytics')}</button>
             </div>
             <button className="fpill" onClick={() => { setSidebarOpen(false); toggleSettingsPanel(); }} style={{ width: '100%', justifyContent: 'center' }}><Settings size={13} />{tUniverse('Open Settings')}</button>
@@ -4055,9 +4230,9 @@ export default function MCUViewer() {
           {metadataBuild.status === 'running' ? `Fetch ${metadataBuild.done}/${metadataBuild.total}` : 'Fetch'}
         </button>
         <button type="button" className="dock-btn"
-          onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
+          onClick={cycleViewMode}
           style={{ background: 'color-mix(in srgb, var(--theme-accent) 16%, var(--control-solid-bg))' }}>
-          View: {viewMode === 'list' ? 'List' : 'Calendar'}
+          View: {VIEW_MODE_LABELS[viewMode]}
         </button>
         <button type="button" className="dock-btn"
           onClick={() => { const next = listMode === 'core' ? 'extended' : 'core'; setListMode(next); setExpandedItem(null); setExpandedPhase(null); }}
@@ -4163,6 +4338,23 @@ export default function MCUViewer() {
                 Start typing to search across your full list.
               </div>
             )
+          ) : viewMode === 'pathfinder' ? (
+            <PathfinderView
+              rows={filtered}
+              phases={currentPhases}
+              activePhase={showPhaseSystem ? activePhase : 0}
+              onPhaseChange={showPhaseSystem ? navigateToPhase : undefined}
+              onOpenDetail={openDetail}
+              posterSrc={posterSrc}
+              releaseInfoFor={releaseInfoFor}
+              releaseStatusFor={releaseStatusFor}
+              releaseStatusLabel={releaseStatusLabel}
+              formatReleaseDate={formatReleaseDate}
+              getTypeMeta={getSafeTypeMeta}
+              getStatusMeta={getSafeStatusMeta}
+              onSetStatus={setStatusDirect}
+              universeLabel={activeUniverse.shortName || activeUniverse.name || (universe === 'dc' ? 'DC' : 'MCU')}
+            />
           ) : viewMode === 'calendar' ? (
             <section data-motion="section" className='curvy-panel calendar-section motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
               <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', color: 'var(--theme-text-primary)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
