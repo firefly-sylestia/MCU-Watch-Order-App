@@ -39,7 +39,7 @@ import { TIMELINE_MODES, TIMELINE_MODE_IDS, CHARACTER_POV_TITLE_SETS, STORY_ORDE
 import { AFTER_CREDITS, AFTER_CREDITS_DEFAULT, DIRECTOR_DATA } from './data/afterCreditsData';
 import { TRAILER_DATA, trailerEmbedUrl, getTrailerByTitle } from './data/trailerData';
 
-import { Search, Eye, EyeOff, Film, Tv, Zap, ChevDown, ChevRight, ArrowUpDown, Check, Clock, Heart, Pause, Trash2, Upload, Download, Sun, Star, Moon, Settings, Info, Bookmark, Layers, PlayCircle, PauseCircle, XCircle, SlidersH, UserCircle, SwitchIcon, X } from './constants/icons';
+import { Search, Eye, EyeOff, Film, Tv, Zap, ChevDown, ArrowUpDown, Check, Clock, Heart, Pause, Trash2, Upload, Download, Sun, Star, Moon, Settings, Info, Bookmark, Layers, PlayCircle, PauseCircle, XCircle, SlidersH, UserCircle, SwitchIcon, X } from './constants/icons';
 import { MARVEL_UI_LEXICON, DC_UI_LEXICON, LIST_MODES } from './constants/appText';
 import { matchesSearch } from './utils/searchUtils';
 
@@ -62,11 +62,6 @@ const STATUS_META = {
 
 const SORT_LABELS = { order: 'Chronological', year: 'By Year', title: 'Alphabetical', runtime: 'Runtime', watched: 'Recently Watched', status: 'By Status' };
 const HIDDEN_FILTER_STATUSES = new Set(['watched', 'dropped']);
-const TITLE_ROW_STATIC = {
-  titleBtn: { overflow: 'hidden' },
-  titleLine: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  genreMeta: { marginTop: 2, fontSize: 10, fontFamily: 'var(--font-marvel-ui)', letterSpacing: 1.2 },
-};
 const DESKTOP_TEXT_SCALES = [1, 1.25, 1.5, 1.75, 2];
 // ─── Static data ────────────────────────────────────────────────────────────
 
@@ -99,7 +94,6 @@ const UI_STATE_DEFAULTS = {
   typeFilter: null,
   activePhase: 0,
   filtersOpen: false,
-  viewMode: 'list',
   densityMode: 'comfortable',
   timelineMode: 'release',
   autoHideStatuses: false,
@@ -113,7 +107,6 @@ const UI_STATE_DEFAULTS = {
 };
 
 const VALID_LIST_MODES = new Set(LIST_MODES.map(mode => mode.id));
-const VALID_VIEW_MODES = new Set(['list', 'calendar']);
 const VALID_PHASES = new Set([0, ...PHASES.map(phase => phase.id), ...DC_PHASES.map(phase => phase.id)]);
 const VALID_TYPES = new Set([null, ...Object.keys(TYPE_META)]);
 const VALID_STATUSES = new Set([null, ...Object.keys(STATUS_META)]);
@@ -150,7 +143,6 @@ const readSavedUiState = () => {
       typeFilter: VALID_TYPES.has(saved.typeFilter) ? saved.typeFilter : UI_STATE_DEFAULTS.typeFilter,
       activePhase: VALID_PHASES.has(Number(saved.activePhase)) ? Number(saved.activePhase) : UI_STATE_DEFAULTS.activePhase,
       filtersOpen: Boolean(saved.filtersOpen),
-      viewMode: VALID_VIEW_MODES.has(saved.viewMode) ? saved.viewMode : UI_STATE_DEFAULTS.viewMode,
       densityMode: VALID_DENSITY_MODES.has(saved.densityMode) ? saved.densityMode : UI_STATE_DEFAULTS.densityMode,
       timelineMode: VALID_TIMELINE_MODES.has(saved.timelineMode) ? saved.timelineMode : UI_STATE_DEFAULTS.timelineMode,
       autoHideStatuses: typeof saved.autoHideStatuses === 'boolean' ? saved.autoHideStatuses : UI_STATE_DEFAULTS.autoHideStatuses,
@@ -554,129 +546,6 @@ const useDebouncedEffect = (effect, deps, delay = 350) => {
 };
 
 
-const areTitleRowPropsEqual = (prev, next) => (
-  prev.item === next.item
-  && prev.idx === next.idx
-  && prev.ph === next.ph
-  && prev.T === next.T
-  && prev.typeMeta === next.typeMeta
-  && prev.statusMeta === next.statusMeta
-  && prev.releaseStatus === next.releaseStatus
-  && prev.releaseStatusText === next.releaseStatusText
-  && prev.releaseLabel === next.releaseLabel
-  && prev.poster === next.poster
-  && prev.genres === next.genres
-  && prev.isExpanded === next.isExpanded
-  && prev.isWatched === next.isWatched
-  && prev.isBookmarked === next.isBookmarked
-  && prev.statusDropdown === next.statusDropdown
-  && prev.rating === next.rating
-  && prev.bulkSelectMode === next.bulkSelectMode
-  && prev.isSelected === next.isSelected
-  && prev.statusLabelOverride === next.statusLabelOverride
-  && prev.isDesktopViewport === next.isDesktopViewport
-);
-
-const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
-  item,
-  idx,
-  ph,
-  T,
-  typeMeta,
-  statusMeta,
-  releaseStatus,
-  releaseStatusStyleObj,
-  releaseStatusText,
-  releaseLabel,
-  poster,
-  genres,
-  isExpanded,
-  isWatched,
-  isBookmarked,
-  statusDropdown,
-  rating,
-  onOpenDetail,
-  onSetStatus,
-  onToggleBookmark,
-  onOpenStatus,
-  bulkSelectMode = false,
-  isSelected = false,
-  onToggleSelected,
-  statusLabelOverride = null,
-  isDesktopViewport = false,
-}) {
-  const StatusIcon = statusMeta.Icon;
-  const TypeIcon = typeMeta.Icon;
-  const RowStatusIcon = statusMeta.Icon;
-  const hideWatchToggle = releaseStatus === 'upcoming';
-  return (
-    <div>
-      <div className={`rrow media-command-card type-${item.type} row-status-${item.status} ${isExpanded ? 'curvy-selected' : ''}`} data-bookmarked={isBookmarked} data-watched={isWatched} style={{ opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow, ...(isWatched ? { background: 'color-mix(in srgb, var(--theme-watched-bg) 62%, transparent)' } : {}) }}>
-        <div className={`row-index ${isWatched ? 'is-watched' : ''}`}>
-          {bulkSelectMode ? (
-            <input
-              type="checkbox"
-              checked={isSelected}
-              aria-label={`Select ${item.title}`}
-              onChange={(event) => onToggleSelected(item.id, event.target.checked)}
-              onClick={(event) => event.stopPropagation()}
-              className="row-select-checkbox"
-            />
-          ) : (idx + 1)}
-        </div>
-        <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 8} loadingMode="lazy" />
-
-        <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
-          <div className="title-row-top" style={TITLE_ROW_STATIC.titleLine}>
-            <span className="title-main">{item.title}</span>
-            <ChevRight size={10} className="title-chevron" />
-          </div>
-          <div className="title-row-mid release-meta-grid">
-            {item.episodes && <span className="meta-chip meta-chip-xs truncate-single-line">{item.episodes} EP</span>}
-            <span className="meta-chip meta-chip-type truncate-single-line" style={{ color: typeMeta.color }}><TypeIcon size={8} />{typeMeta.label}</span>
-            <span className="meta-chip meta-chip-sm truncate-single-line">{item.year || releaseLabel}</span>
-            <span className="meta-chip meta-chip-release meta-chip-xxs truncate-single-line" style={{ color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
-            {!item.essential && <span className="meta-chip meta-chip-xs truncate-single-line">OPT</span>}
-          </div>
-          <div className="meta-muted line-clamp-2 overflow-wrap-anywhere title-subline" style={TITLE_ROW_STATIC.genreMeta}>GENRES: {genres.join(' • ').toUpperCase()}</div>
-        </button>
-
-        <div className={`row-actions media-command-actions ${isDesktopViewport ? 'is-desktop' : ''}`}>
-          <div className="row-meta-line truncate-single-line rating-marvel-pill media-rating-pill" aria-label={`Rating ${rating || 'not available'}`}><Star size={11} /> {rating || '—'}</div>
-          <button
-            aria-label={`Open status menu for ${item.title}`}
-            aria-haspopup="menu"
-            aria-expanded={statusDropdown === item.id}
-            onClick={(event) => onOpenStatus(event, item.id)}
-            className={`wbtn status-pill status-marvel-pill status-shade-${item.status} row-status-btn media-status-control`}
-          >
-            <span className="row-status-label">
-              <RowStatusIcon size={12} />
-              {statusLabelOverride || statusMeta.label}
-            </span>
-            <ChevDown size={12} className={`row-status-chevron ${statusDropdown === item.id ? 'is-open' : ''}`} />
-          </button>
-          <button className={`wbtn bookmark-marvel-btn media-icon-action ${isDesktopViewport ? 'is-desktop' : ''}`} aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} data-bookmarked={isBookmarked}><Bookmark size={14} /><span>{isBookmarked ? 'Saved' : 'Save'}</span></button>
-          {!hideWatchToggle && (
-            <button
-              aria-label={isWatched ? `Mark ${item.title} as unwatched` : `Mark ${item.title} as watched`}
-              title={isWatched ? 'Mark unwatched' : 'Mark watched'}
-              onClick={(event) => {
-                event.stopPropagation();
-                onSetStatus(item.id, isWatched ? 'unwatched' : 'watched');
-              }}
-              className="wbtn status-toggle notwatched-marvel-btn row-watch-toggle media-icon-action media-watch-action"
-            ><RowStatusIcon size={14} /><span>{isWatched ? 'Done' : 'Watch'}</span></button>
-          )}
-        </div>
-        
-      </div>
-    </div>
-  );
-}, areTitleRowPropsEqual);
-
-
-
 const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
   open,
   darkMode,
@@ -697,168 +566,6 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
   );
 }));
 
-const getScrollParent = (node) => {
-  if (typeof window === 'undefined' || !node) return null;
-  const main = node.closest?.('main');
-  if (main && main.scrollHeight > main.clientHeight + 1) return main;
-  return window;
-};
-
-const getScrollSnapshot = (node) => {
-  if (typeof window === 'undefined') {
-    return { top: 0, height: 900, rootTop: 0, usesWindow: true };
-  }
-  const root = getScrollParent(node);
-  if (root && root !== window) {
-    const rect = root.getBoundingClientRect();
-    return {
-      top: root.scrollTop || 0,
-      height: root.clientHeight || window.innerHeight || 900,
-      rootTop: rect.top || 0,
-      usesWindow: false,
-    };
-  }
-  return {
-    top: window.scrollY || document.documentElement.scrollTop || 0,
-    height: window.innerHeight || 900,
-    rootTop: 0,
-    usesWindow: true,
-  };
-};
-
-// WARNING: Do not remove this virtualized scrolling system. Optimize it in place when list scrolling needs fixes.
-const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
-  const shellRef = useRef(null);
-  const rowHeightsRef = useRef(new Map());
-  const prefixHeightsRef = useRef([]);
-  const pendingMeasureRef = useRef(false);
-  const [viewportState, setViewportState] = useState(() => getScrollSnapshot(null));
-  const [measuredVersion, setMeasuredVersion] = useState(0);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-    const shell = shellRef.current;
-    const root = getScrollParent(shell);
-    let rafId = 0;
-
-    const schedule = () => {
-      if (rafId) return;
-      rafId = window.requestAnimationFrame(() => {
-        rafId = 0;
-        const node = shellRef.current;
-        if (node) {
-          const rect = node.getBoundingClientRect();
-          const viewportHeight = window.innerHeight || 900;
-          if (rect.bottom < -viewportHeight || rect.top > viewportHeight * 2) return;
-        }
-        setViewportState(getScrollSnapshot(node));
-      });
-    };
-
-    schedule();
-    const scrollTarget = root && root !== window ? root : window;
-    scrollTarget.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', schedule);
-    return () => {
-      scrollTarget.removeEventListener('scroll', schedule);
-      window.removeEventListener('resize', schedule);
-      if (rafId) window.cancelAnimationFrame(rafId);
-    };
-  }, [rows]);
-
-  useEffect(() => {
-    rowHeightsRef.current.clear();
-    prefixHeightsRef.current = [];
-    setMeasuredVersion(v => v + 1);
-  }, [rows]);
-
-  const estimatedRowHeight = 126;
-  const estimatedTotalHeight = rows.length * estimatedRowHeight;
-  const computedOverscan = Math.min(8, Math.max(4, Math.round(viewportState.height / 260)));
-
-  const prefixHeights = useMemo(() => {
-    const prefix = new Array(rows.length + 1);
-    prefix[0] = 0;
-    for (let i = 0; i < rows.length; i += 1) {
-      prefix[i + 1] = prefix[i] + (rowHeightsRef.current.get(rows[i]?.id) ?? estimatedRowHeight);
-    }
-    prefixHeightsRef.current = prefix;
-    return prefix;
-  }, [rows, measuredVersion]);
-
-  const findRowIndexForOffset = useCallback((offset) => {
-    const prefix = prefixHeightsRef.current;
-    if (!prefix.length) return 0;
-    let lo = 0;
-    let hi = Math.max(0, prefix.length - 2);
-    while (lo < hi) {
-      const mid = Math.floor((lo + hi) / 2);
-      if (prefix[mid + 1] < offset) lo = mid + 1;
-      else hi = mid;
-    }
-    return lo;
-  }, []);
-
-  const windowRange = useMemo(() => {
-    if (!rows.length) return { start: 0, end: -1 };
-    const shellRect = shellRef.current?.getBoundingClientRect?.();
-    if (!shellRect) return { start: 0, end: Math.min(rows.length - 1, 22) };
-
-    const listTopInScrollRoot = viewportState.top + shellRect.top - viewportState.rootTop;
-    const top = Math.max(0, viewportState.top - listTopInScrollRoot);
-    const bottom = top + viewportState.height;
-    const start = findRowIndexForOffset(top);
-    const end = findRowIndexForOffset(bottom);
-
-    return {
-      start: Math.max(0, start - computedOverscan),
-      end: Math.min(rows.length - 1, end + computedOverscan),
-    };
-  }, [rows.length, viewportState, findRowIndexForOffset, computedOverscan, prefixHeights]);
-
-  const { topSpacer, bottomSpacer, visibleRows } = useMemo(() => {
-    if (!rows.length || windowRange.end < windowRange.start) return { topSpacer: 0, bottomSpacer: 0, visibleRows: [] };
-    const topPx = prefixHeights[windowRange.start] || 0;
-    let visiblePx = 0;
-    const subset = [];
-    for (let i = windowRange.start; i <= windowRange.end; i += 1) {
-      subset.push({ item: rows[i], idx: i });
-      visiblePx += rowHeightsRef.current.get(rows[i]?.id) ?? estimatedRowHeight;
-    }
-    const measuredTotal = prefixHeights[rows.length] || estimatedTotalHeight;
-    const total = Math.max(estimatedTotalHeight, measuredTotal);
-    const bottomPx = Math.max(0, total - topPx - visiblePx);
-    return { topSpacer: topPx, bottomSpacer: bottomPx, visibleRows: subset };
-  }, [rows, windowRange, estimatedTotalHeight, prefixHeights]);
-
-  const setRowRef = useCallback((rowId) => (node) => {
-    if (!node || !rowId) return;
-    const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-    const prevHeight = rowHeightsRef.current.get(rowId);
-    if (nextHeight > 0 && prevHeight !== nextHeight) {
-      rowHeightsRef.current.set(rowId, nextHeight);
-      if (!pendingMeasureRef.current) {
-        pendingMeasureRef.current = true;
-        requestAnimationFrame(() => {
-          pendingMeasureRef.current = false;
-          setMeasuredVersion(v => v + 1);
-        });
-      }
-    }
-  }, []);
-
-  return (
-    <div className="phase-rows-full virtual-list" ref={shellRef} style={{ '--virtual-total-rows': rows.length }}>
-      {topSpacer > 0 && <div className="virtual-spacer" style={{ height: topSpacer }} aria-hidden="true" />}
-      {visibleRows.map(({ item, idx }) => (
-        <div key={item.id} ref={setRowRef(item.id)} className="phase-row-virtualized">
-          {renderRow(item, idx)}
-        </div>
-      ))}
-      {bottomSpacer > 0 && <div className="virtual-spacer" style={{ height: bottomSpacer }} aria-hidden="true" />}
-    </div>
-  );
-});
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function MCUViewer() {
   const initialUiState = useMemo(() => readSavedUiState(), []);
@@ -979,7 +686,6 @@ export default function MCUViewer() {
   const [marvelLangMode, setMarvelLangMode] = useState(false);
   const [spoilerSafeMode, setSpoilerSafeMode] = useState(true);
   const [autoHideStatuses, setAutoHideStatuses] = useState(initialUiState.autoHideStatuses);
-  const [viewMode, setViewMode] = useState(initialUiState.viewMode);
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
   const showPhaseSystem = timelineMode === 'release' || timelineMode === 'chronological';
@@ -1896,7 +1602,6 @@ export default function MCUViewer() {
       typeFilter,
       activePhase,
       filtersOpen,
-      viewMode,
       densityMode,
       timelineMode,
       autoHideStatuses,
@@ -1907,7 +1612,7 @@ export default function MCUViewer() {
       textScaleEnabled,
       scrollTop,
     }));
-  }, [listMode, search, searchScope, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, viewMode, densityMode, timelineMode, autoHideStatuses, performanceMode, posterDataSaver, uiBuildCacheEnabled, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
+  }, [listMode, search, searchScope, sortBy, essentialOnly, watchedOnly, statusFilter, typeFilter, activePhase, filtersOpen, densityMode, timelineMode, autoHideStatuses, performanceMode, posterDataSaver, uiBuildCacheEnabled, desktopTextScale, textScaleEnabled, scrollCheckpoint], 300);
   const totalWatched = useMemo(() => activeItems.filter(i => i.status === 'watched').length, [activeItems]);
   const essTotal     = useMemo(() => activeItems.filter(i => i.essential).length, [activeItems]);
   const essWatched   = useMemo(() => activeItems.filter(i => i.essential && i.status === 'watched').length, [activeItems]);
@@ -1959,7 +1664,7 @@ export default function MCUViewer() {
     return () => {
       revealObserver.disconnect();
     };
-  }, [allowMotionReplay, viewMode, phaseKeys.length, performanceMode, browseMode]);
+  }, [allowMotionReplay, phaseKeys.length, performanceMode, browseMode]);
 
   const stickyPhaseProgress = useMemo(() => {
     if (activePhase === 0) return { label: 'All Phases', done: totalWatched, total: activeItems.length, pct };
@@ -2387,12 +2092,6 @@ export default function MCUViewer() {
   const estRuntimeHours = Math.round(((filmCount * 2.3) + (seriesCount * 6.0)) * 10) / 10;
   const remainingHours = Math.max(0, Math.round((estRuntimeHours * (1 - pct / 100)) * 10) / 10);
 
-  const getReleaseCertainty = useCallback((entry) => {
-    if (entry.hasRealDate) return 'Exact Date';
-    if (entry.releaseStatus === 'TBA') return 'TBA';
-    return 'Window';
-  }, []);
-
   const calendarItems = useMemo(() => {
     const now = new Date();
     const withDates = activeItems.map(item => {
@@ -2410,24 +2109,10 @@ export default function MCUViewer() {
         sortTime: parsed ? parsed.getTime() : Date.UTC(yearSort, 11, 31),
       };
     }).sort((a, b) => a.sortTime - b.sortTime || a.item.order - b.item.order);
-    const groupLabel = (entry) => {
-      if (entry.parsed) return entry.parsed.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      const y = Number(entry.item.year) || new Date().getFullYear();
-      const seasonal = /spring|summer|fall|autumn|winter/i.test(entry.label || entry.rawDate || '');
-      if (seasonal) return `Q${Math.max(1, Math.min(4, Math.ceil((new Date(`${entry.label || 'Dec'} 1, ${y}`).getMonth() + 1) / 3)))} ${y}`;
-      return `${y}`;
-    };
-    const groupBy = (arr) => arr.reduce((acc, entry) => {
-      const key = groupLabel(entry);
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(entry);
-      return acc;
-    }, {});
     return {
       upcoming: withDates.filter(x => x.releaseStatus === 'upcoming' && x.hasRealDate),
       released: withDates.filter(x => x.releaseStatus === 'released'),
       tba: withDates.filter(x => x.releaseStatus === 'TBA' || (x.releaseStatus === 'upcoming' && !x.hasRealDate)),
-      grouped: groupBy(withDates),
     };
   }, [activeItems, metaCache]);
 
@@ -2926,7 +2611,7 @@ export default function MCUViewer() {
       resolve();
     }, 700));
     await new Promise(resolve => window.requestAnimationFrame(() => {
-      document.querySelectorAll('.header-brand,.hero-carousel-shell,.phase-header-card,.rrow,.bottom-action-dock,.settings-card').forEach(node => node.getBoundingClientRect());
+      document.querySelectorAll('.header-brand,.hero-carousel-shell,.phase-header-card,.media-grid-card,.bottom-action-dock,.settings-card').forEach(node => node.getBoundingClientRect());
       complete('Layout geometry cached.');
       resolve();
     }));
@@ -3416,7 +3101,7 @@ export default function MCUViewer() {
               <div className="phase-command-center__copy">
                 <span className="phase-command-center__eyebrow">Phase Navigator</span>
                 <h3>{activePhase === 0 ? 'Complete Saga' : activePhaseMeta?.name || `Phase ${activePhase}`}</h3>
-                <p>{activePhase === 0 ? 'Jump across the full timeline or narrow the list to a single phase.' : activePhaseMeta?.summary || activePhaseMeta?.tagline || 'Explore this phase as a focused watch lane.'}</p>
+                <p>{activePhase === 0 ? 'Jump across the full timeline or narrow the collection to a single phase.' : activePhaseMeta?.summary || activePhaseMeta?.tagline || 'Explore this phase as a focused watch lane.'}</p>
               </div>
               <div className="phase-command-center__stats" aria-label="Selected phase progress">
                 <strong>{activePhasePct}%</strong>
@@ -3473,7 +3158,7 @@ export default function MCUViewer() {
     );
   };
 
-  const renderPhaseCalendarRow = (item, ph, idx = 0) => {
+  const renderMediaGridCard = (item, ph, idx = 0) => {
     const itemReleaseStatus = releaseStatusFor(item);
     const itemReleaseInfo = releaseInfoFor(item);
     const isWatched = item.status === 'watched';
@@ -3484,45 +3169,56 @@ export default function MCUViewer() {
     const isBookmarked = Boolean(bookmarks[item.id]);
     const hideWatchToggle = itemReleaseStatus === 'upcoming';
     return (
-      <article key={item.id} className={`phase-list-item media-command-card row-status-${item.status}`} data-bookmarked={isBookmarked} data-watched={isWatched} style={{ '--phase-color': ph?.color || 'var(--theme-accent)' }}>
-        <div className="phase-list-item__index" aria-hidden="true">
-          <span>{String(idx + 1).padStart(2, '0')}</span>
+      <article key={item.id} className={`media-grid-card media-command-card row-status-${item.status}`} data-bookmarked={isBookmarked} data-watched={isWatched} data-selected={selectedIds.has(item.id)} style={{ '--phase-color': ph?.color || 'var(--theme-accent)' }}>
+        <div className="media-grid-card__index" aria-hidden={!bulkSelectMode}>
+          {bulkSelectMode ? (
+            <input
+              type="checkbox"
+              checked={selectedIds.has(item.id)}
+              aria-label={`Select ${item.title}`}
+              onChange={(event) => toggleSelected(item.id, event.target.checked)}
+              onClick={(event) => event.stopPropagation()}
+              className="media-grid-card__checkbox"
+            />
+          ) : (
+            <span>{String(idx + 1).padStart(2, '0')}</span>
+          )}
           <small>{formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}</small>
         </div>
-        <button type="button" className="phase-list-item__poster" onClick={() => openDetail(item)} aria-label={`Open ${item.title} details`}>
+        <button type="button" className="media-grid-card__poster" onClick={() => openDetail(item)} aria-label={`Open ${item.title} details`}>
           <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
         </button>
-        <button className="phase-list-item__content title-btn" onClick={() => openDetail(item)}>
-          <span className="phase-list-item__title">{item.title}</span>
-          <span className="phase-list-item__meta">
+        <button className="media-grid-card__content title-btn" onClick={() => openDetail(item)}>
+          <span className="media-grid-card__title">{item.title}</span>
+          <span className="media-grid-card__meta">
             <span>{typeMeta.label}</span>
             <span>Phase {item.phase}</span>
             <span>{releaseStatusLabel(itemReleaseStatus)}</span>
           </span>
         </button>
-        <div className="phase-list-item__actions media-command-actions">
-          <span className={`phase-list-item__release ${itemReleaseStatus}`}>{itemReleaseStatus}</span>
-          <span className="phase-list-item__rating media-rating-pill"><Star size={11} />{itemRating || '—'}</span>
+        <div className="media-grid-card__actions media-command-actions">
+          <span className={`media-grid-card__release ${itemReleaseStatus}`}>{itemReleaseStatus}</span>
+          <span className="media-grid-card__rating media-rating-pill"><Star size={11} />{itemRating || '—'}</span>
           <button
             type="button"
             aria-label={`Open status menu for ${item.title}`}
             aria-haspopup="menu"
             aria-expanded={statusDropdown === item.id}
             onClick={(event) => openStatusDropdown(event, item.id)}
-            className="phase-list-item__status media-status-control"
+            className="media-grid-card__status media-status-control"
           >
             <RowStatusIcon size={13} />
             {getSafeStatusMeta(item.status).label}
             <ChevDown size={11} className={`row-status-chevron ${statusDropdown === item.id ? 'is-open' : ''}`} />
           </button>
-          <button type="button" className="phase-list-item__status media-icon-action" data-bookmarked={isBookmarked} onClick={() => toggleBookmark(item.id)} aria-pressed={isBookmarked} aria-label={isBookmarked ? `Remove ${item.title} bookmark` : `Bookmark ${item.title}`}>
+          <button type="button" className="media-grid-card__status media-icon-action" data-bookmarked={isBookmarked} onClick={() => toggleBookmark(item.id)} aria-pressed={isBookmarked} aria-label={isBookmarked ? `Remove ${item.title} bookmark` : `Bookmark ${item.title}`}>
             <Bookmark size={13} />
             {isBookmarked ? 'Saved' : 'Save'}
           </button>
           {!hideWatchToggle && (
             <button
               type="button"
-              className="phase-list-item__status media-icon-action media-watch-action"
+              className="media-grid-card__status media-icon-action media-watch-action"
               onClick={() => setStatusDirect(item.id, isWatched ? 'unwatched' : 'watched')}
               aria-pressed={isWatched}
             >
@@ -3535,7 +3231,7 @@ export default function MCUViewer() {
     );
   };
 
-  const renderPhaseCalendarSection = (pid) => {
+  const renderMediaGridSection = (pid) => {
     const ph = currentPhases.find(p => p.id === pid);
     const rows = grouped[pid] || [];
     const done = rows.filter(r => r.status === 'watched').length;
@@ -3545,32 +3241,32 @@ export default function MCUViewer() {
     return (
       <section
         key={pid}
-        className="phase-list-section motion-section"
+        className="media-grid-section motion-section"
         data-motion="section"
         data-phase={pid}
         ref={el => { phaseRefs.current[pid] = el; }}
         style={{ '--phase-color': ph?.color || 'var(--theme-accent)' }}
       >
-        <header className="phase-list-section__header">
-          <div className="phase-list-section__badge">
+        <header className="media-grid-section__header">
+          <div className="media-grid-section__badge">
             <span>Phase</span>
             <strong>{pid}</strong>
           </div>
-          <div className="phase-list-section__title">
-            <span className="phase-list-section__kicker">{ph?.tagline || 'Release group'}</span>
+          <div className="media-grid-section__title">
+            <span className="media-grid-section__kicker">{ph?.tagline || 'Release group'}</span>
             <h3>{ph?.name || `Phase ${pid}`}</h3>
             <p>{done}/{rows.length} watched · Next: {nextTitle}</p>
           </div>
-          <div className="phase-list-section__tools">
-            <span className="phase-list-section__percent">{phasePct}%</span>
+          <div className="media-grid-section__tools">
+            <span className="media-grid-section__percent">{phasePct}%</span>
             <button type="button" onClick={() => setExpandedPhase(summaryOpen ? null : pid)} aria-expanded={summaryOpen}>{summaryOpen ? 'Hide notes' : 'Notes'}</button>
             <button type="button" onClick={() => markPhaseWatched(pid, done < rows.length ? 'watched' : 'unwatched')}>{done < rows.length ? 'Mark all' : 'Clear'}</button>
           </div>
         </header>
-        <span className="phase-list-section__meter"><span style={{ width: `${phasePct}%` }} /></span>
-        {summaryOpen && <div className="phase-list-section__summary">{ph?.summary}</div>}
-        <div className="phase-list-section__grid">
-          {rows.map((item, idx) => renderPhaseCalendarRow(item, ph, idx))}
+        <span className="media-grid-section__meter"><span style={{ width: `${phasePct}%` }} /></span>
+        {summaryOpen && <div className="media-grid-section__summary">{ph?.summary}</div>}
+        <div className="media-grid-section__grid">
+          {rows.map((item, idx) => renderMediaGridCard(item, ph, idx))}
         </div>
       </section>
     );
@@ -3596,7 +3292,7 @@ export default function MCUViewer() {
     ? `${Math.max(heroBackdropScale - 16, 112)}% auto`
     : `auto ${Math.max(heroBackdropScale - 8, 96)}%`;
   return (
-    <div data-scaffold={Boolean(sectionScaffold)} data-theme={normalizeAppearanceMode(appearanceMode)} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${themeTransitioning ? ' theme-is-transitioning' : ''}${uiBuildCacheEnabled ? ' ui-build-cache-on' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
+    <div data-scaffold={Boolean(sectionScaffold)} data-theme={normalizeAppearanceMode(appearanceMode)} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${themeTransitioning ? ' theme-is-transitioning' : ''}${uiBuildCacheEnabled ? ' ui-build-cache-on' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-grid-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
 
 
@@ -3654,7 +3350,6 @@ export default function MCUViewer() {
               <button className="fpill" onClick={() => openSearchMode(search, null)} style={{ justifyContent: 'center' }}>Search</button>
               <button className="fpill" onClick={() => openSearchMode('', 'series')} style={{ justifyContent: 'center' }}>Series</button>
               <button className="fpill" onClick={() => navigateToPhase(activePhase || 0)} style={{ justifyContent: 'center' }}>Phases</button>
-              <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ justifyContent: 'center' }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
               <button className="fpill" onClick={openAnalyticsPanel} style={{ justifyContent: 'center' }}>{tUniverse('Analytics')}</button>
             </div>
             <button className="fpill" onClick={() => { setSidebarOpen(false); toggleSettingsPanel(); }} style={{ width: '100%', justifyContent: 'center' }}><Settings size={13} />{tUniverse('Open Settings')}</button>
@@ -4055,11 +3750,6 @@ export default function MCUViewer() {
           {metadataBuild.status === 'running' ? `Fetch ${metadataBuild.done}/${metadataBuild.total}` : 'Fetch'}
         </button>
         <button type="button" className="dock-btn"
-          onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
-          style={{ background: 'color-mix(in srgb, var(--theme-accent) 16%, var(--control-solid-bg))' }}>
-          View: {viewMode === 'list' ? 'List' : 'Calendar'}
-        </button>
-        <button type="button" className="dock-btn"
           onClick={() => { const next = listMode === 'core' ? 'extended' : 'core'; setListMode(next); setExpandedItem(null); setExpandedPhase(null); }}
           style={{ background: 'color-mix(in srgb, var(--theme-accent-alt) 16%, var(--control-solid-bg))' }}>
           Mode: {listMode === 'core' ? (universe === 'dc' ? 'DC Core' : 'MCU Core') : 'Extended'}
@@ -4109,7 +3799,7 @@ export default function MCUViewer() {
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
-        <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
+        <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="media-grid-switch">
           {browseMode !== 'search' && phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
@@ -4117,117 +3807,24 @@ export default function MCUViewer() {
           )}
           {browseMode === 'search' ? (
             search.trim() ? (
-              <section data-motion="section" className='curvy-panel motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 12 }}>
-                <div className="list-panel" style={{ overflow: 'hidden' }}>
-                  <PhaseRows
-                    rows={filtered}
-                    renderRow={(item, idx) => {
-                      const itemReleaseStatus = releaseStatusFor(item);
-                      const itemReleaseInfo = releaseInfoFor(item);
-                      return (
-                        <MemoizedTitleRow
-                          key={item.id}
-                          item={item}
-                          idx={idx}
-                          ph={currentPhases.find(p => p.id === item.phase) || currentPhases[0]}
-                          T={T}
-                          typeMeta={getSafeTypeMeta(item.type)}
-                          statusMeta={getSafeStatusMeta(item.status)}
-                          releaseStatus={itemReleaseStatus}
-                          releaseStatusText={releaseStatusLabel(itemReleaseStatus)}
-                          releaseStatusStyleObj={releaseStatusStyle(itemReleaseStatus)}
-                          releaseLabel={formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}
-                          poster={posterSrc(item)}
-                          genres={inferGenres(item)}
-                          isExpanded={expandedItem === item.id}
-                          isWatched={item.status === 'watched'}
-                          isBookmarked={Boolean(bookmarks[item.id])}
-                          statusDropdown={statusDropdown}
-                          rating={metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
-                          onOpenDetail={openDetail}
-                          onSetStatus={setStatusDirect}
-                          onToggleBookmark={toggleBookmark}
-                          onOpenStatus={openStatusDropdown}
-                          bulkSelectMode={bulkSelectMode}
-                          isSelected={selectedIds.has(item.id)}
-                          onToggleSelected={toggleSelected}
-                          isDesktopViewport={isDesktopViewport}
-                        />
-                      );
-                    }}
-                  />
+              <section data-motion="section" className='curvy-panel media-grid-section motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16, '--phase-color': 'var(--theme-accent)' }}>
+                <header className="media-grid-section__header">
+                  <div className="media-grid-section__title">
+                    <span className="media-grid-section__kicker">Search results</span>
+                    <h3>{filtered.length} matching {filtered.length === 1 ? 'title' : 'titles'}</h3>
+                    <p>Open a card for details or use the inline controls to update progress.</p>
+                  </div>
+                </header>
+                <div className="media-grid-section__grid">
+                  {filtered.map((item, idx) => renderMediaGridCard(item, currentPhases.find(p => p.id === item.phase) || currentPhases[0], idx))}
                 </div>
               </section>
             ) : (
               <div style={{ textAlign: 'center', padding: '84px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 17, color: T.textMuted, letterSpacing: 2 }}>
-                Start typing to search across your full list.
+                Start typing to search across your full collection.
               </div>
             )
-          ) : viewMode === 'calendar' ? (
-            <section data-motion="section" className='curvy-panel calendar-section motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
-              <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', color: 'var(--theme-text-primary)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
-              <div style={{ marginBottom: 12, color: T.textMuted, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.2 }}>Grouped by month / quarter / year</div>
-              {Object.entries(calendarItems.grouped).map(([group, entries]) => (
-                <div key={group}>
-                  <div className="calendar-group-header">{group}</div>
-                  {entries.map(({ item, rawDate, label, releaseStatus, hasRealDate }) => (
-                    <div key={`${group}-${item.id}`} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
-                      <div style={{ fontSize: 11, color: releaseStatus === 'upcoming' ? 'var(--theme-warning)' : T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
-                      <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
-                      <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left', textShadow: '0 1px 2px color-mix(in srgb, var(--theme-bg) 35%, transparent)' }}>
-                        {item.title}
-                        <div style={{ fontSize: 11, color: T.textMuted, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                          <span>Phase {item.phase} · {getSafeTypeMeta(item.type).label}</span>
-                          <span className={`calendar-badge ${releaseStatus}`}>{releaseStatus}</span>
-                          <span className="calendar-badge certainty">{hasRealDate ? 'Exact Date' : getReleaseCertainty({ hasRealDate, releaseStatus })}</span>
-                        </div>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </section>
-          ) : showPhaseSystem ? phaseKeys.map(renderPhaseCalendarSection) : (
-            <section data-motion="section" className='curvy-panel motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 12 }}>
-              <div className="list-panel" style={{ overflow: 'hidden' }}>
-                <PhaseRows rows={filtered} renderRow={(item, idx) => {
-                  const itemReleaseStatus = releaseStatusFor(item);
-                  const itemReleaseInfo = releaseInfoFor(item);
-                  const ph = currentPhases.find(p => p.id === item.phase) || currentPhases[0];
-                  return (
-                    <MemoizedTitleRow
-                      key={item.id}
-                      item={item}
-                      idx={idx}
-                      ph={ph}
-                      T={T}
-                      typeMeta={getSafeTypeMeta(item.type)}
-                      statusMeta={getSafeStatusMeta(item.status)}
-                      releaseStatus={itemReleaseStatus}
-                      releaseStatusText={releaseStatusLabel(itemReleaseStatus)}
-                      releaseStatusStyleObj={releaseStatusStyle(itemReleaseStatus)}
-                      releaseLabel={formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}
-                      poster={posterSrc(item)}
-                      genres={inferGenres(item)}
-                      isExpanded={expandedItem === item.id}
-                      isWatched={item.status === 'watched'}
-                      isBookmarked={Boolean(bookmarks[item.id])}
-                      statusDropdown={statusDropdown}
-                      rating={metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
-                      onOpenDetail={openDetail}
-                      onSetStatus={setStatusDirect}
-                      onToggleBookmark={toggleBookmark}
-                      onOpenStatus={openStatusDropdown}
-                      bulkSelectMode={bulkSelectMode}
-                      isSelected={selectedIds.has(item.id)}
-                      onToggleSelected={toggleSelected}
-                      isDesktopViewport={isDesktopViewport}
-                    />
-                  );
-                }} />
-              </div>
-            </section>
-          )}
+          ) : phaseKeys.map(renderMediaGridSection)}
 
           <div data-motion="section" className="motion-section motion-pop" style={{ textAlign: 'center', marginTop: 44, fontFamily: 'var(--font-marvel-ui)', fontSize: 11, color: 'var(--theme-text-muted)', letterSpacing: 2.2, fontWeight: 700 }}>
             Made with ♥️ by {tUniverse('Marvel Fan')}

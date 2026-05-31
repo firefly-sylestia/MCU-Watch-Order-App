@@ -1,31 +1,31 @@
 /* Performance-focused rendering isolation for long phase lists. */
-.virtual-list {
+.virtual-grid-legacy-removed {
   contain: layout style paint;
 }
 
-.phase-row-virtualized {
+.media-grid-legacy-row {
   content-visibility: auto;
   contain-intrinsic-size: var(--row-min-h, 126px);
   contain: layout style paint;
 }
 
 .section-up,
-.list-panel,
+.media-grid-panel,
 .curvy-panel.phase-header-card {
   content-visibility: auto;
   contain-intrinsic-size: 420px;
 }
 
-.phase-list-mode .app-backdrop-layout {
+.media-grid-mode .app-backdrop-layout {
   display: none;
 }
 
-.phase-list-mode .motion-section,
+.media-grid-mode .motion-section,
 .performance-mode .motion-section {
   animation: none !important;
 }
 
-.phase-list-mode .rrow,
+.media-grid-mode .rrow,
 .performance-mode .rrow {
   transition-property: background, border-color, transform;
   transition-duration: 120ms;
@@ -34,19 +34,19 @@
 /* 2026 smoothness pass: keep interactions cheap on Vercel/mobile by animating
    compositor-friendly properties only and isolating expensive theme surfaces. */
 .theme-switch.performance-mode,
-.theme-switch.phase-list-mode {
+.theme-switch.media-grid-mode {
   --navigation-blur: none;
 }
 
 .performance-mode :is(.glass-panel, .curvy-panel, .settings-card, .sidebar-panel, .detail-card, .search-page-panel, .navigation-control-btn),
-.phase-list-mode :is(.glass-panel, .curvy-panel, .settings-card, .sidebar-panel, .detail-card, .search-page-panel, .navigation-control-btn) {
+.media-grid-mode :is(.glass-panel, .curvy-panel, .settings-card, .sidebar-panel, .detail-card, .search-page-panel, .navigation-control-btn) {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   filter: none !important;
 }
 
 .performance-mode .hero-backdrop-image,
-.phase-list-mode .hero-backdrop-image {
+.media-grid-mode .hero-backdrop-image {
   transform: translateZ(0);
   filter: none !important;
   transition: opacity 180ms var(--ease-out) !important;
@@ -54,7 +54,7 @@
 }
 
 .performance-mode :is(.rrow, .fpill, .hero-carousel-card, .phase-chip, .navigation-shell),
-.phase-list-mode :is(.rrow, .fpill, .hero-carousel-card, .phase-chip, .navigation-shell) {
+.media-grid-mode :is(.rrow, .fpill, .hero-carousel-card, .phase-chip, .navigation-shell) {
   transition-property: opacity, transform, background-color, border-color, box-shadow !important;
 }
 

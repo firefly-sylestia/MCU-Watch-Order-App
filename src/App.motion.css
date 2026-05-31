@@ -11,8 +11,8 @@
         @keyframes fadeIn{from{opacity:0;transform:scale(0.97) translateY(-4px)}to{opacity:1;transform:scale(1) translateY(0)}}
         .fade-in{animation:fadeIn 240ms var(--ease-out) both}
         @keyframes cardOpenIn{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
-        .theme-switch:not(.performance-mode) .phase-row-virtualized .rrow{animation:cardOpenIn 320ms var(--ease-out) both}
-        .theme-switch:not(.performance-mode) .phase-row-virtualized:nth-child(2n) .rrow{animation-duration:360ms}
+        .theme-switch:not(.performance-mode) .media-grid-legacy-row .rrow{animation:cardOpenIn 320ms var(--ease-out) both}
+        .theme-switch:not(.performance-mode) .media-grid-legacy-row:nth-child(2n) .rrow{animation-duration:360ms}
         @starting-style{.dropdown-pop{opacity:0;transform:translate3d(0,-8px,0) scale(0.96);filter:blur(3px)}.dropdown-pop-up{opacity:0;transform:translate3d(0,8px,0) scale(0.96);filter:blur(3px)}}
         @keyframes expandDown{from{opacity:0;max-height:0;padding-top:0;padding-bottom:0}to{opacity:1;max-height:600px;padding-top:10px;padding-bottom:10px}}
         .expand-row{animation:expandDown 0.28s cubic-bezier(0.34,1.56,0.64,1) both;overflow:hidden}
@@ -20,8 +20,8 @@
         .filters-open{animation:filtersSlide 220ms var(--ease-out) both;overflow:visible}
         @keyframes themeFadeSwitch{from{opacity:0.7}to{opacity:1}}
         .theme-switch{animation:themeFadeSwitch 260ms var(--ease-out) both}
-        @keyframes listModeSlide{from{opacity:0.8;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
-        .list-mode-switch{animation:listModeSlide 220ms var(--ease-out) both}
+        @keyframes mediaGridSlide{from{opacity:0.8;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+        .media-grid-switch{animation:mediaGridSlide 220ms var(--ease-out) both}
         @keyframes buttonPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--theme-accent) 45%, transparent)}70%{box-shadow:0 0 0 6px transparent}100%{box-shadow:0 0 0 0 transparent}}
         @keyframes spiderPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
         @keyframes snapFade{0%{filter:grayscale(0)}40%{filter:grayscale(1) brightness(1.2)}100%{filter:grayscale(0)}}
@@ -33,7 +33,7 @@
         .progress-gradient{background:var(--phase-gradient, linear-gradient(90deg,var(--theme-accent), var(--theme-accent-alt)));background-size:200% 100%;animation:gradientPulse 3s ease-in-out infinite alternate}
         @keyframes gradientPulse{0%{filter:brightness(0.92)}100%{filter:brightness(1.08)}}
         .performance-mode .sweep::after,.performance-mode .progress-gradient,.performance-mode .snap-blip{animation:none !important}
-.performance-mode .motion-section,.performance-mode .phase-rows-full .phase-row-virtualized{transition-duration:220ms !important}
+.performance-mode .motion-section,.performance-mode .media-grid-legacy-removed .media-grid-legacy-row{transition-duration:220ms !important}
 /* Modernized scroll trigger + section progress motion system */
 .motion-section {
   --section-progress: 0;
@@ -53,19 +53,19 @@
   transform: translate3d(0, calc(var(--section-progress) * -8px), 0);
   transition: transform 260ms var(--ease-smooth);
 }
-.phase-rows-full .phase-row-virtualized {
+.media-grid-legacy-removed .media-grid-legacy-row {
   opacity: 0;
   transform: translate3d(0, 12px, 0);
   transition: opacity 380ms var(--ease-out), transform 420ms var(--ease-out);
 }
-.motion-section.is-visible .phase-rows-full .phase-row-virtualized {
+.motion-section.is-visible .media-grid-legacy-removed .media-grid-legacy-row {
   opacity: 1;
   transform: translate3d(0, 0, 0);
 }
-.motion-section.is-visible .phase-rows-full .phase-row-virtualized:nth-child(1) { transition-delay: 40ms; }
-.motion-section.is-visible .phase-rows-full .phase-row-virtualized:nth-child(2) { transition-delay: 80ms; }
-.motion-section.is-visible .phase-rows-full .phase-row-virtualized:nth-child(3) { transition-delay: 120ms; }
-.motion-section.is-visible .phase-rows-full .phase-row-virtualized:nth-child(4) { transition-delay: 160ms; }
+.motion-section.is-visible .media-grid-legacy-removed .media-grid-legacy-row:nth-child(1) { transition-delay: 40ms; }
+.motion-section.is-visible .media-grid-legacy-removed .media-grid-legacy-row:nth-child(2) { transition-delay: 80ms; }
+.motion-section.is-visible .media-grid-legacy-removed .media-grid-legacy-row:nth-child(3) { transition-delay: 120ms; }
+.motion-section.is-visible .media-grid-legacy-removed .media-grid-legacy-row:nth-child(4) { transition-delay: 160ms; }
 
 @media (max-width: 1024px) {
   .motion-section { transform: translate3d(0, 16px, 0); transition-duration: 380ms; }
@@ -79,7 +79,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .motion-section,
-  .phase-rows-full .phase-row-virtualized,
+  .media-grid-legacy-removed .media-grid-legacy-row,
   .motion-section.in-view .phase-header-card {
     opacity: 1 !important;
     transform: none !important;
