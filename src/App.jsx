@@ -3478,56 +3478,86 @@ export default function MCUViewer() {
     const itemReleaseInfo = releaseInfoFor(item);
     const isWatched = item.status === 'watched';
     const typeMeta = getSafeTypeMeta(item.type);
+    const TypeIcon = typeMeta.Icon;
+    const statusMeta = getSafeStatusMeta(item.status);
     const StatusIcon = isWatched ? Check : EyeOff;
-    const RowStatusIcon = getSafeStatusMeta(item.status).Icon;
+    const RowStatusIcon = statusMeta.Icon;
     const itemRating = metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating;
     const isBookmarked = Boolean(bookmarks[item.id]);
     const hideWatchToggle = itemReleaseStatus === 'upcoming';
+    const releaseLabel = formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus);
+    const genres = inferGenres(item).slice(0, 3);
     return (
-      <article key={item.id} className={`phase-list-item media-command-card row-status-${item.status}`} data-bookmarked={isBookmarked} data-watched={isWatched} style={{ '--phase-color': ph?.color || 'var(--theme-accent)' }}>
-        <div className="phase-list-item__index" aria-hidden="true">
-          <span>{String(idx + 1).padStart(2, '0')}</span>
-          <small>{formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}</small>
+      <article
+        key={item.id}
+        className={`phase-atlas-card row-status-${item.status}`}
+        data-bookmarked={isBookmarked}
+        data-watched={isWatched}
+        style={{ '--phase-color': ph?.color || 'var(--theme-accent)' }}
+      >
+        <div className="phase-atlas-card__visual">
+          <button type="button" className="phase-atlas-card__poster" onClick={() => openDetail(item)} aria-label={`Open ${item.title} details`}>
+            <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
+          </button>
+          <span className={`phase-atlas-card__release ${itemReleaseStatus}`}>{releaseStatusLabel(itemReleaseStatus)}</span>
         </div>
-        <button type="button" className="phase-list-item__poster" onClick={() => openDetail(item)} aria-label={`Open ${item.title} details`}>
-          <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
-        </button>
-        <button className="phase-list-item__content title-btn" onClick={() => openDetail(item)}>
-          <span className="phase-list-item__title">{item.title}</span>
-          <span className="phase-list-item__meta">
-            <span>{typeMeta.label}</span>
+
+        <div className="phase-atlas-card__body">
+          <div className="phase-atlas-card__eyebrow">
+            <span className="phase-atlas-card__sequence">#{String(idx + 1).padStart(2, '0')}</span>
+            <span><TypeIcon size={12} />{typeMeta.label}</span>
+            <span>{releaseLabel}</span>
+          </div>
+          <button className="phase-atlas-card__title" onClick={() => openDetail(item)}>
+            <span>{item.title}</span>
+            <ChevRight size={16} aria-hidden="true" />
+          </button>
+          <div className="phase-atlas-card__chips" aria-label={`${item.title} metadata`}>
             <span>Phase {item.phase}</span>
-            <span>{releaseStatusLabel(itemReleaseStatus)}</span>
-          </span>
-        </button>
-        <div className="phase-list-item__actions media-command-actions">
-          <span className={`phase-list-item__release ${itemReleaseStatus}`}>{itemReleaseStatus}</span>
-          <span className="phase-list-item__rating media-rating-pill"><Star size={11} />{itemRating || '—'}</span>
+            {item.episodes && <span>{item.episodes} episodes</span>}
+            {genres.map(genre => <span key={`${item.id}-${genre}`}>{genre}</span>)}
+            {!item.essential && <span>Optional</span>}
+          </div>
+        </div>
+
+        <div className="phase-atlas-card__actions" aria-label={`${item.title} actions`}>
+          {bulkSelectMode && (
+            <label className="phase-atlas-select">
+              <input
+                type="checkbox"
+                checked={isSelected}
+                aria-label={`Select ${item.title}`}
+                onChange={(event) => onToggleSelected(item.id, event.target.checked)}
+              />
+              <span>Select</span>
+            </label>
+          )}
+          <span className="phase-atlas-rating" aria-label={`Rating ${itemRating || 'not available'}`}><Star size={13} />{itemRating || '—'}</span>
           <button
             type="button"
             aria-label={`Open status menu for ${item.title}`}
             aria-haspopup="menu"
             aria-expanded={statusDropdown === item.id}
             onClick={(event) => openStatusDropdown(event, item.id)}
-            className="phase-list-item__status media-status-control"
+            className="phase-atlas-action phase-atlas-action--status"
           >
-            <RowStatusIcon size={13} />
-            {getSafeStatusMeta(item.status).label}
-            <ChevDown size={11} className={`row-status-chevron ${statusDropdown === item.id ? 'is-open' : ''}`} />
+            <RowStatusIcon size={14} />
+            <span>{statusMeta.label}</span>
+            <ChevDown size={12} className={`row-status-chevron ${statusDropdown === item.id ? 'is-open' : ''}`} />
           </button>
-          <button type="button" className="phase-list-item__status media-icon-action" data-bookmarked={isBookmarked} onClick={() => toggleBookmark(item.id)} aria-pressed={isBookmarked} aria-label={isBookmarked ? `Remove ${item.title} bookmark` : `Bookmark ${item.title}`}>
-            <Bookmark size={13} />
-            {isBookmarked ? 'Saved' : 'Save'}
+          <button type="button" className="phase-atlas-action" data-bookmarked={isBookmarked} onClick={() => toggleBookmark(item.id)} aria-pressed={isBookmarked} aria-label={isBookmarked ? `Remove ${item.title} bookmark` : `Bookmark ${item.title}`}>
+            <Bookmark size={14} />
+            <span>{isBookmarked ? 'Saved' : 'Save'}</span>
           </button>
           {!hideWatchToggle && (
             <button
               type="button"
-              className="phase-list-item__status media-icon-action media-watch-action"
+              className="phase-atlas-action phase-atlas-action--watch"
               onClick={() => setStatusDirect(item.id, isWatched ? 'unwatched' : 'watched')}
               aria-pressed={isWatched}
             >
-              <StatusIcon size={13} />
-              {isWatched ? 'Done' : 'Watch'}
+              <StatusIcon size={14} />
+              <span>{isWatched ? 'Done' : 'Watch'}</span>
             </button>
           )}
         </div>
@@ -3541,35 +3571,38 @@ export default function MCUViewer() {
     const done = rows.filter(r => r.status === 'watched').length;
     const phasePct = rows.length ? Math.round((done / rows.length) * 100) : 0;
     const summaryOpen = expandedPhase === pid;
-    const nextTitle = rows.find(r => r.status !== 'watched')?.title || 'Phase complete';
+    const nextItem = rows.find(r => r.status !== 'watched');
+    const nextTitle = nextItem?.title || 'Phase complete';
     return (
       <section
         key={pid}
-        className="phase-list-section motion-section"
+        className="phase-atlas-section motion-section"
         data-motion="section"
         data-phase={pid}
         ref={el => { phaseRefs.current[pid] = el; }}
         style={{ '--phase-color': ph?.color || 'var(--theme-accent)' }}
       >
-        <header className="phase-list-section__header">
-          <div className="phase-list-section__badge">
-            <span>Phase</span>
-            <strong>{pid}</strong>
+        <div className="phase-atlas-section__halo" aria-hidden="true" />
+        <header className="phase-atlas-section__header">
+          <div className="phase-atlas-section__mark" aria-hidden="true">
+            <span>{String(pid).padStart(2, '0')}</span>
           </div>
-          <div className="phase-list-section__title">
-            <span className="phase-list-section__kicker">{ph?.tagline || 'Release group'}</span>
+          <div className="phase-atlas-section__copy">
+            <span className="phase-atlas-section__kicker">{ph?.tagline || 'Viewing cluster'}</span>
             <h3>{ph?.name || `Phase ${pid}`}</h3>
-            <p>{done}/{rows.length} watched · Next: {nextTitle}</p>
+            <p>{done}/{rows.length} complete · Next signal: {nextTitle}</p>
           </div>
-          <div className="phase-list-section__tools">
-            <span className="phase-list-section__percent">{phasePct}%</span>
-            <button type="button" onClick={() => setExpandedPhase(summaryOpen ? null : pid)} aria-expanded={summaryOpen}>{summaryOpen ? 'Hide notes' : 'Notes'}</button>
-            <button type="button" onClick={() => markPhaseWatched(pid, done < rows.length ? 'watched' : 'unwatched')}>{done < rows.length ? 'Mark all' : 'Clear'}</button>
+          <div className="phase-atlas-section__tools">
+            <div className="phase-atlas-section__progress" aria-label={`Phase ${pid} completion ${phasePct}%`}>
+              <strong>{phasePct}%</strong>
+              <span><i style={{ width: `${phasePct}%` }} /></span>
+            </div>
+            <button type="button" onClick={() => setExpandedPhase(summaryOpen ? null : pid)} aria-expanded={summaryOpen}>{summaryOpen ? 'Close brief' : 'Brief'}</button>
+            <button type="button" onClick={() => markPhaseWatched(pid, done < rows.length ? 'watched' : 'unwatched')}>{done < rows.length ? 'Complete cluster' : 'Reset cluster'}</button>
           </div>
         </header>
-        <span className="phase-list-section__meter"><span style={{ width: `${phasePct}%` }} /></span>
-        {summaryOpen && <div className="phase-list-section__summary">{ph?.summary}</div>}
-        <div className="phase-list-section__grid">
+        {summaryOpen && <div className="phase-atlas-section__brief">{ph?.summary}</div>}
+        <div className="phase-atlas-section__grid">
           {rows.map((item, idx) => renderPhaseCalendarRow(item, ph, idx))}
         </div>
       </section>

@@ -4584,3 +4584,92 @@ body { background: var(--app-shell-gradient); }
   .media-command-card,.media-command-card .poster,.media-command-actions button,.row-status-chevron{transition:none !important}
   .media-command-card:hover,.media-command-card:hover .poster{transform:none !important}
 }
+
+/* Complete phase list redesign: isolated atlas cards instead of a continuous row stack. */
+.phase-list-mode{
+  background-image:
+    radial-gradient(circle at 16% 12%, color-mix(in srgb,var(--theme-accent) 18%, transparent), transparent 28rem),
+    radial-gradient(circle at 88% 18%, color-mix(in srgb,var(--theme-accent-alt) 14%, transparent), transparent 26rem),
+    linear-gradient(135deg, color-mix(in srgb,var(--app-bg-base) 86%, #020617), color-mix(in srgb,var(--theme-surface) 18%, var(--app-bg-base))) !important;
+}
+.phase-list-mode::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:
+    linear-gradient(115deg, transparent 0 18%, color-mix(in srgb,var(--theme-accent) 6%, transparent) 18% 18.4%, transparent 18.4% 52%, color-mix(in srgb,var(--theme-accent-alt) 5%, transparent) 52% 52.4%, transparent 52.4%),
+    radial-gradient(circle at center, color-mix(in srgb,var(--theme-text) 6%, transparent) 1px, transparent 1.5px);
+  background-size:auto, 34px 34px;
+  opacity:.55;
+  mask-image:linear-gradient(180deg, transparent, #000 9rem, #000 86%, transparent);
+}
+.phase-list-mode .app-backdrop-layout{display:block;opacity:.18;mix-blend-mode:screen;filter:saturate(.7) blur(1px)}
+.phase-list-mode[data-color-mode="light"]{
+  background-image:
+    radial-gradient(circle at 16% 12%, color-mix(in srgb,var(--theme-accent) 14%, #fff), transparent 28rem),
+    radial-gradient(circle at 88% 18%, color-mix(in srgb,var(--theme-accent-alt) 12%, #fff), transparent 26rem),
+    linear-gradient(135deg, #f8fbff, color-mix(in srgb,var(--theme-surface) 82%, #e8eef8)) !important;
+}
+.phase-list-mode[data-color-mode="light"]::before{opacity:.42;mix-blend-mode:multiply}
+.phase-list-mode[data-color-mode="light"] .app-backdrop-layout{opacity:.08;mix-blend-mode:multiply}
+.phase-atlas-section{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  margin:clamp(1rem,2.2vw,1.7rem) 0;
+  padding:clamp(1rem,2.2vw,1.55rem);
+  border:1px solid color-mix(in srgb,var(--phase-color,var(--theme-accent)) 34%, var(--theme-border));
+  border-radius:clamp(1.35rem,2.6vw,2rem);
+  background:
+    radial-gradient(circle at 92% 12%, color-mix(in srgb,var(--phase-color,var(--theme-accent)) 18%, transparent), transparent 18rem),
+    linear-gradient(150deg, color-mix(in srgb,var(--theme-surface) 80%, transparent), color-mix(in srgb,var(--theme-bg) 38%, transparent));
+  box-shadow:0 22px 48px color-mix(in srgb,#020617 28%, transparent), inset 0 1px 0 color-mix(in srgb,#fff 7%, transparent);
+  transform:translateZ(0);
+}
+.phase-atlas-section__halo{
+  position:absolute;
+  inset:auto -12% -42% 36%;
+  height:18rem;
+  border-radius:999px;
+  background:radial-gradient(circle, color-mix(in srgb,var(--phase-color,var(--theme-accent)) 17%, transparent), transparent 68%);
+  filter:blur(18px);
+  opacity:.74;
+  z-index:-1;
+}
+.phase-atlas-section__header{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:clamp(.8rem,1.8vw,1.35rem);
+  padding-bottom:clamp(.9rem,1.6vw,1.2rem);
+}
+.phase-atlas-section__mark{
+  width:clamp(4.2rem,7vw,5.8rem);
+  aspect-ratio:1;
+  display:grid;
+  place-items:center;
+  border-radius:34% 66% 42% 58% / 54% 35% 65% 46%;
+  border:1px solid color-mix(in srgb,var(--phase-color,var(--theme-accent)) 58%, var(--theme-border));
+  background:conic-gradient(from 140deg, color-mix(in srgb,var(--phase-color,var(--theme-accent)) 30%, transparent), transparent 28%, color-mix(in srgb,var(--theme-surface) 70%, transparent), color-mix(in srgb,var(--phase-color,var(--theme-accent)) 18%, transparent));
+  box-shadow:0 14px 30px color-mix(in srgb,var(--phase-color,var(--theme-accent)) 18%, transparent);
+}
+.phase-atlas-section__mark span{font:950 clamp(1.6rem,3.2vw,2.45rem)/1 var(--font-marvel-ui);letter-spacing:.04em;color:var(--theme-text-primary)}
+.phase-atlas-section__copy{min-width:0}.phase-atlas-section__kicker{display:block;margin-bottom:.25rem;color:color-mix(in srgb,var(--phase-color,var(--theme-accent)) 78%, var(--theme-text-muted));font:850 .72rem/1 var(--font-marvel-ui);letter-spacing:.16em;text-transform:uppercase}.phase-atlas-section__copy h3{margin:0;color:var(--theme-text-primary);font:950 clamp(1.45rem,3vw,2.45rem)/.95 var(--font-marvel-ui);letter-spacing:.02em}.phase-atlas-section__copy p{margin:.4rem 0 0;color:var(--theme-text-muted);font-weight:750}
+.phase-atlas-section__tools{display:grid;grid-template-columns:auto auto;align-items:center;justify-items:end;gap:.55rem}.phase-atlas-section__progress{grid-column:1 / -1;display:flex;align-items:center;gap:.65rem;width:min(18rem,30vw)}.phase-atlas-section__progress strong{color:var(--theme-text-primary);font:950 1.15rem/1 var(--font-marvel-ui);letter-spacing:.08em}.phase-atlas-section__progress span{position:relative;flex:1;height:.5rem;border-radius:999px;background:color-mix(in srgb,var(--theme-bg) 54%, transparent);overflow:hidden}.phase-atlas-section__progress i{position:absolute;inset:0 auto 0 0;border-radius:inherit;background:linear-gradient(90deg,var(--phase-color,var(--theme-accent)),color-mix(in srgb,var(--phase-color,var(--theme-accent)) 45%, #fff));box-shadow:0 0 18px color-mix(in srgb,var(--phase-color,var(--theme-accent)) 45%, transparent)}
+.phase-atlas-section__tools button,.phase-atlas-action,.phase-atlas-select{
+  display:inline-flex;align-items:center;justify-content:center;gap:.45rem;min-height:2.45rem;border:1px solid color-mix(in srgb,var(--theme-border) 64%, transparent);border-radius:999px;background:color-mix(in srgb,var(--theme-surface) 70%, transparent);color:var(--theme-text);padding:.65rem .9rem;font:850 .72rem/1 var(--font-marvel-ui);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:transform 150ms var(--ease-out),border-color 150ms var(--ease-out),background-color 150ms var(--ease-out),box-shadow 150ms var(--ease-out)
+}
+.phase-atlas-section__tools button:hover,.phase-atlas-action:hover,.phase-atlas-select:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--phase-color,var(--theme-accent)) 55%, var(--theme-border));box-shadow:0 10px 20px color-mix(in srgb,#020617 16%, transparent)}
+.phase-atlas-section__tools button:focus-visible,.phase-atlas-action:focus-visible,.phase-atlas-card__title:focus-visible,.phase-atlas-card__poster:focus-visible,.phase-atlas-select:focus-within{outline:2px solid color-mix(in srgb,var(--phase-color,var(--theme-accent)) 65%, transparent);outline-offset:3px}
+.phase-atlas-section__brief{margin:.1rem 0 1rem;padding:1rem 1.1rem;border-radius:1.1rem;border:1px solid color-mix(in srgb,var(--phase-color,var(--theme-accent)) 28%, var(--theme-border));background:color-mix(in srgb,var(--theme-bg) 42%, transparent);color:var(--theme-text-muted);line-height:1.6}.phase-atlas-section__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:clamp(.85rem,1.55vw,1.15rem)}
+.phase-atlas-card{position:relative;display:grid;grid-template-columns:5.2rem minmax(0,1fr);grid-template-areas:"visual body" "actions actions";gap:.95rem;padding:1rem;border:1px solid color-mix(in srgb,var(--theme-border) 58%, transparent);border-radius:1.45rem;background:linear-gradient(145deg,color-mix(in srgb,var(--theme-surface) 72%, transparent),color-mix(in srgb,var(--theme-bg) 30%, transparent));box-shadow:0 16px 32px color-mix(in srgb,#020617 20%, transparent);transition:transform 170ms var(--ease-out),border-color 170ms var(--ease-out),box-shadow 170ms var(--ease-out),background 170ms var(--ease-out)}
+.phase-atlas-card::before{content:"";position:absolute;inset:.6rem;border-radius:1.05rem;border:1px solid color-mix(in srgb,var(--phase-color,var(--theme-accent)) 18%, transparent);opacity:.7;pointer-events:none}.phase-atlas-card:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--phase-color,var(--theme-accent)) 50%, var(--theme-border));box-shadow:0 22px 42px color-mix(in srgb,#020617 28%, transparent)}.phase-atlas-card[data-watched="true"]{background:linear-gradient(145deg,color-mix(in srgb,var(--theme-success,#22c55e) 10%, var(--theme-surface)),color-mix(in srgb,var(--theme-bg) 36%, transparent))}.phase-atlas-card[data-watched="true"]::before{border-color:color-mix(in srgb,var(--theme-success,#22c55e) 34%, transparent)}
+.phase-atlas-card__visual{grid-area:visual;display:grid;gap:.5rem;align-content:start}.phase-atlas-card__poster{width:5.2rem;aspect-ratio:2/3;padding:0;border:0;border-radius:1rem;background:transparent;overflow:hidden;box-shadow:0 14px 28px color-mix(in srgb,#000 30%, transparent);cursor:pointer}.phase-atlas-card__poster .poster{width:100%;height:100%;object-fit:cover;border-radius:inherit;border:1px solid color-mix(in srgb,var(--phase-color,var(--theme-accent)) 34%, var(--theme-border));transition:transform 180ms var(--ease-out)}.phase-atlas-card:hover .poster{transform:scale(1.035)}
+.phase-atlas-card__release{display:inline-flex;justify-content:center;padding:.42rem .5rem;border-radius:999px;border:1px solid color-mix(in srgb,var(--theme-border) 56%, transparent);color:var(--theme-text-muted);font:900 .63rem/1 var(--font-marvel-ui);letter-spacing:.12em;text-transform:uppercase}.phase-atlas-card__release.released{color:var(--theme-success,#22c55e);border-color:color-mix(in srgb,var(--theme-success,#22c55e) 42%, var(--theme-border));background:color-mix(in srgb,var(--theme-success,#22c55e) 10%, transparent)}.phase-atlas-card__release.upcoming,.phase-atlas-card__release.tba{color:var(--theme-warning,#f59e0b);border-color:color-mix(in srgb,var(--theme-warning,#f59e0b) 44%, var(--theme-border));background:color-mix(in srgb,var(--theme-warning,#f59e0b) 10%, transparent)}
+.phase-atlas-card__body{grid-area:body;min-width:0;display:grid;align-content:start;gap:.55rem}.phase-atlas-card__eyebrow{display:flex;gap:.45rem;flex-wrap:wrap;color:var(--theme-text-muted);font-size:.72rem;font-weight:850}.phase-atlas-card__eyebrow span{display:inline-flex;align-items:center;gap:.3rem}.phase-atlas-card__sequence{color:color-mix(in srgb,var(--phase-color,var(--theme-accent)) 85%, var(--theme-text))}.phase-atlas-card__title{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:0;border:0;background:transparent;color:var(--theme-text-primary);text-align:left;cursor:pointer;font:950 clamp(1.04rem,1.7vw,1.35rem)/1.05 var(--font-marvel-ui);letter-spacing:.015em}.phase-atlas-card__title span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.phase-atlas-card__title svg{flex:0 0 auto;color:var(--phase-color,var(--theme-accent));transition:transform 150ms var(--ease-out)}.phase-atlas-card__title:hover svg{transform:translateX(3px)}.phase-atlas-card__chips{display:flex;flex-wrap:wrap;gap:.38rem}.phase-atlas-card__chips span{padding:.35rem .55rem;border-radius:999px;background:color-mix(in srgb,var(--theme-bg) 42%, transparent);border:1px solid color-mix(in srgb,var(--theme-border) 40%, transparent);color:var(--theme-text-muted);font-size:.72rem;font-weight:800}.phase-atlas-card__actions{grid-area:actions;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;position:relative;z-index:1}.phase-atlas-rating{display:inline-flex;align-items:center;justify-content:center;gap:.35rem;min-height:2.45rem;border-radius:999px;border:1px solid color-mix(in srgb,#f59e0b 42%, var(--theme-border));background:color-mix(in srgb,#f59e0b 10%, var(--theme-surface));color:#fbbf24;font-weight:950}.phase-atlas-action--status{grid-column:span 2}.phase-atlas-action[data-bookmarked="true"]{border-color:#fb7185;background:linear-gradient(135deg,#ef4444,#be123c);color:#fff}.phase-atlas-action--watch[aria-pressed="true"]{border-color:color-mix(in srgb,var(--theme-success,#22c55e) 58%, var(--theme-border));background:color-mix(in srgb,var(--theme-success,#22c55e) 16%, var(--theme-surface));color:color-mix(in srgb,var(--theme-success,#22c55e) 86%, var(--theme-text))}.phase-atlas-select{grid-column:span 2;justify-content:flex-start}.phase-atlas-select input{accent-color:var(--phase-color,var(--theme-accent))}
+.phase-list-mode[data-color-mode="light"] .phase-atlas-section,.phase-list-mode[data-color-mode="light"] .phase-atlas-card{background:linear-gradient(145deg,rgba(255,255,255,.94),color-mix(in srgb,var(--theme-surface) 86%, #eef4fb));box-shadow:0 18px 38px rgba(15,23,42,.12),inset 0 1px 0 rgba(255,255,255,.9)}.phase-list-mode[data-color-mode="light"] .phase-atlas-section__tools button,.phase-list-mode[data-color-mode="light"] .phase-atlas-action,.phase-list-mode[data-color-mode="light"] .phase-atlas-select{background:#fff;color:#111827;box-shadow:0 8px 18px rgba(15,23,42,.07)}.phase-list-mode[data-color-mode="light"] .phase-atlas-rating{color:#92400e;background:#fffbeb;border-color:#fcd34d}.phase-list-mode[data-color-mode="light"] .phase-atlas-card__chips span{background:#f8fafc;color:#334155}.phase-list-mode[data-color-mode="light"] .phase-atlas-action--watch[aria-pressed="true"]{color:#166534;background:#ecfdf5;border-color:#86efac}
+@media (max-width: 860px){.phase-atlas-section__header{grid-template-columns:auto minmax(0,1fr)}.phase-atlas-section__tools{grid-column:1 / -1;grid-template-columns:1fr 1fr;justify-items:stretch}.phase-atlas-section__progress{width:100%}.phase-atlas-section__tools button{width:100%}.phase-atlas-section__grid{grid-template-columns:1fr}}
+@media (max-width: 560px){.phase-atlas-section{padding:.85rem;border-radius:1.35rem}.phase-atlas-section__mark{width:3.8rem}.phase-atlas-card{grid-template-columns:4.3rem minmax(0,1fr);gap:.75rem;padding:.78rem;border-radius:1.15rem}.phase-atlas-card__poster{width:4.3rem;border-radius:.8rem}.phase-atlas-card__actions{grid-template-columns:1fr}.phase-atlas-action--status,.phase-atlas-select{grid-column:auto}.phase-atlas-section__tools{grid-template-columns:1fr}.phase-atlas-card__eyebrow span:nth-child(3){display:none}}
+@media (prefers-reduced-motion: reduce){.phase-atlas-section__tools button,.phase-atlas-action,.phase-atlas-card,.phase-atlas-card__poster .poster,.phase-atlas-card__title svg{transition:none}.phase-atlas-card:hover,.phase-atlas-section__tools button:hover,.phase-atlas-action:hover,.phase-atlas-select:hover{transform:none}.phase-atlas-card:hover .poster{transform:none}}

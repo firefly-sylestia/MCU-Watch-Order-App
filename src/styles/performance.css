@@ -17,7 +17,7 @@
 }
 
 .phase-list-mode .app-backdrop-layout {
-  display: none;
+  display: block;
 }
 
 .phase-list-mode .motion-section,
