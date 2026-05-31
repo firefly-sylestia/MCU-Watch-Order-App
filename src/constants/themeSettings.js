@@ -3,7 +3,6 @@ export const APPEARANCE_MODES = [
   { id: 'pixelated', label: 'Pixelated', desc: 'Arcade grid, chunky type, crisp stepped edges', font: 'Pixelify Sans' },
   { id: 'neon', label: 'Neon', desc: 'Electric signage, blacklight grids, outlined circuit panels', font: 'Audiowide' },
   { id: 'minimal', label: 'Minimal', desc: 'Quiet contrast, roomy rhythm, readable UI typography', font: 'Manrope' },
-  { id: 'archive', label: 'Archive', desc: 'Cinematic dark archive and light museum card-catalog surfaces', font: 'Space Grotesk' },
 ];
 
 export const normalizeAppearanceMode = (appearanceMode = 'glass') => (
@@ -60,14 +59,6 @@ const MODE_TOKENS = {
     texture: 'none',
     panelOverlay: 'linear-gradient(180deg, var(--theme-surface), var(--theme-surface-strong))',
   },
-  archive: {
-    fonts: { display: '"Space Grotesk", "Manrope", system-ui, sans-serif', ui: '"Manrope", "Outfit", system-ui, sans-serif', body: '"Manrope", "Outfit", system-ui, sans-serif' },
-    effects: { blur: 14, glow: 0.32, shadow: '0 22px 58px color-mix(in srgb, var(--theme-shadow-rgb, #020617) 24%, transparent)' },
-    shape: { radius: [18, 24, 32, 42], edge: 'archive', border: 1 },
-    motion: { fast: '140ms', normal: '220ms', slow: '300ms', hoverScale: 1.006 },
-    texture: 'radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 16%, transparent), transparent 30%), linear-gradient(135deg, rgba(255,255,255,.10), transparent 42%)',
-    panelOverlay: 'linear-gradient(145deg, color-mix(in srgb, var(--theme-surface) 86%, transparent), color-mix(in srgb, var(--theme-bg-alt) 36%, transparent))',
-  },
 };
 
 const MARVEL_THEME_TOKEN_MAP = {
@@ -115,10 +106,6 @@ const COLOR_MODE_TOKENS = {
     dark: { bg: '#03000f', bgAlt: '#090525', surface: 'rgba(8, 7, 28, .92)', surfaceStrong: 'rgba(14, 12, 42, .98)', text: '#f8fbff', text2: '#c8f7ff', muted: '#7dd6e9', border: 'rgba(57,255,243,.24)', shadowRgb: '#03000f' },
     light: { bg: '#f8fbff', bgAlt: '#edf5ff', surface: 'rgba(255,255,255,.92)', surfaceStrong: 'rgba(255,255,255,.98)', text: '#101532', text2: '#334465', muted: '#61708c', border: 'rgba(0,99,229,.20)', shadowRgb: '#1e3a8a' },
   },
-  archive: {
-    dark: { bg: '#050813', bgAlt: '#101624', surface: 'rgba(18,24,38,.78)', surfaceStrong: 'rgba(28,35,52,.94)', text: '#fff8ea', text2: '#d8cdbd', muted: '#a99a86', border: 'rgba(245, 197, 93, .18)', shadowRgb: '#02040b' },
-    light: { bg: '#f8f1e5', bgAlt: '#efe3d2', surface: 'rgba(255,252,245,.88)', surfaceStrong: 'rgba(255,255,250,.98)', text: '#221914', text2: '#5f4a3e', muted: '#8a7564', border: 'rgba(146, 64, 14, .18)', shadowRgb: '#92400e' },
-  },
   dc: {
     dark: { bg: '#030817', bgAlt: '#061b3a', surface: 'rgba(12,24,48,.76)', surfaceStrong: 'rgba(18,36,70,.9)', text: '#eff6ff', text2: '#bfd8ff', muted: '#8fb4e8', border: 'rgba(147,197,253,.16)', shadowRgb: '#020617' },
     light: { bg: '#eef6ff', bgAlt: '#e7f0ff', surface: 'rgba(248,252,255,.84)', surfaceStrong: 'rgba(255,255,255,.97)', text: '#08162c', text2: '#294365', muted: '#527099', border: 'rgba(37,99,235,.16)', shadowRgb: '#1e3a8a' },
@@ -131,7 +118,7 @@ export const resolveThemeTokens = ({ appearanceMode = 'glass', characterTheme = 
   const universeKey = universe === 'dc' ? 'dc' : 'marvel';
   const brandMap = universeKey === 'dc' ? DC_THEME_TOKEN_MAP : MARVEL_THEME_TOKEN_MAP;
   const hero = brandMap[characterTheme] || brandMap['iron-man'];
-  const colorSystemKey = normalizedMode === 'archive' ? 'archive' : (normalizedMode === 'neon' ? 'neon' : universeKey);
+  const colorSystemKey = normalizedMode === 'neon' ? 'neon' : universeKey;
   const color = COLOR_MODE_TOKENS[colorSystemKey][darkMode ? 'dark' : 'light'];
   const glowSoftPct = Math.round(mode.effects.glow * 42);
   const glowStrongPct = Math.round(mode.effects.glow * 68);
