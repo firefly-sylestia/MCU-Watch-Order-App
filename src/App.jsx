@@ -3339,6 +3339,9 @@ export default function MCUViewer() {
   // ─── Per-theme accent + distinctive surface tints ─────────────────────────
   const activeThemeVars = resolveThemeTokens({ appearanceMode, characterTheme: themeMode, darkMode, universe });
 
+  // Count active filters before any sidebar command metadata reads it.
+  const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
+
   const sidebarQuickActions = useMemo(() => ([
     { id: 'continue', label: 'Continue', meta: nextUnwatched?.title || 'All caught up', Icon: PlayCircle, onClick: () => nextUnwatched && openDetail(nextUnwatched), disabled: !nextUnwatched },
     { id: 'timeline', label: 'Timeline / order', meta: TIMELINE_MODES.find(m => m.id === timelineMode)?.label || 'Release', Icon: Layers, onClick: () => { setBrowseMode('phase'); setSidebarOpen(false); } },
@@ -3428,8 +3431,6 @@ export default function MCUViewer() {
   };
   const routeMode = analyticsOpen || settingsOpen ? 'utility' : 'home';
 
-  // Count active filters for the collapsed bar badge
-  const activeFilterCount = [typeFilter, statusFilter, watchedOnly, autoHideStatuses, essentialOnly && listMode === 'core', sortBy !== 'order'].filter(Boolean).length;
   const trailerDataForDetail = detailItem ? getTrailerByTitle(detailItem.title) : null;
   const trailerOptions = trailerDataForDetail?.options || [];
   const selectedTrailer = trailerOptions[trailerVariantIndex] || trailerOptions[0] || null;
