@@ -1,7 +1,7 @@
 import { Component, StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import App from './App.jsx'
+import RhythmMarvelApp from './rhythm/RhythmMarvelApp.jsx'
 import { useLenis } from './hooks/useLenis'
 import { motionCssVars } from './constants/motion'
 import { useAndroidNativeMode } from './hooks/useAndroidNativeMode'
@@ -10,7 +10,7 @@ const AppRuntime = () => {
   useLenis()
   useAndroidNativeMode()
 
-  return <App />
+  return <RhythmMarvelApp />
 }
 
 Object.entries(motionCssVars).forEach(([key, value]) => {
