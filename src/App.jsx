@@ -42,6 +42,7 @@ import { TRAILER_DATA, trailerEmbedUrl, getTrailerByTitle } from './data/trailer
 import { Search, Eye, EyeOff, Film, Tv, Zap, ChevDown, ChevRight, ArrowUpDown, Check, Clock, Heart, Pause, Trash2, Upload, Download, Sun, Star, Moon, Settings, Info, Bookmark, Layers, PlayCircle, PauseCircle, XCircle, SlidersH, UserCircle, SwitchIcon, X } from './constants/icons';
 import { MARVEL_UI_LEXICON, DC_UI_LEXICON, LIST_MODES } from './constants/appText';
 import { matchesSearch } from './utils/searchUtils';
+import { buildRhythmLibrarySnapshot, syncRhythmLibrarySnapshot } from './native/rhythmBridge';
 
 const TYPE_META = {
   film:   { label: 'Film',   Icon: Film, color: '#d4372f' },
@@ -1916,7 +1917,25 @@ export default function MCUViewer() {
     const phaseItems = activeItems.filter(i => i.phase === ph.id);
     const watched = phaseItems.filter(i => i.status === 'watched').length;
     return { phase: ph.id, watched, total: phaseItems.length };
-  }).filter(p => p.total > 0), [activeItems]);
+  }).filter(p => p.total > 0), [activeItems, currentPhases]);
+
+  const rhythmLibrarySnapshot = useMemo(() => buildRhythmLibrarySnapshot({
+    universe,
+    activePhase,
+    activeItems,
+    phases: currentPhases,
+    statusLabels: Object.fromEntries(Object.entries(STATUS_META).map(([key, meta]) => [key, meta.label])),
+    timelineMode,
+  }), [activeItems, activePhase, currentPhases, timelineMode, universe]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      syncRhythmLibrarySnapshot(rhythmLibrarySnapshot).catch((error) => {
+        console.info('Rhythm bridge snapshot sync skipped:', error?.message || error);
+      });
+    }, 450);
+    return () => window.clearTimeout(timer);
+  }, [rhythmLibrarySnapshot]);
 
 
   useEffect(() => {

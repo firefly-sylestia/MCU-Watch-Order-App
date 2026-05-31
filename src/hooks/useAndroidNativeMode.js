@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
+import { RhythmBridge, canUseRhythmBridge } from '../native/rhythmBridge';
 
 export const useAndroidNativeMode = () => {
   useEffect(() => {
@@ -12,11 +13,24 @@ export const useAndroidNativeMode = () => {
     root.dataset.platform = platform;
     root.dataset.native = String(Capacitor.isNativePlatform());
 
+    if (canUseRhythmBridge()) {
+      RhythmBridge.getRuntime()
+        .then((runtime) => {
+          root.dataset.appSystem = runtime?.system || 'Rhythm Material 3 Expressive';
+          root.style.setProperty('--native-system', `'${runtime?.system || 'Rhythm'}'`);
+        })
+        .catch(() => {
+          root.dataset.appSystem = 'Rhythm Material 3 Expressive';
+        });
+    }
+
     return () => {
       root.classList.remove('android-native');
       document.body.classList.remove('android-native');
       delete root.dataset.platform;
       delete root.dataset.native;
+      delete root.dataset.appSystem;
+      root.style.removeProperty('--native-system');
     };
   }, []);
 };
