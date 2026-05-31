@@ -85,3 +85,42 @@
     transition-duration: 1ms !important;
   }
 }
+
+/* Unified Archive Theme utilities for the library redesign. */
+.theme-switch {
+  --archive-surface-bg: linear-gradient(145deg, color-mix(in srgb, var(--theme-surface) 90%, transparent), color-mix(in srgb, var(--theme-surface-strong) 76%, transparent));
+  --archive-surface-border: color-mix(in srgb, var(--theme-border) 86%, transparent);
+  --archive-card-bg: linear-gradient(155deg, color-mix(in srgb, var(--theme-surface-strong) 86%, transparent), color-mix(in srgb, var(--theme-surface) 92%, transparent));
+  --archive-card-border: color-mix(in srgb, var(--theme-border) 84%, transparent);
+  --archive-card-shadow: 0 18px 44px color-mix(in srgb, var(--theme-shadow-rgb, #020617) 18%, transparent);
+  --archive-card-hover-shadow: 0 22px 60px color-mix(in srgb, var(--theme-shadow-rgb, #020617) 26%, transparent), 0 0 34px color-mix(in srgb, var(--theme-accent) 10%, transparent);
+  --archive-chip-bg: color-mix(in srgb, var(--theme-surface-strong) 76%, transparent);
+  --archive-chip-border: color-mix(in srgb, var(--theme-border) 82%, transparent);
+  --archive-rail-bg: color-mix(in srgb, var(--theme-surface-strong) 88%, transparent);
+  --archive-rail-border: color-mix(in srgb, var(--theme-border) 88%, transparent);
+  --archive-drawer-bg: linear-gradient(160deg, color-mix(in srgb, var(--theme-surface-strong) 94%, transparent), color-mix(in srgb, var(--theme-bg) 18%, var(--theme-surface)));
+}
+
+[data-color-mode="dark"] .theme-switch,
+[data-color-mode="dark"].theme-switch {
+  --archive-shelf-glow: radial-gradient(circle at top left, color-mix(in srgb, var(--theme-accent) 16%, transparent), transparent 38%);
+}
+
+[data-color-mode="light"] .theme-switch,
+[data-color-mode="light"].theme-switch {
+  --archive-card-shadow: 0 14px 30px rgba(120, 72, 24, 0.11);
+  --archive-card-hover-shadow: 0 18px 44px rgba(120, 72, 24, 0.16);
+  --archive-shelf-glow: radial-gradient(circle at top left, color-mix(in srgb, var(--theme-accent-alt) 14%, transparent), transparent 34%);
+}
+
+.archive-surface,
+.archive-shelf,
+.archive-drawer {
+  border: 1px solid var(--archive-surface-border);
+  border-radius: var(--radius-xl, 30px);
+  background: var(--archive-shelf-glow, none), var(--archive-surface-bg);
+  box-shadow: 0 16px 46px color-mix(in srgb, var(--theme-shadow-rgb, #020617) 14%, transparent), inset 0 1px 0 var(--edge-highlight);
+  color: var(--theme-text);
+}
+
+.archive-chip { border-color: var(--archive-chip-border); background: var(--archive-chip-bg); }

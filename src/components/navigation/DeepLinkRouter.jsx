@@ -39,6 +39,8 @@ export const searchRoutePath = (query = '', type = '', universe = 'mcu') => {
 
 export const phaseRoutePath = (phaseId = 0, universe = 'mcu') => `${universeRoutePath(universe)}/phase${phaseId ? `/${phaseId}` : ''}`;
 
+export const collectionRoutePath = (collectionId = '', universe = 'mcu') => `${universeRoutePath(universe)}/collection/${slugifyRouteValue(collectionId)}`;
+
 export const routeItemMatchesSlug = (item, rawSlug) => {
   const slug = slugifyRouteValue(decodeURIComponent(String(rawSlug || '')));
   if (!item || !slug) return false;

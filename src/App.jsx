@@ -14,9 +14,10 @@ import { usePosterCache } from './hooks/usePosterCache';
 import { useOverlayNavigation } from './hooks/useOverlayNavigation';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
+import LibraryAtrium from './components/library/LibraryAtrium';
 import ThemeStudio from './components/features/ThemeStudio';
 import NavigationShell from './components/navigation/NavigationShell';
-import { DeepLinkRouteSync, ROUTE_FALLBACK, SERIES_ROUTE, parseDeepLinkRoute, phaseRoutePath, routeItemMatchesSlug, searchRoutePath, titleRoutePath, universeRoutePath } from './components/navigation/DeepLinkRouter';
+import { DeepLinkRouteSync, ROUTE_FALLBACK, SERIES_ROUTE, collectionRoutePath, parseDeepLinkRoute, phaseRoutePath, routeItemMatchesSlug, searchRoutePath, titleRoutePath, universeRoutePath } from './components/navigation/DeepLinkRouter';
 import { CHARACTER_THEMES, normalizeAppearanceMode, resolveThemeTokens } from './constants/themeSettings';
 import { buildSemanticThemeVars, UI_PARITY_TOKENS } from './constants/ui';
 import './App.layout.css';
@@ -38,6 +39,7 @@ import { UNIVERSE_META } from './constants/universeSwitch';
 import { TIMELINE_MODES, TIMELINE_MODE_IDS, CHARACTER_POV_TITLE_SETS, STORY_ORDER_OVERRIDES, SONY_MARVEL_TITLE_SET } from './data/timelineModes';
 import { AFTER_CREDITS, AFTER_CREDITS_DEFAULT, DIRECTOR_DATA } from './data/afterCreditsData';
 import { TRAILER_DATA, trailerEmbedUrl, getTrailerByTitle } from './data/trailerData';
+import { collectionMatchesItem, getVisibleCollectionRooms } from './data/libraryCollections';
 
 import { Search, Eye, EyeOff, Film, Tv, Zap, ChevDown, ChevRight, ArrowUpDown, Check, Clock, Heart, Pause, Trash2, Upload, Download, Sun, Star, Moon, Settings, Info, Bookmark, Layers, PlayCircle, PauseCircle, XCircle, SlidersH, UserCircle, SwitchIcon, X } from './constants/icons';
 import { MARVEL_UI_LEXICON, DC_UI_LEXICON, LIST_MODES } from './constants/appText';
@@ -893,14 +895,16 @@ export default function MCUViewer() {
   const [statusDropdown, setStatusDropdown] = useState(null);
   const [fabMenuOpen, setFabMenuOpen] = useState(true);
   const [fabMinimized, setFabMinimized] = useState(false);
-  const [browseMode, setBrowseMode] = useState('home');
+  const [browseMode, setBrowseMode] = useState('library');
+  const [selectedCollectionId, setSelectedCollectionId] = useState('');
   const navigateHome = useCallback(() => {
     setDetailItem(null);
     setSettingsOpen(false);
     setAnalyticsOpen(false);
     setTrailerOpen(false);
     setTrailerExpanded(false);
-    setBrowseMode('home');
+    setBrowseMode('library');
+    setSelectedCollectionId('');
     setSidebarOpen(false);
   }, []);
   const openSearchMode = useCallback((nextSearch = '', nextType = null) => {
@@ -910,6 +914,7 @@ export default function MCUViewer() {
     setTrailerOpen(false);
     setTrailerExpanded(false);
     setBrowseMode('search');
+    setSelectedCollectionId('');
     setListMode('extended');
     setActivePhase(0);
     setSearchScope(UI_STATE_DEFAULTS.searchScope);
@@ -924,6 +929,7 @@ export default function MCUViewer() {
     setTrailerOpen(false);
     setTrailerExpanded(false);
     setBrowseMode('phase');
+    setSelectedCollectionId('');
     setActivePhase(phaseId);
     setSidebarOpen(false);
     requestAnimationFrame(() => scrollToListTop());
@@ -975,7 +981,7 @@ export default function MCUViewer() {
   const [avatarCropSrc, setAvatarCropSrc] = useState('');
   const [setupOpen, setSetupOpen] = useState(false);
   const [themeMode,      setThemeMode]      = useState(() => readStorageValue('mcu-theme-mode-v1', 'iron-man') || 'iron-man');
-  const [appearanceMode, setAppearanceMode] = useState(() => normalizeAppearanceMode(readStorageValue('mcu-appearance-mode-v1', 'minimal') || 'minimal'));
+  const [appearanceMode, setAppearanceMode] = useState(() => normalizeAppearanceMode(readStorageValue('mcu-appearance-mode-v1', 'archive') || 'archive'));
   const [marvelLangMode, setMarvelLangMode] = useState(false);
   const [spoilerSafeMode, setSpoilerSafeMode] = useState(true);
   const [autoHideStatuses, setAutoHideStatuses] = useState(initialUiState.autoHideStatuses);
@@ -1024,7 +1030,8 @@ export default function MCUViewer() {
     if (!routeIntent) {
       setActivePhase(0);
       setDetailItem(null);
-      setBrowseMode('home');
+      setBrowseMode('library');
+      setSelectedCollectionId('');
     }
     setExpandedPhase(null);
     setExpandedItem(null);
@@ -1042,7 +1049,8 @@ export default function MCUViewer() {
       const resolved = nextUniverse === 'dc' ? 'dc' : 'mcu';
       return prev === resolved ? prev : resolved;
     });
-    setBrowseMode('home');
+    setBrowseMode('library');
+    setSelectedCollectionId('');
     setSettingsOpen(false);
     setAnalyticsOpen(false);
     setSidebarOpen(false);
@@ -1646,8 +1654,9 @@ export default function MCUViewer() {
       setDetailItem(null);
       setSettingsOpen(false);
       setAnalyticsOpen(false);
-      setBrowseMode('home');
+      setBrowseMode('library');
       setTypeFilter(null);
+      setSelectedCollectionId('');
       return;
     }
 
@@ -1667,7 +1676,7 @@ export default function MCUViewer() {
     if (primary === 'settings') {
       setDetailItem(null);
       setAnalyticsOpen(false);
-      setBrowseMode('home');
+      setBrowseMode('library');
       setSettingsOpen(true);
       return;
     }
@@ -1675,7 +1684,7 @@ export default function MCUViewer() {
     if (primary === 'analytics') {
       setDetailItem(null);
       setSettingsOpen(false);
-      setBrowseMode('home');
+      setBrowseMode('library');
       setAnalyticsOpen(true);
       return;
     }
@@ -1704,12 +1713,21 @@ export default function MCUViewer() {
       return;
     }
 
+    if (primary === 'collection') {
+      setDetailItem(null);
+      setSettingsOpen(false);
+      setAnalyticsOpen(false);
+      setBrowseMode('library');
+      setSelectedCollectionId(parts[1] || '');
+      return;
+    }
+
     if (primary === 'movie' || primary === 'title' || primary === 'series') {
       const requestedSlug = parts.slice(1).join('-');
       const routedItem = routeItems.find(item => routeItemMatchesSlug(item, requestedSlug));
       setSettingsOpen(false);
       setAnalyticsOpen(false);
-      setBrowseMode('home');
+      setBrowseMode('library');
       if (routedItem) {
         setTypeFilter(null);
         openDetail(routedItem);
@@ -1725,7 +1743,7 @@ export default function MCUViewer() {
     setDetailItem(null);
     setSettingsOpen(false);
     setAnalyticsOpen(false);
-    setBrowseMode('home');
+    setBrowseMode('library');
     setTypeFilter(null);
   }, [openDetail, switchUniverse, universe]);
 
@@ -1735,9 +1753,10 @@ export default function MCUViewer() {
     if (analyticsOpen) return `${universeRoutePath(universe)}/analytics`;
     if (browseMode === 'search' && typeFilter === 'series' && !search.trim()) return `${universeRoutePath(universe)}${SERIES_ROUTE}`;
     if (browseMode === 'search') return searchRoutePath(search, typeFilter, universe);
+    if (selectedCollectionId) return collectionRoutePath(selectedCollectionId, universe);
     if (browseMode === 'phase') return phaseRoutePath(activePhase, universe);
     return universeRoutePath(universe);
-  }, [activePhase, analyticsOpen, browseMode, detailItem, search, settingsOpen, typeFilter, universe]);
+  }, [activePhase, analyticsOpen, browseMode, detailItem, search, selectedCollectionId, settingsOpen, typeFilter, universe]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -3389,6 +3408,15 @@ export default function MCUViewer() {
     return lexicon[label] || `✦ ${label}`;
   };
   const filterTriggerLabel = tUniverse('Filters');
+  const activeArchiveDestination = settingsOpen ? 'Settings' : analyticsOpen ? 'Progress' : browseMode === 'search' ? 'Search' : selectedCollectionId ? 'Collections' : browseMode === 'phase' ? 'Library' : 'Home';
+  const archiveDestinations = [
+    { id: 'Home', label: 'Home', Icon: Eye, onSelect: navigateHome },
+    { id: 'Library', label: 'Library', Icon: Layers, badge: filtered.length, onSelect: () => { setBrowseMode('library'); setSelectedCollectionId(''); setSettingsOpen(false); setAnalyticsOpen(false); setSidebarOpen(false); } },
+    { id: 'Collections', label: 'Collections', Icon: Bookmark, onSelect: () => { setBrowseMode('library'); setSettingsOpen(false); setAnalyticsOpen(false); setSidebarOpen(false); requestAnimationFrame(() => document.querySelector('.collection-rooms')?.scrollIntoView({ behavior: performanceMode ? 'auto' : 'smooth', block: 'start' })); } },
+    { id: 'Search', label: 'Search', Icon: Search, onSelect: () => openSearchMode(search, null) },
+    { id: 'Progress', label: 'Progress', Icon: SlidersH, badge: `${pct}%`, onSelect: openAnalyticsPanel },
+    { id: 'Settings', label: 'Settings', Icon: Settings, onSelect: () => { setBrowseMode('library'); setSidebarOpen(false); toggleSettingsPanel(); } },
+  ];
 
   const renderPhaseSelector = () => {
     const activePhaseMeta = currentPhases.find(p => p.id === activePhase);
@@ -3584,7 +3612,6 @@ export default function MCUViewer() {
       <TitleCard />
       <SettingsSection open={settingsOpen} />
       <Analytics open={analyticsOpen} />
-      <DetailDrawer open={Boolean(detailItem)} />
     </>
   );
 
@@ -3623,7 +3650,7 @@ export default function MCUViewer() {
       <div className="theme-transition-loader" aria-hidden={!themeTransitioning}><span />Retuning theme</div>
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <NavigationShell controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onDismissBackdrop={suppressNextDocumentClick} onOpenSettings={toggleSettingsPanel}>
+      <NavigationShell controlsHidden={analyticsOpen || detailItem || settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} onToggle={toggleSidebarPanel} onClose={closeSidebar} onDismissBackdrop={suppressNextDocumentClick} onOpenSettings={toggleSettingsPanel} destinations={archiveDestinations} activeDestination={activeArchiveDestination} progressBadge={`${pct}%`}>
         <div className="sidebar-redesign">
           <section className="sidebar-panel sidebar-panel--brand">
             <p className="sidebar-kicker">{universe === 'dc' ? 'Justice Network' : 'Avengers Network'}</p>
@@ -3903,7 +3930,7 @@ export default function MCUViewer() {
       )}
 
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {browseMode !== 'search' && <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 60, marginTop: 16 }}>
+      {browseMode !== 'search' && browseMode !== 'library' && <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 60, marginTop: 16 }}>
         {/* Toggle row — always visible */}
         <div style={{ maxWidth: 1480, margin: '0 auto', padding: '0 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
@@ -4110,12 +4137,50 @@ export default function MCUViewer() {
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
-          {browseMode !== 'search' && phaseKeys.length === 0 && (
+          {browseMode !== 'search' && browseMode !== 'library' && phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
             </div>
           )}
-          {browseMode === 'search' ? (
+          {browseMode === 'library' ? (
+            <LibraryAtrium
+              items={items}
+              filteredItems={filtered}
+              universe={universe}
+              bookmarks={bookmarks}
+              ratings={metaCache}
+              phases={currentPhases}
+              timelineModes={TIMELINE_MODES}
+              timelineMode={timelineMode}
+              onTimelineModeChange={setTimelineMode}
+              search={search}
+              onSearchChange={setSearch}
+              searchScope={searchScope}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              typeFilter={typeFilter}
+              onTypeFilterChange={setTypeFilter}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+              activePhase={activePhase}
+              onActivePhaseChange={setActivePhase}
+              essentialOnly={essentialOnly}
+              onEssentialOnlyChange={setEssOnly}
+              watchedOnly={watchedOnly}
+              onWatchedOnlyChange={setWatchedOnly}
+              autoHideStatuses={autoHideStatuses}
+              onAutoHideStatusesChange={setAutoHideStatuses}
+              selectedCollectionId={selectedCollectionId}
+              onCollectionChange={setSelectedCollectionId}
+              posterSrc={posterSrc}
+              releaseStatusFor={releaseStatusFor}
+              onOpenDetail={openDetail}
+              onSetStatus={setStatusDirect}
+              onToggleBookmark={toggleBookmark}
+              characterSets={CHARACTER_POV_TITLE_SETS}
+              afterCredits={AFTER_CREDITS}
+            />
+          ) : browseMode === 'search' ? (
             search.trim() ? (
               <section data-motion="section" className='curvy-panel motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 12 }}>
                 <div className="list-panel" style={{ overflow: 'hidden' }}>
@@ -4237,8 +4302,8 @@ export default function MCUViewer() {
 
       {/* ━━ DETAIL MODAL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       {detailItem && (
-        <div className="detail-backdrop" onClick={() => setDetailItem(null)} role="dialog" aria-label="Movie details">
-          <div className="detail-card glass-panel detail-export-shell" onClick={(e) => e.stopPropagation()} style={{ border: '1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border))' }}>
+        <DetailDrawer open={Boolean(detailItem)} onClose={() => setDetailItem(null)} labelledBy="librarian-detail-title">
+          <div className="detail-card glass-panel detail-export-shell" style={{ border: '1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border))' }}>
             <div className="detail-export-grid">
               <div className="detail-poster-frame">
                 {detailPosterFailed ? (
@@ -4259,13 +4324,16 @@ export default function MCUViewer() {
                   <button className="fpill glass-panel detail-btn detail-close-sticky" onClick={() => setDetailItem(null)}><X size={14}/>Close</button>
                 </div>
                 <div className="detail-export-kicker">MCU DETAILS CARD</div>
-                <h2 className="detail-export-title">{detailItem.title}</h2>
+                <h2 id="librarian-detail-title" className="detail-export-title">{detailItem.title}</h2>
                 <div className="detail-export-meta">
                   <span>Phase {detailItem.phase}</span>
                   <span>{getSafeTypeMeta(detailItem.type).label}</span>
                   {(detailData?.imdbRating && detailData.imdbRating !== 'N/A') && <span>★ {detailData.imdbRating}/10</span>}
                 </div>
                 <div className="detail-export-actions-inline">
+                  <button className="fpill glass-panel detail-btn" onClick={() => setStatusDirect(detailItem.id, detailItem.status === 'watched' ? 'unwatched' : 'watched')}><Check size={12}/>{detailItem.status === 'watched' ? 'Mark Unwatched' : 'Mark Watched'}</button>
+                  <button className="fpill glass-panel detail-btn" onClick={() => setStatusDirect(detailItem.id, detailItem.status === 'watching' ? 'unwatched' : 'watching')}><PlayCircle size={12}/>{detailItem.status === 'watching' ? 'Stop Watching' : 'Continue Watching'}</button>
+                  <button className={`fpill glass-panel detail-btn ${bookmarks[detailItem.id] ? 'is-active' : ''}`} onClick={() => toggleBookmark(detailItem.id)}><Bookmark size={12}/>{bookmarks[detailItem.id] ? 'Pinned' : 'Pin'}</button>
                   {hasTrailerOption && (
                     <button className="fpill glass-panel detail-btn" onClick={() => { setTrailerVariantIndex(trailerOptionIndex); openTrailerPlayer(); }}><PlayCircle size={12}/>Trailer</button>
                   )}
@@ -4341,6 +4409,13 @@ export default function MCUViewer() {
                     <div><strong>Cast</strong><span>{detailData?.Actors && detailData.Actors !== 'N/A' ? detailData.Actors : (CAST_MAP[detailItem.title] || ['Cast data coming soon']).join(', ')}</span></div>
                   </div>
                 </section>
+                <section className="detail-export-panel intel">
+                  <div className="detail-export-panel-head"><span>COLLECTION MEMBERSHIP</span></div>
+                  <div className="detail-export-meta">
+                    {getVisibleCollectionRooms(universe).filter(room => collectionMatchesItem(room, detailItem, { universe })).map(room => <span key={room.id}>{room.icon} {room.title}</span>)}
+                  </div>
+                </section>
+
                 <section className="detail-export-panel intel post-credit-graph-panel">
                   <div className="detail-export-panel-head"><span>POST-CREDIT DEPENDENCY GRAPH</span></div>
                   <div className="post-credit-graph" role="list" aria-label="Post-credit dependency graph">
@@ -4389,7 +4464,7 @@ export default function MCUViewer() {
               </div>
             </div>
           </div>
-        </div>
+        </DetailDrawer>
       )}
 
       {trailerOpen && detailItem && selectedTrailer?.youtubeId && (

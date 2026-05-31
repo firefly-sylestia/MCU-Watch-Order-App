@@ -1,0 +1,26 @@
+.collection-rooms { padding: clamp(16px, 3vw, 24px); }
+.library-section-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.library-section-head h2 { margin: 2px 0 4px; font-size: clamp(1.35rem, 3vw, 2.1rem); letter-spacing: -0.04em; }
+.library-section-head p { margin: 0; color: var(--theme-text-secondary); }
+.library-eyebrow { margin: 0; color: var(--theme-accent-alt); font-size: 11px; font-weight: 900; letter-spacing: .16em; text-transform: uppercase; }
+.archive-room-clear { min-height: 38px; padding: 0 14px; border: 1px solid var(--theme-border); border-radius: 999px; background: var(--archive-chip-bg); color: var(--theme-text); font-weight: 800; cursor: pointer; }
+.collection-room-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.collection-room-card { position: relative; min-height: 270px; padding: 16px; border: 1px solid color-mix(in srgb, var(--room-accent) 24%, var(--theme-border)); border-radius: var(--radius-lg, 24px); background: linear-gradient(150deg, color-mix(in srgb, var(--room-accent) 14%, var(--theme-surface)), color-mix(in srgb, var(--theme-surface-strong) 86%, transparent)); color: var(--theme-text); text-align: left; overflow: hidden; cursor: pointer; box-shadow: 0 18px 42px color-mix(in srgb, var(--theme-shadow-rgb, #020617) 16%, transparent); transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out), background 160ms var(--ease-out); }
+.collection-room-card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--room-accent) 58%, var(--theme-border)); }
+.collection-room-card:active { transform: translateY(0) scale(.99); }
+.collection-room-card:focus-visible, .archive-room-clear:focus-visible { outline: none; box-shadow: var(--interactive-ring); }
+.collection-room-card.is-active { border-color: var(--room-accent); }
+.collection-room-card__top, .collection-room-card__stats { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+.collection-room-card__icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 16px; background: color-mix(in srgb, var(--room-accent) 24%, var(--theme-bg)); color: var(--room-accent); font-weight: 900; font-size: 22px; }
+.collection-room-card__active { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border-radius: 999px; background: color-mix(in srgb, var(--room-accent) 18%, transparent); color: var(--room-accent); font-size: 11px; font-weight: 900; }
+.collection-room-card h3 { margin: 18px 0 8px; font-size: 1.25rem; letter-spacing: -0.03em; }
+.collection-room-card p { margin: 0; color: var(--theme-text-secondary); line-height: 1.45; }
+.collection-room-card__posters { position: relative; height: 90px; margin: 18px 0 14px; }
+.collection-room-card__posters span { position: absolute; left: calc(var(--stack-index) * 42px); top: calc(var(--stack-index) * 3px); width: 56px; height: 82px; border: 2px solid color-mix(in srgb, var(--theme-bg) 72%, transparent); border-radius: 10px; overflow: hidden; background: var(--theme-surface-strong); box-shadow: 0 10px 20px rgba(0,0,0,.22); }
+.collection-room-card__posters img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.collection-room-card__meter { height: 7px; border-radius: 999px; background: color-mix(in srgb, var(--theme-bg) 42%, transparent); overflow: hidden; }
+.collection-room-card__meter span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--room-accent), var(--theme-accent-alt)); }
+.collection-room-card__stats { margin-top: 10px; color: var(--theme-text-muted); font-size: 12px; font-weight: 800; }
+.collection-room-card__stats strong { color: var(--room-accent); }
+@media (max-width: 640px) { .library-section-head { align-items: start; flex-direction: column; } .collection-room-grid { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .collection-room-card { transition-duration: 1ms !important; } .collection-room-card:hover, .collection-room-card:active { transform: none !important; } }
