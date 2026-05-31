@@ -610,39 +610,59 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   const RowStatusIcon = statusMeta.Icon;
   const hideWatchToggle = releaseStatus === 'upcoming';
   return (
-    <div>
-      <div className={`rrow media-command-card type-${item.type} row-status-${item.status} ${isExpanded ? 'curvy-selected' : ''}`} data-bookmarked={isBookmarked} data-watched={isWatched} style={{ opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow, ...(isWatched ? { background: 'color-mix(in srgb, var(--theme-watched-bg) 62%, transparent)' } : {}) }}>
-        <div className={`row-index ${isWatched ? 'is-watched' : ''}`}>
-          {bulkSelectMode ? (
-            <input
-              type="checkbox"
-              checked={isSelected}
-              aria-label={`Select ${item.title}`}
-              onChange={(event) => onToggleSelected(item.id, event.target.checked)}
-              onClick={(event) => event.stopPropagation()}
-              className="row-select-checkbox"
-            />
-          ) : (idx + 1)}
+    <div className="watch-card-shell">
+      <article
+        className={`rrow watch-command-card media-command-card type-${item.type} row-status-${item.status} ${isExpanded ? 'curvy-selected' : ''}`}
+        data-bookmarked={isBookmarked}
+        data-watched={isWatched}
+        data-expanded={isExpanded}
+        style={{ '--phase-color': ph.color, '--phase-glow': ph.glow }}
+      >
+        <div className="watch-card-orbit">
+          <span className="watch-card-orbit__phase">P{item.phase}</span>
+          <span className={`watch-card-orbit__index ${isWatched ? 'is-watched' : ''}`}>
+            {bulkSelectMode ? (
+              <input
+                type="checkbox"
+                checked={isSelected}
+                aria-label={`Select ${item.title}`}
+                onChange={(event) => onToggleSelected(item.id, event.target.checked)}
+                onClick={(event) => event.stopPropagation()}
+                className="row-select-checkbox"
+              />
+            ) : String(idx + 1).padStart(2, '0')}
+          </span>
         </div>
-        <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 8} loadingMode="lazy" />
 
-        <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
-          <div className="title-row-top" style={TITLE_ROW_STATIC.titleLine}>
-            <span className="title-main">{item.title}</span>
-            <ChevRight size={10} className="title-chevron" />
-          </div>
-          <div className="title-row-mid release-meta-grid">
-            {item.episodes && <span className="meta-chip meta-chip-xs truncate-single-line">{item.episodes} EP</span>}
-            <span className="meta-chip meta-chip-type truncate-single-line" style={{ color: typeMeta.color }}><TypeIcon size={8} />{typeMeta.label}</span>
-            <span className="meta-chip meta-chip-sm truncate-single-line">{item.year || releaseLabel}</span>
-            <span className="meta-chip meta-chip-release meta-chip-xxs truncate-single-line" style={{ color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
-            {!item.essential && <span className="meta-chip meta-chip-xs truncate-single-line">OPT</span>}
-          </div>
-          <div className="meta-muted line-clamp-2 overflow-wrap-anywhere title-subline" style={TITLE_ROW_STATIC.genreMeta}>GENRES: {genres.join(' • ').toUpperCase()}</div>
+        <button type="button" className="watch-poster-frame" onClick={() => onOpenDetail(item)} aria-label={`Open ${item.title} details`}>
+          <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 8} loadingMode="lazy" />
+          <span className="watch-poster-frame__shine" aria-hidden="true" />
         </button>
 
-        <div className={`row-actions media-command-actions ${isDesktopViewport ? 'is-desktop' : ''}`}>
-          <div className="row-meta-line truncate-single-line rating-marvel-pill media-rating-pill" aria-label={`Rating ${rating || 'not available'}`}><Star size={11} /> {rating || '—'}</div>
+        <div className="watch-card-copy">
+          <button className="title-btn watch-card-title" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
+            <span className="watch-card-kicker">{ph.name || `Phase ${item.phase}`} · {releaseLabel}</span>
+            <span className="title-row-top" style={TITLE_ROW_STATIC.titleLine}>
+              <span className="title-main">{item.title}</span>
+              <ChevRight size={14} className="title-chevron" />
+            </span>
+          </button>
+
+          <div className="watch-card-tags release-meta-grid" aria-label={`${item.title} metadata`}>
+            {item.episodes && <span className="meta-chip meta-chip-xs truncate-single-line">{item.episodes} EP</span>}
+            <span className="meta-chip meta-chip-type truncate-single-line" style={{ '--chip-accent': typeMeta.color }}><TypeIcon size={11} />{typeMeta.label}</span>
+            <span className="meta-chip meta-chip-sm truncate-single-line"><Clock size={10} />{item.year || releaseLabel}</span>
+            <span className="meta-chip meta-chip-release meta-chip-xxs truncate-single-line" style={{ color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
+            {!item.essential && <span className="meta-chip meta-chip-xs truncate-single-line">Optional</span>}
+          </div>
+
+          <div className="watch-card-genres meta-muted line-clamp-2 overflow-wrap-anywhere" style={TITLE_ROW_STATIC.genreMeta}>
+            {genres.length ? genres.join(' / ') : 'Timeline entry'}
+          </div>
+        </div>
+
+        <div className={`row-actions watch-command-actions media-command-actions ${isDesktopViewport ? 'is-desktop' : ''}`}>
+          <div className="watch-score-chip row-meta-line truncate-single-line rating-marvel-pill media-rating-pill" aria-label={`Rating ${rating || 'not available'}`}><Star size={13} /> {rating || '—'}</div>
           <button
             aria-label={`Open status menu for ${item.title}`}
             aria-haspopup="menu"
@@ -651,7 +671,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             className={`wbtn status-pill status-marvel-pill status-shade-${item.status} row-status-btn media-status-control`}
           >
             <span className="row-status-label">
-              <RowStatusIcon size={12} />
+              <RowStatusIcon size={13} />
               {statusLabelOverride || statusMeta.label}
             </span>
             <ChevDown size={12} className={`row-status-chevron ${statusDropdown === item.id ? 'is-open' : ''}`} />
@@ -669,8 +689,7 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
             ><RowStatusIcon size={14} /><span>{isWatched ? 'Done' : 'Watch'}</span></button>
           )}
         </div>
-        
-      </div>
+      </article>
     </div>
   );
 }, areTitleRowPropsEqual);
