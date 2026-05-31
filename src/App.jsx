@@ -16,6 +16,7 @@ import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
 import ThemeStudio from './components/features/ThemeStudio';
 import NavigationShell from './components/navigation/NavigationShell';
+import RhythmHome from './integrations/rhythm/RhythmHome.jsx';
 import { DeepLinkRouteSync, ROUTE_FALLBACK, SERIES_ROUTE, parseDeepLinkRoute, phaseRoutePath, routeItemMatchesSlug, searchRoutePath, titleRoutePath, universeRoutePath } from './components/navigation/DeepLinkRouter';
 import { CHARACTER_THEMES, normalizeAppearanceMode, resolveThemeTokens } from './constants/themeSettings';
 import { buildSemanticThemeVars, UI_PARITY_TOKENS } from './constants/ui';
@@ -24,6 +25,7 @@ import './App.components.css';
 import './App.motion.css';
 import './styles/performance.css';
 import './styles/theme-surfaces.css';
+import './integrations/rhythm/RhythmHome.css';
 
 import {
   ESSENTIAL_LIST,
@@ -3833,6 +3835,30 @@ export default function MCUViewer() {
 
         {!detailItem && !analyticsOpen && !settingsOpen && <WatermarkOverlay surface="hero" theme={darkMode ? 'cinematic' : 'light'} viewport={isDesktopViewport ? 'desktop' : 'mobile'} avoid={['cta', 'title']} />}
       </section>}
+      {browseMode === 'home' && !detailItem && !analyticsOpen && !settingsOpen && (
+        <RhythmHome
+          activeUniverse={activeUniverse}
+          items={activeItems}
+          phases={currentPhases}
+          phaseStats={phaseStats}
+          statusMeta={STATUS_META}
+          totalWatched={totalWatched}
+          pct={pct}
+          nextUnwatched={nextUnwatched}
+          recentActivity={recentActivity}
+          posterSrc={posterSrc}
+          onOpenItem={openDetail}
+          onOpenPhase={navigateToPhase}
+          onOpenSearch={() => openSearchMode(search, null)}
+          onOpenAnalytics={openAnalyticsPanel}
+          onSetStatusFilter={(status) => {
+            setStatusFilter(status);
+            setWatchedOnly(status === 'watched');
+            navigateToPhase(0);
+          }}
+          onToggleStatus={updateStatus}
+        />
+      )}
       {browseMode === 'phase' && (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 16px 12px' }}>
           <button
