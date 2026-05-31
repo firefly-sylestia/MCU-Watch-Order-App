@@ -42,5 +42,7 @@
   .navigation-control-btn { pointer-events: auto; height: 44px; border-radius: 18px; }
   .navigation-shell, .navigation-backdrop { display: none; }
   .archive-mobile-dock { display: grid; }
+  .archive-mobile-dock button:hover { border-color: transparent; background: transparent; color: var(--theme-text-muted); }
+  .archive-mobile-dock button[data-active="true"], .archive-mobile-dock button[data-active="true"]:hover { border-color: color-mix(in srgb, var(--theme-accent) 36%, transparent); background: color-mix(in srgb, var(--theme-accent) 13%, var(--theme-surface)); color: var(--theme-text-primary); }
 }
 @media (prefers-reduced-motion: reduce) { .navigation-shell, .navigation-shell *, .archive-mobile-dock *, .navigation-control-btn { transition-duration: 1ms !important; } }

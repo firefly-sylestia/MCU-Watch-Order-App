@@ -896,9 +896,19 @@ export default function MCUViewer() {
   const [statusDropdown, setStatusDropdown] = useState(null);
   const [fabMenuOpen, setFabMenuOpen] = useState(false);
   const [fabMinimized, setFabMinimized] = useState(false);
-  const [browseMode, setBrowseMode] = useState('library');
+  const [browseMode, setBrowseMode] = useState('home');
   const [activeCollectionId, setActiveCollectionId] = useState(null);
   const navigateHome = useCallback(() => {
+    setDetailItem(null);
+    setSettingsOpen(false);
+    setAnalyticsOpen(false);
+    setTrailerOpen(false);
+    setTrailerExpanded(false);
+    setBrowseMode('home');
+    setActiveCollectionId(null);
+    setSidebarOpen(false);
+  }, []);
+  const navigateLibrary = useCallback(() => {
     setDetailItem(null);
     setSettingsOpen(false);
     setAnalyticsOpen(false);
@@ -1030,7 +1040,7 @@ export default function MCUViewer() {
     if (!routeIntent) {
       setActivePhase(0);
       setDetailItem(null);
-      setBrowseMode('library');
+      setBrowseMode('home');
     }
     setExpandedPhase(null);
     setExpandedItem(null);
@@ -1048,7 +1058,7 @@ export default function MCUViewer() {
       const resolved = nextUniverse === 'dc' ? 'dc' : 'mcu';
       return prev === resolved ? prev : resolved;
     });
-    setBrowseMode('library');
+    setBrowseMode('home');
     setSettingsOpen(false);
     setAnalyticsOpen(false);
     setSidebarOpen(false);
@@ -1653,7 +1663,8 @@ export default function MCUViewer() {
       setDetailItem(null);
       setSettingsOpen(false);
       setAnalyticsOpen(false);
-      setBrowseMode('library');
+      setBrowseMode('home');
+      setActiveCollectionId(null);
       setTypeFilter(null);
       return;
     }
@@ -3641,7 +3652,7 @@ export default function MCUViewer() {
       <div className="theme-transition-loader" aria-hidden={!themeTransitioning}><span />Retuning theme</div>
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <NavigationShell controlsHidden={analyticsOpen || detailItem || settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} activeDestination={analyticsOpen ? 'progress' : (settingsOpen ? 'settings' : browseMode === 'search' ? 'search' : activeCollectionId ? 'collections' : 'library')} progressBadges={{ progress: `${pct}%`, collections: libraryCollections.length }} onNavigate={(destination) => { if (destination === 'home' || destination === 'library') navigateHome(); if (destination === 'collections') { setBrowseMode('library'); setSidebarOpen(false); requestAnimationFrame(() => document.querySelector('.collection-rooms')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); } if (destination === 'search') openSearchMode(search, null); if (destination === 'progress') openAnalyticsPanel(); }} onToggle={toggleSidebarPanel} onClose={closeSidebar} onDismissBackdrop={suppressNextDocumentClick} onOpenSettings={toggleSettingsPanel}>
+      <NavigationShell controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} activeDestination={analyticsOpen ? 'progress' : (settingsOpen ? 'settings' : browseMode === 'search' ? 'search' : activeCollectionId ? 'collections' : browseMode === 'home' ? 'home' : 'library')} progressBadges={{ progress: `${pct}%`, collections: libraryCollections.length }} onNavigate={(destination) => { if (destination === 'home') navigateHome(); if (destination === 'library') navigateLibrary(); if (destination === 'collections') { setBrowseMode('library'); setSidebarOpen(false); requestAnimationFrame(() => document.querySelector('.collection-rooms')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); } if (destination === 'search') openSearchMode(search, null); if (destination === 'progress') openAnalyticsPanel(); }} onToggle={toggleSidebarPanel} onClose={closeSidebar} onDismissBackdrop={suppressNextDocumentClick} onOpenSettings={toggleSettingsPanel}>
         <div className="sidebar-redesign">
           <section className="sidebar-panel sidebar-panel--brand">
             <p className="sidebar-kicker">{universe === 'dc' ? 'Justice Network' : 'Avengers Network'}</p>
@@ -3668,7 +3679,8 @@ export default function MCUViewer() {
           <section className="sidebar-panel">
             <div className="sidebar-section-title">{tUniverse('View & Navigate')}</div>
             <div className="sidebar-btn-grid">
-              <button className="fpill" onClick={navigateHome} style={{ justifyContent: 'center' }}>Library</button>
+              <button className="fpill" onClick={navigateHome} style={{ justifyContent: 'center', borderColor: browseMode === 'home' ? 'var(--theme-accent)' : 'var(--theme-border)', color: browseMode === 'home' ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Star size={12} />Home</button>
+              <button className="fpill" onClick={navigateLibrary} style={{ justifyContent: 'center', borderColor: browseMode === 'library' && !activeCollectionId ? 'var(--theme-accent)' : 'var(--theme-border)', color: browseMode === 'library' && !activeCollectionId ? 'var(--theme-accent)' : 'var(--theme-text)' }}>Library</button>
               <button className="fpill" onClick={() => openSearchMode(search, null)} style={{ justifyContent: 'center' }}>Search</button>
               <button className="fpill" onClick={() => openSearchMode('', 'series')} style={{ justifyContent: 'center' }}>Series</button>
               <button className="fpill" onClick={() => navigateToPhase(activePhase || 0)} style={{ justifyContent: 'center' }}>Phases</button>
@@ -3814,7 +3826,7 @@ export default function MCUViewer() {
       </header>
 
       {/* ━━ POSTER CAROUSEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {browseMode === 'home' && false && <section className="hero-carousel-shell" aria-label={activeUniverse.heroLabel}>
+      {browseMode === 'home' && <section className="hero-carousel-shell" aria-label={activeUniverse.heroLabel}>
         {heroPosters.length > 0 && (
           <>
             <button className="hero-carousel-nav prev" type="button" aria-label="Previous featured poster" onClick={goToPrevHero}>‹</button>
