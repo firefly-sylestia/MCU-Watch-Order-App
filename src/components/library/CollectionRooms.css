@@ -1,0 +1,151 @@
+.collection-rooms {
+  color: var(--theme-text-primary);
+}
+
+.collection-rooms__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: clamp(12px, 2vw, 18px);
+}
+
+.collection-room-card {
+  position: relative;
+  display: flex;
+  min-height: 190px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  overflow: hidden;
+  padding: 18px;
+  border: 1px solid var(--theme-border);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 85% 5%, color-mix(in srgb, var(--collection-accent, var(--theme-accent)) 20%, transparent), transparent 34%),
+    linear-gradient(135deg, color-mix(in srgb, var(--theme-surface) 92%, transparent), color-mix(in srgb, var(--theme-accent) 8%, var(--theme-surface)));
+  color: var(--theme-text-primary);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 16px 42px color-mix(in srgb, var(--theme-bg) 36%, transparent);
+  transition:
+    transform var(--motion-fast, 160ms) var(--ease-out, ease),
+    border-color var(--motion-fast, 160ms) var(--ease-out, ease),
+    background var(--motion-fast, 160ms) var(--ease-out, ease),
+    box-shadow var(--motion-fast, 160ms) var(--ease-out, ease);
+}
+
+.collection-room-card:hover,
+.collection-room-card[data-active='true'] {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--collection-accent, var(--theme-accent)) 58%, var(--theme-border));
+  box-shadow: 0 20px 50px color-mix(in srgb, var(--collection-accent, var(--theme-accent)) 18%, transparent);
+}
+
+.collection-room-card:focus-visible {
+  outline: 2px solid var(--interactive-ring, var(--theme-accent));
+  outline-offset: 3px;
+}
+
+.collection-room-card__glow {
+  position: absolute;
+  inset: auto -20% -48% 34%;
+  height: 130px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--collection-accent, var(--theme-accent)) 20%, transparent);
+  filter: blur(24px);
+  pointer-events: none;
+}
+
+.collection-room-card__topline {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.collection-room-card__icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--collection-accent, var(--theme-accent)) 42%, var(--theme-border));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--collection-accent, var(--theme-accent)) 12%, var(--theme-surface));
+  font-size: 19px;
+}
+
+.collection-room-card__count {
+  border: 1px solid color-mix(in srgb, var(--collection-accent, var(--theme-accent)) 28%, var(--theme-border));
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: var(--theme-text-secondary);
+  font-family: var(--font-marvel-ui);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.collection-room-card__title,
+.collection-room-card__description,
+.collection-room-card__posters {
+  position: relative;
+  z-index: 1;
+}
+
+.collection-room-card__title {
+  font-family: var(--font-marvel-display);
+  font-size: clamp(1.15rem, 2.5vw, 1.55rem);
+  font-weight: 900;
+  letter-spacing: .02em;
+  line-height: 1;
+}
+
+.collection-room-card__description {
+  color: var(--theme-text-secondary);
+  font-size: .92rem;
+  line-height: 1.45;
+}
+
+.collection-room-card__posters {
+  display: flex;
+  min-height: 54px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.collection-room-card__posters img {
+  width: 42px;
+  height: 58px;
+  margin-left: calc(var(--poster-index, 0) * -8px);
+  border: 2px solid color-mix(in srgb, var(--theme-surface-strong) 88%, var(--theme-border));
+  border-radius: 10px;
+  object-fit: cover;
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--theme-bg) 46%, transparent);
+}
+
+.collection-room-card__posters img:first-child {
+  margin-left: 0;
+}
+
+.collection-rooms[data-variant='library'] .collection-room-card {
+  min-height: 168px;
+}
+
+@media (max-width: 640px) {
+  .collection-rooms__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collection-room-card {
+    transition: none;
+  }
+
+  .collection-room-card:hover,
+  .collection-room-card[data-active='true'] {
+    transform: none;
+  }
+}

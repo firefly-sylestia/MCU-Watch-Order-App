@@ -15,6 +15,8 @@ import { useOverlayNavigation } from './hooks/useOverlayNavigation';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
 import ThemeStudio from './components/features/ThemeStudio';
+import LibraryAtrium from './components/library/LibraryAtrium';
+import CollectionRooms from './components/library/CollectionRooms';
 import NavigationShell from './components/navigation/NavigationShell';
 import { DeepLinkRouteSync, ROUTE_FALLBACK, SERIES_ROUTE, parseDeepLinkRoute, phaseRoutePath, routeItemMatchesSlug, searchRoutePath, titleRoutePath, universeRoutePath } from './components/navigation/DeepLinkRouter';
 import { CHARACTER_THEMES, normalizeAppearanceMode, resolveThemeTokens } from './constants/themeSettings';
@@ -38,6 +40,7 @@ import { UNIVERSE_META } from './constants/universeSwitch';
 import { TIMELINE_MODES, TIMELINE_MODE_IDS, CHARACTER_POV_TITLE_SETS, STORY_ORDER_OVERRIDES, SONY_MARVEL_TITLE_SET } from './data/timelineModes';
 import { AFTER_CREDITS, AFTER_CREDITS_DEFAULT, DIRECTOR_DATA } from './data/afterCreditsData';
 import { TRAILER_DATA, trailerEmbedUrl, getTrailerByTitle } from './data/trailerData';
+import { getCollectionsForUniverse, collectionMatchesItem } from './data/libraryCollections';
 
 import { Search, Eye, EyeOff, Film, Tv, Zap, ChevDown, ChevRight, ArrowUpDown, Check, Clock, Heart, Pause, Trash2, Upload, Download, Sun, Star, Moon, Settings, Info, Bookmark, Layers, PlayCircle, PauseCircle, XCircle, SlidersH, UserCircle, SwitchIcon, X } from './constants/icons';
 import { MARVEL_UI_LEXICON, DC_UI_LEXICON, LIST_MODES } from './constants/appText';
@@ -894,40 +897,66 @@ export default function MCUViewer() {
   const [fabMenuOpen, setFabMenuOpen] = useState(true);
   const [fabMinimized, setFabMinimized] = useState(false);
   const [browseMode, setBrowseMode] = useState('home');
-  const navigateHome = useCallback(() => {
+  const [activeCollectionId, setActiveCollectionId] = useState(null);
+  const closeOverlayViews = useCallback(() => {
     setDetailItem(null);
     setSettingsOpen(false);
     setAnalyticsOpen(false);
     setTrailerOpen(false);
     setTrailerExpanded(false);
-    setBrowseMode('home');
-    setSidebarOpen(false);
   }, []);
+  const navigateHome = useCallback(() => {
+    closeOverlayViews();
+    setBrowseMode('home');
+    setActiveCollectionId(null);
+    setSidebarOpen(false);
+  }, [closeOverlayViews]);
   const openSearchMode = useCallback((nextSearch = '', nextType = null) => {
-    setDetailItem(null);
-    setSettingsOpen(false);
-    setAnalyticsOpen(false);
-    setTrailerOpen(false);
-    setTrailerExpanded(false);
+    closeOverlayViews();
     setBrowseMode('search');
     setListMode('extended');
     setActivePhase(0);
     setSearchScope(UI_STATE_DEFAULTS.searchScope);
     setTypeFilter(nextType);
+    setActiveCollectionId(null);
     if (typeof nextSearch === 'string') setSearch(nextSearch);
     setSidebarOpen(false);
-  }, [setBrowseMode, setListMode, setActivePhase, setSearchScope]);
+  }, [closeOverlayViews, setBrowseMode, setListMode, setActivePhase, setSearchScope]);
   const navigateToPhase = useCallback((phaseId = 0) => {
-    setDetailItem(null);
-    setSettingsOpen(false);
-    setAnalyticsOpen(false);
-    setTrailerOpen(false);
-    setTrailerExpanded(false);
+    closeOverlayViews();
     setBrowseMode('phase');
+    setActiveCollectionId(null);
     setActivePhase(phaseId);
     setSidebarOpen(false);
     requestAnimationFrame(() => scrollToListTop());
-  }, []);
+  }, [closeOverlayViews]);
+  const navigateLibrary = useCallback(() => {
+    closeOverlayViews();
+    setBrowseMode('library');
+    setActiveCollectionId(null);
+    setSidebarOpen(false);
+  }, [closeOverlayViews]);
+  const navigateCollections = useCallback(() => {
+    closeOverlayViews();
+    setBrowseMode('collections');
+    setActiveCollectionId(null);
+    setSidebarOpen(false);
+  }, [closeOverlayViews]);
+  const openCollection = useCallback((collectionId) => {
+    closeOverlayViews();
+    setBrowseMode('collections');
+    setActiveCollectionId(collectionId);
+    setSidebarOpen(false);
+    requestAnimationFrame(() => scrollToListTop?.());
+  }, [closeOverlayViews]);
+  const openHomeListView = useCallback(() => {
+    setViewMode('list');
+    navigateHome();
+  }, [navigateHome]);
+  const openHomeCalendarView = useCallback(() => {
+    setViewMode('calendar');
+    navigateHome();
+  }, [navigateHome]);
   const setFilterStatusOpen = (next) => dispatchUiMode({ filterStatusOpen: typeof next === 'function' ? next(uiModeState.filterStatusOpen) : next });
   const setDockStatusOpen = (next) => dispatchUiMode({ dockStatusOpen: typeof next === 'function' ? next(uiModeState.dockStatusOpen) : next });
   const setFiltersOpen = (next) => dispatchUiMode({ filtersOpen: typeof next === 'function' ? next(uiModeState.filtersOpen) : next });
@@ -1025,6 +1054,7 @@ export default function MCUViewer() {
       setActivePhase(0);
       setDetailItem(null);
       setBrowseMode('home');
+      setActiveCollectionId(null);
     }
     setExpandedPhase(null);
     setExpandedItem(null);
@@ -1043,6 +1073,7 @@ export default function MCUViewer() {
       return prev === resolved ? prev : resolved;
     });
     setBrowseMode('home');
+    setActiveCollectionId(null);
     setSettingsOpen(false);
     setAnalyticsOpen(false);
     setSidebarOpen(false);
@@ -1647,7 +1678,26 @@ export default function MCUViewer() {
       setSettingsOpen(false);
       setAnalyticsOpen(false);
       setBrowseMode('home');
+      setActiveCollectionId(null);
       setTypeFilter(null);
+      return;
+    }
+
+    if (primary === 'library') {
+      setDetailItem(null);
+      setSettingsOpen(false);
+      setAnalyticsOpen(false);
+      setBrowseMode('library');
+      setActiveCollectionId(null);
+      return;
+    }
+
+    if (primary === 'collections') {
+      setDetailItem(null);
+      setSettingsOpen(false);
+      setAnalyticsOpen(false);
+      setBrowseMode('collections');
+      setActiveCollectionId(parts[1] || null);
       return;
     }
 
@@ -1656,6 +1706,7 @@ export default function MCUViewer() {
       setSettingsOpen(false);
       setAnalyticsOpen(false);
       setBrowseMode('search');
+      setActiveCollectionId(null);
       setListMode('extended');
       setActivePhase(0);
       setSearchScope(UI_STATE_DEFAULTS.searchScope);
@@ -1686,6 +1737,7 @@ export default function MCUViewer() {
       setSettingsOpen(false);
       setAnalyticsOpen(false);
       setBrowseMode('phase');
+      setActiveCollectionId(null);
       setTypeFilter(null);
       setActivePhase(Number.isFinite(requestedPhase) && requestedPhase > 0 ? requestedPhase : 0);
       return;
@@ -1696,6 +1748,7 @@ export default function MCUViewer() {
       setSettingsOpen(false);
       setAnalyticsOpen(false);
       setBrowseMode('search');
+      setActiveCollectionId(null);
       setListMode('extended');
       setActivePhase(0);
       setTypeFilter('series');
@@ -1716,6 +1769,7 @@ export default function MCUViewer() {
       } else {
         setDetailItem(null);
         setBrowseMode('search');
+        setActiveCollectionId(null);
         setListMode('extended');
         setSearch(decodeURIComponent(requestedSlug || '').replace(/-/g, ' '));
       }
@@ -1736,8 +1790,10 @@ export default function MCUViewer() {
     if (browseMode === 'search' && typeFilter === 'series' && !search.trim()) return `${universeRoutePath(universe)}${SERIES_ROUTE}`;
     if (browseMode === 'search') return searchRoutePath(search, typeFilter, universe);
     if (browseMode === 'phase') return phaseRoutePath(activePhase, universe);
+    if (browseMode === 'library') return `${universeRoutePath(universe)}/library`;
+    if (browseMode === 'collections') return `${universeRoutePath(universe)}/collections${activeCollectionId ? `/${activeCollectionId}` : ''}`;
     return universeRoutePath(universe);
-  }, [activePhase, analyticsOpen, browseMode, detailItem, search, settingsOpen, typeFilter, universe]);
+  }, [activeCollectionId, activePhase, analyticsOpen, browseMode, detailItem, search, settingsOpen, typeFilter, universe]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1867,6 +1923,15 @@ export default function MCUViewer() {
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
     [items, listMode, coreIds]
+  );
+  const collections = useMemo(() => getCollectionsForUniverse(universe), [universe]);
+  const activeCollection = useMemo(
+    () => collections.find(collection => collection.id === activeCollectionId) || null,
+    [collections, activeCollectionId]
+  );
+  const collectionItems = useMemo(
+    () => activeCollection ? activeItems.filter(item => collectionMatchesItem(activeCollection, item)) : [],
+    [activeCollection, activeItems]
   );
 
 
@@ -3576,6 +3641,58 @@ export default function MCUViewer() {
     );
   };
 
+
+  const renderTitleRows = useCallback((rows, emptyMessage = 'No titles found for this view.') => {
+    if (!rows.length) {
+      return (
+        <div className="collection-empty-state">
+          {emptyMessage}
+        </div>
+      );
+    }
+
+    return (
+      <section data-motion="section" className="curvy-panel motion-section motion-pop" style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 12 }}>
+        <div className="list-panel" style={{ overflow: 'hidden' }}>
+          <PhaseRows rows={rows} renderRow={(item, idx) => {
+            const itemReleaseStatus = releaseStatusFor(item);
+            const itemReleaseInfo = releaseInfoFor(item);
+            return (
+              <MemoizedTitleRow
+                key={item.id}
+                item={item}
+                idx={idx}
+                ph={currentPhases.find(ph => ph.id === item.phase) || currentPhases[0]}
+                T={T}
+                typeMeta={getSafeTypeMeta(item.type)}
+                statusMeta={getSafeStatusMeta(item.status)}
+                releaseStatus={itemReleaseStatus}
+                releaseStatusText={releaseStatusLabel(itemReleaseStatus)}
+                releaseStatusStyleObj={releaseStatusStyle(itemReleaseStatus)}
+                releaseLabel={formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}
+                poster={posterSrc(item)}
+                genres={inferGenres(item)}
+                isExpanded={expandedItem === item.id}
+                isWatched={item.status === 'watched'}
+                isBookmarked={Boolean(bookmarks[item.id])}
+                statusDropdown={statusDropdown}
+                rating={metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
+                onOpenDetail={openDetail}
+                onSetStatus={setStatusDirect}
+                onToggleBookmark={toggleBookmark}
+                onOpenStatus={openStatusDropdown}
+                bulkSelectMode={bulkSelectMode}
+                isSelected={selectedIds.has(item.id)}
+                onToggleSelected={toggleSelected}
+                isDesktopViewport={isDesktopViewport}
+              />
+            );
+          }} />
+        </div>
+      </section>
+    );
+  }, [T, bookmarks, bulkSelectMode, currentPhases, expandedItem, isDesktopViewport, metaCache, openDetail, openStatusDropdown, selectedIds, setStatusDirect, statusDropdown, toggleBookmark, toggleSelected]);
+
   const sectionScaffold = (
     <>
       <Header title="MCU Viewing Order" subtitle="Modernized modular UI shell" />
@@ -3651,11 +3768,13 @@ export default function MCUViewer() {
             <div className="sidebar-section-title">{tUniverse('View & Navigate')}</div>
             <div className="sidebar-btn-grid">
               <button className="fpill" onClick={navigateHome} style={{ justifyContent: 'center' }}>Home</button>
+              <button className="fpill" onClick={navigateLibrary} style={{ justifyContent: 'center' }}>Library</button>
+              <button className="fpill" onClick={navigateCollections} style={{ justifyContent: 'center' }}>Collections</button>
               <button className="fpill" onClick={() => openSearchMode(search, null)} style={{ justifyContent: 'center' }}>Search</button>
               <button className="fpill" onClick={() => openSearchMode('', 'series')} style={{ justifyContent: 'center' }}>Series</button>
               <button className="fpill" onClick={() => navigateToPhase(activePhase || 0)} style={{ justifyContent: 'center' }}>Phases</button>
               <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ justifyContent: 'center' }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
-              <button className="fpill" onClick={openAnalyticsPanel} style={{ justifyContent: 'center' }}>{tUniverse('Analytics')}</button>
+              <button className="fpill" onClick={openAnalyticsPanel} style={{ justifyContent: 'center' }}>{tUniverse('Progress / Analytics')}</button>
             </div>
             <button className="fpill" onClick={() => { setSidebarOpen(false); toggleSettingsPanel(); }} style={{ width: '100%', justifyContent: 'center' }}><Settings size={13} />{tUniverse('Open Settings')}</button>
           </section>
@@ -3849,8 +3968,8 @@ export default function MCUViewer() {
         <section className="search-page-shell" style={{ maxWidth: 1480, margin: '8px auto 14px', padding: '0 16px' }}>
           <div className="search-page-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
             <div>
-              <div style={{ fontSize: 11, letterSpacing: 1.8, textTransform: 'uppercase', color: T.textMuted }}>{tUniverse('S.H.I.E.L.D. Intel Search')}</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: T.text }}>{tUniverse('Locate any Marvel story node')}</div>
+              <div style={{ fontSize: 11, letterSpacing: 1.8, textTransform: 'uppercase', color: T.textMuted }}>{universe === 'dc' ? 'Watchtower Intel Search' : tUniverse('S.H.I.E.L.D. Intel Search')}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: T.text }}>{universe === 'dc' ? 'Locate any DC story node' : tUniverse('Locate any Marvel story node')}</div>
             </div>
             <button className="fpill" onClick={navigateHome}><ChevDown size={14}/> {tUniverse('Back to Home')}</button>
           </div>
@@ -3903,7 +4022,7 @@ export default function MCUViewer() {
       )}
 
       {/* ━━ FILTER BAR (collapsible) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {browseMode !== 'search' && <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 60, marginTop: 16 }}>
+      {(browseMode === 'home' || browseMode === 'phase') && <div style={{ background: 'transparent', borderBottom: 'none', flexShrink: 0, position: 'relative', zIndex: 60, marginTop: 16 }}>
         {/* Toggle row — always visible */}
         <div style={{ maxWidth: 1480, margin: '0 auto', padding: '0 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
@@ -4110,13 +4229,68 @@ export default function MCUViewer() {
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
-          {browseMode !== 'search' && phaseKeys.length === 0 && (
+          {(browseMode === 'home' || browseMode === 'phase') && phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
             </div>
           )}
-          {browseMode === 'search' ? (
-            search.trim() ? (
+          {browseMode === 'library' ? (
+            <LibraryAtrium
+              universe={universe}
+              collections={collections}
+              items={items}
+              activeItems={activeItems}
+              currentItem={nextUnwatched}
+              posterSrc={posterSrc}
+              onOpenSearch={() => openSearchMode('', null)}
+              onOpenCollections={navigateCollections}
+              onOpenCollection={openCollection}
+              onOpenPhases={() => navigateToPhase(activePhase || 0)}
+              onOpenProgress={openAnalyticsPanel}
+              onOpenListView={openHomeListView}
+              onOpenCalendarView={openHomeCalendarView}
+              onOpenDetail={openDetail}
+            />
+          ) : browseMode === 'collections' ? (
+            <section className="collections-view" aria-label={`${universe === 'dc' ? 'DC' : 'Marvel'} collections`}>
+              {!activeCollection ? (
+                <>
+                  <header className="collections-view__header">
+                    <div>
+                      <p className="collections-view__kicker">{universe === 'dc' ? 'Watchtower archives' : 'Archive rooms'}</p>
+                      <h2>{universe === 'dc' ? 'DC Collections' : 'Marvel Collections'}</h2>
+                      <p>Open a curated category to browse matching titles with the existing list rows, watch controls, bookmarks, ratings, and detail drawer.</p>
+                    </div>
+                    <button type="button" className="fpill" onClick={navigateLibrary}>Library Hub</button>
+                  </header>
+                  <CollectionRooms
+                    collections={collections}
+                    items={activeItems}
+                    universe={universe}
+                    posterSrc={posterSrc}
+                    onSelectCollection={openCollection}
+                    activeCollectionId={activeCollectionId}
+                  />
+                </>
+              ) : (
+                <>
+                  <header className="collections-view__header collections-view__header--detail" style={{ '--collection-accent': activeCollection.accent || 'var(--theme-accent)' }}>
+                    <button type="button" className="fpill" onClick={navigateCollections}>
+                      <ChevDown size={14} /> Back to Collections
+                    </button>
+                    <div>
+                      <p className="collections-view__kicker">{activeCollection.icon || '✦'} Curated collection</p>
+                      <h2>{activeCollection.title}</h2>
+                      <p>{activeCollection.description}</p>
+                    </div>
+                    <span className="collections-view__count">{collectionItems.length} title{collectionItems.length === 1 ? '' : 's'}</span>
+                  </header>
+                  {renderTitleRows(collectionItems, 'No titles match this collection yet.')}
+                </>
+              )}
+            </section>
+          ) : browseMode === 'search' ? (
+            (search.trim() || typeFilter) ? (
               <section data-motion="section" className='curvy-panel motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 12 }}>
                 <div className="list-panel" style={{ overflow: 'hidden' }}>
                   <PhaseRows
@@ -4230,7 +4404,7 @@ export default function MCUViewer() {
           )}
 
           <div data-motion="section" className="motion-section motion-pop" style={{ textAlign: 'center', marginTop: 44, fontFamily: 'var(--font-marvel-ui)', fontSize: 11, color: 'var(--theme-text-muted)', letterSpacing: 2.2, fontWeight: 700 }}>
-            Made with ♥️ by {tUniverse('Marvel Fan')}
+            Made with ♥️ by {tUniverse(universe === 'dc' ? 'DC Fan' : 'Marvel Fan')}
           </div>
         </div>
       </main>

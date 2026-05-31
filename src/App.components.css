@@ -4584,3 +4584,85 @@ body { background: var(--app-shell-gradient); }
   .media-command-card,.media-command-card .poster,.media-command-actions button,.row-status-chevron{transition:none !important}
   .media-command-card:hover,.media-command-card:hover .poster{transform:none !important}
 }
+
+.collections-view {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 3vw, 24px);
+  color: var(--theme-text-primary);
+}
+
+.collections-view__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border: 1px solid var(--theme-border);
+  border-radius: 24px;
+  padding: clamp(18px, 3vw, 28px);
+  background:
+    radial-gradient(circle at 92% 10%, color-mix(in srgb, var(--collection-accent, var(--theme-accent)) 18%, transparent), transparent 34%),
+    linear-gradient(135deg, color-mix(in srgb, var(--theme-surface) 90%, transparent), color-mix(in srgb, var(--theme-surface-strong) 82%, transparent));
+  box-shadow: 0 18px 48px color-mix(in srgb, var(--theme-bg) 38%, transparent);
+}
+
+.collections-view__header--detail {
+  align-items: flex-start;
+}
+
+.collections-view__header h2 {
+  margin: 0;
+  font-family: var(--font-marvel-display);
+  font-size: clamp(2rem, 6vw, 4rem);
+  font-weight: 900;
+  line-height: .95;
+}
+
+.collections-view__header p:not(.collections-view__kicker) {
+  max-width: 760px;
+  margin: 10px 0 0;
+  color: var(--theme-text-secondary);
+  line-height: 1.5;
+}
+
+.collections-view__kicker {
+  margin: 0 0 8px;
+  color: var(--collection-accent, var(--theme-accent));
+  font-family: var(--font-marvel-ui);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.collections-view__count,
+.collection-empty-state {
+  border: 1px solid color-mix(in srgb, var(--collection-accent, var(--theme-accent)) 30%, var(--theme-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--theme-surface) 78%, transparent);
+  color: var(--theme-text-secondary);
+  font-family: var(--font-marvel-ui);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.collections-view__count {
+  flex: 0 0 auto;
+  padding: 9px 12px;
+}
+
+.collection-empty-state {
+  border-radius: 18px;
+  padding: 30px;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .collections-view__header,
+  .collections-view__header--detail {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
