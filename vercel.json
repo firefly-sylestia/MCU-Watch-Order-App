@@ -3,23 +3,7 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    { "source": "/home", "destination": "/index.html" },
-    { "source": "/marvel", "destination": "/index.html" },
-    { "source": "/marvel/:path*", "destination": "/index.html" },
-    { "source": "/mcu", "destination": "/index.html" },
-    { "source": "/mcu/:path*", "destination": "/index.html" },
-    { "source": "/dc", "destination": "/index.html" },
-    { "source": "/dc/:path*", "destination": "/index.html" },
-    { "source": "/search", "destination": "/index.html" },
-    { "source": "/search/:path*", "destination": "/index.html" },
-    { "source": "/series", "destination": "/index.html" },
-    { "source": "/series/:path*", "destination": "/index.html" },
-    { "source": "/phase", "destination": "/index.html" },
-    { "source": "/phase/:path*", "destination": "/index.html" },
-    { "source": "/movie/:path*", "destination": "/index.html" },
-    { "source": "/title/:path*", "destination": "/index.html" },
-    { "source": "/settings", "destination": "/index.html" },
-    { "source": "/analytics", "destination": "/index.html" }
+    { "source": "/(.*)", "destination": "/" }
   ],
   "headers": [
     {
@@ -44,7 +28,7 @@
       ]
     },
     {
-      "source": "/index.html",
+      "source": "/",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
       ]
