@@ -42,6 +42,7 @@ import { TRAILER_DATA, trailerEmbedUrl, getTrailerByTitle } from './data/trailer
 import { Search, Eye, EyeOff, Film, Tv, Zap, ChevDown, ChevRight, ArrowUpDown, Check, Clock, Heart, Pause, Trash2, Upload, Download, Sun, Star, Moon, Settings, Info, Bookmark, Layers, PlayCircle, PauseCircle, XCircle, SlidersH, UserCircle, SwitchIcon, X } from './constants/icons';
 import { MARVEL_UI_LEXICON, DC_UI_LEXICON, LIST_MODES } from './constants/appText';
 import { matchesSearch } from './utils/searchUtils';
+import { syncRhythmStatuses } from './utils/rhythmStatusBridge';
 
 const TYPE_META = {
   film:   { label: 'Film',   Icon: Film, color: '#d4372f' },
@@ -1268,6 +1269,7 @@ export default function MCUViewer() {
       }
     });
     localStorage.setItem('mcu-v7', JSON.stringify(data));
+    syncRhythmStatuses(next).catch(() => {});
   };
 
   const setStatusDirect = (id, newStatus) => {
