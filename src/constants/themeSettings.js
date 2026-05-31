@@ -3,11 +3,10 @@ export const APPEARANCE_MODES = [
   { id: 'pixelated', label: 'Pixelated', desc: 'Arcade grid, chunky type, crisp stepped edges', font: 'Pixelify Sans' },
   { id: 'neon', label: 'Neon', desc: 'Electric signage, blacklight grids, outlined circuit panels', font: 'Audiowide' },
   { id: 'minimal', label: 'Minimal', desc: 'Quiet contrast, roomy rhythm, readable UI typography', font: 'Manrope' },
-  { id: 'archive', label: 'Archive', desc: 'Cinematic dark archive and light museum card-catalog surfaces', font: 'Space Grotesk' },
 ];
 
 export const normalizeAppearanceMode = (appearanceMode = 'glass') => (
-  appearanceMode === 'neo' ? 'neon' : appearanceMode
+  appearanceMode === 'neo' ? 'neon' : (appearanceMode === 'archive' ? 'glass' : appearanceMode)
 );
 
 export const CHARACTER_THEMES = [
@@ -131,7 +130,7 @@ export const resolveThemeTokens = ({ appearanceMode = 'glass', characterTheme = 
   const universeKey = universe === 'dc' ? 'dc' : 'marvel';
   const brandMap = universeKey === 'dc' ? DC_THEME_TOKEN_MAP : MARVEL_THEME_TOKEN_MAP;
   const hero = brandMap[characterTheme] || brandMap['iron-man'];
-  const colorSystemKey = normalizedMode === 'archive' ? 'archive' : (normalizedMode === 'neon' ? 'neon' : universeKey);
+  const colorSystemKey = normalizedMode === 'neon' ? 'neon' : universeKey;
   const color = COLOR_MODE_TOKENS[colorSystemKey][darkMode ? 'dark' : 'light'];
   const glowSoftPct = Math.round(mode.effects.glow * 42);
   const glowStrongPct = Math.round(mode.effects.glow * 68);

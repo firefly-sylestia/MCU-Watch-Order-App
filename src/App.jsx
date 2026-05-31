@@ -3652,7 +3652,23 @@ export default function MCUViewer() {
       <div className="theme-transition-loader" aria-hidden={!themeTransitioning}><span />Retuning theme</div>
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <NavigationShell controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} activeDestination={analyticsOpen ? 'progress' : (settingsOpen ? 'settings' : browseMode === 'search' ? 'search' : activeCollectionId ? 'collections' : browseMode === 'home' ? 'home' : 'library')} progressBadges={{ progress: `${pct}%`, collections: libraryCollections.length }} onNavigate={(destination) => { if (destination === 'home') navigateHome(); if (destination === 'library') navigateLibrary(); if (destination === 'collections') { setBrowseMode('library'); setSidebarOpen(false); requestAnimationFrame(() => document.querySelector('.collection-rooms')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); } if (destination === 'search') openSearchMode(search, null); if (destination === 'progress') openAnalyticsPanel(); }} onToggle={toggleSidebarPanel} onClose={closeSidebar} onDismissBackdrop={suppressNextDocumentClick} onOpenSettings={toggleSettingsPanel}>
+      <NavigationShell
+        controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen}
+        ref={sidebarRef}
+        open={sidebarOpen}
+        darkMode={darkMode}
+        performanceMode={performanceMode}
+        pillBorder={T.pillBorder}
+        surfaceBorder={T.surfaceBorder}
+        activeDestination={analyticsOpen ? 'progress' : (settingsOpen ? 'settings' : browseMode === 'search' ? 'search' : activeCollectionId ? 'collections' : browseMode === 'home' ? 'home' : 'library')}
+        progressBadges={{ progress: `${pct}%`, collections: libraryCollections.length }}
+        onNavigate={(destination) => { if (destination === 'home') navigateHome(); if (destination === 'library') navigateLibrary(); if (destination === 'collections') { setBrowseMode('library'); setSidebarOpen(false); requestAnimationFrame(() => document.querySelector('.collection-rooms')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); } if (destination === 'search') openSearchMode(search, null); if (destination === 'progress') openAnalyticsPanel(); }}
+        onToggle={toggleSidebarPanel}
+        onClose={closeSidebar}
+        onDismissBackdrop={suppressNextDocumentClick}
+        onOpenSettings={toggleSettingsPanel}
+        onOpenSearch={() => openSearchMode(search, null)}
+      >
         <div className="sidebar-redesign">
           <section className="sidebar-panel sidebar-panel--brand">
             <p className="sidebar-kicker">{universe === 'dc' ? 'Justice Network' : 'Avengers Network'}</p>
@@ -3662,35 +3678,36 @@ export default function MCUViewer() {
               {profile.pfp ? <img src={profile.pfp} alt="profile" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} /> : <div className="sidebar-avatar-fallback"><UserCircle size={20} /></div>}
               <div>
                 <strong>{profile.name || tUniverse('Marvel Fan')}</strong>
-                <span>{universe === 'dc' ? activeUniverse.subtitle : 'Sacred Timeline Keeper'}</span>
+                <span>{pct}% complete · {totalWatched}/{activeItems.length} watched</span>
               </div>
             </div>
           </section>
 
-          <section className="sidebar-panel">
-            <div className="sidebar-section-title">{tUniverse('Theme & Language')}</div>
-            <div className="sidebar-btn-grid">
-              <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={12} />{tUniverse('Dark')}</button>
-              <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={12} />{tUniverse('Light')}</button>
+          <section className="sidebar-panel sidebar-panel--commands">
+            <div className="sidebar-section-title">Quick Actions</div>
+            <div className="sidebar-command-list">
+              <button className="sidebar-command" type="button" onClick={() => nextUnwatched && openDetail(nextUnwatched)} disabled={!nextUnwatched}><PlayCircle size={15}/><span><strong>Continue</strong><small>{nextUnwatched?.title || 'All caught up'}</small></span></button>
+              <button className="sidebar-command" type="button" onClick={() => navigateToPhase(activePhase || 0)}><Layers size={15}/><span><strong>Timeline / order</strong><small>{currentPhases.find(p => p.id === activePhase)?.name || 'All phases'}</small></span></button>
+              <button className="sidebar-command" type="button" aria-pressed={filtersOpen} onClick={() => setFiltersOpen(v => !v)}><SlidersH size={15}/><span><strong>Filters</strong><small>{filtersOpen ? 'Hide controls' : 'Show controls'}</small></span></button>
+              <button className="sidebar-command" type="button" onClick={() => setSortOpen(v => !v)}><ArrowUpDown size={15}/><span><strong>Sort</strong><small>{SORT_LABELS[sortBy] || sortBy}</small></span></button>
+            </div>
+          </section>
+
+          <section className="sidebar-panel sidebar-panel--universe">
+            <div className="sidebar-section-title">Universe</div>
+            <div className="sidebar-universe-switch" role="group" aria-label="Universe switch">
+              <button type="button" aria-pressed={universe === 'mcu'} data-active={universe === 'mcu'} onClick={() => switchUniverse('mcu')}><span>MCU</span><small>Marvel timeline</small></button>
+              <button type="button" aria-pressed={universe === 'dc'} data-active={universe === 'dc'} onClick={() => switchUniverse('dc')}><span>DC</span><small>DC chronicle</small></button>
             </div>
             <button className='fpill settings-toggle-pill' type='button' aria-pressed={marvelLangMode} onClick={() => setMarvelLangMode(v => !v)} style={{ justifyContent: 'space-between' }}><span>{tUniverse('Universe Language')}</span><span>{marvelLangMode ? 'On' : 'Off'}</span></button>
           </section>
 
           <section className="sidebar-panel">
-            <div className="sidebar-section-title">{tUniverse('View & Navigate')}</div>
+            <div className="sidebar-section-title">Display</div>
             <div className="sidebar-btn-grid">
-              <button className="fpill" onClick={navigateHome} style={{ justifyContent: 'center', borderColor: browseMode === 'home' ? 'var(--theme-accent)' : 'var(--theme-border)', color: browseMode === 'home' ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Star size={12} />Home</button>
-              <button className="fpill" onClick={navigateLibrary} style={{ justifyContent: 'center', borderColor: browseMode === 'library' && !activeCollectionId ? 'var(--theme-accent)' : 'var(--theme-border)', color: browseMode === 'library' && !activeCollectionId ? 'var(--theme-accent)' : 'var(--theme-text)' }}>Library</button>
-              <button className="fpill" onClick={() => openSearchMode(search, null)} style={{ justifyContent: 'center' }}>Search</button>
-              <button className="fpill" onClick={() => openSearchMode('', 'series')} style={{ justifyContent: 'center' }}>Series</button>
-              <button className="fpill" onClick={() => navigateToPhase(activePhase || 0)} style={{ justifyContent: 'center' }}>Phases</button>
-              <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ justifyContent: 'center' }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
-              <button className="fpill" onClick={openAnalyticsPanel} style={{ justifyContent: 'center' }}>{tUniverse('Analytics')}</button>
+              <button className="fpill" type="button" aria-pressed={darkMode} onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={12} />{tUniverse('Dark')}</button>
+              <button className="fpill" type="button" aria-pressed={!darkMode} onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={12} />{tUniverse('Light')}</button>
             </div>
-            <button className="fpill" onClick={() => { setSidebarOpen(false); toggleSettingsPanel(); }} style={{ width: '100%', justifyContent: 'center' }}><Settings size={13} />{tUniverse('Open Settings')}</button>
-          </section>
-
-          <section className="sidebar-panel">
             <ThemeStudio
               compact
               title={tUniverse('Universe Style')}
@@ -3699,15 +3716,37 @@ export default function MCUViewer() {
               themeChoices={themedChoices}
               themeMode={themeMode}
               onThemeChange={setThemeMode}
+              universe={universe}
             />
           </section>
 
           <section className="sidebar-panel">
-            <div className="sidebar-section-title">{tUniverse('Watchlist Mode')}</div>
+            <div className="sidebar-section-title">Viewing</div>
+            <div className="sidebar-btn-grid">
+              <button className="fpill" type="button" onClick={navigateHome} aria-pressed={browseMode === 'home'} style={{ justifyContent: 'center', borderColor: browseMode === 'home' ? 'var(--theme-accent)' : 'var(--theme-border)', color: browseMode === 'home' ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Star size={12} />Home</button>
+              <button className="fpill" type="button" onClick={navigateLibrary} aria-pressed={browseMode === 'library' && !activeCollectionId} style={{ justifyContent: 'center', borderColor: browseMode === 'library' && !activeCollectionId ? 'var(--theme-accent)' : 'var(--theme-border)', color: browseMode === 'library' && !activeCollectionId ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Film size={12}/>Library</button>
+              <button className="fpill" type="button" onClick={() => openSearchMode(search, null)} style={{ justifyContent: 'center' }}><Search size={12}/>Search</button>
+              <button className="fpill" type="button" onClick={() => openSearchMode('', 'series')} style={{ justifyContent: 'center' }}><Tv size={12}/>Series</button>
+              <button className="fpill" type="button" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ justifyContent: 'center' }}>{viewMode === 'list' ? 'Calendar' : 'List'}</button>
+              <button className="fpill" type="button" onClick={openAnalyticsPanel} style={{ justifyContent: 'center' }}>{tUniverse('Analytics')}</button>
+            </div>
+          </section>
+
+          <section className="sidebar-panel">
+            <div className="sidebar-section-title">App & Data</div>
+            <div className="sidebar-command-list">
+              <button className="sidebar-command" type="button" onClick={() => { setSidebarOpen(false); toggleSettingsPanel(); }}><Settings size={15}/><span><strong>More / Settings</strong><small>Preferences, backup, help</small></span></button>
+              <button className="sidebar-command" type="button" onClick={exportProgress}><Download size={15}/><span><strong>Export backup</strong><small>Save latest JSON</small></span></button>
+              <label className="sidebar-command sidebar-command--label"><Upload size={15}/><span><strong>Import backup</strong><small>Restore JSON file</small></span><input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} /></label>
+            </div>
+          </section>
+
+          <section className="sidebar-panel">
+            <div className="sidebar-section-title">Watchlist Mode</div>
             <div style={{ display: 'grid', gap: 6 }}>
               {LIST_MODES.map(mode => {
                 const isActive = listMode === mode.id;
-                return <button key={`side-${mode.id}`} className="fpill" onClick={() => { setListMode(mode.id); setExpandedItem(null); setExpandedPhase(null); setSidebarOpen(false); }} style={{ justifyContent: 'space-between', borderColor: isActive ? (mode?.color || 'var(--theme-accent)') : 'var(--theme-border)', color: isActive ? (mode?.color || 'var(--theme-accent)') : 'var(--theme-text)' }}><span>{mode.label}</span>{isActive && <Check size={12} />}</button>;
+                return <button key={`side-${mode.id}`} className="fpill" type="button" aria-pressed={isActive} onClick={() => { setListMode(mode.id); setExpandedItem(null); setExpandedPhase(null); setSidebarOpen(false); }} style={{ justifyContent: 'space-between', borderColor: isActive ? (mode?.color || 'var(--theme-accent)') : 'var(--theme-border)', color: isActive ? (mode?.color || 'var(--theme-accent)') : 'var(--theme-text)' }}><span>{mode.label}</span>{isActive && <Check size={12} />}</button>;
               })}
             </div>
           </section>
@@ -4179,6 +4218,7 @@ export default function MCUViewer() {
             />
           ) : (
             <LibraryAtrium
+              mode={browseMode}
               items={activeItems}
               filteredItems={filtered}
               search={search}

@@ -5,11 +5,12 @@ import './ThemeStudio.css';
 export default function ThemeStudio({
   appearanceMode,
   onAppearanceChange,
-  themeChoices,
+  themeChoices = [],
   themeMode,
   onThemeChange,
   title = 'Universe Style',
   compact = false,
+  universe = 'mcu',
 }) {
   const activeAppearance = normalizeAppearanceMode(appearanceMode);
 
@@ -17,7 +18,7 @@ export default function ThemeStudio({
     <div className={`theme-studio ${compact ? 'theme-studio--compact' : ''}`}>
       <div className="theme-studio__header">
         <div>
-          <p className="theme-studio__eyebrow">Visual system</p>
+          <p className="theme-studio__eyebrow">{universe === 'dc' ? 'DC style console' : 'Marvel style console'}</p>
           <h3>{title}</h3>
         </div>
         <span className="theme-studio__mode-chip">{APPEARANCE_MODES.find(mode => mode.id === activeAppearance)?.font || 'Modern UI'}</span>
@@ -57,7 +58,7 @@ export default function ThemeStudio({
               aria-pressed={isActive}
             >
               <span className="theme-accent-card__swatch" style={{ '--swatch': displaySwatch }} />
-              <span>{displayLabel}</span>
+              <span>{displayLabel}</span><i aria-hidden="true" />
             </button>
           );
         })}
