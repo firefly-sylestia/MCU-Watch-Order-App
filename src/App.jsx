@@ -3390,89 +3390,125 @@ export default function MCUViewer() {
   };
   const filterTriggerLabel = tUniverse('Filters');
 
-  const renderPhaseSelector = () => (
-    <>
-      {showPhaseSystem && (
-        <div ref={phaseRef} className="phase-selector-calendar" aria-label="Phase navigation">
-          <button className="phase-nav-card phase-nav-card--all" data-active={activePhase === 0} onClick={() => navigateToPhase(0)} aria-pressed={activePhase === 0}>
-            <span className="phase-nav-card__date">All</span>
-            <span className="phase-nav-card__title">All Phases</span>
-            <span className="phase-nav-card__meta">{totalWatched}/{activeItems.length} watched</span>
-            <span className="phase-nav-card__bar"><span style={{ width: `${pct}%` }} /></span>
-          </button>
-          {currentPhases.map((ph) => {
-            const stat = phaseStats.find(s => s.phase === ph.id);
-            const total = stat?.total || 0;
-            const watched = stat?.watched || 0;
-            const phasePct = total ? Math.round((watched / total) * 100) : 0;
-            const nextTitle = activeItems.find(item => item.phase === ph.id && item.status !== 'watched')?.title || 'Phase complete';
-            const isActive = activePhase === ph.id;
-            return (
-              <button
-                key={ph.id}
-                onClick={() => navigateToPhase(ph.id)}
-                className="phase-nav-card"
-                data-active={isActive}
-                aria-pressed={isActive}
-                style={{ '--phase-color': ph.color }}
-              >
-                <span className="phase-nav-card__date">Phase {ph.id}</span>
-                <span className="phase-nav-card__title">{ph.name}</span>
-                <span className="phase-nav-card__meta">{watched}/{total} watched · Next: {nextTitle}</span>
-                <span className="phase-nav-card__bar"><span style={{ width: `${phasePct}%` }} /></span>
-              </button>
-            );
-          })}
+  const renderPhaseSelector = () => {
+    const activePhaseMeta = currentPhases.find(p => p.id === activePhase);
+    const activePhaseStat = activePhase === 0
+      ? { watched: totalWatched, total: activeItems.length, pct }
+      : phaseStats.find(s => s.phase === activePhase) || { watched: 0, total: 0 };
+    const activePhasePct = activePhaseStat.total ? Math.round((activePhaseStat.watched / activePhaseStat.total) * 100) : (activePhase === 0 ? pct : 0);
+    const activePhaseNext = activePhase === 0
+      ? activeItems.find(item => item.status !== 'watched')?.title || 'Everything tracked is complete'
+      : activeItems.find(item => item.phase === activePhase && item.status !== 'watched')?.title || 'Phase complete';
+    const phaseOptions = [
+      { id: 0, label: 'All Phases', name: 'Complete Saga', count: activeItems.length, watched: totalWatched, pct, color: 'var(--theme-accent)', tagline: 'Every release group in one continuous mission.' },
+      ...currentPhases.map((ph) => {
+        const stat = phaseStats.find(s => s.phase === ph.id) || { watched: 0, total: 0 };
+        const phasePct = stat.total ? Math.round((stat.watched / stat.total) * 100) : 0;
+        return { id: ph.id, label: `Phase ${ph.id}`, name: ph.name, count: stat.total, watched: stat.watched, pct: phasePct, color: ph.color, tagline: ph.tagline || ph.summary || 'Release group' };
+      }),
+    ];
+
+    return (
+      <>
+        {showPhaseSystem && (
+          <section ref={phaseRef} className="phase-command-center" aria-label="Phase navigation">
+            <div className="phase-command-center__hero" style={{ '--phase-color': activePhaseMeta?.color || 'var(--theme-accent)' }}>
+              <div className="phase-command-center__copy">
+                <span className="phase-command-center__eyebrow">Phase Navigator</span>
+                <h3>{activePhase === 0 ? 'Complete Saga' : activePhaseMeta?.name || `Phase ${activePhase}`}</h3>
+                <p>{activePhase === 0 ? 'Jump across the full timeline or narrow the list to a single phase.' : activePhaseMeta?.summary || activePhaseMeta?.tagline || 'Explore this phase as a focused watch lane.'}</p>
+              </div>
+              <div className="phase-command-center__stats" aria-label="Selected phase progress">
+                <strong>{activePhasePct}%</strong>
+                <span>{activePhaseStat.watched}/{activePhaseStat.total} watched</span>
+                <small>Next: {activePhaseNext}</small>
+              </div>
+            </div>
+
+            <div className="phase-orbit-tabs" role="tablist" aria-label="Choose phase">
+              {phaseOptions.map((opt) => {
+                const isActive = activePhase === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    role="tab"
+                    className="phase-orbit-tab"
+                    data-active={isActive}
+                    aria-selected={isActive}
+                    aria-pressed={isActive}
+                    onClick={() => navigateToPhase(opt.id)}
+                    style={{ '--phase-color': opt.color }}
+                  >
+                    <span className="phase-orbit-tab__marker" aria-hidden="true" />
+                    <span className="phase-orbit-tab__label">{opt.label}</span>
+                    <span className="phase-orbit-tab__name">{opt.name}</span>
+                    <span className="phase-orbit-tab__meta">{opt.watched}/{opt.count} · {opt.pct}%</span>
+                    <span className="phase-orbit-tab__meter"><span style={{ width: `${opt.pct}%` }} /></span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+        <div className="release-state-switch" style={{ marginTop: showPhaseSystem ? 10 : 0 }} aria-label="Release state filters">
+          {[
+            { id: 'all', label: 'All states', hint: `${activeItems.length} titles` },
+            { id: 'released', label: 'Available', hint: `${calendarItems.released.length} released` },
+            { id: 'upcoming', label: 'Upcoming', hint: `${calendarItems.upcoming.length + calendarItems.tba.length} planned` },
+          ].map(opt => (
+            <button
+              key={opt.id}
+              className="release-state-pill"
+              data-active={releaseFilter === opt.id}
+              onClick={() => setReleaseFilter(opt.id)}
+              aria-pressed={releaseFilter === opt.id}
+            >
+              <span>{opt.label}</span>
+              <small>{opt.hint}</small>
+            </button>
+          ))}
         </div>
-      )}
-      <div className="phase-filter-calendar" style={{ marginTop: showPhaseSystem ? 10 : 0 }} aria-label="Release state filters">
-        {[
-          { id: 'all', label: 'All Release States', hint: `${activeItems.length} titles` },
-          { id: 'released', label: 'Now Available', hint: `${calendarItems.released.length} released` },
-          { id: 'upcoming', label: 'Coming Soon / TBA', hint: `${calendarItems.upcoming.length + calendarItems.tba.length} upcoming` },
-        ].map(opt => (
-          <button
-            key={opt.id}
-            className="phase-filter-card"
-            data-active={releaseFilter === opt.id}
-            onClick={() => setReleaseFilter(opt.id)}
-            aria-pressed={releaseFilter === opt.id}
-          >
-            <span>{opt.label}</span>
-            <small>{opt.hint}</small>
-          </button>
-        ))}
-      </div>
-    </>
-  );
+      </>
+    );
+  };
 
   const renderPhaseCalendarRow = (item, ph, idx = 0) => {
     const itemReleaseStatus = releaseStatusFor(item);
     const itemReleaseInfo = releaseInfoFor(item);
     const isWatched = item.status === 'watched';
+    const typeMeta = getSafeTypeMeta(item.type);
+    const StatusIcon = isWatched ? Check : EyeOff;
     return (
-      <div key={item.id} className={`phase-calendar-row calendar-row row-status-${item.status}`} style={{ '--phase-color': ph?.color || 'var(--theme-accent)' }}>
-        <div className="phase-calendar-row__date">
-          <strong>{String(idx + 1).padStart(2, '0')}</strong>
-          <span>{formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}</span>
+      <article key={item.id} className={`phase-list-item row-status-${item.status}`} style={{ '--phase-color': ph?.color || 'var(--theme-accent)' }}>
+        <div className="phase-list-item__index" aria-hidden="true">
+          <span>{String(idx + 1).padStart(2, '0')}</span>
+          <small>{formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}</small>
         </div>
-        <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
-        <button className="phase-calendar-row__title title-btn" onClick={() => openDetail(item)}>
-          <span>{item.title}</span>
-          <small>Phase {item.phase} · {getSafeTypeMeta(item.type).label} · {releaseStatusLabel(itemReleaseStatus)}</small>
+        <button type="button" className="phase-list-item__poster" onClick={() => openDetail(item)} aria-label={`Open ${item.title} details`}>
+          <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
         </button>
-        <div className="phase-calendar-row__actions">
-          <span className={`calendar-badge ${itemReleaseStatus}`}>{itemReleaseStatus}</span>
+        <button className="phase-list-item__content title-btn" onClick={() => openDetail(item)}>
+          <span className="phase-list-item__title">{item.title}</span>
+          <span className="phase-list-item__meta">
+            <span>{typeMeta.label}</span>
+            <span>Phase {item.phase}</span>
+            <span>{releaseStatusLabel(itemReleaseStatus)}</span>
+          </span>
+        </button>
+        <div className="phase-list-item__actions">
+          <span className={`phase-list-item__release ${itemReleaseStatus}`}>{itemReleaseStatus}</span>
           <button
             type="button"
-            className="phase-calendar-status"
+            className="phase-list-item__status"
             onClick={() => setStatusDirect(item.id, isWatched ? 'unwatched' : 'watched')}
             aria-pressed={isWatched}
           >
+            <StatusIcon size={13} />
             {isWatched ? 'Watched' : 'Mark watched'}
           </button>
         </div>
-      </div>
+      </article>
     );
   };
 
@@ -3482,29 +3518,35 @@ export default function MCUViewer() {
     const done = rows.filter(r => r.status === 'watched').length;
     const phasePct = rows.length ? Math.round((done / rows.length) * 100) : 0;
     const summaryOpen = expandedPhase === pid;
+    const nextTitle = rows.find(r => r.status !== 'watched')?.title || 'Phase complete';
     return (
       <section
         key={pid}
-        className="phase-calendar-section motion-section"
+        className="phase-list-section motion-section"
         data-motion="section"
         data-phase={pid}
         ref={el => { phaseRefs.current[pid] = el; }}
         style={{ '--phase-color': ph?.color || 'var(--theme-accent)' }}
       >
-        <div className="phase-calendar-header">
-          <div>
-            <div className="calendar-group-header">{ph?.name || `Phase ${pid}`}</div>
-            <p>{ph?.tagline || 'Release group'} · {done}/{rows.length} watched</p>
+        <header className="phase-list-section__header">
+          <div className="phase-list-section__badge">
+            <span>Phase</span>
+            <strong>{pid}</strong>
           </div>
-          <div className="phase-calendar-header__actions">
-            <span className="phase-calendar-percent">{phasePct}%</span>
-            <button type="button" onClick={() => setExpandedPhase(summaryOpen ? null : pid)}>{summaryOpen ? 'Hide info' : 'Info'}</button>
+          <div className="phase-list-section__title">
+            <span className="phase-list-section__kicker">{ph?.tagline || 'Release group'}</span>
+            <h3>{ph?.name || `Phase ${pid}`}</h3>
+            <p>{done}/{rows.length} watched · Next: {nextTitle}</p>
+          </div>
+          <div className="phase-list-section__tools">
+            <span className="phase-list-section__percent">{phasePct}%</span>
+            <button type="button" onClick={() => setExpandedPhase(summaryOpen ? null : pid)} aria-expanded={summaryOpen}>{summaryOpen ? 'Hide notes' : 'Notes'}</button>
             <button type="button" onClick={() => markPhaseWatched(pid, done < rows.length ? 'watched' : 'unwatched')}>{done < rows.length ? 'Mark all' : 'Clear'}</button>
           </div>
-        </div>
-        <span className="phase-nav-card__bar phase-calendar-section__bar"><span style={{ width: `${phasePct}%` }} /></span>
-        {summaryOpen && <div className="phase-calendar-summary">{ph?.summary}</div>}
-        <div className="phase-calendar-list">
+        </header>
+        <span className="phase-list-section__meter"><span style={{ width: `${phasePct}%` }} /></span>
+        {summaryOpen && <div className="phase-list-section__summary">{ph?.summary}</div>}
+        <div className="phase-list-section__grid">
           {rows.map((item, idx) => renderPhaseCalendarRow(item, ph, idx))}
         </div>
       </section>
