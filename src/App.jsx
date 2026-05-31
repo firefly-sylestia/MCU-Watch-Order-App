@@ -605,73 +605,83 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   statusLabelOverride = null,
   isDesktopViewport = false,
 }) {
-  const StatusIcon = statusMeta.Icon;
   const TypeIcon = typeMeta.Icon;
   const RowStatusIcon = statusMeta.Icon;
+  const WatchToggleIcon = isWatched ? EyeOff : Check;
   const hideWatchToggle = releaseStatus === 'upcoming';
+  const displayIndex = String(idx + 1).padStart(2, '0');
   return (
-    <div>
-      <div className={`rrow type-${item.type} row-status-${item.status} ${isExpanded ? 'curvy-selected' : ''}`} style={{ opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow, ...(isWatched ? { background: 'color-mix(in srgb, var(--theme-watched-bg) 62%, transparent)' } : {}) }}>
-        <div className={`row-index ${isWatched ? 'is-watched' : ''}`}>
-          {bulkSelectMode ? (
-            <input
-              type="checkbox"
-              checked={isSelected}
-              aria-label={`Select ${item.title}`}
-              onChange={(event) => onToggleSelected(item.id, event.target.checked)}
-              onClick={(event) => event.stopPropagation()}
-              className="row-select-checkbox"
-            />
-          ) : (idx + 1)}
-        </div>
-        <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 8} loadingMode="lazy" />
-
-        <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
-          <div className="title-row-top" style={TITLE_ROW_STATIC.titleLine}>
-            <span className="title-main">{item.title}</span>
-            <ChevRight size={10} className="title-chevron" />
-          </div>
-          <div className="title-row-mid release-meta-grid">
-            {item.episodes && <span className="meta-chip meta-chip-xs truncate-single-line">{item.episodes} EP</span>}
-            <span className="meta-chip meta-chip-type truncate-single-line" style={{ color: typeMeta.color }}><TypeIcon size={8} />{typeMeta.label}</span>
-            <span className="meta-chip meta-chip-sm truncate-single-line">{item.year || releaseLabel}</span>
-            <span className="meta-chip meta-chip-release meta-chip-xxs truncate-single-line" style={{ color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
-            {!item.essential && <span className="meta-chip meta-chip-xs truncate-single-line">OPT</span>}
-          </div>
-          <div className="meta-muted line-clamp-2 overflow-wrap-anywhere title-subline" style={TITLE_ROW_STATIC.genreMeta}>GENRES: {genres.join(' • ').toUpperCase()}</div>
-        </button>
-
-        <div className={`row-actions ${isDesktopViewport ? 'is-desktop' : ''}`}>
-          <div className="row-meta-line truncate-single-line rating-marvel-pill">★ {rating || '—'}</div>
-          <button
-            aria-label={`Open status menu for ${item.title}`}
-            aria-haspopup="menu"
-            aria-expanded={statusDropdown === item.id}
-            onClick={(event) => onOpenStatus(event, item.id)}
-            className={`wbtn status-pill status-marvel-pill status-shade-${item.status} row-status-btn`}
-          >
-            <span className="row-status-label">
-              <RowStatusIcon size={10} />
-              {statusLabelOverride || statusMeta.label}
-            </span>
-            <ChevDown size={10} className={`row-status-chevron ${statusDropdown === item.id ? 'is-open' : ''}`} />
-          </button>
-          <button className={`wbtn bookmark-marvel-btn ${isDesktopViewport ? 'is-desktop' : ''}`} aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} data-bookmarked={isBookmarked}><Bookmark size={11} /></button>
-          {!hideWatchToggle && (
-            <button
-              aria-label={isWatched ? `Mark ${item.title} as unwatched` : `Mark ${item.title} as watched`}
-              title={isWatched ? 'Mark unwatched' : 'Mark watched'}
-              onClick={(event) => {
-                event.stopPropagation();
-                onSetStatus(item.id, isWatched ? 'unwatched' : 'watched');
-              }}
-              className="wbtn status-toggle notwatched-marvel-btn row-watch-toggle"
-            ><RowStatusIcon size={12} /></button>
-          )}
-        </div>
-        
+    <article className={`rrow cinematic-title-card type-${item.type} row-status-${item.status} ${isExpanded ? 'curvy-selected' : ''}`} style={{ opacity: 1, '--phase-color': ph.color, '--phase-glow': ph.glow }}>
+      <div className={`row-index cinematic-title-card__index ${isWatched ? 'is-watched' : ''}`}>
+        {bulkSelectMode ? (
+          <input
+            type="checkbox"
+            checked={isSelected}
+            aria-label={`Select ${item.title}`}
+            onChange={(event) => onToggleSelected(item.id, event.target.checked)}
+            onClick={(event) => event.stopPropagation()}
+            className="row-select-checkbox"
+          />
+        ) : (
+          <>
+            <span>{displayIndex}</span>
+            <small>{ph?.name || `Phase ${item.phase}`}</small>
+          </>
+        )}
       </div>
-    </div>
+
+      <button type="button" className="cinematic-title-card__poster" onClick={() => onOpenDetail(item)} aria-label={`Open ${item.title} details`}>
+        <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 8} loadingMode="lazy" />
+      </button>
+
+      <button className="title-btn cinematic-title-card__content" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
+        <span className="cinematic-title-card__eyebrow">
+          <TypeIcon size={12} />
+          {typeMeta.label}
+          <span aria-hidden="true">•</span>
+          {item.year || releaseLabel}
+        </span>
+        <span className="title-row-top cinematic-title-card__title" style={TITLE_ROW_STATIC.titleLine}>
+          <span className="title-main">{item.title}</span>
+          <ChevRight size={14} className="title-chevron" />
+        </span>
+        <span className="title-row-mid release-meta-grid cinematic-title-card__meta">
+          {item.episodes && <span className="meta-chip meta-chip-xs truncate-single-line">{item.episodes} EP</span>}
+          <span className="meta-chip meta-chip-release meta-chip-xxs truncate-single-line" style={{ color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
+          {!item.essential && <span className="meta-chip meta-chip-xs truncate-single-line">Optional</span>}
+        </span>
+        <span className="meta-muted line-clamp-2 overflow-wrap-anywhere title-subline cinematic-title-card__genres" style={TITLE_ROW_STATIC.genreMeta}>{genres.join(' • ')}</span>
+      </button>
+
+      <div className={`row-actions cinematic-title-card__actions ${isDesktopViewport ? 'is-desktop' : ''}`} aria-label={`${item.title} quick actions`}>
+        <div className="row-meta-line truncate-single-line rating-marvel-pill cinematic-action-chip" title="Rating">★ {rating || '—'}</div>
+        <button
+          aria-label={`Open status menu for ${item.title}`}
+          aria-haspopup="menu"
+          aria-expanded={statusDropdown === item.id}
+          onClick={(event) => onOpenStatus(event, item.id)}
+          className={`wbtn status-pill status-marvel-pill status-shade-${item.status} row-status-btn cinematic-action-chip cinematic-status-chip`}
+        >
+          <span className="row-status-label">
+            <RowStatusIcon size={12} />
+            {statusLabelOverride || statusMeta.label}
+          </span>
+          <ChevDown size={12} className={`row-status-chevron ${statusDropdown === item.id ? 'is-open' : ''}`} />
+        </button>
+        <button className={`wbtn bookmark-marvel-btn cinematic-icon-action ${isDesktopViewport ? 'is-desktop' : ''}`} aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} data-bookmarked={isBookmarked}><Bookmark size={14} /><span>{isBookmarked ? 'Saved' : 'Save'}</span></button>
+        {!hideWatchToggle && (
+          <button
+            aria-label={isWatched ? `Mark ${item.title} as unwatched` : `Mark ${item.title} as watched`}
+            title={isWatched ? 'Mark unwatched' : 'Mark watched'}
+            onClick={(event) => {
+              event.stopPropagation();
+              onSetStatus(item.id, isWatched ? 'unwatched' : 'watched');
+            }}
+            className="wbtn status-toggle notwatched-marvel-btn row-watch-toggle cinematic-primary-action"
+          ><WatchToggleIcon size={14} /><span>{isWatched ? 'Unwatch' : 'Watch'}</span></button>
+        )}
+      </div>
+    </article>
   );
 }, areTitleRowPropsEqual);
 
@@ -3477,10 +3487,16 @@ export default function MCUViewer() {
     const itemReleaseStatus = releaseStatusFor(item);
     const itemReleaseInfo = releaseInfoFor(item);
     const isWatched = item.status === 'watched';
+    const isBookmarked = Boolean(bookmarks[item.id]);
     const typeMeta = getSafeTypeMeta(item.type);
-    const StatusIcon = isWatched ? Check : EyeOff;
+    const statusMeta = getSafeStatusMeta(item.status);
+    const PhaseTypeIcon = typeMeta.Icon;
+    const StatusIcon = statusMeta.Icon;
+    const WatchToggleIcon = isWatched ? EyeOff : Check;
+    const rating = metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating;
+    const hideWatchToggle = itemReleaseStatus === 'upcoming';
     return (
-      <article key={item.id} className={`phase-list-item row-status-${item.status}`} style={{ '--phase-color': ph?.color || 'var(--theme-accent)' }}>
+      <article key={item.id} className={`phase-list-item redesigned-phase-card row-status-${item.status}`} style={{ '--phase-color': ph?.color || 'var(--theme-accent)' }}>
         <div className="phase-list-item__index" aria-hidden="true">
           <span>{String(idx + 1).padStart(2, '0')}</span>
           <small>{formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}</small>
@@ -3489,24 +3505,50 @@ export default function MCUViewer() {
           <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
         </button>
         <button className="phase-list-item__content title-btn" onClick={() => openDetail(item)}>
+          <span className="phase-list-item__eyebrow"><PhaseTypeIcon size={12} /> {typeMeta.label} · Phase {item.phase}</span>
           <span className="phase-list-item__title">{item.title}</span>
           <span className="phase-list-item__meta">
-            <span>{typeMeta.label}</span>
-            <span>Phase {item.phase}</span>
             <span>{releaseStatusLabel(itemReleaseStatus)}</span>
+            <span>{item.episodes ? `${item.episodes} episodes` : item.year || formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}</span>
+            {!item.essential && <span>Optional</span>}
           </span>
         </button>
-        <div className="phase-list-item__actions">
+        <div className="phase-list-item__actions" aria-label={`${item.title} quick actions`}>
           <span className={`phase-list-item__release ${itemReleaseStatus}`}>{itemReleaseStatus}</span>
+          <span className="phase-list-item__rating">★ {rating || '—'}</span>
           <button
             type="button"
             className="phase-list-item__status"
-            onClick={() => setStatusDirect(item.id, isWatched ? 'unwatched' : 'watched')}
-            aria-pressed={isWatched}
+            onClick={(event) => openStatusDropdown(event, item.id)}
+            aria-haspopup="menu"
+            aria-expanded={statusDropdown === item.id}
           >
             <StatusIcon size={13} />
-            {isWatched ? 'Watched' : 'Mark watched'}
+            {statusMeta.label}
+            <ChevDown size={11} className={statusDropdown === item.id ? 'is-open' : ''} />
           </button>
+          <button
+            type="button"
+            className="phase-list-item__bookmark"
+            onClick={() => toggleBookmark(item.id)}
+            aria-pressed={isBookmarked}
+            data-bookmarked={isBookmarked}
+            aria-label={isBookmarked ? `Remove ${item.title} bookmark` : `Bookmark ${item.title}`}
+          >
+            <Bookmark size={13} />
+            {isBookmarked ? 'Saved' : 'Save'}
+          </button>
+          {!hideWatchToggle && (
+            <button
+              type="button"
+              className="phase-list-item__watch"
+              onClick={() => setStatusDirect(item.id, isWatched ? 'unwatched' : 'watched')}
+              aria-pressed={isWatched}
+            >
+              <WatchToggleIcon size={13} />
+              {isWatched ? 'Unwatch' : 'Watch'}
+            </button>
+          )}
         </div>
       </article>
     );
