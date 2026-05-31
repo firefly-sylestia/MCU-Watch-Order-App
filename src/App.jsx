@@ -626,37 +626,45 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
         </div>
         <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 8} loadingMode="lazy" />
 
-        <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
+        <button className="title-btn row-story-card" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
+          <div className="row-overline">
+            <span className="row-phase-dot" aria-hidden="true" />
+            <span>Phase {item.phase}</span>
+            <span aria-hidden="true">•</span>
+            <span>{item.year || releaseLabel}</span>
+          </div>
           <div className="title-row-top" style={TITLE_ROW_STATIC.titleLine}>
             <span className="title-main">{item.title}</span>
-            <ChevRight size={10} className="title-chevron" />
+            <ChevRight size={14} className="title-chevron" />
           </div>
+          <div className="meta-muted line-clamp-2 overflow-wrap-anywhere title-subline row-logline" style={TITLE_ROW_STATIC.genreMeta}>{genres.join(' • ')}</div>
           <div className="title-row-mid release-meta-grid">
             {item.episodes && <span className="meta-chip meta-chip-xs truncate-single-line">{item.episodes} EP</span>}
-            <span className="meta-chip meta-chip-type truncate-single-line" style={{ color: typeMeta.color }}><TypeIcon size={8} />{typeMeta.label}</span>
-            <span className="meta-chip meta-chip-sm truncate-single-line">{item.year || releaseLabel}</span>
+            <span className="meta-chip meta-chip-type truncate-single-line" style={{ color: typeMeta.color }}><TypeIcon size={9} />{typeMeta.label}</span>
             <span className="meta-chip meta-chip-release meta-chip-xxs truncate-single-line" style={{ color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
-            {!item.essential && <span className="meta-chip meta-chip-xs truncate-single-line">OPT</span>}
+            {!item.essential && <span className="meta-chip meta-chip-xs truncate-single-line">Optional</span>}
           </div>
-          <div className="meta-muted line-clamp-2 overflow-wrap-anywhere title-subline" style={TITLE_ROW_STATIC.genreMeta}>GENRES: {genres.join(' • ').toUpperCase()}</div>
         </button>
 
-        <div className={`row-actions ${isDesktopViewport ? 'is-desktop' : ''}`}>
-          <div className="row-meta-line truncate-single-line rating-marvel-pill">★ {rating || '—'}</div>
+        <div className={`row-actions row-command-deck ${isDesktopViewport ? 'is-desktop' : ''}`} aria-label={`Quick actions for ${item.title}`}>
+          <div className="row-meta-line truncate-single-line rating-marvel-pill row-rating-chip" aria-label={`Rating ${rating || 'unavailable'}`}><Star size={12} /> {rating || '—'}</div>
           <button
-            aria-label={`Open status menu for ${item.title}`}
+            aria-label={`Change status for ${item.title}`}
             aria-haspopup="menu"
             aria-expanded={statusDropdown === item.id}
             onClick={(event) => onOpenStatus(event, item.id)}
-            className={`wbtn status-pill status-marvel-pill status-shade-${item.status} row-status-btn`}
+            className={`wbtn status-pill status-marvel-pill status-shade-${item.status} row-status-btn row-action-button`}
           >
             <span className="row-status-label">
-              <RowStatusIcon size={10} />
-              {statusLabelOverride || statusMeta.label}
+              <RowStatusIcon size={14} />
+              <span className="row-action-copy">{statusLabelOverride || statusMeta.label}</span>
             </span>
-            <ChevDown size={10} className={`row-status-chevron ${statusDropdown === item.id ? 'is-open' : ''}`} />
+            <ChevDown size={12} className={`row-status-chevron ${statusDropdown === item.id ? 'is-open' : ''}`} />
           </button>
-          <button className={`wbtn bookmark-marvel-btn ${isDesktopViewport ? 'is-desktop' : ''}`} aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} data-bookmarked={isBookmarked}><Bookmark size={11} /></button>
+          <button className={`wbtn bookmark-marvel-btn row-action-button ${isDesktopViewport ? 'is-desktop' : ''}`} aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} data-bookmarked={isBookmarked}>
+            <Bookmark size={14} />
+            <span className="row-action-copy">{isBookmarked ? 'Saved' : 'Bookmark'}</span>
+          </button>
           {!hideWatchToggle && (
             <button
               aria-label={isWatched ? `Mark ${item.title} as unwatched` : `Mark ${item.title} as watched`}
@@ -665,8 +673,8 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
                 event.stopPropagation();
                 onSetStatus(item.id, isWatched ? 'unwatched' : 'watched');
               }}
-              className="wbtn status-toggle notwatched-marvel-btn row-watch-toggle"
-            ><RowStatusIcon size={12} /></button>
+              className="wbtn status-toggle notwatched-marvel-btn row-watch-toggle row-action-button"
+            ><RowStatusIcon size={14} /><span className="row-action-copy">{isWatched ? 'Watched' : 'Watch'}</span></button>
           )}
         </div>
         
@@ -4147,20 +4155,60 @@ export default function MCUViewer() {
               {Object.entries(calendarItems.grouped).map(([group, entries]) => (
                 <div key={group}>
                   <div className="calendar-group-header">{group}</div>
-                  {entries.map(({ item, rawDate, label, releaseStatus, hasRealDate }) => (
-                    <div key={`${group}-${item.id}`} className='rrow calendar-row' style={{ gridTemplateColumns: '108px 52px minmax(0,1fr)', background: 'transparent' }}>
-                      <div style={{ fontSize: 11, color: releaseStatus === 'upcoming' ? 'var(--theme-warning)' : T.textMuted }}>{formatReleaseDate(rawDate, item.year, label, releaseStatus)}</div>
-                      <LazyPoster className="poster" src={posterSrc(item)} alt={item.title} />
-                      <button className='title-btn' onClick={() => openDetail(item)} style={{ textAlign: 'left', textShadow: '0 1px 2px color-mix(in srgb, var(--theme-bg) 35%, transparent)' }}>
-                        {item.title}
-                        <div style={{ fontSize: 11, color: T.textMuted, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                          <span>Phase {item.phase} · {getSafeTypeMeta(item.type).label}</span>
-                          <span className={`calendar-badge ${releaseStatus}`}>{releaseStatus}</span>
-                          <span className="calendar-badge certainty">{hasRealDate ? 'Exact Date' : getReleaseCertainty({ hasRealDate, releaseStatus })}</span>
+                  {entries.map(({ item, rawDate, label, releaseStatus, hasRealDate }) => {
+                    const calendarTypeMeta = getSafeTypeMeta(item.type);
+                    const calendarStatusMeta = getSafeStatusMeta(item.status);
+                    const CalendarStatusIcon = calendarStatusMeta.Icon;
+                    const calendarRating = metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating;
+                    const calendarReleaseLabel = formatReleaseDate(rawDate, item.year, label, releaseStatus);
+                    const calendarIsWatched = item.status === 'watched';
+                    return (
+                      <article key={`${group}-${item.id}`} className='calendar-release-card' style={{ '--type-color': calendarTypeMeta.color }}>
+                        <div className="calendar-date-tile">
+                          <span className="calendar-date-label">{releaseStatus === 'upcoming' ? 'Arrives' : 'Released'}</span>
+                          <strong>{calendarReleaseLabel}</strong>
+                          <span>{hasRealDate ? 'Exact date' : getReleaseCertainty({ hasRealDate, releaseStatus })}</span>
                         </div>
-                      </button>
-                    </div>
-                  ))}
+                        <LazyPoster className="poster calendar-poster" src={posterSrc(item)} alt={`${item.title} poster`} />
+                        <button className='calendar-title-panel' onClick={() => openDetail(item)}>
+                          <span className="calendar-kicker">Phase {item.phase} · {calendarTypeMeta.label}</span>
+                          <span className="calendar-title">{item.title}</span>
+                          <span className="calendar-meta-strip">
+                            <span className={`calendar-badge ${releaseStatus}`}>{releaseStatusLabel(releaseStatus)}</span>
+                            <span className="calendar-badge certainty">{hasRealDate ? 'Exact Date' : getReleaseCertainty({ hasRealDate, releaseStatus })}</span>
+                            <span className="calendar-badge rating"><Star size={11} /> {calendarRating || '—'}</span>
+                          </span>
+                        </button>
+                        <div className="calendar-action-bar" aria-label={`Quick actions for ${item.title}`}>
+                          <button
+                            aria-label={`Change status for ${item.title}`}
+                            aria-haspopup="menu"
+                            aria-expanded={statusDropdown === item.id}
+                            onClick={(event) => openStatusDropdown(event, item.id)}
+                            className={`wbtn status-pill status-marvel-pill status-shade-${item.status} row-status-btn row-action-button`}
+                          >
+                            <CalendarStatusIcon size={14} />
+                            <span className="row-action-copy">{calendarStatusMeta.label}</span>
+                            <ChevDown size={12} className={`row-status-chevron ${statusDropdown === item.id ? 'is-open' : ''}`} />
+                          </button>
+                          <button className="wbtn bookmark-marvel-btn row-action-button" aria-label={bookmarks[item.id] ? 'Remove bookmark' : 'Add bookmark'} onClick={() => toggleBookmark(item.id)} data-bookmarked={Boolean(bookmarks[item.id])}>
+                            <Bookmark size={14} />
+                            <span className="row-action-copy">{bookmarks[item.id] ? 'Saved' : 'Bookmark'}</span>
+                          </button>
+                          {releaseStatus !== 'upcoming' && (
+                            <button
+                              aria-label={calendarIsWatched ? `Mark ${item.title} as unwatched` : `Mark ${item.title} as watched`}
+                              onClick={() => setStatusDirect(item.id, calendarIsWatched ? 'unwatched' : 'watched')}
+                              className="wbtn status-toggle notwatched-marvel-btn row-watch-toggle row-action-button"
+                            >
+                              <CalendarStatusIcon size={14} />
+                              <span className="row-action-copy">{calendarIsWatched ? 'Watched' : 'Watch'}</span>
+                            </button>
+                          )}
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
               ))}
             </section>
