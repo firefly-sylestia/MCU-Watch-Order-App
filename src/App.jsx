@@ -24,6 +24,7 @@ import './App.components.css';
 import './App.motion.css';
 import './styles/performance.css';
 import './styles/theme-surfaces.css';
+import './styles/carousel-view.css';
 
 import {
   ESSENTIAL_LIST,
@@ -99,7 +100,7 @@ const UI_STATE_DEFAULTS = {
   typeFilter: null,
   activePhase: 0,
   filtersOpen: false,
-  viewMode: 'list',
+  viewMode: 'carousel',
   densityMode: 'comfortable',
   timelineMode: 'release',
   autoHideStatuses: false,
@@ -113,7 +114,7 @@ const UI_STATE_DEFAULTS = {
 };
 
 const VALID_LIST_MODES = new Set(LIST_MODES.map(mode => mode.id));
-const VALID_VIEW_MODES = new Set(['list', 'calendar']);
+const VALID_VIEW_MODES = new Set(['carousel', 'list', 'calendar']);
 const VALID_PHASES = new Set([0, ...PHASES.map(phase => phase.id), ...DC_PHASES.map(phase => phase.id)]);
 const VALID_TYPES = new Set([null, ...Object.keys(TYPE_META)]);
 const VALID_STATUSES = new Set([null, ...Object.keys(STATUS_META)]);
@@ -980,6 +981,8 @@ export default function MCUViewer() {
   const [spoilerSafeMode, setSpoilerSafeMode] = useState(true);
   const [autoHideStatuses, setAutoHideStatuses] = useState(initialUiState.autoHideStatuses);
   const [viewMode, setViewMode] = useState(initialUiState.viewMode);
+  const [carouselPhase, setCarouselPhase] = useState(0);
+  const carouselLaneRefs = useRef({});
   const [densityMode, setDensityMode] = useState(initialUiState.densityMode);
   const [timelineMode,   setTimelineMode]   = useState(initialUiState.timelineMode);
   const showPhaseSystem = timelineMode === 'release' || timelineMode === 'chronological';
@@ -1855,6 +1858,55 @@ export default function MCUViewer() {
   }, [items, listMode, essentialOnly, watchedOnly, statusFilter, autoHideStatuses, typeFilter, activePhase, browseMode, timelineMode, genreFilter, deferredSearch, sortBy, coreIds, showAllFiltersOverride, releaseFilter, metaCache, searchScope]);
 
 
+
+  const carouselDeckData = useMemo(() => {
+    const deckItems = items.filter(i => {
+      if (listMode === 'core' && !coreIds.has(i.id)) return false;
+      if (!showAllFiltersOverride) {
+        if (listMode === 'core' && essentialOnly && !i.essential) return false;
+        if (watchedOnly && i.status !== 'watched') return false;
+        if (statusFilter && i.status !== statusFilter) return false;
+        if (typeFilter && i.type !== typeFilter) return false;
+        if (releaseFilter === 'released' && (i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
+        if (releaseFilter === 'upcoming' && !(i.releaseStatus === 'upcoming' || i.releaseStatus === 'TBA')) return false;
+        if (timelineMode === 'loki' && !CHARACTER_POV_TITLE_SETS.loki.has(i.title)) return false;
+        if (timelineMode === 'wanda' && !CHARACTER_POV_TITLE_SETS.wanda.has(i.title)) return false;
+        if (timelineMode === 'sony' && !SONY_MARVEL_TITLE_SET.has(i.title)) return false;
+        if (timelineMode === 'multiverse') {
+          const isMultiverse = /what if|multiverse|loki|deadpool|friendly neighborhood|x-men/i.test(i.title + ' ' + (i.desc || ''));
+          if (!isMultiverse) return false;
+        }
+        if (genreFilter !== 'all' && i.type !== genreFilter) return false;
+      }
+      const after = AFTER_CREDITS[i.title] || AFTER_CREDITS_DEFAULT;
+      const timelineLabel = TIMELINE_MODES.find(m => m.id === timelineMode)?.label || '';
+      return matchesSearch(i, deferredSearch, { director: DIRECTOR_DATA[i.title] || '', actors: metaCache[i.id]?.cast || '', connectsTo: after.connectsTo || [], timelineLabel }, searchScope);
+    }).sort((a, b) => {
+      if (sortBy === 'title') return a.title.localeCompare(b.title);
+      if (sortBy === 'year') return a.year - b.year;
+      if (sortBy === 'runtime') return (a.episodes || (a.type === 'film' ? 2.3 : 6)) - (b.episodes || (b.type === 'film' ? 2.3 : 6));
+      if (sortBy === 'watched') return (b.watchedDate || '').localeCompare(a.watchedDate || '');
+      if (sortBy === 'status') return (STATUS_SORT_ORDER[a.status] ?? 99) - (STATUS_SORT_ORDER[b.status] ?? 99);
+      if (sortBy === 'order' && timelineMode === 'release') return a.year - b.year || a.order - b.order;
+      if (sortBy === 'order' && timelineMode === 'chronological') {
+        const ao = STORY_ORDER_OVERRIDES.get(a.title) ?? a.order + 100;
+        const bo = STORY_ORDER_OVERRIDES.get(b.title) ?? b.order + 100;
+        return ao - bo || a.order - b.order;
+      }
+      if (sortBy === 'order' && timelineMode === 'sony') return a.year - b.year || a.order - b.order;
+      return a.order - b.order;
+    });
+    const deckGrouped = {};
+    deckItems.forEach(i => (deckGrouped[i.phase] = deckGrouped[i.phase] || []).push(i));
+    const deckPhaseKeys = Object.keys(deckGrouped).map(Number).sort((a, b) => a - b);
+    return { items: deckItems, grouped: deckGrouped, phaseKeys: deckPhaseKeys };
+  }, [items, listMode, essentialOnly, watchedOnly, statusFilter, typeFilter, timelineMode, genreFilter, deferredSearch, sortBy, coreIds, showAllFiltersOverride, releaseFilter, metaCache, searchScope]);
+
+  useEffect(() => {
+    if (carouselPhase && !carouselDeckData.phaseKeys.includes(carouselPhase)) {
+      setCarouselPhase(carouselDeckData.phaseKeys[0] || 0);
+    }
+  }, [carouselDeckData.phaseKeys, carouselPhase]);
 
 
   const getAfterCreditsMeta = useCallback((item) => {
@@ -3576,6 +3628,150 @@ export default function MCUViewer() {
     );
   };
 
+  const setCarouselPhaseAndFocus = (phaseId) => {
+    setCarouselPhase(phaseId);
+    window.requestAnimationFrame?.(() => {
+      const lane = carouselLaneRefs.current[phaseId || carouselDeckData.phaseKeys[0]];
+      lane?.scrollTo?.({ left: 0, behavior: 'smooth' });
+    });
+  };
+
+  const scrollCarouselLane = (phaseId, direction) => {
+    const lane = carouselLaneRefs.current[phaseId];
+    if (!lane) return;
+    const distance = Math.max(280, lane.clientWidth * 0.78);
+    lane.scrollBy({ left: direction * distance, behavior: 'smooth' });
+  };
+
+  const renderCarouselCard = (item, idx) => {
+    const itemReleaseStatus = releaseStatusFor(item);
+    const itemReleaseInfo = releaseInfoFor(item);
+    const statusMeta = getSafeStatusMeta(item.status);
+    const StatusIcon = statusMeta.Icon || EyeOff;
+    const typeMeta = getSafeTypeMeta(item.type);
+    const TypeIcon = typeMeta.Icon || Layers;
+    const phaseMeta = currentPhases.find(p => p.id === item.phase) || currentPhases[0];
+    const rating = metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating;
+    const isWatched = item.status === 'watched';
+    const isBookmarked = Boolean(bookmarks[item.id]);
+    return (
+      <article key={item.id} className="carousel-title-card" style={{ '--phase-color': phaseMeta?.color || 'var(--theme-accent)' }}>
+        <button type="button" className="carousel-poster-button" onClick={() => openDetail(item)} aria-label={`Open details for ${item.title}`}>
+          <span className="carousel-card-index">{String(idx + 1).padStart(2, '0')}</span>
+          <LazyPoster className="carousel-card-poster" src={posterSrc(item)} alt={`${item.title} poster`} eager={idx < 3} />
+          <span className="carousel-poster-shine" aria-hidden="true" />
+        </button>
+        <div className="carousel-card-body">
+          <div className="carousel-card-meta">
+            <span style={{ color: typeMeta.color }}><TypeIcon size={12} />{typeMeta.label}</span>
+            <span>{formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}</span>
+            <span>{rating || '—'} ★</span>
+          </div>
+          <button type="button" className="carousel-card-title" onClick={() => openDetail(item)}>{item.title}</button>
+          <p>{item.desc || item.prereq || 'Open the dossier to view story details and connections.'}</p>
+          <div className="carousel-card-actions">
+            <button
+              type="button"
+              className="carousel-chip-button"
+              aria-label={`Open status menu for ${item.title}`}
+              aria-haspopup="menu"
+              aria-expanded={statusDropdown === item.id}
+              onClick={(event) => openStatusDropdown(event, item.id)}
+            >
+              <StatusIcon size={13} />{statusMeta.label}<ChevDown size={11} className={statusDropdown === item.id ? 'is-open' : ''} />
+            </button>
+            <button type="button" className="carousel-chip-button" data-active={isBookmarked} aria-pressed={isBookmarked} onClick={() => toggleBookmark(item.id)}>
+              <Bookmark size={13} />{isBookmarked ? 'Saved' : 'Save'}
+            </button>
+            <button type="button" className="carousel-chip-button carousel-watch-chip" data-active={isWatched} aria-pressed={isWatched} onClick={() => setStatusDirect(item.id, isWatched ? 'unwatched' : 'watched')}>
+              <StatusIcon size={13} />{isWatched ? 'Done' : 'Watch'}
+            </button>
+          </div>
+        </div>
+      </article>
+    );
+  };
+
+  const renderCarouselView = () => {
+    const availablePhaseKeys = carouselDeckData.phaseKeys;
+    const activeDeckPhase = carouselPhase && availablePhaseKeys.includes(carouselPhase) ? carouselPhase : (availablePhaseKeys[0] || 0);
+    const visiblePhaseKeys = activeDeckPhase ? [activeDeckPhase] : availablePhaseKeys;
+    const activeDeckItems = activeDeckPhase ? (carouselDeckData.grouped[activeDeckPhase] || []) : carouselDeckData.items;
+    const activeDone = activeDeckItems.filter(item => item.status === 'watched').length;
+    const activePct = activeDeckItems.length ? Math.round((activeDone / activeDeckItems.length) * 100) : 0;
+    const activePhaseMeta = currentPhases.find(p => p.id === activeDeckPhase);
+    const activeNext = activeDeckItems.find(item => item.status !== 'watched')?.title || 'Deck complete';
+
+    if (!carouselDeckData.items.length) {
+      return (
+        <section className="carousel-view-shell carousel-empty-state" data-motion="section">
+          <p className="carousel-eyebrow">Deck View</p>
+          <h2>No cards match this mission</h2>
+          <p>Clear filters or switch release states to rebuild the horizontal watch deck.</p>
+        </section>
+      );
+    }
+
+    return (
+      <section className="carousel-view-shell motion-section motion-pop" data-motion="section" aria-label="Horizontal carousel viewing system">
+        <header className="carousel-command-hero" style={{ '--phase-color': activePhaseMeta?.color || 'var(--theme-accent)' }}>
+          <div>
+            <p className="carousel-eyebrow">Carousel Viewing System</p>
+            <h2>{activeDeckPhase ? activePhaseMeta?.name || `Phase ${activeDeckPhase}` : 'Complete Saga Deck'}</h2>
+            <p>{activeDeckPhase ? activePhaseMeta?.summary || activePhaseMeta?.tagline : 'A horizontal card deck with its own phase rail, paging controls, and progress map.'}</p>
+          </div>
+          <div className="carousel-progress-orb" aria-label={`${activePct}% watched`}>
+            <strong>{activePct}%</strong>
+            <span>{activeDone}/{activeDeckItems.length} watched</span>
+            <small>Next: {activeNext}</small>
+          </div>
+        </header>
+
+        <nav className="carousel-phase-rail" aria-label="Carousel phase navigation">
+          <button type="button" className="carousel-phase-pill" data-active={!activeDeckPhase} onClick={() => setCarouselPhaseAndFocus(0)}>
+            <span>All</span><small>{carouselDeckData.items.length} cards</small>
+          </button>
+          {availablePhaseKeys.map((pid) => {
+            const phaseMeta = currentPhases.find(p => p.id === pid);
+            const rows = carouselDeckData.grouped[pid] || [];
+            const done = rows.filter(item => item.status === 'watched').length;
+            return (
+              <button key={pid} type="button" className="carousel-phase-pill" data-active={activeDeckPhase === pid} onClick={() => setCarouselPhaseAndFocus(pid)} style={{ '--phase-color': phaseMeta?.color || 'var(--theme-accent)' }}>
+                <span>{phaseMeta?.name || `Phase ${pid}`}</span>
+                <small>{done}/{rows.length} watched</small>
+              </button>
+            );
+          })}
+        </nav>
+
+        {visiblePhaseKeys.map((pid) => {
+          const phaseMeta = currentPhases.find(p => p.id === pid);
+          const rows = carouselDeckData.grouped[pid] || [];
+          return (
+            <section key={pid || 'all'} className="carousel-lane-panel" style={{ '--phase-color': phaseMeta?.color || 'var(--theme-accent)' }} aria-label={`${phaseMeta?.name || 'All phases'} carousel lane`}>
+              <div className="carousel-lane-header">
+                <div>
+                  <span>{phaseMeta?.tagline || 'Swipe the story lane'}</span>
+                  <h3>{phaseMeta?.name || 'Complete Saga'}</h3>
+                </div>
+                <div className="carousel-lane-controls">
+                  <button type="button" onClick={() => scrollCarouselLane(pid, -1)} aria-label="Scroll carousel backward">‹</button>
+                  <button type="button" onClick={() => scrollCarouselLane(pid, 1)} aria-label="Scroll carousel forward">›</button>
+                </div>
+              </div>
+              <div className="carousel-card-lane" ref={el => { carouselLaneRefs.current[pid] = el; }} tabIndex={0} aria-label={`${phaseMeta?.name || 'Complete Saga'} horizontal cards`}>
+                {rows.map(renderCarouselCard)}
+              </div>
+              <div className="carousel-lane-dots" aria-hidden="true">
+                {rows.slice(0, 18).map((item) => <span key={item.id} data-watched={item.status === 'watched'} />)}
+              </div>
+            </section>
+          );
+        })}
+      </section>
+    );
+  };
+
   const sectionScaffold = (
     <>
       <Header title="MCU Viewing Order" subtitle="Modernized modular UI shell" />
@@ -3654,7 +3850,7 @@ export default function MCUViewer() {
               <button className="fpill" onClick={() => openSearchMode(search, null)} style={{ justifyContent: 'center' }}>Search</button>
               <button className="fpill" onClick={() => openSearchMode('', 'series')} style={{ justifyContent: 'center' }}>Series</button>
               <button className="fpill" onClick={() => navigateToPhase(activePhase || 0)} style={{ justifyContent: 'center' }}>Phases</button>
-              <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ justifyContent: 'center' }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
+              <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'carousel' ? 'calendar' : 'carousel'); }} style={{ justifyContent: 'center' }}>{viewMode === 'carousel' ? 'Calendar View' : 'Carousel View'}</button>
               <button className="fpill" onClick={openAnalyticsPanel} style={{ justifyContent: 'center' }}>{tUniverse('Analytics')}</button>
             </div>
             <button className="fpill" onClick={() => { setSidebarOpen(false); toggleSettingsPanel(); }} style={{ width: '100%', justifyContent: 'center' }}><Settings size={13} />{tUniverse('Open Settings')}</button>
@@ -3943,7 +4139,7 @@ export default function MCUViewer() {
               )}
             </div>
 
-            {renderPhaseSelector()}
+            {viewMode !== 'carousel' && renderPhaseSelector()}
             {activeFilterCount > 0 && (
               <button className="fpill" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', padding: '7px 12px' }}
                 onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setSortBy('order'); setActivePhase(0); setReleaseFilter('all'); }}>
@@ -4055,9 +4251,9 @@ export default function MCUViewer() {
           {metadataBuild.status === 'running' ? `Fetch ${metadataBuild.done}/${metadataBuild.total}` : 'Fetch'}
         </button>
         <button type="button" className="dock-btn"
-          onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
+          onClick={() => setViewMode(viewMode === 'carousel' ? 'calendar' : viewMode === 'calendar' ? 'list' : 'carousel')}
           style={{ background: 'color-mix(in srgb, var(--theme-accent) 16%, var(--control-solid-bg))' }}>
-          View: {viewMode === 'list' ? 'List' : 'Calendar'}
+          View: {viewMode === 'carousel' ? 'Carousel' : viewMode === 'calendar' ? 'Calendar' : 'List'}
         </button>
         <button type="button" className="dock-btn"
           onClick={() => { const next = listMode === 'core' ? 'extended' : 'core'; setListMode(next); setExpandedItem(null); setExpandedPhase(null); }}
@@ -4110,7 +4306,7 @@ export default function MCUViewer() {
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
-          {browseMode !== 'search' && phaseKeys.length === 0 && (
+          {browseMode !== 'search' && viewMode !== 'carousel' && phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
             </div>
@@ -4163,6 +4359,8 @@ export default function MCUViewer() {
                 Start typing to search across your full list.
               </div>
             )
+          ) : viewMode === 'carousel' ? (
+            renderCarouselView()
           ) : viewMode === 'calendar' ? (
             <section data-motion="section" className='curvy-panel calendar-section motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
               <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', color: 'var(--theme-text-primary)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
