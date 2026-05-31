@@ -894,7 +894,7 @@ export default function MCUViewer() {
   const setTimelineOpen = (next) => dispatchUiMode({ timelineOpen: typeof next === 'function' ? next(uiModeState.timelineOpen) : next });
   const setPhaseOpen = (next) => dispatchUiMode({ phaseOpen: typeof next === 'function' ? next(uiModeState.phaseOpen) : next });
   const [statusDropdown, setStatusDropdown] = useState(null);
-  const [fabMenuOpen, setFabMenuOpen] = useState(true);
+  const [fabMenuOpen, setFabMenuOpen] = useState(false);
   const [fabMinimized, setFabMinimized] = useState(false);
   const [browseMode, setBrowseMode] = useState('library');
   const [activeCollectionId, setActiveCollectionId] = useState(null);

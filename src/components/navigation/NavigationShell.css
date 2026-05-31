@@ -1,5 +1,5 @@
 .navigation-control-cluster { position: fixed; top: max(14px, env(safe-area-inset-top)); left: max(14px, env(safe-area-inset-left)); z-index: 720; display: flex; gap: 8px; transition: opacity 150ms var(--ease-out), visibility 150ms var(--ease-out); }
-.navigation-control-btn { display: inline-grid; place-items: center; width: 42px; height: 42px; border: 1px solid var(--nav-control-border); border-radius: 16px; background: var(--nav-control-bg); color: var(--nav-control-text); box-shadow: 0 14px 34px rgba(0,0,0,.18); backdrop-filter: blur(12px); cursor: pointer; transition: transform 140ms var(--ease-out), border-color 140ms var(--ease-out), background 140ms var(--ease-out); }
+.navigation-control-btn { display: inline-grid; grid-auto-flow: column; place-items: center; gap: 6px; min-width: 42px; height: 42px; padding: 0 12px; border: 1px solid var(--nav-control-border); border-radius: 16px; background: var(--nav-control-bg); color: var(--nav-control-text); box-shadow: 0 14px 34px rgba(0,0,0,.18); backdrop-filter: blur(12px); cursor: pointer; font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; transition: transform 140ms var(--ease-out), border-color 140ms var(--ease-out), background 140ms var(--ease-out); }
 .navigation-control-btn:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--theme-accent) 54%, var(--nav-control-border)); }
 .navigation-control-btn:active { transform: scale(.96); }
 .navigation-control-btn:focus-visible { outline: none; box-shadow: var(--interactive-ring); }
@@ -37,5 +37,10 @@
 .archive-command-sheet__panel > div { display: flex; align-items: center; justify-content: space-between; }
 .archive-command-sheet__panel button { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 46px; border: 1px solid var(--theme-border); border-radius: 16px; background: color-mix(in srgb, var(--theme-surface) 74%, transparent); color: var(--theme-text-primary); padding: 10px 12px; font-weight: 850; }
 .archive-command-sheet__panel button[data-active="true"] { border-color: color-mix(in srgb, var(--theme-accent) 50%, var(--theme-border)); background: color-mix(in srgb, var(--theme-accent) 14%, var(--theme-surface)); }
-@media (max-width: 760px) { .navigation-control-cluster, .navigation-shell, .navigation-backdrop { display: none; } .archive-mobile-dock { display: grid; } }
+@media (max-width: 760px) {
+  .navigation-control-cluster { left: max(10px, env(safe-area-inset-left)); right: max(10px, env(safe-area-inset-right)); justify-content: space-between; z-index: 760; pointer-events: none; }
+  .navigation-control-btn { pointer-events: auto; height: 44px; border-radius: 18px; }
+  .navigation-shell, .navigation-backdrop { display: none; }
+  .archive-mobile-dock { display: grid; }
+}
 @media (prefers-reduced-motion: reduce) { .navigation-shell, .navigation-shell *, .archive-mobile-dock *, .navigation-control-btn { transition-duration: 1ms !important; } }

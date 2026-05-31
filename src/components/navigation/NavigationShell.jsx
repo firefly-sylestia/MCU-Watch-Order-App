@@ -20,8 +20,8 @@ const controlStyle = (darkMode, pillBorder) => ({
 export const FloatingNavigationControls = React.memo(function FloatingNavigationControls({ darkMode, pillBorder, controlsHidden = false, onToggle, onOpenSettings }) {
   return (
     <nav className="navigation-control-cluster" style={controlsHidden ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined} aria-label="Archive quick controls">
-      <button className="theme-btn navigation-control-btn navigation-control-btn--menu" onClick={onToggle} aria-label="Expand archive navigation" style={controlStyle(darkMode, pillBorder)}><Menu size={18} /></button>
-      <button className="theme-btn navigation-control-btn navigation-control-btn--settings" onClick={onOpenSettings} aria-label="Open settings" style={controlStyle(darkMode, pillBorder)}><Settings size={18} /></button>
+      <button className="theme-btn navigation-control-btn navigation-control-btn--menu" type="button" onClick={onToggle} aria-label="Open archive menu" title="Open archive menu" style={controlStyle(darkMode, pillBorder)}><Menu size={20} aria-hidden="true" /><span>Menu</span></button>
+      <button className="theme-btn navigation-control-btn navigation-control-btn--settings" type="button" onClick={onOpenSettings} aria-label="Open settings" title="Open settings" style={controlStyle(darkMode, pillBorder)}><Settings size={20} aria-hidden="true" /><span>Settings</span></button>
     </nav>
   );
 });
@@ -49,12 +49,19 @@ export const NavigationShell = React.memo(React.forwardRef(function NavigationSh
     else onNavigate?.(destination.id);
     setMobileMoreOpen(false);
   };
+  const handleControlToggle = () => {
+    if (typeof window !== 'undefined' && window.matchMedia?.('(max-width: 760px)').matches) {
+      setMobileMoreOpen(true);
+      return;
+    }
+    onToggle?.();
+  };
   const primaryDock = destinations.filter((d) => d.primary).slice(0, 4);
   const secondaryDock = destinations.filter((d) => !primaryDock.some((p) => p.id === d.id));
 
   return (
     <>
-      <FloatingNavigationControls darkMode={darkMode} pillBorder={pillBorder} controlsHidden={controlsHidden} onToggle={onToggle} onOpenSettings={onOpenSettings} />
+      <FloatingNavigationControls darkMode={darkMode} pillBorder={pillBorder} controlsHidden={controlsHidden} onToggle={handleControlToggle} onOpenSettings={onOpenSettings} />
       {open && <button className="navigation-backdrop" data-state="open" type="button" aria-label="Collapse archive navigation" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); onDismissBackdrop?.(); onClose?.(); }} onClick={(event) => { event.preventDefault(); event.stopPropagation(); }} />}
       <aside ref={ref} data-state={open ? 'open' : 'closed'} aria-label="Archive Navigation" className="navigation-shell archive-rail" style={{ '--navigation-bg': darkMode ? 'rgba(8,12,28,0.92)' : 'rgba(248,251,255,0.94)', '--navigation-border': surfaceBorder, '--navigation-shadow': darkMode ? 'var(--elevation-surface-3)' : 'var(--elevation-surface-2)', '--navigation-blur': performanceMode ? 'none' : 'blur(12px)' }}>
         <div className="navigation-shell__topbar"><span>Archive Navigation</span><button className="navigation-close-btn" type="button" onClick={onClose} aria-label="Collapse navigation"><X size={14} /></button></div>

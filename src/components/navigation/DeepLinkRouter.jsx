@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export const ROUTE_FALLBACK = '/home';
 export const SEARCH_ROUTE = '/search';
@@ -76,13 +76,19 @@ export const parseDeepLinkRoute = (path = '/', queryString = '') => {
 };
 
 export function DeepLinkRouteSync({ applyRoute }) {
+  const latestApplyRouteRef = useRef(applyRoute);
+
+  useEffect(() => {
+    latestApplyRouteRef.current = applyRoute;
+  }, [applyRoute]);
+
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
-    applyRoute(window.location.pathname, window.location.search);
-    const onPopState = () => applyRoute(window.location.pathname, window.location.search);
+    latestApplyRouteRef.current?.(window.location.pathname, window.location.search);
+    const onPopState = () => latestApplyRouteRef.current?.(window.location.pathname, window.location.search);
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, [applyRoute]);
+  }, []);
 
   return null;
 }
