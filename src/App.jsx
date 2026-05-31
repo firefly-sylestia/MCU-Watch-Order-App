@@ -99,7 +99,7 @@ const UI_STATE_DEFAULTS = {
   typeFilter: null,
   activePhase: 0,
   filtersOpen: false,
-  viewMode: 'list',
+  viewMode: 'carousel',
   densityMode: 'comfortable',
   timelineMode: 'release',
   autoHideStatuses: false,
@@ -113,7 +113,7 @@ const UI_STATE_DEFAULTS = {
 };
 
 const VALID_LIST_MODES = new Set(LIST_MODES.map(mode => mode.id));
-const VALID_VIEW_MODES = new Set(['list', 'calendar']);
+const VALID_VIEW_MODES = new Set(['carousel', 'calendar']);
 const VALID_PHASES = new Set([0, ...PHASES.map(phase => phase.id), ...DC_PHASES.map(phase => phase.id)]);
 const VALID_TYPES = new Set([null, ...Object.keys(TYPE_META)]);
 const VALID_STATUSES = new Set([null, ...Object.keys(STATUS_META)]);
@@ -3576,6 +3576,176 @@ export default function MCUViewer() {
     );
   };
 
+
+  const scrollCarouselLane = (pid, direction = 1) => {
+    const lane = document.querySelector(`[data-carousel-lane="${pid}"]`);
+    if (!lane) return;
+    lane.scrollBy({ left: direction * Math.max(280, lane.clientWidth * 0.82), behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+  };
+
+  const renderCarouselCard = (item, ph, idx = 0) => {
+    const itemReleaseStatus = releaseStatusFor(item);
+    const itemReleaseInfo = releaseInfoFor(item);
+    const typeMeta = getSafeTypeMeta(item.type);
+    const TypeIcon = typeMeta.Icon;
+    const statusMeta = getSafeStatusMeta(item.status);
+    const StatusMenuIcon = statusMeta.Icon;
+    const StatusIcon = item.status === 'watched' ? Check : EyeOff;
+    const isWatched = item.status === 'watched';
+    const isBookmarked = Boolean(bookmarks[item.id]);
+    const itemRating = metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating;
+    const releaseStyle = releaseStatusStyle(itemReleaseStatus);
+    const hideWatchToggle = itemReleaseStatus === 'upcoming';
+    return (
+      <article
+        key={item.id}
+        className="carousel-title-card"
+        data-watched={isWatched}
+        style={{ '--phase-color': ph?.color || 'var(--theme-accent)', '--phase-glow': ph?.glow || 'color-mix(in srgb, var(--theme-accent) 30%, transparent)' }}
+      >
+        <button type="button" className="carousel-title-card__poster" onClick={() => openDetail(item)} aria-label={`Open ${item.title} details`}>
+          <LazyPoster className="poster" src={posterSrc(item)} alt={`${item.title} poster`} eager={idx < 3} loadingMode="lazy" />
+          <span className="carousel-title-card__index">{String(idx + 1).padStart(2, '0')}</span>
+          <span className={`carousel-title-card__release ${itemReleaseStatus}`} style={{ color: releaseStyle.color, background: releaseStyle.background, borderColor: releaseStyle.border }}>{releaseStatusLabel(itemReleaseStatus)}</span>
+        </button>
+        <div className="carousel-title-card__body">
+          <button type="button" className="carousel-title-card__title" onClick={() => openDetail(item)}>
+            <span>{item.title}</span>
+            <ChevRight size={14} aria-hidden="true" />
+          </button>
+          <div className="carousel-title-card__meta">
+            {item.episodes && <span>{item.episodes} EP</span>}
+            <span style={{ color: typeMeta.color }}><TypeIcon size={12} />{typeMeta.label}</span>
+            <span>{formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}</span>
+          </div>
+          <p className="carousel-title-card__desc">{metaCache[item.id]?.plot || item.desc || inferGenres(item).join(' • ')}</p>
+          <div className="carousel-title-card__stats">
+            <span><Star size={12} />{itemRating || '—'}</span>
+            <span>{inferGenres(item).join(' • ')}</span>
+          </div>
+        </div>
+        <div className="carousel-title-card__actions">
+          <button
+            type="button"
+            className="carousel-action-btn carousel-action-btn--status"
+            aria-label={`Open status menu for ${item.title}`}
+            aria-haspopup="menu"
+            aria-expanded={statusDropdown === item.id}
+            onClick={(event) => openStatusDropdown(event, item.id)}
+          >
+            <StatusMenuIcon size={13} />
+            {statusMeta.label}
+            <ChevDown size={11} className={`row-status-chevron ${statusDropdown === item.id ? 'is-open' : ''}`} />
+          </button>
+          <button type="button" className="carousel-action-btn" data-bookmarked={isBookmarked} onClick={() => toggleBookmark(item.id)} aria-pressed={isBookmarked}>
+            <Bookmark size={13} />{isBookmarked ? 'Saved' : 'Save'}
+          </button>
+          {!hideWatchToggle && (
+            <button type="button" className="carousel-action-btn" data-watched={isWatched} onClick={() => setStatusDirect(item.id, isWatched ? 'unwatched' : 'watched')} aria-pressed={isWatched}>
+              <StatusIcon size={13} />{isWatched ? 'Done' : 'Watch'}
+            </button>
+          )}
+        </div>
+      </article>
+    );
+  };
+
+  const renderCarouselSection = (pid) => {
+    const ph = currentPhases.find(p => p.id === pid);
+    const rows = grouped[pid] || [];
+    const done = rows.filter(r => r.status === 'watched').length;
+    const phasePct = rows.length ? Math.round((done / rows.length) * 100) : 0;
+    const nextTitle = rows.find(r => r.status !== 'watched')?.title || 'Phase complete';
+    return (
+      <section
+        key={`carousel-phase-${pid}`}
+        id={`carousel-phase-${pid}`}
+        className="carousel-phase-section motion-section motion-pop"
+        data-motion="section"
+        ref={el => { phaseRefs.current[pid] = el; }}
+        style={{ '--phase-color': ph?.color || 'var(--theme-accent)', '--phase-glow': ph?.glow || 'color-mix(in srgb, var(--theme-accent) 28%, transparent)' }}
+      >
+        <header className="carousel-phase-section__header">
+          <div>
+            <span className="carousel-phase-section__eyebrow">Horizontal watch lane</span>
+            <h3>{ph?.name || `Phase ${pid}`}</h3>
+            <p>{ph?.summary || ph?.tagline || 'Swipe sideways through this chapter.'}</p>
+          </div>
+          <div className="carousel-phase-section__progress" aria-label={`${phasePct}% watched in ${ph?.name || `Phase ${pid}`}`}>
+            <strong>{phasePct}%</strong>
+            <span>{done}/{rows.length} watched</span>
+            <small>Next: {nextTitle}</small>
+          </div>
+          <div className="carousel-phase-section__buttons" aria-label={`${ph?.name || `Phase ${pid}`} lane controls`}>
+            <button type="button" onClick={() => scrollCarouselLane(pid, -1)} aria-label={`Scroll ${ph?.name || `Phase ${pid}`} backward`}>‹</button>
+            <button type="button" onClick={() => scrollCarouselLane(pid, 1)} aria-label={`Scroll ${ph?.name || `Phase ${pid}`} forward`}>›</button>
+          </div>
+        </header>
+        <span className="carousel-phase-section__meter"><span style={{ width: `${phasePct}%` }} /></span>
+        <div className="carousel-title-lane" data-carousel-lane={pid} tabIndex={0} aria-label={`${ph?.name || `Phase ${pid}`} horizontal carousel`}>
+          {rows.map((item, idx) => renderCarouselCard(item, ph, idx))}
+        </div>
+      </section>
+    );
+  };
+
+  const renderCarouselExperience = () => {
+    const activePhaseMeta = currentPhases.find(p => p.id === activePhase);
+    const lanes = phaseKeys;
+    const primaryNext = filtered.find(item => item.status !== 'watched') || filtered[0];
+    const navOptions = [
+      { id: 0, label: 'All lanes', name: 'Full carousel', count: activeItems.length, color: 'var(--theme-accent)' },
+      ...currentPhases.map((ph) => ({ id: ph.id, label: `Phase ${ph.id}`, name: ph.name, count: activeItems.filter(item => item.phase === ph.id).length, color: ph.color })),
+    ];
+    return (
+      <section className="carousel-view-system" aria-label="Horizontal carousel viewing system">
+        <div className="carousel-view-system__hero" style={{ '--phase-color': activePhaseMeta?.color || 'var(--theme-accent)' }}>
+          <div>
+            <span className="carousel-view-system__kicker">New Viewing System</span>
+            <h2>{activePhase ? activePhaseMeta?.name || `Phase ${activePhase}` : 'Carousel Command Deck'}</h2>
+            <p>Browse the timeline sideways in focused lanes with visible arrows, keyboard-scrollable tracks, and phase jumps instead of the previous continuous list.</p>
+          </div>
+          <button type="button" className="carousel-continue-card" onClick={() => primaryNext && openDetail(primaryNext)} disabled={!primaryNext}>
+            <span>Continue with</span>
+            <strong>{primaryNext?.title || 'All caught up'}</strong>
+            <small>{primaryNext ? `${getSafeStatusMeta(primaryNext.status).label} · ${getSafeTypeMeta(primaryNext.type).label}` : `${totalWatched}/${activeItems.length} complete`}</small>
+          </button>
+        </div>
+
+        <nav className="carousel-jump-nav" aria-label="Carousel lane navigation">
+          {navOptions.map((opt) => {
+            const selected = activePhase === opt.id;
+            return (
+              <button
+                key={`carousel-nav-${opt.id}`}
+                type="button"
+                className="carousel-jump-nav__item"
+                data-active={selected}
+                aria-pressed={selected}
+                style={{ '--phase-color': opt.color }}
+                onClick={() => {
+                  setActivePhase(opt.id);
+                  setBrowseMode('phase');
+                  window.requestAnimationFrame(() => {
+                    if (opt.id) phaseRefs.current[opt.id]?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
+                  });
+                }}
+              >
+                <span>{opt.label}</span>
+                <strong>{opt.name}</strong>
+                <small>{opt.count} titles</small>
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="carousel-view-system__lanes">
+          {lanes.map(renderCarouselSection)}
+        </div>
+      </section>
+    );
+  };
+
   const sectionScaffold = (
     <>
       <Header title="MCU Viewing Order" subtitle="Modernized modular UI shell" />
@@ -3943,7 +4113,7 @@ export default function MCUViewer() {
               )}
             </div>
 
-            {renderPhaseSelector()}
+            {viewMode !== 'carousel' && renderPhaseSelector()}
             {activeFilterCount > 0 && (
               <button className="fpill" style={{ color: 'var(--theme-danger)', borderColor: 'var(--theme-danger-soft)', background: 'var(--theme-danger-soft)', padding: '7px 12px' }}
                 onClick={() => { setSearch(''); setEssOnly(false); setTypeFilter(null); setStatusFilter(null); setWatchedOnly(false); setAutoHideStatuses(false); setSortBy('order'); setActivePhase(0); setReleaseFilter('all'); }}>
@@ -4055,9 +4225,9 @@ export default function MCUViewer() {
           {metadataBuild.status === 'running' ? `Fetch ${metadataBuild.done}/${metadataBuild.total}` : 'Fetch'}
         </button>
         <button type="button" className="dock-btn"
-          onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
+          onClick={() => setViewMode(viewMode === 'carousel' ? 'calendar' : 'carousel')}
           style={{ background: 'color-mix(in srgb, var(--theme-accent) 16%, var(--control-solid-bg))' }}>
-          View: {viewMode === 'list' ? 'List' : 'Calendar'}
+          View: {viewMode === 'carousel' ? 'Reel' : 'Calendar'}
         </button>
         <button type="button" className="dock-btn"
           onClick={() => { const next = listMode === 'core' ? 'extended' : 'core'; setListMode(next); setExpandedItem(null); setExpandedPhase(null); }}
@@ -4187,46 +4357,8 @@ export default function MCUViewer() {
                 </div>
               ))}
             </section>
-          ) : showPhaseSystem ? phaseKeys.map(renderPhaseCalendarSection) : (
-            <section data-motion="section" className='curvy-panel motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 12 }}>
-              <div className="list-panel" style={{ overflow: 'hidden' }}>
-                <PhaseRows rows={filtered} renderRow={(item, idx) => {
-                  const itemReleaseStatus = releaseStatusFor(item);
-                  const itemReleaseInfo = releaseInfoFor(item);
-                  const ph = currentPhases.find(p => p.id === item.phase) || currentPhases[0];
-                  return (
-                    <MemoizedTitleRow
-                      key={item.id}
-                      item={item}
-                      idx={idx}
-                      ph={ph}
-                      T={T}
-                      typeMeta={getSafeTypeMeta(item.type)}
-                      statusMeta={getSafeStatusMeta(item.status)}
-                      releaseStatus={itemReleaseStatus}
-                      releaseStatusText={releaseStatusLabel(itemReleaseStatus)}
-                      releaseStatusStyleObj={releaseStatusStyle(itemReleaseStatus)}
-                      releaseLabel={formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}
-                      poster={posterSrc(item)}
-                      genres={inferGenres(item)}
-                      isExpanded={expandedItem === item.id}
-                      isWatched={item.status === 'watched'}
-                      isBookmarked={Boolean(bookmarks[item.id])}
-                      statusDropdown={statusDropdown}
-                      rating={metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
-                      onOpenDetail={openDetail}
-                      onSetStatus={setStatusDirect}
-                      onToggleBookmark={toggleBookmark}
-                      onOpenStatus={openStatusDropdown}
-                      bulkSelectMode={bulkSelectMode}
-                      isSelected={selectedIds.has(item.id)}
-                      onToggleSelected={toggleSelected}
-                      isDesktopViewport={isDesktopViewport}
-                    />
-                  );
-                }} />
-              </div>
-            </section>
+          ) : (
+            renderCarouselExperience()
           )}
 
           <div data-motion="section" className="motion-section motion-pop" style={{ textAlign: 'center', marginTop: 44, fontFamily: 'var(--font-marvel-ui)', fontSize: 11, color: 'var(--theme-text-muted)', letterSpacing: 2.2, fontWeight: 700 }}>
