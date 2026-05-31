@@ -16,7 +16,9 @@ import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { Header, TimelineControls, ProgressSection, TitleCard, DetailDrawer, Settings as SettingsSection, Analytics } from './components/features';
 import ThemeStudio from './components/features/ThemeStudio';
 import NavigationShell from './components/navigation/NavigationShell';
-import { DeepLinkRouteSync, ROUTE_FALLBACK, SERIES_ROUTE, parseDeepLinkRoute, phaseRoutePath, routeItemMatchesSlug, searchRoutePath, titleRoutePath, universeRoutePath } from './components/navigation/DeepLinkRouter';
+import LibraryAtrium from './components/library/LibraryAtrium';
+import CollectionRooms from './components/library/CollectionRooms';
+import { DeepLinkRouteSync, ROUTE_FALLBACK, SERIES_ROUTE, collectionRoutePath, libraryRoutePath, parseDeepLinkRoute, phaseRoutePath, routeItemMatchesSlug, searchRoutePath, titleRoutePath, universeRoutePath } from './components/navigation/DeepLinkRouter';
 import { CHARACTER_THEMES, normalizeAppearanceMode, resolveThemeTokens } from './constants/themeSettings';
 import { buildSemanticThemeVars, UI_PARITY_TOKENS } from './constants/ui';
 import './App.layout.css';
@@ -38,6 +40,7 @@ import { UNIVERSE_META } from './constants/universeSwitch';
 import { TIMELINE_MODES, TIMELINE_MODE_IDS, CHARACTER_POV_TITLE_SETS, STORY_ORDER_OVERRIDES, SONY_MARVEL_TITLE_SET } from './data/timelineModes';
 import { AFTER_CREDITS, AFTER_CREDITS_DEFAULT, DIRECTOR_DATA } from './data/afterCreditsData';
 import { TRAILER_DATA, trailerEmbedUrl, getTrailerByTitle } from './data/trailerData';
+import { getCollectionsForUniverse, collectionMatchesItem } from './data/libraryCollections';
 
 import { Search, Eye, EyeOff, Film, Tv, Zap, ChevDown, ChevRight, ArrowUpDown, Check, Clock, Heart, Pause, Trash2, Upload, Download, Sun, Star, Moon, Settings, Info, Bookmark, Layers, PlayCircle, PauseCircle, XCircle, SlidersH, UserCircle, SwitchIcon, X } from './constants/icons';
 import { MARVEL_UI_LEXICON, DC_UI_LEXICON, LIST_MODES } from './constants/appText';
@@ -894,40 +897,59 @@ export default function MCUViewer() {
   const [fabMenuOpen, setFabMenuOpen] = useState(true);
   const [fabMinimized, setFabMinimized] = useState(false);
   const [browseMode, setBrowseMode] = useState('home');
-  const navigateHome = useCallback(() => {
+  const [activeCollectionId, setActiveCollectionId] = useState(null);
+  const closeOverlayViews = useCallback(() => {
     setDetailItem(null);
     setSettingsOpen(false);
     setAnalyticsOpen(false);
     setTrailerOpen(false);
     setTrailerExpanded(false);
-    setBrowseMode('home');
-    setSidebarOpen(false);
   }, []);
+  const navigateHome = useCallback(() => {
+    closeOverlayViews();
+    setBrowseMode('home');
+    setActiveCollectionId(null);
+    setSidebarOpen(false);
+  }, [closeOverlayViews]);
+  const navigateLibrary = useCallback(() => {
+    closeOverlayViews();
+    setBrowseMode('library');
+    setActiveCollectionId(null);
+    setSidebarOpen(false);
+  }, [closeOverlayViews]);
+  const navigateCollections = useCallback(() => {
+    closeOverlayViews();
+    setBrowseMode('collections');
+    setActiveCollectionId(null);
+    setSidebarOpen(false);
+    requestAnimationFrame(() => scrollToListTop?.());
+  }, [closeOverlayViews]);
+  const openCollection = useCallback((collectionId) => {
+    closeOverlayViews();
+    setBrowseMode('collections');
+    setActiveCollectionId(collectionId);
+    setSidebarOpen(false);
+    requestAnimationFrame(() => scrollToListTop?.());
+  }, [closeOverlayViews]);
   const openSearchMode = useCallback((nextSearch = '', nextType = null) => {
-    setDetailItem(null);
-    setSettingsOpen(false);
-    setAnalyticsOpen(false);
-    setTrailerOpen(false);
-    setTrailerExpanded(false);
+    closeOverlayViews();
     setBrowseMode('search');
+    setActiveCollectionId(null);
     setListMode('extended');
     setActivePhase(0);
     setSearchScope(UI_STATE_DEFAULTS.searchScope);
     setTypeFilter(nextType);
     if (typeof nextSearch === 'string') setSearch(nextSearch);
     setSidebarOpen(false);
-  }, [setBrowseMode, setListMode, setActivePhase, setSearchScope]);
+  }, [closeOverlayViews, setBrowseMode, setListMode, setActivePhase, setSearchScope]);
   const navigateToPhase = useCallback((phaseId = 0) => {
-    setDetailItem(null);
-    setSettingsOpen(false);
-    setAnalyticsOpen(false);
-    setTrailerOpen(false);
-    setTrailerExpanded(false);
+    closeOverlayViews();
     setBrowseMode('phase');
+    setActiveCollectionId(null);
     setActivePhase(phaseId);
     setSidebarOpen(false);
     requestAnimationFrame(() => scrollToListTop());
-  }, []);
+  }, [closeOverlayViews]);
   const setFilterStatusOpen = (next) => dispatchUiMode({ filterStatusOpen: typeof next === 'function' ? next(uiModeState.filterStatusOpen) : next });
   const setDockStatusOpen = (next) => dispatchUiMode({ dockStatusOpen: typeof next === 'function' ? next(uiModeState.dockStatusOpen) : next });
   const setFiltersOpen = (next) => dispatchUiMode({ filtersOpen: typeof next === 'function' ? next(uiModeState.filtersOpen) : next });
@@ -1023,8 +1045,9 @@ export default function MCUViewer() {
     const routeIntent = routeUniverseIntentRef.current?.universe === universe ? routeUniverseIntentRef.current : null;
     if (!routeIntent) {
       setActivePhase(0);
+      setActiveCollectionId(null);
       setDetailItem(null);
-      setBrowseMode('home');
+      if (!['library', 'collections', 'search'].includes(browseMode)) setBrowseMode('home');
     }
     setExpandedPhase(null);
     setExpandedItem(null);
@@ -1042,7 +1065,7 @@ export default function MCUViewer() {
       const resolved = nextUniverse === 'dc' ? 'dc' : 'mcu';
       return prev === resolved ? prev : resolved;
     });
-    setBrowseMode('home');
+    setActiveCollectionId(null);
     setSettingsOpen(false);
     setAnalyticsOpen(false);
     setSidebarOpen(false);
@@ -1664,6 +1687,26 @@ export default function MCUViewer() {
       return;
     }
 
+    if (primary === 'library') {
+      setDetailItem(null);
+      setSettingsOpen(false);
+      setAnalyticsOpen(false);
+      setBrowseMode('library');
+      setActiveCollectionId(null);
+      setTypeFilter(null);
+      return;
+    }
+
+    if (primary === 'collections') {
+      setDetailItem(null);
+      setSettingsOpen(false);
+      setAnalyticsOpen(false);
+      setBrowseMode('collections');
+      setActiveCollectionId(parts[1] || null);
+      setTypeFilter(null);
+      return;
+    }
+
     if (primary === 'settings') {
       setDetailItem(null);
       setAnalyticsOpen(false);
@@ -1733,11 +1776,13 @@ export default function MCUViewer() {
     if (detailItem) return titleRoutePath(detailItem, universe);
     if (settingsOpen) return `${universeRoutePath(universe)}/settings`;
     if (analyticsOpen) return `${universeRoutePath(universe)}/analytics`;
+    if (browseMode === 'library') return libraryRoutePath(universe);
+    if (browseMode === 'collections') return collectionRoutePath(activeCollectionId, universe);
     if (browseMode === 'search' && typeFilter === 'series' && !search.trim()) return `${universeRoutePath(universe)}${SERIES_ROUTE}`;
     if (browseMode === 'search') return searchRoutePath(search, typeFilter, universe);
     if (browseMode === 'phase') return phaseRoutePath(activePhase, universe);
     return universeRoutePath(universe);
-  }, [activePhase, analyticsOpen, browseMode, detailItem, search, settingsOpen, typeFilter, universe]);
+  }, [activeCollectionId, activePhase, analyticsOpen, browseMode, detailItem, search, settingsOpen, typeFilter, universe]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1867,6 +1912,23 @@ export default function MCUViewer() {
   const activeItems = useMemo(
     () => listMode === 'core' ? items.filter(i => coreIds.has(i.id)) : items,
     [items, listMode, coreIds]
+  );
+  const libraryCollections = useMemo(() => getCollectionsForUniverse(universe), [universe]);
+  const activeCollection = useMemo(
+    () => libraryCollections.find(collection => collection.id === activeCollectionId) || null,
+    [activeCollectionId, libraryCollections]
+  );
+  const collectionItems = useMemo(
+    () => activeCollection ? activeItems.filter(item => collectionMatchesItem(activeCollection, item)) : [],
+    [activeCollection, activeItems]
+  );
+  const currentLibraryItem = useMemo(
+    () => activeItems.find(item => item.status === 'watching')
+      || activeItems.find(item => item.status === 'plan-to-watch')
+      || activeItems.find(item => item.status !== 'watched')
+      || activeItems[0]
+      || null,
+    [activeItems]
   );
 
 
@@ -3390,6 +3452,53 @@ export default function MCUViewer() {
   };
   const filterTriggerLabel = tUniverse('Filters');
 
+  const openHomeListView = useCallback(() => {
+    setViewMode('list');
+    navigateHome();
+  }, [navigateHome]);
+
+  const openHomeCalendarView = useCallback(() => {
+    setViewMode('calendar');
+    navigateHome();
+  }, [navigateHome]);
+
+  const renderTitleRow = useCallback((item, idx, overrides = {}) => {
+    const itemReleaseStatus = releaseStatusFor(item);
+    const itemReleaseInfo = releaseInfoFor(item);
+    const ph = currentPhases.find(p => p.id === item.phase) || currentPhases[0];
+    return (
+      <MemoizedTitleRow
+        key={item.id}
+        item={item}
+        idx={idx}
+        ph={ph}
+        T={T}
+        typeMeta={getSafeTypeMeta(item.type)}
+        statusMeta={getSafeStatusMeta(item.status)}
+        releaseStatus={itemReleaseStatus}
+        releaseStatusText={releaseStatusLabel(itemReleaseStatus)}
+        releaseStatusStyleObj={releaseStatusStyle(itemReleaseStatus)}
+        releaseLabel={formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}
+        poster={posterSrc(item)}
+        genres={inferGenres(item)}
+        isExpanded={expandedItem === item.id}
+        isWatched={item.status === 'watched'}
+        isBookmarked={Boolean(bookmarks[item.id])}
+        statusDropdown={statusDropdown}
+        rating={metaCache[item.id]?.rating || RELEASE_INFO[item.title]?.rating}
+        onOpenDetail={openDetail}
+        onSetStatus={setStatusDirect}
+        onToggleBookmark={toggleBookmark}
+        onOpenStatus={openStatusDropdown}
+        bulkSelectMode={bulkSelectMode}
+        isSelected={selectedIds.has(item.id)}
+        onToggleSelected={toggleSelected}
+        isDesktopViewport={isDesktopViewport}
+        {...overrides}
+      />
+    );
+  }, [T, bookmarks, bulkSelectMode, currentPhases, expandedItem, isDesktopViewport, metaCache, openDetail, posterSrc, selectedIds, statusDropdown]);
+
   const renderPhaseSelector = () => {
     const activePhaseMeta = currentPhases.find(p => p.id === activePhase);
     const activePhaseStat = activePhase === 0
@@ -3650,10 +3759,12 @@ export default function MCUViewer() {
           <section className="sidebar-panel">
             <div className="sidebar-section-title">{tUniverse('View & Navigate')}</div>
             <div className="sidebar-btn-grid">
-              <button className="fpill" onClick={navigateHome} style={{ justifyContent: 'center' }}>Home</button>
-              <button className="fpill" onClick={() => openSearchMode(search, null)} style={{ justifyContent: 'center' }}>Search</button>
+              <button className="fpill" onClick={navigateHome} aria-pressed={browseMode === 'home'} style={{ justifyContent: 'center', borderColor: browseMode === 'home' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>Home</button>
+              <button className="fpill" onClick={navigateLibrary} aria-pressed={browseMode === 'library'} style={{ justifyContent: 'center', borderColor: browseMode === 'library' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>Library</button>
+              <button className="fpill" onClick={navigateCollections} aria-pressed={browseMode === 'collections'} style={{ justifyContent: 'center', borderColor: browseMode === 'collections' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>Collections</button>
+              <button className="fpill" onClick={() => openSearchMode(search, null)} aria-pressed={browseMode === 'search'} style={{ justifyContent: 'center', borderColor: browseMode === 'search' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>Search</button>
               <button className="fpill" onClick={() => openSearchMode('', 'series')} style={{ justifyContent: 'center' }}>Series</button>
-              <button className="fpill" onClick={() => navigateToPhase(activePhase || 0)} style={{ justifyContent: 'center' }}>Phases</button>
+              <button className="fpill" onClick={() => navigateToPhase(activePhase || 0)} aria-pressed={browseMode === 'phase'} style={{ justifyContent: 'center', borderColor: browseMode === 'phase' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>{universe === 'dc' ? 'Eras' : 'Phases'}</button>
               <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ justifyContent: 'center' }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
               <button className="fpill" onClick={openAnalyticsPanel} style={{ justifyContent: 'center' }}>{tUniverse('Analytics')}</button>
             </div>
@@ -4110,12 +4221,76 @@ export default function MCUViewer() {
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
         <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
-          {browseMode !== 'search' && phaseKeys.length === 0 && (
+          {(browseMode === 'home' || browseMode === 'phase') && phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
             </div>
           )}
-          {browseMode === 'search' ? (
+          {browseMode === 'library' ? (
+            <LibraryAtrium
+              universe={universe}
+              collections={libraryCollections}
+              items={activeItems}
+              activeItems={activeItems}
+              currentItem={currentLibraryItem}
+              posterSrc={posterSrc}
+              onOpenSearch={() => openSearchMode('', null)}
+              onOpenCollections={navigateCollections}
+              onOpenCollection={openCollection}
+              onOpenPhases={() => navigateToPhase(activePhase || 0)}
+              onOpenProgress={openAnalyticsPanel}
+              onOpenListView={openHomeListView}
+              onOpenCalendarView={openHomeCalendarView}
+              onOpenDetail={openDetail}
+            />
+          ) : browseMode === 'collections' ? (
+            <section className="collections-view" aria-labelledby="collections-view-title">
+              {!activeCollection ? (
+                <>
+                  <header className="collections-view__header">
+                    <div>
+                      <p className="collections-view__eyebrow">{universe === 'dc' ? 'DC Collection Rooms' : 'Marvel Collection Rooms'}</p>
+                      <h2 id="collections-view-title">Collections</h2>
+                      <p>Choose a curated category to filter this universe with the existing title rows and detail drawer.</p>
+                    </div>
+                    <button type="button" className="fpill" onClick={navigateLibrary}>Library Hub</button>
+                  </header>
+                  <CollectionRooms
+                    collections={libraryCollections}
+                    items={activeItems}
+                    universe={universe}
+                    posterSrc={posterSrc}
+                    onSelectCollection={openCollection}
+                    activeCollectionId={activeCollectionId}
+                  />
+                </>
+              ) : (
+                <>
+                  <header className="collections-view__header collections-view__header--detail" style={{ '--collection-accent': activeCollection.accent || 'var(--theme-accent)' }}>
+                    <button type="button" className="fpill" onClick={navigateCollections}>
+                      <ChevDown size={14} /> Back to Collections
+                    </button>
+                    <div>
+                      <p className="collections-view__eyebrow">{activeCollection.icon} Collection</p>
+                      <h2 id="collections-view-title">{activeCollection.title}</h2>
+                      <p>{activeCollection.description}</p>
+                    </div>
+                    <span className="collections-view__count">{collectionItems.length} {collectionItems.length === 1 ? 'title' : 'titles'}</span>
+                  </header>
+
+                  {collectionItems.length ? (
+                    <section data-motion="section" className="curvy-panel collections-view__list motion-section motion-pop" style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 12 }}>
+                      <div className="list-panel" style={{ overflow: 'hidden' }}>
+                        <PhaseRows rows={collectionItems} renderRow={(item, idx) => renderTitleRow(item, idx)} />
+                      </div>
+                    </section>
+                  ) : (
+                    <div className="collections-view__empty">No titles in the active list match this collection yet.</div>
+                  )}
+                </>
+              )}
+            </section>
+          ) : browseMode === 'search' ? (
             search.trim() ? (
               <section data-motion="section" className='curvy-panel motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 12 }}>
                 <div className="list-panel" style={{ overflow: 'hidden' }}>

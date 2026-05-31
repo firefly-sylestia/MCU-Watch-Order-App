@@ -3,6 +3,8 @@ import { useEffect } from 'react';
 export const ROUTE_FALLBACK = '/home';
 export const SEARCH_ROUTE = '/search';
 export const SERIES_ROUTE = '/series';
+export const LIBRARY_ROUTE = '/library';
+export const COLLECTIONS_ROUTE = '/collections';
 export const UNIVERSE_ROUTES = new Set(['marvel', 'mcu', 'dc']);
 
 export const slugifyRouteValue = (value) => String(value || '')
@@ -38,6 +40,13 @@ export const searchRoutePath = (query = '', type = '', universe = 'mcu') => {
 };
 
 export const phaseRoutePath = (phaseId = 0, universe = 'mcu') => `${universeRoutePath(universe)}/phase${phaseId ? `/${phaseId}` : ''}`;
+
+export const libraryRoutePath = (universe = 'mcu') => `${universeRoutePath(universe)}${LIBRARY_ROUTE}`;
+
+export const collectionRoutePath = (collectionId = '', universe = 'mcu') => {
+  const collectionSlug = slugifyRouteValue(collectionId);
+  return `${universeRoutePath(universe)}${COLLECTIONS_ROUTE}${collectionSlug ? `/${collectionSlug}` : ''}`;
+};
 
 export const routeItemMatchesSlug = (item, rawSlug) => {
   const slug = slugifyRouteValue(decodeURIComponent(String(rawSlug || '')));
