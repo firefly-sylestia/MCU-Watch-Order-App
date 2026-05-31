@@ -610,9 +610,14 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
   const RowStatusIcon = statusMeta.Icon;
   const hideWatchToggle = releaseStatus === 'upcoming';
   return (
-    <div>
-      <div className={`rrow media-command-card type-${item.type} row-status-${item.status} ${isExpanded ? 'curvy-selected' : ''}`} data-bookmarked={isBookmarked} data-watched={isWatched} style={{ opacity: 1, borderLeftColor: isExpanded ? 'var(--theme-accent)' : 'transparent', '--phase-color': ph.color, '--phase-glow': ph.glow, ...(isWatched ? { background: 'color-mix(in srgb, var(--theme-watched-bg) 62%, transparent)' } : {}) }}>
-        <div className={`row-index ${isWatched ? 'is-watched' : ''}`}>
+    <article className="constellation-row-shell">
+      <div
+        className={`rrow media-command-card constellation-card type-${item.type} row-status-${item.status} ${isExpanded ? 'curvy-selected' : ''}`}
+        data-bookmarked={isBookmarked}
+        data-watched={isWatched}
+        style={{ opacity: 1, '--phase-color': ph.color, '--phase-glow': ph.glow, ...(isWatched ? { '--card-complete-bg': 'color-mix(in srgb, var(--theme-success, #22c55e) 12%, transparent)' } : {}) }}
+      >
+        <div className={`row-index constellation-card__ordinal ${isWatched ? 'is-watched' : ''}`}>
           {bulkSelectMode ? (
             <input
               type="checkbox"
@@ -622,56 +627,67 @@ const MemoizedTitleRow = React.memo(function MemoizedTitleRow({
               onClick={(event) => event.stopPropagation()}
               className="row-select-checkbox"
             />
-          ) : (idx + 1)}
+          ) : (
+            <>
+              <span>{String(idx + 1).padStart(2, '0')}</span>
+              <small>{isWatched ? 'Done' : 'Queue'}</small>
+            </>
+          )}
         </div>
-        <LazyPoster className="poster" src={poster} alt={`${item.title} poster`} eager={idx < 8} loadingMode="lazy" />
 
-        <button className="title-btn" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
-          <div className="title-row-top" style={TITLE_ROW_STATIC.titleLine}>
-            <span className="title-main">{item.title}</span>
-            <ChevRight size={10} className="title-chevron" />
-          </div>
-          <div className="title-row-mid release-meta-grid">
-            {item.episodes && <span className="meta-chip meta-chip-xs truncate-single-line">{item.episodes} EP</span>}
-            <span className="meta-chip meta-chip-type truncate-single-line" style={{ color: typeMeta.color }}><TypeIcon size={8} />{typeMeta.label}</span>
-            <span className="meta-chip meta-chip-sm truncate-single-line">{item.year || releaseLabel}</span>
-            <span className="meta-chip meta-chip-release meta-chip-xxs truncate-single-line" style={{ color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
-            {!item.essential && <span className="meta-chip meta-chip-xs truncate-single-line">OPT</span>}
-          </div>
-          <div className="meta-muted line-clamp-2 overflow-wrap-anywhere title-subline" style={TITLE_ROW_STATIC.genreMeta}>GENRES: {genres.join(' • ').toUpperCase()}</div>
+        <button type="button" className="constellation-card__poster-btn" onClick={() => onOpenDetail(item)} aria-label={`Open ${item.title} details`}>
+          <LazyPoster className="poster constellation-card__poster" src={poster} alt={`${item.title} poster`} eager={idx < 8} loadingMode="lazy" />
         </button>
 
-        <div className={`row-actions media-command-actions ${isDesktopViewport ? 'is-desktop' : ''}`}>
-          <div className="row-meta-line truncate-single-line rating-marvel-pill media-rating-pill" aria-label={`Rating ${rating || 'not available'}`}><Star size={11} /> {rating || '—'}</div>
+        <button className="title-btn constellation-card__content" onClick={() => onOpenDetail(item)} style={TITLE_ROW_STATIC.titleBtn}>
+          <span className="constellation-card__eyebrow">
+            <span style={{ color: typeMeta.color }}><TypeIcon size={11} />{typeMeta.label}</span>
+            <span>{releaseLabel}</span>
+          </span>
+          <span className="title-row-top constellation-card__title" style={TITLE_ROW_STATIC.titleLine}>
+            <span className="title-main">{item.title}</span>
+            <ChevRight size={13} className="title-chevron" />
+          </span>
+          <span className="title-row-mid constellation-card__chips release-meta-grid">
+            {item.episodes && <span className="meta-chip meta-chip-xs truncate-single-line">{item.episodes} EP</span>}
+            <span className="meta-chip meta-chip-sm truncate-single-line">Phase {item.phase}</span>
+            <span className="meta-chip meta-chip-release meta-chip-xxs truncate-single-line" style={{ color: releaseStatusStyleObj.color, background: releaseStatusStyleObj.background, border: `1px solid ${releaseStatusStyleObj.border}` }}>{releaseStatusText}</span>
+            {!item.essential && <span className="meta-chip meta-chip-xs truncate-single-line">Optional</span>}
+          </span>
+          <span className="meta-muted line-clamp-2 overflow-wrap-anywhere title-subline constellation-card__genres" style={TITLE_ROW_STATIC.genreMeta}>Genres · {genres.join(' / ')}</span>
+        </button>
+
+        <div className={`row-actions media-command-actions constellation-card__actions ${isDesktopViewport ? 'is-desktop' : ''}`}>
+          <div className="row-meta-line truncate-single-line rating-marvel-pill media-rating-pill constellation-card__rating" aria-label={`Rating ${rating || 'not available'}`}><Star size={12} /> {rating || '—'}</div>
           <button
             aria-label={`Open status menu for ${item.title}`}
             aria-haspopup="menu"
             aria-expanded={statusDropdown === item.id}
             onClick={(event) => onOpenStatus(event, item.id)}
-            className={`wbtn status-pill status-marvel-pill status-shade-${item.status} row-status-btn media-status-control`}
+            className={`wbtn status-pill status-marvel-pill status-shade-${item.status} row-status-btn media-status-control constellation-card__status`}
           >
             <span className="row-status-label">
-              <RowStatusIcon size={12} />
+              <RowStatusIcon size={13} />
               {statusLabelOverride || statusMeta.label}
             </span>
             <ChevDown size={12} className={`row-status-chevron ${statusDropdown === item.id ? 'is-open' : ''}`} />
           </button>
-          <button className={`wbtn bookmark-marvel-btn media-icon-action ${isDesktopViewport ? 'is-desktop' : ''}`} aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} data-bookmarked={isBookmarked}><Bookmark size={14} /><span>{isBookmarked ? 'Saved' : 'Save'}</span></button>
+          <button className={`wbtn bookmark-marvel-btn media-icon-action constellation-card__icon ${isDesktopViewport ? 'is-desktop' : ''}`} aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'} onClick={() => onToggleBookmark(item.id)} data-bookmarked={isBookmarked} aria-pressed={isBookmarked}><Bookmark size={14} /><span>{isBookmarked ? 'Saved' : 'Save'}</span></button>
           {!hideWatchToggle && (
             <button
               aria-label={isWatched ? `Mark ${item.title} as unwatched` : `Mark ${item.title} as watched`}
               title={isWatched ? 'Mark unwatched' : 'Mark watched'}
+              aria-pressed={isWatched}
               onClick={(event) => {
                 event.stopPropagation();
                 onSetStatus(item.id, isWatched ? 'unwatched' : 'watched');
               }}
-              className="wbtn status-toggle notwatched-marvel-btn row-watch-toggle media-icon-action media-watch-action"
+              className="wbtn status-toggle notwatched-marvel-btn row-watch-toggle media-icon-action media-watch-action constellation-card__icon"
             ><RowStatusIcon size={14} /><span>{isWatched ? 'Done' : 'Watch'}</span></button>
           )}
         </div>
-        
       </div>
-    </div>
+    </article>
   );
 }, areTitleRowPropsEqual);
 
@@ -772,7 +788,7 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
     setMeasuredVersion(v => v + 1);
   }, [rows]);
 
-  const estimatedRowHeight = 126;
+  const estimatedRowHeight = 172;
   const estimatedTotalHeight = rows.length * estimatedRowHeight;
   const computedOverscan = Math.min(8, Math.max(4, Math.round(viewportState.height / 260)));
 
@@ -848,10 +864,10 @@ const PhaseRows = React.memo(function PhaseRows({ rows, renderRow }) {
   }, []);
 
   return (
-    <div className="phase-rows-full virtual-list" ref={shellRef} style={{ '--virtual-total-rows': rows.length }}>
+    <div className="phase-rows-full virtual-list constellation-rows" ref={shellRef} style={{ '--virtual-total-rows': rows.length }}>
       {topSpacer > 0 && <div className="virtual-spacer" style={{ height: topSpacer }} aria-hidden="true" />}
       {visibleRows.map(({ item, idx }) => (
-        <div key={item.id} ref={setRowRef(item.id)} className="phase-row-virtualized">
+        <div key={item.id} ref={setRowRef(item.id)} className="phase-row-virtualized constellation-rows__item">
           {renderRow(item, idx)}
         </div>
       ))}
@@ -3411,7 +3427,7 @@ export default function MCUViewer() {
     return (
       <>
         {showPhaseSystem && (
-          <section ref={phaseRef} className="phase-command-center" aria-label="Phase navigation">
+          <section ref={phaseRef} className="phase-command-center constellation-navigator" aria-label="Phase navigation">
             <div className="phase-command-center__hero" style={{ '--phase-color': activePhaseMeta?.color || 'var(--theme-accent)' }}>
               <div className="phase-command-center__copy">
                 <span className="phase-command-center__eyebrow">Phase Navigator</span>
@@ -3484,7 +3500,7 @@ export default function MCUViewer() {
     const isBookmarked = Boolean(bookmarks[item.id]);
     const hideWatchToggle = itemReleaseStatus === 'upcoming';
     return (
-      <article key={item.id} className={`phase-list-item media-command-card row-status-${item.status}`} data-bookmarked={isBookmarked} data-watched={isWatched} style={{ '--phase-color': ph?.color || 'var(--theme-accent)' }}>
+      <article key={item.id} className={`phase-list-item media-command-card constellation-card constellation-card--phase row-status-${item.status}`} data-bookmarked={isBookmarked} data-watched={isWatched} style={{ '--phase-color': ph?.color || 'var(--theme-accent)' }}>
         <div className="phase-list-item__index" aria-hidden="true">
           <span>{String(idx + 1).padStart(2, '0')}</span>
           <small>{formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}</small>
@@ -3545,7 +3561,7 @@ export default function MCUViewer() {
     return (
       <section
         key={pid}
-        className="phase-list-section motion-section"
+        className="phase-list-section constellation-phase motion-section"
         data-motion="section"
         data-phase={pid}
         ref={el => { phaseRefs.current[pid] = el; }}
@@ -4109,7 +4125,7 @@ export default function MCUViewer() {
 
       {/* ━━ CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <main ref={mainRef} className={`app-scroll-shell${performanceMode ? ' scroll-performance' : ''}`} style={{ overflow: overlayActive ? 'hidden' : 'visible', touchAction: overlayActive ? 'none' : 'pan-y', pointerEvents: blockHomeInteractions ? 'none' : 'auto', flex: '1 1 auto', '--content-max': '95vw', '--content-pad': '20px', '--sticky-offset': headerCompact ? '44px' : '72px' }}>
-        <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch">
+        <div style={{ maxWidth: 'var(--content-max)', margin: '0 auto', padding: '28px 18px 96px 18px', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 'calc(100% - 400px)' }} className="list-mode-switch constellation-list-stage">
           {browseMode !== 'search' && phaseKeys.length === 0 && (
             <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: 'var(--font-marvel-ui)', fontSize: 19, color: T.textMuted, letterSpacing: 4 }}>
               NO RESULTS — ADJUST YOUR FILTERS
@@ -4118,7 +4134,7 @@ export default function MCUViewer() {
           {browseMode === 'search' ? (
             search.trim() ? (
               <section data-motion="section" className='curvy-panel motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 12 }}>
-                <div className="list-panel" style={{ overflow: 'hidden' }}>
+                <div className="list-panel constellation-list-panel" style={{ overflow: 'hidden' }}>
                   <PhaseRows
                     rows={filtered}
                     renderRow={(item, idx) => {
@@ -4189,7 +4205,7 @@ export default function MCUViewer() {
             </section>
           ) : showPhaseSystem ? phaseKeys.map(renderPhaseCalendarSection) : (
             <section data-motion="section" className='curvy-panel motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 12 }}>
-              <div className="list-panel" style={{ overflow: 'hidden' }}>
+              <div className="list-panel constellation-list-panel" style={{ overflow: 'hidden' }}>
                 <PhaseRows rows={filtered} renderRow={(item, idx) => {
                   const itemReleaseStatus = releaseStatusFor(item);
                   const itemReleaseInfo = releaseInfoFor(item);
