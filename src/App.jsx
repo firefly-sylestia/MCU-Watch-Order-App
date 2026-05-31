@@ -99,7 +99,7 @@ const UI_STATE_DEFAULTS = {
   typeFilter: null,
   activePhase: 0,
   filtersOpen: false,
-  viewMode: 'list',
+  viewMode: 'atlas',
   densityMode: 'comfortable',
   timelineMode: 'release',
   autoHideStatuses: false,
@@ -113,7 +113,7 @@ const UI_STATE_DEFAULTS = {
 };
 
 const VALID_LIST_MODES = new Set(LIST_MODES.map(mode => mode.id));
-const VALID_VIEW_MODES = new Set(['list', 'calendar']);
+const VALID_VIEW_MODES = new Set(['atlas', 'list', 'calendar']);
 const VALID_PHASES = new Set([0, ...PHASES.map(phase => phase.id), ...DC_PHASES.map(phase => phase.id)]);
 const VALID_TYPES = new Set([null, ...Object.keys(TYPE_META)]);
 const VALID_STATUSES = new Set([null, ...Object.keys(STATUS_META)]);
@@ -3576,6 +3576,131 @@ export default function MCUViewer() {
     );
   };
 
+  const renderAtlasView = () => {
+    const atlasPhaseOptions = [
+      { id: 0, label: 'All', name: 'Saga Atlas', count: activeItems.length, color: 'var(--theme-accent)' },
+      ...currentPhases.map((ph) => {
+        const rows = activeItems.filter(item => item.phase === ph.id);
+        return { id: ph.id, label: `Phase ${ph.id}`, name: ph.name, count: rows.length, color: ph.color };
+      }).filter(opt => opt.count > 0),
+    ];
+    const atlasGroups = activePhase === 0 ? phaseKeys : [activePhase].filter(pid => grouped[pid]?.length);
+    const atlasNext = filtered.find(item => item.status !== 'watched') || filtered[0];
+    const atlasWatched = filtered.filter(item => item.status === 'watched').length;
+    const atlasPct = filtered.length ? Math.round((atlasWatched / filtered.length) * 100) : 0;
+
+    return (
+      <section className="atlas-view-shell motion-section motion-pop" data-motion="section" aria-label="Story Atlas viewing system">
+        <aside className="atlas-phase-dock" aria-label="Atlas phase navigation">
+          <div className="atlas-dock-heading">
+            <span>Story Atlas</span>
+            <strong>{atlasPct}%</strong>
+          </div>
+          <div className="atlas-phase-track" role="tablist" aria-label="Choose atlas sector">
+            {atlasPhaseOptions.map(opt => (
+              <button
+                key={`atlas-phase-${opt.id}`}
+                type="button"
+                role="tab"
+                aria-selected={activePhase === opt.id}
+                className="atlas-phase-node"
+                data-active={activePhase === opt.id}
+                onClick={() => navigateToPhase(opt.id)}
+                style={{ '--atlas-phase-color': opt.color }}
+              >
+                <span className="atlas-node-orb" aria-hidden="true" />
+                <span className="atlas-node-copy">
+                  <span>{opt.label}</span>
+                  <strong>{opt.name}</strong>
+                  <small>{opt.count} titles</small>
+                </span>
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        <div className="atlas-content-grid">
+          <header className="atlas-command-hero">
+            <div>
+              <p className="atlas-eyebrow">Non-linear watch console</p>
+              <h3>{activePhase === 0 ? 'Navigate the saga by sectors, not a long list.' : currentPhases.find(ph => ph.id === activePhase)?.name || `Phase ${activePhase}`}</h3>
+              <p>Use the phase dock, spotlight, and compact story portals to jump directly into the next title, details, saves, or status changes without scrolling a continuous timeline.</p>
+            </div>
+            <div className="atlas-spotlight-card">
+              <span>Next signal</span>
+              <strong>{atlasNext?.title || 'No titles in this sector'}</strong>
+              <small>{filtered.length} visible · {atlasWatched} completed</small>
+              <span className="atlas-progress-meter"><span style={{ width: `${atlasPct}%` }} /></span>
+            </div>
+          </header>
+
+          <div className="atlas-sector-stack">
+            {atlasGroups.map(pid => {
+              const ph = currentPhases.find(phase => phase.id === pid);
+              const rows = grouped[pid] || [];
+              const done = rows.filter(item => item.status === 'watched').length;
+              const phasePct = rows.length ? Math.round((done / rows.length) * 100) : 0;
+              return (
+                <section key={`atlas-sector-${pid}`} className="atlas-sector" style={{ '--atlas-phase-color': ph?.color || 'var(--theme-accent)' }}>
+                  <header className="atlas-sector-head">
+                    <div>
+                      <span>{ph?.tagline || 'Release sector'}</span>
+                      <h4>{ph?.name || `Phase ${pid}`}</h4>
+                    </div>
+                    <button type="button" className="atlas-sector-jump" onClick={() => navigateToPhase(pid)}>
+                      Focus sector <ChevRight size={13} />
+                    </button>
+                    <span className="atlas-sector-meter"><span style={{ width: `${phasePct}%` }} /></span>
+                  </header>
+                  <div className="atlas-card-grid">
+                    {rows.map((item, idx) => {
+                      const itemReleaseStatus = releaseStatusFor(item);
+                      const itemReleaseInfo = releaseInfoFor(item);
+                      const typeMeta = getSafeTypeMeta(item.type);
+                      const statusMeta = getSafeStatusMeta(item.status);
+                      const StatusIcon = statusMeta.Icon;
+                      const isWatched = item.status === 'watched';
+                      const isBookmarked = Boolean(bookmarks[item.id]);
+                      return (
+                        <article key={`atlas-card-${item.id}`} className={`atlas-title-card row-status-${item.status}`} data-watched={isWatched} data-bookmarked={isBookmarked}>
+                          <button type="button" className="atlas-poster-button" onClick={() => openDetail(item)} aria-label={`Open ${item.title} details`}>
+                            <LazyPoster className="atlas-poster" src={posterSrc(item)} alt={item.title} />
+                            <span className="atlas-card-index">{String(idx + 1).padStart(2, '0')}</span>
+                          </button>
+                          <div className="atlas-card-body">
+                            <button type="button" className="atlas-title-button" onClick={() => openDetail(item)}>{item.title}</button>
+                            <div className="atlas-card-meta">
+                              <span>{typeMeta.label}</span>
+                              <span>{formatReleaseDate(itemReleaseInfo.date, item.year, itemReleaseInfo.label, itemReleaseStatus)}</span>
+                              <span>{releaseStatusLabel(itemReleaseStatus)}</span>
+                            </div>
+                            <div className="atlas-card-actions">
+                              <button type="button" onClick={(event) => openStatusDropdown(event, item.id)} aria-haspopup="menu" aria-expanded={statusDropdown === item.id}>
+                                <StatusIcon size={12} /> {statusMeta.label}
+                              </button>
+                              <button type="button" onClick={() => toggleBookmark(item.id)} aria-pressed={isBookmarked}>
+                                <Bookmark size={12} /> {isBookmarked ? 'Saved' : 'Save'}
+                              </button>
+                              {itemReleaseStatus !== 'upcoming' && (
+                                <button type="button" onClick={() => setStatusDirect(item.id, isWatched ? 'unwatched' : 'watched')} aria-pressed={isWatched}>
+                                  {isWatched ? <Check size={12} /> : <EyeOff size={12} />} {isWatched ? 'Done' : 'Watch'}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    );
+  };
+
   const sectionScaffold = (
     <>
       <Header title="MCU Viewing Order" subtitle="Modernized modular UI shell" />
@@ -3654,7 +3779,9 @@ export default function MCUViewer() {
               <button className="fpill" onClick={() => openSearchMode(search, null)} style={{ justifyContent: 'center' }}>Search</button>
               <button className="fpill" onClick={() => openSearchMode('', 'series')} style={{ justifyContent: 'center' }}>Series</button>
               <button className="fpill" onClick={() => navigateToPhase(activePhase || 0)} style={{ justifyContent: 'center' }}>Phases</button>
-              <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ justifyContent: 'center' }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
+              <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode('atlas'); }} style={{ justifyContent: 'center', borderColor: viewMode === 'atlas' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>Atlas View</button>
+              <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode('calendar'); }} style={{ justifyContent: 'center', borderColor: viewMode === 'calendar' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>Calendar View</button>
+              <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode('list'); }} style={{ justifyContent: 'center', borderColor: viewMode === 'list' ? 'var(--theme-accent)' : 'var(--theme-border)' }}>Classic List</button>
               <button className="fpill" onClick={openAnalyticsPanel} style={{ justifyContent: 'center' }}>{tUniverse('Analytics')}</button>
             </div>
             <button className="fpill" onClick={() => { setSidebarOpen(false); toggleSettingsPanel(); }} style={{ width: '100%', justifyContent: 'center' }}><Settings size={13} />{tUniverse('Open Settings')}</button>
@@ -4055,9 +4182,9 @@ export default function MCUViewer() {
           {metadataBuild.status === 'running' ? `Fetch ${metadataBuild.done}/${metadataBuild.total}` : 'Fetch'}
         </button>
         <button type="button" className="dock-btn"
-          onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
+          onClick={() => setViewMode(viewMode === 'atlas' ? 'calendar' : viewMode === 'calendar' ? 'list' : 'atlas')}
           style={{ background: 'color-mix(in srgb, var(--theme-accent) 16%, var(--control-solid-bg))' }}>
-          View: {viewMode === 'list' ? 'List' : 'Calendar'}
+          View: {viewMode === 'atlas' ? 'Atlas' : viewMode === 'calendar' ? 'Calendar' : 'List'}
         </button>
         <button type="button" className="dock-btn"
           onClick={() => { const next = listMode === 'core' ? 'extended' : 'core'; setListMode(next); setExpandedItem(null); setExpandedPhase(null); }}
@@ -4163,7 +4290,7 @@ export default function MCUViewer() {
                 Start typing to search across your full list.
               </div>
             )
-          ) : viewMode === 'calendar' ? (
+          ) : viewMode === 'atlas' ? renderAtlasView() : viewMode === 'calendar' ? (
             <section data-motion="section" className='curvy-panel calendar-section motion-section motion-pop' style={{ border: `1px solid ${T.surfaceBorder}`, background: 'transparent', borderRadius: 14, padding: 16 }}>
               <h3 style={{ margin: '4px 0 14px', letterSpacing: 2, fontFamily: 'var(--font-marvel-ui)', color: 'var(--theme-text-primary)', textShadow: '0 1px 4px color-mix(in srgb, var(--theme-bg) 45%, transparent)' }}>Release Calendar</h3>
               <div style={{ marginBottom: 12, color: T.textMuted, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.2 }}>Grouped by month / quarter / year</div>
