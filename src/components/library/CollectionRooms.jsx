@@ -1,4 +1,5 @@
 import React from 'react';
+import { ChevRight } from '../../constants/icons.jsx';
 import { collectionMatchesItem } from '../../data/libraryCollections.js';
 import './CollectionRooms.css';
 
@@ -6,8 +7,8 @@ export default function CollectionRooms({ collections = [], items = [], universe
   return (
     <section className="collection-rooms archive-shelf" data-variant={variant} aria-label="Collection rooms">
       <div className="collection-rooms__header">
-        <p>Collection Rooms</p>
-        <h2>Enter a themed room</h2>
+        <p>{universe === 'dc' ? 'Case Rooms' : 'Collection Rooms'}</p>
+        <h2>{universe === 'dc' ? 'Enter a themed dossier' : 'Enter a themed room'}</h2>
       </div>
       <div className="collection-rooms__grid">
         {collections.map((collection) => {
@@ -20,20 +21,27 @@ export default function CollectionRooms({ collections = [], items = [], universe
               type="button"
               className="collection-room-card"
               key={collection.id}
+              aria-pressed={activeCollectionId === collection.id}
               data-active={activeCollectionId === collection.id}
-              style={{ '--room-accent': collection.accent }}
+              style={{ '--room-accent': collection.accent, '--room-progress': `${pct}%` }}
               onClick={() => onSelectCollection?.(collection)}
             >
               <span className="collection-room-card__icon">{collection.icon}</span>
               <span className="collection-room-card__content">
-                <strong>{collection.title}</strong>
+                <span className="collection-room-card__meta-row">
+                  <strong>{collection.title}</strong>
+                  <span className="collection-room-card__progress-pill" aria-label={`${pct}% watched`}>
+                    <i><b style={{ width: `${pct}%` }} /></i>
+                    <em>{pct}%</em>
+                  </span>
+                </span>
                 <small>{collection.description}</small>
-                <span className="collection-room-card__meter" aria-label={`${pct}% watched`}><i style={{ width: `${pct}%` }} /></span>
                 <span className="collection-room-card__stats">{roomItems.length} items · {watched} watched</span>
               </span>
               <span className="collection-room-card__posters" aria-hidden="true">
                 {preview.map((item, index) => <img key={item.id} src={posterSrc?.(item)} alt="" style={{ '--stack-index': index }} />)}
               </span>
+              <span className="collection-room-card__enter"><ChevRight size={14} /> Open list</span>
             </button>
           );
         })}

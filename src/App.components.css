@@ -4586,3 +4586,137 @@ body { background: var(--app-shell-gradient); }
 }
 .sidebar-universe-controls{display:grid;gap:8px}.sidebar-universe-card{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:center;min-height:54px;padding:9px;border:1px solid var(--theme-border);border-radius:17px;background:color-mix(in srgb,var(--theme-surface) 76%,transparent);color:var(--theme-text-primary);text-align:left;cursor:pointer;transition:transform var(--motion-fast) var(--ease-out),border-color var(--motion-fast) var(--ease-out),background var(--motion-fast) var(--ease-out)}.sidebar-universe-card span{grid-row:1 / span 2;width:20px;height:20px;border-radius:999px;background:var(--swatch);box-shadow:0 0 0 4px color-mix(in srgb,var(--swatch) 18%,transparent)}.sidebar-universe-card strong{font-size:12px;font-weight:950;letter-spacing:.1em;text-transform:uppercase}.sidebar-universe-card small{color:var(--theme-text-muted);font-size:10px}.sidebar-universe-card:hover,.sidebar-universe-card[data-active="true"]{transform:translateY(-1px);border-color:color-mix(in srgb,var(--swatch) 58%,var(--theme-border));background:color-mix(in srgb,var(--swatch) 13%,var(--theme-surface))}.sidebar-universe-card:focus-visible{outline:none;box-shadow:var(--interactive-ring)}.sidebar-color-mode-grid .fpill{justify-content:center}.sidebar-color-mode-grid .fpill[aria-pressed="true"]{border-color:var(--theme-accent)!important;color:var(--theme-accent)!important;background:color-mix(in srgb,var(--theme-accent) 14%,var(--theme-surface))!important}.sidebar-theme-redesign{display:grid;gap:10px}.settings-menu-redesign{border-radius:30px!important}.settings-redesign::before{content:'App Preferences';display:block;margin:0 0 10px;color:var(--theme-accent);font-size:11px;font-weight:950;letter-spacing:.18em;text-transform:uppercase}.settings-card:nth-of-type(1)::before{content:'App Preferences';display:block;margin-bottom:8px;color:var(--theme-accent);font-size:10px;font-weight:950;letter-spacing:.15em;text-transform:uppercase}.settings-card:nth-of-type(2)::before{content:'Advanced';display:block;margin-bottom:8px;color:var(--theme-accent);font-size:10px;font-weight:950;letter-spacing:.15em;text-transform:uppercase}.settings-grid-2+.settings-card::before{content:'Display & Theme';display:block;margin-bottom:8px;color:var(--theme-accent);font-size:10px;font-weight:950;letter-spacing:.15em;text-transform:uppercase}.settings-redesign .settings-card:has(.settings-inline-actions)::before{content:'Data & Backup'}.settings-redesign .settings-card:last-child::before{content:'Help / About'}
 @media (prefers-reduced-motion:reduce){.sidebar-universe-card{transition:none}.sidebar-universe-card:hover{transform:none}}
+
+/* Refined grouped More command panel */
+.settings-redesign {
+  display: grid;
+  gap: 16px;
+}
+
+.settings-redesign::before,
+.settings-redesign .settings-card::before,
+.settings-grid-2 + .settings-card::before,
+.settings-redesign .settings-card:last-child::before {
+  content: none !important;
+}
+
+.settings-command-group {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--theme-border) 82%, transparent);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--theme-surface) 62%, transparent);
+}
+
+.settings-hero-card.settings-command-group {
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 260px);
+  align-items: center;
+  padding: 18px;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 12% 4%, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent 42%),
+    color-mix(in srgb, var(--theme-surface-strong) 78%, transparent);
+}
+
+.settings-group-heading {
+  display: grid;
+  gap: 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--theme-border) 72%, transparent);
+}
+
+.settings-group-heading p,
+.settings-eyebrow {
+  margin: 0;
+  color: var(--theme-accent);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.settings-group-heading h3 {
+  margin: 0;
+  color: var(--theme-text-primary);
+  font-family: var(--font-marvel-display);
+  font-size: clamp(1.25rem, 2vw, 1.8rem);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.settings-group-heading span {
+  color: var(--theme-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.settings-redesign .settings-card {
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--theme-surface) 84%, transparent);
+}
+
+.settings-scale-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.settings-scale-grid .fpill {
+  justify-content: center;
+  opacity: 1;
+}
+
+.settings-scale-grid .fpill:disabled {
+  opacity: .55;
+}
+
+.settings-backup-list {
+  display: grid;
+  gap: 6px;
+}
+
+.settings-backup-list .fpill {
+  justify-content: space-between;
+}
+
+.settings-danger-action {
+  justify-content: center;
+  border-color: color-mix(in srgb, #ef4444 44%, var(--theme-border)) !important;
+}
+
+.settings-danger-action:disabled {
+  opacity: .55;
+}
+
+.import-backup-pill {
+  cursor: pointer;
+}
+
+.theme-switch[data-theme="minimal"] .settings-command-group {
+  box-shadow: none;
+}
+
+.theme-switch[data-theme="neon"] .settings-command-group {
+  border-color: color-mix(in srgb, var(--theme-accent) 44%, var(--theme-border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-accent) 16%, transparent), 0 0 24px color-mix(in srgb, var(--theme-accent) 13%, transparent);
+}
+
+.theme-switch[data-theme="pixelated"] :is(.settings-command-group, .settings-redesign .settings-card) {
+  border-radius: 8px !important;
+}
+
+.theme-switch[data-theme="pixelated"] .settings-command-group {
+  box-shadow: 6px 6px 0 color-mix(in srgb, var(--theme-accent) 16%, transparent);
+}
+
+@media (max-width: 700px) {
+  .settings-hero-card.settings-command-group,
+  .settings-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-scale-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

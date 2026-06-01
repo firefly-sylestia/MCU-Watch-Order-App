@@ -1,16 +1,28 @@
-import React, { useMemo } from 'react';
-import { Bookmark, Clock, Layers, Search, Star, PlayCircle, ChevRight } from '../../constants/icons.jsx';
+import React, { useEffect, useMemo, useRef } from 'react';
+import { Bookmark, Clock, Layers, Search, Star, PlayCircle, ChevRight, X } from '../../constants/icons.jsx';
 import { CHARACTER_POV_TITLE_SETS } from '../../data/timelineModes.js';
 import { collectionMatchesItem, getLibraryCollections, phaseCollectionsForUniverse } from '../../data/libraryCollections.js';
 import ArchiveCard from './ArchiveCard.jsx';
 import CollectionRooms from './CollectionRooms.jsx';
 import './LibraryAtrium.css';
 
-function Shelf({ title, kicker, items, empty, renderItem, archival = false }) {
+function Shelf({ title, kicker, items, empty, renderItem, archival = false, layout = 'rail' }) {
+  const contentClass = layout === 'stack'
+    ? 'library-shelf__stack library-archive-row'
+    : layout === 'grid'
+      ? 'library-shelf__grid library-archive-grid'
+      : 'library-shelf__rail';
+
   return (
-    <section className={`library-shelf archive-shelf${archival ? ' library-shelf--archival' : ''}`} aria-label={title}>
-      <div className="library-shelf__head"><div><p>{kicker}</p><h2>{title}</h2></div><span>{items.length} titles</span></div>
-      {items.length ? <div className="library-shelf__rail">{items.map(renderItem)}</div> : <div className="library-shelf__empty">{empty}</div>}
+    <section className={`library-shelf archive-shelf library-shelf--${layout}${archival ? ' library-shelf--archival' : ''}`} aria-label={title}>
+      <div className="library-shelf__head">
+        <div>
+          <p>{kicker}</p>
+          <h2>{title}</h2>
+        </div>
+        <span>{items.length} titles</span>
+      </div>
+      {items.length ? <div className={contentClass}>{items.map(renderItem)}</div> : <div className="library-shelf__empty">{empty}</div>}
     </section>
   );
 }
@@ -39,6 +51,7 @@ export default function LibraryAtrium({
   onToggleBookmark,
   onOpenCatalog,
 }) {
+  const collectionDetailRef = useRef(null);
   const source = filteredItems.length ? filteredItems : items;
   const essentials = useMemo(() => source.filter((item) => item.essential).slice(0, 18), [source]);
   const continueWatching = useMemo(() => source.filter((item) => item.status === 'watching').slice(0, 18), [source]);
@@ -46,18 +59,51 @@ export default function LibraryAtrium({
   const bookmarked = useMemo(() => source.filter((item) => bookmarks[item.id]).slice(0, 18), [source, bookmarks]);
   const recentlyAdded = useMemo(() => [...source].sort((a, b) => (b.year || 0) - (a.year || 0) || (b.order || 0) - (a.order || 0)).slice(0, 18), [source]);
   const recentlyWatched = useMemo(() => (historyItems.length ? historyItems : source.filter((item) => item.watchedDate)).slice(0, 18), [historyItems, source]);
-  const postCreditImportant = useMemo(() => collections.find((collection) => collection.id === 'after-credits'), [collections]);
+  const postCreditImportant = useMemo(() => collections.find((collection) => collection.id === 'after-credits' || collection.id === 'animated-specials'), [collections]);
   const postCreditItems = useMemo(() => postCreditImportant ? source.filter((item) => collectionMatchesItem(postCreditImportant, item, { universe })).slice(0, 18) : [], [postCreditImportant, source, universe]);
   const characterArcShelves = useMemo(() => Object.entries(CHARACTER_POV_TITLE_SETS).map(([id, set]) => ({ id, title: `${id[0].toUpperCase()}${id.slice(1)} Arc`, items: source.filter((item) => set.has(item.title)).slice(0, 14) })).filter((shelf) => shelf.items.length), [source]);
   const allCollections = useMemo(() => [...collections, ...phaseCollectionsForUniverse(universe)], [collections, universe]);
+  const selectedCollection = useMemo(() => allCollections.find((collection) => collection.id === activeCollectionId || collection.id.replace(/^phase-/, '') === String(activeCollectionId || '')), [activeCollectionId, allCollections]);
+  const selectedCollectionItems = useMemo(() => selectedCollection ? items.filter((item) => collectionMatchesItem(selectedCollection, item, { universe })) : [], [items, selectedCollection, universe]);
+  const selectedWatched = selectedCollectionItems.filter((item) => item.status === 'watched').length;
+  const selectedProgress = selectedCollectionItems.length ? Math.round((selectedWatched / selectedCollectionItems.length) * 100) : 0;
   const renderCard = (variant = 'shelf') => (item) => <ArchiveCard key={item.id} item={item} poster={posterSrc?.(item)} rating={getRating?.(item)} status={item.status} isBookmarked={Boolean(bookmarks[item.id])} isWatched={item.status === 'watched'} releaseStatus={releaseStatusFor?.(item)} onOpenDetail={onOpenDetail} onSetStatus={onSetStatus} onToggleBookmark={onToggleBookmark} variant={variant} />;
   const heroItem = continueWatching[0] || watchlist[0] || essentials[0] || source[0];
   const recommended = source.find((item) => item.status !== 'watched' && item.essential) || source.find((item) => item.status !== 'watched') || source[0];
   const featuredCollection = collections.find((collection) => source.some((item) => collectionMatchesItem(collection, item, { universe }))) || collections[0];
   const featuredCollectionItems = featuredCollection ? source.filter((item) => collectionMatchesItem(featuredCollection, item, { universe })).slice(0, 6) : [];
   const lexicon = universe === 'dc'
-    ? { home: 'Watchtower Dispatch', next: 'Recommended patrol', essentials: 'Core heroic arcs', featured: 'Featured case file', recent: 'Recent field notes', library: 'DC Archive Vault', sub: 'Browse eras, legacies, Elseworlds, and team paths with dense catalog controls.', search: 'Search heroes, arcs, cities…' }
-    : { home: 'Mission Dispatch', next: 'Recommended next mission', essentials: 'Essential saga nodes', featured: 'Featured saga file', recent: 'Recent activity', library: 'Marvel Archive Vault', sub: 'Browse phases, sagas, specials, and character paths with dense catalog controls.', search: 'Search titles, phases, stingers…' };
+    ? { home: 'Watchtower Dispatch', next: 'Recommended patrol', essentials: 'Core heroic arcs', featured: 'Featured case file', recent: 'Recent field notes', library: 'DC Archive Vault', sub: 'Browse Gotham dossiers, Metropolis records, Elseworlds, legacies, and Justice League paths with precise catalog tools.', search: 'Search heroes, arcs, cities…', hero: 'Choose the next dossier to open.', collectionCopy: 'Open any case room to see its full title list, progress, and quick actions.' }
+    : { home: 'Mission Dispatch', next: 'Recommended next mission', essentials: 'Essential saga nodes', featured: 'Featured saga file', recent: 'Recent activity', library: 'Marvel Archive Vault', sub: 'Browse phases, sagas, specials, and character paths with dense catalog controls.', search: 'Search titles, phases, stingers…', hero: 'Pick up the best path from here.', collectionCopy: 'Open any saga room to see its full title list, progress, and quick actions.' };
+
+  useEffect(() => {
+    if (!selectedCollection || !collectionDetailRef.current || mode === 'home') return;
+    collectionDetailRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [mode, selectedCollection?.id]);
+
+  const collectionDetail = selectedCollection && mode !== 'home' ? (
+    <section className="collection-detail-panel archive-shelf" ref={collectionDetailRef} style={{ '--room-accent': selectedCollection.accent }} aria-live="polite" aria-label={`${selectedCollection.title} collection details`}>
+      <div className="collection-detail-panel__header">
+        <div className="collection-detail-panel__identity">
+          <span className="collection-detail-panel__icon" aria-hidden="true">{selectedCollection.icon}</span>
+          <div>
+            <p>{universe === 'dc' ? 'Opened case room' : 'Opened collection room'}</p>
+            <h2>{selectedCollection.title}</h2>
+            <span>{selectedCollection.description}</span>
+          </div>
+        </div>
+        <div className="collection-detail-panel__progress" aria-label={`${selectedProgress}% watched`}>
+          <strong>{selectedProgress}%</strong>
+          <span>{selectedWatched}/{selectedCollectionItems.length} watched</span>
+          <i><b style={{ width: `${selectedProgress}%` }} /></i>
+        </div>
+        <button type="button" className="collection-detail-panel__close" onClick={() => setActiveCollectionId?.(null)} aria-label="Clear opened collection"><X size={14} /> Clear</button>
+      </div>
+      <div className="collection-detail-panel__grid">
+        {selectedCollectionItems.map(renderCard('compact'))}
+      </div>
+    </section>
+  ) : null;
 
   if (mode === 'home') {
     return (
@@ -65,7 +111,7 @@ export default function LibraryAtrium({
         <section className="home-collections__hero archive-surface">
           <div className="home-collections__copy">
             <p>{lexicon.home}</p>
-            <h1>Pick up the best path from here.</h1>
+            <h1>{lexicon.hero}</h1>
             <span>Curated shortcuts for what to resume, what matters next, and which collection deserves attention.</span>
             <div className="home-collections__actions">
               <button type="button" onClick={() => heroItem && onOpenDetail?.(heroItem)}><PlayCircle size={17} /> Continue</button>
@@ -89,8 +135,8 @@ export default function LibraryAtrium({
         </section>
 
         <CollectionRooms collections={collections.slice(0, 6)} items={items} universe={universe} posterSrc={posterSrc} activeCollectionId={activeCollectionId} onSelectCollection={(collection) => setActiveCollectionId?.(collection.id)} variant="home" />
-        <Shelf title={lexicon.essentials} kicker="Curated" items={essentials.slice(0, 10)} empty="Your curated essentials will appear here as the archive grows." renderItem={renderCard('shelf')} />
-        <Shelf title="Recently Added" kicker="Fresh picks" items={recentlyAdded.slice(0, 10)} empty="No recent titles available." renderItem={renderCard('compact')} />
+        <Shelf title={lexicon.essentials} kicker="Curated" items={essentials.slice(0, 10)} empty="Your curated essentials will appear here as the archive grows." renderItem={renderCard('shelf')} layout="rail" />
+        <Shelf title="Recently Added" kicker="Fresh picks" items={recentlyAdded.slice(0, 10)} empty="No recent titles available." renderItem={renderCard('compact')} layout="rail" />
       </div>
     );
   }
@@ -109,7 +155,7 @@ export default function LibraryAtrium({
           </label>
           <div className="library-atrium__facet-strip" aria-label="Timeline sort facet">
             <span><Layers size={13} /> Sort / POV</span>
-            {timelineModes.map((mode) => <button key={mode.id} data-active={timelineMode === mode.id} onClick={() => setTimelineMode?.(mode.id)}>{mode.label}</button>)}
+            {timelineModes.map((mode) => <button key={mode.id} type="button" data-active={timelineMode === mode.id} onClick={() => setTimelineMode?.(mode.id)}>{mode.label}</button>)}
           </div>
         </div>
         {heroItem && <ArchiveCard item={heroItem} poster={posterSrc?.(heroItem)} rating={getRating?.(heroItem)} status={heroItem.status} isBookmarked={Boolean(bookmarks[heroItem.id])} isWatched={heroItem.status === 'watched'} releaseStatus={releaseStatusFor?.(heroItem)} onOpenDetail={onOpenDetail} onSetStatus={onSetStatus} onToggleBookmark={onToggleBookmark} variant="hero" />}
@@ -122,13 +168,18 @@ export default function LibraryAtrium({
         <div><Layers size={16} /><strong>{allCollections.length}</strong><span>Archive Rooms</span></div>
       </div>
 
+      <section className="library-collection-intro archive-shelf">
+        <div><p>Collections</p><h2>{universe === 'dc' ? 'Case rooms, not hidden filters.' : 'Saga rooms, not hidden filters.'}</h2></div>
+        <span>{lexicon.collectionCopy}</span>
+      </section>
       <CollectionRooms collections={allCollections} items={items} universe={universe} posterSrc={posterSrc} activeCollectionId={activeCollectionId} onSelectCollection={(collection) => setActiveCollectionId?.(collection.id)} />
-      <Shelf archival title="Full Watchlist" kicker="Queue" items={watchlist} empty="Queued titles appear here when marked plan-to-watch." renderItem={renderCard('compact')} />
-      <Shelf archival title="Recently Added Records" kicker="Archive index" items={recentlyAdded} empty="No recent titles available." renderItem={renderCard('compact')} />
-      <Shelf archival title="Essential Index" kicker={universe === 'dc' ? 'Core heroic records' : 'Core canon records'} items={essentials} empty="No essential titles match current facets." renderItem={renderCard('compact')} />
-      {characterArcShelves.map((shelf) => <Shelf archival key={shelf.id} title={shelf.title} kicker="Character file" items={shelf.items} empty="" renderItem={renderCard('compact')} />)}
-      <Shelf archival title={universe === 'dc' ? 'Tag Scene / Specials Index' : 'Post-credit Important'} kicker={universe === 'dc' ? 'Bonus dossiers' : 'Stinger map'} items={postCreditItems} empty="No bonus-scene required titles match current facets." renderItem={renderCard('compact')} />
-      <Shelf archival title="Recently Watched Archive" kicker="History" items={recentlyWatched} empty="Watched history appears here once you complete titles." renderItem={renderCard('compact')} />
+      {collectionDetail}
+      <Shelf archival title="Full Watchlist" kicker="Queue" items={watchlist} empty="Queued titles appear here when marked plan-to-watch." renderItem={renderCard('compact')} layout="stack" />
+      <Shelf archival title="Recently Added Records" kicker="Archive index" items={recentlyAdded} empty="No recent titles available." renderItem={renderCard('compact')} layout="grid" />
+      <Shelf archival title="Essential Index" kicker={universe === 'dc' ? 'Core heroic records' : 'Core canon records'} items={essentials} empty="No essential titles match current facets." renderItem={renderCard('compact')} layout="grid" />
+      {characterArcShelves.map((shelf) => <Shelf archival key={shelf.id} title={shelf.title} kicker="Character file" items={shelf.items} empty="" renderItem={renderCard('compact')} layout="grid" />)}
+      <Shelf archival title={universe === 'dc' ? 'Tag Scene / Specials Index' : 'Post-credit / Specials Index'} kicker={universe === 'dc' ? 'Bonus dossiers' : 'Stinger map'} items={postCreditItems} empty="No bonus-scene required titles match current facets." renderItem={renderCard('compact')} layout="grid" />
+      <Shelf archival title="Recently Watched Archive" kicker="History" items={recentlyWatched} empty="Watched history appears here once you complete titles." renderItem={renderCard('compact')} layout="stack" />
     </div>
   );
 }
