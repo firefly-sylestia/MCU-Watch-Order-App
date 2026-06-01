@@ -4,6 +4,7 @@ import { Bookmark, Film, Layers, Search, Settings, SlidersH, Star, UserCircle } 
 const NAV = [
   ['home', 'Home', Film],
   ['library', 'Library', Layers],
+  ['phase', 'Phases', Layers],
   ['collections', 'Collections', Star],
   ['search', 'Search', Search],
   ['progress', 'Progress', Bookmark],

@@ -204,7 +204,7 @@ html {
   scroll-behavior: auto;
   -webkit-text-size-adjust: 100%;
   overflow-x: hidden;
-  overscroll-behavior-y: none;
+  overscroll-behavior-y: auto;
   scrollbar-gutter: stable both-edges;
 }
 
@@ -215,7 +215,7 @@ body {
   color: var(--text);
   font-family: var(--font-body);
   overflow-x: hidden;
-  overscroll-behavior-y: none;
+  overscroll-behavior-y: auto;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
 }

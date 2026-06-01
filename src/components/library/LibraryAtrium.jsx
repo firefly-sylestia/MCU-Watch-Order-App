@@ -23,7 +23,7 @@ export default function LibraryAtrium({ activeItems, historyItems, currentPhases
       { id: 'essentials', title: 'Essentials', subtitle: 'A high-signal pathway through the library.', items: essentials },
       { id: 'arcs', title: 'Character Arcs', subtitle: 'Hero, antihero, and team journeys.', items: characterArcs },
       ...(historyItems.length ? [{ id: 'recent', title: 'Recently Watched', subtitle: 'Your latest completed or rated entries.', items: historyItems }] : []),
-      { id: 'phases', title: 'Phase Collections', subtitle: 'Phases are now a facet, not the whole interface.', items: phaseCollections },
+      { id: 'phases', title: 'Phase Collections', subtitle: 'Open the phase loading system with the full phase navigator and watch rows.', items: phaseCollections },
       { id: 'credits', title: 'After-Credits Important', subtitle: 'Stingers that matter for future connections.', items: afterCredits },
     ].map((shelf) => ({ ...shelf, items: uniqueById(shelf.items).slice(0, shelfLimit) }));
   }, [activeItems, bookmarks, currentPhases, getAfterCreditsMeta, historyItems]);
@@ -39,7 +39,7 @@ export default function LibraryAtrium({ activeItems, historyItems, currentPhases
           <p>Browse like a media library instead of a phase checklist. Your watched states, bookmarks, ratings, reviews, posters, trailers, universe switch, theme, export tools, and deep links remain connected.</p>
           <div className="library-hero__actions">
             <button className="archive-btn archive-btn--primary" type="button" onClick={() => onNavigate('search')}>Open Command Catalog</button>
-            <button className="archive-btn archive-btn--ghost" type="button" onClick={() => onNavigate('collections')}>Enter Collection Rooms</button>
+            <button className="archive-btn archive-btn--ghost" type="button" onClick={() => onNavigate('phase')}>Open Phase Navigator</button>
           </div>
         </div>
         <div className="library-hero__card">{hero && <ArchiveCard item={hero} variant="hero" posterSrc={posterSrc} bookmarked={bookmarks[hero.id]} rating={myRating[hero.id]} onOpen={openDetail} onToggleBookmark={toggleBookmark} onStatus={setStatusDirect} />}</div>
@@ -49,7 +49,7 @@ export default function LibraryAtrium({ activeItems, historyItems, currentPhases
       <div className="library-shelves">
         {shelves.map((shelf) => (
           <section key={shelf.id} className="library-shelf" aria-labelledby={`shelf-${shelf.id}`}>
-            <div className="library-shelf__head"><div><h2 id={`shelf-${shelf.id}`}>{shelf.title}</h2><p>{shelf.subtitle}</p></div>{shelf.items.length > 0 && <button type="button" onClick={() => onNavigate(shelf.id === 'phases' ? 'collections' : 'library')}>View all</button>}</div>
+            <div className="library-shelf__head"><div><h2 id={`shelf-${shelf.id}`}>{shelf.title}</h2><p>{shelf.subtitle}</p></div>{shelf.items.length > 0 && <button type="button" onClick={() => onNavigate(shelf.id === 'phases' ? 'phase' : 'library')}>View all</button>}</div>
             {shelf.items.length ? <div className="archive-row">{shelf.items.map((item) => <ArchiveCard key={item.id} item={item} variant="shelf" posterSrc={posterSrc} bookmarked={bookmarks[item.id]} rating={myRating[item.id]} onOpen={openDetail} onToggleBookmark={toggleBookmark} onStatus={setStatusDirect} />)}</div> : <div className="library-empty">Nothing here yet. Use quick actions on cards to fill this shelf.</div>}
           </section>
         ))}

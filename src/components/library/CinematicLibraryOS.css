@@ -24,6 +24,10 @@
 .archive-rail__profile { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--archive-card-border); } .archive-rail__profile img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; }
 .archive-dock { display: none; }
 
+.archive-phase-view { display: grid; gap: clamp(16px, 2.4vw, 28px); }
+.archive-phase-view .phase-command-center { margin-top: 0; }
+.phase-list-stack { display: grid; gap: clamp(16px, 2.2vw, 26px); }
+
 .library-hero { position: relative; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr); gap: var(--archive-gap); min-height: 520px; padding: clamp(22px, 4vw, 54px); border: 1px solid var(--archive-card-border); border-radius: 38px; overflow: hidden; background: radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--theme-accent) 24%, transparent), transparent 38%), linear-gradient(140deg, color-mix(in srgb, var(--theme-surface) 78%, transparent), color-mix(in srgb, var(--theme-bg-alt) 72%, transparent)); box-shadow: var(--elevation-surface-3); }
 .library-hero__copy { align-self: center; max-width: 780px; } .library-hero h1 { margin: 0; font: 950 clamp(40px, 7vw, 92px)/.88 var(--font-marvel-display); letter-spacing: -.075em; } .library-hero__actions, .librarian-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
 .library-hero__metrics { position: absolute; left: clamp(22px, 4vw, 54px); right: clamp(22px, 4vw, 54px); bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; } .library-hero__metrics span { padding: 10px 14px; border: 1px solid var(--archive-card-border); border-radius: 999px; background: color-mix(in srgb, var(--theme-surface) 62%, transparent); }
