@@ -699,7 +699,7 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
       {open && <button className="settings-backdrop" data-state="open" aria-label="Close settings menu" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onDismissBackdrop?.(); onClose?.(); }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} />}
       <div className="settings-shell" data-state={open ? 'open' : 'closed'} role="dialog" aria-modal={open ? 'true' : 'false'} aria-hidden={!open} aria-label="More command panel" id="more-command-panel" ref={ref}>
         <div className="fade-in settings-menu settings-menu-redesign" data-state={open ? 'open' : 'closed'} style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
-          <div className="settings-close-row"><button className="fpill settings-close-sticky" onClick={() => onClose?.()}><X size={14}/>Close</button></div>{children}
+          <div className="settings-close-row"><button className="fpill settings-close-sticky" type="button" onClick={() => onClose?.()}><X size={14}/>Close</button></div>{children}
         </div>
       </div>
     </>
@@ -3691,7 +3691,7 @@ export default function MCUViewer() {
         progressBadges={{ progress: `${pct}%`, collections: libraryCollections.length }}
         universeLabel={`${activeUniverse.title} ${activeUniverse.subtitle}`}
         universeMeta={universe === 'dc' ? 'Justice paths, Elseworlds, and legacy arcs.' : 'Saga paths, phases, and timeline missions.'}
-        quickActions={sidebarQuickActions}
+        viewingActions={sidebarQuickActions}
         appActions={sidebarAppActions}
         universeControls={sidebarUniverseControls}
         onNavigate={(destination) => { if (destination === 'home') navigateHome(); if (destination === 'library') navigateLibrary(); if (destination === 'collections') { setBrowseMode('library'); setSidebarOpen(false); requestAnimationFrame(() => document.querySelector('.collection-rooms')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); } if (destination === 'search') openSearchMode(search, null); if (destination === 'progress') openAnalyticsPanel(); }}
@@ -3714,98 +3714,107 @@ export default function MCUViewer() {
       </NavigationShell>
 
       <SettingsMenu ref={settingsRef} open={settingsOpen} darkMode={darkMode} performanceMode={performanceMode} onClose={closeSettings} onDismissBackdrop={suppressNextDocumentClick}>
-  <div className="settings-redesign">
-    <section className="settings-hero-card">
-      <div>
-        <p className="settings-eyebrow">More Command Panel</p>
-        <h2>{universe === 'dc' ? 'Watchtower systems and backup tools' : 'Command systems and backup tools'}</h2>
-        <p>Grouped preferences, display links, data backup, and advanced utilities. Fast style changes live in the Sidebar Hub.</p>
-      </div>
-      <div className="settings-hero-actions">
-        <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={13} />Dark</button>
-        <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={13} />Light</button>
-      </div>
-    </section>
-
-    <section className="settings-grid-2">
-      <article className="settings-card">
-        <h3>Profile</h3>
-        <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" className="settings-input" />
-        <div className="settings-avatar-grid">
-          {uploadedAvatars.map((src, idx) => (
-            <button key={idx} onClick={() => setProfile(p => ({ ...p, pfp: src }))} title={`Avatar ${idx + 1}`} className="settings-avatar-btn" style={{ background: profile.pfp === src ? 'var(--theme-surface-hover)' : 'transparent' }}>
-              <img src={src} alt={`Avatar ${idx + 1}`} style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: '50%', objectFit: 'cover' }} />
-            </button>
-          ))}
-          <label title="Upload custom avatar" className="settings-avatar-upload">
-            <div style={{ display: 'grid', placeItems: 'center', fontSize: 11, gap: 2 }}>
-              <Upload size={13} />
-              <span>Custom +</span>
+        <div className="settings-redesign">
+          <section className="settings-hero-card">
+            <div>
+              <p className="settings-eyebrow">More Command Panel</p>
+              <h2>{universe === 'dc' ? 'Watchtower systems and backup tools' : 'Command systems and backup tools'}</h2>
+              <p>Grouped preferences, display links, data backup, help, and advanced utilities. Fast style changes live in the Sidebar Hub.</p>
             </div>
-            <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const img = String(r.result || ''); setAvatarCropSrc(img); }; r.readAsDataURL(f); }} style={{ display: 'none' }} />
-          </label>
-        </div>
-        <button className="fpill" onClick={() => setProfile(p => ({ ...p, pfp: '' }))} disabled={!profile.pfp} style={{ justifyContent: 'center', opacity: profile.pfp ? 1 : 0.55 }}><Trash2 size={14}/>Remove Profile Picture</button>
-      </article>
+            <div className="settings-hero-actions">
+              <button className="fpill" type="button" onClick={() => { setSidebarOpen(true); closeSettings(); }} style={{ justifyContent: 'center' }}><Layers size={13} />Open Sidebar Hub</button>
+              <button className="fpill" type="button" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={13} />Dark</button>
+              <button className="fpill" type="button" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={13} />Light</button>
+            </div>
+          </section>
 
-      <article className="settings-card">
-        <h3>{tUniverse('Interface Behavior')}</h3>
-        <label className="settings-toggle-row"><span><EyeOff size={14}/>{tUniverse('Auto-hide Completed')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={autoHideStatuses} onClick={() => setAutoHideStatuses(v => !v)}>{autoHideStatuses ? 'On' : 'Off'}</button></label>
-        <label className="settings-toggle-row"><span><Pause size={14}/>{tUniverse('Reduce Motion')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={performanceMode} onClick={() => setPerformanceMode(v => !v)}>{performanceMode ? 'On' : 'Off'}</button></label>
-        <label className="settings-toggle-row"><span><Film size={14}/>Poster Data Saver</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={posterDataSaver} onClick={() => setPosterDataSaver(v => !v)}>{posterDataSaver ? 'On' : 'Off'}</button></label>
-        <label className="settings-toggle-row"><span><Layers size={14}/>UI Build Cache</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={uiBuildCacheEnabled} onClick={() => setUiBuildCacheEnabled(v => !v)}>{uiBuildCacheEnabled ? 'On' : 'Off'}</button></label>
-        <p className="settings-help">Data saver uses lighter TMDB poster sizes. UI Build Cache pre-decodes visible poster layers during idle time and stores a small build manifest without growing memory.</p>
-      </article>
-    </section>
+          <section className="settings-command-group" aria-labelledby="settings-app-preferences">
+            <div className="settings-command-group__head"><span><UserCircle size={14} />App Preferences</span><small>Profile and everyday behavior</small></div>
+            <div className="settings-grid-2">
+              <article className="settings-card">
+                <h3 id="settings-app-preferences">Profile</h3>
+                <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} placeholder="User name" className="settings-input" />
+                <div className="settings-avatar-grid">
+                  {uploadedAvatars.map((src, idx) => (
+                    <button key={idx} type="button" onClick={() => setProfile(p => ({ ...p, pfp: src }))} title={`Avatar ${idx + 1}`} className="settings-avatar-btn" style={{ background: profile.pfp === src ? 'var(--theme-surface-hover)' : 'transparent' }}>
+                      <img src={src} alt={`Avatar ${idx + 1}`} style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: '50%', objectFit: 'cover' }} />
+                    </button>
+                  ))}
+                  <label title="Upload custom avatar" className="settings-avatar-upload">
+                    <div style={{ display: 'grid', placeItems: 'center', fontSize: 11, gap: 2 }}><Upload size={13} /><span>Custom +</span></div>
+                    <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const img = String(r.result || ''); setAvatarCropSrc(img); }; r.readAsDataURL(f); }} style={{ display: 'none' }} />
+                  </label>
+                </div>
+                <button className="fpill settings-danger-action" type="button" onClick={() => setProfile(p => ({ ...p, pfp: '' }))} disabled={!profile.pfp} style={{ justifyContent: 'center', opacity: profile.pfp ? 1 : 0.55 }}><Trash2 size={14}/>Remove Profile Picture</button>
+              </article>
 
-    <section className="settings-card">
-      <h3>{tUniverse('Preferences')}</h3>
-      <div className="settings-toggle-grid">
-        <label className="settings-toggle-row"><span><Star size={14}/>{tUniverse('Universe Language')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={marvelLangMode} onClick={() => setMarvelLangMode(v => !v)}>{marvelLangMode ? 'On' : 'Off'}</button></label>
-        <label className="settings-toggle-row"><span><EyeOff size={14}/>{tUniverse('Spoiler Safe')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={spoilerSafeMode} onClick={() => setSpoilerSafeMode(v => !v)}>{spoilerSafeMode ? 'On' : 'Off'}</button></label>
-        <label className="settings-toggle-row"><span><Zap size={14}/>{tUniverse('Performance Mode')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={performanceMode} onClick={() => setPerformanceMode(v => !v)}>{performanceMode ? 'On' : 'Off'}</button></label>
-      </div>
-      <p className="settings-help">Performance mode reduces visual effects for slower devices.</p>
-      <div className="settings-build-panel">
-        <div><strong>UI build status</strong><span>{uiBuildState.message || 'Idle · cache capped and built only during browser idle time.'}</span></div>
-        <button className="fpill" type="button" disabled={uiBuildState.active} onClick={() => buildUiExperienceCache('view')}>{uiBuildState.active ? `${uiBuildState.done}/${uiBuildState.total}` : 'Build visible UI'}</button>
-      </div>
-    </section>
+              <article className="settings-card">
+                <h3>{tUniverse('Interface Behavior')}</h3>
+                <label className="settings-toggle-row"><span><EyeOff size={14}/>{tUniverse('Auto-hide Completed')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={autoHideStatuses} onClick={() => setAutoHideStatuses(v => !v)}>{autoHideStatuses ? 'On' : 'Off'}</button></label>
+                <label className="settings-toggle-row"><span><Pause size={14}/>{tUniverse('Reduce Motion')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={performanceMode} onClick={() => setPerformanceMode(v => !v)}>{performanceMode ? 'On' : 'Off'}</button></label>
+                <label className="settings-toggle-row"><span><EyeOff size={14}/>{tUniverse('Spoiler Safe')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={spoilerSafeMode} onClick={() => setSpoilerSafeMode(v => !v)}>{spoilerSafeMode ? 'On' : 'Off'}</button></label>
+                <label className="settings-toggle-row"><span><Star size={14}/>{tUniverse('Universe Language')}</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={marvelLangMode} onClick={() => setMarvelLangMode(v => !v)}>{marvelLangMode ? 'On' : 'Off'}</button></label>
+              </article>
+            </div>
+          </section>
 
-    <section className="settings-grid-2">
-      <article className="settings-card">
-        <h3>Visual Tuning</h3>
-        <label className="settings-toggle-row"><span><Layers size={14}/>Desktop text scaling</span><button className='fpill settings-toggle-pill' type='button' onClick={() => setTextScaleEnabled(v => !v)}>{textScaleEnabled ? 'On' : 'Off'}</button></label>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,minmax(0,1fr))', gap: 6 }}>
-          {DESKTOP_TEXT_SCALES.map(scale => <button key={`desktop-scale-${scale}`} className='fpill' type='button' onClick={() => setDesktopTextScale(scale)} disabled={!textScaleEnabled} style={{ justifyContent: 'center', opacity: textScaleEnabled ? 1 : 0.55 }}>{Math.round(scale * 100)}%</button>)}
-        </div>
-        <p className="settings-help">Current scale: {Math.round((textScaleEnabled ? effectiveUiScale : 1) * 100)}%</p>
-        <div className="settings-slider-group"><span><Film size={12} /> Background size ({heroBackdropScale}%)</span><input type='range' min={100} max={112} step={1} value={heroBackdropScale} onChange={(e) => setHeroBackdropScale(Number(e.target.value))} /></div>
-        <div className="settings-slider-group"><span>Background opacity ({Math.round(heroBackdropOpacity * 100)}%)</span><input type='range' min={75} max={100} step={1} value={Math.round(heroBackdropOpacity * 100)} onChange={(e) => setHeroBackdropOpacity(Number(e.target.value) / 100)} /></div>
-      </article>
+          <section className="settings-command-group" aria-labelledby="settings-display-theme">
+            <div className="settings-command-group__head"><span><Layers size={14} />Display & Theme</span><small>Fine tuning plus a hub shortcut</small></div>
+            <article className="settings-card">
+              <h3 id="settings-display-theme">Visual Tuning</h3>
+              <p className="settings-help">Style cards, universe accents, and character themes are available in the Sidebar Hub for faster switching.</p>
+              <button className="fpill" type="button" onClick={() => { setSidebarOpen(true); closeSettings(); }}><Layers size={14} />Open Sidebar Hub</button>
+              <label className="settings-toggle-row"><span><Layers size={14}/>Desktop text scaling</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={textScaleEnabled} onClick={() => setTextScaleEnabled(v => !v)}>{textScaleEnabled ? 'On' : 'Off'}</button></label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,minmax(0,1fr))', gap: 6 }}>
+                {DESKTOP_TEXT_SCALES.map(scale => <button key={`desktop-scale-${scale}`} className='fpill' type='button' onClick={() => setDesktopTextScale(scale)} disabled={!textScaleEnabled} style={{ justifyContent: 'center', opacity: textScaleEnabled ? 1 : 0.55 }}>{Math.round(scale * 100)}%</button>)}
+              </div>
+              <p className="settings-help">Current scale: {Math.round((textScaleEnabled ? effectiveUiScale : 1) * 100)}%</p>
+              <div className="settings-slider-group"><span><Film size={12} /> Background size ({heroBackdropScale}%)</span><input type='range' min={100} max={112} step={1} value={heroBackdropScale} onChange={(e) => setHeroBackdropScale(Number(e.target.value))} /></div>
+              <div className="settings-slider-group"><span>Background opacity ({Math.round(heroBackdropOpacity * 100)}%)</span><input type='range' min={75} max={100} step={1} value={Math.round(heroBackdropOpacity * 100)} onChange={(e) => setHeroBackdropOpacity(Number(e.target.value) / 100)} /></div>
+            </article>
+          </section>
 
-      <article className="settings-card">
-        <h3>Backup & Restore</h3>
-        <p className="settings-help">Automatic snapshots are saved continuously here. Restore any saved point or export the latest JSON to Google Drive.</p>
-        <div style={{ display: 'grid', gap: 6 }}><div className="settings-help">Auto snapshots (latest 5)</div>{autoBackups.slice(0,5).map((shot, idx) => { const preview = buildBackupPreview(shot); return <button key={`${shot.exportedAt}-${idx}`} className="fpill" onClick={() => importProgress(new File([JSON.stringify(shot)], 'mcu-auto-backup.json', { type: 'application/json' }))} style={{ justifyContent: 'space-between' }}><span><Clock size={14}/>Restore {new Date(preview.exportedAt).toLocaleDateString()}</span><span style={{ fontSize: 'var(--type-metadata)', color: T.textMuted }}>{preview.watched}/{preview.total}</span></button>; })}</div>
-        <div className="settings-inline-actions">
-          <button className="fpill" onClick={exportProgress}><Download size={14}/>Export latest JSON</button>
-          <label className="fpill import-backup-pill" style={{ cursor: 'pointer' }}><Upload size={14}/>Import JSON<input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} /></label>
-        </div>
-      </article>
-    </section>
+          <section className="settings-command-group" aria-labelledby="settings-data-backup">
+            <div className="settings-command-group__head"><span><Download size={14} />Data & Backup</span><small>Progress snapshots and transfers</small></div>
+            <article className="settings-card">
+              <h3 id="settings-data-backup">Backup & Restore</h3>
+              <p className="settings-help">Automatic snapshots are saved continuously here. Restore any saved point or export the latest JSON to Google Drive.</p>
+              <div style={{ display: 'grid', gap: 6 }}><div className="settings-help">Auto snapshots (latest 5)</div>{autoBackups.slice(0,5).map((shot, idx) => { const preview = buildBackupPreview(shot); return <button key={`${shot.exportedAt}-${idx}`} type="button" className="fpill" onClick={() => importProgress(new File([JSON.stringify(shot)], 'mcu-auto-backup.json', { type: 'application/json' }))} style={{ justifyContent: 'space-between' }}><span><Clock size={14}/>Restore {new Date(preview.exportedAt).toLocaleDateString()}</span><span style={{ fontSize: 'var(--type-metadata)', color: T.textMuted }}>{preview.watched}/{preview.total}</span></button>; })}</div>
+              <div className="settings-inline-actions">
+                <button className="fpill" type="button" onClick={exportProgress}><Download size={14}/>Export latest JSON</button>
+                <label className="fpill import-backup-pill" style={{ cursor: 'pointer' }}><Upload size={14}/>Import JSON<input type="file" accept="application/json" onChange={(e) => importProgress(e.target.files?.[0])} style={{ display: 'none' }} /></label>
+              </div>
+            </article>
+          </section>
 
-    <section className="settings-card">
-      <h3>Google Drive Backup Guide</h3>
-      <ol className="settings-guide-list">
-        <li>Tap <b>Export Backup JSON</b> and save the file locally.</li>
-        <li>Open Google Drive app or drive.google.com and upload the JSON file.</li>
-        <li>On a new device, download that same JSON from Drive.</li>
-        <li>Tap <b>Import Backup JSON</b> in this app and choose the downloaded file.</li>
+          <section className="settings-command-group" aria-labelledby="settings-help-about">
+            <div className="settings-command-group__head"><span><Info size={14} />Help / About</span><small>Backup guide and app context</small></div>
+            <article className="settings-card">
+              <h3 id="settings-help-about">Google Drive Backup Guide</h3>
+              <ol className="settings-guide-list">
+                <li>Tap <b>Export Backup JSON</b> and save the file locally.</li>
+                <li>Open Google Drive app or drive.google.com and upload the JSON file.</li>
+                <li>On a new device, download that same JSON from Drive.</li>
+                <li>Tap <b>Import Backup JSON</b> in this app and choose the downloaded file.</li>
               </ol>
-    </section>
-  </div>
-</SettingsMenu>
+            </article>
+          </section>
+
+          <section className="settings-command-group settings-command-group--advanced" aria-labelledby="settings-advanced">
+            <div className="settings-command-group__head"><span><Zap size={14} />Advanced</span><small>Performance and cache controls</small></div>
+            <article className="settings-card">
+              <h3 id="settings-advanced">Device Utilities</h3>
+              <label className="settings-toggle-row"><span><Film size={14}/>Poster Data Saver</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={posterDataSaver} onClick={() => setPosterDataSaver(v => !v)}>{posterDataSaver ? 'On' : 'Off'}</button></label>
+              <label className="settings-toggle-row"><span><Layers size={14}/>UI Build Cache</span><button className='fpill settings-toggle-pill' type='button' aria-pressed={uiBuildCacheEnabled} onClick={() => setUiBuildCacheEnabled(v => !v)}>{uiBuildCacheEnabled ? 'On' : 'Off'}</button></label>
+              <p className="settings-help">Data saver uses lighter TMDB poster sizes. UI Build Cache pre-decodes visible poster layers during idle time and stores a small build manifest without growing memory.</p>
+              <div className="settings-build-panel">
+                <div><strong>UI build status</strong><span>{uiBuildState.message || 'Idle · cache capped and built only during browser idle time.'}</span></div>
+                <button className="fpill" type="button" disabled={uiBuildState.active} onClick={() => buildUiExperienceCache('view')}>{uiBuildState.active ? `${uiBuildState.done}/${uiBuildState.total}` : 'Build visible UI'}</button>
+              </div>
+            </article>
+          </section>
+        </div>
+      </SettingsMenu>
 
       {/* ━━ HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <header className="hexbg" style={{ position: 'relative', zIndex: 'var(--overlay-z-base)', background: universe === 'dc' ? 'linear-gradient(180deg, rgba(20,44,88,.95), rgba(10,22,43,.88))' : 'transparent', borderBottom: universe === 'dc' ? '1px solid rgba(59,130,246,.35)' : 'none', flexShrink: 0, pointerEvents: blockHomeInteractions ? 'none' : 'auto' }}>

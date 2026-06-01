@@ -110,3 +110,35 @@
   .archive-card:hover,
   .archive-card:active { transform: none !important; }
 }
+
+.library-archive-grid .archive-card--compact,
+.collection-detail-panel__grid .archive-card--compact {
+  grid-template-columns: 82px minmax(0, 1fr);
+  min-height: 156px;
+  padding: 14px;
+}
+
+.library-archive-grid .archive-card--compact .archive-card__poster-wrap,
+.collection-detail-panel__grid .archive-card--compact .archive-card__poster-wrap {
+  width: 82px;
+}
+
+.library-archive-grid .archive-card--compact .archive-card__title,
+.collection-detail-panel__grid .archive-card--compact .archive-card__title {
+  min-height: 0;
+}
+
+@media (max-width: 560px) {
+  .archive-card--compact,
+  .library-archive-grid .archive-card--compact,
+  .collection-detail-panel__grid .archive-card--compact {
+    grid-template-columns: 66px minmax(0, 1fr);
+    min-width: 0;
+  }
+
+  .archive-card--compact .archive-card__poster-wrap,
+  .library-archive-grid .archive-card--compact .archive-card__poster-wrap,
+  .collection-detail-panel__grid .archive-card--compact .archive-card__poster-wrap {
+    width: 66px;
+  }
+}
