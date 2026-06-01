@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export const ROUTE_FALLBACK = '/home';
 export const SEARCH_ROUTE = '/search';
+export const COLLECTION_ROUTE = '/collection';
 export const SERIES_ROUTE = '/series';
 export const UNIVERSE_ROUTES = new Set(['marvel', 'mcu', 'dc']);
 
@@ -38,6 +39,7 @@ export const searchRoutePath = (query = '', type = '', universe = 'mcu') => {
 };
 
 export const phaseRoutePath = (phaseId = 0, universe = 'mcu') => `${universeRoutePath(universe)}/phase${phaseId ? `/${phaseId}` : ''}`;
+export const collectionRoutePath = (collectionId = '', universe = 'mcu') => `${universeRoutePath(universe)}${COLLECTION_ROUTE}/${slugifyRouteValue(collectionId)}`;
 
 export const routeItemMatchesSlug = (item, rawSlug) => {
   const slug = slugifyRouteValue(decodeURIComponent(String(rawSlug || '')));
@@ -74,13 +76,19 @@ export const parseDeepLinkRoute = (path = '/', queryString = '') => {
 };
 
 export function DeepLinkRouteSync({ applyRoute }) {
+  const latestApplyRouteRef = useRef(applyRoute);
+
+  useEffect(() => {
+    latestApplyRouteRef.current = applyRoute;
+  }, [applyRoute]);
+
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
-    applyRoute(window.location.pathname, window.location.search);
-    const onPopState = () => applyRoute(window.location.pathname, window.location.search);
+    latestApplyRouteRef.current?.(window.location.pathname, window.location.search);
+    const onPopState = () => latestApplyRouteRef.current?.(window.location.pathname, window.location.search);
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, [applyRoute]);
+  }, []);
 
   return null;
 }
