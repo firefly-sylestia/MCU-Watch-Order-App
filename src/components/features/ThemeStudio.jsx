@@ -24,7 +24,7 @@ export default function ThemeStudio({
       </div>
 
       <div className="theme-style-grid" aria-label="Appearance styles">
-        {APPEARANCE_MODES.map(mode => {
+        {APPEARANCE_MODES.filter(mode => ['glass', 'neon', 'minimal', 'pixelated'].includes(mode.id)).map(mode => {
           const isActive = activeAppearance === mode.id;
           return (
             <button
@@ -37,7 +37,7 @@ export default function ThemeStudio({
               <span className="theme-style-card__visual" aria-hidden="true"><i /><b /><em /></span>
               <span className="theme-style-card__copy">
                 <strong>{mode.label}</strong>
-                <small>{mode.desc}</small>
+                {!compact && <small>{mode.desc}</small>}
                 <span>{mode.font}</span>
               </span>
             </button>

@@ -688,10 +688,16 @@ const SettingsMenu = React.memo(React.forwardRef(function SettingsMenu({
   onDismissBackdrop,
   children,
 }, ref) {
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (event) => { if (event.key === 'Escape') onClose?.(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
   return (
     <>
       {open && <button className="settings-backdrop" data-state="open" aria-label="Close settings menu" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onDismissBackdrop?.(); onClose?.(); }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} />}
-      <div className="settings-shell" data-state={open ? 'open' : 'closed'} role="dialog" aria-modal={open ? 'true' : 'false'} aria-hidden={!open} aria-label="Settings and profile" ref={ref}>
+      <div className="settings-shell" data-state={open ? 'open' : 'closed'} role="dialog" aria-modal={open ? 'true' : 'false'} aria-hidden={!open} aria-label="More command panel" id="more-command-panel" ref={ref}>
         <div className="fade-in settings-menu settings-menu-redesign" data-state={open ? 'open' : 'closed'} style={{ '--settings-bg': darkMode ? 'rgba(10,16,30,0.97)' : 'rgba(255,255,255,0.98)', '--settings-blur': performanceMode ? 'none' : 'blur(8px)' }}>
           <div className="settings-close-row"><button className="fpill settings-close-sticky" onClick={() => onClose?.()}><X size={14}/>Close</button></div>{children}
         </div>
@@ -3624,6 +3630,27 @@ export default function MCUViewer() {
   const heroBackdropBackgroundSize = isDesktopViewport
     ? `${Math.max(heroBackdropScale - 16, 112)}% auto`
     : `auto ${Math.max(heroBackdropScale - 8, 96)}%`;
+
+  const sidebarContinueItem = activeItems.find(item => item.status === 'watching') || activeItems.find(item => item.status === 'plan-to-watch') || activeItems.find(item => item.status !== 'watched');
+  const sidebarQuickActions = [
+    { id: 'continue', label: 'Continue', meta: sidebarContinueItem?.title || 'All caught up', Icon: PlayCircle, active: Boolean(sidebarContinueItem), onClick: () => { if (sidebarContinueItem) openDetail(sidebarContinueItem); } },
+    { id: 'timeline', label: 'Timeline order', meta: TIMELINE_MODES.find(mode => mode.id === timelineMode)?.label || 'Release order', Icon: Layers, active: browseMode === 'phase', onClick: () => { setBrowseMode('library'); requestAnimationFrame(() => document.querySelector('.phase-command-center')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); } },
+    { id: 'filters', label: 'Filters', meta: `${activeFilterCount} active`, Icon: SlidersH, active: activeFilterCount > 0, badge: activeFilterCount || '', onClick: () => { setBrowseMode('search'); setShowAllFiltersOverride(true); } },
+    { id: 'sort', label: 'Sort', meta: SORT_LABELS[sortBy] || sortBy, Icon: ArrowUpDown, active: sortBy !== 'order', onClick: () => setSortBy(sortBy === 'order' ? 'year' : 'order') },
+  ];
+  const sidebarAppActions = [
+    { id: 'settings', label: 'Settings', meta: 'Preferences and profile', Icon: Settings, onClick: toggleSettingsPanel },
+    { id: 'export', label: 'Export backup', meta: 'Download progress JSON', Icon: Download, onClick: exportProgress },
+    { id: 'metadata', label: metadataBuild.status === 'running' ? `Fetch ${metadataBuild.done}/${metadataBuild.total}` : 'Fetch posters', meta: 'Refresh metadata cache', Icon: Download, active: metadataBuild.status === 'running', onClick: handleMetadataBuildClick },
+  ];
+  const sidebarUniverseControls = (
+    <div className="sidebar-universe-controls">
+      <button className="sidebar-universe-card" type="button" aria-pressed={universe === 'mcu'} data-active={universe === 'mcu'} onClick={() => switchUniverse('mcu')}><span style={{ '--swatch': '#d4372f' }} /> <strong>MCU</strong><small>Marvel timeline language</small></button>
+      <button className="sidebar-universe-card" type="button" aria-pressed={universe === 'dc'} data-active={universe === 'dc'} onClick={() => switchUniverse('dc')}><span style={{ '--swatch': '#1f6feb' }} /> <strong>DC</strong><small>Watchtower archive tone</small></button>
+      <button className="sidebar-command-btn" type="button" aria-pressed={marvelLangMode} data-active={marvelLangMode} onClick={() => setMarvelLangMode(v => !v)}><SwitchIcon size={16}/><span><strong>{tUniverse('Universe Language')}</strong><small>{marvelLangMode ? 'Universe labels on' : 'Plain labels'}</small></span></button>
+      <div className="sidebar-btn-grid sidebar-color-mode-grid"><button className="fpill" aria-pressed={darkMode} onClick={() => setDarkMode(true)}><Moon size={12}/>{tUniverse('Dark')}</button><button className="fpill" aria-pressed={!darkMode} onClick={() => setDarkMode(false)}><Sun size={12}/>{tUniverse('Light')}</button></div>
+    </div>
+  );
   return (
     <div data-scaffold={Boolean(sectionScaffold)} data-theme={normalizeAppearanceMode(appearanceMode)} data-universe={universe === 'dc' ? 'dc' : 'marvel'} style={{ ...cssThemeVars, '--row-gap': densityMode === 'compact' ? '8px' : '12px', '--row-pad': densityMode === 'compact' ? '11px 10px 11px 8px' : '16px 16px 16px 12px', '--row-min-h': densityMode === 'compact' ? '72px' : '86px', '--text-scale': 1, '--ui-scale': effectiveUiScale, minHeight: '100dvh', backgroundColor: 'var(--app-bg-base)', backgroundImage: appTexture !== 'none' ? `${appTexture}, ${appThemeBg}` : appThemeBg, backgroundSize: appTexture !== 'none' ? '6px 6px, auto' : 'auto', color: 'var(--theme-text)', fontFamily: 'var(--font-marvel-body)', fontSize: '16px', zoom: effectiveUiScale, display: 'flex', flexDirection: 'column', overflowX: 'hidden', overflowY: 'visible', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', transition: 'background 260ms var(--ease-out), color 180ms var(--ease-out)' }} className={`theme-switch ${universe === 'dc' ? 'dc-universe' : 'mcu-universe'}${performanceMode || browseMode === 'phase' ? ' performance-mode' : ''}${themeTransitioning ? ' theme-is-transitioning' : ''}${uiBuildCacheEnabled ? ' ui-build-cache-on' : ''}${overlayActive ? ' overlay-open' : ''}${browseMode === 'phase' ? ' phase-list-mode' : ''}`} data-color-mode={darkMode ? 'dark' : 'light'}>
       
@@ -3652,65 +3679,37 @@ export default function MCUViewer() {
       <div className="theme-transition-loader" aria-hidden={!themeTransitioning}><span />Retuning theme</div>
 
       {/* ━━ SETTINGS PANEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <NavigationShell controlsHidden={analyticsOpen || detailItem || sidebarOpen || settingsOpen} ref={sidebarRef} open={sidebarOpen} darkMode={darkMode} performanceMode={performanceMode} pillBorder={T.pillBorder} surfaceBorder={T.surfaceBorder} activeDestination={analyticsOpen ? 'progress' : (settingsOpen ? 'settings' : browseMode === 'search' ? 'search' : activeCollectionId ? 'collections' : browseMode === 'home' ? 'home' : 'library')} progressBadges={{ progress: `${pct}%`, collections: libraryCollections.length }} onNavigate={(destination) => { if (destination === 'home') navigateHome(); if (destination === 'library') navigateLibrary(); if (destination === 'collections') { setBrowseMode('library'); setSidebarOpen(false); requestAnimationFrame(() => document.querySelector('.collection-rooms')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); } if (destination === 'search') openSearchMode(search, null); if (destination === 'progress') openAnalyticsPanel(); }} onToggle={toggleSidebarPanel} onClose={closeSidebar} onDismissBackdrop={suppressNextDocumentClick} onOpenSettings={toggleSettingsPanel}>
-        <div className="sidebar-redesign">
-          <section className="sidebar-panel sidebar-panel--brand">
-            <p className="sidebar-kicker">{universe === 'dc' ? 'Justice Network' : 'Avengers Network'}</p>
-            <h3>{tUniverse('Mission Control')}</h3>
-            <p>{tUniverse('Track progress blurb')}</p>
-            <div className="sidebar-profile-row">
-              {profile.pfp ? <img src={profile.pfp} alt="profile" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} /> : <div className="sidebar-avatar-fallback"><UserCircle size={20} /></div>}
-              <div>
-                <strong>{profile.name || tUniverse('Marvel Fan')}</strong>
-                <span>{universe === 'dc' ? activeUniverse.subtitle : 'Sacred Timeline Keeper'}</span>
-              </div>
-            </div>
-          </section>
-
-          <section className="sidebar-panel">
-            <div className="sidebar-section-title">{tUniverse('Theme & Language')}</div>
-            <div className="sidebar-btn-grid">
-              <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={12} />{tUniverse('Dark')}</button>
-              <button className="fpill" onClick={() => setDarkMode(false)} style={{ justifyContent: 'center', borderColor: !darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Sun size={12} />{tUniverse('Light')}</button>
-            </div>
-            <button className='fpill settings-toggle-pill' type='button' aria-pressed={marvelLangMode} onClick={() => setMarvelLangMode(v => !v)} style={{ justifyContent: 'space-between' }}><span>{tUniverse('Universe Language')}</span><span>{marvelLangMode ? 'On' : 'Off'}</span></button>
-          </section>
-
-          <section className="sidebar-panel">
-            <div className="sidebar-section-title">{tUniverse('View & Navigate')}</div>
-            <div className="sidebar-btn-grid">
-              <button className="fpill" onClick={navigateHome} style={{ justifyContent: 'center', borderColor: browseMode === 'home' ? 'var(--theme-accent)' : 'var(--theme-border)', color: browseMode === 'home' ? 'var(--theme-accent)' : 'var(--theme-text)' }}><Star size={12} />Home</button>
-              <button className="fpill" onClick={navigateLibrary} style={{ justifyContent: 'center', borderColor: browseMode === 'library' && !activeCollectionId ? 'var(--theme-accent)' : 'var(--theme-border)', color: browseMode === 'library' && !activeCollectionId ? 'var(--theme-accent)' : 'var(--theme-text)' }}>Library</button>
-              <button className="fpill" onClick={() => openSearchMode(search, null)} style={{ justifyContent: 'center' }}>Search</button>
-              <button className="fpill" onClick={() => openSearchMode('', 'series')} style={{ justifyContent: 'center' }}>Series</button>
-              <button className="fpill" onClick={() => navigateToPhase(activePhase || 0)} style={{ justifyContent: 'center' }}>Phases</button>
-              <button className="fpill" onClick={() => { setSidebarOpen(false); setViewMode(viewMode === 'list' ? 'calendar' : 'list'); }} style={{ justifyContent: 'center' }}>{viewMode === 'list' ? 'Calendar View' : 'List View'}</button>
-              <button className="fpill" onClick={openAnalyticsPanel} style={{ justifyContent: 'center' }}>{tUniverse('Analytics')}</button>
-            </div>
-            <button className="fpill" onClick={() => { setSidebarOpen(false); toggleSettingsPanel(); }} style={{ width: '100%', justifyContent: 'center' }}><Settings size={13} />{tUniverse('Open Settings')}</button>
-          </section>
-
-          <section className="sidebar-panel">
-            <ThemeStudio
-              compact
-              title={tUniverse('Universe Style')}
-              appearanceMode={appearanceMode}
-              onAppearanceChange={setAppearanceMode}
-              themeChoices={themedChoices}
-              themeMode={themeMode}
-              onThemeChange={setThemeMode}
-            />
-          </section>
-
-          <section className="sidebar-panel">
-            <div className="sidebar-section-title">{tUniverse('Watchlist Mode')}</div>
-            <div style={{ display: 'grid', gap: 6 }}>
-              {LIST_MODES.map(mode => {
-                const isActive = listMode === mode.id;
-                return <button key={`side-${mode.id}`} className="fpill" onClick={() => { setListMode(mode.id); setExpandedItem(null); setExpandedPhase(null); setSidebarOpen(false); }} style={{ justifyContent: 'space-between', borderColor: isActive ? (mode?.color || 'var(--theme-accent)') : 'var(--theme-border)', color: isActive ? (mode?.color || 'var(--theme-accent)') : 'var(--theme-text)' }}><span>{mode.label}</span>{isActive && <Check size={12} />}</button>;
-              })}
-            </div>
-          </section>
+      <NavigationShell
+        controlsHidden={analyticsOpen || detailItem || settingsOpen}
+        ref={sidebarRef}
+        open={sidebarOpen}
+        darkMode={darkMode}
+        performanceMode={performanceMode}
+        pillBorder={T.pillBorder}
+        surfaceBorder={T.surfaceBorder}
+        activeDestination={analyticsOpen ? 'progress' : (settingsOpen ? 'settings' : browseMode === 'search' ? 'search' : activeCollectionId ? 'collections' : browseMode === 'home' ? 'home' : 'library')}
+        progressBadges={{ progress: `${pct}%`, collections: libraryCollections.length }}
+        universeLabel={`${activeUniverse.title} ${activeUniverse.subtitle}`}
+        universeMeta={universe === 'dc' ? 'Justice paths, Elseworlds, and legacy arcs.' : 'Saga paths, phases, and timeline missions.'}
+        quickActions={sidebarQuickActions}
+        appActions={sidebarAppActions}
+        universeControls={sidebarUniverseControls}
+        onNavigate={(destination) => { if (destination === 'home') navigateHome(); if (destination === 'library') navigateLibrary(); if (destination === 'collections') { setBrowseMode('library'); setSidebarOpen(false); requestAnimationFrame(() => document.querySelector('.collection-rooms')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); } if (destination === 'search') openSearchMode(search, null); if (destination === 'progress') openAnalyticsPanel(); }}
+        onToggle={toggleSidebarPanel}
+        onClose={closeSidebar}
+        onDismissBackdrop={suppressNextDocumentClick}
+        onOpenSettings={toggleSettingsPanel}
+      >
+        <div className="sidebar-redesign sidebar-theme-redesign">
+          <ThemeStudio
+            compact
+            title={tUniverse('Universe Style')}
+            appearanceMode={appearanceMode}
+            onAppearanceChange={setAppearanceMode}
+            themeChoices={themedChoices}
+            themeMode={themeMode}
+            onThemeChange={setThemeMode}
+          />
         </div>
       </NavigationShell>
 
@@ -3718,9 +3717,9 @@ export default function MCUViewer() {
   <div className="settings-redesign">
     <section className="settings-hero-card">
       <div>
-        <p className="settings-eyebrow">Settings Hub</p>
-        <h2>{universe === 'dc' ? 'Customize your DC experience' : 'Customize your Marvel experience'}</h2>
-        <p>Unified controls for profile, universe themes, sync, backups, and modern accessibility-focused tuning.</p>
+        <p className="settings-eyebrow">More Command Panel</p>
+        <h2>{universe === 'dc' ? 'Watchtower systems and backup tools' : 'Command systems and backup tools'}</h2>
+        <p>Grouped preferences, display links, data backup, and advanced utilities. Fast style changes live in the Sidebar Hub.</p>
       </div>
       <div className="settings-hero-actions">
         <button className="fpill" onClick={() => setDarkMode(true)} style={{ justifyContent: 'center', borderColor: darkMode ? 'var(--theme-accent)' : 'var(--theme-border)' }}><Moon size={13} />Dark</button>
@@ -4064,7 +4063,7 @@ export default function MCUViewer() {
           </div>
         )}
       </div>}
-      <div className={`floating-controls${fabMinimized ? ' is-minimized' : ''}`} style={detailItem || trailerOpen || analyticsOpen || settingsOpen || sidebarOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
+      {false && <div className={`floating-controls${fabMinimized ? ' is-minimized' : ''}`} style={detailItem || trailerOpen || analyticsOpen || settingsOpen || sidebarOpen ? { opacity: 0, pointerEvents: 'none', visibility: 'hidden' } : undefined}>
         <button
           type="button"
           className="fab-primary"
@@ -4126,7 +4125,7 @@ export default function MCUViewer() {
           )}
         </div>
         </div>
-      </div>
+      </div>}
         <button
           type="button"
           className="go-top-fab"
@@ -4179,6 +4178,7 @@ export default function MCUViewer() {
             />
           ) : (
             <LibraryAtrium
+              mode={browseMode}
               items={activeItems}
               filteredItems={filtered}
               search={search}
@@ -4208,7 +4208,7 @@ export default function MCUViewer() {
             </div>
           )}
           <div data-motion="section" className="motion-section motion-pop" style={{ textAlign: 'center', marginTop: 44, fontFamily: 'var(--font-marvel-ui)', fontSize: 11, color: 'var(--theme-text-muted)', letterSpacing: 2.2, fontWeight: 700 }}>
-            Made with ♥️ by {tUniverse('Marvel Fan')}
+            Made with ♥️ by {universe === 'dc' ? (marvelLangMode ? tUniverse('Marvel Fan') : 'DC Fan') : tUniverse('Marvel Fan')}
           </div>
         </div>
       </main>

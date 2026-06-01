@@ -2,9 +2,9 @@ import React from 'react';
 import { collectionMatchesItem } from '../../data/libraryCollections.js';
 import './CollectionRooms.css';
 
-export default function CollectionRooms({ collections = [], items = [], universe = 'mcu', posterSrc, onSelectCollection, activeCollectionId }) {
+export default function CollectionRooms({ collections = [], items = [], universe = 'mcu', posterSrc, onSelectCollection, activeCollectionId, variant = 'archive' }) {
   return (
-    <section className="collection-rooms archive-shelf" aria-label="Collection rooms">
+    <section className="collection-rooms archive-shelf" data-variant={variant} aria-label="Collection rooms">
       <div className="collection-rooms__header">
         <p>Collection Rooms</p>
         <h2>Enter a themed room</h2>
