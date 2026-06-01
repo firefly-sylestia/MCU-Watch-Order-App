@@ -110,3 +110,56 @@
   .archive-card:hover,
   .archive-card:active { transform: none !important; }
 }
+
+.library-shelf__stack .archive-card--compact,
+.collection-detail-panel__grid .archive-card--compact {
+  grid-template-columns: 74px minmax(0, 1fr) auto;
+  grid-template-rows: auto;
+  align-items: center;
+  min-width: 0;
+  padding: 10px 12px;
+}
+
+.library-shelf__stack .archive-card--compact .archive-card__actions,
+.collection-detail-panel__grid .archive-card--compact .archive-card__actions {
+  grid-column: 3;
+  grid-template-columns: 1fr;
+  min-width: 108px;
+}
+
+.library-archive-grid .archive-card--compact,
+.collection-detail-panel__grid .archive-card--compact {
+  min-width: 0;
+}
+
+.theme-switch[data-theme="minimal"] .archive-card {
+  box-shadow: none;
+}
+
+.theme-switch[data-theme="neon"] .archive-card {
+  border-color: color-mix(in srgb, var(--theme-accent) 34%, var(--theme-border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-accent) 12%, transparent), 0 18px 36px color-mix(in srgb, var(--theme-accent) 12%, transparent);
+}
+
+.theme-switch[data-theme="pixelated"] .archive-card,
+.theme-switch[data-theme="pixelated"] .archive-card__poster-wrap,
+.theme-switch[data-theme="pixelated"] .archive-card__action,
+.theme-switch[data-theme="pixelated"] .archive-card__chip {
+  border-radius: 8px;
+  backdrop-filter: none;
+}
+
+@media (max-width: 640px) {
+  .library-shelf__stack .archive-card--compact,
+  .collection-detail-panel__grid .archive-card--compact {
+    grid-template-columns: 72px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+  }
+
+  .library-shelf__stack .archive-card--compact .archive-card__actions,
+  .collection-detail-panel__grid .archive-card--compact .archive-card__actions {
+    grid-column: 2;
+    grid-template-columns: 1fr 1fr;
+    min-width: 0;
+  }
+}

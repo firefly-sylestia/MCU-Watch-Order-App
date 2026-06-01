@@ -4,10 +4,10 @@ import './CollectionRooms.css';
 
 export default function CollectionRooms({ collections = [], items = [], universe = 'mcu', posterSrc, onSelectCollection, activeCollectionId, variant = 'archive' }) {
   return (
-    <section className="collection-rooms archive-shelf" data-variant={variant} aria-label="Collection rooms">
+    <section className="collection-rooms archive-shelf" data-variant={variant} aria-label={universe === 'dc' ? 'Dossier rooms' : 'Collection rooms'}>
       <div className="collection-rooms__header">
-        <p>Collection Rooms</p>
-        <h2>Enter a themed room</h2>
+        <p>{universe === 'dc' ? 'Dossier Rooms' : 'Collection Rooms'}</p>
+        <h2>{universe === 'dc' ? 'Open a case-file room' : 'Enter a themed room'}</h2>
       </div>
       <div className="collection-rooms__grid">
         {collections.map((collection) => {
@@ -20,15 +20,21 @@ export default function CollectionRooms({ collections = [], items = [], universe
               type="button"
               className="collection-room-card"
               key={collection.id}
+              aria-pressed={activeCollectionId === collection.id}
               data-active={activeCollectionId === collection.id}
-              style={{ '--room-accent': collection.accent }}
+              style={{ '--room-accent': collection.accent, '--room-progress': `${pct}%` }}
               onClick={() => onSelectCollection?.(collection)}
             >
               <span className="collection-room-card__icon">{collection.icon}</span>
               <span className="collection-room-card__content">
-                <strong>{collection.title}</strong>
+                <span className="collection-room-card__meta-row">
+                  <strong>{collection.title}</strong>
+                  <span className="collection-room-card__progress" aria-label={`${pct}% watched`}>
+                    <span className="collection-room-card__progress-pill"><i style={{ width: `${pct}%` }} /></span>
+                    <b>{pct}%</b>
+                  </span>
+                </span>
                 <small>{collection.description}</small>
-                <span className="collection-room-card__meter" aria-label={`${pct}% watched`}><i style={{ width: `${pct}%` }} /></span>
                 <span className="collection-room-card__stats">{roomItems.length} items · {watched} watched</span>
               </span>
               <span className="collection-room-card__posters" aria-hidden="true">

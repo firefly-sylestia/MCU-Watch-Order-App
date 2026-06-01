@@ -28,3 +28,31 @@
 .theme-accent-card__swatch{width:18px;height:18px;flex:0 0 auto;border-radius:999px;background:linear-gradient(135deg,var(--swatch),color-mix(in srgb,var(--swatch) 55%,#fff));box-shadow:0 0 0 3px color-mix(in srgb,var(--swatch) 18%,transparent)}
 .theme-studio--compact{gap:10px}.theme-studio--compact .theme-studio__header h3{font-size:18px}.theme-studio--compact .theme-style-grid{grid-template-columns:1fr}.theme-studio--compact .theme-style-card{min-height:58px;grid-template-columns:36px minmax(0,1fr)}.theme-studio--compact .theme-style-card__visual{width:34px;height:34px;border-radius:12px}.theme-studio--compact .theme-accent-grid{grid-template-columns:1fr;max-height:210px}
 @media (prefers-reduced-motion: reduce){.theme-style-card,.theme-accent-card{transition:none!important}.theme-style-card:hover,.theme-accent-card:hover{transform:none!important}}
+
+.theme-switch[data-theme="glass"] .theme-style-card,
+.theme-switch[data-theme="glass"] .theme-accent-card,
+.theme-switch[data-theme="glass"] .theme-studio__mode-chip {
+  backdrop-filter: blur(12px) saturate(1.12);
+  -webkit-backdrop-filter: blur(12px) saturate(1.12);
+}
+
+.theme-switch[data-theme="neon"] .theme-style-card,
+.theme-switch[data-theme="neon"] .theme-accent-card {
+  border-color: color-mix(in srgb, var(--theme-accent) 36%, var(--theme-border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-accent) 12%, transparent), 0 10px 24px color-mix(in srgb, var(--theme-accent) 10%, transparent);
+}
+
+.theme-switch[data-theme="minimal"] .theme-style-card,
+.theme-switch[data-theme="minimal"] .theme-accent-card {
+  box-shadow: none;
+  background: color-mix(in srgb, var(--theme-surface) 94%, transparent);
+}
+
+.theme-switch[data-theme="pixelated"] .theme-style-card,
+.theme-switch[data-theme="pixelated"] .theme-accent-card,
+.theme-switch[data-theme="pixelated"] .theme-studio__mode-chip,
+.theme-switch[data-theme="pixelated"] .theme-style-card__visual {
+  border-radius: 6px;
+  box-shadow: 4px 4px 0 color-mix(in srgb, var(--theme-accent) 18%, transparent);
+  backdrop-filter: none;
+}
