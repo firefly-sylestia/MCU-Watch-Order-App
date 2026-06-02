@@ -10,7 +10,9 @@
     "android:build:release": "gradle :androidApp:assembleRelease",
     "data:validate": "node tools/validate-shared-data.mjs",
     "data:generate": "node tools/generate-kotlin-data.mjs && node tools/generate-web-data.mjs",
-    "check:theme-colors": "node webApp/scripts/check-theme-colors.mjs"
+    "check:theme-colors": "node webApp/scripts/check-theme-colors.mjs",
+    "build": "npm run web:build",
+    "android:build:all": "gradle assembleAllApks"
   },
   "dependencies": {},
   "devDependencies": {}
