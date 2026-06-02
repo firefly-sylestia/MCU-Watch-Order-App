@@ -1,3 +1,5 @@
+import org.gradle.api.provider.Provider
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -15,7 +17,10 @@ val keystorePath = providers.environmentVariable("KEYSTORE_PATH")
 val keystorePassword = providers.environmentVariable("KEYSTORE_PASSWORD")
 val signingKeyAlias = providers.environmentVariable("KEY_ALIAS")
 val keyPasswordEnv = providers.environmentVariable("KEY_PASSWORD")
-val hasReleaseSigning = listOf(keystorePath, keystorePassword, signingKeyAlias, keyPasswordEnv).all { it.isPresent }
+fun Provider<String>.isPresentAndNotBlank(): Boolean = isPresent && get().isNotBlank()
+
+val hasReleaseSigning = listOf(keystorePath, keystorePassword, signingKeyAlias, keyPasswordEnv)
+    .all { it.isPresentAndNotBlank() } && file(keystorePath.get()).isFile
 
 android {
     namespace = "com.mcuviewingorder.app"
@@ -49,8 +54,10 @@ android {
         release {
             isMinifyEnabled = false
             isShrinkResources = false
-            if (hasReleaseSigning) {
-                signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (hasReleaseSigning) {
+                signingConfigs.getByName("release")
+            } else {
+                null
             }
         }
     }
