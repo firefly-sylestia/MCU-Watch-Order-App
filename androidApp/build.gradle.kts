@@ -1,4 +1,5 @@
 import org.gradle.api.provider.Provider
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.application")
@@ -34,6 +35,11 @@ android {
         versionName = ciVersionName.get()
     }
 
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
     signingConfigs {
         if (hasReleaseSigning) {
             create("release") {
@@ -60,6 +66,12 @@ android {
                 null
             }
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
