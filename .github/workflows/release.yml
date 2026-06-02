@@ -25,6 +25,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Resolve version
         id: version
@@ -38,11 +40,12 @@ jobs:
             VERSION_NAME=$(node -p "require('./package.json').version")
           fi
 
+          RELEASE_TAG="v${VERSION_NAME}"
           VERSION_CODE="${GITHUB_RUN_NUMBER}"
           echo "version_name=${VERSION_NAME}" >> "$GITHUB_OUTPUT"
           echo "version_code=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
-          echo "tag_name=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
-          echo "Building APKs for version ${VERSION_NAME} (${VERSION_CODE})"
+          echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "Building APKs for version ${VERSION_NAME} (${VERSION_CODE}) with release tag ${RELEASE_TAG}"
 
       - name: Set up Java ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
@@ -54,10 +57,14 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.14.3'
 
       - name: Create release keystore from secrets
         shell: bash
@@ -78,14 +85,14 @@ jobs:
           fi
 
       - name: Build debug APK
-        run: gradle :androidApp:assembleDebug --no-daemon --stacktrace -PVERSION_NAME=${{ steps.version.outputs.version_name }} -PVERSION_CODE=${{ steps.version.outputs.version_code }}
+        run: ./gradlew :androidApp:assembleDebug --no-daemon --stacktrace -PVERSION_NAME=${{ steps.version.outputs.version_name }} -PVERSION_CODE=${{ steps.version.outputs.version_code }}
 
       - name: Build release APK
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: gradle :androidApp:assembleRelease --no-daemon --stacktrace -PVERSION_NAME=${{ steps.version.outputs.version_name }} -PVERSION_CODE=${{ steps.version.outputs.version_code }}
+        run: ./gradlew :androidApp:assembleRelease --no-daemon --stacktrace -PVERSION_NAME=${{ steps.version.outputs.version_name }} -PVERSION_CODE=${{ steps.version.outputs.version_code }}
 
       - name: Prepare APK assets
         id: assets
@@ -114,6 +121,20 @@ jobs:
           echo "release_apk=${RELEASE_NAME}" >> "$GITHUB_OUTPUT"
           ls -lh "$DEBUG_NAME" "$RELEASE_NAME"
 
+      - name: Create or verify release tag
+        if: github.ref_type != 'tag'
+        shell: bash
+        run: |
+          git fetch --tags --force
+          if git ls-remote --exit-code --tags origin "refs/tags/${{ steps.version.outputs.release_tag }}" >/dev/null 2>&1; then
+            echo "Release tag ${{ steps.version.outputs.release_tag }} already exists; reusing it without force-pushing."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "${{ steps.version.outputs.release_tag }}" -m "Release ${{ steps.version.outputs.release_tag }}"
+            git push origin "${{ steps.version.outputs.release_tag }}"
+          fi
+
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -125,10 +146,9 @@ jobs:
           retention-days: 30
 
       - name: Create GitHub Release
-        if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ steps.version.outputs.release_tag }}
           name: MCU Viewing Order v${{ steps.version.outputs.version_name }}
           draft: false
           prerelease: false
