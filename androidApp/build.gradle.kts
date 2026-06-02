@@ -13,9 +13,9 @@ val ciVersionCode = providers.gradleProperty("VERSION_CODE")
 
 val keystorePath = providers.environmentVariable("KEYSTORE_PATH")
 val keystorePassword = providers.environmentVariable("KEYSTORE_PASSWORD")
-val keyAlias = providers.environmentVariable("KEY_ALIAS")
+val signingKeyAlias = providers.environmentVariable("KEY_ALIAS")
 val keyPasswordEnv = providers.environmentVariable("KEY_PASSWORD")
-val hasReleaseSigning = listOf(keystorePath, keystorePassword, keyAlias, keyPasswordEnv).all { it.isPresent }
+val hasReleaseSigning = listOf(keystorePath, keystorePassword, signingKeyAlias, keyPasswordEnv).all { it.isPresent }
 
 android {
     namespace = "com.mcuviewingorder.app"
@@ -34,7 +34,7 @@ android {
             create("release") {
                 storeFile = file(keystorePath.get())
                 storePassword = keystorePassword.get()
-                alias = keyAlias.get()
+                keyAlias = signingKeyAlias.get()
                 keyPassword = keyPasswordEnv.get()
             }
         }

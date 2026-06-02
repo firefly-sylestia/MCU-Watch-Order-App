@@ -33,13 +33,17 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.14.3'
 
       - name: Build debug APK
-        run: gradle :androidApp:assembleDebug --no-daemon --stacktrace -PVERSION_NAME=pr-${{ github.event.pull_request.number || github.run_number }} -PVERSION_CODE=${{ github.run_number }}
+        run: ./gradlew :androidApp:assembleDebug --no-daemon --stacktrace -PVERSION_NAME=pr-${{ github.event.pull_request.number || github.run_number }} -PVERSION_CODE=${{ github.run_number }}
 
       - name: Prepare debug APK artifact
         id: apk

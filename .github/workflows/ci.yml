@@ -11,29 +11,8 @@ permissions:
 
 env:
   JAVA_VERSION: '17'
-  NODE_VERSION: '22'
 
 jobs:
-  web-build:
-    name: Build Web
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build web app
-        run: npm run web:build
-
   android-gradle-check:
     name: Android Gradle Check
     runs-on: ubuntu-latest
@@ -52,10 +31,14 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.14.3'
 
       - name: Build debug APK
-        run: gradle :androidApp:assembleDebug --no-daemon --stacktrace -PVERSION_NAME=ci-${{ github.run_number }} -PVERSION_CODE=${{ github.run_number }}
+        run: ./gradlew :androidApp:assembleDebug --no-daemon --stacktrace -PVERSION_NAME=ci-${{ github.run_number }} -PVERSION_CODE=${{ github.run_number }}
