@@ -36,8 +36,12 @@ jobs:
       - name: Install Android SDK packages
         shell: bash
         run: |
+          # GitHub-hosted bash enables pipefail; disable it so yes exiting after
+          # sdkmanager closes stdin does not fail an otherwise successful step.
+          set +o pipefail
           yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          set -o pipefail
+          sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
