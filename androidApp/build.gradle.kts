@@ -4,15 +4,65 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val ciVersionName = providers.gradleProperty("VERSION_NAME")
+    .orElse(providers.environmentVariable("VERSION_NAME"))
+    .orElse("1.0-native")
+val ciVersionCode = providers.gradleProperty("VERSION_CODE")
+    .orElse(providers.environmentVariable("VERSION_CODE"))
+    .orElse("1")
+
+val keystorePath = providers.environmentVariable("KEYSTORE_PATH")
+val keystorePassword = providers.environmentVariable("KEYSTORE_PASSWORD")
+val keyAlias = providers.environmentVariable("KEY_ALIAS")
+val keyPasswordEnv = providers.environmentVariable("KEY_PASSWORD")
+val hasReleaseSigning = listOf(keystorePath, keystorePassword, keyAlias, keyPasswordEnv).all { it.isPresent }
+
 android {
     namespace = "com.mcuviewingorder.app"
     compileSdk = 36
+
     defaultConfig {
         applicationId = "com.mcuviewingorder.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0-native"
+        versionCode = ciVersionCode.get().toInt()
+        versionName = ciVersionName.get()
+    }
+
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(keystorePath.get())
+                storePassword = keystorePassword.get()
+                alias = keyAlias.get()
+                keyPassword = keyPasswordEnv.get()
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
+
+        release {
+            isMinifyEnabled = false
+            isShrinkResources = false
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+        }
+    }
+}
+
+tasks.register("printApkLocations") {
+    group = "build"
+    description = "Prints the expected debug and release APK output locations."
+    doLast {
+        println("Debug APK: ${layout.buildDirectory.file("outputs/apk/debug/androidApp-debug.apk").get().asFile}")
+        println("Release APK: ${layout.buildDirectory.file("outputs/apk/release/androidApp-release.apk").get().asFile}")
+        println("Unsigned release APK: ${layout.buildDirectory.file("outputs/apk/release/androidApp-release-unsigned.apk").get().asFile}")
     }
 }
 

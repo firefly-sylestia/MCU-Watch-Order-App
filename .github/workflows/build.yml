@@ -1,9 +1,13 @@
-name: CI Build
+name: Web Build
 
 on:
   push:
     branches: [main, master]
   pull_request:
+    branches: ['**']
+
+permissions:
+  contents: read
 
 jobs:
   web-build:
@@ -16,11 +20,11 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
       - name: Build web app
-        run: npm run build
+        run: npm run web:build
